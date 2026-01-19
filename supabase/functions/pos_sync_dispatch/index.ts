@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { createErrorResponse } from '../_shared/error-handler.ts';
 
 const FUNCTION_MAP: Record<string, string> = {
   revo: 'pos_sync_revo',
@@ -74,11 +75,6 @@ serve(async (req) => {
     );
     
   } catch (error: unknown) {
-    console.error('Dispatch error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse('dispatch', 'dispatch', error, { mode: 'dispatch' });
   }
 });
