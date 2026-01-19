@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { createErrorResponse } from '../_shared/error-handler.ts';
 
 // This function is a placeholder for scheduled sync execution
 // It can be triggered by a cron job or external scheduler
@@ -82,11 +83,6 @@ serve(async (req) => {
     );
     
   } catch (error: unknown) {
-    console.error('Schedule runner error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse('scheduler', 'schedule_runner', error, { mode: 'scheduled' });
   }
 });

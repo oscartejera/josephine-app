@@ -3,6 +3,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { generateMockBatch } from '../_shared/mock-generator.ts';
 import { normalizeTicket, normalizeTicketLine, normalizePayment, createExternalId } from '../_shared/normalize.ts';
 import { upsertTickets, upsertTicketLines, upsertPayments, getTicketIdByExternalId, updateConnectionStatus } from '../_shared/db-operations.ts';
+import { createErrorResponse } from '../_shared/error-handler.ts';
 
 const PROVIDER = 'square';
 
@@ -95,11 +96,6 @@ serve(async (req) => {
     );
     
   } catch (error: unknown) {
-    console.error('Square sync error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse(PROVIDER, 'sync', error, { mode: 'sync' });
   }
 });

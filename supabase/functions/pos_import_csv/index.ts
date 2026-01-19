@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { normalizeChannel, normalizePaymentMethod, toUTC, createExternalId } from '../_shared/normalize.ts';
 import { updateConnectionStatus } from '../_shared/db-operations.ts';
+import { createErrorResponse } from '../_shared/error-handler.ts';
 
 const PROVIDER = 'csv';
 
@@ -241,11 +242,6 @@ serve(async (req) => {
     );
     
   } catch (error: unknown) {
-    console.error('CSV import error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return createErrorResponse(PROVIDER, 'import', error, { mode: 'csv_import' });
   }
 });
