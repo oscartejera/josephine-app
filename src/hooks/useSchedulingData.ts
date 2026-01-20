@@ -1,5 +1,10 @@
 import { useState, useMemo } from 'react';
-import { startOfWeek, endOfWeek, addDays, format, differenceInHours } from 'date-fns';
+import { startOfWeek, endOfWeek, addDays, format } from 'date-fns';
+import { 
+  getEmployeeDateAvailability, 
+  getApprovedTimeOffForDateRange,
+  type TimeOffRequest 
+} from '@/stores/availabilityStore';
 
 // Types
 export type ViewMode = 'departments' | 'people' | 'positions' | 'stations';
@@ -15,7 +20,8 @@ export interface Employee {
   station: string;
   weeklyHours: number;
   targetHours: number;
-  availability: Record<string, 'available' | 'unavailable' | 'day_off'>;
+  availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'>;
+  timeOffInfo?: Record<string, TimeOffRequest>;
 }
 
 export interface Shift {
@@ -72,6 +78,7 @@ export interface ScheduleData {
   targetColPercent: number;
   totalHours: number;
   status: 'draft' | 'published';
+  timeOffConflicts: number; // Count of employees with time-off during the week
 }
 
 // Seeded random for consistent data
@@ -126,7 +133,7 @@ const STATIONS = ['Grill', 'Prep', 'Bar', 'Floor', 'Counter', 'Drive-thru'];
 const FIRST_NAMES = ['Alex', 'Jordan', 'Taylor', 'Morgan', 'Casey', 'Riley', 'Jamie', 'Quinn', 'Avery', 'Reese', 'Cameron', 'Drew', 'Finley', 'Hayden'];
 const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Martinez', 'Wilson', 'Anderson', 'Taylor', 'Thomas', 'Moore'];
 
-function generateEmployees(rng: SeededRandom, count: number): Employee[] {
+function generateEmployees(rng: SeededRandom, count: number, weekStart: Date): Employee[] {
   const employees: Employee[] = [];
   
   for (let i = 0; i < count; i++) {
@@ -138,22 +145,32 @@ function generateEmployees(rng: SeededRandom, count: number): Employee[] {
     const position = rng.pick(POSITIONS);
     const station = rng.pick(STATIONS);
     const targetHours = rng.intRange(32, 40);
+    const employeeId = `emp-${i}`;
     
-    // Generate availability for the week
-    const availability: Record<string, 'available' | 'unavailable' | 'day_off'> = {};
+    // Use shared availability store for each day of the week
+    const availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'> = {};
+    const timeOffInfo: Record<string, TimeOffRequest> = {};
+    
     for (let d = 0; d < 7; d++) {
-      const rand = rng.next();
-      if (rand < 0.1) {
+      const date = addDays(weekStart, d);
+      const dateAvail = getEmployeeDateAvailability(employeeId, date);
+      
+      if (dateAvail.status === 'time_off') {
+        availability[d.toString()] = 'time_off';
+        if (dateAvail.timeOffInfo) {
+          timeOffInfo[d.toString()] = dateAvail.timeOffInfo;
+        }
+      } else if (dateAvail.status === 'unavailable') {
         availability[d.toString()] = 'unavailable';
-      } else if (rand < 0.15 && (d === 5 || d === 6)) {
-        availability[d.toString()] = 'day_off';
+      } else if (dateAvail.status === 'preferred') {
+        availability[d.toString()] = 'preferred';
       } else {
         availability[d.toString()] = 'available';
       }
     }
     
     employees.push({
-      id: `emp-${i}`,
+      id: employeeId,
       name,
       initials,
       department,
@@ -162,6 +179,7 @@ function generateEmployees(rng: SeededRandom, count: number): Employee[] {
       weeklyHours: 0,
       targetHours,
       availability,
+      timeOffInfo: Object.keys(timeOffInfo).length > 0 ? timeOffInfo : undefined,
     });
   }
   
@@ -183,7 +201,7 @@ function generateShifts(rng: SeededRandom, employees: Employee[], weekStart: Dat
     { start: '17:00', end: '23:00', hours: 6 },
   ];
   
-  // Generate shifts for each employee
+  // Generate shifts for each employee - respecting availability!
   employees.forEach((emp, empIndex) => {
     let weeklyHours = 0;
     
@@ -191,8 +209,14 @@ function generateShifts(rng: SeededRandom, employees: Employee[], weekStart: Dat
       const date = format(addDays(weekStart, day), 'yyyy-MM-dd');
       const availability = emp.availability[day.toString()];
       
-      if (availability === 'available' && weeklyHours < emp.targetHours) {
-        if (rng.next() > 0.2) { // 80% chance of having a shift
+      // Only schedule if employee is available (not unavailable, day_off, or time_off)
+      const canSchedule = availability === 'available' || availability === 'preferred';
+      
+      if (canSchedule && weeklyHours < emp.targetHours) {
+        // Lower chance of scheduling on preferred days (employee would rather not)
+        const scheduleProbability = availability === 'preferred' ? 0.3 : 0.8;
+        
+        if (rng.next() < scheduleProbability) {
           const template = rng.pick(shiftTemplates);
           weeklyHours += template.hours;
           
@@ -272,6 +296,14 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
   const location = LOCATIONS.find(l => l.id === locationId) || LOCATIONS[1];
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   
+  // Get time-off conflicts for this week
+  const timeOffConflicts = useMemo(() => {
+    const approvedTimeOff = getApprovedTimeOffForDateRange(weekStart, weekEnd);
+    // Count unique employees with time-off
+    const uniqueEmployees = new Set(approvedTimeOff.map(r => r.employeeId));
+    return uniqueEmployees.size;
+  }, [weekStart, weekEnd]);
+  
   const data = useMemo((): ScheduleData | null => {
     if (!hasSchedule) return null;
     
@@ -279,7 +311,8 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     const rng = new SeededRandom(seed);
     
     const employeeCount = rng.intRange(10, 15);
-    const employees = generateEmployees(rng, employeeCount);
+    // Pass weekStart to generateEmployees so it can check availability for correct dates
+    const employees = generateEmployees(rng, employeeCount, weekStart);
     const { shifts: baseShifts, openShifts } = generateShifts(rng, employees, weekStart);
     const dailyKPIs = generateDailyKPIs(rng, weekStart);
     
@@ -326,8 +359,9 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
       targetColPercent: 22,
       totalHours: Math.round(totalHours * 10) / 10,
       status: 'draft',
+      timeOffConflicts,
     };
-  }, [locationId, weekStart, hasSchedule, scheduleVersion, location.name, shiftOverrides, newShifts]);
+  }, [locationId, weekStart, hasSchedule, scheduleVersion, location.name, shiftOverrides, newShifts, timeOffConflicts]);
   
   const createSchedule = async (): Promise<void> => {
     setIsLoading(true);
@@ -449,6 +483,7 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     positions: POSITIONS,
     swapRequests,
     pendingSwapRequests,
+    timeOffConflicts,
     createSchedule,
     undoSchedule,
     acceptSchedule,
