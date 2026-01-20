@@ -438,21 +438,59 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
             Team
           </div>
           {days.map((day, i) => {
-            const kpi = data.dailyKPIs[i];
             const WeatherIcon = weatherIcons[i];
             
             return (
               <div key={day.dateStr} className="p-3 border-r border-border last:border-r-0">
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{day.dayName}</span>
                     <span className="text-sm text-muted-foreground">{day.dayNum}</span>
                   </div>
                   <WeatherIcon className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  £{kpi.sales.toLocaleString()}
-                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Sales row */}
+        <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
+          <div className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center">
+            Sales
+          </div>
+          {days.map((day, i) => {
+            const kpi = data.dailyKPIs[i];
+            return (
+              <div key={`sales-${day.dateStr}`} className="p-2 px-3 border-r border-border last:border-r-0 text-sm font-medium">
+                £{kpi.sales.toLocaleString()}
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Cost / COL % row */}
+        <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
+          <div className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center">
+            Cost / COL %
+          </div>
+          {days.map((day, i) => {
+            const kpi = data.dailyKPIs[i];
+            const isHigh = kpi.colPercent > 35;
+            
+            return (
+              <div key={`col-${day.dateStr}`} className="p-2 px-3 border-r border-border last:border-r-0">
+                <span className={cn(
+                  "text-sm font-medium",
+                  isHigh ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  {kpi.colPercent > 0 ? `${kpi.colPercent.toFixed(1)}%` : '-'}
+                </span>
+                {kpi.cost > 0 && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    / £{kpi.cost.toLocaleString()}
+                  </span>
+                )}
               </div>
             );
           })}
