@@ -12,7 +12,8 @@ import {
   LogOut,
   ChevronLeft,
   Calculator,
-  BarChart3
+  BarChart3,
+  Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +25,7 @@ const navItems = [
   { icon: TrendingUp, label: 'Sales', path: '/sales' },
   { icon: Users, label: 'Labour', path: '/labour' },
   { icon: BarChart3, label: 'Instant P&L', path: '/instant-pl' },
+  { icon: Star, label: 'Reviews', path: '/insights/reviews' },
   { icon: Package, label: 'Inventory', path: '/inventory' },
   { icon: Trash2, label: 'Waste', path: '/waste' },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },
