@@ -22,10 +22,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Settings, RotateCcw } from 'lucide-react';
+import { Settings, RotateCcw, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface CategorySettings {
   wasteFactor: number;
@@ -183,9 +189,19 @@ export function ProcurementSettingsDialog({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Waste Factor */}
                     <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">
-                        Waste Factor
-                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label className="text-sm text-muted-foreground inline-flex items-center gap-1 cursor-help">
+                              Waste Factor
+                              <HelpCircle className="h-3 w-3" />
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[220px]">
+                            <p className="text-xs">Expected percentage of product lost to spoilage, breakage, or expiration. Higher values order more to compensate.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <div className="flex items-center gap-3">
                         <Slider
                           value={[settings.wasteFactor * 100]}
@@ -203,9 +219,19 @@ export function ProcurementSettingsDialog({
 
                     {/* Safety Stock */}
                     <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">
-                        Safety Stock
-                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label className="text-sm text-muted-foreground inline-flex items-center gap-1 cursor-help">
+                              Safety Stock
+                              <HelpCircle className="h-3 w-3" />
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[220px]">
+                            <p className="text-xs">Extra buffer inventory kept to handle unexpected demand spikes or delivery delays. Added on top of forecasted needs.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <div className="flex items-center gap-3">
                         <Slider
                           value={[settings.safetyStockPct * 100]}
@@ -223,9 +249,19 @@ export function ProcurementSettingsDialog({
 
                     {/* Yield Factor */}
                     <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">
-                        Yield Factor
-                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Label className="text-sm text-muted-foreground inline-flex items-center gap-1 cursor-help">
+                              Yield Factor
+                              <HelpCircle className="h-3 w-3" />
+                            </Label>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[220px]">
+                            <p className="text-xs">Usable percentage after trimming or preparation. 80% yield means 20% is lost during prep (e.g., peeling vegetables).</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <div className="flex items-center gap-3">
                         <Slider
                           value={[settings.yieldFactor * 100]}
