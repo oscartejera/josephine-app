@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format, eachDayOfInterval, eachHourOfInterval, startOfDay, endOfDay, differenceInDays, isSameDay } from 'date-fns';
+import { toast } from 'sonner';
 
 export type CompareMode = 'forecast' | 'previous_period' | 'previous_year';
 export type GranularityMode = 'daily' | 'weekly' | 'monthly';
@@ -160,11 +162,48 @@ function generateDemoData(dateRange: BIDateRange, isSingleDay: boolean): BISales
 
 export function useBISalesData({ dateRange, granularity, compareMode, locationIds }: UseBISalesDataParams) {
   const { locations } = useApp();
+  const queryClient = useQueryClient();
   const effectiveLocationIds = locationIds.length > 0 ? locationIds : locations.map(l => l.id);
+  const isLiveRef = useRef(false);
   
   const isSingleDay = isSameDay(dateRange.from, dateRange.to) || differenceInDays(dateRange.to, dateRange.from) === 0;
 
-  return useQuery({
+  // Subscribe to realtime ticket updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('sales-tickets-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tickets'
+        },
+        (payload) => {
+          console.log('Sales realtime update:', payload);
+          
+          // Invalidate and refetch the query
+          queryClient.invalidateQueries({ queryKey: ['bi-sales'] });
+          
+          if (payload.eventType === 'INSERT') {
+            const newTicket = payload.new as any;
+            const amount = newTicket.net_total || newTicket.gross_total || 0;
+            
+            toast.success('New transaction!', {
+              description: `€${amount.toFixed(2)} sale recorded`,
+              duration: 3000,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const query = useQuery({
     queryKey: ['bi-sales', dateRange, granularity, compareMode, effectiveLocationIds],
     queryFn: async (): Promise<BISalesData> => {
       if (effectiveLocationIds.length === 0) {
@@ -432,4 +471,6 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
     },
     staleTime: 30000
   });
+
+  return query;
 }
