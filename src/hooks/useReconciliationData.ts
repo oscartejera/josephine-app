@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
+import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 export interface ReconciliationLine {
@@ -19,15 +20,57 @@ export interface ReconciliationLine {
   batchBalance: number;
 }
 
+interface ReconciliationTotals {
+  openingQty: number;
+  deliveriesQty: number;
+  transfersNetQty: number;
+  closingQty: number;
+  usedQty: number;
+  salesQty: number;
+  varianceQty: number;
+  batchBalance: number;
+}
+
+const defaultTotals: ReconciliationTotals = {
+  openingQty: 0,
+  deliveriesQty: 0,
+  transfersNetQty: 0,
+  closingQty: 0,
+  usedQty: 0,
+  salesQty: 0,
+  varianceQty: 0,
+  batchBalance: 0
+};
+
 export function useReconciliationData(
   dateRange: DateRangeValue,
   selectedLocations: string[],
   stockStatus: 'counted' | 'uncounted' | 'all'
 ) {
-  const { locations, group } = useApp();
+  const { locations, loading: appLoading } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [lines, setLines] = useState<ReconciliationLine[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Prevent duplicate fetches
+  const fetchedRef = useRef<string>('');
+  const isMountedRef = useRef(true);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Create stable cache key
+  const cacheKey = useMemo(() => {
+    const fromStr = dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : '';
+    const toStr = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
+    const locsStr = selectedLocations.sort().join(',');
+    return `${fromStr}-${toStr}-${locsStr}-${stockStatus}`;
+  }, [dateRange.from, dateRange.to, selectedLocations, stockStatus]);
 
   const locationIds = useMemo(() => {
     if (selectedLocations.length === 0) {
@@ -36,18 +79,25 @@ export function useReconciliationData(
     return selectedLocations;
   }, [selectedLocations, locations]);
 
-  useEffect(() => {
-    fetchData();
-  }, [dateRange, locationIds, stockStatus]);
+  const fetchData = useCallback(async () => {
+    // Guard against duplicate fetches
+    if (fetchedRef.current === cacheKey) {
+      return;
+    }
 
-  const fetchData = async () => {
+    // Guard: Need valid date range
+    if (!dateRange.from || !dateRange.to) {
+      return;
+    }
+
+    fetchedRef.current = cacheKey;
     setIsLoading(true);
 
     try {
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Fetch stock counts for the period
+      // Try fetching real data first
       let stockCountsQuery = supabase
         .from('stock_counts')
         .select(`
@@ -115,63 +165,117 @@ export function useReconciliationData(
         });
       });
 
-      setLines(Array.from(linesMap.values()));
-      setLastUpdated(new Date());
+      if (isMountedRef.current) {
+        const realLines = Array.from(linesMap.values());
+        
+        // Use demo data if no real data found
+        if (realLines.length === 0) {
+          generateDemoLines();
+        } else {
+          setLines(realLines);
+          setLastUpdated(new Date());
+        }
+      }
     } catch (error) {
       console.error('Error fetching reconciliation data:', error);
+      if (isMountedRef.current) {
+        generateDemoLines();
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, [cacheKey, dateRange.from, dateRange.to, locationIds, locations.length, stockStatus]);
 
-  // Generate demo data if empty
-  useEffect(() => {
-    if (!isLoading && lines.length === 0) {
-      const demoItems = [
-        { name: 'Tomatoes', unit: 'kg' },
-        { name: 'Chicken Breast', unit: 'kg' },
-        { name: 'Olive Oil', unit: 'L' },
-        { name: 'Pasta', unit: 'kg' },
-        { name: 'Mozzarella', unit: 'kg' },
-        { name: 'Beef Sirloin', unit: 'kg' },
-        { name: 'White Wine', unit: 'L' },
-        { name: 'Flour', unit: 'kg' },
-        { name: 'Butter', unit: 'kg' },
-        { name: 'Eggs', unit: 'units' }
-      ];
-
-      const demoLines: ReconciliationLine[] = demoItems.map((item, i) => {
-        const openingQty = 20 + Math.random() * 30;
-        const deliveriesQty = 10 + Math.random() * 20;
-        const transfersNetQty = (Math.random() - 0.5) * 5;
-        const salesQty = 15 + Math.random() * 25;
-        const closingQty = openingQty + deliveriesQty + transfersNetQty - salesQty - Math.random() * 3;
-        const usedQty = openingQty + deliveriesQty + transfersNetQty - closingQty;
-        const varianceQty = usedQty - salesQty;
-        const batchBalance = Math.random() * 2 - 1;
-
-        return {
+  // Generate demo data
+  const generateDemoLines = useCallback(() => {
+    try {
+      const generator = getDemoGenerator(dateRange.from || new Date(), dateRange.to || new Date());
+      
+      // Get demo stock count data for the first selected location
+      const locationId = selectedLocations.length > 0 ? selectedLocations[0] : 'loc-west-002';
+      const stockData = generator.getStockCountData(locationId);
+      
+      if (stockData && stockData.length > 0) {
+        const demoLines: ReconciliationLine[] = stockData.map((item, i) => ({
           id: `demo-${i}`,
           itemId: `item-${i}`,
-          itemName: item.name,
+          itemName: item.itemName,
           unit: item.unit,
-          openingQty: Math.round(openingQty * 100) / 100,
-          deliveriesQty: Math.round(deliveriesQty * 100) / 100,
-          transfersNetQty: Math.round(transfersNetQty * 100) / 100,
-          closingQty: Math.round(closingQty * 100) / 100,
-          usedQty: Math.round(usedQty * 100) / 100,
-          salesQty: Math.round(salesQty * 100) / 100,
-          varianceQty: Math.round(varianceQty * 100) / 100,
-          batchBalance: Math.round(batchBalance * 100) / 100
-        };
-      });
+          openingQty: item.openingQty,
+          deliveriesQty: item.deliveriesQty,
+          transfersNetQty: item.netTransferredQty,
+          closingQty: item.closingQty,
+          usedQty: item.usedQty,
+          salesQty: item.salesQty,
+          varianceQty: item.varianceQty,
+          batchBalance: item.batchBalance
+        }));
+        setLines(demoLines);
+      } else {
+        // Fallback demo items
+        const demoItems = [
+          { name: 'Tender fillets (fresh)', unit: 'kg' },
+          { name: 'Chicken breast', unit: 'kg' },
+          { name: 'House sauce', unit: 'L' },
+          { name: 'Plain flour', unit: 'kg' },
+          { name: 'Spice mix original', unit: 'kg' },
+          { name: 'Spice mix hot', unit: 'kg' },
+          { name: 'Bread crumbs', unit: 'kg' },
+          { name: 'Vegetable oil', unit: 'L' },
+          { name: 'Lettuce iceberg', unit: 'kg' },
+          { name: 'Tomatoes fresh', unit: 'kg' }
+        ];
 
-      setLines(demoLines);
+        const demoLines: ReconciliationLine[] = demoItems.map((item, i) => {
+          const openingQty = 20 + Math.random() * 30;
+          const deliveriesQty = 10 + Math.random() * 20;
+          const transfersNetQty = (Math.random() - 0.5) * 5;
+          const salesQty = 15 + Math.random() * 25;
+          const closingQty = Math.max(0, openingQty + deliveriesQty + transfersNetQty - salesQty - Math.random() * 3);
+          const usedQty = openingQty + deliveriesQty + transfersNetQty - closingQty;
+          const varianceQty = usedQty - salesQty;
+          const batchBalance = Math.random() * 2 - 1;
+
+          return {
+            id: `demo-${i}`,
+            itemId: `item-${i}`,
+            itemName: item.name,
+            unit: item.unit,
+            openingQty: Math.round(openingQty * 100) / 100,
+            deliveriesQty: Math.round(deliveriesQty * 100) / 100,
+            transfersNetQty: Math.round(transfersNetQty * 100) / 100,
+            closingQty: Math.round(closingQty * 100) / 100,
+            usedQty: Math.round(usedQty * 100) / 100,
+            salesQty: Math.round(salesQty * 100) / 100,
+            varianceQty: Math.round(varianceQty * 100) / 100,
+            batchBalance: Math.round(batchBalance * 100) / 100
+          };
+        });
+
+        setLines(demoLines);
+      }
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Error generating demo data:', error);
     }
-  }, [isLoading, lines.length]);
+  }, [dateRange.from, dateRange.to, selectedLocations]);
 
-  // Calculate totals
-  const totals = useMemo(() => {
+  // Trigger fetch when dependencies change
+  useEffect(() => {
+    // Don't fetch while app context is still loading
+    if (appLoading) {
+      return;
+    }
+    
+    fetchData();
+  }, [fetchData, appLoading]);
+
+  // Calculate totals - memoized
+  const totals = useMemo((): ReconciliationTotals => {
+    if (lines.length === 0) return defaultTotals;
+    
     return lines.reduce((acc, line) => ({
       openingQty: acc.openingQty + line.openingQty,
       deliveriesQty: acc.deliveriesQty + line.deliveriesQty,
@@ -181,16 +285,7 @@ export function useReconciliationData(
       salesQty: acc.salesQty + line.salesQty,
       varianceQty: acc.varianceQty + line.varianceQty,
       batchBalance: acc.batchBalance + line.batchBalance
-    }), {
-      openingQty: 0,
-      deliveriesQty: 0,
-      transfersNetQty: 0,
-      closingQty: 0,
-      usedQty: 0,
-      salesQty: 0,
-      varianceQty: 0,
-      batchBalance: 0
-    });
+    }), defaultTotals);
   }, [lines]);
 
   return {

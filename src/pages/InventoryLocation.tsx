@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { startOfMonth, endOfMonth, parse, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { 
   InventoryHeader, 
@@ -16,6 +17,7 @@ import {
 import { AskJosephineDrawer } from '@/components/inventory/AskJosephineDrawer';
 import { useInventoryData } from '@/hooks/useInventoryData';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
+import { useApp } from '@/contexts/AppContext';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 // Validate locationId format (demo IDs or UUIDs)
@@ -31,6 +33,7 @@ export default function InventoryLocation() {
   const navigate = useNavigate();
   const { locationId } = useParams<{ locationId: string }>();
   const [searchParams] = useSearchParams();
+  const { loading: appLoading } = useApp();
   
   // Stable initial date range - memoized to prevent re-computation
   const initialDateRange = useMemo((): DateRangeValue => {
@@ -57,26 +60,15 @@ export default function InventoryLocation() {
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [viewMode, setViewMode] = useState<ViewMode>('GP');
   const [josephineOpen, setJosephineOpen] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
 
-  // Validate locationId
-  const isValidLocation = isValidLocationId(locationId);
+  // Validate locationId - memoized
+  const isValidLocation = useMemo(() => isValidLocationId(locationId), [locationId]);
 
   // Stable selectedLocations array - only changes when locationId changes
   const selectedLocations = useMemo(() => {
     return locationId && isValidLocation ? [locationId] : [];
   }, [locationId, isValidLocation]);
-
-  const {
-    isLoading,
-    lastUpdated,
-    metrics,
-    categoryBreakdown,
-    wasteByCategory,
-    wasteByLocation,
-    locationPerformance,
-    error: dataError
-  } = useInventoryData(dateRange, dateMode, viewMode, selectedLocations);
 
   // Get location name for title - memoized to prevent unnecessary recalculations
   const currentLocation = useMemo(() => {
@@ -89,13 +81,39 @@ export default function InventoryLocation() {
     }
   }, [locationId, isValidLocation, dateRange.from, dateRange.to]);
 
-  // Track errors
+  // Only fetch data when we have valid inputs and app is loaded
+  const shouldFetchData = isValidLocation && !appLoading && dateRange.from && dateRange.to;
+
+  const {
+    isLoading,
+    lastUpdated,
+    metrics,
+    categoryBreakdown,
+    wasteByCategory,
+    wasteByLocation,
+    locationPerformance,
+    error: dataError
+  } = useInventoryData(
+    dateRange, 
+    dateMode, 
+    viewMode, 
+    shouldFetchData ? selectedLocations : []
+  );
+
+  // Track errors from data fetch - but don't loop
   useEffect(() => {
-    if (dataError) {
-      console.error('InventoryLocation error:', { locationId, dateRange, error: dataError });
-      setHasError(true);
+    if (dataError && !pageError) {
+      console.error('InventoryLocation data error:', { 
+        locationId, 
+        dateRange: {
+          from: dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : null,
+          to: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : null
+        }, 
+        error: dataError.message 
+      });
+      setPageError('Failed to load data for this location');
     }
-  }, [dataError, locationId, dateRange]);
+  }, [dataError, pageError, locationId, dateRange]);
 
   // Stable handlers
   const handleBackToAllLocations = useCallback(() => {
@@ -123,18 +141,38 @@ export default function InventoryLocation() {
   }, [navigate, locationId, dateRange]);
 
   const handleRetry = useCallback(() => {
-    setHasError(false);
+    setPageError(null);
     // Force a re-fetch by updating date range with same values
     setDateRange(prev => ({ ...prev }));
   }, []);
 
   const isCOGS = viewMode === 'COGS';
 
+  // Show loading state while app is initializing
+  if (appLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-8 w-48" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="p-6">
+              <Skeleton className="h-6 w-24 mb-4" />
+              <Skeleton className="h-10 w-full" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // Invalid location guard - render error state
   if (!isValidLocation) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="max-w-md">
+        <Card className="max-w-md border-border/60">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-destructive" />
@@ -156,17 +194,17 @@ export default function InventoryLocation() {
   }
 
   // Error state guard
-  if (hasError && !isLoading) {
+  if (pageError && !isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="max-w-md">
+        <Card className="max-w-md border-border/60">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-amber-500" />
               <div>
                 <h2 className="text-lg font-semibold">Something went wrong</h2>
                 <p className="text-muted-foreground mt-1">
-                  We couldn't load data for this location. Please try again.
+                  {pageError}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -222,7 +260,7 @@ export default function InventoryLocation() {
         </Button>
         
         <Button 
-          variant="outline" 
+          variant="default" 
           onClick={handleNavigateToReconciliation}
           className="gap-2"
         >
