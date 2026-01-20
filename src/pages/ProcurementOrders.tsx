@@ -181,6 +181,11 @@ export default function ProcurementOrders() {
           fetchData();
           
           if (payload.eventType === 'INSERT') {
+            // Play notification sound
+            const audio = new Audio('/sounds/notification.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(err => console.log('Audio play failed:', err));
+            
             toast.success('New order received!', {
               description: 'The orders list has been updated.',
               icon: <CheckCircle className="h-5 w-5 text-success" />,
