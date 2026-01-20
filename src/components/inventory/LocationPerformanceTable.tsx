@@ -74,17 +74,17 @@ export function LocationPerformanceTable({
       return;
     }
     
-    // Build URL with date params
+    // Build URL with date params - navigate to dedicated venue page
     const params = new URLSearchParams();
     if (dateRange?.from) {
-      params.set('start_date', format(dateRange.from, 'yyyy-MM-dd'));
+      params.set('start', format(dateRange.from, 'yyyy-MM-dd'));
     }
     if (dateRange?.to) {
-      params.set('end_date', format(dateRange.to, 'yyyy-MM-dd'));
+      params.set('end', format(dateRange.to, 'yyyy-MM-dd'));
     }
     
     const queryString = params.toString();
-    navigate(`/inventory/${locationId}${queryString ? `?${queryString}` : ''}`);
+    navigate(`/inventory/location/${locationId}${queryString ? `?${queryString}` : ''}`);
   };
 
   if (isLoading) {

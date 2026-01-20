@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { startOfMonth, endOfMonth, parse } from 'date-fns';
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { startOfMonth, endOfMonth, parse, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText } from 'lucide-react';
+import { FileText, ArrowLeft } from 'lucide-react';
 import { 
   InventoryHeader, 
   InventorySalesCard, 
@@ -10,15 +10,16 @@ import {
   InventoryGapCard,
   InventoryBreakdownChart,
   InventoryWasteOverview,
-  LocationPerformanceTable,
   type ViewMode
 } from '@/components/inventory';
 import { AskJosephineDrawer } from '@/components/inventory/AskJosephineDrawer';
 import { useInventoryData } from '@/hooks/useInventoryData';
+import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
-export default function Inventory() {
+export default function InventoryLocation() {
   const navigate = useNavigate();
+  const { locationId } = useParams<{ locationId: string }>();
   const [searchParams] = useSearchParams();
   const today = new Date();
   
@@ -45,9 +46,10 @@ export default function Inventory() {
   const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [viewMode, setViewMode] = useState<ViewMode>('GP');
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [josephineOpen, setJosephineOpen] = useState(false);
   const [reseedTrigger, setReseedTrigger] = useState(0);
+
+  const selectedLocations = locationId ? [locationId] : [];
 
   const {
     isLoading,
@@ -59,7 +61,11 @@ export default function Inventory() {
     locationPerformance
   } = useInventoryData(dateRange, dateMode, viewMode, selectedLocations);
 
-  // Force refetch when reseed is triggered
+  // Get location name for title
+  const currentLocation = locationId 
+    ? getDemoGenerator(dateRange.from || today, dateRange.to || today).getLocations().find(l => l.id === locationId)
+    : null;
+
   const handleReseedData = () => {
     setReseedTrigger(prev => prev + 1);
     setTimeout(() => {
@@ -67,11 +73,36 @@ export default function Inventory() {
     }, 100);
   };
 
+  const handleBackToAllLocations = () => {
+    const params = new URLSearchParams();
+    if (dateRange.from) {
+      params.set('start', format(dateRange.from, 'yyyy-MM-dd'));
+    }
+    if (dateRange.to) {
+      params.set('end', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+    const queryString = params.toString();
+    navigate(`/inventory${queryString ? `?${queryString}` : ''}`);
+  };
+
+  const handleNavigateToReconciliation = () => {
+    const params = new URLSearchParams();
+    if (dateRange.from) {
+      params.set('start', format(dateRange.from, 'yyyy-MM-dd'));
+    }
+    if (dateRange.to) {
+      params.set('end', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+    const queryString = params.toString();
+    navigate(`/inventory/location/${locationId}/reconciliation${queryString ? `?${queryString}` : ''}`);
+  };
+
   const isCOGS = viewMode === 'COGS';
 
   const breadcrumbs = [
     { label: 'Insights' },
-    { label: 'Inventory' }
+    { label: 'Inventory', path: '/inventory' },
+    { label: currentLocation?.name || 'Location' }
   ];
 
   return (
@@ -85,7 +116,7 @@ export default function Inventory() {
         viewMode={viewMode}
         setViewMode={setViewMode}
         selectedLocations={selectedLocations}
-        setSelectedLocations={setSelectedLocations}
+        setSelectedLocations={() => {}}
         onAskJosephine={() => setJosephineOpen(true)}
         onReseedData={handleReseedData}
         lastUpdated={lastUpdated}
@@ -93,11 +124,20 @@ export default function Inventory() {
         breadcrumbs={breadcrumbs}
       />
 
-      {/* Navigation to Reconciliation */}
-      <div className="flex items-center gap-2">
+      {/* Actions row */}
+      <div className="flex items-center justify-between gap-4">
+        <Button 
+          variant="ghost" 
+          onClick={handleBackToAllLocations}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          All locations
+        </Button>
+        
         <Button 
           variant="outline" 
-          onClick={() => navigate('/inventory/reconciliation')}
+          onClick={handleNavigateToReconciliation}
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
@@ -151,14 +191,6 @@ export default function Inventory() {
           isLoading={isLoading}
         />
       </div>
-
-      {/* Location Performance */}
-      <LocationPerformanceTable
-        viewMode={viewMode}
-        data={locationPerformance}
-        isLoading={isLoading}
-        dateRange={dateRange}
-      />
 
       {/* Ask Josephine Drawer */}
       <AskJosephineDrawer
