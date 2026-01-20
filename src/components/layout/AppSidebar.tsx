@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: TrendingUp, label: 'Forecast', path: '/forecast' },
+  { icon: TrendingUp, label: 'Sales', path: '/sales' },
   { icon: Users, label: 'Labor', path: '/labor' },
   { icon: Package, label: 'Inventory', path: '/inventory' },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },

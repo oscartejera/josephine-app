@@ -66,7 +66,7 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/forecast" element={<Sales />} />
+        <Route path="/sales" element={<Sales />} />
         <Route path="/labor" element={<Labor />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/procurement" element={<Procurement />} />
