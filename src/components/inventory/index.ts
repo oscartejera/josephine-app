@@ -6,3 +6,4 @@ export { InventoryBreakdownChart } from './InventoryBreakdownChart';
 export { InventoryWasteOverview } from './InventoryWasteOverview';
 export { LocationPerformanceTable } from './LocationPerformanceTable';
 export { ReconciliationGrid } from './ReconciliationGrid';
+export { AskJosephineDrawer } from './AskJosephineDrawer';
