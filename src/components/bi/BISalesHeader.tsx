@@ -1,5 +1,6 @@
-import { ChevronDown, Sparkles, MoreHorizontal } from 'lucide-react';
+import { ChevronDown, Sparkles, MoreHorizontal, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -11,12 +12,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import type { CompareMode, GranularityMode, BIDateRange } from '@/pages/Sales';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from './DateRangePickerNoryLike';
+import { formatDistanceToNow } from 'date-fns';
 
 interface BISalesHeaderProps {
   dateRange: BIDateRange;
@@ -28,6 +35,8 @@ interface BISalesHeaderProps {
   selectedLocations: string[];
   setSelectedLocations: (ids: string[]) => void;
   onAskJosephine: () => void;
+  isConnected?: boolean;
+  lastUpdate?: Date | null;
 }
 
 export function BISalesHeader({
@@ -39,7 +48,9 @@ export function BISalesHeader({
   setCompareMode,
   selectedLocations,
   setSelectedLocations,
-  onAskJosephine
+  onAskJosephine,
+  isConnected = false,
+  lastUpdate = null
 }: BISalesHeaderProps) {
   const { locations } = useApp();
   const [locationsOpen, setLocationsOpen] = useState(false);
@@ -144,14 +155,52 @@ export function BISalesHeader({
           </DropdownMenu>
         </div>
 
-        {/* Ask Josephine button */}
-        <Button 
-          onClick={onAskJosephine}
-          className="bg-gradient-primary text-white gap-2"
-        >
-          <Sparkles className="h-4 w-4" />
-          Ask Josephine
-        </Button>
+        {/* Live Status + Ask Josephine button */}
+        <div className="flex items-center gap-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "gap-1.5 cursor-default transition-colors",
+                  isConnected 
+                    ? "text-success border-success/30 bg-success/5" 
+                    : "text-muted-foreground border-border"
+                )}
+              >
+                {isConnected ? (
+                  <>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                    </span>
+                    Live
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="h-3 w-3" />
+                    Offline
+                  </>
+                )}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isConnected ? (
+                <p>Real-time updates active{lastUpdate ? `. Last update: ${formatDistanceToNow(lastUpdate, { addSuffix: true })}` : ''}</p>
+              ) : (
+                <p>Connecting to real-time updates...</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+          
+          <Button 
+            onClick={onAskJosephine}
+            className="bg-gradient-primary text-white gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Ask Josephine
+          </Button>
+        </div>
       </div>
 
       {/* Row 2: Location selector */}
