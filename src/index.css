@@ -71,6 +71,18 @@
     --chart-3: 38 92% 50%;
     --chart-4: 199 89% 48%;
     --chart-5: 0 84% 60%;
+
+    /* BI Sales specific tokens */
+    --bi-actual: 263 70% 50%;
+    --bi-forecast-live: 263 50% 65%;
+    --bi-forecast: 263 30% 85%;
+    --bi-acs: 30 90% 55%;
+    --bi-acs-forecast: 30 70% 75%;
+    --bi-border: 40 15% 90%;
+    --bi-badge-positive: 142 60% 94%;
+    --bi-badge-positive-text: 142 70% 35%;
+    --bi-badge-negative: 0 70% 94%;
+    --bi-badge-negative-text: 0 70% 45%;
   }
 
   .dark {
