@@ -73,6 +73,14 @@ export interface RecommendationSettings {
   roundToPacks: boolean;
 }
 
+export interface CategorySettingsMap {
+  [category: string]: {
+    wasteFactor: number;
+    safetyStockPct: number;
+    yieldFactor: number;
+  };
+}
+
 // Default waste factors by category
 const CATEGORY_WASTE_FACTORS: Record<string, number> = {
   'Produce': 0.06,
@@ -307,6 +315,17 @@ function getCoverageEndDate(
   return addDays(orderDate, minCoverageDays);
 }
 
+// Default category settings
+const DEFAULT_CATEGORY_SETTINGS: CategorySettingsMap = {
+  'Produce': { wasteFactor: 0.06, safetyStockPct: 0.15, yieldFactor: 1.0 },
+  'Proteins': { wasteFactor: 0.05, safetyStockPct: 0.15, yieldFactor: 1.0 },
+  'Dairy': { wasteFactor: 0.03, safetyStockPct: 0.15, yieldFactor: 1.0 },
+  'Dry Goods': { wasteFactor: 0.01, safetyStockPct: 0.10, yieldFactor: 1.0 },
+  'Beverages': { wasteFactor: 0.01, safetyStockPct: 0.10, yieldFactor: 1.0 },
+  'Bakery': { wasteFactor: 0.04, safetyStockPct: 0.20, yieldFactor: 1.0 },
+  'Condiments': { wasteFactor: 0.02, safetyStockPct: 0.10, yieldFactor: 1.0 },
+};
+
 // Main hook
 export function useProcurementData() {
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('macro');
@@ -319,6 +338,7 @@ export function useProcurementData() {
     includeSafetyStock: true,
     roundToPacks: true,
   });
+  const [categorySettings, setCategorySettings] = useState<CategorySettingsMap>(DEFAULT_CATEGORY_SETTINGS);
 
   const suppliers = SEED_SUPPLIERS;
   const allSkus = FULL_SKUS;
@@ -333,15 +353,31 @@ export function useProcurementData() {
     [selectedSupplier, orderDate]
   );
 
+  // Compute SKUs with applied category settings
+  const skusWithCategorySettings = useMemo(() => {
+    return allSkus.map(sku => {
+      const catSettings = categorySettings[sku.category];
+      if (catSettings) {
+        return {
+          ...sku,
+          wasteFactor: catSettings.wasteFactor,
+          safetyStockPct: catSettings.safetyStockPct,
+          yieldFactor: catSettings.yieldFactor,
+        };
+      }
+      return sku;
+    });
+  }, [allSkus, categorySettings]);
+
   const filteredSkus = useMemo(() => {
-    const supplierSkus = allSkus.filter(sku => sku.supplierId === selectedSupplierId);
+    const supplierSkus = skusWithCategorySettings.filter(sku => sku.supplierId === selectedSupplierId);
     if (!searchQuery.trim()) return supplierSkus;
     const query = searchQuery.toLowerCase();
     return supplierSkus.filter(sku => 
       sku.name.toLowerCase().includes(query) ||
       sku.category.toLowerCase().includes(query)
     );
-  }, [selectedSupplierId, searchQuery, allSkus]);
+  }, [selectedSupplierId, searchQuery, skusWithCategorySettings]);
 
   const categories = useMemo(() => {
     const cats = new Set(filteredSkus.map(s => s.category));
@@ -356,7 +392,7 @@ export function useProcurementData() {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     const newCart = new Map<string, number>();
-    const supplierSkus = allSkus.filter(sku => sku.supplierId === selectedSupplierId);
+    const supplierSkus = skusWithCategorySettings.filter(sku => sku.supplierId === selectedSupplierId);
     
     supplierSkus.forEach(sku => {
       if (sku.paused) return;
@@ -368,12 +404,12 @@ export function useProcurementData() {
     
     setCart(newCart);
     setIsCalculating(false);
-  }, [selectedSupplierId, recommendationSettings, allSkus]);
+  }, [selectedSupplierId, recommendationSettings, skusWithCategorySettings]);
 
   // Legacy autofill (quick, no delay)
   const autofillCart = useCallback(() => {
     const newCart = new Map<string, number>();
-    const supplierSkus = allSkus.filter(sku => sku.supplierId === selectedSupplierId);
+    const supplierSkus = skusWithCategorySettings.filter(sku => sku.supplierId === selectedSupplierId);
     
     supplierSkus.forEach(sku => {
       if (sku.paused) return;
@@ -384,7 +420,7 @@ export function useProcurementData() {
     });
     
     setCart(newCart);
-  }, [selectedSupplierId, recommendationSettings, allSkus]);
+  }, [selectedSupplierId, recommendationSettings, skusWithCategorySettings]);
 
   const updateCartItem = useCallback((skuId: string, packs: number) => {
     setCart(prev => {
@@ -478,7 +514,7 @@ export function useProcurementData() {
     setSelectedSupplierId,
     filteredSkus,
     categories,
-    allSkus,
+    allSkus: skusWithCategorySettings,
     
     // Date & delivery
     orderDate,
@@ -502,6 +538,10 @@ export function useProcurementData() {
     isCalculating,
     recommendationSettings,
     setRecommendationSettings,
+    
+    // Category settings
+    categorySettings,
+    setCategorySettings,
     
     // Search
     searchQuery,
