@@ -1,13 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
-import { Cloud, Sun, CloudRain } from 'lucide-react';
+import { Cloud, Sun, CloudRain, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScheduleData, ViewMode, Employee, Shift } from '@/hooks/useSchedulingData';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 
 interface ScheduleGridProps {
   data: ScheduleData;
   viewMode: ViewMode;
+  onMoveShift?: (shiftId: string, toEmployeeId: string, toDate: string) => void;
 }
 
 interface GridRow {
@@ -22,17 +24,48 @@ interface GridRow {
   dayOffDays: number[];
 }
 
-function ShiftCard({ shift }: { shift: Shift }) {
+interface DragData {
+  shiftId: string;
+  shift: Shift;
+  fromEmployeeId: string;
+  fromDate: string;
+}
+
+function ShiftCard({ 
+  shift, 
+  isDragging,
+  onDragStart,
+  onDragEnd,
+  draggable = true,
+}: { 
+  shift: Shift;
+  isDragging?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+  draggable?: boolean;
+}) {
   return (
-    <div className={cn(
-      "px-2 py-1.5 rounded-md text-xs border",
-      shift.isOpen 
-        ? "bg-amber-50 border-amber-200 text-amber-700"
-        : "bg-primary/5 border-primary/20 text-foreground"
-    )}>
-      <div className="font-medium truncate">{shift.role}</div>
-      <div className="text-muted-foreground">
-        {shift.startTime} - {shift.endTime}
+    <div 
+      className={cn(
+        "px-2 py-1.5 rounded-md text-xs border cursor-grab active:cursor-grabbing transition-all",
+        shift.isOpen 
+          ? "bg-amber-50 border-amber-200 text-amber-700"
+          : "bg-primary/5 border-primary/20 text-foreground",
+        isDragging && "opacity-50 scale-95",
+        draggable && "hover:shadow-md hover:border-primary/40"
+      )}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    >
+      <div className="flex items-center gap-1">
+        {draggable && <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0" />}
+        <div className="min-w-0 flex-1">
+          <div className="font-medium truncate">{shift.role}</div>
+          <div className="text-muted-foreground">
+            {shift.startTime} - {shift.endTime}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -54,7 +87,41 @@ function DayOffCell() {
   );
 }
 
-export function ScheduleGrid({ data, viewMode }: ScheduleGridProps) {
+function DropZone({ 
+  isOver, 
+  canDrop,
+  children,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}: { 
+  isOver: boolean;
+  canDrop: boolean;
+  children: React.ReactNode;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "p-2 border-r border-border last:border-r-0 min-h-[60px] transition-colors",
+        isOver && canDrop && "bg-primary/10 border-primary/30",
+        isOver && !canDrop && "bg-destructive/10"
+      )}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function ScheduleGrid({ data, viewMode, onMoveShift }: ScheduleGridProps) {
+  const [dragData, setDragData] = useState<DragData | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
+  
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => ({
       date: addDays(data.weekStart, i),
@@ -158,6 +225,73 @@ export function ScheduleGrid({ data, viewMode }: ScheduleGridProps) {
   
   const weatherIcons = [Sun, Cloud, Sun, CloudRain, Sun, Sun, Cloud];
   
+  // Drag handlers
+  const handleDragStart = useCallback((e: React.DragEvent, shift: Shift, employeeId: string) => {
+    const dragPayload: DragData = {
+      shiftId: shift.id,
+      shift,
+      fromEmployeeId: employeeId,
+      fromDate: shift.date,
+    };
+    setDragData(dragPayload);
+    e.dataTransfer.setData('application/json', JSON.stringify(dragPayload));
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+  
+  const handleDragEnd = useCallback(() => {
+    setDragData(null);
+    setDropTarget(null);
+  }, []);
+  
+  const handleDragOver = useCallback((e: React.DragEvent, employeeId: string, dayIndex: number, unavailable: boolean, dayOff: boolean) => {
+    e.preventDefault();
+    if (unavailable || dayOff) {
+      e.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    e.dataTransfer.dropEffect = 'move';
+    setDropTarget({ employeeId, dayIndex });
+  }, []);
+  
+  const handleDragLeave = useCallback(() => {
+    setDropTarget(null);
+  }, []);
+  
+  const handleDrop = useCallback((e: React.DragEvent, toEmployeeId: string, dayIndex: number, row: GridRow) => {
+    e.preventDefault();
+    setDropTarget(null);
+    
+    if (row.unavailableDays.includes(dayIndex) || row.dayOffDays.includes(dayIndex)) {
+      toast.error("Cannot assign shift - employee is unavailable");
+      return;
+    }
+    
+    try {
+      const payload = JSON.parse(e.dataTransfer.getData('application/json')) as DragData;
+      const toDate = days[dayIndex].dateStr;
+      
+      // Check if dropping to same position
+      if (payload.fromEmployeeId === toEmployeeId && payload.fromDate === toDate) {
+        return;
+      }
+      
+      // Call the move handler
+      if (onMoveShift) {
+        onMoveShift(payload.shiftId, toEmployeeId, toDate);
+        
+        const employee = data.employees.find(e => e.id === toEmployeeId);
+        const employeeName = employee?.name || 'employee';
+        const dayName = days[dayIndex].dayName;
+        
+        toast.success(`Shift moved to ${employeeName} on ${dayName}`);
+      }
+    } catch (err) {
+      console.error('Drop error:', err);
+    }
+  }, [days, onMoveShift, data.employees]);
+  
+  const isDraggingEnabled = viewMode === 'people' && onMoveShift;
+  
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Header with days */}
@@ -196,7 +330,7 @@ export function ScheduleGrid({ data, viewMode }: ScheduleGridProps) {
         </div>
         {openShiftsRow.shifts.map((shift, i) => (
           <div key={i} className="p-2 border-r border-border last:border-r-0 min-h-[60px]">
-            {shift && <ShiftCard shift={shift} />}
+            {shift && <ShiftCard shift={shift} draggable={false} />}
           </div>
         ))}
       </div>
@@ -232,23 +366,64 @@ export function ScheduleGrid({ data, viewMode }: ScheduleGridProps) {
             </div>
             
             {/* Shift cells */}
-            {row.shifts.map((shift, dayIndex) => (
-              <div 
-                key={dayIndex} 
-                className="p-2 border-r border-border last:border-r-0 min-h-[60px]"
-              >
-                {row.unavailableDays.includes(dayIndex) ? (
-                  <UnavailableCell />
-                ) : row.dayOffDays.includes(dayIndex) ? (
-                  <DayOffCell />
-                ) : shift ? (
-                  <ShiftCard shift={shift} />
-                ) : null}
-              </div>
-            ))}
+            {row.shifts.map((shift, dayIndex) => {
+              const isUnavailable = row.unavailableDays.includes(dayIndex);
+              const isDayOff = row.dayOffDays.includes(dayIndex);
+              const isOver = dropTarget?.employeeId === row.id && dropTarget?.dayIndex === dayIndex;
+              const canDrop = !isUnavailable && !isDayOff;
+              
+              if (isDraggingEnabled) {
+                return (
+                  <DropZone
+                    key={dayIndex}
+                    isOver={isOver}
+                    canDrop={canDrop}
+                    onDragOver={(e) => handleDragOver(e, row.id, dayIndex, isUnavailable, isDayOff)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, row.id, dayIndex, row)}
+                  >
+                    {isUnavailable ? (
+                      <UnavailableCell />
+                    ) : isDayOff ? (
+                      <DayOffCell />
+                    ) : shift ? (
+                      <ShiftCard 
+                        shift={shift}
+                        isDragging={dragData?.shiftId === shift.id}
+                        onDragStart={(e) => handleDragStart(e, shift, row.id)}
+                        onDragEnd={handleDragEnd}
+                        draggable={true}
+                      />
+                    ) : null}
+                  </DropZone>
+                );
+              }
+              
+              return (
+                <div 
+                  key={dayIndex} 
+                  className="p-2 border-r border-border last:border-r-0 min-h-[60px]"
+                >
+                  {isUnavailable ? (
+                    <UnavailableCell />
+                  ) : isDayOff ? (
+                    <DayOffCell />
+                  ) : shift ? (
+                    <ShiftCard shift={shift} draggable={false} />
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         ))}
       </ScrollArea>
+      
+      {/* Drag hint */}
+      {isDraggingEnabled && (
+        <div className="px-4 py-2 bg-muted/30 border-t border-border text-xs text-muted-foreground">
+          💡 Drag shifts to reassign them to different employees or days
+        </div>
+      )}
     </div>
   );
 }
