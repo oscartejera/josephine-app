@@ -14,7 +14,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import type { CompareMode, GranularityMode, BIDateRange } from '@/pages/BISales';
+import type { CompareMode, GranularityMode, BIDateRange } from '@/pages/Forecast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from './DateRangePickerNoryLike';
 
