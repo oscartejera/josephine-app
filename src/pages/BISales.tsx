@@ -55,13 +55,6 @@ export default function BISales() {
       {/* KPI Cards */}
       <BIKpiCards data={data} isLoading={isLoading} compareMode={compareMode} />
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'sales' | 'orders')}>
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="sales">Sales</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-        </TabsList>
-      </Tabs>
 
       {/* Main Chart */}
       <BISalesChart 
