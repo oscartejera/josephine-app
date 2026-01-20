@@ -3,7 +3,7 @@
  * Shows per-location P&L snapshot with actual vs forecast comparisons
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { 
   InstantPLHeader, 
@@ -12,7 +12,6 @@ import {
 } from '@/components/instant-pl';
 import { 
   useInstantPLData, 
-  ViewMode, 
   FilterMode, 
   ChipFilter,
   PLDateRange 
@@ -27,9 +26,6 @@ export default function InstantPL() {
   }));
   const [dateMode, setDateMode] = useState<DateMode>('daily');
   
-  // View mode state
-  const [viewMode, setViewMode] = useState<ViewMode>('percentage');
-  
   // Filter mode state (Best/Worst/All)
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   
@@ -39,7 +35,7 @@ export default function InstantPL() {
   // Fetch data
   const { locations, chipCounts, lastUpdated, isLoading, isError } = useInstantPLData({
     dateRange,
-    viewMode,
+    viewMode: 'amount', // Fixed to amount view
     filterMode,
     activeChips
   });
@@ -87,8 +83,6 @@ export default function InstantPL() {
         dateMode={dateMode}
         onDateChange={handleDateChange}
         onDateModeChange={setDateMode}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         filterMode={filterMode}
         onFilterModeChange={setFilterMode}
         lastUpdated={lastUpdated}
@@ -104,7 +98,7 @@ export default function InstantPL() {
       {/* Location Cards Grid */}
       <LocationCardsGrid
         locations={locations}
-        viewMode={viewMode}
+        viewMode="amount"
         isLoading={isLoading}
       />
       
