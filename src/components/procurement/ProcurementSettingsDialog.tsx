@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Settings, RotateCcw, HelpCircle } from 'lucide-react';
+import { Settings, RotateCcw, HelpCircle, TrendingUp, TrendingDown, Minus, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -53,6 +53,32 @@ export const DEFAULT_CATEGORY_SETTINGS: ProcurementCategorySettings = {
   'Bakery': { wasteFactor: 0.04, safetyStockPct: 0.20, yieldFactor: 1.0 },
   'Condiments': { wasteFactor: 0.02, safetyStockPct: 0.10, yieldFactor: 1.0 },
 };
+
+// Sample SKU data for impact preview
+const SAMPLE_SKUS: Record<string, { name: string; forecastUsage: number; onHand: number; packSize: number }> = {
+  'Produce': { name: 'Tomatoes Vine', forecastUsage: 35, onHand: 4, packSize: 5 },
+  'Proteins': { name: 'Chicken Breast', forecastUsage: 28, onHand: 8, packSize: 5 },
+  'Dairy': { name: 'Whole Milk', forecastUsage: 42, onHand: 18, packSize: 12 },
+  'Dry Goods': { name: 'Pasta Penne', forecastUsage: 20, onHand: 6, packSize: 5 },
+  'Beverages': { name: 'Coca-Cola', forecastUsage: 60, onHand: 48, packSize: 24 },
+  'Bakery': { name: 'Burger Buns', forecastUsage: 64, onHand: 32, packSize: 48 },
+  'Condiments': { name: 'Mayonnaise', forecastUsage: 8, onHand: 3, packSize: 5 },
+};
+
+// Calculate recommendation with given settings
+function calculateImpact(
+  forecastUsage: number,
+  onHand: number,
+  packSize: number,
+  settings: CategorySettings
+): { adjustedForecast: number; safetyStock: number; netNeeded: number; recommendedPacks: number } {
+  const adjustedForecast = (forecastUsage * (1 + settings.wasteFactor)) / settings.yieldFactor;
+  const safetyStock = forecastUsage * settings.safetyStockPct;
+  const netNeeded = Math.max(0, adjustedForecast + safetyStock - onHand);
+  const recommendedPacks = Math.ceil(netNeeded / packSize);
+  
+  return { adjustedForecast, safetyStock, netNeeded, recommendedPacks };
+}
 
 interface ProcurementSettingsDialogProps {
   categorySettings: ProcurementCategorySettings;
@@ -165,6 +191,22 @@ export function ProcurementSettingsDialog({
                 settings.safetyStockPct !== defaults.safetyStockPct ||
                 settings.yieldFactor !== defaults.yieldFactor;
 
+              // Calculate impact preview
+              const sampleSku = SAMPLE_SKUS[category];
+              const currentImpact = calculateImpact(
+                sampleSku.forecastUsage,
+                sampleSku.onHand,
+                sampleSku.packSize,
+                settings
+              );
+              const defaultImpact = calculateImpact(
+                sampleSku.forecastUsage,
+                sampleSku.onHand,
+                sampleSku.packSize,
+                defaults
+              );
+              const packsDiff = currentImpact.recommendedPacks - defaultImpact.recommendedPacks;
+
               return (
                 <div key={category} className="p-4 bg-muted/30 rounded-lg border border-border">
                   <div className="flex items-center justify-between mb-4">
@@ -275,6 +317,42 @@ export function ProcurementSettingsDialog({
                           {(settings.yieldFactor * 100).toFixed(0)}%
                         </span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Impact Preview */}
+                  <div className="mt-4 pt-3 border-t border-border/50">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                      <Package className="h-3 w-3" />
+                      <span>Impact Preview: {sampleSku.name}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Recommended:</span>
+                        <span className="font-semibold text-foreground">
+                          {currentImpact.recommendedPacks} packs
+                        </span>
+                      </div>
+                      {packsDiff !== 0 && (
+                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                          packsDiff > 0 
+                            ? 'bg-amber-500/10 text-amber-600' 
+                            : 'bg-emerald-500/10 text-emerald-600'
+                        }`}>
+                          {packsDiff > 0 ? (
+                            <TrendingUp className="h-3 w-3" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3" />
+                          )}
+                          {packsDiff > 0 ? '+' : ''}{packsDiff} vs default
+                        </div>
+                      )}
+                      {packsDiff === 0 && isModified && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                          <Minus className="h-3 w-3" />
+                          No change
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
