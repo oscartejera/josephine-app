@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format, eachDayOfInterval, parseISO } from 'date-fns';
+import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 export type WasteReason = 'broken' | 'end_of_day' | 'expired' | 'theft' | 'other';

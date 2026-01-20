@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
-import { startOfMonth, endOfMonth, format, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
+import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
 
@@ -72,6 +73,7 @@ export function useInventoryData(
   const { locations, group } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [hasRealData, setHasRealData] = useState(false);
   const [metrics, setMetrics] = useState<InventoryMetrics>({
     totalSales: 0,
     assignedSales: 0,
@@ -112,15 +114,17 @@ export function useInventoryData(
     setIsLoading(true);
 
     try {
-      const fromDate = format(dateRange.from, 'yyyy-MM-dd');
-      const toDate = format(dateRange.to, 'yyyy-MM-dd');
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
+      const fromDateStr = format(fromDate, 'yyyy-MM-dd');
+      const toDateStr = format(toDate, 'yyyy-MM-dd');
 
-      // Fetch tickets for sales data
+      // Try to fetch real data first
       let ticketsQuery = supabase
         .from('tickets')
         .select('id, location_id, net_total, gross_total, closed_at')
-        .gte('closed_at', `${fromDate}T00:00:00`)
-        .lte('closed_at', `${toDate}T23:59:59`)
+        .gte('closed_at', `${fromDateStr}T00:00:00`)
+        .lte('closed_at', `${toDateStr}T23:59:59`)
         .eq('status', 'closed');
 
       if (locationIds.length > 0 && locationIds.length < locations.length) {
@@ -129,335 +133,273 @@ export function useInventoryData(
 
       const { data: tickets } = await ticketsQuery;
 
-      // Fetch ticket lines for category breakdown
-      let ticketLinesQuery = supabase
-        .from('ticket_lines')
-        .select('ticket_id, item_name, category_name, gross_line_total, quantity')
-        .in('ticket_id', (tickets || []).map(t => t.id));
+      // Check if we have real data
+      const hasReal = tickets && tickets.length > 0;
+      setHasRealData(hasReal);
 
-      const { data: ticketLines } = await ticketLinesQuery;
-
-      // Fetch waste events
-      let wasteQuery = supabase
-        .from('waste_events')
-        .select('id, location_id, waste_value, reason, created_at, inventory_items(name, category)')
-        .gte('created_at', `${fromDate}T00:00:00`)
-        .lte('created_at', `${toDate}T23:59:59`);
-
-      if (locationIds.length > 0 && locationIds.length < locations.length) {
-        wasteQuery = wasteQuery.in('location_id', locationIds);
+      if (hasReal) {
+        // Use real data processing
+        await processRealData(tickets, fromDateStr, toDateStr);
+      } else {
+        // Use demo generator
+        useDemoData(fromDate, toDate);
       }
-
-      const { data: wasteEvents } = await wasteQuery;
-
-      // Fetch inventory items for cost calculations
-      const { data: inventoryItems } = await supabase
-        .from('inventory_items')
-        .select('id, name, category, last_cost');
-
-      // Fetch recipes for theoretical cost
-      const { data: recipes } = await supabase
-        .from('recipes')
-        .select(`
-          id, menu_item_name, selling_price,
-          recipe_ingredients(quantity, inventory_items(last_cost))
-        `);
-
-      // Fetch stock counts for the period
-      const { data: stockCounts } = await supabase
-        .from('stock_counts')
-        .select('id, location_id, status')
-        .gte('start_date', fromDate)
-        .lte('end_date', toDate);
-
-      // Calculate metrics
-      const totalSales = (tickets || []).reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
-      
-      // Calculate assigned vs unassigned based on category presence
-      const linesByTicket = new Map<string, any[]>();
-      (ticketLines || []).forEach(line => {
-        const existing = linesByTicket.get(line.ticket_id) || [];
-        existing.push(line);
-        linesByTicket.set(line.ticket_id, existing);
-      });
-
-      let assignedSales = 0;
-      let unassignedSales = 0;
-      (tickets || []).forEach(ticket => {
-        const lines = linesByTicket.get(ticket.id) || [];
-        const hasCategory = lines.some(l => l.category_name);
-        const ticketTotal = ticket.net_total || ticket.gross_total || 0;
-        if (hasCategory) {
-          assignedSales += ticketTotal;
-        } else {
-          unassignedSales += ticketTotal;
-        }
-      });
-
-      // Calculate recipe costs map
-      const recipeCostMap = new Map<string, number>();
-      (recipes || []).forEach((r: any) => {
-        const cost = (r.recipe_ingredients || []).reduce((sum: number, ing: any) => {
-          return sum + (ing.quantity * (ing.inventory_items?.last_cost || 0));
-        }, 0);
-        recipeCostMap.set(r.menu_item_name.toLowerCase(), cost);
-      });
-
-      // Calculate theoretical COGS from ticket lines
-      let theoreticalCOGS = 0;
-      (ticketLines || []).forEach(line => {
-        const itemName = line.item_name?.toLowerCase() || '';
-        const recipeCost = recipeCostMap.get(itemName);
-        if (recipeCost) {
-          theoreticalCOGS += recipeCost * (line.quantity || 1);
-        } else {
-          // Default 30% COGS if no recipe
-          theoreticalCOGS += (line.gross_line_total || 0) * 0.30;
-        }
-      });
-
-      // Actual COGS = theoretical + waste (simplified for MVP)
-      const totalWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
-      const actualCOGS = theoreticalCOGS + totalWaste * 0.5; // Simplified
-
-      // GP calculations
-      const theoreticalGP = totalSales - theoreticalCOGS;
-      const actualGP = totalSales - actualCOGS;
-
-      // Percentages
-      const theoreticalCOGSPercent = totalSales > 0 ? (theoreticalCOGS / totalSales) * 100 : 0;
-      const actualCOGSPercent = totalSales > 0 ? (actualCOGS / totalSales) * 100 : 0;
-      const theoreticalGPPercent = totalSales > 0 ? (theoreticalGP / totalSales) * 100 : 0;
-      const actualGPPercent = totalSales > 0 ? (actualGP / totalSales) * 100 : 0;
-
-      // Gap calculations
-      const gapCOGS = actualCOGS - theoreticalCOGS;
-      const gapCOGSPercent = actualCOGSPercent - theoreticalCOGSPercent;
-      const gapGP = actualGP - theoreticalGP;
-      const gapGPPercent = actualGPPercent - theoreticalGPPercent;
-
-      // Waste breakdown
-      const accountedWaste = totalWaste * 0.7; // Simplified: 70% accounted
-      const unaccountedWaste = totalWaste * 0.3;
-      const surplus = gapCOGS - accountedWaste - unaccountedWaste;
-
-      setMetrics({
-        totalSales,
-        assignedSales,
-        unassignedSales,
-        theoreticalCOGS,
-        theoreticalCOGSPercent,
-        actualCOGS,
-        actualCOGSPercent,
-        theoreticalGP,
-        theoreticalGPPercent,
-        actualGP,
-        actualGPPercent,
-        gapCOGS,
-        gapCOGSPercent,
-        gapGP,
-        gapGPPercent,
-        accountedWaste,
-        unaccountedWaste,
-        surplus
-      });
-
-      // Category breakdown
-      const categoryMap = new Map<string, { actual: number; theoretical: number }>();
-      ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
-        categoryMap.set(cat, { actual: 0, theoretical: 0 });
-      });
-
-      (ticketLines || []).forEach(line => {
-        const cat = line.category_name || 'Miscellaneous';
-        const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink') 
-          ? 'Beverage' 
-          : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
-          ? 'Food'
-          : 'Miscellaneous';
-        
-        const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
-        const lineTotal = line.gross_line_total || 0;
-        const recipeCost = recipeCostMap.get(line.item_name?.toLowerCase() || '') || lineTotal * 0.30;
-        
-        existing.actual += recipeCost + (lineTotal * 0.05); // Simplified actual with variance
-        existing.theoretical += recipeCost;
-        categoryMap.set(mappedCat, existing);
-      });
-
-      const breakdownData: CategoryBreakdown[] = Array.from(categoryMap.entries()).map(([category, data]) => ({
-        category,
-        actualPercent: totalSales > 0 ? (data.actual / totalSales) * 100 : 0,
-        actualAmount: data.actual,
-        theoreticalPercent: totalSales > 0 ? (data.theoretical / totalSales) * 100 : 0,
-        theoreticalAmount: data.theoretical
-      }));
-      setCategoryBreakdown(breakdownData);
-
-      // Waste by category
-      const wasteByCat = new Map<string, { accounted: number; unaccounted: number }>();
-      ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
-        wasteByCat.set(cat, { accounted: 0, unaccounted: 0 });
-      });
-
-      (wasteEvents || []).forEach((w: any) => {
-        const cat = w.inventory_items?.category || 'food';
-        const mappedCat = cat === 'beverage' ? 'Beverage' : cat === 'food' ? 'Food' : 'Miscellaneous';
-        const existing = wasteByCat.get(mappedCat) || { accounted: 0, unaccounted: 0 };
-        existing.accounted += (w.waste_value || 0) * 0.7;
-        existing.unaccounted += (w.waste_value || 0) * 0.3;
-        wasteByCat.set(mappedCat, existing);
-      });
-
-      setWasteByCategory(Array.from(wasteByCat.entries()).map(([category, data]) => ({
-        category,
-        accounted: data.accounted,
-        unaccounted: data.unaccounted
-      })));
-
-      // Waste by location
-      const wasteByLoc = new Map<string, { accounted: number; unaccounted: number }>();
-      (wasteEvents || []).forEach((w: any) => {
-        const existing = wasteByLoc.get(w.location_id) || { accounted: 0, unaccounted: 0 };
-        existing.accounted += (w.waste_value || 0) * 0.7;
-        existing.unaccounted += (w.waste_value || 0) * 0.3;
-        wasteByLoc.set(w.location_id, existing);
-      });
-
-      const stockCountLocations = new Set((stockCounts || []).map(sc => sc.location_id));
-
-      setWasteByLocation(locations.filter(l => locationIds.includes(l.id)).map(loc => {
-        const data = wasteByLoc.get(loc.id) || { accounted: 0, unaccounted: 0 };
-        const totalLocWaste = data.accounted + data.unaccounted;
-        return {
-          locationId: loc.id,
-          locationName: loc.name,
-          accountedPercent: totalLocWaste > 0 ? (data.accounted / totalLocWaste) * 100 : 0,
-          accountedAmount: data.accounted,
-          unaccountedPercent: totalLocWaste > 0 ? (data.unaccounted / totalLocWaste) * 100 : 0,
-          unaccountedAmount: data.unaccounted,
-          hasStockCount: stockCountLocations.has(loc.id)
-        };
-      }));
-
-      // Location performance
-      const salesByLocation = new Map<string, number>();
-      (tickets || []).forEach(t => {
-        const existing = salesByLocation.get(t.location_id) || 0;
-        salesByLocation.set(t.location_id, existing + (t.net_total || t.gross_total || 0));
-      });
-
-      setLocationPerformance(locations.filter(l => locationIds.includes(l.id)).map(loc => {
-        const locSales = salesByLocation.get(loc.id) || 0;
-        const locTheoreticalCOGS = locSales * 0.30; // 30% theoretical COGS
-        const locActualCOGS = locTheoreticalCOGS * 1.05; // 5% variance
-        const locVarianceCOGS = locActualCOGS - locTheoreticalCOGS;
-        const hasStockCount = stockCountLocations.has(loc.id);
-        
-        return {
-          locationId: loc.id,
-          locationName: loc.name,
-          sales: locSales,
-          theoreticalValue: locTheoreticalCOGS,
-          theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
-          actualValue: locActualCOGS,
-          actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
-          variancePercent: locSales > 0 ? (locVarianceCOGS / locSales) * 100 : 0,
-          varianceAmount: locVarianceCOGS,
-          hasStockCount
-        };
-      }));
 
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Error fetching inventory data:', error);
+      // Fallback to demo data on error
+      useDemoData(dateRange.from, dateRange.to);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generate demo data if everything is 0
-  useEffect(() => {
-    if (!isLoading && metrics.totalSales === 0) {
-      // Generate realistic demo data
-      const demoSales = 45000 + Math.random() * 15000;
-      const demoAssigned = demoSales * 0.85;
-      const demoUnassigned = demoSales * 0.15;
-      const demoTheoreticalCOGS = demoSales * 0.28;
-      const demoActualCOGS = demoSales * 0.32;
-      const demoTheoreticalGP = demoSales - demoTheoreticalCOGS;
-      const demoActualGP = demoSales - demoActualCOGS;
-      const demoGapCOGS = demoActualCOGS - demoTheoreticalCOGS;
-      const demoGapGP = demoActualGP - demoTheoreticalGP;
-      const demoAccountedWaste = demoGapCOGS * 0.5;
-      const demoUnaccountedWaste = demoGapCOGS * 0.35;
-      const demoSurplus = demoGapCOGS * 0.15;
+  const processRealData = async (tickets: any[], fromDateStr: string, toDateStr: string) => {
+    // Fetch ticket lines for category breakdown
+    const { data: ticketLines } = await supabase
+      .from('ticket_lines')
+      .select('ticket_id, item_name, category_name, gross_line_total, quantity')
+      .in('ticket_id', tickets.map(t => t.id));
 
-      setMetrics({
-        totalSales: demoSales,
-        assignedSales: demoAssigned,
-        unassignedSales: demoUnassigned,
-        theoreticalCOGS: demoTheoreticalCOGS,
-        theoreticalCOGSPercent: 28,
-        actualCOGS: demoActualCOGS,
-        actualCOGSPercent: 32,
-        theoreticalGP: demoTheoreticalGP,
-        theoreticalGPPercent: 72,
-        actualGP: demoActualGP,
-        actualGPPercent: 68,
-        gapCOGS: demoGapCOGS,
-        gapCOGSPercent: 4,
-        gapGP: demoGapGP,
-        gapGPPercent: -4,
-        accountedWaste: demoAccountedWaste,
-        unaccountedWaste: demoUnaccountedWaste,
-        surplus: demoSurplus
+    // Fetch waste events
+    let wasteQuery = supabase
+      .from('waste_events')
+      .select('id, location_id, waste_value, reason, created_at, inventory_items(name, category)')
+      .gte('created_at', `${fromDateStr}T00:00:00`)
+      .lte('created_at', `${toDateStr}T23:59:59`);
+
+    if (locationIds.length > 0 && locationIds.length < locations.length) {
+      wasteQuery = wasteQuery.in('location_id', locationIds);
+    }
+
+    const { data: wasteEvents } = await wasteQuery;
+
+    // Fetch recipes for theoretical cost
+    const { data: recipes } = await supabase
+      .from('recipes')
+      .select(`
+        id, menu_item_name, selling_price,
+        recipe_ingredients(quantity, inventory_items(last_cost))
+      `);
+
+    // Fetch stock counts for the period
+    const { data: stockCounts } = await supabase
+      .from('stock_counts')
+      .select('id, location_id, status')
+      .gte('start_date', fromDateStr)
+      .lte('end_date', toDateStr);
+
+    // Calculate metrics from real data
+    const totalSales = tickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
+    
+    // Build recipe cost map
+    const recipeCostMap = new Map<string, number>();
+    (recipes || []).forEach((r: any) => {
+      const cost = (r.recipe_ingredients || []).reduce((sum: number, ing: any) => {
+        return sum + (ing.quantity * (ing.inventory_items?.last_cost || 0));
+      }, 0);
+      recipeCostMap.set(r.menu_item_name.toLowerCase(), cost);
+    });
+
+    // Calculate theoretical COGS from ticket lines
+    let theoreticalCOGS = 0;
+    (ticketLines || []).forEach(line => {
+      const itemName = line.item_name?.toLowerCase() || '';
+      const recipeCost = recipeCostMap.get(itemName);
+      if (recipeCost) {
+        theoreticalCOGS += recipeCost * (line.quantity || 1);
+      } else {
+        theoreticalCOGS += (line.gross_line_total || 0) * 0.28;
+      }
+    });
+
+    const totalWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
+    const actualCOGS = theoreticalCOGS + totalWaste * 0.6;
+
+    const theoreticalGP = totalSales - theoreticalCOGS;
+    const actualGP = totalSales - actualCOGS;
+    const gapCOGS = actualCOGS - theoreticalCOGS;
+
+    const accountedWaste = totalWaste;
+    const unaccountedWaste = Math.max(0, gapCOGS - accountedWaste) * 0.7;
+    const surplus = Math.max(0, gapCOGS - accountedWaste - unaccountedWaste);
+
+    setMetrics({
+      totalSales,
+      assignedSales: totalSales * 0.85,
+      unassignedSales: totalSales * 0.15,
+      theoreticalCOGS,
+      theoreticalCOGSPercent: totalSales > 0 ? (theoreticalCOGS / totalSales) * 100 : 0,
+      actualCOGS,
+      actualCOGSPercent: totalSales > 0 ? (actualCOGS / totalSales) * 100 : 0,
+      theoreticalGP,
+      theoreticalGPPercent: totalSales > 0 ? (theoreticalGP / totalSales) * 100 : 0,
+      actualGP,
+      actualGPPercent: totalSales > 0 ? (actualGP / totalSales) * 100 : 0,
+      gapCOGS,
+      gapCOGSPercent: totalSales > 0 ? (gapCOGS / totalSales) * 100 : 0,
+      gapGP: -gapCOGS,
+      gapGPPercent: totalSales > 0 ? -(gapCOGS / totalSales) * 100 : 0,
+      accountedWaste,
+      unaccountedWaste,
+      surplus
+    });
+
+    // Category breakdown from real data
+    const categoryMap = new Map<string, { actual: number; theoretical: number }>();
+    ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
+      categoryMap.set(cat, { actual: 0, theoretical: 0 });
+    });
+
+    (ticketLines || []).forEach(line => {
+      const cat = line.category_name || 'Miscellaneous';
+      const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink') 
+        ? 'Beverage' 
+        : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
+        ? 'Food'
+        : 'Miscellaneous';
+      
+      const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
+      const lineTotal = line.gross_line_total || 0;
+      const recipeCost = recipeCostMap.get(line.item_name?.toLowerCase() || '') || lineTotal * 0.28;
+      
+      existing.actual += recipeCost * 1.05;
+      existing.theoretical += recipeCost;
+      categoryMap.set(mappedCat, existing);
+    });
+
+    setCategoryBreakdown(Array.from(categoryMap.entries()).map(([category, data]) => ({
+      category,
+      actualPercent: totalSales > 0 ? (data.actual / totalSales) * 100 : 0,
+      actualAmount: data.actual,
+      theoreticalPercent: totalSales > 0 ? (data.theoretical / totalSales) * 100 : 0,
+      theoreticalAmount: data.theoretical
+    })));
+
+    // Waste by category
+    const wasteByCat = new Map<string, { accounted: number; unaccounted: number }>();
+    ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
+      wasteByCat.set(cat, { accounted: 0, unaccounted: 0 });
+    });
+
+    (wasteEvents || []).forEach((w: any) => {
+      const cat = w.inventory_items?.category || 'food';
+      const mappedCat = cat === 'beverage' ? 'Beverage' : cat === 'food' ? 'Food' : 'Miscellaneous';
+      const existing = wasteByCat.get(mappedCat) || { accounted: 0, unaccounted: 0 };
+      existing.accounted += w.waste_value || 0;
+      wasteByCat.set(mappedCat, existing);
+    });
+
+    // Distribute unaccounted proportionally
+    const totalAccounted = Array.from(wasteByCat.values()).reduce((s, v) => s + v.accounted, 0);
+    if (totalAccounted > 0 && unaccountedWaste > 0) {
+      wasteByCat.forEach((val, key) => {
+        val.unaccounted = unaccountedWaste * (val.accounted / totalAccounted);
       });
+    }
 
-      setCategoryBreakdown([
-        { category: 'Food', actualPercent: 22, actualAmount: demoSales * 0.22, theoreticalPercent: 19, theoreticalAmount: demoSales * 0.19 },
-        { category: 'Beverage', actualPercent: 8, actualAmount: demoSales * 0.08, theoreticalPercent: 7, theoreticalAmount: demoSales * 0.07 },
-        { category: 'Miscellaneous', actualPercent: 2, actualAmount: demoSales * 0.02, theoreticalPercent: 2, theoreticalAmount: demoSales * 0.02 }
-      ]);
+    setWasteByCategory(Array.from(wasteByCat.entries()).map(([category, data]) => ({
+      category,
+      accounted: data.accounted,
+      unaccounted: data.unaccounted
+    })));
 
-      setWasteByCategory([
-        { category: 'Food', accounted: demoAccountedWaste * 0.7, unaccounted: demoUnaccountedWaste * 0.7 },
-        { category: 'Beverage', accounted: demoAccountedWaste * 0.2, unaccounted: demoUnaccountedWaste * 0.2 },
-        { category: 'Miscellaneous', accounted: demoAccountedWaste * 0.1, unaccounted: demoUnaccountedWaste * 0.1 }
-      ]);
+    // Waste by location
+    const wasteByLoc = new Map<string, { accounted: number; unaccounted: number }>();
+    const salesByLoc = new Map<string, number>();
 
-      setWasteByLocation(locations.slice(0, 3).map((loc, i) => ({
+    tickets.forEach(t => {
+      salesByLoc.set(t.location_id, (salesByLoc.get(t.location_id) || 0) + (t.net_total || t.gross_total || 0));
+    });
+
+    (wasteEvents || []).forEach((w: any) => {
+      const existing = wasteByLoc.get(w.location_id) || { accounted: 0, unaccounted: 0 };
+      existing.accounted += w.waste_value || 0;
+      wasteByLoc.set(w.location_id, existing);
+    });
+
+    const stockCountLocations = new Set((stockCounts || []).map(sc => sc.location_id));
+
+    setWasteByLocation(locations.filter(l => locationIds.includes(l.id)).map(loc => {
+      const data = wasteByLoc.get(loc.id) || { accounted: 0, unaccounted: 0 };
+      const locSales = salesByLoc.get(loc.id) || 0;
+      const locUnaccounted = locSales > 0 ? locSales * 0.005 : 0; // Estimate
+      
+      return {
         locationId: loc.id,
         locationName: loc.name,
-        accountedPercent: 65 + i * 5,
-        accountedAmount: demoAccountedWaste / 3,
-        unaccountedPercent: 35 - i * 5,
-        unaccountedAmount: demoUnaccountedWaste / 3,
-        hasStockCount: i < 2
-      })));
+        accountedPercent: locSales > 0 ? (data.accounted / locSales) * 100 : 0,
+        accountedAmount: data.accounted,
+        unaccountedPercent: locSales > 0 ? (locUnaccounted / locSales) * 100 : 0,
+        unaccountedAmount: locUnaccounted,
+        hasStockCount: stockCountLocations.has(loc.id)
+      };
+    }));
 
-      setLocationPerformance(locations.slice(0, 3).map((loc, i) => {
-        const locSales = demoSales / 3 * (1 + (i - 1) * 0.1);
-        const variance = 2 + i * 1.5;
-        return {
-          locationId: loc.id,
-          locationName: loc.name,
-          sales: locSales,
-          theoreticalValue: locSales * 0.28,
-          theoreticalPercent: 28,
-          actualValue: locSales * (0.28 + variance / 100),
-          actualPercent: 28 + variance,
-          variancePercent: variance,
-          varianceAmount: locSales * (variance / 100),
-          hasStockCount: i < 2 // First 2 have stock count
-        };
-      }));
-    }
-  }, [isLoading, metrics.totalSales, locations]);
+    // Location performance
+    setLocationPerformance(locations.filter(l => locationIds.includes(l.id)).map(loc => {
+      const locSales = salesByLoc.get(loc.id) || 0;
+      const locTheoreticalCOGS = locSales * 0.28;
+      const locActualCOGS = locTheoreticalCOGS * 1.05;
+      const locVariance = locActualCOGS - locTheoreticalCOGS;
+      
+      return {
+        locationId: loc.id,
+        locationName: loc.name,
+        sales: locSales,
+        theoreticalValue: locTheoreticalCOGS,
+        theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
+        actualValue: locActualCOGS,
+        actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
+        variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
+        varianceAmount: locVariance,
+        hasStockCount: stockCountLocations.has(loc.id)
+      };
+    }));
+  };
+
+  const useDemoData = (fromDate: Date, toDate: Date) => {
+    const generator = getDemoGenerator(fromDate, toDate);
+    
+    // Use demo location IDs if no real locations exist
+    const demoLocationIds = generator.getLocations().map(l => l.id);
+    const effectiveLocationIds = selectedLocations.length > 0 ? selectedLocations : demoLocationIds;
+
+    // Get demo metrics
+    const demoMetrics = generator.getInventoryMetrics(fromDate, toDate, effectiveLocationIds);
+    
+    setMetrics({
+      totalSales: demoMetrics.totalSales,
+      assignedSales: demoMetrics.assignedSales,
+      unassignedSales: demoMetrics.unassignedSales,
+      theoreticalCOGS: demoMetrics.theoreticalCOGS,
+      theoreticalCOGSPercent: demoMetrics.theoreticalCOGSPercent,
+      actualCOGS: demoMetrics.actualCOGS,
+      actualCOGSPercent: demoMetrics.actualCOGSPercent,
+      theoreticalGP: demoMetrics.theoreticalGP,
+      theoreticalGPPercent: demoMetrics.theoreticalGPPercent,
+      actualGP: demoMetrics.actualGP,
+      actualGPPercent: demoMetrics.actualGPPercent,
+      gapCOGS: demoMetrics.gapCOGS,
+      gapCOGSPercent: demoMetrics.gapCOGSPercent,
+      gapGP: demoMetrics.gapGP,
+      gapGPPercent: demoMetrics.gapGPPercent,
+      accountedWaste: demoMetrics.accountedWaste,
+      unaccountedWaste: demoMetrics.unaccountedWaste,
+      surplus: demoMetrics.surplus
+    });
+
+    setCategoryBreakdown(generator.getCategoryBreakdown(fromDate, toDate, effectiveLocationIds));
+    setWasteByCategory(generator.getWasteByCategory(fromDate, toDate, effectiveLocationIds));
+    setWasteByLocation(generator.getWasteByLocation(fromDate, toDate, effectiveLocationIds));
+    setLocationPerformance(generator.getLocationPerformance(fromDate, toDate, effectiveLocationIds));
+  };
 
   return {
     isLoading,
     lastUpdated,
+    hasRealData,
     metrics,
     categoryBreakdown,
     wasteByCategory,
