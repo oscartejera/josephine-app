@@ -88,113 +88,48 @@ export default function PayrollCalculate({
     
     setCalculating(true);
     
-    // Fetch employees with contracts and inputs
-    const { data: contracts } = await supabase
-      .from('employment_contracts')
-      .select(`
-        id, employee_id, base_salary_monthly, hourly_rate, 
-        group_ss, jornada_pct, irpf_rate, extra_pays,
-        employees(id, full_name)
-      `)
-      .eq('legal_entity_id', selectedLegalEntity.id)
-      .eq('active', true);
-    
-    const { data: inputs } = await supabase
-      .from('payroll_inputs')
-      .select('*')
-      .eq('period_year', currentPeriod.year)
-      .eq('period_month', currentPeriod.month);
-    
-    const inputsMap = new Map((inputs || []).map(i => [i.employee_id, i]));
-    
-    // Calculate payslips
-    const calculatedPayslips: any[] = [];
-    const payslipLines: any[] = [];
-    
-    for (const contract of contracts || []) {
-      const input = inputsMap.get(contract.employee_id);
-      const baseSalary = Number(contract.base_salary_monthly) || 0;
-      const hourlyRate = Number(contract.hourly_rate) || baseSalary / 160;
-      const jornadaPct = Number(contract.jornada_pct) || 100;
-      const irpfRate = Number(contract.irpf_rate) || 15;
+    try {
+      // Call Edge Function for payroll calculation
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Calculate gross
-      let grossPay = baseSalary * (jornadaPct / 100);
-      
-      // Add hours-based pay
-      if (input) {
-        const nightBonus = Number(input.hours_night) * hourlyRate * 0.25;
-        const holidayBonus = Number(input.hours_holiday) * hourlyRate * 0.5;
-        const overtimeBonus = Number(input.hours_overtime) * hourlyRate * 1.5;
-        
-        grossPay += nightBonus + holidayBonus + overtimeBonus;
-        
-        // Add manual bonuses
-        const bonuses = (input.bonuses_json || []) as { name: string; amount: number }[];
-        bonuses.forEach(b => {
-          grossPay += b.amount;
-        });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payroll_calculate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ payroll_run_id: currentRun.id }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error en el cálculo');
       }
+
+      const result = await response.json();
       
-      // Calculate SS (simplified Spanish rates)
-      const ssBase = Math.min(Math.max(grossPay, 1260), 4720); // 2024 bases min/max group 5
-      const employeeSS = ssBase * 0.0635; // 6.35% employee contribution
-      const employerSS = ssBase * 0.30; // ~30% employer contribution
+      await refreshData();
+      await fetchPayslips();
       
-      // Calculate IRPF
-      const irpfWithheld = grossPay * (irpfRate / 100);
-      
-      // Other deductions
-      let otherDeductions = 0;
-      if (input) {
-        const deductions = (input.deductions_json || []) as { name: string; amount: number }[];
-        otherDeductions = deductions.reduce((sum, d) => sum + d.amount, 0);
-      }
-      
-      // Net pay
-      const netPay = grossPay - employeeSS - irpfWithheld - otherDeductions;
-      
-      calculatedPayslips.push({
-        payroll_run_id: currentRun.id,
-        employee_id: contract.employee_id,
-        gross_pay: grossPay.toFixed(2),
-        employee_ss: employeeSS.toFixed(2),
-        employer_ss: employerSS.toFixed(2),
-        irpf_withheld: irpfWithheld.toFixed(2),
-        other_deductions: otherDeductions.toFixed(2),
-        net_pay: netPay.toFixed(2),
+      setCalculated(true);
+      toast({ 
+        title: 'Cálculo completado', 
+        description: `Se han calculado ${result.employees_calculated} nóminas. Total neto: €${result.totals.net_pay.toLocaleString()}` 
       });
-    }
-    
-    // Delete existing payslips for this run
-    await supabase
-      .from('payslips')
-      .delete()
-      .eq('payroll_run_id', currentRun.id);
-    
-    // Insert new payslips
-    const { error } = await supabase
-      .from('payslips')
-      .insert(calculatedPayslips);
-    
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Error al calcular nóminas' });
+    } catch (error) {
+      console.error('Payroll calculation error:', error);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error', 
+        description: error instanceof Error ? error.message : 'Error al calcular nóminas' 
+      });
+    } finally {
       setCalculating(false);
-      return;
     }
-    
-    // Update run status
-    await supabase
-      .from('payroll_runs')
-      .update({ status: 'calculated' })
-      .eq('id', currentRun.id);
-    
-    await refreshData();
-    await fetchPayslips();
-    
-    setCalculating(false);
-    setCalculated(true);
-    toast({ title: 'Cálculo completado', description: `Se han calculado ${calculatedPayslips.length} nóminas` });
   };
 
   const totals = {
