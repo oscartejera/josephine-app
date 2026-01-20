@@ -871,6 +871,63 @@ export type Database = {
           },
         ]
       }
+      planned_shifts: {
+        Row: {
+          created_at: string
+          employee_id: string
+          end_time: string
+          id: string
+          location_id: string
+          planned_cost: number | null
+          planned_hours: number
+          role: string | null
+          shift_date: string
+          start_time: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          end_time: string
+          id?: string
+          location_id: string
+          planned_cost?: number | null
+          planned_hours: number
+          role?: string | null
+          shift_date: string
+          start_time: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          end_time?: string
+          id?: string
+          location_id?: string
+          planned_cost?: number | null
+          planned_hours?: number
+          role?: string | null
+          shift_date?: string
+          start_time?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planned_shifts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planned_shifts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_connections: {
         Row: {
           config_json: Json | null
