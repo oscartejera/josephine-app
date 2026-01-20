@@ -60,6 +60,7 @@ interface LocationPerformance {
   actualPercent: number;
   variancePercent: number;
   varianceAmount: number;
+  hasStockCount?: boolean;
 }
 
 export function useInventoryData(
@@ -348,20 +349,22 @@ export function useInventoryData(
 
       setLocationPerformance(locations.filter(l => locationIds.includes(l.id)).map(loc => {
         const locSales = salesByLocation.get(loc.id) || 0;
-        const locTheoretical = locSales * 0.30; // 30% theoretical COGS
-        const locActual = locTheoretical * 1.05; // 5% variance
-        const locVariance = locActual - locTheoretical;
+        const locTheoreticalCOGS = locSales * 0.30; // 30% theoretical COGS
+        const locActualCOGS = locTheoreticalCOGS * 1.05; // 5% variance
+        const locVarianceCOGS = locActualCOGS - locTheoreticalCOGS;
+        const hasStockCount = stockCountLocations.has(loc.id);
         
         return {
           locationId: loc.id,
           locationName: loc.name,
           sales: locSales,
-          theoreticalValue: locTheoretical,
-          theoreticalPercent: locSales > 0 ? (locTheoretical / locSales) * 100 : 0,
-          actualValue: locActual,
-          actualPercent: locSales > 0 ? (locActual / locSales) * 100 : 0,
-          variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
-          varianceAmount: locVariance
+          theoreticalValue: locTheoreticalCOGS,
+          theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
+          actualValue: locActualCOGS,
+          actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
+          variancePercent: locSales > 0 ? (locVarianceCOGS / locSales) * 100 : 0,
+          varianceAmount: locVarianceCOGS,
+          hasStockCount
         };
       }));
 
@@ -445,7 +448,8 @@ export function useInventoryData(
           actualValue: locSales * (0.28 + variance / 100),
           actualPercent: 28 + variance,
           variancePercent: variance,
-          varianceAmount: locSales * (variance / 100)
+          varianceAmount: locSales * (variance / 100),
+          hasStockCount: i < 2 // First 2 have stock count
         };
       }));
     }

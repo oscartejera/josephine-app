@@ -17,6 +17,7 @@ interface LocationPerformance {
   actualPercent: number;
   variancePercent: number;
   varianceAmount: number;
+  hasStockCount?: boolean;
 }
 
 interface LocationPerformanceTableProps {
@@ -34,7 +35,10 @@ export function LocationPerformanceTable({
 }: LocationPerformanceTableProps) {
   const [search, setSearch] = useState('');
   const isCOGS = viewMode === 'COGS';
-  const metricLabel = isCOGS ? 'COGS' : 'GP';
+  
+  // For GP view, we show GP metrics instead of COGS
+  const theoreticalLabel = isCOGS ? 'Theoretical COGS' : 'Theoretical GP';
+  const actualLabel = isCOGS ? 'Actual COGS' : 'Actual GP';
 
   const filteredData = data.filter(d => 
     d.locationName.toLowerCase().includes(search.toLowerCase())
@@ -58,7 +62,7 @@ export function LocationPerformanceTable({
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border-[#E8E5DD] rounded-2xl shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-40" />
@@ -73,103 +77,118 @@ export function LocationPerformanceTable({
   }
 
   return (
-    <Card>
+    <Card className="border-[#E8E5DD] rounded-2xl shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">Location performance</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">Location performance</CardTitle>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by location"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-9 border-border/60 focus:border-primary"
             />
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-lg border border-border/60 overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-[180px]">Locations</TableHead>
-                <TableHead className="text-right">Sales</TableHead>
-                <TableHead className="text-right">Theoretical {metricLabel}</TableHead>
-                <TableHead className="text-right">Actual {metricLabel}</TableHead>
-                <TableHead className="text-right">Variance</TableHead>
+              <TableRow className="bg-muted/30 border-b border-border/50">
+                <TableHead className="w-[180px] text-xs font-medium text-muted-foreground py-3">Locations</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3">Sales</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3">{theoreticalLabel}</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3">{actualLabel}</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3">Variance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.map((row) => {
+                // For COGS: positive variance is bad (red), negative is good (green)
+                // For GP: negative variance is bad (red), positive is good (green)
                 const isVarianceNegative = isCOGS ? row.variancePercent > 0 : row.variancePercent < 0;
+                const hasData = row.hasStockCount !== false;
                 
                 return (
-                  <TableRow key={row.locationId}>
-                    <TableCell className="font-medium">{row.locationName}</TableCell>
-                    <TableCell className="text-right">
+                  <TableRow key={row.locationId} className="border-b border-border/30 hover:bg-muted/20">
+                    <TableCell className="py-3 font-medium text-sm">{row.locationName}</TableCell>
+                    <TableCell className="py-3 text-right text-sm">
                       {currency}{row.sales.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col items-end">
-                        <span className="text-muted-foreground">{row.theoreticalPercent.toFixed(1)}%</span>
-                        <span className="text-xs text-muted-foreground/70">
-                          {currency}{row.theoreticalValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col items-end">
-                        <span>{row.actualPercent.toFixed(1)}%</span>
-                        <span className="text-xs text-muted-foreground">
-                          {currency}{row.actualValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className={cn(
-                        "flex flex-col items-end",
-                        isVarianceNegative ? "text-destructive" : "text-success"
-                      )}>
-                        <span>{row.variancePercent >= 0 ? '+' : ''}{row.variancePercent.toFixed(1)}%</span>
-                        <span className="text-xs">
-                          {row.varianceAmount >= 0 ? '+' : ''}{currency}{Math.abs(row.varianceAmount).toLocaleString('es-ES', { minimumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                    </TableCell>
+                    {hasData ? (
+                      <>
+                        <TableCell className="py-3 text-right">
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm font-medium">{row.theoreticalPercent.toFixed(1)}%</span>
+                            <span className="text-xs text-muted-foreground">
+                              {currency}{row.theoreticalValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 text-right">
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm font-medium">{row.actualPercent.toFixed(1)}%</span>
+                            <span className="text-xs text-muted-foreground">
+                              {currency}{row.actualValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 text-right">
+                          <div className={cn(
+                            "flex flex-col items-end",
+                            isVarianceNegative ? "text-destructive" : "text-success"
+                          )}>
+                            <span className="text-sm font-medium">
+                              {row.variancePercent >= 0 ? '+' : ''}{row.variancePercent.toFixed(1)}%
+                            </span>
+                            <span className="text-xs">
+                              {row.varianceAmount >= 0 ? '+' : ''}{currency}{Math.abs(row.varianceAmount).toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <TableCell colSpan={3} className="py-3 text-center text-sm text-muted-foreground italic">
+                        No stock count done
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
               
               {/* Totals row */}
-              <TableRow className="font-semibold border-t-2 bg-muted/30">
-                <TableCell>Total / Average</TableCell>
-                <TableCell className="text-right">
+              <TableRow className="border-t-2 border-border bg-muted/20">
+                <TableCell className="py-3 font-semibold text-sm text-muted-foreground">Total / Average</TableCell>
+                <TableCell className="py-3 text-right font-semibold text-sm text-muted-foreground">
                   {currency}{totals.sales.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="py-3 text-right">
                   <div className="flex flex-col items-end">
-                    <span>{avgTheoreticalPercent.toFixed(1)}%</span>
-                    <span className="text-xs font-normal text-muted-foreground">
+                    <span className="font-semibold text-sm text-muted-foreground">{avgTheoreticalPercent.toFixed(1)}%</span>
+                    <span className="text-xs text-muted-foreground">
                       {currency}{totals.theoreticalValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="py-3 text-right">
                   <div className="flex flex-col items-end">
-                    <span>{avgActualPercent.toFixed(1)}%</span>
-                    <span className="text-xs font-normal text-muted-foreground">
+                    <span className="font-semibold text-sm text-muted-foreground">{avgActualPercent.toFixed(1)}%</span>
+                    <span className="text-xs text-muted-foreground">
                       {currency}{totals.actualValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="py-3 text-right">
                   <div className={cn(
                     "flex flex-col items-end",
                     (isCOGS ? avgVariancePercent > 0 : avgVariancePercent < 0) ? "text-destructive" : "text-success"
                   )}>
-                    <span>{avgVariancePercent >= 0 ? '+' : ''}{avgVariancePercent.toFixed(1)}%</span>
-                    <span className="text-xs font-normal">
+                    <span className="font-semibold text-sm">
+                      {avgVariancePercent >= 0 ? '+' : ''}{avgVariancePercent.toFixed(1)}%
+                    </span>
+                    <span className="text-xs">
                       {totals.varianceAmount >= 0 ? '+' : ''}{currency}{Math.abs(totals.varianceAmount).toLocaleString('es-ES', { minimumFractionDigits: 0 })}
                     </span>
                   </div>
