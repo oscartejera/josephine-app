@@ -5,3 +5,4 @@ export { IngredientRow } from './IngredientRow';
 export { OrderSummaryPanel } from './OrderSummaryPanel';
 export { CoverageBanner } from './CoverageBanner';
 export { OrderHistoryPanel } from './OrderHistoryPanel';
+export { AIRecommendPanel } from './AIRecommendPanel';
