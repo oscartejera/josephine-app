@@ -245,6 +245,7 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
   const [scheduleVersion, setScheduleVersion] = useState(0);
   const [previousSchedule, setPreviousSchedule] = useState<ScheduleData | null>(null);
   const [shiftOverrides, setShiftOverrides] = useState<Record<string, { employeeId: string; date: string }>>({});
+  const [newShifts, setNewShifts] = useState<Shift[]>([]);
   
   const location = LOCATIONS.find(l => l.id === locationId) || LOCATIONS[1];
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -261,7 +262,7 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     const dailyKPIs = generateDailyKPIs(rng, weekStart);
     
     // Apply shift overrides (from drag-and-drop)
-    const shifts = baseShifts.map(shift => {
+    let shifts = baseShifts.map(shift => {
       const override = shiftOverrides[shift.id];
       if (override) {
         return {
@@ -272,6 +273,9 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
       }
       return shift;
     });
+    
+    // Add newly created shifts
+    shifts = [...shifts, ...newShifts];
     
     // Recalculate employee weekly hours with overrides
     employees.forEach(emp => {
@@ -301,13 +305,14 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
       totalHours: Math.round(totalHours * 10) / 10,
       status: 'draft',
     };
-  }, [locationId, weekStart, hasSchedule, scheduleVersion, location.name, shiftOverrides]);
+  }, [locationId, weekStart, hasSchedule, scheduleVersion, location.name, shiftOverrides, newShifts]);
   
   const createSchedule = async (): Promise<void> => {
     setIsLoading(true);
     // Simulated AI processing
     await new Promise(resolve => setTimeout(resolve, 4500));
     setShiftOverrides({});
+    setNewShifts([]);
     setHasSchedule(true);
     setScheduleVersion(v => v + 1);
     setIsLoading(false);
@@ -317,9 +322,11 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     if (previousSchedule) {
       setScheduleVersion(v => v - 1);
       setShiftOverrides({});
+      setNewShifts([]);
     } else {
       setHasSchedule(false);
       setShiftOverrides({});
+      setNewShifts([]);
     }
   };
   
@@ -340,7 +347,16 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     }));
   };
   
-  const hasChanges = Object.keys(shiftOverrides).length > 0;
+  const addShift = (shift: Omit<Shift, 'id'>) => {
+    const newShift: Shift = {
+      ...shift,
+      id: `new-shift-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    };
+    setNewShifts(prev => [...prev, newShift]);
+    return newShift;
+  };
+  
+  const hasChanges = Object.keys(shiftOverrides).length > 0 || newShifts.length > 0;
   
   return {
     data,
@@ -348,10 +364,12 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     hasSchedule,
     hasChanges,
     locations: LOCATIONS,
+    positions: POSITIONS,
     createSchedule,
     undoSchedule,
     acceptSchedule,
     publishSchedule,
     moveShift,
+    addShift,
   };
 }

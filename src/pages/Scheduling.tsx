@@ -56,11 +56,13 @@ export default function Scheduling() {
     hasSchedule,
     hasChanges,
     locations,
+    positions,
     createSchedule,
     undoSchedule,
     acceptSchedule,
     publishSchedule,
     moveShift,
+    addShift,
   } = useSchedulingData(locationId, weekStart);
   
   // Placeholder KPIs for empty state
@@ -148,7 +150,13 @@ export default function Scheduling() {
       
       {/* Grid */}
       {hasSchedule && data ? (
-        <ScheduleGrid data={data} viewMode={viewMode} onMoveShift={moveShift} />
+        <ScheduleGrid 
+          data={data} 
+          viewMode={viewMode} 
+          positions={positions}
+          onMoveShift={moveShift} 
+          onAddShift={addShift}
+        />
       ) : (
         <EmptyScheduleState weekStart={weekStart} dailyKPIs={placeholderKPIs} />
       )}
