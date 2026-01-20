@@ -1,12 +1,13 @@
 /**
  * Labour Data Hook - Fetches and processes labour data for the Labour module
  * Supports percentage, amount, and hours display modes
+ * Includes department and shift type breakdown for location detail views
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
-import { startOfDay, endOfDay, eachDayOfInterval, format, isSameDay } from 'date-fns';
+import { eachDayOfInterval, format } from 'date-fns';
 
 export type MetricMode = 'percentage' | 'amount' | 'hours';
 export type CompareMode = 'forecast' | 'last_week' | 'last_month';
@@ -69,10 +70,35 @@ export interface LabourKPIs {
   splhPlanned: number;
 }
 
+// Department breakdown for location detail view
+export interface DepartmentData {
+  department: 'BOH' | 'FOH' | 'Management';
+  hoursActual: number;
+  hoursPlanned: number;
+  costActual: number;
+  costPlanned: number;
+  contributionActual: number;
+  contributionPlanned: number;
+  delta: number;
+}
+
+// Shift type breakdown for location detail view
+export interface ShiftTypeData {
+  type: 'Regular' | 'Overtime' | 'Training' | 'Other';
+  hoursActual: number;
+  hoursPlanned: number;
+  percentActual: number;
+  percentPlanned: number;
+  delta: number;
+}
+
 export interface LabourData {
   kpis: LabourKPIs;
   dailyData: LabourDailyData[];
   locationData: LocationLabourData[];
+  // Location detail specific
+  departmentData?: DepartmentData[];
+  shiftTypeData?: ShiftTypeData[];
 }
 
 interface UseLabourDataParams {
@@ -103,7 +129,10 @@ export function useLabourData({ dateRange, metricMode, compareMode, locationId }
             id: l.id,
             name: l.name
           }))
-        : demoLocations.map(l => ({
+        : (locationId 
+            ? demoLocations.filter(l => l.id === locationId)
+            : demoLocations
+          ).map(l => ({
             id: l.id,
             name: l.name
           }));
@@ -295,10 +324,99 @@ export function useLabourData({ dateRange, metricMode, compareMode, locationId }
         ? ((kpis.colActual - kpis.colPlanned) / kpis.colPlanned) * 100 
         : 0;
       
+      // Generate department and shift type data for location detail view
+      let departmentData: DepartmentData[] | undefined;
+      let shiftTypeData: ShiftTypeData[] | undefined;
+      
+      if (locationId) {
+        const seed = hashCode(locationId + dateRange.from.toISOString());
+        
+        // Department distribution (BOH, FOH, Management)
+        const bohPercent = randomBetween(35, 45, seed);
+        const fohPercent = randomBetween(40, 50, seed + 1);
+        const mgmtPercent = 100 - bohPercent - fohPercent;
+        
+        departmentData = [
+          {
+            department: 'BOH',
+            hoursActual: Math.round(kpis.hoursActual * (bohPercent / 100)),
+            hoursPlanned: Math.round(kpis.hoursPlanned * (bohPercent / 100) * randomBetween(0.95, 1.05, seed + 2)),
+            costActual: Math.round(kpis.labourCostActual * (bohPercent / 100)),
+            costPlanned: Math.round(kpis.labourCostPlanned * (bohPercent / 100) * randomBetween(0.95, 1.05, seed + 3)),
+            contributionActual: bohPercent,
+            contributionPlanned: bohPercent * randomBetween(0.95, 1.05, seed + 4),
+            delta: randomBetween(-8, 8, seed + 5)
+          },
+          {
+            department: 'FOH',
+            hoursActual: Math.round(kpis.hoursActual * (fohPercent / 100)),
+            hoursPlanned: Math.round(kpis.hoursPlanned * (fohPercent / 100) * randomBetween(0.95, 1.05, seed + 6)),
+            costActual: Math.round(kpis.labourCostActual * (fohPercent / 100)),
+            costPlanned: Math.round(kpis.labourCostPlanned * (fohPercent / 100) * randomBetween(0.95, 1.05, seed + 7)),
+            contributionActual: fohPercent,
+            contributionPlanned: fohPercent * randomBetween(0.95, 1.05, seed + 8),
+            delta: randomBetween(-8, 8, seed + 9)
+          },
+          {
+            department: 'Management',
+            hoursActual: Math.round(kpis.hoursActual * (mgmtPercent / 100)),
+            hoursPlanned: Math.round(kpis.hoursPlanned * (mgmtPercent / 100) * randomBetween(0.95, 1.05, seed + 10)),
+            costActual: Math.round(kpis.labourCostActual * (mgmtPercent / 100)),
+            costPlanned: Math.round(kpis.labourCostPlanned * (mgmtPercent / 100) * randomBetween(0.95, 1.05, seed + 11)),
+            contributionActual: mgmtPercent,
+            contributionPlanned: mgmtPercent * randomBetween(0.95, 1.05, seed + 12),
+            delta: randomBetween(-8, 8, seed + 13)
+          }
+        ];
+        
+        // Shift types (Regular, Overtime, Training, Other)
+        const regularPercent = randomBetween(75, 85, seed + 20);
+        const overtimePercent = randomBetween(5, 12, seed + 21);
+        const trainingPercent = randomBetween(3, 8, seed + 22);
+        const otherPercent = 100 - regularPercent - overtimePercent - trainingPercent;
+        
+        shiftTypeData = [
+          {
+            type: 'Regular',
+            hoursActual: Math.round(kpis.hoursActual * (regularPercent / 100)),
+            hoursPlanned: Math.round(kpis.hoursPlanned * (regularPercent / 100) * randomBetween(0.95, 1.05, seed + 23)),
+            percentActual: regularPercent,
+            percentPlanned: regularPercent * randomBetween(0.98, 1.02, seed + 24),
+            delta: randomBetween(-5, 5, seed + 25)
+          },
+          {
+            type: 'Overtime',
+            hoursActual: Math.round(kpis.hoursActual * (overtimePercent / 100)),
+            hoursPlanned: Math.round(kpis.hoursPlanned * (overtimePercent / 100) * randomBetween(0.8, 1.2, seed + 26)),
+            percentActual: overtimePercent,
+            percentPlanned: overtimePercent * randomBetween(0.8, 1.2, seed + 27),
+            delta: randomBetween(-15, 15, seed + 28)
+          },
+          {
+            type: 'Training',
+            hoursActual: Math.round(kpis.hoursActual * (trainingPercent / 100)),
+            hoursPlanned: Math.round(kpis.hoursPlanned * (trainingPercent / 100) * randomBetween(0.9, 1.1, seed + 29)),
+            percentActual: trainingPercent,
+            percentPlanned: trainingPercent * randomBetween(0.9, 1.1, seed + 30),
+            delta: randomBetween(-10, 10, seed + 31)
+          },
+          {
+            type: 'Other',
+            hoursActual: Math.round(kpis.hoursActual * (otherPercent / 100)),
+            hoursPlanned: Math.round(kpis.hoursPlanned * (otherPercent / 100) * randomBetween(0.85, 1.15, seed + 32)),
+            percentActual: otherPercent,
+            percentPlanned: otherPercent * randomBetween(0.85, 1.15, seed + 33),
+            delta: randomBetween(-12, 12, seed + 34)
+          }
+        ];
+      }
+      
       return {
         kpis,
         dailyData,
-        locationData
+        locationData,
+        departmentData,
+        shiftTypeData
       };
     },
     enabled: !appLoading,

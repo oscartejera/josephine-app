@@ -1,5 +1,6 @@
 /**
  * Labour Header Component - Nory-style header with breadcrumbs, date picker, toggles
+ * Identical layout to Nory with proper spacing and grouping
  */
 
 import { ChevronDown, Sparkles, MoreHorizontal } from 'lucide-react';
@@ -10,11 +11,9 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import type { LabourDateRange, MetricMode, CompareMode } from '@/hooks/useLabourData';
 
@@ -42,7 +41,7 @@ export function LabourHeader({
   onAskJosephine
 }: LabourHeaderProps) {
   const { locations } = useApp();
-  const [dateMode, setDateMode] = useState<DateMode>('daily');
+  const [dateMode, setDateMode] = useState<DateMode>('weekly');
 
   const handleDateChange = (range: { from: Date; to: Date }, mode: DateMode, _granularity: ChartGranularity) => {
     setDateRange(range);
@@ -57,6 +56,12 @@ export function LabourHeader({
     ? `Labour - ${locationName}` 
     : 'Labour - All locations';
 
+  const compareLabel = compareMode === 'forecast' 
+    ? 'Forecast' 
+    : compareMode === 'last_week' 
+      ? 'Last week' 
+      : 'Last month';
+
   return (
     <div className="space-y-4">
       {/* Row 1: Breadcrumbs, Date selector, Compare, Toggle, Actions */}
@@ -65,13 +70,15 @@ export function LabourHeader({
           {/* Breadcrumb dropdowns */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 px-2 text-muted-foreground gap-1">
+              <Button variant="ghost" className="h-8 px-2 text-muted-foreground gap-1 text-sm">
                 Insights
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Labour Insights</DropdownMenuItem>
+              <DropdownMenuItem>Sales</DropdownMenuItem>
+              <DropdownMenuItem>Labour</DropdownMenuItem>
+              <DropdownMenuItem>Inventory</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -79,7 +86,7 @@ export function LabourHeader({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 px-2 font-semibold gap-1">
+              <Button variant="ghost" className="h-8 px-2 font-semibold gap-1 text-sm">
                 Labour
                 <ChevronDown className="h-3 w-3" />
               </Button>
@@ -91,7 +98,7 @@ export function LabourHeader({
           </DropdownMenu>
 
           {/* Date Range Picker */}
-          <div className="ml-4">
+          <div className="ml-2">
             <DateRangePickerNoryLike
               value={dateRange}
               onChange={handleDateChange}
@@ -103,8 +110,8 @@ export function LabourHeader({
           {/* Compare dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-8 gap-2">
-                Compare: {compareMode === 'forecast' ? 'Forecast' : compareMode === 'last_week' ? 'Last week' : 'Last month'}
+              <Button variant="outline" size="sm" className="h-8 gap-2 text-sm">
+                Compare: {compareLabel}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -166,32 +173,42 @@ export function LabourHeader({
             </Button>
           </div>
 
-          {/* Ask Josephine button */}
-          <Button 
-            onClick={onAskJosephine}
-            className="bg-gradient-primary text-white gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Ask Josephine
+          {/* Location dropdown (only for all locations view) */}
+          {!locationId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-2 text-sm">
+                  All locations
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>All locations</DropdownMenuItem>
+                {locations.map(loc => (
+                  <DropdownMenuItem key={loc.id}>{loc.name}</DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* More actions */}
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Row 2: Page title and location selector */}
+      {/* Row 2: Page title and Ask Josephine */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-display font-bold">{pageTitle}</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">{pageTitle}</h1>
         
-        {!locationId && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="h-9 gap-2">
-              All locations
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        <Button 
+          onClick={onAskJosephine}
+          className="bg-gradient-primary text-white gap-2"
+        >
+          <Sparkles className="h-4 w-4" />
+          Ask Josephine
+        </Button>
       </div>
     </div>
   );

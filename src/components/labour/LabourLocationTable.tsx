@@ -1,6 +1,7 @@
 /**
  * Labour Location Table - Nory-style location performance table
- * Columns: Location, Sales (Actual/Projected), COL (Actual/Projected), SPLH (Actual/Projected)
+ * Multi-level headers: Location, Sales (Actual/Projected), COL (Actual/Projected), SPLH (Actual/Projected)
+ * Clickable rows navigate to /labour/:locationId
  */
 
 import { useCallback } from 'react';
@@ -32,37 +33,45 @@ function formatPercent(value: number): string {
   return `${value.toFixed(2)}%`;
 }
 
-function formatHours(value: number): string {
-  return `${Math.round(value)}h`;
+function formatSplh(value: number): string {
+  return `€${value.toFixed(0)}`;
 }
 
-function DeltaBadge({ value, inverted = false, size = 'sm' }: { value: number; inverted?: boolean; size?: 'sm' | 'xs' }) {
+function DeltaBadge({ value, inverted = false }: { value: number; inverted?: boolean }) {
   const isPositive = inverted ? value <= 0 : value >= 0;
+  const arrow = value >= 0 ? '▲' : '▼';
+  
+  if (Math.abs(value) < 0.01) {
+    return <span className="text-[10px] text-muted-foreground">-</span>;
+  }
   
   return (
     <span className={cn(
-      "inline-flex items-center rounded-full font-medium",
-      size === 'sm' ? "px-2 py-0.5 text-xs" : "px-1.5 py-0.5 text-[10px]",
+      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
       isPositive 
         ? "bg-[hsl(var(--bi-badge-positive))] text-[hsl(var(--bi-badge-positive-text))]" 
         : "bg-[hsl(var(--bi-badge-negative))] text-[hsl(var(--bi-badge-negative-text))]"
     )}>
-      {value >= 0 ? '+' : ''}{value.toFixed(1)}%
+      <span>{arrow}</span>
+      {Math.abs(value).toFixed(1)}%
     </span>
   );
 }
 
 function TableSkeleton() {
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
+    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
+      <CardContent className="p-0">
+        <div className="p-6 space-y-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="flex gap-4">
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-8 flex-1" />
-              <Skeleton className="h-8 flex-1" />
-              <Skeleton className="h-8 flex-1" />
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 flex-1" />
             </div>
           ))}
         </div>
@@ -119,30 +128,32 @@ export function LabourLocationTable({ data, isLoading, dateRange, metricMode }: 
     : 0;
 
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden">
+    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden bg-card">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader className="bg-muted/30">
-            <TableRow>
-              <TableHead className="w-[180px] font-semibold">Locations</TableHead>
-              <TableHead colSpan={2} className="text-center font-semibold border-l border-border/50">
+          <TableHeader>
+            {/* First header row - group headers */}
+            <TableRow className="bg-muted/30 border-b border-border/50">
+              <TableHead className="w-[160px] font-semibold text-foreground">Locations</TableHead>
+              <TableHead colSpan={2} className="text-center font-semibold text-foreground border-l border-border/40">
                 Sales
               </TableHead>
-              <TableHead colSpan={2} className="text-center font-semibold border-l border-border/50">
+              <TableHead colSpan={2} className="text-center font-semibold text-foreground border-l border-border/40">
                 COL
               </TableHead>
-              <TableHead colSpan={2} className="text-center font-semibold border-l border-border/50">
+              <TableHead colSpan={2} className="text-center font-semibold text-foreground border-l border-border/40">
                 SPLH
               </TableHead>
             </TableRow>
-            <TableRow>
+            {/* Second header row - Actual/Projected */}
+            <TableRow className="border-b border-border/50">
               <TableHead></TableHead>
-              <TableHead className="text-center text-xs text-muted-foreground border-l border-border/50">Actual</TableHead>
-              <TableHead className="text-center text-xs text-muted-foreground">Projected</TableHead>
-              <TableHead className="text-center text-xs text-muted-foreground border-l border-border/50">Actual</TableHead>
-              <TableHead className="text-center text-xs text-muted-foreground">Projected</TableHead>
-              <TableHead className="text-center text-xs text-muted-foreground border-l border-border/50">Actual</TableHead>
-              <TableHead className="text-center text-xs text-muted-foreground">Projected</TableHead>
+              <TableHead className="text-center text-xs font-medium text-muted-foreground border-l border-border/40 py-2">Actual</TableHead>
+              <TableHead className="text-center text-xs font-medium text-muted-foreground py-2">Projected</TableHead>
+              <TableHead className="text-center text-xs font-medium text-muted-foreground border-l border-border/40 py-2">Actual</TableHead>
+              <TableHead className="text-center text-xs font-medium text-muted-foreground py-2">Projected</TableHead>
+              <TableHead className="text-center text-xs font-medium text-muted-foreground border-l border-border/40 py-2">Actual</TableHead>
+              <TableHead className="text-center text-xs font-medium text-muted-foreground py-2">Projected</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -152,75 +163,75 @@ export function LabourLocationTable({ data, isLoading, dateRange, metricMode }: 
                 className="cursor-pointer hover:bg-muted/40 transition-colors"
                 onClick={() => handleRowClick(loc.locationId)}
               >
-                <TableCell className="font-medium">{loc.locationName}</TableCell>
+                <TableCell className="font-medium text-foreground">{loc.locationName}</TableCell>
                 
                 {/* Sales */}
-                <TableCell className="text-center border-l border-border/30">
+                <TableCell className="text-center border-l border-border/20 py-3">
                   <div className="flex flex-col items-center gap-1">
-                    <span className="font-medium">{formatCurrency(loc.salesActual)}</span>
-                    <DeltaBadge value={loc.salesDelta} size="xs" />
+                    <span className="font-semibold text-foreground">{formatCurrency(loc.salesActual)}</span>
+                    <DeltaBadge value={loc.salesDelta} />
                   </div>
                 </TableCell>
-                <TableCell className="text-center text-muted-foreground">
+                <TableCell className="text-center text-muted-foreground py-3">
                   {formatCurrency(loc.salesProjected)}
                 </TableCell>
                 
                 {/* COL */}
-                <TableCell className="text-center border-l border-border/30">
+                <TableCell className="text-center border-l border-border/20 py-3">
                   <div className="flex flex-col items-center gap-1">
-                    <span className="font-medium">{formatPercent(loc.colActual)}</span>
-                    <DeltaBadge value={loc.colDelta} inverted size="xs" />
+                    <span className="font-semibold text-foreground">{formatPercent(loc.colActual)}</span>
+                    <DeltaBadge value={loc.colDelta} inverted />
                   </div>
                 </TableCell>
-                <TableCell className="text-center text-muted-foreground">
+                <TableCell className="text-center text-muted-foreground py-3">
                   {formatPercent(loc.colPlanned)}
                 </TableCell>
                 
                 {/* SPLH */}
-                <TableCell className="text-center border-l border-border/30">
+                <TableCell className="text-center border-l border-border/20 py-3">
                   <div className="flex flex-col items-center gap-1">
-                    <span className="font-medium">€{loc.splhActual.toFixed(0)}</span>
-                    <DeltaBadge value={loc.splhDelta} size="xs" />
+                    <span className="font-semibold text-foreground">{formatSplh(loc.splhActual)}</span>
+                    <DeltaBadge value={loc.splhDelta} />
                   </div>
                 </TableCell>
-                <TableCell className="text-center text-muted-foreground">
-                  €{loc.splhPlanned.toFixed(0)}
+                <TableCell className="text-center text-muted-foreground py-3">
+                  {formatSplh(loc.splhPlanned)}
                 </TableCell>
               </TableRow>
             ))}
             
             {/* Summary row */}
-            <TableRow className="bg-muted/50 font-semibold">
-              <TableCell>All locations</TableCell>
+            <TableRow className="bg-muted/50 border-t-2 border-border">
+              <TableCell className="font-semibold text-foreground">All locations</TableCell>
               
-              <TableCell className="text-center border-l border-border/30">
+              <TableCell className="text-center border-l border-border/20 py-3">
                 <div className="flex flex-col items-center gap-1">
-                  <span>{formatCurrency(totals.salesActual)}</span>
-                  <DeltaBadge value={salesDelta} size="xs" />
+                  <span className="font-semibold text-foreground">{formatCurrency(totals.salesActual)}</span>
+                  <DeltaBadge value={salesDelta} />
                 </div>
               </TableCell>
-              <TableCell className="text-center text-muted-foreground">
+              <TableCell className="text-center text-muted-foreground font-medium py-3">
                 {formatCurrency(totals.salesProjected)}
               </TableCell>
               
-              <TableCell className="text-center border-l border-border/30">
+              <TableCell className="text-center border-l border-border/20 py-3">
                 <div className="flex flex-col items-center gap-1">
-                  <span>{formatPercent(avgColActual)}</span>
-                  <DeltaBadge value={colDelta} inverted size="xs" />
+                  <span className="font-semibold text-foreground">{formatPercent(avgColActual)}</span>
+                  <DeltaBadge value={colDelta} inverted />
                 </div>
               </TableCell>
-              <TableCell className="text-center text-muted-foreground">
+              <TableCell className="text-center text-muted-foreground font-medium py-3">
                 {formatPercent(avgColPlanned)}
               </TableCell>
               
-              <TableCell className="text-center border-l border-border/30">
+              <TableCell className="text-center border-l border-border/20 py-3">
                 <div className="flex flex-col items-center gap-1">
-                  <span>€{avgSplhActual.toFixed(0)}</span>
-                  <DeltaBadge value={splhDelta} size="xs" />
+                  <span className="font-semibold text-foreground">{formatSplh(avgSplhActual)}</span>
+                  <DeltaBadge value={splhDelta} />
                 </div>
               </TableCell>
-              <TableCell className="text-center text-muted-foreground">
-                €{avgSplhPlanned.toFixed(0)}
+              <TableCell className="text-center text-muted-foreground font-medium py-3">
+                {formatSplh(avgSplhPlanned)}
               </TableCell>
             </TableRow>
           </TableBody>
