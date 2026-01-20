@@ -99,6 +99,8 @@ export default function Inventory() {
           unaccountedWaste={metrics.unaccountedWaste}
           surplus={metrics.surplus}
           isLoading={isLoading}
+          dateRange={dateRange}
+          selectedLocations={selectedLocations}
         />
       </div>
 

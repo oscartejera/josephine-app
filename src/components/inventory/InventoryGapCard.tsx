@@ -1,7 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { ViewMode } from './InventoryHeader';
+import { format } from 'date-fns';
 
 interface InventoryGapCardProps {
   viewMode: ViewMode;
@@ -12,6 +14,8 @@ interface InventoryGapCardProps {
   surplus: number;
   isLoading?: boolean;
   currency?: string;
+  dateRange?: { from: Date; to: Date };
+  selectedLocations?: string[];
 }
 
 export function InventoryGapCard({
@@ -22,15 +26,48 @@ export function InventoryGapCard({
   unaccountedWaste,
   surplus,
   isLoading = false,
-  currency = '€'
+  currency = '€',
+  dateRange,
+  selectedLocations = []
 }: InventoryGapCardProps) {
+  const navigate = useNavigate();
   const isCOGS = viewMode === 'COGS';
   const isNegative = isCOGS ? gapAmount > 0 : gapAmount < 0;
+
+  // Ensure gap = accounted + unaccounted + surplus
+  // Recalculate to ensure consistency
+  let adjustedUnaccounted = unaccountedWaste;
+  let adjustedSurplus = surplus;
   
-  const total = Math.abs(accountedWaste) + Math.abs(unaccountedWaste) + Math.abs(surplus);
+  // If values don't add up, adjust
+  const currentSum = accountedWaste + unaccountedWaste + surplus;
+  if (Math.abs(currentSum - gapAmount) > 0.01 && gapAmount !== 0) {
+    // Recalculate: unaccounted = gap - accounted - surplus
+    adjustedUnaccounted = gapAmount - accountedWaste - surplus;
+    if (adjustedUnaccounted < 0) {
+      adjustedUnaccounted = 0;
+      adjustedSurplus = gapAmount - accountedWaste;
+    }
+  }
+  
+  const total = Math.abs(accountedWaste) + Math.abs(adjustedUnaccounted) + Math.abs(adjustedSurplus);
   const accountedPercent = total > 0 ? (Math.abs(accountedWaste) / total) * 100 : 33;
-  const unaccountedPercent = total > 0 ? (Math.abs(unaccountedWaste) / total) * 100 : 33;
-  const surplusPercent = total > 0 ? (Math.abs(surplus) / total) * 100 : 34;
+  const unaccountedPercent = total > 0 ? (Math.abs(adjustedUnaccounted) / total) * 100 : 33;
+  const surplusPercent = total > 0 ? (Math.abs(adjustedSurplus) / total) * 100 : 34;
+
+  const handleNavigateToWaste = () => {
+    const params = new URLSearchParams();
+    if (dateRange) {
+      params.set('start_date', format(dateRange.from, 'yyyy-MM-dd'));
+      params.set('end_date', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+    if (selectedLocations.length === 1) {
+      params.set('location_id', selectedLocations[0]);
+    } else {
+      params.set('location_id', 'all');
+    }
+    navigate(`/waste?${params.toString()}`);
+  };
 
   if (isLoading) {
     return (
@@ -90,19 +127,22 @@ export function InventoryGapCard({
 
         {/* Legend */}
         <div className="space-y-1.5 text-sm">
-          <div className="flex items-center justify-between">
+          <button
+            onClick={handleNavigateToWaste}
+            className="flex items-center justify-between w-full hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 transition-colors cursor-pointer"
+          >
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-info" />
-              <span className="text-muted-foreground">Accounted waste</span>
+              <span className="text-muted-foreground hover:text-foreground">Accounted waste</span>
             </div>
             <span className="font-medium">{currency}{accountedWaste.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
-          </div>
+          </button>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-info/40" />
               <span className="text-muted-foreground">Unaccounted waste</span>
             </div>
-            <span className="font-medium">{currency}{unaccountedWaste.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
+            <span className="font-medium">{currency}{adjustedUnaccounted.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -111,9 +151,9 @@ export function InventoryGapCard({
             </div>
             <span className={cn(
               "font-medium",
-              surplus < 0 ? "text-destructive" : ""
+              adjustedSurplus < 0 ? "text-destructive" : ""
             )}>
-              {surplus >= 0 ? '' : '-'}{currency}{Math.abs(surplus).toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+              {adjustedSurplus >= 0 ? '' : '-'}{currency}{Math.abs(adjustedSurplus).toLocaleString('es-ES', { minimumFractionDigits: 0 })}
             </span>
           </div>
         </div>
