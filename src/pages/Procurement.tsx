@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useProcurementData } from '@/hooks/useProcurementData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, History, ChevronRight, MoreHorizontal, Settings } from 'lucide-react';
+import { ShoppingCart, History, ChevronRight, MoreHorizontal, Database, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +57,8 @@ export default function Procurement() {
     setRecommendationSettings,
     categorySettings,
     setCategorySettings,
+    isLoading,
+    hasRealData,
   } = useProcurementData();
 
   // Check URL params for supplier
@@ -79,7 +83,24 @@ export default function Procurement() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Procurement</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-display font-bold text-foreground">Procurement</h1>
+            {isLoading ? (
+              <Badge variant="outline" className="gap-1.5 text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading inventory...
+              </Badge>
+            ) : hasRealData ? (
+              <Badge variant="outline" className="gap-1.5 text-success border-success/30 bg-success/5">
+                <Database className="h-3 w-3" />
+                Live Inventory
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="gap-1.5 text-xs">
+                Demo Data
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
             <span>Insights</span>
             <ChevronRight className="h-3 w-3" />
@@ -142,6 +163,20 @@ export default function Procurement() {
         </TabsList>
 
         <TabsContent value="order" className="mt-6 space-y-6">
+          {isLoading ? (
+            <div className="space-y-6">
+              <Skeleton className="h-32 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-48 w-full rounded-xl" />
+                  <Skeleton className="h-48 w-full rounded-xl" />
+                </div>
+                <Skeleton className="hidden xl:block h-[500px] w-full rounded-xl" />
+              </div>
+            </div>
+          ) : (
+            <>
           {/* Supplier Card with search & date */}
           <SupplierCard
             supplier={selectedSupplier}
@@ -212,6 +247,8 @@ export default function Procurement() {
               </Button>
             </div>
           </div>
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">

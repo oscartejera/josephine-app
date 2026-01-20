@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { addDays, format, isAfter, isBefore, getDay, setHours, setMinutes } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types
 export interface Supplier {
@@ -32,6 +33,9 @@ export interface IngredientSku {
   wasteFactor: number; // e.g., 0.05 for 5%
   yieldFactor: number; // e.g., 0.95 for 95% yield
   safetyStockPct: number; // e.g., 0.15 for 15%
+  // Link to real inventory
+  inventoryItemId?: string;
+  isRealData?: boolean;
 }
 
 export interface CartItem {
@@ -90,9 +94,11 @@ const CATEGORY_WASTE_FACTORS: Record<string, number> = {
   'Beverages': 0.01,
   'Bakery': 0.04,
   'Condiments': 0.02,
+  'food': 0.04,
+  'beverage': 0.02,
 };
 
-// Seed data - 50 realistic SKUs
+// Seed data - Suppliers
 const SEED_SUPPLIERS: Supplier[] = [
   {
     id: 'macro',
@@ -129,6 +135,7 @@ const SEED_SUPPLIERS: Supplier[] = [
   },
 ];
 
+// Fallback SKUs when no real inventory data available
 const SEED_SKUS: Omit<IngredientSku, 'forecastDailyUsage' | 'wasteFactor' | 'yieldFactor' | 'safetyStockPct'>[] = [
   // Proteins
   { id: 'sku-001', supplierId: 'macro', name: 'Chicken Breast', category: 'Proteins', packSize: '1×5kg', packSizeUnits: 5, unit: 'kg', unitPrice: 42.50, onHandUnits: 8, parLevelUnits: 25, onOrderUnits: 0, paused: false },
@@ -201,15 +208,6 @@ const generateForecastUsage = (days: number = 30): number[] => {
     return Math.max(1, Math.round(baseUsage + variance));
   });
 };
-
-const FULL_SKUS: IngredientSku[] = SEED_SKUS.map(sku => ({
-  ...sku,
-  forecastDailyUsage: generateForecastUsage(30),
-  paused: sku.id === 'sku-064',
-  wasteFactor: CATEGORY_WASTE_FACTORS[sku.category] || 0.02,
-  yieldFactor: 1.0,
-  safetyStockPct: 0.15,
-}));
 
 // Utility functions
 function getNextDeliveryDate(supplier: Supplier, orderDate: Date): Date {
@@ -324,7 +322,39 @@ const DEFAULT_CATEGORY_SETTINGS: CategorySettingsMap = {
   'Beverages': { wasteFactor: 0.01, safetyStockPct: 0.10, yieldFactor: 1.0 },
   'Bakery': { wasteFactor: 0.04, safetyStockPct: 0.20, yieldFactor: 1.0 },
   'Condiments': { wasteFactor: 0.02, safetyStockPct: 0.10, yieldFactor: 1.0 },
+  'food': { wasteFactor: 0.04, safetyStockPct: 0.15, yieldFactor: 1.0 },
+  'beverage': { wasteFactor: 0.02, safetyStockPct: 0.10, yieldFactor: 1.0 },
 };
+
+// Map database category to procurement category
+function mapDbCategoryToProcurement(category: string | null): string {
+  if (!category) return 'Dry Goods';
+  const lowerCategory = category.toLowerCase();
+  
+  if (lowerCategory.includes('meat') || lowerCategory.includes('protein') || lowerCategory.includes('chicken') || lowerCategory.includes('fish') || lowerCategory.includes('seafood')) {
+    return 'Proteins';
+  }
+  if (lowerCategory.includes('dairy') || lowerCategory.includes('milk') || lowerCategory.includes('cheese') || lowerCategory.includes('cream')) {
+    return 'Dairy';
+  }
+  if (lowerCategory.includes('produce') || lowerCategory.includes('vegetable') || lowerCategory.includes('fruit') || lowerCategory.includes('fresh')) {
+    return 'Produce';
+  }
+  if (lowerCategory.includes('beverage') || lowerCategory.includes('drink')) {
+    return 'Beverages';
+  }
+  if (lowerCategory.includes('bakery') || lowerCategory.includes('bread')) {
+    return 'Bakery';
+  }
+  if (lowerCategory.includes('condiment') || lowerCategory.includes('sauce')) {
+    return 'Condiments';
+  }
+  // For "food" or other generic categories
+  if (lowerCategory === 'food') {
+    return 'Dry Goods';
+  }
+  return category.charAt(0).toUpperCase() + category.slice(1);
+}
 
 // Main hook
 export function useProcurementData() {
@@ -333,15 +363,159 @@ export function useProcurementData() {
   const [cart, setCart] = useState<Map<string, number>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasRealData, setHasRealData] = useState(false);
   const [recommendationSettings, setRecommendationSettings] = useState<RecommendationSettings>({
     horizon: 7,
     includeSafetyStock: true,
     roundToPacks: true,
   });
   const [categorySettings, setCategorySettings] = useState<CategorySettingsMap>(DEFAULT_CATEGORY_SETTINGS);
+  
+  // State for real inventory data from Supabase
+  const [realInventoryItems, setRealInventoryItems] = useState<IngredientSku[]>([]);
 
   const suppliers = SEED_SUPPLIERS;
-  const allSkus = FULL_SKUS;
+
+  // Fetch real inventory data from Supabase
+  useEffect(() => {
+    async function fetchInventoryData() {
+      setIsLoading(true);
+      try {
+        // Fetch inventory items
+        const { data: inventoryData, error: inventoryError } = await supabase
+          .from('inventory_items')
+          .select('*')
+          .order('name');
+
+        if (inventoryError) {
+          console.error('Error fetching inventory items:', inventoryError);
+          setHasRealData(false);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!inventoryData || inventoryData.length === 0) {
+          console.log('No inventory data found, using demo data');
+          setHasRealData(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch pending purchase order lines to calculate on-order quantities
+        const { data: poData } = await supabase
+          .from('purchase_orders')
+          .select(`
+            id,
+            status,
+            purchase_order_lines (
+              inventory_item_id,
+              quantity
+            )
+          `)
+          .in('status', ['draft', 'sent']);
+
+        // Calculate on-order quantities per inventory item
+        const onOrderMap = new Map<string, number>();
+        if (poData) {
+          poData.forEach(po => {
+            if (po.purchase_order_lines) {
+              po.purchase_order_lines.forEach((line: { inventory_item_id: string; quantity: number }) => {
+                const current = onOrderMap.get(line.inventory_item_id) || 0;
+                onOrderMap.set(line.inventory_item_id, current + (line.quantity || 0));
+              });
+            }
+          });
+        }
+
+        // Convert inventory items to IngredientSku format
+        const skusFromDb: IngredientSku[] = inventoryData.map((item, index) => {
+          const category = mapDbCategoryToProcurement(item.category);
+          const wasteFactor = CATEGORY_WASTE_FACTORS[category] || CATEGORY_WASTE_FACTORS[item.category || ''] || 0.03;
+          // Assign to different suppliers for variety
+          const supplierIndex = index % suppliers.length;
+          const supplier = suppliers[supplierIndex];
+          
+          // Generate realistic pack size based on unit
+          const unit = item.unit || 'kg';
+          let packSizeUnits = 1;
+          let packSize = `1×1${unit}`;
+          
+          if (unit === 'kg' || unit === 'L') {
+            packSizeUnits = 5;
+            packSize = `1×5${unit}`;
+          } else if (unit === 'units' || unit === 'ea') {
+            packSizeUnits = 12;
+            packSize = `12 units`;
+          }
+
+          // Calculate price based on last_cost or generate realistic one
+          const basePrice = item.last_cost || (Math.random() * 30 + 5);
+          const unitPrice = Number((basePrice * packSizeUnits).toFixed(2));
+          
+          return {
+            id: `db-${item.id}`,
+            inventoryItemId: item.id,
+            supplierId: supplier.id,
+            name: item.name,
+            category,
+            packSize,
+            packSizeUnits,
+            unit,
+            unitPrice,
+            onHandUnits: item.current_stock || 0,
+            parLevelUnits: item.par_level || packSizeUnits * 5,
+            onOrderUnits: onOrderMap.get(item.id) || 0,
+            forecastDailyUsage: generateForecastUsage(30),
+            paused: false,
+            wasteFactor,
+            yieldFactor: 1.0,
+            safetyStockPct: 0.15,
+            isRealData: true,
+          };
+        });
+
+        setRealInventoryItems(skusFromDb);
+        setHasRealData(true);
+        console.log(`Loaded ${skusFromDb.length} inventory items from database`);
+      } catch (error) {
+        console.error('Error in fetchInventoryData:', error);
+        setHasRealData(false);
+      }
+      setIsLoading(false);
+    }
+
+    fetchInventoryData();
+  }, [suppliers]);
+
+  // Combine real data with seed data (prioritize real data)
+  const allSkus = useMemo(() => {
+    if (hasRealData && realInventoryItems.length > 0) {
+      // Use real data primarily, but keep seed data for suppliers without real inventory
+      const seedSkusWithForecast: IngredientSku[] = SEED_SKUS.map(sku => ({
+        ...sku,
+        forecastDailyUsage: generateForecastUsage(30),
+        wasteFactor: CATEGORY_WASTE_FACTORS[sku.category] || 0.02,
+        yieldFactor: 1.0,
+        safetyStockPct: 0.15,
+        isRealData: false,
+      }));
+      
+      // Combine: real items first, then seed items (for variety in demo)
+      return [...realInventoryItems, ...seedSkusWithForecast];
+    }
+    
+    // Fallback to seed data
+    return SEED_SKUS.map(sku => ({
+      ...sku,
+      forecastDailyUsage: generateForecastUsage(30),
+      paused: sku.id === 'sku-064',
+      wasteFactor: CATEGORY_WASTE_FACTORS[sku.category] || 0.02,
+      yieldFactor: 1.0,
+      safetyStockPct: 0.15,
+      isRealData: false,
+    }));
+  }, [hasRealData, realInventoryItems]);
 
   const selectedSupplier = useMemo(
     () => suppliers.find(s => s.id === selectedSupplierId) || suppliers[0],
@@ -546,5 +720,9 @@ export function useProcurementData() {
     // Search
     searchQuery,
     setSearchQuery,
+    
+    // Loading state
+    isLoading,
+    hasRealData,
   };
 }
