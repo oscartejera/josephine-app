@@ -14,7 +14,8 @@ import {
   Calculator,
   BarChart3,
   Star,
-  CalendarDays
+  CalendarDays,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +29,7 @@ const navItems = [
   { icon: BarChart3, label: 'Instant P&L', path: '/instant-pl' },
   { icon: Star, label: 'Reviews', path: '/insights/reviews' },
   { icon: CalendarDays, label: 'Scheduling', path: '/scheduling' },
+  { icon: Clock, label: 'Availability', path: '/availability' },
   { icon: Package, label: 'Inventory', path: '/inventory' },
   { icon: Trash2, label: 'Waste', path: '/waste' },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },
