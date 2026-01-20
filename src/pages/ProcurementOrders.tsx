@@ -69,101 +69,130 @@ export default function ProcurementOrders() {
   const [isLoadingLines, setIsLoadingLines] = useState(false);
 
   // Fetch suppliers and orders from database
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
-      try {
-        // Fetch suppliers with order counts
-        const { data: suppliersData, error: suppliersError } = await supabase
-          .from('suppliers')
-          .select('id, name, email, phone');
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch suppliers with order counts
+      const { data: suppliersData, error: suppliersError } = await supabase
+        .from('suppliers')
+        .select('id, name, email, phone');
 
-        if (suppliersError) throw suppliersError;
+      if (suppliersError) throw suppliersError;
 
-        // Fetch all orders with supplier info
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('purchase_orders')
-          .select(`
-            id,
-            status,
-            created_at,
-            supplier_id,
-            suppliers (name)
-          `)
-          .order('created_at', { ascending: false });
+      // Fetch all orders with supplier info
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('purchase_orders')
+        .select(`
+          id,
+          status,
+          created_at,
+          supplier_id,
+          suppliers (name)
+        `)
+        .order('created_at', { ascending: false });
 
-        if (ordersError) throw ordersError;
+      if (ordersError) throw ordersError;
 
-        // Fetch order line totals
-        const { data: linesData, error: linesError } = await supabase
-          .from('purchase_order_lines')
-          .select('purchase_order_id, quantity, unit_cost');
+      // Fetch order line totals
+      const { data: linesData, error: linesError } = await supabase
+        .from('purchase_order_lines')
+        .select('purchase_order_id, quantity, unit_cost');
 
-        if (linesError) throw linesError;
+      if (linesError) throw linesError;
 
-        // Calculate order totals and line counts
-        const orderTotals = new Map<string, { lineCount: number; totalValue: number }>();
-        linesData?.forEach(line => {
-          const existing = orderTotals.get(line.purchase_order_id) || { lineCount: 0, totalValue: 0 };
-          orderTotals.set(line.purchase_order_id, {
-            lineCount: existing.lineCount + 1,
-            totalValue: existing.totalValue + (line.quantity * (line.unit_cost || 0))
-          });
+      // Calculate order totals and line counts
+      const orderTotals = new Map<string, { lineCount: number; totalValue: number }>();
+      linesData?.forEach(line => {
+        const existing = orderTotals.get(line.purchase_order_id) || { lineCount: 0, totalValue: 0 };
+        orderTotals.set(line.purchase_order_id, {
+          lineCount: existing.lineCount + 1,
+          totalValue: existing.totalValue + (line.quantity * (line.unit_cost || 0))
         });
+      });
 
-        // Build orders list with totals
-        const formattedOrders: PurchaseOrder[] = (ordersData || []).map(order => {
-          const totals = orderTotals.get(order.id) || { lineCount: 0, totalValue: 0 };
-          return {
-            id: order.id,
-            status: order.status || 'draft',
-            created_at: order.created_at,
-            supplier_id: order.supplier_id,
-            supplier_name: (order.suppliers as any)?.name || 'Unknown Supplier',
-            line_count: totals.lineCount,
-            total_value: totals.totalValue
-          };
+      // Build orders list with totals
+      const formattedOrders: PurchaseOrder[] = (ordersData || []).map(order => {
+        const totals = orderTotals.get(order.id) || { lineCount: 0, totalValue: 0 };
+        return {
+          id: order.id,
+          status: order.status || 'draft',
+          created_at: order.created_at,
+          supplier_id: order.supplier_id,
+          supplier_name: (order.suppliers as any)?.name || 'Unknown Supplier',
+          line_count: totals.lineCount,
+          total_value: totals.totalValue
+        };
+      });
+
+      setOrders(formattedOrders);
+
+      // Calculate supplier stats
+      const supplierStats = new Map<string, { ordersCount: number; totalValue: number; lastOrderDate: string | null }>();
+      formattedOrders.forEach(order => {
+        const existing = supplierStats.get(order.supplier_id) || { ordersCount: 0, totalValue: 0, lastOrderDate: null };
+        supplierStats.set(order.supplier_id, {
+          ordersCount: existing.ordersCount + 1,
+          totalValue: existing.totalValue + order.total_value,
+          lastOrderDate: existing.lastOrderDate || order.created_at
         });
+      });
 
-        setOrders(formattedOrders);
+      // Build suppliers with stats
+      const formattedSuppliers: SupplierWithStats[] = (suppliersData || []).map(supplier => {
+        const stats = supplierStats.get(supplier.id) || { ordersCount: 0, totalValue: 0, lastOrderDate: null };
+        return {
+          id: supplier.id,
+          name: supplier.name,
+          email: supplier.email,
+          phone: supplier.phone,
+          ordersCount: stats.ordersCount,
+          totalValue: stats.totalValue,
+          lastOrderDate: stats.lastOrderDate
+        };
+      });
 
-        // Calculate supplier stats
-        const supplierStats = new Map<string, { ordersCount: number; totalValue: number; lastOrderDate: string | null }>();
-        formattedOrders.forEach(order => {
-          const existing = supplierStats.get(order.supplier_id) || { ordersCount: 0, totalValue: 0, lastOrderDate: null };
-          supplierStats.set(order.supplier_id, {
-            ordersCount: existing.ordersCount + 1,
-            totalValue: existing.totalValue + order.total_value,
-            lastOrderDate: existing.lastOrderDate || order.created_at
-          });
-        });
+      // Sort by orders count descending
+      formattedSuppliers.sort((a, b) => b.ordersCount - a.ordersCount);
 
-        // Build suppliers with stats
-        const formattedSuppliers: SupplierWithStats[] = (suppliersData || []).map(supplier => {
-          const stats = supplierStats.get(supplier.id) || { ordersCount: 0, totalValue: 0, lastOrderDate: null };
-          return {
-            id: supplier.id,
-            name: supplier.name,
-            email: supplier.email,
-            phone: supplier.phone,
-            ordersCount: stats.ordersCount,
-            totalValue: stats.totalValue,
-            lastOrderDate: stats.lastOrderDate
-          };
-        });
-
-        // Sort by orders count descending
-        formattedSuppliers.sort((a, b) => b.ordersCount - a.ordersCount);
-
-        setSuppliers(formattedSuppliers);
-      } catch (error) {
-        console.error('Error fetching procurement data:', error);
-      } finally {
-        setIsLoading(false);
-      }
+      setSuppliers(formattedSuppliers);
+    } catch (error) {
+      console.error('Error fetching procurement data:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchData();
+
+    // Subscribe to realtime updates for purchase_orders
+    const channel = supabase
+      .channel('purchase-orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchase_orders'
+        },
+        (payload) => {
+          console.log('Realtime update:', payload);
+          // Refetch data when any change occurs
+          fetchData();
+          
+          if (payload.eventType === 'INSERT') {
+            toast.success('New order received!', {
+              description: 'The orders list has been updated.',
+              icon: <CheckCircle className="h-5 w-5 text-success" />,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Check if we came from a successful order placement
