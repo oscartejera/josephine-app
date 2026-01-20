@@ -1,9 +1,13 @@
 export { ProcurementHeader } from './ProcurementHeader';
 export { SupplierHeader } from './SupplierHeader';
+export { SupplierCard } from './SupplierCard';
 export { IngredientList } from './IngredientList';
 export { IngredientRow } from './IngredientRow';
+export { IngredientTable } from './IngredientTable';
 export { OrderSummaryPanel } from './OrderSummaryPanel';
+export { OrderSummaryDesktop } from './OrderSummaryDesktop';
 export { CoverageBanner } from './CoverageBanner';
+export { CoverageBannerDesktop } from './CoverageBannerDesktop';
 export { OrderHistoryPanel } from './OrderHistoryPanel';
 export { AIRecommendPanel } from './AIRecommendPanel';
 export { ProcurementSettingsDialog, DEFAULT_CATEGORY_SETTINGS } from './ProcurementSettingsDialog';
