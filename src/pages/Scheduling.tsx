@@ -2,7 +2,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { startOfWeek, parseISO } from 'date-fns';
 import { toast } from 'sonner';
-import { useSchedulingData, ViewMode } from '@/hooks/useSchedulingData';
+import { ArrowRightLeft } from 'lucide-react';
+import { useSchedulingData, ViewMode, Shift } from '@/hooks/useSchedulingData';
 import {
   SchedulingHeader,
   CreateScheduleModal,
@@ -11,6 +12,8 @@ import {
   ScheduleToast,
   PublishModal,
   EmptyScheduleState,
+  SwapShiftDialog,
+  SwapRequestsPanel,
 } from '@/components/scheduling';
 import {
   Select,
@@ -19,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 // Generate placeholder KPIs for empty state
 function generatePlaceholderKPIs(weekStart: Date) {
@@ -48,6 +53,11 @@ export default function Scheduling() {
   const [isCreating, setIsCreating] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showSwapPanel, setShowSwapPanel] = useState(false);
+  const [swapDialogData, setSwapDialogData] = useState<{
+    shift: Shift;
+    employeeName: string;
+  } | null>(null);
   
   // Data hook
   const {
@@ -57,12 +67,17 @@ export default function Scheduling() {
     hasChanges,
     locations,
     positions,
+    swapRequests,
+    pendingSwapRequests,
     createSchedule,
     undoSchedule,
     acceptSchedule,
     publishSchedule,
     moveShift,
     addShift,
+    createSwapRequest,
+    approveSwapRequest,
+    rejectSwapRequest,
   } = useSchedulingData(locationId, weekStart);
   
   // Placeholder KPIs for empty state
@@ -105,6 +120,39 @@ export default function Scheduling() {
     toast.success('Schedule published and notifications sent to all employees');
   }, [publishSchedule]);
   
+  const handleInitiateSwap = useCallback((shift: Shift, employeeName: string) => {
+    setSwapDialogData({ shift, employeeName });
+  }, []);
+  
+  const handleSubmitSwap = useCallback((targetShift: Shift, reason?: string) => {
+    if (!swapDialogData) return;
+    createSwapRequest(swapDialogData.shift, targetShift, reason);
+    toast.success('Swap request sent for approval');
+  }, [swapDialogData, createSwapRequest]);
+  
+  const handleApproveSwap = useCallback((requestId: string) => {
+    approveSwapRequest(requestId);
+    toast.success('Swap approved - shifts have been exchanged');
+  }, [approveSwapRequest]);
+  
+  const handleRejectSwap = useCallback((requestId: string) => {
+    rejectSwapRequest(requestId);
+    toast.info('Swap request rejected');
+  }, [rejectSwapRequest]);
+  
+  // Get available shifts to swap with (other employees' shifts)
+  const availableSwapShifts = useMemo(() => {
+    if (!data || !swapDialogData) return [];
+    
+    return data.shifts
+      .filter(s => s.employeeId !== swapDialogData.shift.employeeId && !s.isOpen)
+      .map(shift => ({
+        shift,
+        employee: data.employees.find(e => e.id === shift.employeeId)!,
+      }))
+      .filter(item => item.employee);
+  }, [data, swapDialogData]);
+  
   const currentLocation = locations.find(l => l.id === locationId) || locations[0];
   
   return (
@@ -141,11 +189,34 @@ export default function Scheduling() {
           </Select>
         </div>
         
-        {data && (
-          <div className="text-sm text-muted-foreground">
-            {data.employees.length} employees · {data.totalHours}h scheduled
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Swap requests button */}
+          {hasSchedule && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSwapPanel(true)}
+              className="relative"
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              Swap Requests
+              {pendingSwapRequests.length > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                >
+                  {pendingSwapRequests.length}
+                </Badge>
+              )}
+            </Button>
+          )}
+          
+          {data && (
+            <div className="text-sm text-muted-foreground">
+              {data.employees.length} employees · {data.totalHours}h scheduled
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Grid */}
@@ -156,6 +227,7 @@ export default function Scheduling() {
           positions={positions}
           onMoveShift={moveShift} 
           onAddShift={addShift}
+          onInitiateSwap={handleInitiateSwap}
         />
       ) : (
         <EmptyScheduleState weekStart={weekStart} dailyKPIs={placeholderKPIs} />
@@ -181,6 +253,27 @@ export default function Scheduling() {
         onClose={() => setShowPublishModal(false)}
         onConfirm={handlePublish}
         locationName={currentLocation.name}
+      />
+      
+      {/* Swap shift dialog */}
+      {swapDialogData && (
+        <SwapShiftDialog
+          isOpen={true}
+          onClose={() => setSwapDialogData(null)}
+          onSubmit={handleSubmitSwap}
+          myShift={swapDialogData.shift}
+          myName={swapDialogData.employeeName}
+          availableShifts={availableSwapShifts}
+        />
+      )}
+      
+      {/* Swap requests panel */}
+      <SwapRequestsPanel
+        isOpen={showSwapPanel}
+        onClose={() => setShowSwapPanel(false)}
+        requests={swapRequests}
+        onApprove={handleApproveSwap}
+        onReject={handleRejectSwap}
       />
     </div>
   );

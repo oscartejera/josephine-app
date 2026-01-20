@@ -6,3 +6,5 @@ export { ViewModeDropdown } from './ViewModeDropdown';
 export { ScheduleToast } from './ScheduleToast';
 export { PublishModal } from './PublishModal';
 export { EmptyScheduleState } from './EmptyScheduleState';
+export { SwapShiftDialog } from './SwapShiftDialog';
+export { SwapRequestsPanel } from './SwapRequestsPanel';
