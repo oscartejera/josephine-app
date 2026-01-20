@@ -14,6 +14,8 @@ import Dashboard from "@/pages/Dashboard";
 import Sales from "@/pages/Sales";
 import Labor from "@/pages/Labor";
 import Inventory from "@/pages/Inventory";
+import InventoryLocation from "@/pages/InventoryLocation";
+import InventoryLocationReconciliation from "@/pages/InventoryLocationReconciliation";
 import InventoryReconciliation from "@/pages/InventoryReconciliation";
 import Waste from "@/pages/Waste";
 import Procurement from "@/pages/Procurement";
@@ -71,7 +73,8 @@ function AppRoutes() {
         <Route path="/sales" element={<Sales />} />
         <Route path="/labor" element={<Labor />} />
         <Route path="/inventory" element={<Inventory />} />
-        <Route path="/inventory/:locationId" element={<Inventory />} />
+        <Route path="/inventory/location/:locationId" element={<InventoryLocation />} />
+        <Route path="/inventory/location/:locationId/reconciliation" element={<InventoryLocationReconciliation />} />
         <Route path="/inventory/reconciliation" element={<InventoryReconciliation />} />
         <Route path="/waste" element={<Waste />} />
         <Route path="/procurement" element={<Procurement />} />
