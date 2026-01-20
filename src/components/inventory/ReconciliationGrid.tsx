@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,7 +10,6 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
-  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChevronDown, Filter, MoreHorizontal, Search, ArrowUpDown } from 'lucide-react';
@@ -83,45 +82,59 @@ export function ReconciliationGrid({
     return result;
   }, [lines, search, sortField, sortDirection]);
 
-  const handleSort = (field: SortField) => {
+  const handleSort = useCallback((field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
-  };
+  }, [sortField]);
 
-  const toggleColumn = (key: string) => {
-    if (visibleColumns.includes(key)) {
-      setVisibleColumns(visibleColumns.filter(c => c !== key));
-    } else {
-      setVisibleColumns([...visibleColumns, key]);
-    }
-  };
+  const toggleColumn = useCallback((key: string) => {
+    setVisibleColumns(prev => {
+      if (prev.includes(key)) {
+        return prev.filter(c => c !== key);
+      }
+      return [...prev, key];
+    });
+  }, []);
 
-  const formatNumber = (value: number, isVariance = false) => {
+  const formatNumber = useCallback((value: number, isVariance = false) => {
     const formatted = value.toFixed(2);
     if (isVariance) {
       if (value < 0) {
-        return <span className="text-destructive">{formatted}</span>;
+        return <span className="text-destructive font-medium">{formatted}</span>;
       } else if (value > 0) {
-        return <span className="text-success">+{formatted}</span>;
+        return <span className="text-success font-medium">+{formatted}</span>;
       }
     }
     return value === 0 ? <span className="text-muted-foreground/50">0.00</span> : formatted;
-  };
+  }, []);
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border-border/60">
         <CardHeader className="pb-4">
-          <Skeleton className="h-5 w-48" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+            <div className="flex-1" />
+            <Skeleton className="h-8 w-48" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-64 w-full" />
+        <CardContent className="p-0">
+          <div className="border-t border-border/40">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-3 border-b border-border/20">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-16" />
+                <Skeleton className="h-5 w-16" />
+                <Skeleton className="h-5 w-16" />
+                <Skeleton className="h-5 w-16" />
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -129,28 +142,28 @@ export function ReconciliationGrid({
   }
 
   return (
-    <Card>
+    <Card className="border-border/60">
       <CardHeader className="pb-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Stock status chips */}
           <div className="flex items-center gap-2">
             <Badge 
               variant={stockStatus === 'counted' ? 'default' : 'outline'}
-              className="cursor-pointer"
+              className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('counted')}
             >
               Counted
             </Badge>
             <Badge 
               variant={stockStatus === 'uncounted' ? 'default' : 'outline'}
-              className="cursor-pointer"
+              className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('uncounted')}
             >
               Uncounted
             </Badge>
             <Badge 
               variant={stockStatus === 'all' ? 'default' : 'outline'}
-              className="cursor-pointer"
+              className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('all')}
             >
               All
@@ -213,7 +226,7 @@ export function ReconciliationGrid({
               placeholder="Search items..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-9 border-border/60"
             />
           </div>
 
@@ -236,17 +249,17 @@ export function ReconciliationGrid({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="border rounded-lg overflow-auto max-h-[600px]">
+        <div className="border-t border-border/40 overflow-auto max-h-[600px]">
           <Table>
             <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur z-10">
-              <TableRow>
+              <TableRow className="hover:bg-muted/80">
                 {allColumns.filter(c => visibleColumns.includes(c.key)).map(col => (
                   <TableHead 
                     key={col.key}
                     className={cn(
-                      "whitespace-nowrap",
+                      "whitespace-nowrap text-xs font-medium",
                       col.sticky && "sticky left-0 bg-muted/80 backdrop-blur z-20",
-                      ['varianceQty', 'usedQty', 'salesQty'].includes(col.key) && "cursor-pointer hover:bg-muted"
+                      ['itemName', 'varianceQty', 'usedQty', 'salesQty'].includes(col.key) && "cursor-pointer hover:bg-muted"
                     )}
                     onClick={() => {
                       if (['itemName', 'varianceQty', 'usedQty', 'salesQty'].includes(col.key)) {
@@ -266,73 +279,73 @@ export function ReconciliationGrid({
             </TableHeader>
             <TableBody>
               {filteredLines.map((line) => (
-                <TableRow key={line.id}>
+                <TableRow key={line.id} className="hover:bg-muted/20">
                   {visibleColumns.includes('itemName') && (
-                    <TableCell className="font-medium sticky left-0 bg-card z-10">
+                    <TableCell className="font-medium sticky left-0 bg-card z-10 text-sm">
                       {line.itemName}
                     </TableCell>
                   )}
                   {visibleColumns.includes('unit') && (
-                    <TableCell className="text-muted-foreground">{line.unit}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{line.unit}</TableCell>
                   )}
                   {visibleColumns.includes('varianceQty') && (
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right text-sm">
                       {formatNumber(line.varianceQty, true)}
                     </TableCell>
                   )}
                   {visibleColumns.includes('openingQty') && (
-                    <TableCell className="text-right">{formatNumber(line.openingQty)}</TableCell>
+                    <TableCell className="text-right text-sm">{formatNumber(line.openingQty)}</TableCell>
                   )}
                   {visibleColumns.includes('deliveriesQty') && (
-                    <TableCell className="text-right">{formatNumber(line.deliveriesQty)}</TableCell>
+                    <TableCell className="text-right text-sm">{formatNumber(line.deliveriesQty)}</TableCell>
                   )}
                   {visibleColumns.includes('transfersNetQty') && (
-                    <TableCell className="text-right">{formatNumber(line.transfersNetQty, true)}</TableCell>
+                    <TableCell className="text-right text-sm">{formatNumber(line.transfersNetQty, true)}</TableCell>
                   )}
                   {visibleColumns.includes('closingQty') && (
-                    <TableCell className="text-right">{formatNumber(line.closingQty)}</TableCell>
+                    <TableCell className="text-right text-sm">{formatNumber(line.closingQty)}</TableCell>
                   )}
                   {visibleColumns.includes('usedQty') && (
-                    <TableCell className="text-right">{formatNumber(line.usedQty)}</TableCell>
+                    <TableCell className="text-right text-sm">{formatNumber(line.usedQty)}</TableCell>
                   )}
                   {visibleColumns.includes('salesQty') && (
-                    <TableCell className="text-right">{formatNumber(line.salesQty)}</TableCell>
+                    <TableCell className="text-right text-sm">{formatNumber(line.salesQty)}</TableCell>
                   )}
                   {visibleColumns.includes('batchBalance') && (
-                    <TableCell className="text-right">{formatNumber(line.batchBalance, true)}</TableCell>
+                    <TableCell className="text-right text-sm">{formatNumber(line.batchBalance, true)}</TableCell>
                   )}
                 </TableRow>
               ))}
               
               {/* Totals row */}
-              <TableRow className="font-semibold border-t-2 bg-muted/30 sticky bottom-0">
+              <TableRow className="font-semibold border-t-2 border-border bg-muted/30 sticky bottom-0 hover:bg-muted/30">
                 {visibleColumns.includes('itemName') && (
-                  <TableCell className="sticky left-0 bg-muted/30 z-10">Total</TableCell>
+                  <TableCell className="sticky left-0 bg-muted/30 z-10 text-sm">Total</TableCell>
                 )}
-                {visibleColumns.includes('unit') && <TableCell>—</TableCell>}
+                {visibleColumns.includes('unit') && <TableCell className="text-sm">—</TableCell>}
                 {visibleColumns.includes('varianceQty') && (
-                  <TableCell className="text-right">{formatNumber(totals.varianceQty, true)}</TableCell>
+                  <TableCell className="text-right text-sm">{formatNumber(totals.varianceQty, true)}</TableCell>
                 )}
                 {visibleColumns.includes('openingQty') && (
-                  <TableCell className="text-right">{totals.openingQty.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-sm">{totals.openingQty.toFixed(2)}</TableCell>
                 )}
                 {visibleColumns.includes('deliveriesQty') && (
-                  <TableCell className="text-right">{totals.deliveriesQty.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-sm">{totals.deliveriesQty.toFixed(2)}</TableCell>
                 )}
                 {visibleColumns.includes('transfersNetQty') && (
-                  <TableCell className="text-right">{formatNumber(totals.transfersNetQty, true)}</TableCell>
+                  <TableCell className="text-right text-sm">{formatNumber(totals.transfersNetQty, true)}</TableCell>
                 )}
                 {visibleColumns.includes('closingQty') && (
-                  <TableCell className="text-right">{totals.closingQty.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-sm">{totals.closingQty.toFixed(2)}</TableCell>
                 )}
                 {visibleColumns.includes('usedQty') && (
-                  <TableCell className="text-right">{totals.usedQty.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-sm">{totals.usedQty.toFixed(2)}</TableCell>
                 )}
                 {visibleColumns.includes('salesQty') && (
-                  <TableCell className="text-right">{totals.salesQty.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-sm">{totals.salesQty.toFixed(2)}</TableCell>
                 )}
                 {visibleColumns.includes('batchBalance') && (
-                  <TableCell className="text-right">{formatNumber(totals.batchBalance, true)}</TableCell>
+                  <TableCell className="text-right text-sm">{formatNumber(totals.batchBalance, true)}</TableCell>
                 )}
               </TableRow>
             </TableBody>
