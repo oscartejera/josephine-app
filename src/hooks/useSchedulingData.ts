@@ -4,6 +4,8 @@ import { startOfWeek, endOfWeek, addDays, format, differenceInHours } from 'date
 // Types
 export type ViewMode = 'departments' | 'people' | 'positions' | 'stations';
 
+export type SwapRequestStatus = 'pending' | 'approved' | 'rejected';
+
 export interface Employee {
   id: string;
   name: string;
@@ -25,6 +27,25 @@ export interface Shift {
   hours: number;
   role: string;
   isOpen?: boolean;
+}
+
+export interface SwapRequest {
+  id: string;
+  requesterId: string;
+  requesterName: string;
+  requesterInitials: string;
+  requesterShiftId: string;
+  requesterShiftDate: string;
+  requesterShiftTime: string;
+  targetId: string;
+  targetName: string;
+  targetInitials: string;
+  targetShiftId: string;
+  targetShiftDate: string;
+  targetShiftTime: string;
+  status: SwapRequestStatus;
+  createdAt: string;
+  reason?: string;
 }
 
 export interface DayKPI {
@@ -246,6 +267,7 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
   const [previousSchedule, setPreviousSchedule] = useState<ScheduleData | null>(null);
   const [shiftOverrides, setShiftOverrides] = useState<Record<string, { employeeId: string; date: string }>>({});
   const [newShifts, setNewShifts] = useState<Shift[]>([]);
+  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
   
   const location = LOCATIONS.find(l => l.id === locationId) || LOCATIONS[1];
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -356,6 +378,66 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     return newShift;
   };
   
+  const createSwapRequest = (
+    requesterShift: Shift,
+    targetShift: Shift,
+    reason?: string
+  ) => {
+    if (!data) return;
+    
+    const requester = data.employees.find(e => e.id === requesterShift.employeeId);
+    const target = data.employees.find(e => e.id === targetShift.employeeId);
+    
+    if (!requester || !target) return;
+    
+    const newRequest: SwapRequest = {
+      id: `swap-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      requesterId: requester.id,
+      requesterName: requester.name,
+      requesterInitials: requester.initials,
+      requesterShiftId: requesterShift.id,
+      requesterShiftDate: requesterShift.date,
+      requesterShiftTime: `${requesterShift.startTime} - ${requesterShift.endTime}`,
+      targetId: target.id,
+      targetName: target.name,
+      targetInitials: target.initials,
+      targetShiftId: targetShift.id,
+      targetShiftDate: targetShift.date,
+      targetShiftTime: `${targetShift.startTime} - ${targetShift.endTime}`,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      reason,
+    };
+    
+    setSwapRequests(prev => [...prev, newRequest]);
+    return newRequest;
+  };
+  
+  const approveSwapRequest = (requestId: string) => {
+    const request = swapRequests.find(r => r.id === requestId);
+    if (!request) return;
+    
+    // Apply the swap by moving shifts
+    setShiftOverrides(prev => ({
+      ...prev,
+      [request.requesterShiftId]: { employeeId: request.targetId, date: request.requesterShiftDate },
+      [request.targetShiftId]: { employeeId: request.requesterId, date: request.targetShiftDate },
+    }));
+    
+    // Update status
+    setSwapRequests(prev => 
+      prev.map(r => r.id === requestId ? { ...r, status: 'approved' as const } : r)
+    );
+  };
+  
+  const rejectSwapRequest = (requestId: string) => {
+    setSwapRequests(prev => 
+      prev.map(r => r.id === requestId ? { ...r, status: 'rejected' as const } : r)
+    );
+  };
+  
+  const pendingSwapRequests = swapRequests.filter(r => r.status === 'pending');
+  
   const hasChanges = Object.keys(shiftOverrides).length > 0 || newShifts.length > 0;
   
   return {
@@ -365,11 +447,16 @@ export function useSchedulingData(locationId: string = 'westside', weekStart: Da
     hasChanges,
     locations: LOCATIONS,
     positions: POSITIONS,
+    swapRequests,
+    pendingSwapRequests,
     createSchedule,
     undoSchedule,
     acceptSchedule,
     publishSchedule,
     moveShift,
     addShift,
+    createSwapRequest,
+    approveSwapRequest,
+    rejectSwapRequest,
   };
 }

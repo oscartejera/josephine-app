@@ -1,11 +1,17 @@
 import { useMemo, useState, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
-import { Cloud, Sun, CloudRain, GripVertical, Plus } from 'lucide-react';
+import { Cloud, Sun, CloudRain, GripVertical, Plus, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScheduleData, ViewMode, Employee, Shift } from '@/hooks/useSchedulingData';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { CreateShiftDialog } from './CreateShiftDialog';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 
 interface ScheduleGridProps {
   data: ScheduleData;
@@ -13,6 +19,7 @@ interface ScheduleGridProps {
   positions: string[];
   onMoveShift?: (shiftId: string, toEmployeeId: string, toDate: string) => void;
   onAddShift?: (shift: Omit<Shift, 'id'>) => void;
+  onInitiateSwap?: (shift: Shift, employeeName: string) => void;
 }
 
 interface GridRow {
@@ -47,14 +54,18 @@ function ShiftCard({
   onDragStart,
   onDragEnd,
   draggable = true,
+  onSwapClick,
+  employeeName,
 }: { 
   shift: Shift;
   isDragging?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: (e: React.DragEvent) => void;
   draggable?: boolean;
+  onSwapClick?: () => void;
+  employeeName?: string;
 }) {
-  return (
+  const cardContent = (
     <div 
       className={cn(
         "px-2 py-1.5 rounded-md text-xs border cursor-grab active:cursor-grabbing transition-all",
@@ -79,6 +90,24 @@ function ShiftCard({
       </div>
     </div>
   );
+  
+  if (onSwapClick) {
+    return (
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          {cardContent}
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={onSwapClick}>
+            <ArrowRightLeft className="h-4 w-4 mr-2" />
+            Request Swap
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    );
+  }
+  
+  return cardContent;
 }
 
 function UnavailableCell() {
@@ -139,7 +168,7 @@ function DropZone({
   );
 }
 
-export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShift }: ScheduleGridProps) {
+export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
   const [dragData, setDragData] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
   const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);
@@ -346,6 +375,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
     setCreateShiftTarget(null);
   }, [createShiftTarget, onAddShift]);
   
+  const isSwapEnabled = viewMode === 'people' && onInitiateSwap;
   const isDraggingEnabled = viewMode === 'people' && onMoveShift;
   const isCreatingEnabled = viewMode === 'people' && onAddShift;
   
