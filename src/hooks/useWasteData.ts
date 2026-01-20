@@ -69,6 +69,7 @@ export function useWasteData(
 ) {
   const { locations, group } = useApp();
   const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
   const [metrics, setMetrics] = useState<WasteMetrics>({
     totalSales: 0,
     totalAccountedWaste: 0,
@@ -324,10 +325,13 @@ export function useWasteData(
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
 
     return () => {
       supabase.removeChannel(channel);
+      setIsConnected(false);
     };
   }, [fetchData]);
 
@@ -412,6 +416,7 @@ export function useWasteData(
 
   return {
     isLoading,
+    isConnected,
     metrics,
     trendData,
     byReason,

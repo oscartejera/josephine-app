@@ -1,5 +1,6 @@
-import { ChevronDown, Sparkles, RefreshCw, MoreHorizontal, Database } from 'lucide-react';
+import { ChevronDown, Sparkles, RefreshCw, MoreHorizontal, Database, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -12,7 +13,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useApp } from '@/contexts/AppContext';
+import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
@@ -37,6 +44,7 @@ interface InventoryHeaderProps {
   onReseedData?: () => void;
   lastUpdated?: Date | null;
   isLoading?: boolean;
+  isConnected?: boolean;
   showViewToggle?: boolean;
   breadcrumbs?: { label: string; path?: string }[];
 }
@@ -54,6 +62,7 @@ export function InventoryHeader({
   onReseedData,
   lastUpdated,
   isLoading = false,
+  isConnected = false,
   showViewToggle = true,
   breadcrumbs = [{ label: 'Insights' }, { label: 'Inventory' }]
 }: InventoryHeaderProps) {
@@ -147,6 +156,43 @@ export function InventoryHeader({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Live Status Indicator */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "gap-1.5 cursor-default transition-colors",
+                  isConnected 
+                    ? "text-success border-success/30 bg-success/5" 
+                    : "text-muted-foreground border-border"
+                )}
+              >
+                {isConnected ? (
+                  <>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                    </span>
+                    Live
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="h-3 w-3" />
+                    Offline
+                  </>
+                )}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isConnected ? (
+                <p>Real-time inventory updates active{lastUpdated ? `. Last update: ${formatDistanceToNow(lastUpdated, { addSuffix: true })}` : ''}</p>
+              ) : (
+                <p>Connecting to real-time updates...</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+
           {/* GP / COGS Toggle */}
           {showViewToggle && (
             <div className="flex items-center bg-muted rounded-full p-0.5">
