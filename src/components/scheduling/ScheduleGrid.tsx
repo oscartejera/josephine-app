@@ -1,15 +1,18 @@
 import { useMemo, useState, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
-import { Cloud, Sun, CloudRain, GripVertical } from 'lucide-react';
+import { Cloud, Sun, CloudRain, GripVertical, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScheduleData, ViewMode, Employee, Shift } from '@/hooks/useSchedulingData';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { CreateShiftDialog } from './CreateShiftDialog';
 
 interface ScheduleGridProps {
   data: ScheduleData;
   viewMode: ViewMode;
+  positions: string[];
   onMoveShift?: (shiftId: string, toEmployeeId: string, toDate: string) => void;
+  onAddShift?: (shift: Omit<Shift, 'id'>) => void;
 }
 
 interface GridRow {
@@ -29,6 +32,13 @@ interface DragData {
   shift: Shift;
   fromEmployeeId: string;
   fromDate: string;
+}
+
+interface CreateShiftTarget {
+  employeeId: string;
+  employeeName: string;
+  date: Date;
+  dateStr: string;
 }
 
 function ShiftCard({ 
@@ -87,6 +97,17 @@ function DayOffCell() {
   );
 }
 
+function EmptyCell({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full h-full min-h-[44px] flex items-center justify-center rounded-md border border-dashed border-transparent hover:border-primary/30 hover:bg-primary/5 transition-colors group"
+    >
+      <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+    </button>
+  );
+}
+
 function DropZone({ 
   isOver, 
   canDrop,
@@ -118,9 +139,10 @@ function DropZone({
   );
 }
 
-export function ScheduleGrid({ data, viewMode, onMoveShift }: ScheduleGridProps) {
+export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShift }: ScheduleGridProps) {
   const [dragData, setDragData] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
+  const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);
   
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => ({
@@ -290,140 +312,195 @@ export function ScheduleGrid({ data, viewMode, onMoveShift }: ScheduleGridProps)
     }
   }, [days, onMoveShift, data.employees]);
   
+  // Click handler for empty cells
+  const handleEmptyCellClick = useCallback((employeeId: string, employeeName: string, dayIndex: number) => {
+    const day = days[dayIndex];
+    setCreateShiftTarget({
+      employeeId,
+      employeeName,
+      date: day.date,
+      dateStr: day.dateStr,
+    });
+  }, [days]);
+  
+  // Handler for creating shift
+  const handleCreateShift = useCallback((shiftData: { startTime: string; endTime: string; role: string }) => {
+    if (!createShiftTarget || !onAddShift) return;
+    
+    // Calculate hours
+    const [startH, startM] = shiftData.startTime.split(':').map(Number);
+    const [endH, endM] = shiftData.endTime.split(':').map(Number);
+    let hours = (endH * 60 + endM - startH * 60 - startM) / 60;
+    if (hours <= 0) hours += 24;
+    
+    onAddShift({
+      employeeId: createShiftTarget.employeeId,
+      date: createShiftTarget.dateStr,
+      startTime: shiftData.startTime,
+      endTime: shiftData.endTime,
+      hours,
+      role: shiftData.role,
+    });
+    
+    toast.success(`New shift created for ${createShiftTarget.employeeName}`);
+    setCreateShiftTarget(null);
+  }, [createShiftTarget, onAddShift]);
+  
   const isDraggingEnabled = viewMode === 'people' && onMoveShift;
+  const isCreatingEnabled = viewMode === 'people' && onAddShift;
   
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
-      {/* Header with days */}
-      <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/30">
-        <div className="p-3 font-medium text-sm text-muted-foreground border-r border-border">
-          Team
-        </div>
-        {days.map((day, i) => {
-          const kpi = data.dailyKPIs[i];
-          const WeatherIcon = weatherIcons[i];
-          
-          return (
-            <div key={day.dateStr} className="p-3 border-r border-border last:border-r-0">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{day.dayName}</span>
-                  <span className="text-sm text-muted-foreground">{day.dayNum}</span>
-                </div>
-                <WeatherIcon className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-xs text-muted-foreground">
-                £{kpi.sales.toLocaleString()}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      
-      {/* Open shifts row */}
-      <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-amber-50/30">
-        <div className="p-3 border-r border-border">
-          <div className="font-medium text-sm">{openShiftsRow.label}</div>
-          <div className="text-xs text-muted-foreground">
-            {openShiftsRow.hours}h total
+    <>
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        {/* Header with days */}
+        <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/30">
+          <div className="p-3 font-medium text-sm text-muted-foreground border-r border-border">
+            Team
           </div>
-        </div>
-        {openShiftsRow.shifts.map((shift, i) => (
-          <div key={i} className="p-2 border-r border-border last:border-r-0 min-h-[60px]">
-            {shift && <ShiftCard shift={shift} draggable={false} />}
-          </div>
-        ))}
-      </div>
-      
-      {/* Employee/group rows */}
-      <ScrollArea className="max-h-[500px]">
-        {rows.map((row) => (
-          <div 
-            key={row.id} 
-            className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors"
-          >
-            {/* Row label */}
-            <div className="p-3 border-r border-border flex items-center gap-3">
-              {row.initials && (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                  {row.initials}
-                </div>
-              )}
-              <div className="min-w-0">
-                <div className="font-medium text-sm truncate">{row.label}</div>
-                <div className="text-xs text-muted-foreground">
-                  {row.targetHours ? (
-                    <span className={row.hours < row.targetHours * 0.8 ? 'text-amber-600' : ''}>
-                      {row.hours}/{row.targetHours}h
-                    </span>
-                  ) : row.sublabel ? (
-                    row.sublabel
-                  ) : (
-                    `${row.hours}h`
-                  )}
-                </div>
-              </div>
-            </div>
+          {days.map((day, i) => {
+            const kpi = data.dailyKPIs[i];
+            const WeatherIcon = weatherIcons[i];
             
-            {/* Shift cells */}
-            {row.shifts.map((shift, dayIndex) => {
-              const isUnavailable = row.unavailableDays.includes(dayIndex);
-              const isDayOff = row.dayOffDays.includes(dayIndex);
-              const isOver = dropTarget?.employeeId === row.id && dropTarget?.dayIndex === dayIndex;
-              const canDrop = !isUnavailable && !isDayOff;
+            return (
+              <div key={day.dateStr} className="p-3 border-r border-border last:border-r-0">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{day.dayName}</span>
+                    <span className="text-sm text-muted-foreground">{day.dayNum}</span>
+                  </div>
+                  <WeatherIcon className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  £{kpi.sales.toLocaleString()}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Open shifts row */}
+        <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-amber-50/30">
+          <div className="p-3 border-r border-border">
+            <div className="font-medium text-sm">{openShiftsRow.label}</div>
+            <div className="text-xs text-muted-foreground">
+              {openShiftsRow.hours}h total
+            </div>
+          </div>
+          {openShiftsRow.shifts.map((shift, i) => (
+            <div key={i} className="p-2 border-r border-border last:border-r-0 min-h-[60px]">
+              {shift && <ShiftCard shift={shift} draggable={false} />}
+            </div>
+          ))}
+        </div>
+        
+        {/* Employee/group rows */}
+        <ScrollArea className="max-h-[500px]">
+          {rows.map((row) => (
+            <div 
+              key={row.id} 
+              className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors"
+            >
+              {/* Row label */}
+              <div className="p-3 border-r border-border flex items-center gap-3">
+                {row.initials && (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                    {row.initials}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{row.label}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {row.targetHours ? (
+                      <span className={row.hours < row.targetHours * 0.8 ? 'text-amber-600' : ''}>
+                        {row.hours}/{row.targetHours}h
+                      </span>
+                    ) : row.sublabel ? (
+                      row.sublabel
+                    ) : (
+                      `${row.hours}h`
+                    )}
+                  </div>
+                </div>
+              </div>
               
-              if (isDraggingEnabled) {
+              {/* Shift cells */}
+              {row.shifts.map((shift, dayIndex) => {
+                const isUnavailable = row.unavailableDays.includes(dayIndex);
+                const isDayOff = row.dayOffDays.includes(dayIndex);
+                const isOver = dropTarget?.employeeId === row.id && dropTarget?.dayIndex === dayIndex;
+                const canDrop = !isUnavailable && !isDayOff;
+                const isEmpty = !isUnavailable && !isDayOff && !shift;
+                
+                if (isDraggingEnabled) {
+                  return (
+                    <DropZone
+                      key={dayIndex}
+                      isOver={isOver}
+                      canDrop={canDrop}
+                      onDragOver={(e) => handleDragOver(e, row.id, dayIndex, isUnavailable, isDayOff)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, row.id, dayIndex, row)}
+                    >
+                      {isUnavailable ? (
+                        <UnavailableCell />
+                      ) : isDayOff ? (
+                        <DayOffCell />
+                      ) : shift ? (
+                        <ShiftCard 
+                          shift={shift}
+                          isDragging={dragData?.shiftId === shift.id}
+                          onDragStart={(e) => handleDragStart(e, shift, row.id)}
+                          onDragEnd={handleDragEnd}
+                          draggable={true}
+                        />
+                      ) : isCreatingEnabled ? (
+                        <EmptyCell onClick={() => handleEmptyCellClick(row.id, row.label, dayIndex)} />
+                      ) : null}
+                    </DropZone>
+                  );
+                }
+                
                 return (
-                  <DropZone
-                    key={dayIndex}
-                    isOver={isOver}
-                    canDrop={canDrop}
-                    onDragOver={(e) => handleDragOver(e, row.id, dayIndex, isUnavailable, isDayOff)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, row.id, dayIndex, row)}
+                  <div 
+                    key={dayIndex} 
+                    className="p-2 border-r border-border last:border-r-0 min-h-[60px]"
                   >
                     {isUnavailable ? (
                       <UnavailableCell />
                     ) : isDayOff ? (
                       <DayOffCell />
                     ) : shift ? (
-                      <ShiftCard 
-                        shift={shift}
-                        isDragging={dragData?.shiftId === shift.id}
-                        onDragStart={(e) => handleDragStart(e, shift, row.id)}
-                        onDragEnd={handleDragEnd}
-                        draggable={true}
-                      />
+                      <ShiftCard shift={shift} draggable={false} />
+                    ) : isCreatingEnabled ? (
+                      <EmptyCell onClick={() => handleEmptyCellClick(row.id, row.label, dayIndex)} />
                     ) : null}
-                  </DropZone>
+                  </div>
                 );
-              }
-              
-              return (
-                <div 
-                  key={dayIndex} 
-                  className="p-2 border-r border-border last:border-r-0 min-h-[60px]"
-                >
-                  {isUnavailable ? (
-                    <UnavailableCell />
-                  ) : isDayOff ? (
-                    <DayOffCell />
-                  ) : shift ? (
-                    <ShiftCard shift={shift} draggable={false} />
-                  ) : null}
-                </div>
-              );
-            })}
+              })}
+            </div>
+          ))}
+        </ScrollArea>
+        
+        {/* Hints */}
+        {(isDraggingEnabled || isCreatingEnabled) && (
+          <div className="px-4 py-2 bg-muted/30 border-t border-border text-xs text-muted-foreground flex gap-4">
+            {isDraggingEnabled && <span>💡 Drag shifts to reassign</span>}
+            {isCreatingEnabled && <span>➕ Click empty cells to add shifts</span>}
           </div>
-        ))}
-      </ScrollArea>
+        )}
+      </div>
       
-      {/* Drag hint */}
-      {isDraggingEnabled && (
-        <div className="px-4 py-2 bg-muted/30 border-t border-border text-xs text-muted-foreground">
-          💡 Drag shifts to reassign them to different employees or days
-        </div>
+      {/* Create Shift Dialog */}
+      {createShiftTarget && (
+        <CreateShiftDialog
+          isOpen={true}
+          onClose={() => setCreateShiftTarget(null)}
+          onSubmit={handleCreateShift}
+          employeeName={createShiftTarget.employeeName}
+          date={createShiftTarget.date}
+          positions={positions}
+        />
       )}
-    </div>
+    </>
   );
 }
