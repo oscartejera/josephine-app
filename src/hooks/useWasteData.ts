@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format, eachDayOfInterval, parseISO } from 'date-fns';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
+import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 export type WasteReason = 'broken' | 'end_of_day' | 'expired' | 'theft' | 'other';
@@ -86,11 +87,7 @@ export function useWasteData(
     return selectedLocations;
   }, [selectedLocations, locations]);
 
-  useEffect(() => {
-    fetchData();
-  }, [dateRange, locationIds, group]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -292,7 +289,47 @@ export function useWasteData(
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dateRange, locationIds, locations]);
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Subscribe to realtime waste event updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('waste-events-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'waste_events'
+        },
+        (payload) => {
+          console.log('Waste event realtime update:', payload);
+          fetchData();
+          
+          if (payload.eventType === 'INSERT') {
+            toast.success('New waste logged', {
+              description: 'Waste data has been updated.',
+              duration: 3000,
+            });
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('Waste entry removed', {
+              description: 'Waste data has been updated.',
+              duration: 3000,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
 
   // Generate demo data if empty
   useEffect(() => {
