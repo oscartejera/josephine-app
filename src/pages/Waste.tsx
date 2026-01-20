@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import {
@@ -8,7 +8,8 @@ import {
   WasteByReasonChart,
   WasteCategoryDonut,
   WasteLeaderboard,
-  WasteItemsTable
+  WasteItemsTable,
+  LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
@@ -16,6 +17,7 @@ import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNo
 export default function Waste() {
   const [searchParams] = useSearchParams();
   const today = new Date();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Initialize from query params if present
   const initialFrom = searchParams.get('start_date') 
@@ -45,17 +47,32 @@ export default function Waste() {
     items
   } = useWasteData(dateRange, dateMode, selectedLocations);
 
+  const handleWasteLogged = () => {
+    // Trigger refresh by updating key
+    setRefreshKey(k => k + 1);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <WasteHeader
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        dateMode={dateMode}
-        setDateMode={setDateMode}
-        selectedLocations={selectedLocations}
-        setSelectedLocations={setSelectedLocations}
-      />
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="flex-1">
+          <WasteHeader
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            dateMode={dateMode}
+            setDateMode={setDateMode}
+            selectedLocations={selectedLocations}
+            setSelectedLocations={setSelectedLocations}
+          />
+        </div>
+        <div className="flex-shrink-0 pt-8 lg:pt-12">
+          <LogWasteDialog
+            onSuccess={handleWasteLogged}
+            defaultLocationId={selectedLocations[0]}
+          />
+        </div>
+      </div>
 
       {/* KPI Cards Row */}
       <WasteKPICards
