@@ -32,6 +32,9 @@ interface GridRow {
   shifts: (Shift | null)[];
   unavailableDays: number[];
   dayOffDays: number[];
+  timeOffDays: number[];
+  timeOffTypes: Record<number, string>;
+  preferredOffDays: number[];
 }
 
 interface DragData {
@@ -122,6 +125,25 @@ function DayOffCell() {
   return (
     <div className="flex items-center gap-1 px-2 py-1.5 bg-blue-50 rounded-md text-xs text-blue-600">
       <span>🏖️ Day off</span>
+    </div>
+  );
+}
+
+function TimeOffCell({ type }: { type?: string }) {
+  const icon = type === 'sick' ? '🤒' : type === 'vacation' ? '✈️' : '📋';
+  const label = type === 'sick' ? 'Sick leave' : type === 'vacation' ? 'Vacation' : 'Time off';
+  
+  return (
+    <div className="flex items-center gap-1 px-2 py-1.5 bg-purple-50 rounded-md text-xs text-purple-600 border border-purple-200">
+      <span>{icon} {label}</span>
+    </div>
+  );
+}
+
+function PreferredCell() {
+  return (
+    <div className="flex items-center gap-1 px-2 py-1.5 bg-amber-50/50 rounded-md text-xs text-amber-600 border border-dashed border-amber-200">
+      <span>⚠️ Prefers off</span>
     </div>
   );
 }
@@ -225,6 +247,25 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           .map((_, i) => emp.availability[i.toString()] === 'day_off' ? i : -1)
           .filter(i => i >= 0);
         
+        const timeOffDays = days
+          .map((_, i) => emp.availability[i.toString()] === 'time_off' ? i : -1)
+          .filter(i => i >= 0);
+        
+        const preferredOffDays = days
+          .map((_, i) => emp.availability[i.toString()] === 'preferred' ? i : -1)
+          .filter(i => i >= 0);
+        
+        // Get time-off types for each day
+        const timeOffTypes: Record<number, string> = {};
+        if (emp.timeOffInfo) {
+          days.forEach((_, i) => {
+            const info = emp.timeOffInfo?.[i.toString()];
+            if (info) {
+              timeOffTypes[i] = info.type;
+            }
+          });
+        }
+        
         return {
           id: emp.id,
           label: emp.name,
@@ -234,6 +275,9 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           shifts,
           unavailableDays,
           dayOffDays,
+          timeOffDays,
+          timeOffTypes,
+          preferredOffDays,
         };
       });
     } else {
@@ -256,6 +300,9 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           shifts,
           unavailableDays: [],
           dayOffDays: [],
+          timeOffDays: [],
+          timeOffTypes: {},
+          preferredOffDays: [],
         };
       });
     }
@@ -272,6 +319,9 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
     ),
     unavailableDays: [],
     dayOffDays: [],
+    timeOffDays: [],
+    timeOffTypes: {},
+    preferredOffDays: [],
   };
   
   const weatherIcons = [Sun, Cloud, Sun, CloudRain, Sun, Sun, Cloud];
@@ -457,9 +507,12 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
               {row.shifts.map((shift, dayIndex) => {
                 const isUnavailable = row.unavailableDays.includes(dayIndex);
                 const isDayOff = row.dayOffDays.includes(dayIndex);
+                const isTimeOff = row.timeOffDays.includes(dayIndex);
+                const isPreferred = row.preferredOffDays.includes(dayIndex);
+                const timeOffType = row.timeOffTypes[dayIndex];
                 const isOver = dropTarget?.employeeId === row.id && dropTarget?.dayIndex === dayIndex;
-                const canDrop = !isUnavailable && !isDayOff;
-                const isEmpty = !isUnavailable && !isDayOff && !shift;
+                const canDrop = !isUnavailable && !isDayOff && !isTimeOff;
+                const isEmpty = !isUnavailable && !isDayOff && !isTimeOff && !shift;
                 
                 if (isDraggingEnabled) {
                   return (
@@ -467,11 +520,13 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                       key={dayIndex}
                       isOver={isOver}
                       canDrop={canDrop}
-                      onDragOver={(e) => handleDragOver(e, row.id, dayIndex, isUnavailable, isDayOff)}
+                      onDragOver={(e) => handleDragOver(e, row.id, dayIndex, isUnavailable || isTimeOff, isDayOff)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, row.id, dayIndex, row)}
                     >
-                      {isUnavailable ? (
+                      {isTimeOff ? (
+                        <TimeOffCell type={timeOffType} />
+                      ) : isUnavailable ? (
                         <UnavailableCell />
                       ) : isDayOff ? (
                         <DayOffCell />
