@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Minus, Plus, CreditCard, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Trash2, Minus, Plus, CreditCard, Loader2, CheckCircle, AlertCircle, Truck, Calendar, Shield, Package, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { useProcurementData } from '@/hooks/useProcurementData';
@@ -17,23 +21,37 @@ export default function ProcurementCart() {
     orderSummary,
     cart,
     updateCartItem,
-    allSkus,
+    clearCart,
+    selectedSupplier,
+    deliveryDate,
+    cutoffInfo,
+    deliveryDaysLabel,
   } = useProcurementData();
   
   const [paymentState, setPaymentState] = useState<PaymentState>('idle');
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [comments, setComments] = useState('');
+
+  const cartItems = orderSummary.items;
+  const meetsMinOrder = orderSummary.subtotal >= orderSummary.minOrder;
+  const amountNeeded = orderSummary.minOrder - orderSummary.subtotal;
 
   const handlePlaceOrder = async () => {
+    if (!meetsMinOrder) {
+      return;
+    }
+
     setPaymentState('processing');
     
     // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 2500));
     
-    // Mock success (80% chance) or failure
-    const success = Math.random() > 0.2;
+    // Mock success (90% chance)
+    const success = Math.random() > 0.1;
     
     if (success) {
-      setOrderId(`PO-${Date.now().toString(36).toUpperCase()}`);
+      const newOrderId = `PO-${Date.now().toString(36).toUpperCase()}`;
+      setOrderId(newOrderId);
       setPaymentState('success');
     } else {
       setPaymentState('error');
@@ -42,166 +60,267 @@ export default function ProcurementCart() {
 
   const handleCloseDialog = () => {
     if (paymentState === 'success') {
-      navigate('/procurement');
+      clearCart();
+      // Navigate to orders page with success state
+      navigate('/procurement/orders', { 
+        state: { 
+          orderSuccess: true, 
+          orderId: orderId,
+          supplierName: orderSummary.supplierName 
+        } 
+      });
     }
     setPaymentState('idle');
   };
 
-  const cartItems = orderSummary.items;
-
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-[1400px] mx-auto space-y-6 animate-fade-in pb-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/procurement')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Shopping Cart</h1>
-          <p className="text-sm text-muted-foreground">
-            {cartItems.length} items • {orderSummary.supplierName}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/procurement')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Shopping Cart</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Truck className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Delivers {deliveryDaysLabel}</span>
+            </div>
+          </div>
         </div>
+        <Badge variant="secondary" className="text-sm px-4 py-2">
+          {cartItems.length} items
+        </Badge>
+      </div>
+
+      {/* Info banner */}
+      <div className="flex items-start gap-3 p-4 bg-info/10 rounded-xl border border-info/20">
+        <Calendar className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-foreground">
+          Earliest delivery on <span className="font-semibold text-info">{cutoffInfo.deliveryDateStr}</span> if ordered before{' '}
+          <span className="font-semibold">{cutoffInfo.cutoffTimeStr}</span> on {cutoffInfo.cutoffDay}.
+        </p>
       </div>
 
       {cartItems.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground mb-4">Your cart is empty</p>
+            <Package className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" />
+            <p className="text-lg text-muted-foreground mb-4">Your cart is empty</p>
             <Button onClick={() => navigate('/procurement')}>
               Continue Shopping
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
-          {/* Cart Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Pack Size</TableHead>
-                    <TableHead className="text-center">Quantity</TableHead>
-                    <TableHead className="text-right">Unit Price</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cartItems.map(({ sku, packs }) => (
-                    <TableRow key={sku.id}>
-                      <TableCell className="font-medium">{sku.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{sku.packSize}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => updateCartItem(sku.id, packs - 1)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-6 text-center font-medium">{packs}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => updateCartItem(sku.id, packs + 1)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">£{sku.unitPrice.toFixed(2)}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        £{(packs * sku.unitPrice).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => updateCartItem(sku.id, 0)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
+          {/* Cart Items */}
+          <div className="space-y-6">
+            {/* Delivery Date Field */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Delivery Date</p>
+                      <p className="text-lg font-semibold text-foreground">{format(deliveryDate, 'EEEE, d MMMM yyyy')}</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-success border-success">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Coverage until {format(orderSummary.coverageEndDate, 'EEE d MMM')}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Order Summary */}
+            {/* Comments */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="comments" className="text-sm font-medium">Order Comments</Label>
+                    <span className="text-xs text-muted-foreground ml-auto">{comments.length}/300</span>
+                  </div>
+                  <Textarea
+                    id="comments"
+                    placeholder="Add any special instructions for this order..."
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value.slice(0, 300))}
+                    className="min-h-[80px] resize-none"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Items Table */}
+            <Card>
+              <CardHeader className="border-b border-border">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Package className="h-5 w-5" />
+                  Your Items
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="font-semibold">Item</TableHead>
+                      <TableHead className="font-semibold">Pack Size</TableHead>
+                      <TableHead className="text-center font-semibold">Quantity</TableHead>
+                      <TableHead className="text-right font-semibold">Unit Price</TableHead>
+                      <TableHead className="text-right font-semibold">Subtotal</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cartItems.map(({ sku, packs }) => (
+                      <TableRow key={sku.id}>
+                        <TableCell className="font-medium">{sku.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-normal">{sku.packSize}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateCartItem(sku.id, packs - 1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <div className="w-10 h-8 flex items-center justify-center bg-muted rounded font-semibold">
+                              {packs}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateCartItem(sku.id, packs + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">£{sku.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          £{(packs * sku.unitPrice).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => updateCartItem(sku.id, 0)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Order Summary Sidebar */}
           <div className="space-y-4">
             <Card className="sticky top-6">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+              <CardHeader className="border-b border-border bg-muted/30">
+                <CardTitle className="text-lg">Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Supplier</span>
-                    <span className="font-medium">{orderSummary.supplierName}</span>
+              <CardContent className="p-6 space-y-5">
+                {/* Supplier info */}
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <span className="text-lg font-bold text-primary">{selectedSupplier.logo}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delivery Date</span>
-                    <span className="font-medium">{format(orderSummary.deliveryDate, 'd MMM yyyy')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Coverage Until</span>
-                    <span className="font-medium text-success">{format(orderSummary.coverageEndDate, 'EEE d MMM')}</span>
+                  <div>
+                    <p className="font-semibold text-foreground">{orderSummary.supplierName}</p>
+                    <p className="text-sm text-muted-foreground">Delivery: {format(deliveryDate, 'd MMM yyyy')}</p>
                   </div>
                 </div>
 
                 <Separator />
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
-                    <span>£{orderSummary.subtotal.toFixed(2)}</span>
+                {/* Min order progress */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Min. order value</span>
+                    <span className="font-medium">£{orderSummary.minOrder.toFixed(0)}</span>
                   </div>
-                  {orderSummary.deliveryFee > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Delivery Fee</span>
+                  <Progress value={orderSummary.minOrderProgress} className="h-2.5" />
+                  {!meetsMinOrder && (
+                    <p className="text-xs text-warning flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Add £{amountNeeded.toFixed(2)} more to place order
+                    </p>
+                  )}
+                  {meetsMinOrder && (
+                    <p className="text-xs text-success flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Minimum order met
+                    </p>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Totals */}
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
+                    <span className="font-medium">£{orderSummary.subtotal.toFixed(2)}</span>
+                  </div>
+                  {orderSummary.deliveryFee > 0 ? (
+                    <div className="flex justify-between text-sm text-warning">
+                      <span>Delivery Fee</span>
                       <span>£{orderSummary.deliveryFee.toFixed(2)}</span>
                     </div>
+                  ) : (
+                    <div className="flex justify-between text-sm text-success">
+                      <span>Delivery</span>
+                      <span className="font-medium">FREE</span>
+                    </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">VAT (21%)</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total VAT (21%)</span>
                     <span>£{orderSummary.tax.toFixed(2)}</span>
                   </div>
                 </div>
 
                 <Separator />
 
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total</span>
-                  <span>£{orderSummary.total.toFixed(2)}</span>
+                {/* Grand Total */}
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Total</span>
+                  <span className="text-2xl font-bold">£{orderSummary.total.toFixed(2)}</span>
                 </div>
 
-                <div className="space-y-2 pt-2">
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    onClick={handlePlaceOrder}
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Place Order
-                  </Button>
+                {/* Actions */}
+                <div className="space-y-3 pt-2">
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => navigate('/procurement')}
+                    onClick={() => {/* Save for later */}}
                   >
-                    Back to Procurement
+                    Save for later
+                  </Button>
+                  <Button 
+                    className="w-full h-12 text-base font-semibold" 
+                    size="lg"
+                    onClick={handlePlaceOrder}
+                    disabled={!meetsMinOrder}
+                  >
+                    <CreditCard className="h-5 w-5 mr-2" />
+                    Place Order
                   </Button>
                 </div>
 
@@ -221,9 +340,9 @@ export default function ProcurementCart() {
             <div className="py-8 text-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
               <DialogHeader>
-                <DialogTitle>Processing Payment...</DialogTitle>
+                <DialogTitle>Processing Order...</DialogTitle>
                 <DialogDescription>
-                  Please wait while we process your order.
+                  Please wait while we submit your order to {orderSummary.supplierName}.
                 </DialogDescription>
               </DialogHeader>
             </div>
@@ -239,11 +358,11 @@ export default function ProcurementCart() {
                 <DialogDescription className="space-y-2">
                   <p>Your order has been submitted to {orderSummary.supplierName}.</p>
                   <p className="font-medium text-foreground">Order ID: {orderId}</p>
-                  <p>Expected delivery: {format(orderSummary.deliveryDate, 'd MMMM yyyy')}</p>
+                  <p>Expected delivery: {format(deliveryDate, 'd MMMM yyyy')}</p>
                 </DialogDescription>
               </DialogHeader>
               <Button onClick={handleCloseDialog} className="mt-4">
-                Back to Procurement
+                View Orders
               </Button>
             </div>
           )}
@@ -254,9 +373,9 @@ export default function ProcurementCart() {
                 <AlertCircle className="h-8 w-8 text-destructive" />
               </div>
               <DialogHeader>
-                <DialogTitle>Payment Failed</DialogTitle>
+                <DialogTitle>Order Failed</DialogTitle>
                 <DialogDescription>
-                  There was an issue processing your payment. Please check your payment method in Settings.
+                  There was an issue processing your order. Please check your supplier connection in Settings.
                 </DialogDescription>
               </DialogHeader>
               <div className="flex gap-2 justify-center mt-4">
@@ -264,7 +383,7 @@ export default function ProcurementCart() {
                   Try Again
                 </Button>
                 <Button onClick={() => navigate('/settings')}>
-                  Update Payment Method
+                  Check Settings
                 </Button>
               </div>
             </div>
