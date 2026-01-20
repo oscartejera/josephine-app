@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { startOfMonth, endOfMonth } from 'date-fns';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { InventoryHeader } from '@/components/inventory';
 import { ReconciliationGrid } from '@/components/inventory/ReconciliationGrid';
+import { AskJosephineDrawer } from '@/components/inventory/AskJosephineDrawer';
 import { useReconciliationData } from '@/hooks/useReconciliationData';
+import { useInventoryData } from '@/hooks/useInventoryData';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
 
@@ -25,6 +26,14 @@ export default function InventoryReconciliation() {
     selectedLocations,
     stockStatus
   );
+
+  // Get inventory metrics for Josephine context
+  const {
+    metrics,
+    categoryBreakdown,
+    wasteByCategory,
+    locationPerformance
+  } = useInventoryData(dateRange, dateMode, viewMode, selectedLocations);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -59,16 +68,14 @@ export default function InventoryReconciliation() {
       />
 
       {/* Ask Josephine Drawer */}
-      <Sheet open={josephineOpen} onOpenChange={setJosephineOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px]">
-          <SheetHeader>
-            <SheetTitle>Ask Josephine</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 text-center text-muted-foreground">
-            <p>AI-powered reconciliation insights coming soon...</p>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <AskJosephineDrawer
+        open={josephineOpen}
+        onOpenChange={setJosephineOpen}
+        metrics={metrics}
+        categoryBreakdown={categoryBreakdown}
+        wasteByCategory={wasteByCategory}
+        locationPerformance={locationPerformance}
+      />
     </div>
   );
 }

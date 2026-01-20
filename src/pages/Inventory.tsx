@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useNavigate } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import { 
@@ -14,6 +13,7 @@ import {
   LocationPerformanceTable,
   type ViewMode
 } from '@/components/inventory';
+import { AskJosephineDrawer } from '@/components/inventory/AskJosephineDrawer';
 import { useInventoryData } from '@/hooks/useInventoryData';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -125,16 +125,14 @@ export default function Inventory() {
       />
 
       {/* Ask Josephine Drawer */}
-      <Sheet open={josephineOpen} onOpenChange={setJosephineOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px]">
-          <SheetHeader>
-            <SheetTitle>Ask Josephine</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 text-center text-muted-foreground">
-            <p>AI-powered inventory insights coming soon...</p>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <AskJosephineDrawer
+        open={josephineOpen}
+        onOpenChange={setJosephineOpen}
+        metrics={metrics}
+        categoryBreakdown={categoryBreakdown}
+        wasteByCategory={wasteByCategory}
+        locationPerformance={locationPerformance}
+      />
     </div>
   );
 }
