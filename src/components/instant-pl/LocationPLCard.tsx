@@ -85,8 +85,8 @@ function MetricRow({
   isBetter: boolean;
   tooltipContent?: string;
 }) {
-  const content = (
-    <div className="py-2.5 border-b border-border/40 last:border-b-0">
+  const innerContent = (
+    <>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide mb-0.5">
@@ -105,14 +105,16 @@ function MetricRow({
         Forecast: {forecastPrimary}
         {forecastSecondary && ` (${forecastSecondary})`}
       </p>
-    </div>
+    </>
   );
   
   if (tooltipContent) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="cursor-help">{content}</div>
+          <div className="py-2.5 border-b border-border/40 last:border-b-0 cursor-help">
+            {innerContent}
+          </div>
         </TooltipTrigger>
         <TooltipContent side="right" className="max-w-[200px]">
           <p className="text-xs">{tooltipContent}</p>
@@ -121,7 +123,11 @@ function MetricRow({
     );
   }
   
-  return content;
+  return (
+    <div className="py-2.5 border-b border-border/40 last:border-b-0">
+      {innerContent}
+    </div>
+  );
 }
 
 export function LocationPLCard({ 

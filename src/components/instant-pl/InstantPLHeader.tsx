@@ -2,7 +2,7 @@
  * InstantPLHeader - Nory-like header for Instant P&L page
  */
 
-import { ChevronRight, MoreHorizontal } from 'lucide-react';
+import { ChevronRight, MoreHorizontal, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DateRangePickerNoryLike, 
@@ -17,8 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ViewMode, FilterMode } from '@/hooks/useInstantPLData';
+import { FilterMode } from '@/hooks/useInstantPLData';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -27,20 +26,22 @@ interface InstantPLHeaderProps {
   dateMode: DateMode;
   onDateChange: (range: DateRangeValue, mode: DateMode, granularity: ChartGranularity) => void;
   onDateModeChange: (mode: DateMode) => void;
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
   filterMode: FilterMode;
   onFilterModeChange: (mode: FilterMode) => void;
   lastUpdated?: Date;
 }
+
+const FILTER_OPTIONS: { value: FilterMode; label: string }[] = [
+  { value: 'best', label: 'Best' },
+  { value: 'worst', label: 'Worst' },
+  { value: 'all', label: 'All' },
+];
 
 export function InstantPLHeader({
   dateRange,
   dateMode,
   onDateChange,
   onDateModeChange,
-  viewMode,
-  onViewModeChange,
   filterMode,
   onFilterModeChange,
   lastUpdated
@@ -83,63 +84,31 @@ export function InstantPLHeader({
           </Select>
         </div>
         
-        {/* Right side: Best/Worst/All + View mode + Actions */}
+        {/* Right side: Best/Worst/All + Actions */}
         <div className="flex items-center gap-3">
-          {/* Best/Worst/All toggle */}
-          <Tabs 
-            value={filterMode} 
-            onValueChange={(v) => onFilterModeChange(v as FilterMode)}
-          >
-            <TabsList className="h-8 p-0.5 bg-muted/50">
-              <TabsTrigger 
-                value="best" 
-                className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                Best
-              </TabsTrigger>
-              <TabsTrigger 
-                value="worst" 
-                className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                Worst
-              </TabsTrigger>
-              <TabsTrigger 
-                value="all" 
-                className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                All
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <div className="h-5 w-px bg-border" />
-          
-          {/* View mode toggle */}
-          <Tabs 
-            value={viewMode} 
-            onValueChange={(v) => onViewModeChange(v as ViewMode)}
-          >
-            <TabsList className="h-8 p-0.5 bg-muted/50">
-              <TabsTrigger 
-                value="percentage" 
-                className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                Percentage
-              </TabsTrigger>
-              <TabsTrigger 
-                value="amount" 
-                className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                Amount
-              </TabsTrigger>
-              <TabsTrigger 
-                value="hours" 
-                className="text-xs h-7 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                Hours
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Best/Worst/All toggle with green checkmark */}
+          <div className="inline-flex items-center rounded-lg border border-border/60 bg-card p-0.5">
+            {FILTER_OPTIONS.map((option) => {
+              const isSelected = filterMode === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => onFilterModeChange(option.value)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                    isSelected
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  {isSelected && (
+                    <Check className="h-3.5 w-3.5 text-[hsl(var(--success))]" strokeWidth={3} />
+                  )}
+                  <span>{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
           
           {/* Actions button */}
           <Button variant="ghost" size="icon" className="h-8 w-8">
