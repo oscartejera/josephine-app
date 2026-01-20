@@ -1,5 +1,6 @@
-import { ChevronRight, MoreHorizontal, Sparkles } from 'lucide-react';
+import { ChevronRight, MoreHorizontal, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import {
   Select,
@@ -8,7 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useApp } from '@/contexts/AppContext';
+import { cn } from '@/lib/utils';
 
 interface WasteHeaderProps {
   dateRange: DateRangeValue;
@@ -18,6 +25,7 @@ interface WasteHeaderProps {
   selectedLocations: string[];
   setSelectedLocations: (value: string[]) => void;
   onAskJosephine?: () => void;
+  isConnected?: boolean;
 }
 
 export function WasteHeader({
@@ -27,7 +35,8 @@ export function WasteHeader({
   setDateMode,
   selectedLocations,
   setSelectedLocations,
-  onAskJosephine
+  onAskJosephine,
+  isConnected = false
 }: WasteHeaderProps) {
   const { locations } = useApp();
 
@@ -53,6 +62,43 @@ export function WasteHeader({
         </h1>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Live Status Indicator */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "gap-1.5 cursor-default transition-colors",
+                  isConnected 
+                    ? "text-success border-success/30 bg-success/5" 
+                    : "text-muted-foreground border-border"
+                )}
+              >
+                {isConnected ? (
+                  <>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                    </span>
+                    Live
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="h-3 w-3" />
+                    Offline
+                  </>
+                )}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isConnected ? (
+                <p>Real-time waste updates active</p>
+              ) : (
+                <p>Connecting to real-time updates...</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+
           {/* Date Range Picker */}
           <DateRangePickerNoryLike
             value={dateRange}

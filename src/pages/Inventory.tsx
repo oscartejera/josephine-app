@@ -51,6 +51,7 @@ export default function Inventory() {
   const {
     isLoading,
     lastUpdated,
+    isConnected,
     metrics,
     categoryBreakdown,
     wasteByCategory,
@@ -86,6 +87,7 @@ export default function Inventory() {
         onReseedData={handleReseedData}
         lastUpdated={lastUpdated}
         isLoading={isLoading}
+        isConnected={isConnected}
         breadcrumbs={breadcrumbs}
       />
 

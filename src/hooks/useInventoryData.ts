@@ -97,6 +97,7 @@ export function useInventoryData(
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [hasRealData, setHasRealData] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const [metrics, setMetrics] = useState<InventoryMetrics>(defaultMetrics);
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
   const [wasteByCategory, setWasteByCategory] = useState<WasteByCategory[]>([]);
@@ -262,10 +263,13 @@ export function useInventoryData(
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
 
     return () => {
       supabase.removeChannel(channel);
+      setIsConnected(false);
     };
   }, [fetchData]);
 
@@ -524,6 +528,7 @@ export function useInventoryData(
     isLoading,
     lastUpdated,
     hasRealData,
+    isConnected,
     metrics,
     categoryBreakdown,
     wasteByCategory,

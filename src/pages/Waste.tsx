@@ -39,6 +39,7 @@ export default function Waste() {
 
   const {
     isLoading,
+    isConnected,
     metrics,
     trendData,
     byReason,
@@ -64,6 +65,7 @@ export default function Waste() {
             setDateMode={setDateMode}
             selectedLocations={selectedLocations}
             setSelectedLocations={setSelectedLocations}
+            isConnected={isConnected}
           />
         </div>
         <div className="flex-shrink-0 pt-8 lg:pt-12">
