@@ -30,7 +30,7 @@ export default function BISales() {
   const [askPanelOpen, setAskPanelOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'sales' | 'orders'>('sales');
 
-  const { data, isLoading } = useBISalesData({
+  const { data, isLoading, isConnected, lastUpdate } = useBISalesData({
     dateRange,
     granularity,
     compareMode,
@@ -50,6 +50,8 @@ export default function BISales() {
         selectedLocations={selectedLocations}
         setSelectedLocations={setSelectedLocations}
         onAskJosephine={() => setAskPanelOpen(true)}
+        isConnected={isConnected}
+        lastUpdate={lastUpdate}
       />
 
       {/* KPI Cards */}

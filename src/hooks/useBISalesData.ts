@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format, eachDayOfInterval, eachHourOfInterval, startOfDay, endOfDay, differenceInDays, isSameDay } from 'date-fns';
 import { toast } from 'sonner';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export type CompareMode = 'forecast' | 'previous_period' | 'previous_year';
 export type GranularityMode = 'daily' | 'weekly' | 'monthly';
@@ -164,7 +165,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
   const { locations } = useApp();
   const queryClient = useQueryClient();
   const effectiveLocationIds = locationIds.length > 0 ? locationIds : locations.map(l => l.id);
-  const isLiveRef = useRef(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   
   const isSingleDay = isSameDay(dateRange.from, dateRange.to) || differenceInDays(dateRange.to, dateRange.from) === 0;
 
@@ -182,6 +184,9 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         (payload) => {
           console.log('Sales realtime update:', payload);
           
+          // Mark last update time
+          setLastUpdate(new Date());
+          
           // Invalidate and refetch the query
           queryClient.invalidateQueries({ queryKey: ['bi-sales'] });
           
@@ -196,10 +201,13 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
 
     return () => {
       supabase.removeChannel(channel);
+      setIsConnected(false);
     };
   }, [queryClient]);
 
@@ -472,5 +480,9 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
     staleTime: 30000
   });
 
-  return query;
+  return {
+    ...query,
+    isConnected,
+    lastUpdate
+  };
 }
