@@ -17,6 +17,7 @@ import Inventory from "@/pages/Inventory";
 import Procurement from "@/pages/Procurement";
 import MenuEngineering from "@/pages/MenuEngineering";
 import Integrations from "@/pages/Integrations";
+import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
@@ -71,6 +72,8 @@ function AppRoutes() {
         <Route path="/procurement" element={<Procurement />} />
         <Route path="/menu-engineering" element={<MenuEngineering />} />
         <Route path="/integrations" element={<Integrations />} />
+        <Route path="/payroll" element={<Payroll />} />
+        <Route path="/payroll/:step" element={<Payroll />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
       
