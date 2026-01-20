@@ -166,12 +166,6 @@ const STOCK_COUNT_ITEMS = [
   { name: 'Coffee beans', unit: 'kg' },
 ];
 
-function weightedPick<T>(items: T[], weights: number[]): T {
-  const totalWeight = weights.reduce((a, b) => a + b, 0);
-  let random = Math.random() * totalWeight;
-  for (let i = 0; i < items.length; i++) {
-    random -= weights[i];
-    if (random <= 0) return items[i];
 // ============= WASTE ITEMS =============
 
 const WASTE_ITEMS: { name: string; category: string; unit: string; avgCost: number; type: 'ingredient' | 'product' }[] = [
