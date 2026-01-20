@@ -11,7 +11,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
-import Forecast from "@/pages/Forecast";
+import Sales from "@/pages/Sales";
 import Labor from "@/pages/Labor";
 import Inventory from "@/pages/Inventory";
 import Procurement from "@/pages/Procurement";
@@ -66,7 +66,7 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/forecast" element={<Forecast />} />
+        <Route path="/forecast" element={<Sales />} />
         <Route path="/labor" element={<Labor />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/procurement" element={<Procurement />} />
