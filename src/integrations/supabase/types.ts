@@ -14,6 +14,168 @@ export type Database = {
   }
   public: {
     Tables: {
+      compliance_submissions: {
+        Row: {
+          agency: Database["public"]["Enums"]["compliance_agency"]
+          created_at: string
+          id: string
+          payload_file_url: string | null
+          payroll_run_id: string
+          response_json: Json | null
+          status: Database["public"]["Enums"]["compliance_status"]
+          submission_type: string
+          submitted_at: string | null
+        }
+        Insert: {
+          agency: Database["public"]["Enums"]["compliance_agency"]
+          created_at?: string
+          id?: string
+          payload_file_url?: string | null
+          payroll_run_id: string
+          response_json?: Json | null
+          status?: Database["public"]["Enums"]["compliance_status"]
+          submission_type: string
+          submitted_at?: string | null
+        }
+        Update: {
+          agency?: Database["public"]["Enums"]["compliance_agency"]
+          created_at?: string
+          id?: string
+          payload_file_url?: string | null
+          payroll_run_id?: string
+          response_json?: Json | null
+          status?: Database["public"]["Enums"]["compliance_status"]
+          submission_type?: string
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_submissions_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_tokens: {
+        Row: {
+          created_at: string
+          encrypted_blob: string
+          expires_at: string | null
+          id: string
+          legal_entity_id: string
+          provider: Database["public"]["Enums"]["token_provider"]
+        }
+        Insert: {
+          created_at?: string
+          encrypted_blob: string
+          expires_at?: string | null
+          id?: string
+          legal_entity_id: string
+          provider: Database["public"]["Enums"]["token_provider"]
+        }
+        Update: {
+          created_at?: string
+          encrypted_blob?: string
+          expires_at?: string | null
+          id?: string
+          legal_entity_id?: string
+          provider?: Database["public"]["Enums"]["token_provider"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_tokens_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      convenio_rules: {
+        Row: {
+          convenio_code: string
+          created_at: string
+          group_id: string
+          id: string
+          rule_json: Json
+        }
+        Insert: {
+          convenio_code: string
+          created_at?: string
+          group_id: string
+          id?: string
+          rule_json?: Json
+        }
+        Update: {
+          convenio_code?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          rule_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convenio_rules_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_legal: {
+        Row: {
+          created_at: string
+          domicilio: string | null
+          employee_id: string
+          fecha_nacimiento: string | null
+          iban: string | null
+          id: string
+          legal_entity_id: string
+          nif: string | null
+          nss: string | null
+        }
+        Insert: {
+          created_at?: string
+          domicilio?: string | null
+          employee_id: string
+          fecha_nacimiento?: string | null
+          iban?: string | null
+          id?: string
+          legal_entity_id: string
+          nif?: string | null
+          nss?: string | null
+        }
+        Update: {
+          created_at?: string
+          domicilio?: string | null
+          employee_id?: string
+          fecha_nacimiento?: string | null
+          iban?: string | null
+          id?: string
+          legal_entity_id?: string
+          nif?: string | null
+          nss?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_legal_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_legal_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           active: boolean | null
@@ -48,6 +210,91 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "employees_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employment_contracts: {
+        Row: {
+          active: boolean
+          base_salary_monthly: number
+          category: string
+          contract_type: string
+          convenio_code: string | null
+          created_at: string
+          employee_id: string
+          end_date: string | null
+          extra_pays: Database["public"]["Enums"]["extra_pay_mode"]
+          group_ss: string
+          hourly_rate: number | null
+          id: string
+          irpf_mode: Database["public"]["Enums"]["irpf_mode"]
+          irpf_rate: number | null
+          jornada_pct: number
+          legal_entity_id: string
+          location_id: string | null
+          start_date: string
+        }
+        Insert: {
+          active?: boolean
+          base_salary_monthly: number
+          category: string
+          contract_type: string
+          convenio_code?: string | null
+          created_at?: string
+          employee_id: string
+          end_date?: string | null
+          extra_pays?: Database["public"]["Enums"]["extra_pay_mode"]
+          group_ss: string
+          hourly_rate?: number | null
+          id?: string
+          irpf_mode?: Database["public"]["Enums"]["irpf_mode"]
+          irpf_rate?: number | null
+          jornada_pct?: number
+          legal_entity_id: string
+          location_id?: string | null
+          start_date: string
+        }
+        Update: {
+          active?: boolean
+          base_salary_monthly?: number
+          category?: string
+          contract_type?: string
+          convenio_code?: string | null
+          created_at?: string
+          employee_id?: string
+          end_date?: string | null
+          extra_pays?: Database["public"]["Enums"]["extra_pay_mode"]
+          group_ss?: string
+          hourly_rate?: number | null
+          id?: string
+          irpf_mode?: Database["public"]["Enums"]["irpf_mode"]
+          irpf_rate?: number | null
+          jornada_pct?: number
+          legal_entity_id?: string
+          location_id?: string | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employment_contracts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employment_contracts_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employment_contracts_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
@@ -145,6 +392,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "inventory_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_entities: {
+        Row: {
+          cnae: string | null
+          created_at: string
+          domicilio_fiscal: string
+          group_id: string
+          id: string
+          nif: string
+          razon_social: string
+        }
+        Insert: {
+          cnae?: string | null
+          created_at?: string
+          domicilio_fiscal: string
+          group_id: string
+          id?: string
+          nif: string
+          razon_social: string
+        }
+        Update: {
+          cnae?: string | null
+          created_at?: string
+          domicilio_fiscal?: string
+          group_id?: string
+          id?: string
+          nif?: string
+          razon_social?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_entities_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
@@ -256,6 +541,329 @@ export type Database = {
             columns: ["ticket_id"]
             isOneToOne: false
             referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_audit: {
+        Row: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          group_id: string
+          id: string
+          payload_json: Json
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          created_at?: string
+          group_id: string
+          id?: string
+          payload_json?: Json
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          payload_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_audit_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_concepts: {
+        Row: {
+          code: string
+          cotizable_ss: boolean
+          created_at: string
+          group_id: string
+          id: string
+          is_default: boolean
+          name: string
+          taxable_irpf: boolean
+          type: Database["public"]["Enums"]["concept_type"]
+        }
+        Insert: {
+          code: string
+          cotizable_ss?: boolean
+          created_at?: string
+          group_id: string
+          id?: string
+          is_default?: boolean
+          name: string
+          taxable_irpf?: boolean
+          type: Database["public"]["Enums"]["concept_type"]
+        }
+        Update: {
+          code?: string
+          cotizable_ss?: boolean
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          taxable_irpf?: boolean
+          type?: Database["public"]["Enums"]["concept_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_concepts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_inputs: {
+        Row: {
+          bonuses_json: Json | null
+          created_at: string
+          deductions_json: Json | null
+          employee_id: string
+          hours_holiday: number
+          hours_night: number
+          hours_overtime: number
+          hours_regular: number
+          id: string
+          location_id: string | null
+          period_month: number
+          period_year: number
+          tips_json: Json | null
+        }
+        Insert: {
+          bonuses_json?: Json | null
+          created_at?: string
+          deductions_json?: Json | null
+          employee_id: string
+          hours_holiday?: number
+          hours_night?: number
+          hours_overtime?: number
+          hours_regular?: number
+          id?: string
+          location_id?: string | null
+          period_month: number
+          period_year: number
+          tips_json?: Json | null
+        }
+        Update: {
+          bonuses_json?: Json | null
+          created_at?: string
+          deductions_json?: Json | null
+          employee_id?: string
+          hours_holiday?: number
+          hours_night?: number
+          hours_overtime?: number
+          hours_regular?: number
+          id?: string
+          location_id?: string | null
+          period_month?: number
+          period_year?: number
+          tips_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_inputs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_inputs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          group_id: string
+          id: string
+          legal_entity_id: string
+          period_month: number
+          period_year: number
+          status: Database["public"]["Enums"]["payroll_status"]
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          group_id: string
+          id?: string
+          legal_entity_id: string
+          period_month: number
+          period_year: number
+          status?: Database["public"]["Enums"]["payroll_status"]
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          legal_entity_id?: string
+          period_month?: number
+          period_year?: number
+          status?: Database["public"]["Enums"]["payroll_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_settings: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          setting_json: Json
+          setting_type: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          setting_json?: Json
+          setting_type: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          setting_json?: Json
+          setting_type?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payslip_lines: {
+        Row: {
+          amount: number
+          concept_code: string
+          concept_name: string
+          id: string
+          payslip_id: string
+          type: Database["public"]["Enums"]["concept_type"]
+        }
+        Insert: {
+          amount: number
+          concept_code: string
+          concept_name: string
+          id?: string
+          payslip_id: string
+          type: Database["public"]["Enums"]["concept_type"]
+        }
+        Update: {
+          amount?: number
+          concept_code?: string
+          concept_name?: string
+          id?: string
+          payslip_id?: string
+          type?: Database["public"]["Enums"]["concept_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payslip_lines_payslip_id_fkey"
+            columns: ["payslip_id"]
+            isOneToOne: false
+            referencedRelation: "payslips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payslips: {
+        Row: {
+          employee_id: string
+          employee_ss: number
+          employer_ss: number
+          generated_at: string
+          gross_pay: number
+          id: string
+          irpf_withheld: number
+          net_pay: number
+          other_deductions: number
+          payroll_run_id: string
+          pdf_url: string | null
+        }
+        Insert: {
+          employee_id: string
+          employee_ss?: number
+          employer_ss?: number
+          generated_at?: string
+          gross_pay?: number
+          id?: string
+          irpf_withheld?: number
+          net_pay?: number
+          other_deductions?: number
+          payroll_run_id: string
+          pdf_url?: string | null
+        }
+        Update: {
+          employee_id?: string
+          employee_ss?: number
+          employer_ss?: number
+          generated_at?: string
+          gross_pay?: number
+          id?: string
+          irpf_withheld?: number
+          net_pay?: number
+          other_deductions?: number
+          payroll_run_id?: string
+          pdf_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payslips_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payslips_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -483,6 +1091,38 @@ export type Database = {
           },
         ]
       }
+      social_security_accounts: {
+        Row: {
+          ccc: string
+          created_at: string
+          id: string
+          legal_entity_id: string
+          provincia: string | null
+        }
+        Insert: {
+          ccc: string
+          created_at?: string
+          id?: string
+          legal_entity_id: string
+          provincia?: string | null
+        }
+        Update: {
+          ccc?: string
+          created_at?: string
+          id?: string
+          legal_entity_id?: string
+          provincia?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_security_accounts_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           created_at: string
@@ -514,6 +1154,35 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_accounts: {
+        Row: {
+          aeat_delegacion: string | null
+          created_at: string
+          id: string
+          legal_entity_id: string
+        }
+        Insert: {
+          aeat_delegacion?: string | null
+          created_at?: string
+          id?: string
+          legal_entity_id: string
+        }
+        Update: {
+          aeat_delegacion?: string | null
+          created_at?: string
+          id?: string
+          legal_entity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_accounts_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
         ]
@@ -787,20 +1456,44 @@ export type Database = {
       can_access_location: { Args: { _location_id: string }; Returns: boolean }
       get_accessible_location_ids: { Args: never; Returns: string[] }
       get_user_group_id: { Args: never; Returns: string }
+      has_payroll_role: { Args: never; Returns: boolean }
       has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
       is_admin_or_ops: { Args: never; Returns: boolean }
+      is_payroll_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "owner_admin" | "ops_manager" | "location_manager" | "viewer"
+      app_role:
+        | "owner_admin"
+        | "ops_manager"
+        | "location_manager"
+        | "viewer"
+        | "payroll_admin"
+        | "payroll_operator"
+      compliance_agency: "TGSS" | "AEAT" | "SEPE"
+      compliance_status: "draft" | "signed" | "sent" | "accepted" | "rejected"
+      concept_type: "earning" | "deduction"
+      extra_pay_mode: "prorrateada" | "no_prorrateada"
+      irpf_mode: "manual" | "tabla"
       payment_method: "card" | "cash" | "other"
+      payroll_status:
+        | "draft"
+        | "validated"
+        | "calculated"
+        | "approved"
+        | "submitted"
+        | "paid"
       po_status: "draft" | "sent" | "received"
       pos_provider: "revo" | "glop" | "square" | "lightspeed" | "csv"
       pos_status: "connected" | "disconnected" | "error" | "syncing"
       ticket_channel: "dinein" | "takeaway" | "delivery" | "unknown"
       ticket_status: "open" | "closed"
+      token_provider:
+        | "certificate_p12"
+        | "certificate_local_agent"
+        | "oauth_provider"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -928,13 +1621,38 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner_admin", "ops_manager", "location_manager", "viewer"],
+      app_role: [
+        "owner_admin",
+        "ops_manager",
+        "location_manager",
+        "viewer",
+        "payroll_admin",
+        "payroll_operator",
+      ],
+      compliance_agency: ["TGSS", "AEAT", "SEPE"],
+      compliance_status: ["draft", "signed", "sent", "accepted", "rejected"],
+      concept_type: ["earning", "deduction"],
+      extra_pay_mode: ["prorrateada", "no_prorrateada"],
+      irpf_mode: ["manual", "tabla"],
       payment_method: ["card", "cash", "other"],
+      payroll_status: [
+        "draft",
+        "validated",
+        "calculated",
+        "approved",
+        "submitted",
+        "paid",
+      ],
       po_status: ["draft", "sent", "received"],
       pos_provider: ["revo", "glop", "square", "lightspeed", "csv"],
       pos_status: ["connected", "disconnected", "error", "syncing"],
       ticket_channel: ["dinein", "takeaway", "delivery", "unknown"],
       ticket_status: ["open", "closed"],
+      token_provider: [
+        "certificate_p12",
+        "certificate_local_agent",
+        "oauth_provider",
+      ],
     },
   },
 } as const
