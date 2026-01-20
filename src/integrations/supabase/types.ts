@@ -360,6 +360,7 @@ export type Database = {
       }
       inventory_items: {
         Row: {
+          category: string | null
           created_at: string
           current_stock: number | null
           group_id: string
@@ -370,6 +371,7 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
           current_stock?: number | null
           group_id: string
@@ -380,6 +382,7 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string
           current_stock?: number | null
           group_id?: string
@@ -1119,6 +1122,114 @@ export type Database = {
             columns: ["legal_entity_id"]
             isOneToOne: false
             referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_count_lines: {
+        Row: {
+          batch_balance: number | null
+          closing_qty: number | null
+          deliveries_qty: number | null
+          id: string
+          inventory_item_id: string
+          opening_qty: number | null
+          sales_qty: number | null
+          stock_count_id: string
+          transfers_net_qty: number | null
+          updated_at: string
+          used_qty: number | null
+          variance_qty: number | null
+        }
+        Insert: {
+          batch_balance?: number | null
+          closing_qty?: number | null
+          deliveries_qty?: number | null
+          id?: string
+          inventory_item_id: string
+          opening_qty?: number | null
+          sales_qty?: number | null
+          stock_count_id: string
+          transfers_net_qty?: number | null
+          updated_at?: string
+          used_qty?: number | null
+          variance_qty?: number | null
+        }
+        Update: {
+          batch_balance?: number | null
+          closing_qty?: number | null
+          deliveries_qty?: number | null
+          id?: string
+          inventory_item_id?: string
+          opening_qty?: number | null
+          sales_qty?: number | null
+          stock_count_id?: string
+          transfers_net_qty?: number | null
+          updated_at?: string
+          used_qty?: number | null
+          variance_qty?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_lines_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_stock_count_id_fkey"
+            columns: ["stock_count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_counts: {
+        Row: {
+          created_at: string
+          end_date: string
+          group_id: string
+          id: string
+          location_id: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          group_id: string
+          id?: string
+          location_id: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          group_id?: string
+          id?: string
+          location_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_counts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
