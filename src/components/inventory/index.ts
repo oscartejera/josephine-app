@@ -7,3 +7,4 @@ export { InventoryWasteOverview } from './InventoryWasteOverview';
 export { LocationPerformanceTable } from './LocationPerformanceTable';
 export { ReconciliationGrid } from './ReconciliationGrid';
 export { AskJosephineDrawer } from './AskJosephineDrawer';
+export { StockCountReport, type StockCountRow } from './StockCountReport';

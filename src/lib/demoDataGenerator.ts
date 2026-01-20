@@ -2,9 +2,55 @@
  * Demo Data Generator for Josephine
  * Generates coherent, realistic data for Inventory and Waste modules
  * Mimics Nory's data patterns and ensures consistency across views
+ * Uses deterministic seeding for reproducible data
  */
 
 import { format, subDays, addHours, startOfDay } from 'date-fns';
+
+// ============= SEEDED RANDOM =============
+
+class SeededRandom {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed;
+  }
+
+  next(): number {
+    this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff;
+    return this.seed / 0x7fffffff;
+  }
+
+  between(min: number, max: number): number {
+    return min + this.next() * (max - min);
+  }
+
+  intBetween(min: number, max: number): number {
+    return Math.floor(this.between(min, max + 1));
+  }
+
+  pick<T>(arr: T[]): T {
+    return arr[Math.floor(this.next() * arr.length)];
+  }
+
+  weightedPick<T>(items: T[], weights: number[]): T {
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let random = this.next() * totalWeight;
+    for (let i = 0; i < items.length; i++) {
+      random -= weights[i];
+      if (random <= 0) return items[i];
+    }
+    return items[items.length - 1];
+  }
+}
+
+function hashString(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+  }
+  return Math.abs(hash);
+}
 
 // ============= TYPES =============
 
@@ -12,6 +58,7 @@ export interface DemoLocation {
   id: string;
   name: string;
   dailySalesRange: [number, number];
+  hasStockCount: boolean;
 }
 
 export interface DemoEmployee {
@@ -43,6 +90,20 @@ export interface DemoWasteEvent {
   type: 'ingredient' | 'product';
 }
 
+export interface StockCountRowData {
+  id: string;
+  itemName: string;
+  unit: string;
+  varianceQty: number;
+  openingQty: number;
+  deliveriesQty: number;
+  netTransferredQty: number;
+  closingQty: number;
+  usedQty: number;
+  salesQty: number;
+  batchBalance: number;
+}
+
 export interface DailyMetrics {
   date: Date;
   locationId: string;
@@ -55,14 +116,15 @@ export interface DailyMetrics {
   wasteByCategory: Record<string, number>;
 }
 
-// ============= DEMO LOCATIONS =============
+// ============= DEMO LOCATIONS (6 as requested) =============
 
 export const DEMO_LOCATIONS: DemoLocation[] = [
-  { id: 'loc-cpu-001', name: 'CPU', dailySalesRange: [3000, 6000] },
-  { id: 'loc-west-002', name: 'Westside', dailySalesRange: [2500, 5000] },
-  { id: 'loc-south-003', name: 'Southside', dailySalesRange: [2000, 4500] },
-  { id: 'loc-east-004', name: 'Eastside', dailySalesRange: [2000, 4000] },
-  { id: 'loc-hq-005', name: 'HQ Kitchen', dailySalesRange: [1500, 3000] },
+  { id: 'loc-cpu-001', name: 'CPU', dailySalesRange: [3000, 6000], hasStockCount: false },
+  { id: 'loc-west-002', name: 'Westside', dailySalesRange: [2500, 5000], hasStockCount: true },
+  { id: 'loc-south-003', name: 'Southside', dailySalesRange: [2000, 4500], hasStockCount: true },
+  { id: 'loc-hq-005', name: 'HQ', dailySalesRange: [1500, 3000], hasStockCount: false },
+  { id: 'loc-westend-006', name: 'Westend', dailySalesRange: [2200, 4200], hasStockCount: true },
+  { id: 'loc-east-004', name: 'Eastside', dailySalesRange: [2000, 4000], hasStockCount: true },
 ];
 
 // ============= DEMO EMPLOYEES =============
@@ -74,64 +136,35 @@ const EMPLOYEE_NAMES = [
   'Lucía Navarro', 'Francisco Gil', 'Marta Serrano'
 ];
 
-// ============= WASTE ITEM DEFINITIONS =============
+// ============= STOCK COUNT ITEMS =============
 
-const WASTE_ITEMS: { name: string; category: string; unit: string; avgCost: number; type: 'ingredient' | 'product' }[] = [
-  // Fresh
-  { name: 'Tomatoes', category: 'Fresh', unit: 'kg', avgCost: 2.5, type: 'ingredient' },
-  { name: 'Lettuce', category: 'Fresh', unit: 'kg', avgCost: 1.8, type: 'ingredient' },
-  { name: 'Avocado', category: 'Fresh', unit: 'units', avgCost: 1.5, type: 'ingredient' },
-  { name: 'Onions', category: 'Fresh', unit: 'kg', avgCost: 1.2, type: 'ingredient' },
-  { name: 'Peppers', category: 'Fresh', unit: 'kg', avgCost: 3.0, type: 'ingredient' },
-  // Dairy
-  { name: 'Milk', category: 'Dairy', unit: 'L', avgCost: 1.1, type: 'ingredient' },
-  { name: 'Cheese', category: 'Dairy', unit: 'kg', avgCost: 8.5, type: 'ingredient' },
-  { name: 'Butter', category: 'Dairy', unit: 'kg', avgCost: 6.0, type: 'ingredient' },
-  { name: 'Cream', category: 'Dairy', unit: 'L', avgCost: 3.5, type: 'ingredient' },
-  // Meat/Protein
-  { name: 'Chicken Breast', category: 'Protein', unit: 'kg', avgCost: 7.5, type: 'ingredient' },
-  { name: 'Beef Steak', category: 'Protein', unit: 'kg', avgCost: 18.0, type: 'ingredient' },
-  { name: 'Salmon Fillet', category: 'Protein', unit: 'kg', avgCost: 22.0, type: 'ingredient' },
-  { name: 'Pork Loin', category: 'Protein', unit: 'kg', avgCost: 9.0, type: 'ingredient' },
-  // Frozen
-  { name: 'Frozen Fries', category: 'Frozen', unit: 'kg', avgCost: 2.0, type: 'ingredient' },
-  { name: 'Frozen Vegetables', category: 'Frozen', unit: 'kg', avgCost: 2.5, type: 'ingredient' },
-  { name: 'Ice Cream', category: 'Frozen', unit: 'L', avgCost: 4.5, type: 'product' },
-  // Sauce
-  { name: 'House Dressing', category: 'Sauce', unit: 'L', avgCost: 3.0, type: 'ingredient' },
-  { name: 'BBQ Sauce', category: 'Sauce', unit: 'L', avgCost: 2.5, type: 'ingredient' },
-  { name: 'Mayo', category: 'Sauce', unit: 'L', avgCost: 2.0, type: 'ingredient' },
-  // Dry Goods
-  { name: 'Bread Rolls', category: 'Dry Goods', unit: 'units', avgCost: 0.3, type: 'ingredient' },
-  { name: 'Pasta', category: 'Dry Goods', unit: 'kg', avgCost: 1.5, type: 'ingredient' },
-  { name: 'Rice', category: 'Dry Goods', unit: 'kg', avgCost: 1.2, type: 'ingredient' },
-  // Products
-  { name: 'Burger', category: 'Product', unit: 'units', avgCost: 4.5, type: 'product' },
-  { name: 'Salad Bowl', category: 'Product', unit: 'units', avgCost: 3.0, type: 'product' },
-  { name: 'Sandwich', category: 'Product', unit: 'units', avgCost: 2.5, type: 'product' },
+const STOCK_COUNT_ITEMS = [
+  { name: 'Tender fillets (fresh)', unit: 'kg' },
+  { name: 'Chicken breast', unit: 'kg' },
+  { name: 'House sauce', unit: 'L' },
+  { name: 'Plain flour', unit: 'kg' },
+  { name: 'Spice mix original', unit: 'kg' },
+  { name: 'Spice mix hot', unit: 'kg' },
+  { name: 'Bread crumbs', unit: 'kg' },
+  { name: 'Vegetable oil', unit: 'L' },
+  { name: 'Lettuce iceberg', unit: 'kg' },
+  { name: 'Tomatoes fresh', unit: 'kg' },
+  { name: 'Onions', unit: 'kg' },
+  { name: 'Cheese slices', unit: 'kg' },
+  { name: 'Burger buns', unit: 'units' },
+  { name: 'Fries frozen', unit: 'kg' },
+  { name: 'Cola syrup', unit: 'L' },
+  { name: 'Orange juice', unit: 'L' },
+  { name: 'Mayonnaise', unit: 'L' },
+  { name: 'Ketchup', unit: 'L' },
+  { name: 'Mustard', unit: 'L' },
+  { name: 'Pickles sliced', unit: 'kg' },
+  { name: 'Bacon rashers', unit: 'kg' },
+  { name: 'Egg liquid', unit: 'L' },
+  { name: 'Milk whole', unit: 'L' },
+  { name: 'Ice cream vanilla', unit: 'L' },
+  { name: 'Coffee beans', unit: 'kg' },
 ];
-
-// ============= HELPER FUNCTIONS =============
-
-function randomInRange(min: number, max: number): number {
-  return Math.random() * (max - min) + min;
-}
-
-function randomInt(min: number, max: number): number {
-  return Math.floor(randomInRange(min, max + 1));
-}
-
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
 function weightedPick<T>(items: T[], weights: number[]): T {
   const totalWeight = weights.reduce((a, b) => a + b, 0);
@@ -139,9 +172,28 @@ function weightedPick<T>(items: T[], weights: number[]): T {
   for (let i = 0; i < items.length; i++) {
     random -= weights[i];
     if (random <= 0) return items[i];
-  }
-  return items[items.length - 1];
-}
+// ============= WASTE ITEMS =============
+
+const WASTE_ITEMS: { name: string; category: string; unit: string; avgCost: number; type: 'ingredient' | 'product' }[] = [
+  { name: 'Tomatoes', category: 'Fresh', unit: 'kg', avgCost: 2.5, type: 'ingredient' },
+  { name: 'Lettuce', category: 'Fresh', unit: 'kg', avgCost: 1.8, type: 'ingredient' },
+  { name: 'Avocado', category: 'Fresh', unit: 'units', avgCost: 1.5, type: 'ingredient' },
+  { name: 'Onions', category: 'Fresh', unit: 'kg', avgCost: 1.2, type: 'ingredient' },
+  { name: 'Milk', category: 'Dairy', unit: 'L', avgCost: 1.1, type: 'ingredient' },
+  { name: 'Cheese', category: 'Dairy', unit: 'kg', avgCost: 8.5, type: 'ingredient' },
+  { name: 'Butter', category: 'Dairy', unit: 'kg', avgCost: 6.0, type: 'ingredient' },
+  { name: 'Chicken Breast', category: 'Protein', unit: 'kg', avgCost: 7.5, type: 'ingredient' },
+  { name: 'Beef Steak', category: 'Protein', unit: 'kg', avgCost: 18.0, type: 'ingredient' },
+  { name: 'Salmon Fillet', category: 'Protein', unit: 'kg', avgCost: 22.0, type: 'ingredient' },
+  { name: 'Frozen Fries', category: 'Frozen', unit: 'kg', avgCost: 2.0, type: 'ingredient' },
+  { name: 'Ice Cream', category: 'Frozen', unit: 'L', avgCost: 4.5, type: 'product' },
+  { name: 'House Dressing', category: 'Sauce', unit: 'L', avgCost: 3.0, type: 'ingredient' },
+  { name: 'BBQ Sauce', category: 'Sauce', unit: 'L', avgCost: 2.5, type: 'ingredient' },
+  { name: 'Bread Rolls', category: 'Dry Goods', unit: 'units', avgCost: 0.3, type: 'ingredient' },
+  { name: 'Pasta', category: 'Dry Goods', unit: 'kg', avgCost: 1.5, type: 'ingredient' },
+  { name: 'Burger', category: 'Product', unit: 'units', avgCost: 4.5, type: 'product' },
+  { name: 'Salad Bowl', category: 'Product', unit: 'units', avgCost: 3.0, type: 'product' },
+];
 
 // ============= MAIN GENERATOR CLASS =============
 
@@ -151,23 +203,40 @@ export class DemoDataGenerator {
   private dailyMetrics: Map<string, DailyMetrics[]>;
   private tickets: DemoTicket[];
   private wasteEvents: DemoWasteEvent[];
-  private seed: number;
+  private stockCountData: Map<string, StockCountRowData[]>;
+  private rng: SeededRandom;
+  private baseSeed: number;
 
   constructor(seed?: number) {
-    this.seed = seed || Date.now();
+    this.baseSeed = seed || 12345; // Deterministic default
+    this.rng = new SeededRandom(this.baseSeed);
     this.locations = DEMO_LOCATIONS;
     this.employees = [];
     this.dailyMetrics = new Map();
     this.tickets = [];
     this.wasteEvents = [];
+    this.stockCountData = new Map();
+  }
+
+  private generateUUID(): string {
+    const chars = '0123456789abcdef';
+    let uuid = '';
+    for (let i = 0; i < 32; i++) {
+      uuid += chars[Math.floor(this.rng.next() * 16)];
+      if (i === 7 || i === 11 || i === 15 || i === 19) uuid += '-';
+    }
+    return uuid;
   }
 
   // Generate all demo data for a date range
   generate(fromDate: Date, toDate: Date): void {
+    // Reset RNG with base seed for determinism
+    this.rng = new SeededRandom(this.baseSeed);
     this.generateEmployees();
     this.generateDailyMetrics(fromDate, toDate);
     this.generateTickets(fromDate, toDate);
     this.generateWasteEvents(fromDate, toDate);
+    this.generateStockCountData(fromDate, toDate);
   }
 
   private generateEmployees(): void {
@@ -175,7 +244,7 @@ export class DemoDataGenerator {
       const location = this.locations[idx % this.locations.length];
       const nameParts = name.split(' ');
       return {
-        id: `emp-${generateUUID().slice(0, 8)}`,
+        id: `emp-${this.generateUUID().slice(0, 8)}`,
         fullName: name,
         locationId: location.id,
         initials: nameParts.map(p => p[0]).join('').toUpperCase()
@@ -197,28 +266,28 @@ export class DemoDataGenerator {
         const weekendMultiplier = (dayOfWeek === 0 || dayOfWeek === 6) ? 1.2 : 1.0;
         
         // Base sales with some variation
-        const baseSales = randomInRange(location.dailySalesRange[0], location.dailySalesRange[1]);
+        const baseSales = this.rng.between(location.dailySalesRange[0], location.dailySalesRange[1]);
         const sales = Math.round(baseSales * weekendMultiplier);
         
         // Theoretical COGS (target percentages)
-        const theoreticalFood = sales * randomInRange(0.22, 0.28);
-        const theoreticalBeverage = sales * randomInRange(0.04, 0.08);
-        const theoreticalMisc = sales * randomInRange(0.005, 0.02);
+        const theoreticalFood = sales * this.rng.between(0.22, 0.28);
+        const theoreticalBeverage = sales * this.rng.between(0.04, 0.08);
+        const theoreticalMisc = sales * this.rng.between(0.005, 0.02);
         
         // Actual COGS (slightly higher than theoretical)
-        const actualFood = theoreticalFood * randomInRange(1.02, 1.12);
-        const actualBeverage = theoreticalBeverage * randomInRange(1.01, 1.08);
-        const actualMisc = theoreticalMisc * randomInRange(1.0, 1.15);
+        const actualFood = theoreticalFood * this.rng.between(1.02, 1.12);
+        const actualBeverage = theoreticalBeverage * this.rng.between(1.01, 1.08);
+        const actualMisc = theoreticalMisc * this.rng.between(1.0, 1.15);
         
         // Waste calculations
-        const accountedWaste = sales * randomInRange(0.002, 0.008);
-        const unaccountedWaste = sales * randomInRange(0.001, 0.012);
+        const accountedWaste = sales * this.rng.between(0.002, 0.008);
+        const unaccountedWaste = sales * this.rng.between(0.001, 0.012);
         
         // Waste by reason (must sum to accountedWaste)
-        const endOfDayPct = randomInRange(0.55, 0.75);
-        const brokenPct = randomInRange(0.10, 0.20);
-        const expiredPct = randomInRange(0.05, 0.15);
-        const theftPct = randomInRange(0.0, 0.05);
+        const endOfDayPct = this.rng.between(0.55, 0.75);
+        const brokenPct = this.rng.between(0.10, 0.20);
+        const expiredPct = this.rng.between(0.05, 0.15);
+        const theftPct = this.rng.between(0.0, 0.05);
         const otherPct = 1 - endOfDayPct - brokenPct - expiredPct - theftPct;
         
         const wasteByReason = {
@@ -231,13 +300,13 @@ export class DemoDataGenerator {
         
         // Waste by category (must sum to accountedWaste)
         const categoryDistribution = {
-          Fresh: randomInRange(0.15, 0.30),
-          Protein: randomInRange(0.20, 0.35),
-          Dairy: randomInRange(0.08, 0.15),
-          Frozen: randomInRange(0.03, 0.10),
-          Sauce: randomInRange(0.03, 0.08),
-          'Dry Goods': randomInRange(0.05, 0.12),
-          Product: randomInRange(0.05, 0.15)
+          Fresh: this.rng.between(0.15, 0.30),
+          Protein: this.rng.between(0.20, 0.35),
+          Dairy: this.rng.between(0.08, 0.15),
+          Frozen: this.rng.between(0.03, 0.10),
+          Sauce: this.rng.between(0.03, 0.08),
+          'Dry Goods': this.rng.between(0.05, 0.12),
+          Product: this.rng.between(0.05, 0.15)
         };
         
         const catTotal = Object.values(categoryDistribution).reduce((a, b) => a + b, 0);
@@ -271,15 +340,15 @@ export class DemoDataGenerator {
       
       for (const day of metrics) {
         // Generate 50-150 tickets per day to reach the daily sales
-        const ticketCount = randomInt(50, 150);
+        const ticketCount = this.rng.intBetween(50, 150);
         const avgTicket = day.sales / ticketCount;
         
         // Channel distribution
         const channels: ('dinein' | 'takeaway' | 'delivery')[] = ['dinein', 'takeaway', 'delivery'];
         const channelWeights = [
-          randomInRange(0.55, 0.75), // dinein
-          randomInRange(0.05, 0.20), // takeaway
-          randomInRange(0.10, 0.35)  // delivery
+          this.rng.between(0.55, 0.75),
+          this.rng.between(0.05, 0.20),
+          this.rng.between(0.10, 0.35)
         ];
         
         let remainingSales = day.sales;
@@ -288,21 +357,21 @@ export class DemoDataGenerator {
           const isLast = t === ticketCount - 1;
           const ticketAmount = isLast 
             ? remainingSales 
-            : Math.max(5, Math.round(avgTicket * randomInRange(0.3, 2.0)));
+            : Math.max(5, Math.round(avgTicket * this.rng.between(0.3, 2.0)));
           
           remainingSales -= ticketAmount;
           
           // Random time during the day (11:00 - 23:00)
-          const hour = randomInt(11, 23);
-          const minute = randomInt(0, 59);
+          const hour = this.rng.intBetween(11, 23);
+          const minute = this.rng.intBetween(0, 59);
           const closedAt = addHours(startOfDay(day.date), hour + minute / 60);
           
           this.tickets.push({
-            id: generateUUID(),
+            id: this.generateUUID(),
             locationId: location.id,
             closedAt,
             netTotal: Math.max(5, ticketAmount),
-            channel: weightedPick(channels, channelWeights)
+            channel: this.rng.weightedPick(channels, channelWeights)
           });
         }
       }
@@ -318,7 +387,7 @@ export class DemoDataGenerator {
       
       for (const day of metrics) {
         // Generate 3-12 waste events per day
-        const eventCount = randomInt(3, 12);
+        const eventCount = this.rng.intBetween(3, 12);
         let remainingWaste = day.accountedWaste;
         
         const reasons: ('broken' | 'end_of_day' | 'expired' | 'theft' | 'other')[] = 
@@ -333,14 +402,14 @@ export class DemoDataGenerator {
         
         for (let e = 0; e < eventCount; e++) {
           const isLast = e === eventCount - 1;
-          const item = pickRandom(WASTE_ITEMS);
-          const reason = weightedPick(reasons, reasonWeights);
+          const item = this.rng.pick(WASTE_ITEMS);
+          const reason = this.rng.weightedPick(reasons, reasonWeights);
           
           // Calculate waste value
           const avgEventValue = remainingWaste / (eventCount - e);
           const eventValue = isLast 
             ? remainingWaste 
-            : Math.max(0.5, avgEventValue * randomInRange(0.3, 2.0));
+            : Math.max(0.5, avgEventValue * this.rng.between(0.3, 2.0));
           
           remainingWaste -= eventValue;
           
@@ -348,12 +417,12 @@ export class DemoDataGenerator {
           const quantity = Math.max(0.1, eventValue / item.avgCost);
           
           // Random time during the day
-          const hour = randomInt(11, 23);
-          const minute = randomInt(0, 59);
+          const hour = this.rng.intBetween(11, 23);
+          const minute = this.rng.intBetween(0, 59);
           const occurredAt = addHours(startOfDay(day.date), hour + minute / 60);
           
           this.wasteEvents.push({
-            id: generateUUID(),
+            id: this.generateUUID(),
             locationId: location.id,
             occurredAt,
             itemName: item.name,
@@ -362,11 +431,46 @@ export class DemoDataGenerator {
             unit: item.unit,
             valueEur: Math.round(eventValue * 100) / 100,
             reason,
-            employeeId: locationEmployees.length > 0 ? pickRandom(locationEmployees).id : null,
+            employeeId: locationEmployees.length > 0 ? this.rng.pick(locationEmployees).id : null,
             type: item.type
           });
         }
       }
+    }
+  }
+
+  private generateStockCountData(fromDate: Date, toDate: Date): void {
+    this.stockCountData = new Map();
+
+    for (const location of this.locations) {
+      if (!location.hasStockCount) continue;
+
+      const rows: StockCountRowData[] = STOCK_COUNT_ITEMS.map(item => {
+        const openingQty = this.rng.between(10, 100);
+        const deliveriesQty = this.rng.between(0, 50);
+        const netTransferredQty = this.rng.between(-5, 5);
+        const salesQty = this.rng.between(20, 80);
+        const usedQty = salesQty * this.rng.between(1.0, 1.2);
+        const closingQty = openingQty + deliveriesQty + netTransferredQty - usedQty;
+        const batchBalance = this.rng.between(-2, 2);
+        const varianceQty = closingQty - (openingQty + deliveriesQty + netTransferredQty - salesQty) + batchBalance;
+
+        return {
+          id: this.generateUUID(),
+          itemName: item.name,
+          unit: item.unit,
+          varianceQty: Math.round(varianceQty * 100) / 100,
+          openingQty: Math.round(openingQty * 100) / 100,
+          deliveriesQty: Math.round(deliveriesQty * 100) / 100,
+          netTransferredQty: Math.round(netTransferredQty * 100) / 100,
+          closingQty: Math.round(Math.max(0, closingQty) * 100) / 100,
+          usedQty: Math.round(usedQty * 100) / 100,
+          salesQty: Math.round(salesQty * 100) / 100,
+          batchBalance: Math.round(batchBalance * 100) / 100
+        };
+      });
+
+      this.stockCountData.set(location.id, rows);
     }
   }
 
@@ -386,6 +490,10 @@ export class DemoDataGenerator {
 
   getWasteEvents(): DemoWasteEvent[] {
     return this.wasteEvents;
+  }
+
+  getStockCountData(locationId: string): StockCountRowData[] {
+    return this.stockCountData.get(locationId) || [];
   }
 
   // ============= AGGREGATED DATA GETTERS =============
