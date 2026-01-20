@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { startOfMonth, endOfMonth, parse } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -20,10 +20,9 @@ import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNo
 export default function Inventory() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const today = new Date();
   
-  // Parse date range from URL params
-  const getInitialDateRange = (): DateRangeValue => {
+  // Stable initial date range - memoized to prevent re-computation
+  const initialDateRange = useMemo((): DateRangeValue => {
     const startDate = searchParams.get('start') || searchParams.get('start_date');
     const endDate = searchParams.get('end') || searchParams.get('end_date');
     if (startDate && endDate) {
@@ -36,18 +35,18 @@ export default function Inventory() {
         // Fall back to default
       }
     }
+    const today = new Date();
     return {
       from: startOfMonth(today),
       to: endOfMonth(today)
     };
-  };
+  }, []); // Only compute once on mount
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [viewMode, setViewMode] = useState<ViewMode>('GP');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [josephineOpen, setJosephineOpen] = useState(false);
-  const [reseedTrigger, setReseedTrigger] = useState(0);
 
   const {
     isLoading,
@@ -59,13 +58,10 @@ export default function Inventory() {
     locationPerformance
   } = useInventoryData(dateRange, dateMode, viewMode, selectedLocations);
 
-  // Force refetch when reseed is triggered
-  const handleReseedData = () => {
-    setReseedTrigger(prev => prev + 1);
-    setTimeout(() => {
-      setDateRange({ ...dateRange });
-    }, 100);
-  };
+  // Stable reseed handler
+  const handleReseedData = useCallback(() => {
+    setDateRange(prev => ({ ...prev }));
+  }, []);
 
   const isCOGS = viewMode === 'COGS';
 

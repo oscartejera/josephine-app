@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { startOfMonth, endOfMonth, parse, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { FileText, ArrowLeft } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { FileText, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { 
   InventoryHeader, 
   InventorySalesCard, 
@@ -17,14 +18,22 @@ import { useInventoryData } from '@/hooks/useInventoryData';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
+// Validate locationId format (demo IDs or UUIDs)
+function isValidLocationId(id: string | undefined): boolean {
+  if (!id) return false;
+  // Demo IDs like "loc-west-001" or UUIDs
+  const demoPattern = /^loc-[a-z]+-\d{3}$/;
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return demoPattern.test(id) || uuidPattern.test(id);
+}
+
 export default function InventoryLocation() {
   const navigate = useNavigate();
   const { locationId } = useParams<{ locationId: string }>();
   const [searchParams] = useSearchParams();
-  const today = new Date();
   
-  // Parse date range from URL params
-  const getInitialDateRange = (): DateRangeValue => {
+  // Stable initial date range - memoized to prevent re-computation
+  const initialDateRange = useMemo((): DateRangeValue => {
     const startDate = searchParams.get('start') || searchParams.get('start_date');
     const endDate = searchParams.get('end') || searchParams.get('end_date');
     if (startDate && endDate) {
@@ -37,19 +46,26 @@ export default function InventoryLocation() {
         // Fall back to default
       }
     }
+    const today = new Date();
     return {
       from: startOfMonth(today),
       to: endOfMonth(today)
     };
-  };
+  }, []); // Only compute once on mount
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [viewMode, setViewMode] = useState<ViewMode>('GP');
   const [josephineOpen, setJosephineOpen] = useState(false);
-  const [reseedTrigger, setReseedTrigger] = useState(0);
+  const [hasError, setHasError] = useState(false);
 
-  const selectedLocations = locationId ? [locationId] : [];
+  // Validate locationId
+  const isValidLocation = isValidLocationId(locationId);
+
+  // Stable selectedLocations array - only changes when locationId changes
+  const selectedLocations = useMemo(() => {
+    return locationId && isValidLocation ? [locationId] : [];
+  }, [locationId, isValidLocation]);
 
   const {
     isLoading,
@@ -58,22 +74,31 @@ export default function InventoryLocation() {
     categoryBreakdown,
     wasteByCategory,
     wasteByLocation,
-    locationPerformance
+    locationPerformance,
+    error: dataError
   } = useInventoryData(dateRange, dateMode, viewMode, selectedLocations);
 
-  // Get location name for title
-  const currentLocation = locationId 
-    ? getDemoGenerator(dateRange.from || today, dateRange.to || today).getLocations().find(l => l.id === locationId)
-    : null;
+  // Get location name for title - memoized to prevent unnecessary recalculations
+  const currentLocation = useMemo(() => {
+    if (!locationId || !isValidLocation) return null;
+    try {
+      const generator = getDemoGenerator(dateRange.from || new Date(), dateRange.to || new Date());
+      return generator.getLocations().find(l => l.id === locationId) || null;
+    } catch {
+      return null;
+    }
+  }, [locationId, isValidLocation, dateRange.from, dateRange.to]);
 
-  const handleReseedData = () => {
-    setReseedTrigger(prev => prev + 1);
-    setTimeout(() => {
-      setDateRange({ ...dateRange });
-    }, 100);
-  };
+  // Track errors
+  useEffect(() => {
+    if (dataError) {
+      console.error('InventoryLocation error:', { locationId, dateRange, error: dataError });
+      setHasError(true);
+    }
+  }, [dataError, locationId, dateRange]);
 
-  const handleBackToAllLocations = () => {
+  // Stable handlers
+  const handleBackToAllLocations = useCallback(() => {
     const params = new URLSearchParams();
     if (dateRange.from) {
       params.set('start', format(dateRange.from, 'yyyy-MM-dd'));
@@ -83,9 +108,9 @@ export default function InventoryLocation() {
     }
     const queryString = params.toString();
     navigate(`/inventory${queryString ? `?${queryString}` : ''}`);
-  };
+  }, [navigate, dateRange]);
 
-  const handleNavigateToReconciliation = () => {
+  const handleNavigateToReconciliation = useCallback(() => {
     const params = new URLSearchParams();
     if (dateRange.from) {
       params.set('start', format(dateRange.from, 'yyyy-MM-dd'));
@@ -95,9 +120,71 @@ export default function InventoryLocation() {
     }
     const queryString = params.toString();
     navigate(`/inventory/location/${locationId}/reconciliation${queryString ? `?${queryString}` : ''}`);
-  };
+  }, [navigate, locationId, dateRange]);
+
+  const handleRetry = useCallback(() => {
+    setHasError(false);
+    // Force a re-fetch by updating date range with same values
+    setDateRange(prev => ({ ...prev }));
+  }, []);
 
   const isCOGS = viewMode === 'COGS';
+
+  // Invalid location guard - render error state
+  if (!isValidLocation) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-destructive" />
+              <div>
+                <h2 className="text-lg font-semibold">Invalid Location</h2>
+                <p className="text-muted-foreground mt-1">
+                  The location "{locationId}" could not be found or is invalid.
+                </p>
+              </div>
+              <Button onClick={handleBackToAllLocations} className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to All Locations
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state guard
+  if (hasError && !isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-amber-500" />
+              <div>
+                <h2 className="text-lg font-semibold">Something went wrong</h2>
+                <p className="text-muted-foreground mt-1">
+                  We couldn't load data for this location. Please try again.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleBackToAllLocations} className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Inventory
+                </Button>
+                <Button onClick={handleRetry} className="gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const breadcrumbs = [
     { label: 'Insights' },
@@ -118,7 +205,6 @@ export default function InventoryLocation() {
         selectedLocations={selectedLocations}
         setSelectedLocations={() => {}}
         onAskJosephine={() => setJosephineOpen(true)}
-        onReseedData={handleReseedData}
         lastUpdated={lastUpdated}
         isLoading={isLoading}
         breadcrumbs={breadcrumbs}
