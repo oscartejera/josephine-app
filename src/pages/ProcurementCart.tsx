@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Minus, Plus, CreditCard, Loader2, CheckCircle, AlertCircle, Truck, Calendar, Shield, Package, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Trash2, Minus, Plus, CreditCard, Loader2, CheckCircle, AlertCircle, Truck, Calendar, Shield, Package, MessageSquare, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { useProcurementData } from '@/hooks/useProcurementData';
+import { supabase } from '@/integrations/supabase/client';
 
 type PaymentState = 'idle' | 'processing' | 'success' | 'error';
 
@@ -26,11 +27,14 @@ export default function ProcurementCart() {
     deliveryDate,
     cutoffInfo,
     deliveryDaysLabel,
+    allSkus,
   } = useProcurementData();
   
   const [paymentState, setPaymentState] = useState<PaymentState>('idle');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [comments, setComments] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [savedToDb, setSavedToDb] = useState(false);
 
   const cartItems = orderSummary.items;
   const meetsMinOrder = orderSummary.subtotal >= orderSummary.minOrder;
@@ -42,18 +46,116 @@ export default function ProcurementCart() {
     }
 
     setPaymentState('processing');
+    setErrorMessage('');
+    setSavedToDb(false);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    // Mock success (90% chance)
-    const success = Math.random() > 0.1;
-    
-    if (success) {
+    try {
+      // First, we need to get a supplier ID from the database
+      // Check if we have a supplier with the same name
+      const { data: existingSuppliers, error: supplierQueryError } = await supabase
+        .from('suppliers')
+        .select('id, group_id')
+        .ilike('name', `%${selectedSupplier.name}%`)
+        .limit(1);
+
+      if (supplierQueryError) {
+        console.error('Error querying suppliers:', supplierQueryError);
+      }
+
+      let supplierId: string | null = null;
+      let groupId: string | null = null;
+
+      if (existingSuppliers && existingSuppliers.length > 0) {
+        supplierId = existingSuppliers[0].id;
+        groupId = existingSuppliers[0].group_id;
+      } else {
+        // Try to get group_id from profiles
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('group_id')
+            .eq('id', user.id)
+            .single();
+          
+          if (profile?.group_id) {
+            groupId = profile.group_id;
+            
+            // Create the supplier
+            const { data: newSupplier, error: createSupplierError } = await supabase
+              .from('suppliers')
+              .insert({
+                name: selectedSupplier.name,
+                group_id: groupId,
+              })
+              .select('id')
+              .single();
+
+            if (!createSupplierError && newSupplier) {
+              supplierId = newSupplier.id;
+            }
+          }
+        }
+      }
+
+      // If we have a supplier and group, create the purchase order
+      if (supplierId && groupId) {
+        // Create purchase order
+        const { data: purchaseOrder, error: poError } = await supabase
+          .from('purchase_orders')
+          .insert({
+            supplier_id: supplierId,
+            group_id: groupId,
+            status: 'sent',
+          })
+          .select('id')
+          .single();
+
+        if (poError) {
+          console.error('Error creating purchase order:', poError);
+          throw new Error('Failed to create purchase order');
+        }
+
+        if (purchaseOrder) {
+          // Create purchase order lines for items with real inventory IDs
+          const orderLines = cartItems
+            .filter(({ sku }) => sku.inventoryItemId) // Only items linked to real inventory
+            .map(({ sku, packs }) => ({
+              purchase_order_id: purchaseOrder.id,
+              inventory_item_id: sku.inventoryItemId!,
+              quantity: packs * sku.packSizeUnits,
+              unit_cost: sku.unitPrice / sku.packSizeUnits,
+            }));
+
+          if (orderLines.length > 0) {
+            const { error: linesError } = await supabase
+              .from('purchase_order_lines')
+              .insert(orderLines);
+
+            if (linesError) {
+              console.error('Error creating order lines:', linesError);
+              // Don't throw - the order was still created
+            }
+          }
+
+          setSavedToDb(true);
+          const newOrderId = `PO-${purchaseOrder.id.slice(0, 8).toUpperCase()}`;
+          setOrderId(newOrderId);
+          setPaymentState('success');
+          return;
+        }
+      }
+
+      // Fallback: If we can't save to DB (no auth, no group, etc.), still show success with mock ID
+      console.log('Order not saved to database - no valid supplier/group context');
+      await new Promise(resolve => setTimeout(resolve, 1500));
       const newOrderId = `PO-${Date.now().toString(36).toUpperCase()}`;
       setOrderId(newOrderId);
       setPaymentState('success');
-    } else {
+      
+    } catch (error) {
+      console.error('Error placing order:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
       setPaymentState('error');
     }
   };
@@ -66,7 +168,8 @@ export default function ProcurementCart() {
         state: { 
           orderSuccess: true, 
           orderId: orderId,
-          supplierName: orderSummary.supplierName 
+          supplierName: orderSummary.supplierName,
+          savedToDb,
         } 
       });
     }
@@ -164,6 +267,12 @@ export default function ProcurementCart() {
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Package className="h-5 w-5" />
                   Your Items
+                  {cartItems.some(({ sku }) => sku.isRealData) && (
+                    <Badge variant="outline" className="ml-2 text-xs gap-1 text-success border-success/30">
+                      <Database className="h-3 w-3" />
+                      Linked to inventory
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -181,7 +290,14 @@ export default function ProcurementCart() {
                   <TableBody>
                     {cartItems.map(({ sku, packs }) => (
                       <TableRow key={sku.id}>
-                        <TableCell className="font-medium">{sku.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {sku.name}
+                            {sku.isRealData && (
+                              <Database className="h-3 w-3 text-success" />
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="font-normal">{sku.packSize}</Badge>
                         </TableCell>
@@ -359,6 +475,12 @@ export default function ProcurementCart() {
                   <p>Your order has been submitted to {orderSummary.supplierName}.</p>
                   <p className="font-medium text-foreground">Order ID: {orderId}</p>
                   <p>Expected delivery: {format(deliveryDate, 'd MMMM yyyy')}</p>
+                  {savedToDb && (
+                    <Badge variant="outline" className="mt-2 gap-1 text-success border-success/30">
+                      <Database className="h-3 w-3" />
+                      Saved to database
+                    </Badge>
+                  )}
                 </DialogDescription>
               </DialogHeader>
               <Button onClick={handleCloseDialog} className="mt-4">
@@ -375,11 +497,11 @@ export default function ProcurementCart() {
               <DialogHeader>
                 <DialogTitle>Order Failed</DialogTitle>
                 <DialogDescription>
-                  There was an issue processing your order. Please check your supplier connection in Settings.
+                  {errorMessage || 'There was an issue processing your order. Please check your supplier connection in Settings.'}
                 </DialogDescription>
               </DialogHeader>
               <div className="flex gap-2 justify-center mt-4">
-                <Button variant="outline" onClick={handleCloseDialog}>
+                <Button variant="outline" onClick={() => setPaymentState('idle')}>
                   Try Again
                 </Button>
                 <Button onClick={() => navigate('/settings')}>
