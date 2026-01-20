@@ -67,6 +67,20 @@ export default function ProcurementOrders() {
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [isLoadingLines, setIsLoadingLines] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        setNotificationsEnabled(true);
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          setNotificationsEnabled(permission === 'granted');
+        });
+      }
+    }
+  }, []);
 
   // Fetch suppliers and orders from database
   const fetchData = async () => {
@@ -185,6 +199,20 @@ export default function ProcurementOrders() {
             const audio = new Audio('/sounds/notification.mp3');
             audio.volume = 0.5;
             audio.play().catch(err => console.log('Audio play failed:', err));
+            
+            // Show browser push notification if tab is in background
+            if (document.hidden && notificationsEnabled && 'Notification' in window) {
+              const notification = new Notification('New Procurement Order', {
+                body: 'A new order has been placed!',
+                icon: '/favicon.ico',
+                tag: 'new-order',
+              });
+              
+              notification.onclick = () => {
+                window.focus();
+                notification.close();
+              };
+            }
             
             toast.success('New order received!', {
               description: 'The orders list has been updated.',
