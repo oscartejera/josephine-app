@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   Calculator,
   BarChart3,
-  Star
+  Star,
+  CalendarDays
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +27,7 @@ const navItems = [
   { icon: Users, label: 'Labour', path: '/labour' },
   { icon: BarChart3, label: 'Instant P&L', path: '/instant-pl' },
   { icon: Star, label: 'Reviews', path: '/insights/reviews' },
+  { icon: CalendarDays, label: 'Scheduling', path: '/scheduling' },
   { icon: Package, label: 'Inventory', path: '/inventory' },
   { icon: Trash2, label: 'Waste', path: '/waste' },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },
