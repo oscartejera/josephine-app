@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
-import { Cloud, Sun, CloudRain, GripVertical, Plus, ArrowRightLeft } from 'lucide-react';
+import { Cloud, Sun, CloudRain, GripVertical, Plus, ArrowRightLeft, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScheduleData, ViewMode, Employee, Shift } from '@/hooks/useSchedulingData';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -194,6 +194,8 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
   const [dragData, setDragData] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
   const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);
+  const [salesSort, setSalesSort] = useState<'none' | 'asc' | 'desc'>('none');
+  const [colSort, setColSort] = useState<'none' | 'asc' | 'desc'>('none');
   
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => ({
@@ -456,13 +458,35 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
         
         {/* Sales row */}
         <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
-          <div className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center">
+          <button 
+            onClick={() => {
+              setSalesSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
+              setColSort('none');
+            }}
+            className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1 hover:bg-muted/50 transition-colors"
+          >
             Sales
-          </div>
+            {salesSort === 'none' && <ArrowUpDown className="h-3 w-3" />}
+            {salesSort === 'desc' && <ArrowDown className="h-3 w-3 text-primary" />}
+            {salesSort === 'asc' && <ArrowUp className="h-3 w-3 text-primary" />}
+          </button>
           {days.map((day, i) => {
             const kpi = data.dailyKPIs[i];
+            const salesValues = data.dailyKPIs.map(k => k.sales);
+            const maxSales = Math.max(...salesValues);
+            const minSales = Math.min(...salesValues);
+            const isHighest = salesSort !== 'none' && kpi.sales === maxSales;
+            const isLowest = salesSort !== 'none' && kpi.sales === minSales;
+            
             return (
-              <div key={`sales-${day.dateStr}`} className="p-2 px-3 border-r border-border last:border-r-0 text-sm font-medium">
+              <div 
+                key={`sales-${day.dateStr}`} 
+                className={cn(
+                  "p-2 px-3 border-r border-border last:border-r-0 text-sm font-medium transition-colors",
+                  isHighest && salesSort === 'desc' && "bg-emerald-50 text-emerald-700",
+                  isLowest && salesSort === 'asc' && "bg-amber-50 text-amber-700"
+                )}
+              >
                 £{kpi.sales.toLocaleString()}
               </div>
             );
@@ -471,17 +495,40 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
         
         {/* Cost / COL % row */}
         <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
-          <div className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center">
+          <button 
+            onClick={() => {
+              setColSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
+              setSalesSort('none');
+            }}
+            className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1 hover:bg-muted/50 transition-colors"
+          >
             Cost / COL %
-          </div>
+            {colSort === 'none' && <ArrowUpDown className="h-3 w-3" />}
+            {colSort === 'desc' && <ArrowDown className="h-3 w-3 text-primary" />}
+            {colSort === 'asc' && <ArrowUp className="h-3 w-3 text-primary" />}
+          </button>
           {days.map((day, i) => {
             const kpi = data.dailyKPIs[i];
+            const colValues = data.dailyKPIs.map(k => k.colPercent);
+            const maxCol = Math.max(...colValues);
+            const minCol = Math.min(...colValues);
+            const isHighest = colSort !== 'none' && kpi.colPercent === maxCol;
+            const isLowest = colSort !== 'none' && kpi.colPercent === minCol;
             const isHigh = kpi.colPercent > 35;
             
             return (
-              <div key={`col-${day.dateStr}`} className="p-2 px-3 border-r border-border last:border-r-0">
+              <div 
+                key={`col-${day.dateStr}`} 
+                className={cn(
+                  "p-2 px-3 border-r border-border last:border-r-0 transition-colors",
+                  isHighest && colSort === 'desc' && "bg-destructive/10",
+                  isLowest && colSort === 'asc' && "bg-emerald-50"
+                )}
+              >
                 <span className={cn(
                   "text-sm font-medium",
+                  isHighest && colSort === 'desc' ? "text-destructive" : 
+                  isLowest && colSort === 'asc' ? "text-emerald-700" :
                   isHigh ? "text-destructive" : "text-muted-foreground"
                 )}>
                   {kpi.colPercent > 0 ? `${kpi.colPercent.toFixed(1)}%` : '-'}
