@@ -1,4 +1,4 @@
-import { ChevronRight, Settings, MoreHorizontal } from 'lucide-react';
+import { ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,17 +14,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Supplier } from '@/hooks/useProcurementData';
+import type { ReactNode } from 'react';
 
 interface ProcurementHeaderProps {
   suppliers: Supplier[];
   selectedSupplierId: string;
   onSupplierChange: (id: string) => void;
+  settingsSlot?: ReactNode;
 }
 
 export function ProcurementHeader({
   suppliers,
   selectedSupplierId,
   onSupplierChange,
+  settingsSlot,
 }: ProcurementHeaderProps) {
   return (
     <div className="flex items-center justify-between">
@@ -49,10 +52,7 @@ export function ProcurementHeader({
           </SelectContent>
         </Select>
         
-        <Button variant="outline" size="sm" className="hidden sm:flex">
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </Button>
+        {settingsSlot && <div className="hidden sm:block">{settingsSlot}</div>}
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

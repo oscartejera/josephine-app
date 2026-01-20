@@ -6,3 +6,5 @@ export { OrderSummaryPanel } from './OrderSummaryPanel';
 export { CoverageBanner } from './CoverageBanner';
 export { OrderHistoryPanel } from './OrderHistoryPanel';
 export { AIRecommendPanel } from './AIRecommendPanel';
+export { ProcurementSettingsDialog, DEFAULT_CATEGORY_SETTINGS } from './ProcurementSettingsDialog';
+export type { ProcurementCategorySettings, CategorySettings } from './ProcurementSettingsDialog';

@@ -10,6 +10,7 @@ import {
   CoverageBanner,
   OrderHistoryPanel,
   AIRecommendPanel,
+  ProcurementSettingsDialog,
 } from '@/components/procurement';
 
 export default function Procurement() {
@@ -40,6 +41,8 @@ export default function Procurement() {
     isCalculating,
     recommendationSettings,
     setRecommendationSettings,
+    categorySettings,
+    setCategorySettings,
   } = useProcurementData();
 
   const handleReorder = (items: { skuId: string; packs: number }[]) => {
@@ -59,6 +62,12 @@ export default function Procurement() {
         suppliers={suppliers}
         selectedSupplierId={selectedSupplierId}
         onSupplierChange={setSelectedSupplierId}
+        settingsSlot={
+          <ProcurementSettingsDialog
+            categorySettings={categorySettings}
+            onSettingsChange={setCategorySettings}
+          />
+        }
       />
 
       {/* Tabs for Order / History */}
