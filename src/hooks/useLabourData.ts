@@ -1,13 +1,13 @@
 /**
- * Labour Data Hook - Fetches and processes labour data for the Labour module
- * Supports percentage, amount, and hours display modes
+ * Labour Data Hook - Fetches and processes labour data from database
+ * Uses timesheets for actual hours/cost, planned_shifts for planned hours/cost
  * Includes department and shift type breakdown for location detail views
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
-import { getDemoGenerator } from '@/lib/demoDataGenerator';
-import { eachDayOfInterval, format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { eachDayOfInterval, format, startOfDay, endOfDay } from 'date-fns';
 
 export type MetricMode = 'percentage' | 'amount' | 'hours';
 export type CompareMode = 'forecast' | 'last_week' | 'last_month';
@@ -108,47 +108,111 @@ interface UseLabourDataParams {
   locationId?: string;
 }
 
+// Role to department mapping
+const ROLE_DEPARTMENT_MAP: Record<string, 'BOH' | 'FOH' | 'Management'> = {
+  'Jefe de cocina': 'Management',
+  'Jefe de Cocina': 'Management',
+  'Cocinero': 'BOH',
+  'Cocinera': 'BOH',
+  'Ayudante Cocina': 'BOH',
+  'Camarero': 'FOH',
+  'Camarera': 'FOH',
+  'default': 'FOH'
+};
+
+function getDepartmentFromRole(role: string | null): 'BOH' | 'FOH' | 'Management' {
+  if (!role) return 'FOH';
+  for (const [key, dept] of Object.entries(ROLE_DEPARTMENT_MAP)) {
+    if (role.includes(key)) return dept;
+  }
+  return 'FOH';
+}
+
 export function useLabourData({ dateRange, metricMode, compareMode, locationId }: UseLabourDataParams) {
   const { group, locations, loading: appLoading } = useApp();
 
   return useQuery({
     queryKey: ['labour-data', group?.id, dateRange.from.toISOString(), dateRange.to.toISOString(), metricMode, compareMode, locationId],
     queryFn: async (): Promise<LabourData> => {
-      // Generate demo data using the existing generator
-      const generator = getDemoGenerator(dateRange.from, dateRange.to);
+      const fromDate = format(startOfDay(dateRange.from), 'yyyy-MM-dd');
+      const toDate = format(endOfDay(dateRange.to), 'yyyy-MM-dd');
       
-      // Get location list
-      const locationsToProcess = locationId 
-        ? locations.filter(l => l.id === locationId)
-        : locations;
+      // Filter locations if specific one is requested
+      const effectiveLocationIds = locationId 
+        ? [locationId]
+        : locations.map(l => l.id);
       
-      // Use demo locations if no real locations
-      const demoLocations = generator.getLocations();
-      const effectiveLocations = locationsToProcess.length > 0 
-        ? locationsToProcess.map(l => ({
-            id: l.id,
-            name: l.name
-          }))
-        : (locationId 
-            ? demoLocations.filter(l => l.id === locationId)
-            : demoLocations
-          ).map(l => ({
-            id: l.id,
-            name: l.name
-          }));
-
-      // Generate daily data for the range
+      // Fetch timesheets (actual hours/cost)
+      const { data: timesheets, error: tsError } = await supabase
+        .from('timesheets')
+        .select(`
+          id,
+          employee_id,
+          location_id,
+          clock_in,
+          clock_out,
+          minutes,
+          labor_cost,
+          employees!inner(role_name)
+        `)
+        .gte('clock_in', `${fromDate}T00:00:00`)
+        .lte('clock_in', `${toDate}T23:59:59`)
+        .in('location_id', effectiveLocationIds);
+      
+      if (tsError) {
+        console.error('Error fetching timesheets:', tsError);
+      }
+      
+      // Fetch planned shifts
+      const { data: plannedShifts, error: psError } = await supabase
+        .from('planned_shifts')
+        .select('*')
+        .gte('shift_date', fromDate)
+        .lte('shift_date', toDate)
+        .in('location_id', effectiveLocationIds);
+      
+      if (psError) {
+        console.error('Error fetching planned shifts:', psError);
+      }
+      
+      // Fetch tickets for sales data
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('id, location_id, gross_total, closed_at')
+        .gte('closed_at', `${fromDate}T00:00:00`)
+        .lte('closed_at', `${toDate}T23:59:59`)
+        .in('location_id', effectiveLocationIds)
+        .eq('status', 'closed');
+      
+      if (ticketsError) {
+        console.error('Error fetching tickets:', ticketsError);
+      }
+      
+      // Fetch forecasts for projected sales
+      const { data: forecasts, error: forecastError } = await supabase
+        .from('forecasts')
+        .select('*')
+        .gte('forecast_date', fromDate)
+        .lte('forecast_date', toDate)
+        .in('location_id', effectiveLocationIds);
+      
+      if (forecastError) {
+        console.error('Error fetching forecasts:', forecastError);
+      }
+      
+      // Create location map for names
+      const locationMap = new Map(locations.map(l => [l.id, l.name]));
+      
+      // Process data by location and date
       const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
       const dailyData: LabourDailyData[] = [];
-      
-      // Location performance data
       const locationDataMap = new Map<string, LocationLabourData>();
       
       // Initialize location data
-      for (const loc of effectiveLocations) {
-        locationDataMap.set(loc.id, {
-          locationId: loc.id,
-          locationName: loc.name,
+      for (const locId of effectiveLocationIds) {
+        locationDataMap.set(locId, {
+          locationId: locId,
+          locationName: locationMap.get(locId) || locId,
           salesActual: 0,
           salesProjected: 0,
           salesDelta: 0,
@@ -166,8 +230,21 @@ export function useLabourData({ dateRange, metricMode, compareMode, locationId }
         });
       }
       
+      // Department breakdown accumulator (for location detail)
+      const deptAccum: Record<'BOH' | 'FOH' | 'Management', { hoursActual: number; hoursPlanned: number; costActual: number; costPlanned: number }> = {
+        BOH: { hoursActual: 0, hoursPlanned: 0, costActual: 0, costPlanned: 0 },
+        FOH: { hoursActual: 0, hoursPlanned: 0, costActual: 0, costPlanned: 0 },
+        Management: { hoursActual: 0, hoursPlanned: 0, costActual: 0, costPlanned: 0 }
+      };
+      
+      // Shift type accumulator
+      let totalActualHours = 0;
+      let totalPlannedHours = 0;
+      let overtimeHoursActual = 0;
+      
       // Process each day
       for (const day of days) {
+        const dayStr = format(day, 'yyyy-MM-dd');
         let daySalesActual = 0;
         let daySalesProjected = 0;
         let dayHoursActual = 0;
@@ -175,41 +252,85 @@ export function useLabourData({ dateRange, metricMode, compareMode, locationId }
         let dayLabourCostActual = 0;
         let dayLabourCostPlanned = 0;
         
-        for (const loc of effectiveLocations) {
-          // Get sales from tickets (demo generator)
-          const dayStr = format(day, 'yyyy-MM-dd');
+        for (const locId of effectiveLocationIds) {
+          // Actual sales from tickets
+          const dayTickets = (tickets || []).filter(t => 
+            t.location_id === locId && 
+            t.closed_at?.startsWith(dayStr)
+          );
+          const locSalesActual = dayTickets.reduce((sum, t) => sum + (Number(t.gross_total) || 0), 0);
           
-          // Generate realistic labour data based on location size
-          const baseSales = generateLocationDaySales(loc.name, day);
-          const salesActual = baseSales;
-          const salesProjected = baseSales * randomBetween(0.92, 1.08, hashCode(dayStr + loc.id));
+          // Projected sales from forecasts
+          const dayForecasts = (forecasts || []).filter(f => 
+            f.location_id === locId && 
+            f.forecast_date === dayStr
+          );
+          const locSalesProjected = dayForecasts.reduce((sum, f) => sum + (Number(f.forecast_sales) || 0), 0);
           
-          // Hours based on sales (roughly €100-150 per labour hour)
-          const avgSalesPerHour = randomBetween(100, 150, hashCode(dayStr + loc.id + 'hours'));
-          const hoursActual = Math.round(salesActual / avgSalesPerHour);
-          const hoursPlanned = Math.round(salesProjected / avgSalesPerHour * randomBetween(0.95, 1.05, hashCode(dayStr + loc.id + 'planned')));
+          // Actual hours from timesheets
+          const dayTimesheets = (timesheets || []).filter(t => 
+            t.location_id === locId && 
+            t.clock_in?.startsWith(dayStr)
+          );
+          const locHoursActual = dayTimesheets.reduce((sum, t) => sum + ((t.minutes || 0) / 60), 0);
+          const locCostActual = dayTimesheets.reduce((sum, t) => sum + (Number(t.labor_cost) || 0), 0);
           
-          // Hourly rate €12-18
-          const avgHourlyRate = randomBetween(12, 18, hashCode(loc.id + 'rate'));
-          const labourCostActual = hoursActual * avgHourlyRate;
-          const labourCostPlanned = hoursPlanned * avgHourlyRate;
+          // Planned hours from planned_shifts
+          const dayPlanned = (plannedShifts || []).filter(p => 
+            p.location_id === locId && 
+            p.shift_date === dayStr
+          );
+          const locHoursPlanned = dayPlanned.reduce((sum, p) => sum + (Number(p.planned_hours) || 0), 0);
+          const locCostPlanned = dayPlanned.reduce((sum, p) => sum + (Number(p.planned_cost) || 0), 0);
           
-          // Accumulate to location totals
-          const locData = locationDataMap.get(loc.id)!;
-          locData.salesActual += salesActual;
-          locData.salesProjected += salesProjected;
-          locData.hoursActual += hoursActual;
-          locData.hoursPlanned += hoursPlanned;
-          locData.labourCostActual += labourCostActual;
-          locData.labourCostPlanned += labourCostPlanned;
+          // Update location totals
+          const locData = locationDataMap.get(locId)!;
+          locData.salesActual += locSalesActual;
+          locData.salesProjected += locSalesProjected || locSalesActual * 1.02; // Fallback if no forecast
+          locData.hoursActual += locHoursActual;
+          locData.hoursPlanned += locHoursPlanned;
+          locData.labourCostActual += locCostActual;
+          locData.labourCostPlanned += locCostPlanned;
           
-          // Accumulate to daily totals
-          daySalesActual += salesActual;
-          daySalesProjected += salesProjected;
-          dayHoursActual += hoursActual;
-          dayHoursPlanned += hoursPlanned;
-          dayLabourCostActual += labourCostActual;
-          dayLabourCostPlanned += labourCostPlanned;
+          // Daily totals
+          daySalesActual += locSalesActual;
+          daySalesProjected += locSalesProjected || locSalesActual * 1.02;
+          dayHoursActual += locHoursActual;
+          dayHoursPlanned += locHoursPlanned;
+          dayLabourCostActual += locCostActual;
+          dayLabourCostPlanned += locCostPlanned;
+          
+          // Department breakdown (only for location detail)
+          if (locationId) {
+            for (const ts of dayTimesheets) {
+              const emp = ts.employees as any;
+              const role = emp?.role_name || null;
+              const dept = getDepartmentFromRole(role);
+              const hours = (ts.minutes || 0) / 60;
+              const cost = Number(ts.labor_cost) || 0;
+              
+              deptAccum[dept].hoursActual += hours;
+              deptAccum[dept].costActual += cost;
+              
+              totalActualHours += hours;
+              
+              // Track overtime (shifts > 8 hours are considered overtime)
+              if (hours > 8) {
+                overtimeHoursActual += hours - 8;
+              }
+            }
+            
+            for (const ps of dayPlanned) {
+              const dept = getDepartmentFromRole(ps.role);
+              const hours = Number(ps.planned_hours) || 0;
+              const cost = Number(ps.planned_cost) || 0;
+              
+              deptAccum[dept].hoursPlanned += hours;
+              deptAccum[dept].costPlanned += cost;
+              
+              totalPlannedHours += hours;
+            }
+          }
         }
         
         // Calculate daily derived metrics
@@ -217,11 +338,11 @@ export function useLabourData({ dateRange, metricMode, compareMode, locationId }
         const colPlanned = daySalesProjected > 0 ? (dayLabourCostPlanned / daySalesProjected) * 100 : 0;
         const splhActual = dayHoursActual > 0 ? daySalesActual / dayHoursActual : 0;
         const splhPlanned = dayHoursPlanned > 0 ? daySalesProjected / dayHoursPlanned : 0;
-        const oplhActual = splhActual * 0.65; // Simplified OPLH calculation (GP-based)
+        const oplhActual = splhActual * 0.65; // Simplified OPLH (GP-based)
         const oplhPlanned = splhPlanned * 0.65;
         
         dailyData.push({
-          date: format(day, 'yyyy-MM-dd'),
+          date: dayStr,
           dateLabel: format(day, 'EEE d'),
           salesActual: daySalesActual,
           salesProjected: daySalesProjected,
@@ -328,85 +449,95 @@ export function useLabourData({ dateRange, metricMode, compareMode, locationId }
       let departmentData: DepartmentData[] | undefined;
       let shiftTypeData: ShiftTypeData[] | undefined;
       
-      if (locationId) {
-        const seed = hashCode(locationId + dateRange.from.toISOString());
-        
-        // Department distribution (BOH, FOH, Management)
-        const bohPercent = randomBetween(35, 45, seed);
-        const fohPercent = randomBetween(40, 50, seed + 1);
-        const mgmtPercent = 100 - bohPercent - fohPercent;
+      if (locationId && totalActualHours > 0) {
+        const totalActualCost = deptAccum.BOH.costActual + deptAccum.FOH.costActual + deptAccum.Management.costActual;
+        const totalPlannedCost = deptAccum.BOH.costPlanned + deptAccum.FOH.costPlanned + deptAccum.Management.costPlanned;
         
         departmentData = [
           {
             department: 'BOH',
-            hoursActual: Math.round(kpis.hoursActual * (bohPercent / 100)),
-            hoursPlanned: Math.round(kpis.hoursPlanned * (bohPercent / 100) * randomBetween(0.95, 1.05, seed + 2)),
-            costActual: Math.round(kpis.labourCostActual * (bohPercent / 100)),
-            costPlanned: Math.round(kpis.labourCostPlanned * (bohPercent / 100) * randomBetween(0.95, 1.05, seed + 3)),
-            contributionActual: bohPercent,
-            contributionPlanned: bohPercent * randomBetween(0.95, 1.05, seed + 4),
-            delta: randomBetween(-8, 8, seed + 5)
+            hoursActual: Math.round(deptAccum.BOH.hoursActual),
+            hoursPlanned: Math.round(deptAccum.BOH.hoursPlanned),
+            costActual: Math.round(deptAccum.BOH.costActual),
+            costPlanned: Math.round(deptAccum.BOH.costPlanned),
+            contributionActual: totalActualHours > 0 ? (deptAccum.BOH.hoursActual / totalActualHours) * 100 : 0,
+            contributionPlanned: totalPlannedHours > 0 ? (deptAccum.BOH.hoursPlanned / totalPlannedHours) * 100 : 0,
+            delta: deptAccum.BOH.hoursPlanned > 0 
+              ? ((deptAccum.BOH.hoursActual - deptAccum.BOH.hoursPlanned) / deptAccum.BOH.hoursPlanned) * 100 
+              : 0
           },
           {
             department: 'FOH',
-            hoursActual: Math.round(kpis.hoursActual * (fohPercent / 100)),
-            hoursPlanned: Math.round(kpis.hoursPlanned * (fohPercent / 100) * randomBetween(0.95, 1.05, seed + 6)),
-            costActual: Math.round(kpis.labourCostActual * (fohPercent / 100)),
-            costPlanned: Math.round(kpis.labourCostPlanned * (fohPercent / 100) * randomBetween(0.95, 1.05, seed + 7)),
-            contributionActual: fohPercent,
-            contributionPlanned: fohPercent * randomBetween(0.95, 1.05, seed + 8),
-            delta: randomBetween(-8, 8, seed + 9)
+            hoursActual: Math.round(deptAccum.FOH.hoursActual),
+            hoursPlanned: Math.round(deptAccum.FOH.hoursPlanned),
+            costActual: Math.round(deptAccum.FOH.costActual),
+            costPlanned: Math.round(deptAccum.FOH.costPlanned),
+            contributionActual: totalActualHours > 0 ? (deptAccum.FOH.hoursActual / totalActualHours) * 100 : 0,
+            contributionPlanned: totalPlannedHours > 0 ? (deptAccum.FOH.hoursPlanned / totalPlannedHours) * 100 : 0,
+            delta: deptAccum.FOH.hoursPlanned > 0 
+              ? ((deptAccum.FOH.hoursActual - deptAccum.FOH.hoursPlanned) / deptAccum.FOH.hoursPlanned) * 100 
+              : 0
           },
           {
             department: 'Management',
-            hoursActual: Math.round(kpis.hoursActual * (mgmtPercent / 100)),
-            hoursPlanned: Math.round(kpis.hoursPlanned * (mgmtPercent / 100) * randomBetween(0.95, 1.05, seed + 10)),
-            costActual: Math.round(kpis.labourCostActual * (mgmtPercent / 100)),
-            costPlanned: Math.round(kpis.labourCostPlanned * (mgmtPercent / 100) * randomBetween(0.95, 1.05, seed + 11)),
-            contributionActual: mgmtPercent,
-            contributionPlanned: mgmtPercent * randomBetween(0.95, 1.05, seed + 12),
-            delta: randomBetween(-8, 8, seed + 13)
+            hoursActual: Math.round(deptAccum.Management.hoursActual),
+            hoursPlanned: Math.round(deptAccum.Management.hoursPlanned),
+            costActual: Math.round(deptAccum.Management.costActual),
+            costPlanned: Math.round(deptAccum.Management.costPlanned),
+            contributionActual: totalActualHours > 0 ? (deptAccum.Management.hoursActual / totalActualHours) * 100 : 0,
+            contributionPlanned: totalPlannedHours > 0 ? (deptAccum.Management.hoursPlanned / totalPlannedHours) * 100 : 0,
+            delta: deptAccum.Management.hoursPlanned > 0 
+              ? ((deptAccum.Management.hoursActual - deptAccum.Management.hoursPlanned) / deptAccum.Management.hoursPlanned) * 100 
+              : 0
           }
         ];
         
-        // Shift types (Regular, Overtime, Training, Other)
-        const regularPercent = randomBetween(75, 85, seed + 20);
-        const overtimePercent = randomBetween(5, 12, seed + 21);
-        const trainingPercent = randomBetween(3, 8, seed + 22);
-        const otherPercent = 100 - regularPercent - overtimePercent - trainingPercent;
+        // Shift type breakdown (Regular, Overtime, Training, Other)
+        const regularHoursActual = totalActualHours - overtimeHoursActual;
+        const regularHoursPlanned = totalPlannedHours * 0.92; // Assume 92% regular planned
+        const trainingHoursActual = totalActualHours * 0.03; // Estimate 3% training
+        const trainingHoursPlanned = totalPlannedHours * 0.05; // 5% planned training
+        const otherHoursActual = totalActualHours * 0.02; // 2% other
+        const otherHoursPlanned = totalPlannedHours * 0.03; // 3% planned other
         
         shiftTypeData = [
           {
             type: 'Regular',
-            hoursActual: Math.round(kpis.hoursActual * (regularPercent / 100)),
-            hoursPlanned: Math.round(kpis.hoursPlanned * (regularPercent / 100) * randomBetween(0.95, 1.05, seed + 23)),
-            percentActual: regularPercent,
-            percentPlanned: regularPercent * randomBetween(0.98, 1.02, seed + 24),
-            delta: randomBetween(-5, 5, seed + 25)
+            hoursActual: Math.round(regularHoursActual),
+            hoursPlanned: Math.round(regularHoursPlanned),
+            percentActual: totalActualHours > 0 ? (regularHoursActual / totalActualHours) * 100 : 0,
+            percentPlanned: totalPlannedHours > 0 ? (regularHoursPlanned / totalPlannedHours) * 100 : 0,
+            delta: regularHoursPlanned > 0 
+              ? ((regularHoursActual - regularHoursPlanned) / regularHoursPlanned) * 100 
+              : 0
           },
           {
             type: 'Overtime',
-            hoursActual: Math.round(kpis.hoursActual * (overtimePercent / 100)),
-            hoursPlanned: Math.round(kpis.hoursPlanned * (overtimePercent / 100) * randomBetween(0.8, 1.2, seed + 26)),
-            percentActual: overtimePercent,
-            percentPlanned: overtimePercent * randomBetween(0.8, 1.2, seed + 27),
-            delta: randomBetween(-15, 15, seed + 28)
+            hoursActual: Math.round(overtimeHoursActual),
+            hoursPlanned: Math.round(totalPlannedHours * 0.05), // 5% planned overtime
+            percentActual: totalActualHours > 0 ? (overtimeHoursActual / totalActualHours) * 100 : 0,
+            percentPlanned: 5,
+            delta: 0
           },
           {
             type: 'Training',
-            hoursActual: Math.round(kpis.hoursActual * (trainingPercent / 100)),
-            hoursPlanned: Math.round(kpis.hoursPlanned * (trainingPercent / 100) * randomBetween(0.9, 1.1, seed + 29)),
-            percentActual: trainingPercent,
-            percentPlanned: trainingPercent * randomBetween(0.9, 1.1, seed + 30),
-            delta: randomBetween(-10, 10, seed + 31)
+            hoursActual: Math.round(trainingHoursActual),
+            hoursPlanned: Math.round(trainingHoursPlanned),
+            percentActual: totalActualHours > 0 ? (trainingHoursActual / totalActualHours) * 100 : 0,
+            percentPlanned: totalPlannedHours > 0 ? (trainingHoursPlanned / totalPlannedHours) * 100 : 0,
+            delta: trainingHoursPlanned > 0 
+              ? ((trainingHoursActual - trainingHoursPlanned) / trainingHoursPlanned) * 100 
+              : 0
           },
           {
             type: 'Other',
-            hoursActual: Math.round(kpis.hoursActual * (otherPercent / 100)),
-            hoursPlanned: Math.round(kpis.hoursPlanned * (otherPercent / 100) * randomBetween(0.85, 1.15, seed + 32)),
-            percentActual: otherPercent,
-            percentPlanned: otherPercent * randomBetween(0.85, 1.15, seed + 33),
-            delta: randomBetween(-12, 12, seed + 34)
+            hoursActual: Math.round(otherHoursActual),
+            hoursPlanned: Math.round(otherHoursPlanned),
+            percentActual: totalActualHours > 0 ? (otherHoursActual / totalActualHours) * 100 : 0,
+            percentPlanned: totalPlannedHours > 0 ? (otherHoursPlanned / totalPlannedHours) * 100 : 0,
+            delta: otherHoursPlanned > 0 
+              ? ((otherHoursActual - otherHoursPlanned) / otherHoursPlanned) * 100 
+              : 0
           }
         ];
       }
@@ -419,44 +550,8 @@ export function useLabourData({ dateRange, metricMode, compareMode, locationId }
         shiftTypeData
       };
     },
-    enabled: !appLoading,
+    enabled: !appLoading && locations.length > 0,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false
   });
-}
-
-// Helper functions for deterministic demo data
-function hashCode(str: string): number {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) + str.charCodeAt(i);
-  }
-  return Math.abs(hash);
-}
-
-function randomBetween(min: number, max: number, seed: number): number {
-  const x = Math.sin(seed) * 10000;
-  const r = x - Math.floor(x);
-  return min + r * (max - min);
-}
-
-function generateLocationDaySales(locationName: string, date: Date): number {
-  const seed = hashCode(locationName + format(date, 'yyyy-MM-dd'));
-  const dayOfWeek = date.getDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6;
-  
-  // Base sales by location "size"
-  const baseSalesMap: Record<string, [number, number]> = {
-    'CPU': [4000, 8000],
-    'Westside': [5000, 10000],
-    'Southside': [3500, 7500],
-    'HQ': [2500, 5000],
-    'Westend': [4500, 8500],
-    'Eastside': [3000, 6500]
-  };
-  
-  const range = baseSalesMap[locationName] || [3000, 6000];
-  const weekendMultiplier = isWeekend ? 1.25 : 1.0;
-  
-  return Math.round(randomBetween(range[0], range[1], seed) * weekendMultiplier);
 }
