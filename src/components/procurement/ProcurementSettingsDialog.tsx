@@ -7,6 +7,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,6 +92,17 @@ export function ProcurementSettingsDialog({
     }));
   };
 
+  // Check if any settings are modified
+  const hasModifications = categories.some(category => {
+    const settings = localSettings[category] || DEFAULT_CATEGORY_SETTINGS[category];
+    const defaults = DEFAULT_CATEGORY_SETTINGS[category];
+    return (
+      settings.wasteFactor !== defaults.wasteFactor ||
+      settings.safetyStockPct !== defaults.safetyStockPct ||
+      settings.yieldFactor !== defaults.yieldFactor
+    );
+  });
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -98,10 +120,33 @@ export function ProcurementSettingsDialog({
         </DialogHeader>
 
         <div className="flex justify-end">
-          <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2 text-muted-foreground">
-            <RotateCcw className="h-4 w-4" />
-            Reset All to Defaults
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 text-muted-foreground"
+                disabled={!hasModifications}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset All to Defaults
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reset all settings?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will reset all category settings (waste factors, safety stock, and yield factors) to their default values. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset}>
+                  Reset All
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         <ScrollArea className="h-[400px] pr-4">
