@@ -29,6 +29,7 @@ export default function Inventory() {
   const [viewMode, setViewMode] = useState<ViewMode>('COGS');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [josephineOpen, setJosephineOpen] = useState(false);
+  const [reseedTrigger, setReseedTrigger] = useState(0);
 
   const {
     isLoading,
@@ -39,6 +40,15 @@ export default function Inventory() {
     wasteByLocation,
     locationPerformance
   } = useInventoryData(dateRange, dateMode, viewMode, selectedLocations);
+
+  // Force refetch when reseed is triggered
+  const handleReseedData = () => {
+    setReseedTrigger(prev => prev + 1);
+    // Small delay to allow demo generator to reset
+    setTimeout(() => {
+      setDateRange({ ...dateRange });
+    }, 100);
+  };
 
   const isCOGS = viewMode === 'COGS';
 
@@ -55,6 +65,7 @@ export default function Inventory() {
         selectedLocations={selectedLocations}
         setSelectedLocations={setSelectedLocations}
         onAskJosephine={() => setJosephineOpen(true)}
+        onReseedData={handleReseedData}
         lastUpdated={lastUpdated}
         isLoading={isLoading}
         breadcrumbs={[{ label: 'Insights' }, { label: 'Inventory' }]}
