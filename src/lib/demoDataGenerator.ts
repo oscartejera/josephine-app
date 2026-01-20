@@ -200,6 +200,8 @@ export class DemoDataGenerator {
   private stockCountData: Map<string, StockCountRowData[]>;
   private rng: SeededRandom;
   private baseSeed: number;
+  private generatedFromDate: Date | null = null;
+  private generatedToDate: Date | null = null;
 
   constructor(seed?: number) {
     this.baseSeed = seed || 12345; // Deterministic default
@@ -222,15 +224,43 @@ export class DemoDataGenerator {
     return uuid;
   }
 
+  // Check if dates are within generated range
+  hasDataForRange(fromDate: Date, toDate: Date): boolean {
+    if (!this.generatedFromDate || !this.generatedToDate) return false;
+    return fromDate >= this.generatedFromDate && toDate <= this.generatedToDate;
+  }
+
+  // Get current generated range
+  getGeneratedRange(): { from: Date | null; to: Date | null } {
+    return { from: this.generatedFromDate, to: this.generatedToDate };
+  }
+
   // Generate all demo data for a date range
   generate(fromDate: Date, toDate: Date): void {
     // Reset RNG with base seed for determinism
     this.rng = new SeededRandom(this.baseSeed);
+    this.generatedFromDate = fromDate;
+    this.generatedToDate = toDate;
     this.generateEmployees();
     this.generateDailyMetrics(fromDate, toDate);
     this.generateTickets(fromDate, toDate);
     this.generateWasteEvents(fromDate, toDate);
     this.generateStockCountData(fromDate, toDate);
+  }
+
+  // Extend the generated range if needed
+  extendRange(fromDate: Date, toDate: Date): void {
+    const newFrom = this.generatedFromDate && fromDate >= this.generatedFromDate 
+      ? this.generatedFromDate 
+      : fromDate;
+    const newTo = this.generatedToDate && toDate <= this.generatedToDate 
+      ? this.generatedToDate 
+      : toDate;
+    
+    // Only regenerate if range actually needs to expand
+    if (newFrom !== this.generatedFromDate || newTo !== this.generatedToDate) {
+      this.generate(newFrom, newTo);
+    }
   }
 
   private generateEmployees(): void {
@@ -945,13 +975,23 @@ export class DemoDataGenerator {
 let generatorInstance: DemoDataGenerator | null = null;
 
 export function getDemoGenerator(fromDate: Date, toDate: Date): DemoDataGenerator {
+  // Extend range with padding for broader coverage
+  const paddedFrom = subDays(fromDate, 30);
+  const paddedTo = subDays(toDate, -30);
+  
   if (!generatorInstance) {
     generatorInstance = new DemoDataGenerator();
-    // Generate 60 days of data to cover most date ranges
-    const extendedFrom = subDays(fromDate, 30);
-    const extendedTo = subDays(toDate, -30);
-    generatorInstance.generate(extendedFrom, extendedTo);
+    // Generate 4+ years of historical data by default (covers most use cases)
+    const historicalStart = subDays(new Date(), 365 * 4 + 60); // ~4 years back
+    const futureEnd = subDays(new Date(), -60); // 60 days into future
+    generatorInstance.generate(historicalStart, futureEnd);
+  } else {
+    // Auto-extend range if requested dates are outside current coverage
+    if (!generatorInstance.hasDataForRange(paddedFrom, paddedTo)) {
+      generatorInstance.extendRange(paddedFrom, paddedTo);
+    }
   }
+  
   return generatorInstance;
 }
 

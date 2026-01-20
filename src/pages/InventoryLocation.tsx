@@ -87,6 +87,7 @@ export default function InventoryLocation() {
   const {
     isLoading,
     lastUpdated,
+    isConnected,
     metrics,
     categoryBreakdown,
     wasteByCategory,
@@ -245,6 +246,7 @@ export default function InventoryLocation() {
         onAskJosephine={() => setJosephineOpen(true)}
         lastUpdated={lastUpdated}
         isLoading={isLoading}
+        isConnected={isConnected}
         breadcrumbs={breadcrumbs}
       />
 
