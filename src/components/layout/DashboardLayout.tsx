@@ -4,8 +4,10 @@ import { AppSidebar } from './AppSidebar';
 import { TopBar } from './TopBar';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { useGlobalRealtimeNotifications } from '@/hooks/useGlobalRealtimeNotifications';
 
 export function DashboardLayout() {
+  useGlobalRealtimeNotifications();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

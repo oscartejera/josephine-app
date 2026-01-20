@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -101,6 +102,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        <NotificationCenter />
         {/* Date range selector */}
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <div className="flex items-center">
