@@ -24,6 +24,7 @@ import InventoryLocationReconciliation from "@/pages/InventoryLocationReconcilia
 import InventoryReconciliation from "@/pages/InventoryReconciliation";
 import Waste from "@/pages/Waste";
 import Procurement from "@/pages/Procurement";
+import ProcurementCart from "@/pages/ProcurementCart";
 import MenuEngineering from "@/pages/MenuEngineering";
 import Integrations from "@/pages/Integrations";
 import Payroll from "@/pages/Payroll";
@@ -90,6 +91,7 @@ function AppRoutes() {
         <Route path="/inventory/reconciliation" element={<InventoryReconciliation />} />
         <Route path="/waste" element={<Waste />} />
         <Route path="/procurement" element={<Procurement />} />
+        <Route path="/procurement/cart" element={<ProcurementCart />} />
         <Route path="/menu-engineering" element={<MenuEngineering />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/payroll" element={<Payroll />} />
