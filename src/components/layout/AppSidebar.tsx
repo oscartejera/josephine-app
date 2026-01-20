@@ -9,7 +9,8 @@ import {
   Plug,
   Settings,
   LogOut,
-  ChevronLeft
+  ChevronLeft,
+  Calculator
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +26,7 @@ const navItems = [
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },
   { icon: ChefHat, label: 'Menu Engineering', path: '/menu-engineering' },
   { icon: Plug, label: 'Integrations', path: '/integrations' },
+  { icon: Calculator, label: 'Payroll', path: '/payroll' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
