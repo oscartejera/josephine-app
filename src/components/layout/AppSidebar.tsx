@@ -35,7 +35,6 @@ const navItems = [
 
 const biItems = [
   { label: 'Sales', path: '/bi/sales' },
-  { label: 'Orders', path: '/bi/orders' },
 ];
 
 interface AppSidebarProps {
