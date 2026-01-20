@@ -1,17 +1,20 @@
 /**
- * Labour KPI Cards - 4 cards matching Nory design
+ * Labour KPI Cards - 4 cards matching Nory design exactly
  * Sales, Projected Sales, Actual COL, Projected COL
+ * Date range labels and delta badges
  */
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { LabourData, MetricMode } from '@/hooks/useLabourData';
+import { format } from 'date-fns';
+import type { LabourData, MetricMode, LabourDateRange } from '@/hooks/useLabourData';
 
 interface LabourKPICardsProps {
   data: LabourData | undefined;
   isLoading: boolean;
   metricMode: MetricMode;
+  dateRange: LabourDateRange;
 }
 
 function formatCurrency(value: number): string {
@@ -28,41 +31,43 @@ function formatPercent(value: number): string {
 }
 
 function formatHours(value: number): string {
-  return `${Math.round(value)}h`;
+  return `${value.toFixed(1)}h`;
 }
 
-function DeltaBadge({ value, inverted = false }: { value: number; inverted?: boolean }) {
+function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: { value: number; inverted?: boolean; label?: string }) {
   // For COL, lower is better (inverted)
   const isPositive = inverted ? value <= 0 : value >= 0;
+  const arrow = value >= 0 ? '▲' : '▼';
   
   return (
     <span className={cn(
-      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
       isPositive 
         ? "bg-[hsl(var(--bi-badge-positive))] text-[hsl(var(--bi-badge-positive-text))]" 
         : "bg-[hsl(var(--bi-badge-negative))] text-[hsl(var(--bi-badge-negative-text))]"
     )}>
-      {value >= 0 ? '+' : ''}{value.toFixed(1)}% vs forecast
+      <span className="text-[10px]">{arrow}</span>
+      {Math.abs(value).toFixed(1)}% {label}
     </span>
   );
 }
 
 function KpiCardSkeleton() {
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
       <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-3">
           <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-5 w-24 rounded-full" />
         </div>
-        <Skeleton className="h-10 w-32 mb-2" />
-        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-10 w-36 mb-2" />
+        <Skeleton className="h-3 w-28" />
       </CardContent>
     </Card>
   );
 }
 
-export function LabourKPICards({ data, isLoading, metricMode }: LabourKPICardsProps) {
+export function LabourKPICards({ data, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
   if (isLoading || !data) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -75,6 +80,9 @@ export function LabourKPICards({ data, isLoading, metricMode }: LabourKPICardsPr
   }
 
   const { kpis } = data;
+  
+  // Format date range label like Nory
+  const dateLabel = `${format(dateRange.from, 'd MMM')} - ${format(dateRange.to, 'd MMM')}`;
 
   // Determine display values based on metric mode for COL cards
   const getColValue = () => {
@@ -101,66 +109,72 @@ export function LabourKPICards({ data, isLoading, metricMode }: LabourKPICardsPr
     return 'Projected Hours';
   };
 
+  const getColDelta = () => {
+    if (metricMode === 'percentage') return kpis.colDelta;
+    if (metricMode === 'amount') return kpis.colDelta;
+    return kpis.hoursDelta;
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Sales */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">Sales</span>
+            <span className="text-sm font-medium text-muted-foreground">Sales</span>
             <DeltaBadge value={kpis.salesDelta} />
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
             {formatCurrency(kpis.salesActual)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Actual sales in period
+            {dateLabel}
           </p>
         </CardContent>
       </Card>
 
       {/* Projected Sales */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">Projected Sales</span>
+            <span className="text-sm font-medium text-muted-foreground">Projected Sales</span>
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
             {formatCurrency(kpis.salesProjected)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Forecast for period
+            {dateLabel}
           </p>
         </CardContent>
       </Card>
 
       {/* Actual COL / Labour Cost / Hours */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">{getColLabel()}</span>
-            <DeltaBadge value={kpis.colDelta} inverted />
+            <span className="text-sm font-medium text-muted-foreground">{getColLabel()}</span>
+            <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label="vs planned" />
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
             {getColValue()}
           </div>
           <p className="text-xs text-muted-foreground">
-            vs planned
+            {dateLabel}
           </p>
         </CardContent>
       </Card>
 
       {/* Projected COL / Labour Cost / Hours */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">{getColPlannedLabel()}</span>
+            <span className="text-sm font-medium text-muted-foreground">{getColPlannedLabel()}</span>
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
             {getColPlannedValue()}
           </div>
           <p className="text-xs text-muted-foreground">
-            Target for period
+            {dateLabel}
           </p>
         </CardContent>
       </Card>

@@ -1,6 +1,6 @@
 /**
  * Labour Chart - "Labour over time" with SPLH/OPLH toggle
- * Mixed bar + line chart like Nory
+ * Mixed bar + line chart like Nory - purple bars, orange lines
  */
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { MoreHorizontal } from 'lucide-react';
 import {
   ComposedChart,
   Bar,
@@ -20,7 +21,6 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import type { LabourData, MetricMode, ChartMode } from '@/hooks/useLabourData';
-// date-fns removed - using dateLabel directly
 
 interface LabourChartProps {
   data: LabourData | undefined;
@@ -30,11 +30,14 @@ interface LabourChartProps {
 
 function ChartSkeleton() {
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-6">
           <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-8 w-28" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-8 w-8" />
+          </div>
         </div>
         <Skeleton className="h-[350px] w-full" />
       </CardContent>
@@ -46,16 +49,33 @@ interface CustomTooltipProps {
   active?: boolean;
   payload?: any[];
   label?: string;
+  metricMode: MetricMode;
 }
 
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, label, metricMode }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
 
-  // Label is the dateLabel (e.g., "Mon 13"), use it directly
+  // Label is the dateLabel (e.g., "Mon 13")
   const displayLabel = label || '';
 
+  const formatValue = (name: string, value: number) => {
+    if (name.includes('COL') || name.includes('%')) {
+      return `${value.toFixed(1)}%`;
+    }
+    if (name.includes('SPLH') || name.includes('OPLH')) {
+      return `€${value.toFixed(0)}`;
+    }
+    if (name.includes('Cost') || name.includes('Labour')) {
+      return `€${value.toFixed(0)}`;
+    }
+    if (name.includes('Hours')) {
+      return `${value.toFixed(1)}h`;
+    }
+    return value.toFixed(1);
+  };
+
   return (
-    <div className="bg-card border border-border rounded-xl shadow-lg p-4 min-w-[200px]">
+    <div className="bg-card border border-border rounded-xl shadow-lg p-4 min-w-[220px]">
       <p className="text-sm font-semibold mb-3 capitalize">{displayLabel}</p>
       <div className="space-y-2">
         {payload.map((entry, idx) => (
@@ -68,12 +88,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
               <span className="text-xs text-muted-foreground">{entry.name}</span>
             </div>
             <span className="text-xs font-medium">
-              {entry.name.includes('COL') 
-                ? `${entry.value.toFixed(1)}%`
-                : entry.name.includes('SPLH') || entry.name.includes('OPLH')
-                  ? `€${entry.value.toFixed(0)}`
-                  : entry.value.toFixed(0)
-              }
+              {formatValue(entry.name, entry.value)}
             </span>
           </div>
         ))}
@@ -121,38 +136,44 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
     : { actual: 'oplhActual', planned: 'oplhPlanned', label: 'OPLH' };
 
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold">Labour over time</h3>
           
-          {/* SPLH / OPLH Toggle */}
-          <div className="flex items-center bg-muted rounded-lg p-0.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                chartMode === 'splh' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => setChartMode('splh')}
-            >
-              SPLH
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                chartMode === 'oplh' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => setChartMode('oplh')}
-            >
-              OPLH
+          <div className="flex items-center gap-2">
+            {/* SPLH / OPLH Toggle */}
+            <div className="flex items-center bg-muted rounded-lg p-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-7 px-3 rounded-md text-xs font-medium transition-all",
+                  chartMode === 'splh' 
+                    ? "bg-background shadow-sm text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setChartMode('splh')}
+              >
+                SPLH
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-7 px-3 rounded-md text-xs font-medium transition-all",
+                  chartMode === 'oplh' 
+                    ? "bg-background shadow-sm text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setChartMode('oplh')}
+              >
+                OPLH
+              </Button>
+            </div>
+            
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -192,7 +213,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
                 tickLine={false}
                 tickFormatter={(v) => `€${v.toFixed(0)}`}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip metricMode={metricMode} />} />
               <Legend 
                 verticalAlign="bottom"
                 height={36}
