@@ -10,17 +10,12 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  Calculator,
-  BarChart3,
-  ChevronDown
+  Calculator
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useState } from 'react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -33,10 +28,6 @@ const navItems = [
   { icon: Calculator, label: 'Payroll', path: '/payroll' },
 ];
 
-const biItems = [
-  { label: 'Sales', path: '/bi/sales' },
-];
-
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -46,7 +37,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
-  const [biOpen, setBiOpen] = useState(location.pathname.startsWith('/bi'));
 
   const handleSignOut = async () => {
     await signOut();
@@ -101,51 +91,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               </Button>
             );
           })}
-
-          {/* Business Intelligence Group */}
-          {!collapsed ? (
-            <Collapsible open={biOpen} onOpenChange={setBiOpen}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant={location.pathname.startsWith('/bi') ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start gap-3 h-10",
-                    location.pathname.startsWith('/bi') && "bg-accent text-accent-foreground font-medium"
-                  )}
-                >
-                  <BarChart3 className="h-4 w-4 shrink-0" />
-                  <span className="flex-1 text-left">Business Intelligence</span>
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", biOpen && "rotate-180")} />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pl-7 space-y-1 mt-1">
-                {biItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Button
-                      key={item.path}
-                      variant={isActive ? "secondary" : "ghost"}
-                      className={cn(
-                        "w-full justify-start h-9 text-sm",
-                        isActive && "bg-accent text-accent-foreground font-medium"
-                      )}
-                      onClick={() => navigate(item.path)}
-                    >
-                      {item.label}
-                    </Button>
-                  );
-                })}
-              </CollapsibleContent>
-            </Collapsible>
-          ) : (
-            <Button
-              variant={location.pathname.startsWith('/bi') ? "secondary" : "ghost"}
-              className="w-full justify-center px-2 h-10"
-              onClick={() => navigate('/bi/sales')}
-            >
-              <BarChart3 className="h-4 w-4 shrink-0" />
-            </Button>
-          )}
 
           <Button
             variant={location.pathname === '/settings' ? "secondary" : "ghost"}
