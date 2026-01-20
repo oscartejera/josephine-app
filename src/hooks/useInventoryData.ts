@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
+import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
 
@@ -223,6 +224,50 @@ export function useInventoryData(
     
     fetchData();
   }, [fetchData, appLoading]);
+
+  // Subscribe to realtime inventory updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('inventory-items-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'inventory_items'
+        },
+        (payload) => {
+          console.log('Inventory realtime update:', payload);
+          
+          // Reset cache key to force refetch
+          fetchedRef.current = '';
+          fetchData();
+          
+          const eventType = payload.eventType;
+          if (eventType === 'UPDATE') {
+            toast.info('Stock updated', {
+              description: 'Inventory data has been refreshed.',
+              duration: 3000,
+            });
+          } else if (eventType === 'INSERT') {
+            toast.success('New item added', {
+              description: 'A new inventory item was added.',
+              duration: 3000,
+            });
+          } else if (eventType === 'DELETE') {
+            toast.info('Item removed', {
+              description: 'An inventory item was deleted.',
+              duration: 3000,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
 
   const processRealData = async (
     tickets: any[], 
