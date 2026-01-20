@@ -20,8 +20,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import type { LabourData, MetricMode, ChartMode } from '@/hooks/useLabourData';
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
+// date-fns removed - using dateLabel directly
 
 interface LabourChartProps {
   data: LabourData | undefined;
@@ -52,17 +51,17 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
 
-  const date = label ? parseISO(label) : new Date();
-  const dayName = format(date, 'EEEE, d', { locale: es });
+  // Label is the dateLabel (e.g., "Mon 13"), use it directly
+  const displayLabel = label || '';
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-lg p-4 min-w-[200px]">
-      <p className="text-sm font-semibold mb-3 capitalize">{dayName}</p>
+      <p className="text-sm font-semibold mb-3 capitalize">{displayLabel}</p>
       <div className="space-y-2">
         {payload.map((entry, idx) => (
           <div key={idx} className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div 
+              <div
                 className="w-3 h-3 rounded-sm" 
                 style={{ backgroundColor: entry.color }}
               />
