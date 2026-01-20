@@ -71,6 +71,7 @@ function AppRoutes() {
         <Route path="/sales" element={<Sales />} />
         <Route path="/labor" element={<Labor />} />
         <Route path="/inventory" element={<Inventory />} />
+        <Route path="/inventory/:locationId" element={<Inventory />} />
         <Route path="/inventory/reconciliation" element={<InventoryReconciliation />} />
         <Route path="/waste" element={<Waste />} />
         <Route path="/procurement" element={<Procurement />} />

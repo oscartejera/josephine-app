@@ -5,7 +5,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import type { ViewMode } from './InventoryHeader';
+import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 interface LocationPerformance {
   locationId: string;
@@ -25,15 +28,20 @@ interface LocationPerformanceTableProps {
   data: LocationPerformance[];
   isLoading?: boolean;
   currency?: string;
+  dateRange?: DateRangeValue;
+  onLocationClick?: (locationId: string) => void;
 }
 
 export function LocationPerformanceTable({
   viewMode,
   data,
   isLoading = false,
-  currency = '€'
+  currency = '€',
+  dateRange,
+  onLocationClick
 }: LocationPerformanceTableProps) {
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
   const isCOGS = viewMode === 'COGS';
   
   // For GP view, we show GP metrics instead of COGS
@@ -59,6 +67,25 @@ export function LocationPerformanceTable({
     ? (totals.actualValue / totals.sales) * 100 
     : 0;
   const avgVariancePercent = avgActualPercent - avgTheoreticalPercent;
+
+  const handleRowClick = (locationId: string) => {
+    if (onLocationClick) {
+      onLocationClick(locationId);
+      return;
+    }
+    
+    // Build URL with date params
+    const params = new URLSearchParams();
+    if (dateRange?.from) {
+      params.set('start_date', format(dateRange.from, 'yyyy-MM-dd'));
+    }
+    if (dateRange?.to) {
+      params.set('end_date', format(dateRange.to, 'yyyy-MM-dd'));
+    }
+    
+    const queryString = params.toString();
+    navigate(`/inventory/${locationId}${queryString ? `?${queryString}` : ''}`);
+  };
 
   if (isLoading) {
     return (
@@ -112,26 +139,32 @@ export function LocationPerformanceTable({
                 const hasData = row.hasStockCount !== false;
                 
                 return (
-                  <TableRow key={row.locationId} className="border-b border-border/30 hover:bg-muted/20">
-                    <TableCell className="py-3 font-medium text-sm">{row.locationName}</TableCell>
+                  <TableRow 
+                    key={row.locationId} 
+                    className="border-b border-border/30 hover:bg-muted/20 cursor-pointer transition-colors"
+                    onClick={() => handleRowClick(row.locationId)}
+                  >
+                    <TableCell className="py-3 font-medium text-sm text-primary hover:underline">
+                      {row.locationName}
+                    </TableCell>
                     <TableCell className="py-3 text-right text-sm">
-                      {currency}{row.sales.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                      {currency}{row.sales.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="py-3 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-medium">{row.theoreticalPercent.toFixed(2)}%</span>
+                        <span className="text-xs text-muted-foreground">
+                          {currency}{row.theoreticalValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
                     </TableCell>
                     {hasData ? (
                       <>
                         <TableCell className="py-3 text-right">
                           <div className="flex flex-col items-end">
-                            <span className="text-sm font-medium">{row.theoreticalPercent.toFixed(1)}%</span>
+                            <span className="text-sm font-medium">{row.actualPercent.toFixed(2)}%</span>
                             <span className="text-xs text-muted-foreground">
-                              {currency}{row.theoreticalValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-3 text-right">
-                          <div className="flex flex-col items-end">
-                            <span className="text-sm font-medium">{row.actualPercent.toFixed(1)}%</span>
-                            <span className="text-xs text-muted-foreground">
-                              {currency}{row.actualValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                              {currency}{row.actualValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         </TableCell>
@@ -141,16 +174,16 @@ export function LocationPerformanceTable({
                             isVarianceNegative ? "text-destructive" : "text-success"
                           )}>
                             <span className="text-sm font-medium">
-                              {row.variancePercent >= 0 ? '+' : ''}{row.variancePercent.toFixed(1)}%
+                              {row.variancePercent >= 0 ? '+' : ''}{row.variancePercent.toFixed(2)}%
                             </span>
                             <span className="text-xs">
-                              {row.varianceAmount >= 0 ? '+' : ''}{currency}{Math.abs(row.varianceAmount).toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                              {row.varianceAmount >= 0 ? '+' : ''}{currency}{Math.abs(row.varianceAmount).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         </TableCell>
                       </>
                     ) : (
-                      <TableCell colSpan={3} className="py-3 text-center text-sm text-muted-foreground italic">
+                      <TableCell colSpan={2} className="py-3 text-center text-sm text-muted-foreground italic">
                         No stock count done
                       </TableCell>
                     )}
@@ -160,23 +193,23 @@ export function LocationPerformanceTable({
               
               {/* Totals row */}
               <TableRow className="border-t-2 border-border bg-muted/20">
-                <TableCell className="py-3 font-semibold text-sm text-muted-foreground">Total / Average</TableCell>
+                <TableCell className="py-3 font-semibold text-sm text-muted-foreground">All locations</TableCell>
                 <TableCell className="py-3 text-right font-semibold text-sm text-muted-foreground">
-                  {currency}{totals.sales.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                  {currency}{totals.sales.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="py-3 text-right">
                   <div className="flex flex-col items-end">
-                    <span className="font-semibold text-sm text-muted-foreground">{avgTheoreticalPercent.toFixed(1)}%</span>
+                    <span className="font-semibold text-sm text-muted-foreground">{avgTheoreticalPercent.toFixed(2)}%</span>
                     <span className="text-xs text-muted-foreground">
-                      {currency}{totals.theoreticalValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                      {currency}{totals.theoreticalValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell className="py-3 text-right">
                   <div className="flex flex-col items-end">
-                    <span className="font-semibold text-sm text-muted-foreground">{avgActualPercent.toFixed(1)}%</span>
+                    <span className="font-semibold text-sm text-muted-foreground">{avgActualPercent.toFixed(2)}%</span>
                     <span className="text-xs text-muted-foreground">
-                      {currency}{totals.actualValue.toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                      {currency}{totals.actualValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </TableCell>
@@ -186,10 +219,10 @@ export function LocationPerformanceTable({
                     (isCOGS ? avgVariancePercent > 0 : avgVariancePercent < 0) ? "text-destructive" : "text-success"
                   )}>
                     <span className="font-semibold text-sm">
-                      {avgVariancePercent >= 0 ? '+' : ''}{avgVariancePercent.toFixed(1)}%
+                      {avgVariancePercent >= 0 ? '+' : ''}{avgVariancePercent.toFixed(2)}%
                     </span>
                     <span className="text-xs">
-                      {totals.varianceAmount >= 0 ? '+' : ''}{currency}{Math.abs(totals.varianceAmount).toLocaleString('es-ES', { minimumFractionDigits: 0 })}
+                      {totals.varianceAmount >= 0 ? '+' : ''}{currency}{Math.abs(totals.varianceAmount).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </TableCell>
