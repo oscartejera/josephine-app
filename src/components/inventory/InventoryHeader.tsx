@@ -1,10 +1,11 @@
-import { ChevronDown, Sparkles, RefreshCw } from 'lucide-react';
+import { ChevronDown, Sparkles, RefreshCw, MoreHorizontal, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import {
   Popover,
@@ -18,6 +19,8 @@ import { DateRangePickerNoryLike, DateMode, ChartGranularity, DateRangeValue } f
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { resetDemoGenerator } from '@/lib/demoDataGenerator';
+import { toast } from 'sonner';
 
 export type ViewMode = 'COGS' | 'GP';
 
@@ -31,6 +34,7 @@ interface InventoryHeaderProps {
   selectedLocations: string[];
   setSelectedLocations: (ids: string[]) => void;
   onAskJosephine: () => void;
+  onReseedData?: () => void;
   lastUpdated?: Date | null;
   isLoading?: boolean;
   showViewToggle?: boolean;
@@ -47,6 +51,7 @@ export function InventoryHeader({
   selectedLocations,
   setSelectedLocations,
   onAskJosephine,
+  onReseedData,
   lastUpdated,
   isLoading = false,
   showViewToggle = true,
@@ -56,6 +61,16 @@ export function InventoryHeader({
   const navigate = useNavigate();
   const location = useLocation();
   const [locationsOpen, setLocationsOpen] = useState(false);
+
+  const handleReseedData = () => {
+    resetDemoGenerator();
+    toast.success('Demo data regenerated', {
+      description: 'New realistic data has been generated for all locations.'
+    });
+    if (onReseedData) {
+      onReseedData();
+    }
+  };
 
   const handleDateChange = (range: DateRangeValue, mode: DateMode, chartGranularity: ChartGranularity) => {
     setDateRange(range);
@@ -166,6 +181,21 @@ export function InventoryHeader({
             <Sparkles className="h-4 w-4" />
             Ask Josephine
           </Button>
+
+          {/* Actions menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleReseedData}>
+                <Database className="h-4 w-4 mr-2" />
+                Reseed demo data
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
