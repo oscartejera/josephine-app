@@ -44,9 +44,9 @@ export default function PayrollSubmit({
     // Simulate submission in sandbox mode
     const { error } = await supabase.from('compliance_submissions').insert({
       payroll_run_id: currentRun.id,
-      agency,
+      agency: agency as 'TGSS' | 'AEAT' | 'SEPE',
       submission_type: type,
-      status: isSandboxMode ? 'accepted' : 'sent',
+      status: isSandboxMode ? 'accepted' as const : 'sent' as const,
       response_json: isSandboxMode ? { sandbox: true, message: 'Simulación OK' } : null,
       submitted_at: new Date().toISOString(),
     });
