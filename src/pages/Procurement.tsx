@@ -9,6 +9,7 @@ import {
   OrderSummaryPanel,
   CoverageBanner,
   OrderHistoryPanel,
+  AIRecommendPanel,
 } from '@/components/procurement';
 
 export default function Procurement() {
@@ -30,18 +31,16 @@ export default function Procurement() {
     updateCartItem,
     clearCart,
     autofillCart,
+    aiRecommend,
     getRecommendedPacks,
+    getRecommendationBreakdown,
     orderSummary,
     searchQuery,
     setSearchQuery,
+    isCalculating,
+    recommendationSettings,
+    setRecommendationSettings,
   } = useProcurementData();
-
-  // Auto-fill on first load
-  useEffect(() => {
-    if (cart.size === 0) {
-      autofillCart();
-    }
-  }, []);
 
   const handleReorder = (items: { skuId: string; packs: number }[]) => {
     // Clear cart and add reorder items
@@ -87,10 +86,19 @@ export default function Procurement() {
             cutoffInfo={cutoffInfo}
           />
 
+          {/* AI Recommendation Panel */}
+          <AIRecommendPanel
+            settings={recommendationSettings}
+            onSettingsChange={setRecommendationSettings}
+            onRecommend={aiRecommend}
+            isCalculating={isCalculating}
+          />
+
           {/* Coverage Banner */}
           <CoverageBanner
             coverageEndDate={orderSummary.coverageEndDate}
             hasItems={orderSummary.items.length > 0}
+            orderDate={orderDate}
           />
 
           {/* Main 2-column layout */}
@@ -103,6 +111,7 @@ export default function Procurement() {
                 cart={cart}
                 dayLabels={dayLabels}
                 getRecommendedPacks={getRecommendedPacks}
+                getRecommendationBreakdown={getRecommendationBreakdown}
                 onUpdatePacks={updateCartItem}
               />
             </div>

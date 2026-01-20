@@ -1,13 +1,15 @@
-import { Minus, Plus, Pause } from 'lucide-react';
+import { Minus, Plus, Pause, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { IngredientSku } from '@/hooks/useProcurementData';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
 
 interface IngredientRowProps {
   sku: IngredientSku;
   packs: number;
   recommendedPacks: number;
+  breakdown: RecommendationBreakdown;
   dayLabels: string[];
   onUpdatePacks: (skuId: string, packs: number) => void;
 }
@@ -16,6 +18,7 @@ export function IngredientRow({
   sku,
   packs,
   recommendedPacks,
+  breakdown,
   dayLabels,
   onUpdatePacks,
 }: IngredientRowProps) {
@@ -60,6 +63,63 @@ export function IngredientRow({
                 </div>
               ))}
             </div>
+            
+            {/* Why? Popover */}
+            {!isPaused && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground ml-2">
+                    <HelpCircle className="h-3 w-3 mr-1" />
+                    Why?
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" side="right" align="start">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm">Recommendation Breakdown</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Forecast Usage:</span>
+                        <span className="font-medium">{breakdown.forecastUsage.toFixed(1)} {sku.unit}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Waste Factor ({(breakdown.wasteFactor * 100).toFixed(0)}%):</span>
+                        <span className="font-medium text-destructive">+{(breakdown.forecastUsage * breakdown.wasteFactor).toFixed(1)} {sku.unit}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Yield Factor ({(breakdown.yieldFactor * 100).toFixed(0)}%):</span>
+                        <span className="font-medium">{breakdown.adjustedForecast.toFixed(1)} {sku.unit}</span>
+                      </div>
+                      {breakdown.safetyStock > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Safety Stock ({(breakdown.safetyStockPct * 100).toFixed(0)}%):</span>
+                          <span className="font-medium text-warning">+{breakdown.safetyStock.toFixed(1)} {sku.unit}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-border pt-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">On Hand:</span>
+                          <span className="font-medium text-success">-{breakdown.onHand.toFixed(1)} {sku.unit}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">On Order:</span>
+                          <span className="font-medium text-success">-{breakdown.onOrder.toFixed(1)} {sku.unit}</span>
+                        </div>
+                      </div>
+                      <div className="border-t border-border pt-2">
+                        <div className="flex justify-between font-semibold">
+                          <span>Net Needed:</span>
+                          <span>{breakdown.netNeeded.toFixed(1)} {sku.unit}</span>
+                        </div>
+                        <div className="flex justify-between font-semibold text-primary">
+                          <span>Recommended:</span>
+                          <span>{breakdown.recommendedPacks} packs ({(breakdown.recommendedPacks * sku.packSizeUnits).toFixed(1)} {sku.unit})</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         </div>
         

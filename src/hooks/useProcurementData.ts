@@ -29,11 +29,28 @@ export interface IngredientSku {
   forecastDailyUsage: number[];
   paused: boolean;
   pauseReason?: string;
+  wasteFactor: number; // e.g., 0.05 for 5%
+  yieldFactor: number; // e.g., 0.95 for 95% yield
+  safetyStockPct: number; // e.g., 0.15 for 15%
 }
 
 export interface CartItem {
   skuId: string;
   packs: number;
+}
+
+export interface RecommendationBreakdown {
+  forecastUsage: number;
+  adjustedForecast: number;
+  safetyStock: number;
+  onHand: number;
+  onOrder: number;
+  netNeeded: number;
+  recommendedUnits: number;
+  recommendedPacks: number;
+  wasteFactor: number;
+  yieldFactor: number;
+  safetyStockPct: number;
 }
 
 export interface OrderSummary {
@@ -46,7 +63,26 @@ export interface OrderSummary {
   deliveryFee: number;
   tax: number;
   total: number;
+  minOrder: number;
+  minOrderProgress: number;
 }
+
+export interface RecommendationSettings {
+  horizon: 7 | 14 | 30;
+  includeSafetyStock: boolean;
+  roundToPacks: boolean;
+}
+
+// Default waste factors by category
+const CATEGORY_WASTE_FACTORS: Record<string, number> = {
+  'Produce': 0.06,
+  'Proteins': 0.05,
+  'Dairy': 0.03,
+  'Dry Goods': 0.01,
+  'Beverages': 0.01,
+  'Bakery': 0.04,
+  'Condiments': 0.02,
+};
 
 // Seed data - 50 realistic SKUs
 const SEED_SUPPLIERS: Supplier[] = [
@@ -58,8 +94,8 @@ const SEED_SUPPLIERS: Supplier[] = [
     cutoffHour: 17,
     cutoffMinute: 0,
     leadTimeDays: 1,
-    minOrder: 50,
-    deliveryFee: 0,
+    minOrder: 150,
+    deliveryFee: 12,
   },
   {
     id: 'sysco',
@@ -69,7 +105,7 @@ const SEED_SUPPLIERS: Supplier[] = [
     cutoffHour: 14,
     cutoffMinute: 0,
     leadTimeDays: 2,
-    minOrder: 100,
+    minOrder: 200,
     deliveryFee: 15,
   },
   {
@@ -80,12 +116,12 @@ const SEED_SUPPLIERS: Supplier[] = [
     cutoffHour: 12,
     cutoffMinute: 0,
     leadTimeDays: 2,
-    minOrder: 75,
+    minOrder: 100,
     deliveryFee: 10,
   },
 ];
 
-const SEED_SKUS: Omit<IngredientSku, 'forecastDailyUsage'>[] = [
+const SEED_SKUS: Omit<IngredientSku, 'forecastDailyUsage' | 'wasteFactor' | 'yieldFactor' | 'safetyStockPct'>[] = [
   // Proteins
   { id: 'sku-001', supplierId: 'macro', name: 'Chicken Breast', category: 'Proteins', packSize: '1×5kg', packSizeUnits: 5, unit: 'kg', unitPrice: 42.50, onHandUnits: 8, parLevelUnits: 25, onOrderUnits: 0, paused: false },
   { id: 'sku-002', supplierId: 'macro', name: 'Beef Mince 80/20', category: 'Proteins', packSize: '1×3kg', packSizeUnits: 3, unit: 'kg', unitPrice: 28.90, onHandUnits: 4, parLevelUnits: 15, onOrderUnits: 0, paused: false },
@@ -146,14 +182,13 @@ const SEED_SKUS: Omit<IngredientSku, 'forecastDailyUsage'>[] = [
   { id: 'sku-061', supplierId: 'macro', name: 'Ketchup', category: 'Condiments', packSize: '1×4.5kg', packSizeUnits: 4.5, unit: 'kg', unitPrice: 10.00, onHandUnits: 2, parLevelUnits: 9, onOrderUnits: 0, paused: false },
   { id: 'sku-062', supplierId: 'bidfood', name: 'Soy Sauce', category: 'Condiments', packSize: '1×1.8L', packSizeUnits: 1.8, unit: 'L', unitPrice: 8.50, onHandUnits: 1, parLevelUnits: 5.4, onOrderUnits: 0, paused: false },
   { id: 'sku-063', supplierId: 'macro', name: 'Balsamic Vinegar', category: 'Condiments', packSize: '1×1L', packSizeUnits: 1, unit: 'L', unitPrice: 14.00, onHandUnits: 0.5, parLevelUnits: 3, onOrderUnits: 0, paused: false },
-  { id: 'sku-064', supplierId: 'macro', name: 'Dijon Mustard', category: 'Condiments', packSize: '1×2kg', packSizeUnits: 2, unit: 'kg', unitPrice: 11.00, onHandUnits: 1, parLevelUnits: 4, onOrderUnits: 0, paused: false, pauseReason: 'Seasonal item - out of stock until March' },
+  { id: 'sku-064', supplierId: 'macro', name: 'Dijon Mustard', category: 'Condiments', packSize: '1×2kg', packSizeUnits: 2, unit: 'kg', unitPrice: 11.00, onHandUnits: 1, parLevelUnits: 4, onOrderUnits: 0, paused: true, pauseReason: 'Seasonal item - out of stock until March' },
 ];
 
-// Generate realistic forecast data
-const generateForecastUsage = (): number[] => {
-  // 7 days of usage: Today, +1, +2, +3, +4, +5, +6
-  const baseUsage = Math.floor(Math.random() * 6) + 2; // 2-7 base
-  return Array.from({ length: 7 }, () => {
+// Generate realistic forecast data based on horizon
+const generateForecastUsage = (days: number = 30): number[] => {
+  const baseUsage = Math.floor(Math.random() * 6) + 2;
+  return Array.from({ length: days }, () => {
     const variance = (Math.random() - 0.5) * 4;
     return Math.max(1, Math.round(baseUsage + variance));
   });
@@ -161,8 +196,11 @@ const generateForecastUsage = (): number[] => {
 
 const FULL_SKUS: IngredientSku[] = SEED_SKUS.map(sku => ({
   ...sku,
-  forecastDailyUsage: generateForecastUsage(),
-  paused: sku.id === 'sku-064', // Only mustard is paused
+  forecastDailyUsage: generateForecastUsage(30),
+  paused: sku.id === 'sku-064',
+  wasteFactor: CATEGORY_WASTE_FACTORS[sku.category] || 0.02,
+  yieldFactor: 1.0,
+  safetyStockPct: 0.15,
 }));
 
 // Utility functions
@@ -172,7 +210,6 @@ function getNextDeliveryDate(supplier: Supplier, orderDate: Date): Date {
     ? addDays(orderDate, supplier.leadTimeDays + 1)
     : addDays(orderDate, supplier.leadTimeDays);
   
-  // Find next delivery day
   for (let i = 0; i < 14; i++) {
     const dayOfWeek = getDay(checkDate);
     if (supplier.deliveryDays.includes(dayOfWeek)) {
@@ -183,25 +220,59 @@ function getNextDeliveryDate(supplier: Supplier, orderDate: Date): Date {
   return checkDate;
 }
 
-function calculateRecommendedPacks(
+// Calculate recommendation with full breakdown
+export function calculateRecommendation(
   sku: IngredientSku,
-  deliveryDate: Date,
-  orderDate: Date
-): number {
-  // Calculate days until next delivery after this one (buffer)
-  const daysUntilDelivery = Math.ceil((deliveryDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
-  const bufferDays = daysUntilDelivery + 1;
-  
-  // Sum expected consumption
-  const expectedConsumption = sku.forecastDailyUsage
-    .slice(0, Math.min(bufferDays, 7))
+  horizonDays: number,
+  settings: RecommendationSettings
+): RecommendationBreakdown {
+  // Sum forecast for the horizon
+  const forecastUsage = sku.forecastDailyUsage
+    .slice(0, horizonDays)
     .reduce((sum, usage) => sum + usage, 0);
   
-  const targetStock = expectedConsumption + sku.parLevelUnits * 0.5;
-  const netNeededUnits = Math.max(0, targetStock - sku.onHandUnits - sku.onOrderUnits);
-  const recommendedPacks = Math.ceil(netNeededUnits / sku.packSizeUnits);
+  // Adjusted forecast = (ForecastUsage * (1 + WasteFactor)) / YieldFactor
+  const adjustedForecast = (forecastUsage * (1 + sku.wasteFactor)) / sku.yieldFactor;
   
-  return recommendedPacks;
+  // Safety stock = 15% of forecast (if enabled)
+  const safetyStock = settings.includeSafetyStock 
+    ? forecastUsage * sku.safetyStockPct 
+    : 0;
+  
+  // Net needed = Adjusted + Safety - (OnHand + OnOrder)
+  const netNeeded = adjustedForecast + safetyStock - (sku.onHandUnits + sku.onOrderUnits);
+  const recommendedUnits = Math.max(0, netNeeded);
+  
+  // Round to packs if enabled
+  let recommendedPacks: number;
+  if (settings.roundToPacks) {
+    recommendedPacks = Math.ceil(recommendedUnits / sku.packSizeUnits);
+  } else {
+    recommendedPacks = recommendedUnits / sku.packSizeUnits;
+  }
+  
+  return {
+    forecastUsage,
+    adjustedForecast,
+    safetyStock,
+    onHand: sku.onHandUnits,
+    onOrder: sku.onOrderUnits,
+    netNeeded: Math.max(0, netNeeded),
+    recommendedUnits,
+    recommendedPacks: Math.max(0, recommendedPacks),
+    wasteFactor: sku.wasteFactor,
+    yieldFactor: sku.yieldFactor,
+    safetyStockPct: sku.safetyStockPct,
+  };
+}
+
+function calculateRecommendedPacks(
+  sku: IngredientSku,
+  horizonDays: number,
+  settings: RecommendationSettings
+): number {
+  const breakdown = calculateRecommendation(sku, horizonDays, settings);
+  return breakdown.recommendedPacks;
 }
 
 function getCoverageEndDate(
@@ -211,7 +282,7 @@ function getCoverageEndDate(
 ): Date {
   if (cart.size === 0) return orderDate;
   
-  let minCoverageDays = 14;
+  let minCoverageDays = 30;
   
   cart.forEach((packs, skuId) => {
     const sku = skus.find(s => s.id === skuId);
@@ -242,6 +313,12 @@ export function useProcurementData() {
   const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [cart, setCart] = useState<Map<string, number>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [recommendationSettings, setRecommendationSettings] = useState<RecommendationSettings>({
+    horizon: 7,
+    includeSafetyStock: true,
+    roundToPacks: true,
+  });
 
   const suppliers = SEED_SUPPLIERS;
   const allSkus = FULL_SKUS;
@@ -271,21 +348,43 @@ export function useProcurementData() {
     return Array.from(cats).sort();
   }, [filteredSkus]);
 
-  // Auto-fill recommended quantities
-  const autofillCart = useCallback(() => {
+  // AI Recommend function with loading state
+  const aiRecommend = useCallback(async () => {
+    setIsCalculating(true);
+    
+    // Simulate AI calculation delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     const newCart = new Map<string, number>();
     const supplierSkus = allSkus.filter(sku => sku.supplierId === selectedSupplierId);
     
     supplierSkus.forEach(sku => {
       if (sku.paused) return;
-      const recommended = calculateRecommendedPacks(sku, deliveryDate, orderDate);
+      const recommended = calculateRecommendedPacks(sku, recommendationSettings.horizon, recommendationSettings);
       if (recommended > 0) {
         newCart.set(sku.id, recommended);
       }
     });
     
     setCart(newCart);
-  }, [selectedSupplierId, deliveryDate, orderDate, allSkus]);
+    setIsCalculating(false);
+  }, [selectedSupplierId, recommendationSettings, allSkus]);
+
+  // Legacy autofill (quick, no delay)
+  const autofillCart = useCallback(() => {
+    const newCart = new Map<string, number>();
+    const supplierSkus = allSkus.filter(sku => sku.supplierId === selectedSupplierId);
+    
+    supplierSkus.forEach(sku => {
+      if (sku.paused) return;
+      const recommended = calculateRecommendedPacks(sku, recommendationSettings.horizon, recommendationSettings);
+      if (recommended > 0) {
+        newCart.set(sku.id, recommended);
+      }
+    });
+    
+    setCart(newCart);
+  }, [selectedSupplierId, recommendationSettings, allSkus]);
 
   const updateCartItem = useCallback((skuId: string, packs: number) => {
     setCart(prev => {
@@ -304,8 +403,12 @@ export function useProcurementData() {
   }, []);
 
   const getRecommendedPacks = useCallback((sku: IngredientSku) => {
-    return calculateRecommendedPacks(sku, deliveryDate, orderDate);
-  }, [deliveryDate, orderDate]);
+    return calculateRecommendedPacks(sku, recommendationSettings.horizon, recommendationSettings);
+  }, [recommendationSettings]);
+
+  const getRecommendationBreakdown = useCallback((sku: IngredientSku) => {
+    return calculateRecommendation(sku, recommendationSettings.horizon, recommendationSettings);
+  }, [recommendationSettings]);
 
   const orderSummary = useMemo((): OrderSummary => {
     const items: { sku: IngredientSku; packs: number }[] = [];
@@ -319,10 +422,12 @@ export function useProcurementData() {
       }
     });
     
-    const deliveryFee = subtotal >= selectedSupplier.minOrder ? 0 : selectedSupplier.deliveryFee;
-    const tax = subtotal * 0.21; // 21% VAT
+    const meetsMinOrder = subtotal >= selectedSupplier.minOrder;
+    const deliveryFee = meetsMinOrder ? 0 : selectedSupplier.deliveryFee;
+    const tax = subtotal * 0.21;
     const total = subtotal + deliveryFee + tax;
     const coverageEndDate = getCoverageEndDate(cart, allSkus, orderDate);
+    const minOrderProgress = Math.min(100, (subtotal / selectedSupplier.minOrder) * 100);
     
     return {
       supplierId: selectedSupplier.id,
@@ -334,6 +439,8 @@ export function useProcurementData() {
       deliveryFee,
       tax,
       total,
+      minOrder: selectedSupplier.minOrder,
+      minOrderProgress,
     };
   }, [cart, allSkus, selectedSupplier, deliveryDate, orderDate]);
 
@@ -386,8 +493,15 @@ export function useProcurementData() {
     updateCartItem,
     clearCart,
     autofillCart,
+    aiRecommend,
     getRecommendedPacks,
+    getRecommendationBreakdown,
     orderSummary,
+    
+    // AI Recommendation
+    isCalculating,
+    recommendationSettings,
+    setRecommendationSettings,
     
     // Search
     searchQuery,

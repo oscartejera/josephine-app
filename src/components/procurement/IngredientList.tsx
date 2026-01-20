@@ -1,5 +1,5 @@
 import { IngredientRow } from './IngredientRow';
-import type { IngredientSku } from '@/hooks/useProcurementData';
+import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
 
 interface IngredientListProps {
   skus: IngredientSku[];
@@ -7,6 +7,7 @@ interface IngredientListProps {
   cart: Map<string, number>;
   dayLabels: string[];
   getRecommendedPacks: (sku: IngredientSku) => number;
+  getRecommendationBreakdown: (sku: IngredientSku) => RecommendationBreakdown;
   onUpdatePacks: (skuId: string, packs: number) => void;
 }
 
@@ -16,6 +17,7 @@ export function IngredientList({
   cart,
   dayLabels,
   getRecommendedPacks,
+  getRecommendationBreakdown,
   onUpdatePacks,
 }: IngredientListProps) {
   if (skus.length === 0) {
@@ -45,6 +47,7 @@ export function IngredientList({
                   sku={sku}
                   packs={cart.get(sku.id) || 0}
                   recommendedPacks={getRecommendedPacks(sku)}
+                  breakdown={getRecommendationBreakdown(sku)}
                   dayLabels={dayLabels}
                   onUpdatePacks={onUpdatePacks}
                 />
