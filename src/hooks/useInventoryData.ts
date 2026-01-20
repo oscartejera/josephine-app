@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
@@ -64,54 +64,80 @@ interface LocationPerformance {
   hasStockCount?: boolean;
 }
 
+const defaultMetrics: InventoryMetrics = {
+  totalSales: 0,
+  assignedSales: 0,
+  unassignedSales: 0,
+  theoreticalCOGS: 0,
+  theoreticalCOGSPercent: 0,
+  actualCOGS: 0,
+  actualCOGSPercent: 0,
+  theoreticalGP: 0,
+  theoreticalGPPercent: 0,
+  actualGP: 0,
+  actualGPPercent: 0,
+  gapCOGS: 0,
+  gapCOGSPercent: 0,
+  gapGP: 0,
+  gapGPPercent: 0,
+  accountedWaste: 0,
+  unaccountedWaste: 0,
+  surplus: 0
+};
+
 export function useInventoryData(
   dateRange: DateRangeValue,
   dateMode: DateMode,
   viewMode: ViewMode,
   selectedLocations: string[]
 ) {
-  const { locations, group } = useApp();
+  const { locations, group, loading: appLoading } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [hasRealData, setHasRealData] = useState(false);
-  const [metrics, setMetrics] = useState<InventoryMetrics>({
-    totalSales: 0,
-    assignedSales: 0,
-    unassignedSales: 0,
-    theoreticalCOGS: 0,
-    theoreticalCOGSPercent: 0,
-    actualCOGS: 0,
-    actualCOGSPercent: 0,
-    theoreticalGP: 0,
-    theoreticalGPPercent: 0,
-    actualGP: 0,
-    actualGPPercent: 0,
-    gapCOGS: 0,
-    gapCOGSPercent: 0,
-    gapGP: 0,
-    gapGPPercent: 0,
-    accountedWaste: 0,
-    unaccountedWaste: 0,
-    surplus: 0
-  });
+  const [error, setError] = useState<Error | null>(null);
+  const [metrics, setMetrics] = useState<InventoryMetrics>(defaultMetrics);
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
   const [wasteByCategory, setWasteByCategory] = useState<WasteByCategory[]>([]);
   const [wasteByLocation, setWasteByLocation] = useState<WasteByLocation[]>([]);
   const [locationPerformance, setLocationPerformance] = useState<LocationPerformance[]>([]);
 
-  const locationIds = useMemo(() => {
-    if (selectedLocations.length === 0) {
-      return locations.map(l => l.id);
-    }
-    return selectedLocations;
-  }, [selectedLocations, locations]);
+  // Track if we've fetched to avoid loops
+  const fetchedRef = useRef<string>('');
+  const isMountedRef = useRef(true);
 
+  // Create a stable cache key for the current request
+  const cacheKey = useMemo(() => {
+    const fromStr = dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : '';
+    const toStr = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
+    const locsStr = selectedLocations.sort().join(',');
+    return `${fromStr}-${toStr}-${locsStr}`;
+  }, [dateRange.from, dateRange.to, selectedLocations]);
+
+  // Cleanup on unmount
   useEffect(() => {
-    fetchData();
-  }, [dateRange, locationIds, group]);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-  const fetchData = async () => {
+  // Stable data fetching with guards
+  const fetchData = useCallback(async () => {
+    // Guard: Don't fetch if already fetching same data
+    if (fetchedRef.current === cacheKey) {
+      return;
+    }
+
+    // Guard: Require valid date range
+    if (!dateRange.from || !dateRange.to) {
+      return;
+    }
+
+    // Mark as fetching this key
+    fetchedRef.current = cacheKey;
     setIsLoading(true);
+    setError(null);
 
     try {
       const fromDate = dateRange.from;
@@ -119,43 +145,91 @@ export function useInventoryData(
       const fromDateStr = format(fromDate, 'yyyy-MM-dd');
       const toDateStr = format(toDate, 'yyyy-MM-dd');
 
-      // Try to fetch real data first
-      let ticketsQuery = supabase
-        .from('tickets')
-        .select('id, location_id, net_total, gross_total, closed_at')
-        .gte('closed_at', `${fromDateStr}T00:00:00`)
-        .lte('closed_at', `${toDateStr}T23:59:59`)
-        .eq('status', 'closed');
-
-      if (locationIds.length > 0 && locationIds.length < locations.length) {
-        ticketsQuery = ticketsQuery.in('location_id', locationIds);
+      // Determine which location IDs to use
+      let effectiveLocationIds = selectedLocations;
+      
+      // If no selected locations, use all from context OR demo
+      if (effectiveLocationIds.length === 0) {
+        if (locations.length > 0) {
+          effectiveLocationIds = locations.map(l => l.id);
+        } else {
+          // Use demo locations if no real locations
+          const generator = getDemoGenerator(fromDate, toDate);
+          effectiveLocationIds = generator.getLocations().map(l => l.id);
+        }
       }
 
-      const { data: tickets } = await ticketsQuery;
+      // Try to fetch real data first (only if we have real locations)
+      let hasReal = false;
+      if (locations.length > 0 && !appLoading) {
+        let ticketsQuery = supabase
+          .from('tickets')
+          .select('id, location_id, net_total, gross_total, closed_at')
+          .gte('closed_at', `${fromDateStr}T00:00:00`)
+          .lte('closed_at', `${toDateStr}T23:59:59`)
+          .eq('status', 'closed');
 
-      // Check if we have real data
-      const hasReal = tickets && tickets.length > 0;
-      setHasRealData(hasReal);
+        if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+          ticketsQuery = ticketsQuery.in('location_id', effectiveLocationIds);
+        }
 
-      if (hasReal) {
-        // Use real data processing
-        await processRealData(tickets, fromDateStr, toDateStr);
-      } else {
-        // Use demo generator
-        useDemoData(fromDate, toDate);
+        const { data: tickets, error: ticketsError } = await ticketsQuery;
+        
+        if (ticketsError) {
+          console.warn('Error fetching tickets, using demo data:', ticketsError);
+        } else {
+          hasReal = tickets && tickets.length > 0;
+          if (hasReal && isMountedRef.current) {
+            setHasRealData(true);
+            await processRealData(tickets, fromDateStr, toDateStr, effectiveLocationIds);
+            return;
+          }
+        }
       }
 
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error('Error fetching inventory data:', error);
-      // Fallback to demo data on error
-      useDemoData(dateRange.from, dateRange.to);
+      // Use demo generator for data
+      if (isMountedRef.current) {
+        setHasRealData(false);
+        useDemoData(fromDate, toDate, effectiveLocationIds);
+      }
+
+      if (isMountedRef.current) {
+        setLastUpdated(new Date());
+      }
+    } catch (err) {
+      console.error('Error fetching inventory data:', err);
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err : new Error('Unknown error'));
+        // Still try demo data as fallback
+        try {
+          useDemoData(dateRange.from, dateRange.to, selectedLocations);
+        } catch {
+          // Ignore demo fallback errors
+        }
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, [cacheKey, dateRange.from, dateRange.to, selectedLocations, locations, appLoading]);
 
-  const processRealData = async (tickets: any[], fromDateStr: string, toDateStr: string) => {
+  // Trigger fetch when dependencies change
+  useEffect(() => {
+    // Don't fetch while app context is still loading
+    if (appLoading) {
+      return;
+    }
+    
+    fetchData();
+  }, [fetchData, appLoading]);
+
+  const processRealData = async (
+    tickets: any[], 
+    fromDateStr: string, 
+    toDateStr: string,
+    effectiveLocationIds: string[]
+  ) => {
     // Fetch ticket lines for category breakdown
     const { data: ticketLines } = await supabase
       .from('ticket_lines')
@@ -169,8 +243,8 @@ export function useInventoryData(
       .gte('created_at', `${fromDateStr}T00:00:00`)
       .lte('created_at', `${toDateStr}T23:59:59`);
 
-    if (locationIds.length > 0 && locationIds.length < locations.length) {
-      wasteQuery = wasteQuery.in('location_id', locationIds);
+    if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      wasteQuery = wasteQuery.in('location_id', effectiveLocationIds);
     }
 
     const { data: wasteEvents } = await wasteQuery;
@@ -189,6 +263,8 @@ export function useInventoryData(
       .select('id, location_id, status')
       .gte('start_date', fromDateStr)
       .lte('end_date', toDateStr);
+
+    if (!isMountedRef.current) return;
 
     // Calculate metrics from real data
     const totalSales = tickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
@@ -294,7 +370,7 @@ export function useInventoryData(
     // Distribute unaccounted proportionally
     const totalAccounted = Array.from(wasteByCat.values()).reduce((s, v) => s + v.accounted, 0);
     if (totalAccounted > 0 && unaccountedWaste > 0) {
-      wasteByCat.forEach((val, key) => {
+      wasteByCat.forEach((val) => {
         val.unaccounted = unaccountedWaste * (val.accounted / totalAccounted);
       });
     }
@@ -321,10 +397,10 @@ export function useInventoryData(
 
     const stockCountLocations = new Set((stockCounts || []).map(sc => sc.location_id));
 
-    setWasteByLocation(locations.filter(l => locationIds.includes(l.id)).map(loc => {
+    setWasteByLocation(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
       const data = wasteByLoc.get(loc.id) || { accounted: 0, unaccounted: 0 };
       const locSales = salesByLoc.get(loc.id) || 0;
-      const locUnaccounted = locSales > 0 ? locSales * 0.005 : 0; // Estimate
+      const locUnaccounted = locSales > 0 ? locSales * 0.005 : 0;
       
       return {
         locationId: loc.id,
@@ -338,7 +414,7 @@ export function useInventoryData(
     }));
 
     // Location performance
-    setLocationPerformance(locations.filter(l => locationIds.includes(l.id)).map(loc => {
+    setLocationPerformance(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
       const locSales = salesByLoc.get(loc.id) || 0;
       const locTheoreticalCOGS = locSales * 0.28;
       const locActualCOGS = locTheoreticalCOGS * 1.05;
@@ -357,17 +433,19 @@ export function useInventoryData(
         hasStockCount: stockCountLocations.has(loc.id)
       };
     }));
+
+    setLastUpdated(new Date());
   };
 
-  const useDemoData = (fromDate: Date, toDate: Date) => {
+  const useDemoData = (fromDate: Date, toDate: Date, effectiveLocationIds: string[]) => {
     const generator = getDemoGenerator(fromDate, toDate);
     
-    // Use demo location IDs if no real locations exist
+    // Use demo location IDs if none provided
     const demoLocationIds = generator.getLocations().map(l => l.id);
-    const effectiveLocationIds = selectedLocations.length > 0 ? selectedLocations : demoLocationIds;
+    const finalLocationIds = effectiveLocationIds.length > 0 ? effectiveLocationIds : demoLocationIds;
 
     // Get demo metrics
-    const demoMetrics = generator.getInventoryMetrics(fromDate, toDate, effectiveLocationIds);
+    const demoMetrics = generator.getInventoryMetrics(fromDate, toDate, finalLocationIds);
     
     setMetrics({
       totalSales: demoMetrics.totalSales,
@@ -390,10 +468,11 @@ export function useInventoryData(
       surplus: demoMetrics.surplus
     });
 
-    setCategoryBreakdown(generator.getCategoryBreakdown(fromDate, toDate, effectiveLocationIds));
-    setWasteByCategory(generator.getWasteByCategory(fromDate, toDate, effectiveLocationIds));
-    setWasteByLocation(generator.getWasteByLocation(fromDate, toDate, effectiveLocationIds));
-    setLocationPerformance(generator.getLocationPerformance(fromDate, toDate, effectiveLocationIds));
+    setCategoryBreakdown(generator.getCategoryBreakdown(fromDate, toDate, finalLocationIds));
+    setWasteByCategory(generator.getWasteByCategory(fromDate, toDate, finalLocationIds));
+    setWasteByLocation(generator.getWasteByLocation(fromDate, toDate, finalLocationIds));
+    setLocationPerformance(generator.getLocationPerformance(fromDate, toDate, finalLocationIds));
+    setLastUpdated(new Date());
   };
 
   return {
@@ -404,6 +483,7 @@ export function useInventoryData(
     categoryBreakdown,
     wasteByCategory,
     wasteByLocation,
-    locationPerformance
+    locationPerformance,
+    error
   };
 }
