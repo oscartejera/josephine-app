@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -29,22 +30,23 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
 
 const insightsChildren = [
-  { icon: TrendingUp, label: 'Sales', path: '/insights/sales' },
-  { icon: Users, label: 'Labour', path: '/insights/labour' },
-  { icon: BarChart3, label: 'Instant P&L', path: '/insights/instant-pl' },
-  { icon: Star, label: 'Reviews', path: '/insights/reviews' },
+  { icon: TrendingUp, label: 'Sales', path: '/insights/sales', permission: PERMISSIONS.SALES_VIEW },
+  { icon: Users, label: 'Labour', path: '/insights/labour', permission: PERMISSIONS.LABOUR_VIEW },
+  { icon: BarChart3, label: 'Instant P&L', path: '/insights/instant-pl', permission: PERMISSIONS.INSTANT_PL_VIEW },
+  { icon: Star, label: 'Reviews', path: '/insights/reviews', permission: PERMISSIONS.REVIEWS_VIEW },
 ];
 
+// Availability is ONLY for employees (not owner, admin, ops_manager, store_manager)
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: CalendarDays, label: 'Scheduling', path: '/scheduling' },
-  { icon: Clock, label: 'Availability', path: '/availability' },
-  { icon: Package, label: 'Inventory', path: '/inventory' },
-  { icon: Trash2, label: 'Waste', path: '/waste' },
-  { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },
-  { icon: ChefHat, label: 'Menu Engineering', path: '/menu-engineering' },
-  { icon: Plug, label: 'Integrations', path: '/integrations' },
-  { icon: Calculator, label: 'Payroll', path: '/payroll' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', permission: PERMISSIONS.DASHBOARD_VIEW },
+  { icon: CalendarDays, label: 'Scheduling', path: '/scheduling', permission: PERMISSIONS.SCHEDULING_VIEW },
+  { icon: Clock, label: 'Availability', path: '/availability', permission: PERMISSIONS.AVAILABILITY_VIEW, employeeOnly: true },
+  { icon: Package, label: 'Inventory', path: '/inventory', permission: PERMISSIONS.INVENTORY_VIEW },
+  { icon: Trash2, label: 'Waste', path: '/waste', permission: PERMISSIONS.WASTE_VIEW },
+  { icon: ShoppingCart, label: 'Procurement', path: '/procurement', permission: PERMISSIONS.PROCUREMENT_VIEW },
+  { icon: ChefHat, label: 'Menu Engineering', path: '/menu-engineering', permission: PERMISSIONS.MENU_ENGINEERING_VIEW },
+  { icon: Plug, label: 'Integrations', path: '/integrations', permission: PERMISSIONS.INTEGRATIONS_VIEW },
+  { icon: Calculator, label: 'Payroll', path: '/payroll', permission: PERMISSIONS.PAYROLL_VIEW },
 ];
 
 interface AppSidebarProps {
@@ -56,6 +58,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
+  const { isOwner, primaryRole, hasPermission, hasAnyPermission } = usePermissions();
 
   const isInsightsRoute = location.pathname.startsWith('/insights');
 
@@ -64,6 +67,29 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     const stored = localStorage.getItem(INSIGHTS_EXPANDED_KEY);
     return stored === 'true';
   });
+
+  // Filter nav items based on permissions
+  // Availability is only for employees (not owner, admin, ops_manager, store_manager)
+  const isManagerOrAbove = useMemo(() => {
+    return isOwner || ['admin', 'ops_manager', 'store_manager'].includes(primaryRole || '');
+  }, [isOwner, primaryRole]);
+
+  const visibleNavItems = useMemo(() => {
+    return navItems.filter(item => {
+      // Availability is only for employees, not managers/owners
+      if (item.employeeOnly && isManagerOrAbove) {
+        return false;
+      }
+      // Check permission (owners always see everything)
+      if (isOwner) return !item.employeeOnly; // Owners don't see employee-only items
+      return hasPermission(item.permission);
+    });
+  }, [isOwner, isManagerOrAbove, hasPermission]);
+
+  const visibleInsightsChildren = useMemo(() => {
+    if (isOwner) return insightsChildren;
+    return insightsChildren.filter(item => hasPermission(item.permission));
+  }, [isOwner, hasPermission]);
 
   useEffect(() => {
     if (isInsightsRoute) {
@@ -154,7 +180,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent id="insights-content" className="space-y-1 mt-1">
-              {insightsChildren.map((item) => {
+              {visibleInsightsChildren.map((item) => {
                 const isActive = location.pathname === item.path || 
                   (item.path === '/insights/reviews' && location.pathname.startsWith('/insights/reviews'));
                 return (
@@ -176,7 +202,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           </Collapsible>
 
           {/* Other nav items (skip Dashboard, it's already rendered) */}
-          {navItems.slice(1).map((item) => {
+          {visibleNavItems.slice(1).map((item) => {
             const isActive = location.pathname === item.path || 
               location.pathname.startsWith(item.path + '/');
             return (
