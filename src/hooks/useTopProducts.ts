@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { subDays, format } from 'date-fns';
+import { toast } from 'sonner';
 
 export type OrderByOption = 'share' | 'gp_eur' | 'gp_pct';
 
@@ -67,7 +68,10 @@ export function useTopProducts() {
         p_order_by: orderBy
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in get_top_products RPC:', error);
+        throw error;
+      }
       
       setProducts((data || []) as TopProduct[]);
     } catch (error) {
@@ -79,55 +83,55 @@ export function useTopProducts() {
   }, [selectedLocationId, orderBy, getDateRange]);
 
   const seedDemoData = useCallback(async () => {
-    if (!group?.id) return;
+    console.log('seedDemoData called, group:', group);
+    
+    if (!group?.id) {
+      console.error('No group ID available');
+      toast.error('Error: No se encontró el grupo');
+      return;
+    }
+    
+    // Clear localStorage to allow re-seeding
+    localStorage.removeItem('topProductsDemoSeeded');
     
     setSeeding(true);
+    toast.loading('Generando datos demo...', { id: 'seeding' });
+    
     try {
-      const { error } = await supabase.rpc('seed_demo_products_and_sales', {
+      console.log('Calling seed_demo_products_and_sales with group_id:', group.id);
+      
+      const { data, error } = await supabase.rpc('seed_demo_products_and_sales', {
         p_group_id: group.id
       });
 
-      if (error) throw error;
+      console.log('Seed RPC response:', { data, error });
+
+      if (error) {
+        console.error('Seed RPC error:', error);
+        throw error;
+      }
       
       // Mark as seeded
       localStorage.setItem('topProductsDemoSeeded', 'true');
       
+      toast.success('Datos demo generados correctamente', { id: 'seeding' });
+      
       // Refetch products
       await fetchTopProducts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error seeding demo data:', error);
+      toast.error(`Error: ${error.message || 'No se pudieron generar los datos'}`, { id: 'seeding' });
     } finally {
       setSeeding(false);
     }
   }, [group?.id, fetchTopProducts]);
 
-  // Auto-seed on first load if no data
-  useEffect(() => {
-    const checkAndSeed = async () => {
-      if (!group?.id) return;
-      
-      const alreadySeeded = localStorage.getItem('topProductsDemoSeeded');
-      if (alreadySeeded) return;
-
-      // Check if products exist
-      const { count } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true });
-
-      if (count === 0) {
-        await seedDemoData();
-      } else {
-        localStorage.setItem('topProductsDemoSeeded', 'true');
-      }
-    };
-
-    checkAndSeed();
-  }, [group?.id, seedDemoData]);
-
   // Fetch products when filters change
   useEffect(() => {
-    fetchTopProducts();
-  }, [fetchTopProducts]);
+    if (group?.id) {
+      fetchTopProducts();
+    }
+  }, [fetchTopProducts, group?.id]);
 
   return {
     products,
