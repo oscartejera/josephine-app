@@ -87,6 +87,12 @@ function AppRoutes() {
         <Route path="/insights/instant-pl" element={<InstantPL />} />
         <Route path="/insights/reviews" element={<Reviews />} />
         <Route path="/insights/reviews/all" element={<ReviewsAll />} />
+        <Route path="/insights/inventory" element={<Inventory />} />
+        <Route path="/insights/inventory/location/:locationId" element={<InventoryLocation />} />
+        <Route path="/insights/inventory/location/:locationId/reconciliation" element={<InventoryLocationReconciliation />} />
+        <Route path="/insights/inventory/reconciliation" element={<InventoryReconciliation />} />
+        <Route path="/insights/waste" element={<Waste />} />
+        <Route path="/insights/menu-engineering" element={<MenuEngineering />} />
         
         {/* Redirects from old routes */}
         <Route path="/sales" element={<Navigate to="/insights/sales" replace />} />
@@ -94,18 +100,13 @@ function AppRoutes() {
         <Route path="/labour/:locationId" element={<Navigate to="/insights/labour" replace />} />
         <Route path="/labor" element={<Navigate to="/insights/labour" replace />} />
         <Route path="/instant-pl" element={<Navigate to="/insights/instant-pl" replace />} />
+        <Route path="/inventory" element={<Navigate to="/insights/inventory" replace />} />
+        <Route path="/inventory/*" element={<Navigate to="/insights/inventory" replace />} />
+        <Route path="/waste" element={<Navigate to="/insights/waste" replace />} />
+        <Route path="/menu-engineering" element={<Navigate to="/insights/menu-engineering" replace />} />
         
         <Route path="/scheduling" element={<Scheduling />} />
         <Route path="/availability" element={<Availability />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/inventory/location/:locationId" element={<InventoryLocation />} />
-        <Route path="/inventory/location/:locationId/reconciliation" element={<InventoryLocationReconciliation />} />
-        <Route path="/inventory/reconciliation" element={<InventoryReconciliation />} />
-        <Route path="/waste" element={<Waste />} />
-        <Route path="/procurement" element={<Procurement />} />
-        <Route path="/procurement/cart" element={<ProcurementCart />} />
-        <Route path="/procurement/orders" element={<ProcurementOrders />} />
-        <Route path="/menu-engineering" element={<MenuEngineering />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/:step" element={<Payroll />} />

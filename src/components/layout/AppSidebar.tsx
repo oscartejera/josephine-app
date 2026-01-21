@@ -34,17 +34,16 @@ const insightsChildren = [
   { icon: Users, label: 'Labour', path: '/insights/labour', permission: PERMISSIONS.LABOUR_VIEW },
   { icon: BarChart3, label: 'Instant P&L', path: '/insights/instant-pl', permission: PERMISSIONS.INSTANT_PL_VIEW },
   { icon: Star, label: 'Reviews', path: '/insights/reviews', permission: PERMISSIONS.REVIEWS_VIEW },
+  { icon: Package, label: 'Inventory', path: '/insights/inventory', permission: PERMISSIONS.INVENTORY_VIEW },
+  { icon: Trash2, label: 'Waste', path: '/insights/waste', permission: PERMISSIONS.WASTE_VIEW },
+  { icon: ChefHat, label: 'Menu Engineering', path: '/insights/menu-engineering', permission: PERMISSIONS.MENU_ENGINEERING_VIEW },
 ];
 
-// Availability is ONLY for employees (not owner, admin, ops_manager, store_manager)
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', permission: PERMISSIONS.DASHBOARD_VIEW },
   { icon: CalendarDays, label: 'Scheduling', path: '/scheduling', permission: PERMISSIONS.SCHEDULING_VIEW },
   { icon: Clock, label: 'Availability', path: '/availability', permission: PERMISSIONS.AVAILABILITY_VIEW, employeeOnly: true },
-  { icon: Package, label: 'Inventory', path: '/inventory', permission: PERMISSIONS.INVENTORY_VIEW },
-  { icon: Trash2, label: 'Waste', path: '/waste', permission: PERMISSIONS.WASTE_VIEW },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement', permission: PERMISSIONS.PROCUREMENT_VIEW },
-  { icon: ChefHat, label: 'Menu Engineering', path: '/menu-engineering', permission: PERMISSIONS.MENU_ENGINEERING_VIEW },
   { icon: Plug, label: 'Integrations', path: '/integrations', permission: PERMISSIONS.INTEGRATIONS_VIEW },
   { icon: Calculator, label: 'Payroll', path: '/payroll', permission: PERMISSIONS.PAYROLL_VIEW },
 ];
@@ -60,7 +59,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const { signOut, profile } = useAuth();
   const { isOwner, primaryRole, hasPermission, loading: permissionsLoading, roles } = usePermissions();
 
-  const isInsightsRoute = location.pathname.startsWith('/insights');
+  const isInsightsRoute = location.pathname.startsWith('/insights') || 
+    location.pathname.startsWith('/inventory') || 
+    location.pathname.startsWith('/waste') || 
+    location.pathname.startsWith('/menu-engineering');
 
   const [insightsExpanded, setInsightsExpanded] = useState(() => {
     if (isInsightsRoute) return true;
