@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
+import { TeamManager } from '@/components/settings/TeamManager';
 
 interface PaymentMethod {
   id: string;
@@ -250,14 +251,21 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Configuración del grupo y locales</p>
       </div>
 
-      <Tabs defaultValue="locations">
-        <TabsList>
+      <Tabs defaultValue="team">
+        <TabsList className="flex-wrap h-auto gap-1">
+          {canManageUsers && <TabsTrigger value="team">Equipo</TabsTrigger>}
           <TabsTrigger value="locations">Locales</TabsTrigger>
-          {canManageUsers && <TabsTrigger value="users">Usuarios y Roles</TabsTrigger>}
+          {canManageUsers && <TabsTrigger value="users">Roles</TabsTrigger>}
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
           {canManageBilling && <TabsTrigger value="payment">Payment</TabsTrigger>}
           <TabsTrigger value="export">Exportar</TabsTrigger>
         </TabsList>
+
+        {canManageUsers && (
+          <TabsContent value="team">
+            <TeamManager />
+          </TabsContent>
+        )}
 
         <TabsContent value="locations">
           <Card>
