@@ -18,7 +18,9 @@ import {
   Star,
   CalendarDays,
   Clock,
-  LineChart
+  LineChart,
+  Wallet,
+  PiggyBank
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +39,8 @@ const insightsChildren = [
   { icon: Package, label: 'Inventory', path: '/insights/inventory', permission: PERMISSIONS.INVENTORY_VIEW },
   { icon: Trash2, label: 'Waste', path: '/insights/waste', permission: PERMISSIONS.WASTE_VIEW },
   { icon: ChefHat, label: 'Menu Engineering', path: '/insights/menu-engineering', permission: PERMISSIONS.MENU_ENGINEERING_VIEW },
+  { icon: Wallet, label: 'Cash Management', path: '/insights/cash-management', permission: 'cash_management.view' },
+  { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets', permission: 'budgets.view' },
 ];
 
 const navItems = [

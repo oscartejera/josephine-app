@@ -27,6 +27,8 @@ import Procurement from "@/pages/Procurement";
 import ProcurementCart from "@/pages/ProcurementCart";
 import ProcurementOrders from "@/pages/ProcurementOrders";
 import MenuEngineering from "@/pages/MenuEngineering";
+import CashManagement from "@/pages/CashManagement";
+import Budgets from "@/pages/Budgets";
 import Integrations from "@/pages/Integrations";
 import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
@@ -93,6 +95,8 @@ function AppRoutes() {
         <Route path="/insights/inventory/reconciliation" element={<InventoryReconciliation />} />
         <Route path="/insights/waste" element={<Waste />} />
         <Route path="/insights/menu-engineering" element={<MenuEngineering />} />
+        <Route path="/insights/cash-management" element={<CashManagement />} />
+        <Route path="/insights/budgets" element={<Budgets />} />
         
         {/* Redirects from old routes */}
         <Route path="/sales" element={<Navigate to="/insights/sales" replace />} />
