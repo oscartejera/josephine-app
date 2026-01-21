@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { AlertsPanel, Alert } from '@/components/dashboard/AlertsPanel';
-import { TopItemsTable } from '@/components/dashboard/TopItemsTable';
+import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { HourlySalesChart, HourlyLaborChart } from '@/components/dashboard/Charts';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
@@ -105,11 +105,13 @@ export default function Dashboard() {
         <HourlyLaborChart data={hourlyLabor} title="Labor por Hora (Real vs Recomendado)" />
       </div>
 
-      {/* Alerts, Low Stock, and Top Items */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      {/* Top 10 Products - full width */}
+      <TopProductsCard />
+
+      {/* Alerts and Low Stock */}
+      <div className="grid lg:grid-cols-2 gap-6">
         <AlertsPanel alerts={alerts} />
         <LowStockWidget />
-        <TopItemsTable items={topItems} title="Top 10 Productos" />
       </div>
     </div>
   );

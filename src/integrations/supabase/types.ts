@@ -966,6 +966,99 @@ export type Database = {
           },
         ]
       }
+      product_sales_daily: {
+        Row: {
+          cogs: number
+          created_at: string | null
+          date: string
+          id: string
+          location_id: string
+          net_sales: number
+          product_id: string
+          units_sold: number
+        }
+        Insert: {
+          cogs?: number
+          created_at?: string | null
+          date: string
+          id?: string
+          location_id: string
+          net_sales?: number
+          product_id: string
+          units_sold?: number
+        }
+        Update: {
+          cogs?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          location_id?: string
+          net_sales?: number
+          product_id?: string
+          units_sold?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sales_daily_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_sales_daily_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          group_id: string
+          id: string
+          is_active: boolean | null
+          location_id: string | null
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          group_id: string
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1623,6 +1716,26 @@ export type Database = {
     Functions: {
       can_access_location: { Args: { _location_id: string }; Returns: boolean }
       get_accessible_location_ids: { Args: never; Returns: string[] }
+      get_top_products: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_location_id?: string
+          p_order_by?: string
+        }
+        Returns: {
+          badge_label: string
+          category: string
+          cogs: number
+          gp: number
+          gp_pct: number
+          product_id: string
+          product_name: string
+          sales: number
+          sales_share_pct: number
+          units: number
+        }[]
+      }
       get_user_group_id: { Args: never; Returns: string }
       has_payroll_role: { Args: never; Returns: boolean }
       has_role: {
@@ -1631,6 +1744,10 @@ export type Database = {
       }
       is_admin_or_ops: { Args: never; Returns: boolean }
       is_payroll_admin: { Args: never; Returns: boolean }
+      seed_demo_products_and_sales: {
+        Args: { p_group_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
