@@ -31,7 +31,7 @@ export function EmptyScheduleState({ weekStart, dailyKPIs }: EmptyScheduleStateP
                 <span className="text-sm text-muted-foreground">{day.dayNum}</span>
               </div>
               <div className="text-xs text-muted-foreground">
-                £{kpi?.sales.toLocaleString() || '0'}
+                €{kpi?.sales.toLocaleString() || '0'}
               </div>
             </div>
           );

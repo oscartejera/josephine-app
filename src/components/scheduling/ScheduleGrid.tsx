@@ -487,7 +487,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                   isLowest && salesSort === 'asc' && "bg-amber-50 text-amber-700"
                 )}
               >
-                £{kpi.sales.toLocaleString()}
+                €{kpi.sales.toLocaleString()}
               </div>
             );
           })}
@@ -535,7 +535,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                 </span>
                 {kpi.cost > 0 && (
                   <span className="text-xs text-muted-foreground ml-1">
-                    / £{kpi.cost.toLocaleString()}
+                    / €{kpi.cost.toLocaleString()}
                   </span>
                 )}
               </div>

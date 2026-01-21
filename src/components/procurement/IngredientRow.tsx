@@ -152,10 +152,10 @@ export function IngredientRow({
           
           <div className="text-right">
             <p className="text-sm font-medium text-foreground">
-              £{(packs * sku.unitPrice).toFixed(2)}
+              €{(packs * sku.unitPrice).toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">
-              £{sku.unitPrice.toFixed(2)}/pack
+              €{sku.unitPrice.toFixed(2)}/pack
             </p>
           </div>
           

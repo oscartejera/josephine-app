@@ -75,19 +75,19 @@ export function OrderSummaryDesktop({
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Min. order value</span>
-            <span className="font-medium">£{summary.minOrder.toFixed(0)}</span>
+            <span className="font-medium">€{summary.minOrder.toFixed(0)}</span>
           </div>
           <Progress value={summary.minOrderProgress} className="h-2.5" />
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">£{summary.subtotal.toFixed(2)}</span>
+            <span className="text-muted-foreground">€{summary.subtotal.toFixed(2)}</span>
             <span className={`font-medium ${meetsMinOrder ? 'text-success' : 'text-warning'}`}>
-              {meetsMinOrder ? '✓ Min. order met' : `£${amountNeeded.toFixed(2)} to go`}
+              {meetsMinOrder ? '✓ Min. order met' : `€${amountNeeded.toFixed(2)} to go`}
             </span>
           </div>
           {!meetsMinOrder && summary.subtotal > 0 && (
             <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg text-xs text-warning">
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>Add £{amountNeeded.toFixed(2)} more to waive the £{summary.deliveryFee.toFixed(2)} delivery fee</span>
+              <span>Add €{amountNeeded.toFixed(2)} more to waive the €{summary.deliveryFee.toFixed(2)} delivery fee</span>
             </div>
           )}
         </div>
@@ -136,12 +136,12 @@ export function OrderSummaryDesktop({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
-            <span className="text-foreground font-medium">£{summary.subtotal.toFixed(2)}</span>
+            <span className="text-foreground font-medium">€{summary.subtotal.toFixed(2)}</span>
           </div>
           {summary.deliveryFee > 0 && (
             <div className="flex justify-between text-warning">
               <span>Delivery fee</span>
-              <span>£{summary.deliveryFee.toFixed(2)}</span>
+              <span>€{summary.deliveryFee.toFixed(2)}</span>
             </div>
           )}
           {summary.deliveryFee === 0 && summary.subtotal >= summary.minOrder && (
@@ -152,12 +152,12 @@ export function OrderSummaryDesktop({
           )}
           <div className="flex justify-between">
             <span className="text-muted-foreground">VAT (21%)</span>
-            <span className="text-foreground">£{summary.tax.toFixed(2)}</span>
+            <span className="text-foreground">€{summary.tax.toFixed(2)}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-semibold text-lg pt-1">
             <span className="text-foreground">Total</span>
-            <span className="text-foreground">£{summary.total.toFixed(2)}</span>
+            <span className="text-foreground">€{summary.total.toFixed(2)}</span>
           </div>
         </div>
 

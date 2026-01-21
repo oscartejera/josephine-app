@@ -234,7 +234,7 @@ export default function Procurement() {
             <div className="max-w-[800px] mx-auto flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">{orderSummary.items.length} items</p>
-                <p className="text-lg font-semibold">£{orderSummary.total.toFixed(2)}</p>
+                <p className="text-lg font-semibold">€{orderSummary.total.toFixed(2)}</p>
               </div>
               <Button 
                 size="lg" 

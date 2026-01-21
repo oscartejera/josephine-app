@@ -324,9 +324,9 @@ export default function ProcurementCart() {
                             </Button>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">£{sku.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">€{sku.unitPrice.toFixed(2)}</TableCell>
                         <TableCell className="text-right font-semibold">
-                          £{(packs * sku.unitPrice).toFixed(2)}
+                          €{(packs * sku.unitPrice).toFixed(2)}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -370,13 +370,13 @@ export default function ProcurementCart() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Min. order value</span>
-                    <span className="font-medium">£{orderSummary.minOrder.toFixed(0)}</span>
+                    <span className="font-medium">€{orderSummary.minOrder.toFixed(0)}</span>
                   </div>
                   <Progress value={orderSummary.minOrderProgress} className="h-2.5" />
                   {!meetsMinOrder && (
                     <p className="text-xs text-warning flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
-                      Add £{amountNeeded.toFixed(2)} more to place order
+                      Add €{amountNeeded.toFixed(2)} more to place order
                     </p>
                   )}
                   {meetsMinOrder && (
@@ -393,12 +393,12 @@ export default function ProcurementCart() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
-                    <span className="font-medium">£{orderSummary.subtotal.toFixed(2)}</span>
+                    <span className="font-medium">€{orderSummary.subtotal.toFixed(2)}</span>
                   </div>
                   {orderSummary.deliveryFee > 0 ? (
                     <div className="flex justify-between text-sm text-warning">
                       <span>Delivery Fee</span>
-                      <span>£{orderSummary.deliveryFee.toFixed(2)}</span>
+                      <span>€{orderSummary.deliveryFee.toFixed(2)}</span>
                     </div>
                   ) : (
                     <div className="flex justify-between text-sm text-success">
@@ -408,7 +408,7 @@ export default function ProcurementCart() {
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total VAT (21%)</span>
-                    <span>£{orderSummary.tax.toFixed(2)}</span>
+                    <span>€{orderSummary.tax.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -417,7 +417,7 @@ export default function ProcurementCart() {
                 {/* Grand Total */}
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Total</span>
-                  <span className="text-2xl font-bold">£{orderSummary.total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold">€{orderSummary.total.toFixed(2)}</span>
                 </div>
 
                 {/* Actions */}

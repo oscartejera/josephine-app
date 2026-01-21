@@ -96,7 +96,7 @@ export function SchedulingHeader({
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
                 <span className="text-muted-foreground">Projected</span>
-                <span className="font-medium">£{projectedSales.toLocaleString()}</span>
+                <span className="font-medium">€{projectedSales.toLocaleString()}</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
                 <span className="text-muted-foreground">COL</span>
