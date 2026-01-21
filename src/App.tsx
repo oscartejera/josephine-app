@@ -52,6 +52,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ProtectedLayout() {
+  return (
+    <AppProvider>
+      <DashboardLayout />
+    </AppProvider>
+  );
+}
+
 function AppRoutes() {
   const { user, loading } = useAuth();
 
@@ -69,13 +77,7 @@ function AppRoutes() {
       <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <Signup />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
-      <Route element={
-        <ProtectedRoute>
-          <AppProvider>
-            <DashboardLayout />
-          </AppProvider>
-        </ProtectedRoute>
-      }>
+      <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/labour" element={<Labour />} />
