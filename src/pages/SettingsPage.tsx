@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
 
 interface PaymentMethod {
   id: string;
@@ -37,14 +39,17 @@ interface LocationSetting {
 
 export default function SettingsPage() {
   const { locations, group } = useApp();
-  const { hasRole, profile } = useAuth();
+  const { profile } = useAuth();
+  const { isOwner, hasPermission } = usePermissions();
   const [settings, setSettings] = useState<LocationSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState({ target_gp: '', target_col: '', default_cogs: '' });
   const { toast } = useToast();
   
-  const isAdmin = hasRole('owner_admin');
+  const canManageUsers = isOwner || hasPermission(PERMISSIONS.SETTINGS_USERS_MANAGE);
+  const canManageBilling = isOwner || hasPermission(PERMISSIONS.SETTINGS_BILLING_MANAGE);
+  const isAdmin = isOwner || hasPermission(PERMISSIONS.SETTINGS_USERS_MANAGE);
   
   // Payment methods state (mock data - would be stored in backend)
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(() => {
@@ -248,9 +253,9 @@ export default function SettingsPage() {
       <Tabs defaultValue="locations">
         <TabsList>
           <TabsTrigger value="locations">Locales</TabsTrigger>
-          {isAdmin && <TabsTrigger value="roles">Roles</TabsTrigger>}
+          {canManageUsers && <TabsTrigger value="users">Usuarios y Roles</TabsTrigger>}
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
-          <TabsTrigger value="payment">Payment</TabsTrigger>
+          {canManageBilling && <TabsTrigger value="payment">Payment</TabsTrigger>}
           <TabsTrigger value="export">Exportar</TabsTrigger>
         </TabsList>
 
@@ -300,45 +305,9 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {isAdmin && (
-          <TabsContent value="roles">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Gestión de Roles</CardTitle>
-                    <CardDescription>Asigna roles a los miembros del equipo</CardDescription>
-                  </div>
-                  <Button disabled>
-                    <Users className="h-4 w-4 mr-2" />
-                    Invitar Usuario
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuario</TableHead>
-                      <TableHead>Rol</TableHead>
-                      <TableHead>Locales</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">{profile?.full_name || 'Admin'}</TableCell>
-                      <TableCell><Badge>Owner Admin</Badge></TableCell>
-                      <TableCell>Todos</TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Roles disponibles: Owner Admin, Ops Manager, Location Manager, Viewer
-                </p>
-              </CardContent>
-            </Card>
+        {canManageUsers && (
+          <TabsContent value="users">
+            <UsersRolesManager />
           </TabsContent>
         )}
 
