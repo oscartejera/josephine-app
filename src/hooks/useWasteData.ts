@@ -62,6 +62,32 @@ const REASON_LABELS: Record<WasteReason, string> = {
   other: 'Other'
 };
 
+// Normalize reason from various formats to standard WasteReason
+function normalizeReason(rawReason: string | null | undefined): WasteReason {
+  if (!rawReason) return 'other';
+  
+  const lower = rawReason.toLowerCase().trim();
+  
+  // Map various formats to standard reasons
+  if (lower === 'broken' || lower === 'rotura' || lower === 'dañado' || lower === 'deterioro') {
+    return 'broken';
+  }
+  if (lower === 'end of day' || lower === 'end_of_day' || lower === 'sobreproducción' || lower === 'fin de día') {
+    return 'end_of_day';
+  }
+  if (lower === 'expired' || lower === 'caducado' || lower === 'caducidad') {
+    return 'expired';
+  }
+  if (lower === 'theft' || lower === 'robo' || lower === 'hurto') {
+    return 'theft';
+  }
+  if (lower === 'other' || lower === 'otro' || lower === 'otros' || lower.includes('error') || lower.includes('devolución') || lower.includes('preparación')) {
+    return 'other';
+  }
+  // Default fallback
+  return 'other';
+}
+
 export function useWasteData(
   dateRange: DateRangeValue,
   dateMode: DateMode,
@@ -152,7 +178,7 @@ export function useWasteData(
         const dateStr = format(parseISO(event.created_at), 'yyyy-MM-dd');
         const existing = trendMap.get(dateStr);
         if (existing) {
-          const reason = (event.reason as WasteReason) || 'other';
+          const reason = normalizeReason(event.reason);
           existing[reason] = (existing[reason] || 0) + (event.waste_value || 0);
           trendMap.set(dateStr, existing);
         }
@@ -167,7 +193,7 @@ export function useWasteData(
       });
 
       (wasteEvents || []).forEach(event => {
-        const reason = (event.reason as WasteReason) || 'other';
+        const reason = normalizeReason(event.reason);
         const existing = reasonMap.get(reason) || { count: 0, value: 0 };
         existing.count++;
         existing.value += event.waste_value || 0;
@@ -244,7 +270,7 @@ export function useWasteData(
       (wasteEvents || []).forEach((event: any) => {
         const itemId = event.inventory_item_id || 'unknown';
         const itemName = event.inventory_items?.name || 'Unknown Item';
-        const reason = (event.reason as WasteReason) || 'other';
+        const reason = normalizeReason(event.reason);
         
         const existing = itemMap.get(itemId) || { 
           itemName, 
