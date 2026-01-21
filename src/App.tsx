@@ -110,6 +110,11 @@ function AppRoutes() {
         <Route path="/waste" element={<Navigate to="/insights/waste" replace />} />
         <Route path="/menu-engineering" element={<Navigate to="/insights/menu-engineering" replace />} />
         
+        {/* Procurement routes */}
+        <Route path="/procurement" element={<Procurement />} />
+        <Route path="/procurement/cart" element={<ProcurementCart />} />
+        <Route path="/procurement/orders" element={<ProcurementOrders />} />
+        
         <Route path="/scheduling" element={<Scheduling />} />
         <Route path="/availability" element={<Availability />} />
         <Route path="/integrations" element={<Integrations />} />
