@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 export default function Budgets() {
   const { locations } = useApp();
-  const { hasPermission, isLoading: permLoading } = usePermissions();
+  const { hasPermission, loading: permLoading } = usePermissions();
 
   const initialDateRange = useMemo((): DateRangeValue => {
     const today = new Date();
