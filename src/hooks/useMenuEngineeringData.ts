@@ -177,9 +177,14 @@ export function useMenuEngineeringData() {
   ) => {
     const { from, to } = getDateRange();
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { error: insertError } = await supabase
       .from('menu_engineering_actions')
       .insert({
+        user_id: user.id,
         location_id: selectedLocationId || null,
         date_from: from,
         date_to: to,
