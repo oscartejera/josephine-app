@@ -6,6 +6,7 @@ import { AlertsPanel, Alert } from '@/components/dashboard/AlertsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { HourlySalesChart, HourlyLaborChart } from '@/components/dashboard/Charts';
+import { CategoryBreakdownChart } from '@/components/dashboard/CategoryBreakdownChart';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
 
 export default function Dashboard() {
@@ -100,10 +101,13 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <HourlySalesChart data={hourlySales} title="Ventas por Hora (Real vs Forecast)" />
-        <HourlyLaborChart data={hourlyLabor} title="Labor por Hora (Real vs Recomendado)" />
+      <div className="grid lg:grid-cols-3 gap-6">
+        <HourlySalesChart data={hourlySales} title="Ventas por Hora (Real vs Forecast)" className="lg:col-span-2" />
+        <CategoryBreakdownChart />
       </div>
+
+      {/* Labor Chart */}
+      <HourlyLaborChart data={hourlyLabor} title="Labor por Hora (Real vs Recomendado)" />
 
       {/* Top 10 Products - full width */}
       <TopProductsCard />
