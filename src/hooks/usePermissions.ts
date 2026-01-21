@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useCallback, useMemo } from 'react';
+import { DEMO_MODE } from '@/contexts/DemoModeContext';
 
 // Permission keys for the application
 export const PERMISSIONS = {
@@ -116,27 +117,31 @@ export function usePermissions() {
     loading 
   } = useAuth();
 
-  // Check if user can view a sidebar item
+  // Check if user can view a sidebar item - always true in DEMO_MODE
   const canViewSidebarItem = useCallback((item: keyof typeof SIDEBAR_PERMISSIONS): boolean => {
+    if (DEMO_MODE) return true;
     if (isOwner) return true;
     const requiredPermissions = [...SIDEBAR_PERMISSIONS[item]] as string[];
     return hasAnyPermission(requiredPermissions);
   }, [isOwner, hasAnyPermission]);
 
-  // Check if user can access a specific location
+  // Check if user can access a specific location - always true in DEMO_MODE
   const canAccessLocation = useCallback((locationId: string): boolean => {
+    if (DEMO_MODE) return true;
     if (isOwner || hasGlobalScope) return true;
     return accessibleLocationIds.includes(locationId);
   }, [isOwner, hasGlobalScope, accessibleLocationIds]);
 
-  // Get filtered locations based on access
+  // Get filtered locations based on access - all locations in DEMO_MODE
   const getAccessibleLocations = useCallback(<T extends { id: string }>(locations: T[]): T[] => {
+    if (DEMO_MODE) return locations;
     if (isOwner || hasGlobalScope) return locations;
     return locations.filter(l => accessibleLocationIds.includes(l.id));
   }, [isOwner, hasGlobalScope, accessibleLocationIds]);
 
-  // Check if user can show "All locations" option
+  // Check if user can show "All locations" option - always true in DEMO_MODE
   const canShowAllLocations = useMemo(() => {
+    if (DEMO_MODE) return true;
     return isOwner || hasGlobalScope;
   }, [isOwner, hasGlobalScope]);
 

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { DEMO_MODE } from './DemoModeContext';
 
 export interface Location {
   id: string;
@@ -36,7 +36,6 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { profile, isOwner, hasGlobalScope, accessibleLocationIds } = useAuth();
-  const { toast } = useToast();
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(null);
@@ -44,11 +43,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Determine if user can see "All locations" option
-  const canShowAllLocations = isOwner || hasGlobalScope;
+  // In DEMO_MODE, everyone can see all locations
+  const canShowAllLocations = DEMO_MODE ? true : (isOwner || hasGlobalScope);
 
-  // Filter locations based on user's access
+  // In DEMO_MODE, all locations are accessible
   const accessibleLocations = React.useMemo(() => {
+    if (DEMO_MODE) {
+      return locations;
+    }
     if (isOwner || hasGlobalScope) {
       return locations;
     }
@@ -63,26 +65,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [profile?.group_id]);
 
-  // Validate and set location when accessible locations change
+  // Set default location when accessible locations change
   useEffect(() => {
-    if (accessibleLocations.length > 0 && selectedLocationId) {
-      // Check if current selection is still valid
-      const isValidSelection = 
-        selectedLocationId === 'all' 
-          ? canShowAllLocations 
-          : accessibleLocations.some(l => l.id === selectedLocationId);
-
-      if (!isValidSelection) {
-        // Redirect to first accessible location
-        const firstLocation = accessibleLocations[0];
-        setSelectedLocationIdInternal(firstLocation.id);
-        toast({
-          variant: "destructive",
-          title: "Acceso denegado",
-          description: "No tienes acceso a esa ubicación."
-        });
-      }
-    } else if (accessibleLocations.length > 0 && !selectedLocationId) {
+    if (accessibleLocations.length > 0 && !selectedLocationId) {
       // Set default location
       if (canShowAllLocations) {
         setSelectedLocationIdInternal('all');
@@ -113,26 +98,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Wrapped setter that validates access
+  // Wrapped setter - in DEMO_MODE, all locations are valid
   const setSelectedLocationId = (id: string | null) => {
+    // In DEMO_MODE, all selections are valid
+    if (DEMO_MODE) {
+      setSelectedLocationIdInternal(id);
+      return;
+    }
+
+    // Production mode - validate access
     if (id === 'all' && !canShowAllLocations) {
-      // User tried to select "all" but doesn't have permission
-      toast({
-        variant: "destructive",
-        title: "Acceso denegado",
-        description: "No tienes acceso a todas las ubicaciones."
-      });
+      console.warn('User tried to select all locations without permission');
       return;
     }
 
     if (id && id !== 'all' && !isOwner && !hasGlobalScope) {
       const hasAccess = accessibleLocationIds.includes(id);
       if (!hasAccess) {
-        toast({
-          variant: "destructive",
-          title: "Acceso denegado",
-          description: "No tienes acceso a esa ubicación."
-        });
+        console.warn('User tried to access unauthorized location');
         return;
       }
     }

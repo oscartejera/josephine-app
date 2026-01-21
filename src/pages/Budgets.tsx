@@ -7,7 +7,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, ChevronDown, Sparkles } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
-import { NoAccess } from '@/components/common/NoAccess';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { BudgetKPICards, BudgetChart, BudgetLocationTable } from '@/components/budgets';
 import { useBudgetsData, type BudgetTab } from '@/hooks/useBudgetsData';
@@ -85,8 +84,8 @@ export default function Budgets() {
     }
   };
 
+  // Loading state
   if (permLoading) return null;
-  if (!hasPermission('budgets.view')) return <NoAccess />;
 
   const locationsLabel = selectedLocations.length === 0 ? 'All locations' : 
     selectedLocations.length === 1 ? locations.find(l => l.id === selectedLocations[0])?.name : 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -24,32 +24,33 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
 
+// All insights children - always visible
 const insightsChildren = [
-  { icon: TrendingUp, label: 'Sales', path: '/insights/sales', permission: PERMISSIONS.SALES_VIEW },
-  { icon: Users, label: 'Labour', path: '/insights/labour', permission: PERMISSIONS.LABOUR_VIEW },
-  { icon: BarChart3, label: 'Instant P&L', path: '/insights/instant-pl', permission: PERMISSIONS.INSTANT_PL_VIEW },
-  { icon: Star, label: 'Reviews', path: '/insights/reviews', permission: PERMISSIONS.REVIEWS_VIEW },
-  { icon: Package, label: 'Inventory', path: '/insights/inventory', permission: PERMISSIONS.INVENTORY_VIEW },
-  { icon: Trash2, label: 'Waste', path: '/insights/waste', permission: PERMISSIONS.WASTE_VIEW },
-  { icon: ChefHat, label: 'Menu Engineering', path: '/insights/menu-engineering', permission: PERMISSIONS.MENU_ENGINEERING_VIEW },
-  { icon: Wallet, label: 'Cash Management', path: '/insights/cash-management', permission: 'cash_management.view' },
-  { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets', permission: 'budgets.view' },
+  { icon: TrendingUp, label: 'Sales', path: '/insights/sales' },
+  { icon: Users, label: 'Labour', path: '/insights/labour' },
+  { icon: BarChart3, label: 'Instant P&L', path: '/insights/instant-pl' },
+  { icon: Star, label: 'Reviews', path: '/insights/reviews' },
+  { icon: Package, label: 'Inventory', path: '/insights/inventory' },
+  { icon: Trash2, label: 'Waste', path: '/insights/waste' },
+  { icon: ChefHat, label: 'Menu Engineering', path: '/insights/menu-engineering' },
+  { icon: Wallet, label: 'Cash Management', path: '/insights/cash-management' },
+  { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets' },
 ];
 
+// All nav items - always visible (no permission filtering)
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', permission: PERMISSIONS.DASHBOARD_VIEW },
-  { icon: CalendarDays, label: 'Scheduling', path: '/scheduling', permission: PERMISSIONS.SCHEDULING_VIEW },
-  { icon: Clock, label: 'Availability', path: '/availability', permission: PERMISSIONS.AVAILABILITY_VIEW, employeeOnly: true },
-  { icon: ShoppingCart, label: 'Procurement', path: '/procurement', permission: PERMISSIONS.PROCUREMENT_VIEW },
-  { icon: Plug, label: 'Integrations', path: '/integrations', permission: PERMISSIONS.INTEGRATIONS_VIEW },
-  { icon: Calculator, label: 'Payroll', path: '/payroll', permission: PERMISSIONS.PAYROLL_VIEW },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: CalendarDays, label: 'Scheduling', path: '/scheduling' },
+  { icon: Clock, label: 'Availability', path: '/availability' },
+  { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },
+  { icon: Plug, label: 'Integrations', path: '/integrations' },
+  { icon: Calculator, label: 'Payroll', path: '/payroll' },
 ];
 
 interface AppSidebarProps {
@@ -61,7 +62,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
-  const { isOwner, primaryRole, hasPermission, loading: permissionsLoading, roles } = usePermissions();
 
   const isInsightsRoute = location.pathname.startsWith('/insights') || 
     location.pathname.startsWith('/inventory') || 
@@ -73,40 +73,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     const stored = localStorage.getItem(INSIGHTS_EXPANDED_KEY);
     return stored === 'true';
   });
-
-  // Determine if user has any management role or is owner
-  // If no roles assigned yet, show all items (fallback for new users)
-  const hasNoRolesAssigned = roles.length === 0;
-  const isManagerOrAbove = useMemo(() => {
-    return isOwner || ['admin', 'ops_manager', 'store_manager'].includes(primaryRole || '');
-  }, [isOwner, primaryRole]);
-
-  // If still loading permissions or no roles assigned, show all items
-  // Otherwise filter based on permissions
-  const visibleNavItems = useMemo(() => {
-    // Show all items (except employee-only for managers) when:
-    // - User is owner
-    // - Permissions are still loading
-    // - User has no roles assigned (new user, fallback to show everything)
-    const showAll = isOwner || permissionsLoading || hasNoRolesAssigned;
-    
-    return navItems.filter(item => {
-      // Availability is only for employees, not managers/owners
-      if (item.employeeOnly && isManagerOrAbove) {
-        return false;
-      }
-      // Show all items for owners or when loading/no roles
-      if (showAll) return !item.employeeOnly;
-      // Otherwise check permission
-      return hasPermission(item.permission);
-    });
-  }, [isOwner, isManagerOrAbove, hasPermission, permissionsLoading, hasNoRolesAssigned]);
-
-  const visibleInsightsChildren = useMemo(() => {
-    // Show all if owner, loading, or no roles assigned
-    if (isOwner || permissionsLoading || hasNoRolesAssigned) return insightsChildren;
-    return insightsChildren.filter(item => hasPermission(item.permission));
-  }, [isOwner, hasPermission, permissionsLoading, hasNoRolesAssigned]);
 
   useEffect(() => {
     if (isInsightsRoute) {
@@ -197,7 +163,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent id="insights-content" className="space-y-1 mt-1">
-              {visibleInsightsChildren.map((item) => {
+              {insightsChildren.map((item) => {
                 const isActive = location.pathname === item.path || 
                   (item.path === '/insights/reviews' && location.pathname.startsWith('/insights/reviews'));
                 return (
@@ -219,7 +185,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           </Collapsible>
 
           {/* Other nav items (skip Dashboard, it's already rendered) */}
-          {visibleNavItems.slice(1).map((item) => {
+          {navItems.slice(1).map((item) => {
             const isActive = location.pathname === item.path || 
               location.pathname.startsWith(item.path + '/');
             return (
