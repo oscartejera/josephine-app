@@ -13,8 +13,8 @@ import { LabourKPICardsNew } from '@/components/labour/LabourKPICardsNew';
 import { LabourChartNew } from '@/components/labour/LabourChartNew';
 import { LabourLocationsTableNew } from '@/components/labour/LabourLocationsTableNew';
 import { LabourEmptyState } from '@/components/labour/LabourEmptyState';
+import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
 
 // Validate UUID format
 function isValidUUID(id: string | undefined): boolean {
@@ -35,6 +35,7 @@ export default function LabourNew() {
 
   const [dateRange, setDateRange] = useState<LabourDateRange>(initialDateRange);
   const [metricMode, setMetricMode] = useState<MetricMode>('percentage');
+  const [showJosephine, setShowJosephine] = useState(false);
 
   // Validate location ID
   const validLocationId = isValidUUID(locationId) ? locationId : null;
@@ -100,15 +101,23 @@ export default function LabourNew() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <LabourHeaderNew
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        metricMode={metricMode}
-        setMetricMode={setMetricMode}
-        locationId={validLocationId}
-        locationName={locationInfo?.name}
-        onAskJosephine={() => toast.info('Ask Josephine coming soon for Labour insights!')}
-      />
+        <LabourHeaderNew
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          metricMode={metricMode}
+          setMetricMode={setMetricMode}
+          locationId={validLocationId}
+          locationName={locationInfo?.name}
+          onAskJosephine={() => setShowJosephine(true)}
+        />
+
+        {/* Ask Josephine Panel */}
+        <AskJosephineLabourPanel
+          open={showJosephine}
+          onClose={() => setShowJosephine(false)}
+          kpis={kpis}
+          locations={locations}
+        />
 
       {/* Empty State */}
       {isEmpty && !isLoading ? (
