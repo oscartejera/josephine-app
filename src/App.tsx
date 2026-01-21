@@ -79,13 +79,22 @@ function AppRoutes() {
       
       <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/sales" element={<Sales />} />
-        <Route path="/labour" element={<Labour />} />
-        <Route path="/labour/:locationId" element={<Labour />} />
-        <Route path="/labor" element={<Navigate to="/labour" replace />} />
-        <Route path="/instant-pl" element={<InstantPL />} />
+        
+        {/* Insights routes */}
+        <Route path="/insights/sales" element={<Sales />} />
+        <Route path="/insights/labour" element={<Labour />} />
+        <Route path="/insights/labour/:locationId" element={<Labour />} />
+        <Route path="/insights/instant-pl" element={<InstantPL />} />
         <Route path="/insights/reviews" element={<Reviews />} />
         <Route path="/insights/reviews/all" element={<ReviewsAll />} />
+        
+        {/* Redirects from old routes */}
+        <Route path="/sales" element={<Navigate to="/insights/sales" replace />} />
+        <Route path="/labour" element={<Navigate to="/insights/labour" replace />} />
+        <Route path="/labour/:locationId" element={<Navigate to="/insights/labour" replace />} />
+        <Route path="/labor" element={<Navigate to="/insights/labour" replace />} />
+        <Route path="/instant-pl" element={<Navigate to="/insights/instant-pl" replace />} />
+        
         <Route path="/scheduling" element={<Scheduling />} />
         <Route path="/availability" element={<Availability />} />
         <Route path="/inventory" element={<Inventory />} />

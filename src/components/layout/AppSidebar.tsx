@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -11,23 +12,31 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  ChevronDown,
   Calculator,
   BarChart3,
   Star,
   CalendarDays,
-  Clock
+  Clock,
+  LineChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
+
+const insightsChildren = [
+  { icon: TrendingUp, label: 'Sales', path: '/insights/sales' },
+  { icon: Users, label: 'Labour', path: '/insights/labour' },
+  { icon: BarChart3, label: 'Instant P&L', path: '/insights/instant-pl' },
+  { icon: Star, label: 'Reviews', path: '/insights/reviews' },
+];
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: TrendingUp, label: 'Sales', path: '/sales' },
-  { icon: Users, label: 'Labour', path: '/labour' },
-  { icon: BarChart3, label: 'Instant P&L', path: '/instant-pl' },
-  { icon: Star, label: 'Reviews', path: '/insights/reviews' },
   { icon: CalendarDays, label: 'Scheduling', path: '/scheduling' },
   { icon: Clock, label: 'Availability', path: '/availability' },
   { icon: Package, label: 'Inventory', path: '/inventory' },
@@ -48,9 +57,31 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
 
+  const isInsightsRoute = location.pathname.startsWith('/insights');
+
+  const [insightsExpanded, setInsightsExpanded] = useState(() => {
+    if (isInsightsRoute) return true;
+    const stored = localStorage.getItem(INSIGHTS_EXPANDED_KEY);
+    return stored === 'true';
+  });
+
+  useEffect(() => {
+    if (isInsightsRoute) {
+      setInsightsExpanded(true);
+    }
+  }, [isInsightsRoute]);
+
+  useEffect(() => {
+    localStorage.setItem(INSIGHTS_EXPANDED_KEY, String(insightsExpanded));
+  }, [insightsExpanded]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
+  };
+
+  const handleInsightsToggle = () => {
+    setInsightsExpanded(prev => !prev);
   };
 
   return (
@@ -83,8 +114,71 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       {/* Navigation */}
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-1 px-2">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+          {/* Dashboard */}
+          <Button
+            variant={location.pathname === '/dashboard' ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname === '/dashboard' && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/dashboard')}
+          >
+            <LayoutDashboard className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Dashboard</span>}
+          </Button>
+
+          {/* Insights Collapsible */}
+          <Collapsible open={insightsExpanded && !collapsed} onOpenChange={handleInsightsToggle}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant={isInsightsRoute ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start gap-3 h-10",
+                  isInsightsRoute && "bg-accent/50 text-accent-foreground font-medium",
+                  collapsed && "justify-center px-2"
+                )}
+                aria-expanded={insightsExpanded}
+                aria-controls="insights-content"
+              >
+                <LineChart className="h-4 w-4 shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left">Insights</span>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 shrink-0 transition-transform duration-200",
+                      insightsExpanded && "rotate-180"
+                    )} />
+                  </>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent id="insights-content" className="space-y-1 mt-1">
+              {insightsChildren.map((item) => {
+                const isActive = location.pathname === item.path || 
+                  (item.path === '/insights/reviews' && location.pathname.startsWith('/insights/reviews'));
+                return (
+                  <Button
+                    key={item.path}
+                    variant={isActive ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10 pl-9",
+                      isActive && "bg-accent text-accent-foreground font-medium"
+                    )}
+                    onClick={() => navigate(item.path)}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </Button>
+                );
+              })}
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Other nav items (skip Dashboard, it's already rendered) */}
+          {navItems.slice(1).map((item) => {
+            const isActive = location.pathname === item.path || 
+              location.pathname.startsWith(item.path + '/');
             return (
               <Button
                 key={item.path}
