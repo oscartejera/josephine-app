@@ -14,6 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      budgets_daily: {
+        Row: {
+          budget_cogs: number
+          budget_labour: number
+          budget_sales: number
+          created_at: string
+          date: string
+          id: string
+          location_id: string
+        }
+        Insert: {
+          budget_cogs?: number
+          budget_labour?: number
+          budget_sales?: number
+          created_at?: string
+          date: string
+          id?: string
+          location_id: string
+        }
+        Update: {
+          budget_cogs?: number
+          budget_labour?: number
+          budget_sales?: number
+          created_at?: string
+          date?: string
+          id?: string
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_daily_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_counts_daily: {
+        Row: {
+          cash_counted: number
+          created_at: string
+          date: string
+          id: string
+          location_id: string
+          notes: string | null
+        }
+        Insert: {
+          cash_counted?: number
+          created_at?: string
+          date: string
+          id?: string
+          location_id: string
+          notes?: string | null
+        }
+        Update: {
+          cash_counted?: number
+          created_at?: string
+          date?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_counts_daily_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cogs_daily: {
+        Row: {
+          cogs_amount: number
+          created_at: string
+          date: string
+          id: string
+          location_id: string
+        }
+        Insert: {
+          cogs_amount?: number
+          created_at?: string
+          date: string
+          id?: string
+          location_id: string
+        }
+        Update: {
+          cogs_amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cogs_daily_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_submissions: {
         Row: {
           agency: Database["public"]["Enums"]["compliance_agency"]
@@ -439,6 +544,41 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_daily: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          labour_cost: number
+          labour_hours: number
+          location_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          labour_cost?: number
+          labour_hours?: number
+          location_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          labour_cost?: number
+          labour_hours?: number
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_daily_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -1024,6 +1164,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pos_connections_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_daily_finance: {
+        Row: {
+          comps_amount: number
+          created_at: string
+          date: string
+          discounts_amount: number
+          gross_sales: number
+          id: string
+          location_id: string
+          net_sales: number
+          orders_count: number
+          payments_card: number
+          payments_cash: number
+          payments_other: number
+          refunds_amount: number
+          refunds_count: number
+          voids_amount: number
+        }
+        Insert: {
+          comps_amount?: number
+          created_at?: string
+          date: string
+          discounts_amount?: number
+          gross_sales?: number
+          id?: string
+          location_id: string
+          net_sales?: number
+          orders_count?: number
+          payments_card?: number
+          payments_cash?: number
+          payments_other?: number
+          refunds_amount?: number
+          refunds_count?: number
+          voids_amount?: number
+        }
+        Update: {
+          comps_amount?: number
+          created_at?: string
+          date?: string
+          discounts_amount?: number
+          gross_sales?: number
+          id?: string
+          location_id?: string
+          net_sales?: number
+          orders_count?: number
+          payments_card?: number
+          payments_cash?: number
+          payments_other?: number
+          refunds_amount?: number
+          refunds_count?: number
+          voids_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_daily_finance_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
