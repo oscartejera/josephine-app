@@ -13,10 +13,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield } from 'lucide-react';
+import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield, RefreshCw, Database, AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
 import { TeamManager } from '@/components/settings/TeamManager';
+import { DemoDataManager } from '@/components/settings/DemoDataManager';
+import { Progress } from '@/components/ui/progress';
 
 interface PaymentMethod {
   id: string;
@@ -259,6 +261,7 @@ export default function SettingsPage() {
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
           {canManageBilling && <TabsTrigger value="payment">Payment</TabsTrigger>}
           <TabsTrigger value="export">Exportar</TabsTrigger>
+          {isOwner && <TabsTrigger value="demo">Demo</TabsTrigger>}
         </TabsList>
 
         {canManageUsers && (
@@ -652,6 +655,12 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {isOwner && (
+          <TabsContent value="demo">
+            <DemoDataManager />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
