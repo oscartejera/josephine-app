@@ -335,7 +335,94 @@ export function useWasteData(
     };
   }, [fetchData]);
 
-  // Generate demo data if empty
+  // Seed demo data to database
+  const seedDemoData = useCallback(async () => {
+    if (!group?.id || locations.length === 0) {
+      toast.error('No group or locations available');
+      return;
+    }
+
+    const reasonsWeighted = [
+      'End of day', 'End of day', 'End of day', 'End of day', 'End of day',
+      'Expired', 'Expired', 'Expired',
+      'Broken', 'Broken',
+      'Other',
+      'Theft'
+    ];
+    const categories = ['Fresh', 'Dairy', 'Frozen', 'Sauce', 'Dry goods'];
+    const itemNames = [
+      'Brined Chicken Fillets (kg)', 'Luxury cheese sauce (kg)', 'Fresh salmon (kg)',
+      'Organic eggs (dozen)', 'Butter (500g)', 'Fresh cream (ltr)',
+      'Mixed salad leaves (kg)', 'Tomatoes (kg)', 'Potatoes (kg)',
+      'Pasta sauce (jar)', 'Olive oil (ltr)', 'Milk (ltr)',
+      'Ice cream (tub)', 'Frozen peas (kg)', 'Beef mince (kg)',
+      'Yogurt (pack)', 'Cheese block (kg)', 'Ham slices (pack)'
+    ];
+
+    const wasteRows = [];
+    const today = new Date();
+
+    for (const loc of locations) {
+      // Generate 80-200 logs per location
+      const logsCount = 80 + Math.floor(Math.random() * 120);
+      
+      for (let i = 0; i < logsCount; i++) {
+        const daysAgo = Math.floor(Math.random() * 30);
+        const eventDate = new Date(today);
+        eventDate.setDate(eventDate.getDate() - daysAgo);
+        
+        const reason = reasonsWeighted[Math.floor(Math.random() * reasonsWeighted.length)];
+        const itemName = itemNames[Math.floor(Math.random() * itemNames.length)];
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        const quantity = 0.5 + Math.random() * 10;
+        const unitCost = 2 + Math.random() * 40;
+        const wasteValue = quantity * unitCost;
+
+        wasteRows.push({
+          location_id: loc.id,
+          inventory_item_id: null, // We'll use the first available or skip FK
+          quantity: Math.round(quantity * 100) / 100,
+          reason,
+          waste_value: Math.round(wasteValue * 100) / 100,
+          created_at: eventDate.toISOString()
+        });
+      }
+    }
+
+    // Get an inventory item to use (or skip if none)
+    const { data: invItems } = await supabase
+      .from('inventory_items')
+      .select('id')
+      .limit(1);
+
+    const inventoryItemId = invItems?.[0]?.id;
+    
+    if (!inventoryItemId) {
+      toast.error('No inventory items found. Please create inventory items first.');
+      return;
+    }
+
+    // Update all rows with the inventory item ID
+    const rowsWithItem = wasteRows.map(r => ({
+      ...r,
+      inventory_item_id: inventoryItemId
+    }));
+
+    const { error } = await supabase
+      .from('waste_events')
+      .insert(rowsWithItem);
+
+    if (error) {
+      console.error('Error seeding waste data:', error);
+      toast.error('Failed to generate demo data');
+      return;
+    }
+
+    toast.success(`Generated ${wasteRows.length} waste events`);
+    fetchData();
+  }, [group?.id, locations, fetchData]);
+
+  // Generate demo data fallback if empty (in-memory only)
   useEffect(() => {
     if (!isLoading && metrics.totalAccountedWaste === 0) {
       generateDemoData();
@@ -424,6 +511,8 @@ export function useWasteData(
     leaderboard,
     items,
     locations: locations.filter(l => locationIds.includes(l.id)),
-    REASON_LABELS
+    REASON_LABELS,
+    seedDemoData,
+    refetch: fetchData
   };
 }
