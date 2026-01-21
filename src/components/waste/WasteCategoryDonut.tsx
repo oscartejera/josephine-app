@@ -23,15 +23,16 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
+import { ArrowRight, ChevronDown } from 'lucide-react';
 import type { WasteByCategory } from '@/hooks/useWasteData';
 
 const CATEGORY_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--muted-foreground))'
+  '#22c55e',  // Green - Frozen
+  '#f97316',  // Orange - Dairy
+  '#3b82f6',  // Blue - Sauce
+  '#84cc16',  // Lime - Fresh
+  '#a855f7',  // Purple
+  '#6b7280',  // Gray
 ];
 
 interface WasteCategoryDonutProps {
@@ -47,8 +48,8 @@ export function WasteCategoryDonut({
 }: WasteCategoryDonutProps) {
   if (isLoading) {
     return (
-      <Card className="border-[hsl(var(--bi-border))]">
-        <CardHeader>
+      <Card className="border-border">
+        <CardHeader className="pb-2">
           <Skeleton className="h-5 w-48" />
         </CardHeader>
         <CardContent>
@@ -65,37 +66,39 @@ export function WasteCategoryDonut({
   }));
 
   return (
-    <Card className="border-[hsl(var(--bi-border))]">
+    <Card className="border-border">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">Waste by ingredient category</CardTitle>
+          <CardTitle className="text-sm font-medium text-foreground">Waste by ingredient category</CardTitle>
           <div className="flex items-center gap-2">
-            <Select defaultValue="category">
-              <SelectTrigger className="h-8 w-[100px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="category">Category</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="link" className="h-8 text-xs text-primary p-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 text-xs gap-1.5 font-normal"
+            >
+              Category
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground">
               See all
+              <ArrowRight className="h-3 w-3" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="h-[200px] relative">
+      <CardContent className="pt-0">
+        <div className="h-[180px] relative flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={85}
+                innerRadius={55}
+                outerRadius={80}
                 paddingAngle={2}
                 dataKey="value"
+                strokeWidth={0}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={entry.category} fill={entry.fill} />
@@ -105,8 +108,8 @@ export function WasteCategoryDonut({
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                  boxShadow: 'var(--shadow-md)'
+                  borderRadius: '6px',
+                  fontSize: '12px'
                 }}
                 formatter={(value: number) => [`${currency}${value.toFixed(2)}`, 'Value']}
               />
@@ -114,37 +117,39 @@ export function WasteCategoryDonut({
           </ResponsiveContainer>
         </div>
 
-        {/* Category table */}
-        <Table className="mt-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">Item category</TableHead>
-              <TableHead className="text-xs text-right">% of total waste</TableHead>
-              <TableHead className="text-xs text-right">Value</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {chartData.map((item) => (
-              <TableRow key={item.category}>
-                <TableCell className="py-2">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: item.fill }}
-                    />
-                    <span className="text-sm">{item.category}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="py-2 text-right text-sm">
-                  {item.percentOfTotal.toFixed(1)}%
-                </TableCell>
-                <TableCell className="py-2 text-right text-sm font-medium">
-                  {currency}{item.value.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                </TableCell>
+        {/* Category table - Nory style */}
+        <div className="mt-2 border-t border-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">Item category</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">% of total waste</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Value</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {chartData.map((item) => (
+                <TableRow key={item.category} className="hover:bg-muted/30">
+                  <TableCell className="py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-2.5 h-2.5 rounded-sm" 
+                        style={{ backgroundColor: item.fill }}
+                      />
+                      <span className="text-sm">{item.category}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2.5 text-right text-sm">
+                    {item.percentOfTotal.toFixed(2)}%
+                  </TableCell>
+                  <TableCell className="py-2.5 text-right text-sm">
+                    {currency}{item.value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

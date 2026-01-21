@@ -55,8 +55,8 @@ export default function Waste() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
+    <div className="space-y-4 animate-fade-in">
+      {/* Header with Log Waste button */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
           <WasteHeader
@@ -69,7 +69,7 @@ export default function Waste() {
             isConnected={isConnected}
           />
         </div>
-        <div className="flex-shrink-0 pt-8 lg:pt-12">
+        <div className="flex-shrink-0 lg:pt-6">
           <LogWasteDialog
             onSuccess={handleWasteLogged}
             defaultLocationId={selectedLocations[0]}
