@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowDown, Sparkles } from 'lucide-react';
+import { Search, ArrowDown, Sparkles, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -14,6 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { WasteItem, WasteReason } from '@/hooks/useWasteData';
 
 const REASON_LABELS: Record<WasteReason, string> = {
@@ -23,6 +30,8 @@ const REASON_LABELS: Record<WasteReason, string> = {
   theft: 'Theft',
   other: 'Other'
 };
+
+const REASON_OPTIONS: WasteReason[] = ['broken', 'end_of_day', 'expired', 'theft', 'other'];
 
 interface WasteItemsTableProps {
   items: WasteItem[];
@@ -40,12 +49,19 @@ export function WasteItemsTable({
   onGenerateDemo
 }: WasteItemsTableProps) {
   const [search, setSearch] = useState('');
+  const [reasonFilter, setReasonFilter] = useState<WasteReason | 'all'>('all');
   const [sortBy, setSortBy] = useState<'value' | 'quantity' | 'percentOfSales'>('value');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const filteredItems = useMemo(() => {
     let result = [...items];
     
+    // Filter by reason
+    if (reasonFilter !== 'all') {
+      result = result.filter(item => item.topReason === reasonFilter);
+    }
+    
+    // Filter by search
     if (search) {
       const lowerSearch = search.toLowerCase();
       result = result.filter(item => 
@@ -60,10 +76,10 @@ export function WasteItemsTable({
     });
     
     return result;
-  }, [items, search, sortBy, sortOrder]);
+  }, [items, search, reasonFilter, sortBy, sortOrder]);
 
-  const totalValue = items.reduce((sum, item) => sum + item.value, 0);
-  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalValue = filteredItems.reduce((sum, item) => sum + item.value, 0);
+  const totalQuantity = filteredItems.reduce((sum, item) => sum + item.quantity, 0);
 
   if (isLoading) {
     return (
@@ -109,14 +125,47 @@ export function WasteItemsTable({
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm font-medium text-foreground">% of total waste</p>
-          <div className="relative w-full sm:w-56">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by item name"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm"
-            />
+          <div className="flex items-center gap-2">
+            {/* Reason Filter */}
+            <Select
+              value={reasonFilter}
+              onValueChange={(val) => setReasonFilter(val as WasteReason | 'all')}
+            >
+              <SelectTrigger className="h-9 w-[130px] text-sm bg-card border-border">
+                <SelectValue placeholder="All reasons" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="all">All reasons</SelectItem>
+                {REASON_OPTIONS.map(reason => (
+                  <SelectItem key={reason} value={reason}>
+                    {REASON_LABELS[reason]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Clear filter button */}
+            {reasonFilter !== 'all' && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9"
+                onClick={() => setReasonFilter('all')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            
+            {/* Search */}
+            <div className="relative w-full sm:w-48">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by item name"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
+            </div>
           </div>
         </div>
       </CardHeader>
