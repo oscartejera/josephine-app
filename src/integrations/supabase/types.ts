@@ -871,6 +871,30 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          key: string
+          module: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          module: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          module?: string
+        }
+        Relationships: []
+      }
       planned_shifts: {
         Row: {
           created_at: string
@@ -1243,6 +1267,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_permissions: {
+        Row: {
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+        }
+        Relationships: []
       }
       social_security_accounts: {
         Row: {
@@ -1649,20 +1727,38 @@ export type Database = {
       user_roles: {
         Row: {
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          location_id: string | null
+          role_id: string | null
           user_id: string
         }
         Insert: {
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
+          location_id?: string | null
+          role_id?: string | null
           user_id: string
         }
         Update: {
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          location_id?: string | null
+          role_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waste_events: {
         Row: {
@@ -1736,18 +1832,52 @@ export type Database = {
           units: number
         }[]
       }
+      get_user_accessible_locations: {
+        Args: { _user_id?: string }
+        Returns: string[]
+      }
       get_user_group_id: { Args: never; Returns: string }
+      get_user_has_global_scope: {
+        Args: { _user_id?: string }
+        Returns: boolean
+      }
+      get_user_permissions: {
+        Args: { _location_id?: string; _user_id?: string }
+        Returns: {
+          module: string
+          permission_key: string
+        }[]
+      }
+      get_user_roles_with_scope: {
+        Args: { _user_id?: string }
+        Returns: {
+          location_id: string
+          location_name: string
+          role_id: string
+          role_name: string
+        }[]
+      }
       has_payroll_role: { Args: never; Returns: boolean }
+      has_permission: {
+        Args: {
+          _location_id?: string
+          _permission_key: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
       is_admin_or_ops: { Args: never; Returns: boolean }
+      is_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_payroll_admin: { Args: never; Returns: boolean }
       seed_demo_products_and_sales: {
         Args: { p_group_id: string }
         Returns: undefined
       }
+      seed_roles_and_permissions: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:

@@ -1,8 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-
-type AppRole = 'owner_admin' | 'ops_manager' | 'location_manager' | 'viewer';
 
 interface Profile {
   id: string;
@@ -10,17 +8,36 @@ interface Profile {
   full_name: string | null;
 }
 
+interface UserRole {
+  role_name: string;
+  role_id: string;
+  location_id: string | null;
+  location_name: string | null;
+}
+
+interface Permission {
+  permission_key: string;
+  module: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  roles: AppRole[];
+  roles: UserRole[];
+  permissions: Permission[];
   loading: boolean;
+  isOwner: boolean;
+  hasGlobalScope: boolean;
+  accessibleLocationIds: string[];
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  hasRole: (role: AppRole) => boolean;
+  hasPermission: (permissionKey: string, locationId?: string | null) => boolean;
+  hasAnyPermission: (permissionKeys: string[]) => boolean;
+  hasRole: (roleName: string) => boolean;
   isAdminOrOps: () => boolean;
+  refreshPermissions: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,8 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
+  const [roles, setRoles] = useState<UserRole[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
+  const [hasGlobalScope, setHasGlobalScope] = useState(false);
+  const [accessibleLocationIds, setAccessibleLocationIds] = useState<string[]>([]);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -41,13 +62,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data as Profile | null;
   };
 
-  const fetchRoles = async (userId: string) => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
-    return (data?.map(r => r.role as AppRole) || []);
-  };
+  const fetchUserData = useCallback(async (userId: string) => {
+    try {
+      // Fetch roles with scope using RPC
+      const { data: rolesData } = await supabase.rpc('get_user_roles_with_scope', {
+        _user_id: userId
+      });
+      
+      if (rolesData) {
+        setRoles(rolesData as UserRole[]);
+      } else {
+        setRoles([]);
+      }
+
+      // Check if owner
+      const { data: isOwnerData } = await supabase.rpc('is_owner', {
+        _user_id: userId
+      });
+      setIsOwner(isOwnerData === true);
+
+      // Check global scope
+      const { data: globalScopeData } = await supabase.rpc('get_user_has_global_scope', {
+        _user_id: userId
+      });
+      setHasGlobalScope(globalScopeData === true);
+
+      // Get accessible locations
+      const { data: locationsData } = await supabase.rpc('get_user_accessible_locations', {
+        _user_id: userId
+      });
+      if (locationsData) {
+        setAccessibleLocationIds(locationsData as string[]);
+      } else {
+        setAccessibleLocationIds([]);
+      }
+
+      // Get permissions
+      const { data: permsData } = await supabase.rpc('get_user_permissions', {
+        _user_id: userId
+      });
+      if (permsData) {
+        setPermissions(permsData as Permission[]);
+      } else {
+        setPermissions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setRoles([]);
+      setPermissions([]);
+      setIsOwner(false);
+      setHasGlobalScope(false);
+      setAccessibleLocationIds([]);
+    }
+  }, []);
+
+  const refreshPermissions = useCallback(async () => {
+    if (user?.id) {
+      await fetchUserData(user.id);
+    }
+  }, [user?.id, fetchUserData]);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -59,16 +132,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           // Use setTimeout to avoid blocking the auth state change
           setTimeout(async () => {
-            const [profileData, rolesData] = await Promise.all([
-              fetchProfile(session.user.id),
-              fetchRoles(session.user.id)
-            ]);
+            const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
-            setRoles(rolesData);
+            await fetchUserData(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
+          setPermissions([]);
+          setIsOwner(false);
+          setHasGlobalScope(false);
+          setAccessibleLocationIds([]);
         }
         setLoading(false);
       }
@@ -81,10 +155,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         Promise.all([
           fetchProfile(session.user.id),
-          fetchRoles(session.user.id)
-        ]).then(([profileData, rolesData]) => {
+          fetchUserData(session.user.id)
+        ]).then(([profileData]) => {
           setProfile(profileData);
-          setRoles(rolesData);
           setLoading(false);
         });
       } else {
@@ -93,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchUserData]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -116,8 +189,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  const hasRole = (role: AppRole) => roles.includes(role);
-  const isAdminOrOps = () => hasRole('owner_admin') || hasRole('ops_manager');
+  // Check if user has a specific permission
+  const hasPermission = useCallback((permissionKey: string, locationId?: string | null): boolean => {
+    // Owner has all permissions
+    if (isOwner) return true;
+    
+    // Check if permission exists in user's permissions
+    return permissions.some(p => p.permission_key === permissionKey);
+  }, [isOwner, permissions]);
+
+  // Check if user has any of the given permissions
+  const hasAnyPermission = useCallback((permissionKeys: string[]): boolean => {
+    if (isOwner) return true;
+    return permissionKeys.some(key => permissions.some(p => p.permission_key === key));
+  }, [isOwner, permissions]);
+
+  // Check if user has a specific role
+  const hasRole = useCallback((roleName: string): boolean => {
+    if (isOwner && roleName === 'owner') return true;
+    return roles.some(r => r.role_name === roleName);
+  }, [isOwner, roles]);
+
+  // Check if user is admin or ops manager (legacy compatibility)
+  const isAdminOrOps = useCallback((): boolean => {
+    if (isOwner) return true;
+    return roles.some(r => ['owner', 'admin', 'ops_manager'].includes(r.role_name));
+  }, [isOwner, roles]);
 
   return (
     <AuthContext.Provider value={{
@@ -125,12 +222,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session,
       profile,
       roles,
+      permissions,
       loading,
+      isOwner,
+      hasGlobalScope,
+      accessibleLocationIds,
       signIn,
       signUp,
       signOut,
+      hasPermission,
+      hasAnyPermission,
       hasRole,
-      isAdminOrOps
+      isAdminOrOps,
+      refreshPermissions
     }}>
       {children}
     </AuthContext.Provider>
