@@ -230,6 +230,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           gross_total,
           net_total,
           discount_total,
+          covers,
           status
         `)
         .in('location_id', effectiveLocationIds)
@@ -264,7 +265,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       // Calculate KPIs
       const totalSales = tickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
       const totalOrders = tickets.length;
-      const avgCheckSize = totalOrders > 0 ? totalSales / totalOrders : 0;
+      const totalCovers = tickets.reduce((sum, t) => sum + (t.covers || 1), 0);
+      const avgCheckSize = totalCovers > 0 ? totalSales / totalCovers : 0;
       const totalForecast = (forecasts || []).reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
       const salesToDateDelta = totalForecast > 0 ? ((totalSales - totalForecast) / totalForecast) * 100 : 0;
 
@@ -296,17 +298,27 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         percentage: totalSales > 0 ? Math.round((value / totalSales) * 100) : 0
       }));
 
-      // ACS by channel
-      const channelOrdersMap = new Map<string, number>();
+      // ACS by channel (use covers, not orders)
+      const channelCoversMap = new Map<string, number>();
       tickets.forEach(t => {
         const channel = t.channel || 'unknown';
-        channelOrdersMap.set(channel, (channelOrdersMap.get(channel) || 0) + 1);
+        channelCoversMap.set(channel, (channelCoversMap.get(channel) || 0) + (t.covers || 1));
       });
 
       const acsBreakdown = Array.from(channelMap.entries()).map(([channel, value]) => ({
         channel: channel === 'dinein' ? 'Dine-in' : channel === 'takeaway' ? 'Pick-up' : channel === 'delivery' ? 'Delivery' : channel,
-        value: (channelOrdersMap.get(channel) || 1) > 0 ? value / (channelOrdersMap.get(channel) || 1) : 0
+        value: (channelCoversMap.get(channel) || 1) > 0 ? value / (channelCoversMap.get(channel) || 1) : 0
       }));
+
+      // Calculate forecast ACS based on expected orders per forecast sales
+      const forecastAvgCheckSize = totalForecast > 0 && totalCovers > 0 
+        ? (totalForecast / (totalCovers * (totalForecast / totalSales || 1)))
+        : avgCheckSize * 0.95;
+
+      // Calculate ACS delta vs forecast
+      const avgCheckSizeDelta = forecastAvgCheckSize > 0 
+        ? ((avgCheckSize - forecastAvgCheckSize) / forecastAvgCheckSize) * 100 
+        : 0;
 
       // Build chart data
       const chartData: ChartDataPoint[] = [];
@@ -323,7 +335,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             return closedAt.getHours() === hourNum;
           });
           const hourSales = hourTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
-          const hourOrders = hourTickets.length;
+          const hourCovers = hourTickets.reduce((sum, t) => sum + (t.covers || 1), 0);
           const hourForecast = (forecasts || [])
             .filter(f => f.hour === hourNum)
             .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
@@ -333,8 +345,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             actual: hourSales,
             forecastLive: hourForecast * 1.05,
             forecast: hourForecast,
-            avgCheckSize: hourOrders > 0 ? hourSales / hourOrders : 0,
-            avgCheckForecast: 22
+            avgCheckSize: hourCovers > 0 ? hourSales / hourCovers : avgCheckSize,
+            avgCheckForecast: forecastAvgCheckSize
           });
         });
       } else {
@@ -346,7 +358,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             return format(closedAt, 'yyyy-MM-dd') === dayStr;
           });
           const daySales = dayTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
-          const dayOrders = dayTickets.length;
+          const dayCovers = dayTickets.reduce((sum, t) => sum + (t.covers || 1), 0);
           const dayForecast = (forecasts || [])
             .filter(f => f.forecast_date === dayStr)
             .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
@@ -356,8 +368,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             actual: daySales,
             forecastLive: dayForecast * 1.05,
             forecast: dayForecast,
-            avgCheckSize: dayOrders > 0 ? daySales / dayOrders : 0,
-            avgCheckForecast: 22
+            avgCheckSize: dayCovers > 0 ? daySales / dayCovers : (dayForecast > 0 ? forecastAvgCheckSize : 0),
+            avgCheckForecast: forecastAvgCheckSize
           });
         });
       }
@@ -417,7 +429,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const locationSalesData: LocationSalesData[] = locations.map(loc => {
         const locTickets = tickets.filter(t => t.location_id === loc.id);
         const locSales = locTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
-        const locOrders = locTickets.length;
+        const locCovers = locTickets.reduce((sum, t) => sum + (t.covers || 1), 0);
         const locForecast = (forecasts || [])
           .filter(f => f.location_id === loc.id)
           .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
@@ -453,8 +465,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           deliveryDelta: 0,
           pickUp: pickUpSales,
           pickUpDelta: 0,
-          orders: locOrders,
-          acs: locOrders > 0 ? locSales / locOrders : 0,
+          orders: locTickets.length,
+          acs: locCovers > 0 ? locSales / locCovers : 0,
           dwellTime: locDwellTime
         };
       });
@@ -464,9 +476,9 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           salesToDate: totalSales,
           salesToDateDelta,
           avgCheckSize,
-          avgCheckSizeDelta: 2.5, // Placeholder
+          avgCheckSizeDelta,
           dwellTime,
-          dwellTimeDelta: -3.2, // Placeholder
+          dwellTimeDelta: -3.2, // Placeholder for now
           channelBreakdown,
           acsBreakdown
         },
