@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Location {
   id: string;
@@ -18,6 +19,7 @@ type DateRange = 'today' | '7d' | '30d' | 'custom';
 interface AppContextType {
   group: Group | null;
   locations: Location[];
+  accessibleLocations: Location[];
   selectedLocationId: string | null;
   selectedLocation: Location | null;
   setSelectedLocationId: (id: string | null) => void;
@@ -27,18 +29,31 @@ interface AppContextType {
   setCustomDateRange: (range: { from: Date; to: Date } | null) => void;
   getDateRangeValues: () => { from: Date; to: Date };
   loading: boolean;
+  canShowAllLocations: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { profile } = useAuth();
+  const { profile, isOwner, hasGlobalScope, accessibleLocationIds } = useAuth();
+  const { toast } = useToast();
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>('today');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Determine if user can see "All locations" option
+  const canShowAllLocations = isOwner || hasGlobalScope;
+
+  // Filter locations based on user's access
+  const accessibleLocations = React.useMemo(() => {
+    if (isOwner || hasGlobalScope) {
+      return locations;
+    }
+    return locations.filter(l => accessibleLocationIds.includes(l.id));
+  }, [locations, isOwner, hasGlobalScope, accessibleLocationIds]);
 
   useEffect(() => {
     if (profile?.group_id) {
@@ -47,6 +62,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   }, [profile?.group_id]);
+
+  // Validate and set location when accessible locations change
+  useEffect(() => {
+    if (accessibleLocations.length > 0 && selectedLocationId) {
+      // Check if current selection is still valid
+      const isValidSelection = 
+        selectedLocationId === 'all' 
+          ? canShowAllLocations 
+          : accessibleLocations.some(l => l.id === selectedLocationId);
+
+      if (!isValidSelection) {
+        // Redirect to first accessible location
+        const firstLocation = accessibleLocations[0];
+        setSelectedLocationIdInternal(firstLocation.id);
+        toast({
+          variant: "destructive",
+          title: "Acceso denegado",
+          description: "No tienes acceso a esa ubicación."
+        });
+      }
+    } else if (accessibleLocations.length > 0 && !selectedLocationId) {
+      // Set default location
+      if (canShowAllLocations) {
+        setSelectedLocationIdInternal('all');
+      } else {
+        setSelectedLocationIdInternal(accessibleLocations[0].id);
+      }
+    }
+  }, [accessibleLocations, selectedLocationId, canShowAllLocations]);
 
   const fetchGroupAndLocations = async (groupId: string) => {
     setLoading(true);
@@ -61,16 +105,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       if (locationsResult.data) {
         setLocations(locationsResult.data);
-        // Default to first location or "all"
-        if (locationsResult.data.length > 0 && !selectedLocationId) {
-          setSelectedLocationId(locationsResult.data[0].id);
-        }
       }
     } catch (error) {
       console.error('Error fetching group/locations:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Wrapped setter that validates access
+  const setSelectedLocationId = (id: string | null) => {
+    if (id === 'all' && !canShowAllLocations) {
+      // User tried to select "all" but doesn't have permission
+      toast({
+        variant: "destructive",
+        title: "Acceso denegado",
+        description: "No tienes acceso a todas las ubicaciones."
+      });
+      return;
+    }
+
+    if (id && id !== 'all' && !isOwner && !hasGlobalScope) {
+      const hasAccess = accessibleLocationIds.includes(id);
+      if (!hasAccess) {
+        toast({
+          variant: "destructive",
+          title: "Acceso denegado",
+          description: "No tienes acceso a esa ubicación."
+        });
+        return;
+      }
+    }
+
+    setSelectedLocationIdInternal(id);
   };
 
   const selectedLocation = locations.find(l => l.id === selectedLocationId) || null;
@@ -101,6 +168,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider value={{
       group,
       locations,
+      accessibleLocations,
       selectedLocationId,
       selectedLocation,
       setSelectedLocationId,
@@ -109,7 +177,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       customDateRange,
       setCustomDateRange,
       getDateRangeValues,
-      loading
+      loading,
+      canShowAllLocations
     }}>
       {children}
     </AppContext.Provider>

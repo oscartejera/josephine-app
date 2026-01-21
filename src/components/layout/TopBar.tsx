@@ -19,6 +19,7 @@ import { es } from 'date-fns/locale';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -27,14 +28,15 @@ interface TopBarProps {
 export function TopBar({ onMenuClick }: TopBarProps) {
   const {
     group,
-    locations,
+    accessibleLocations,
     selectedLocationId,
     setSelectedLocationId,
     dateRange,
     setDateRange,
     customDateRange,
     setCustomDateRange,
-    getDateRangeValues
+    getDateRangeValues,
+    canShowAllLocations
   } = useApp();
 
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -91,8 +93,10 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos los locales</SelectItem>
-            {locations.map((location) => (
+            {canShowAllLocations && (
+              <SelectItem value="all">Todos los locales</SelectItem>
+            )}
+            {accessibleLocations.map((location) => (
               <SelectItem key={location.id} value={location.id}>
                 {location.name}
               </SelectItem>
