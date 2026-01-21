@@ -302,6 +302,47 @@ export type Database = {
           },
         ]
       }
+      forecast_daily_metrics: {
+        Row: {
+          created_at: string
+          date: string
+          forecast_orders: number
+          forecast_sales: number
+          id: string
+          location_id: string
+          planned_labor_cost: number
+          planned_labor_hours: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          forecast_orders?: number
+          forecast_sales?: number
+          id?: string
+          location_id: string
+          planned_labor_cost?: number
+          planned_labor_hours?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          forecast_orders?: number
+          forecast_sales?: number
+          id?: string
+          location_id?: string
+          planned_labor_cost?: number
+          planned_labor_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_daily_metrics_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecasts: {
         Row: {
           created_at: string
@@ -983,6 +1024,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pos_connections_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_daily_metrics: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          labor_cost: number
+          labor_hours: number
+          location_id: string
+          net_sales: number
+          orders: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          labor_cost?: number
+          labor_hours?: number
+          location_id: string
+          net_sales?: number
+          orders?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          labor_cost?: number
+          labor_hours?: number
+          location_id?: string
+          net_sales?: number
+          orders?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_daily_metrics_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
@@ -1812,6 +1894,66 @@ export type Database = {
     Functions: {
       can_access_location: { Args: { _location_id: string }; Returns: boolean }
       get_accessible_location_ids: { Args: never; Returns: string[] }
+      get_labour_kpis: {
+        Args: {
+          date_from: string
+          date_to: string
+          selected_location_id?: string
+        }
+        Returns: Json
+      }
+      get_labour_locations_table: {
+        Args: {
+          date_from: string
+          date_to: string
+          selected_location_id?: string
+        }
+        Returns: {
+          col_actual_pct: number
+          col_delta_pct: number
+          col_projected_pct: number
+          hours_actual: number
+          hours_projected: number
+          is_summary: boolean
+          labor_cost_actual: number
+          labor_cost_projected: number
+          location_id: string
+          location_name: string
+          oplh_actual: number
+          oplh_delta_pct: number
+          oplh_projected: number
+          sales_actual: number
+          sales_delta_pct: number
+          sales_projected: number
+          splh_actual: number
+          splh_delta_pct: number
+          splh_projected: number
+        }[]
+      }
+      get_labour_timeseries: {
+        Args: {
+          date_from: string
+          date_to: string
+          selected_location_id?: string
+        }
+        Returns: {
+          actual_col_pct: number
+          actual_hours: number
+          actual_labor_cost: number
+          actual_oplh: number
+          actual_orders: number
+          actual_sales: number
+          actual_splh: number
+          date: string
+          forecast_orders: number
+          forecast_sales: number
+          planned_col_pct: number
+          planned_hours: number
+          planned_labor_cost: number
+          planned_oplh: number
+          planned_splh: number
+        }[]
+      }
       get_top_products: {
         Args: {
           p_date_from?: string
@@ -1873,6 +2015,10 @@ export type Database = {
       is_admin_or_ops: { Args: never; Returns: boolean }
       is_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_payroll_admin: { Args: never; Returns: boolean }
+      seed_demo_labour_data: {
+        Args: { p_days?: number; p_locations?: number }
+        Returns: Json
+      }
       seed_demo_products_and_sales: {
         Args: { p_group_id: string }
         Returns: undefined
