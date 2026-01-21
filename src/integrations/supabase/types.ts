@@ -694,6 +694,63 @@ export type Database = {
           },
         ]
       }
+      menu_engineering_actions: {
+        Row: {
+          action_type: string
+          classification: string
+          created_at: string
+          date_from: string
+          date_to: string
+          estimated_impact_eur: number | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          product_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          classification: string
+          created_at?: string
+          date_from: string
+          date_to: string
+          estimated_impact_eur?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          product_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          classification?: string
+          created_at?: string
+          date_from?: string
+          date_to?: string
+          estimated_impact_eur?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          product_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_engineering_actions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_engineering_actions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -2294,6 +2351,29 @@ export type Database = {
       is_admin_or_ops: { Args: never; Returns: boolean }
       is_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_payroll_admin: { Args: never; Returns: boolean }
+      menu_engineering_summary: {
+        Args: { p_date_from: string; p_date_to: string; p_location_id?: string }
+        Returns: {
+          action_tag: string
+          badges: string[]
+          category: string
+          classification: string
+          cogs: number
+          margin_pct: number
+          margin_threshold: number
+          name: string
+          pop_threshold: number
+          popularity_share: number
+          product_id: string
+          profit_eur: number
+          profit_per_sale: number
+          sales: number
+          sales_share: number
+          total_sales_period: number
+          total_units_period: number
+          units: number
+        }[]
+      }
       seed_demo_labour_data: {
         Args: { p_days?: number; p_locations?: number }
         Returns: Json

@@ -1,437 +1,212 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
-import { format, subDays } from 'date-fns';
 
 export type Classification = 'star' | 'plow_horse' | 'puzzle' | 'dog';
 export type DatePreset = 'last7' | 'last30' | 'custom';
+export type PopularityMode = 'units' | 'sales';
 
 export interface MenuEngineeringItem {
-  productId: string;
-  name: string;
-  category: string;
-  units: number;
-  sales: number;
-  cogs: number;
-  gp: number;          // Gross Profit = sales - cogs
-  gpPct: number;       // GP% = gp / sales
-  cm: number;          // Contribution Margin €/unit = gp / units
-  popularity: number;  // Share of units = units / totalUnits
-  classification: Classification;
-  lowData: boolean;    // Flag for insufficient data
-  // Per-category thresholds (when enabled)
-  categoryPopularityThreshold?: number;
-  categoryMarginThreshold?: number;
-}
-
-export interface CategoryThresholds {
-  category: string;
-  popularityThreshold: number;
-  marginThreshold: number;
-  itemCount: number;
-}
-
-export interface MenuEngineeringStats {
-  totalProducts: number;
-  stars: number;
-  plowHorses: number;
-  puzzles: number;
-  dogs: number;
-  popularityThreshold: number;  // P* (global)
-  marginThreshold: number;      // M* (global median CM)
-  categoryThresholds?: CategoryThresholds[];  // Per-category thresholds
-}
-
-interface RawAggregation {
   product_id: string;
   name: string;
   category: string;
   units: number;
   sales: number;
   cogs: number;
+  profit_eur: number;
+  margin_pct: number;
+  profit_per_sale: number;
+  popularity_share: number;
+  sales_share: number;
+  classification: Classification;
+  action_tag: string;
+  badges: string[];
+}
+
+export interface MenuEngineeringStats {
+  stars: number;
+  plowHorses: number;
+  puzzles: number;
+  dogs: number;
+  totalUnits: number;
+  totalSales: number;
+  popThreshold: number;
+  marginThreshold: number;
 }
 
 export function useMenuEngineeringData() {
-  const { accessibleLocations, canShowAllLocations } = useApp();
-  
+  const { accessibleLocations } = useApp();
+
+  // State
   const [items, setItems] = useState<MenuEngineeringItem[]>([]);
   const [stats, setStats] = useState<MenuEngineeringStats | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Filters
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [datePreset, setDatePreset] = useState<DatePreset>('last30');
-  const [customDateFrom, setCustomDateFrom] = useState<Date>(subDays(new Date(), 30));
-  const [customDateTo, setCustomDateTo] = useState<Date>(new Date());
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [includeLowData, setIncludeLowData] = useState(false);
-  const [usePerCategoryThresholds, setUsePerCategoryThresholds] = useState(false);
+  const [popularityMode, setPopularityMode] = useState<PopularityMode>('units');
 
-  // Categories from data
-  const [categories, setCategories] = useState<string[]>([]);
+  // Categories from items
+  const categories = useMemo(() => {
+    const cats = new Set(items.map(i => i.category));
+    return Array.from(cats).sort();
+  }, [items]);
 
-  // Get date range based on preset
+  // Date range calculation
   const getDateRange = useCallback(() => {
     const now = new Date();
-    switch (datePreset) {
-      case 'last7':
-        return { from: subDays(now, 7), to: now };
-      case 'last30':
-        return { from: subDays(now, 30), to: now };
-      case 'custom':
-        return { from: customDateFrom, to: customDateTo };
+    let from: Date;
+    let to: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (datePreset === 'last7') {
+      from = new Date(to);
+      from.setDate(from.getDate() - 7);
+    } else if (datePreset === 'last30') {
+      from = new Date(to);
+      from.setDate(from.getDate() - 30);
+    } else if (customDateFrom && customDateTo) {
+      from = customDateFrom;
+      to = customDateTo;
+    } else {
+      from = new Date(to);
+      from.setDate(from.getDate() - 30);
     }
+
+    return {
+      from: from.toISOString().split('T')[0],
+      to: to.toISOString().split('T')[0],
+    };
   }, [datePreset, customDateFrom, customDateTo]);
 
-  // Calculate low data threshold based on date range
-  const getLowDataThreshold = useCallback(() => {
-    return datePreset === 'last7' ? 10 : 30;
-  }, [datePreset]);
-
-  // Fetch and calculate menu engineering data
+  // Fetch data from RPC
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       const { from, to } = getDateRange();
-      const dateFrom = format(from, 'yyyy-MM-dd');
-      const dateTo = format(to, 'yyyy-MM-dd');
 
-      // Build query for aggregated product sales
-      let query = supabase
-        .from('product_sales_daily')
-        .select(`
-          product_id,
-          units_sold,
-          net_sales,
-          cogs,
-          location_id,
-          products!inner(id, name, category)
-        `)
-        .gte('date', dateFrom)
-        .lte('date', dateTo);
+      const { data, error: rpcError } = await supabase.rpc('menu_engineering_summary', {
+        p_date_from: from,
+        p_date_to: to,
+        p_location_id: selectedLocationId || null,
+      });
 
-      // Apply location filter
-      if (selectedLocationId && selectedLocationId !== 'all') {
-        query = query.eq('location_id', selectedLocationId);
-      }
+      if (rpcError) throw rpcError;
 
-      const { data: salesData, error: salesError } = await query;
-
-      if (salesError) throw salesError;
-
-      if (!salesData || salesData.length === 0) {
+      if (!data || data.length === 0) {
         setItems([]);
         setStats(null);
-        setCategories([]);
+        setLoading(false);
         return;
       }
 
-      // Aggregate by product
-      const productMap = new Map<string, RawAggregation>();
-      const categorySet = new Set<string>();
+      // Map to typed items
+      const mappedItems: MenuEngineeringItem[] = data.map((row: Record<string, unknown>) => ({
+        product_id: row.product_id as string,
+        name: row.name as string,
+        category: row.category as string,
+        units: Number(row.units) || 0,
+        sales: Number(row.sales) || 0,
+        cogs: Number(row.cogs) || 0,
+        profit_eur: Number(row.profit_eur) || 0,
+        margin_pct: Number(row.margin_pct) || 0,
+        profit_per_sale: Number(row.profit_per_sale) || 0,
+        popularity_share: Number(row.popularity_share) || 0,
+        sales_share: Number(row.sales_share) || 0,
+        classification: (row.classification as Classification) || 'dog',
+        action_tag: row.action_tag as string || 'Revisar',
+        badges: (row.badges as string[]) || [],
+      }));
 
-      salesData.forEach((row: any) => {
-        const productId = row.product_id;
-        const product = row.products;
-        const category = product?.category || 'Other';
-        
-        categorySet.add(category);
-
-        // Apply category filter
-        if (selectedCategory && category !== selectedCategory) return;
-
-        const existing = productMap.get(productId) || {
-          product_id: productId,
-          name: product?.name || 'Unknown',
-          category,
-          units: 0,
-          sales: 0,
-          cogs: 0,
-        };
-
-        existing.units += Number(row.units_sold) || 0;
-        existing.sales += Number(row.net_sales) || 0;
-        existing.cogs += Number(row.cogs) || 0;
-
-        productMap.set(productId, existing);
-      });
-
-      setCategories(Array.from(categorySet).sort());
-
-      const aggregated = Array.from(productMap.values());
-
-      if (aggregated.length === 0) {
-        setItems([]);
-        setStats(null);
-        return;
-      }
-
-      // Calculate totals
-      const totalUnits = aggregated.reduce((sum, p) => sum + p.units, 0);
-      const lowDataThreshold = getLowDataThreshold();
-
-      // Calculate derived metrics for each product
-      const itemsWithMetrics = aggregated.map(p => {
-        const gp = p.sales - p.cogs;
-        const gpPct = p.sales > 0 ? (gp / p.sales) * 100 : 0;
-        const cm = p.units > 0 ? gp / p.units : 0;
-        const popularity = totalUnits > 0 ? (p.units / totalUnits) * 100 : 0;
-        const lowData = p.units < lowDataThreshold;
-
-        return {
-          productId: p.product_id,
-          name: p.name,
-          category: p.category,
-          units: p.units,
-          sales: p.sales,
-          cogs: p.cogs,
-          gp,
-          gpPct,
-          cm,
-          popularity,
-          lowData,
-          classification: 'dog' as Classification, // Will be calculated below
-        };
-      });
-
-      // Filter items for threshold calculation (exclude low data)
-      const validItems = itemsWithMetrics.filter(i => !i.lowData && i.units > 0 && i.cm > 0);
-      const N = validItems.length;
-
-      if (N === 0) {
-        setItems(itemsWithMetrics);
-        setStats({
-          totalProducts: itemsWithMetrics.length,
-          stars: 0,
-          plowHorses: 0,
-          puzzles: 0,
-          dogs: itemsWithMetrics.length,
-          popularityThreshold: 0,
-          marginThreshold: 0,
-        });
-        return;
-      }
-
-      // Calculate GLOBAL thresholds
-      // P* = 0.70 * (1 / N) as a percentage
-      const globalPopularityThreshold = (0.70 / N) * 100;
-
-      // M* = Median of CM for valid items
-      const sortedCMs = validItems.map(i => i.cm).sort((a, b) => a - b);
-      const midIndex = Math.floor(sortedCMs.length / 2);
-      const globalMarginThreshold = sortedCMs.length % 2 === 0
-        ? (sortedCMs[midIndex - 1] + sortedCMs[midIndex]) / 2
-        : sortedCMs[midIndex];
-
-      // Calculate PER-CATEGORY thresholds if enabled
-      const categoryThresholdsMap = new Map<string, { popularityThreshold: number; marginThreshold: number; itemCount: number }>();
-      
-      if (usePerCategoryThresholds) {
-        // Group valid items by category
-        const categoryGroups = new Map<string, typeof validItems>();
-        validItems.forEach(item => {
-          const group = categoryGroups.get(item.category) || [];
-          group.push(item);
-          categoryGroups.set(item.category, group);
-        });
-
-        // Calculate thresholds for each category
-        categoryGroups.forEach((categoryItems, category) => {
-          const categoryN = categoryItems.length;
-          if (categoryN === 0) return;
-
-          // Category popularity threshold: P* = 0.70 / N_category
-          const categoryPopThreshold = (0.70 / categoryN) * 100;
-
-          // Category margin threshold: Median CM within category
-          const categoryCMs = categoryItems.map(i => i.cm).sort((a, b) => a - b);
-          const catMidIndex = Math.floor(categoryCMs.length / 2);
-          const categoryMarginThreshold = categoryCMs.length % 2 === 0
-            ? (categoryCMs[catMidIndex - 1] + categoryCMs[catMidIndex]) / 2
-            : categoryCMs[catMidIndex];
-
-          categoryThresholdsMap.set(category, {
-            popularityThreshold: categoryPopThreshold,
-            marginThreshold: categoryMarginThreshold,
-            itemCount: categoryN,
-          });
-        });
-      }
-
-      // Classify each item
-      const classifiedItems = itemsWithMetrics.map(item => {
-        let classification: Classification;
-        let categoryPopularityThreshold: number | undefined;
-        let categoryMarginThreshold: number | undefined;
-        
-        if (item.lowData) {
-          classification = 'dog'; // Default for low data items
-        } else if (usePerCategoryThresholds && categoryThresholdsMap.has(item.category)) {
-          // Use per-category thresholds
-          const catThresholds = categoryThresholdsMap.get(item.category)!;
-          categoryPopularityThreshold = catThresholds.popularityThreshold;
-          categoryMarginThreshold = catThresholds.marginThreshold;
-          
-          const highPopularity = item.popularity >= catThresholds.popularityThreshold;
-          const highMargin = item.cm >= catThresholds.marginThreshold;
-
-          if (highPopularity && highMargin) classification = 'star';
-          else if (highPopularity && !highMargin) classification = 'plow_horse';
-          else if (!highPopularity && highMargin) classification = 'puzzle';
-          else classification = 'dog';
-        } else {
-          // Use global thresholds
-          const highPopularity = item.popularity >= globalPopularityThreshold;
-          const highMargin = item.cm >= globalMarginThreshold;
-
-          if (highPopularity && highMargin) classification = 'star';
-          else if (highPopularity && !highMargin) classification = 'plow_horse';
-          else if (!highPopularity && highMargin) classification = 'puzzle';
-          else classification = 'dog';
-        }
-
-        return { 
-          ...item, 
-          classification,
-          categoryPopularityThreshold,
-          categoryMarginThreshold,
-        };
-      });
-
-      // Count by classification
-      const counts = {
-        stars: classifiedItems.filter(i => i.classification === 'star').length,
-        plowHorses: classifiedItems.filter(i => i.classification === 'plow_horse').length,
-        puzzles: classifiedItems.filter(i => i.classification === 'puzzle').length,
-        dogs: classifiedItems.filter(i => i.classification === 'dog').length,
+      // Calculate stats
+      const firstRow = data[0];
+      const statsData: MenuEngineeringStats = {
+        stars: mappedItems.filter(i => i.classification === 'star').length,
+        plowHorses: mappedItems.filter(i => i.classification === 'plow_horse').length,
+        puzzles: mappedItems.filter(i => i.classification === 'puzzle').length,
+        dogs: mappedItems.filter(i => i.classification === 'dog').length,
+        totalUnits: Number(firstRow.total_units_period) || 0,
+        totalSales: Number(firstRow.total_sales_period) || 0,
+        popThreshold: Number(firstRow.pop_threshold) || 0,
+        marginThreshold: Number(firstRow.margin_threshold) || 0,
       };
 
-      // Sort by sales descending
-      classifiedItems.sort((a, b) => b.sales - a.sales);
-
-      // Build category thresholds array for stats
-      const categoryThresholdsArray: CategoryThresholds[] = Array.from(categoryThresholdsMap.entries())
-        .map(([category, thresholds]) => ({
-          category,
-          ...thresholds,
-        }))
-        .sort((a, b) => a.category.localeCompare(b.category));
-
-      setItems(classifiedItems);
-      setStats({
-        totalProducts: classifiedItems.length,
-        ...counts,
-        popularityThreshold: globalPopularityThreshold,
-        marginThreshold: globalMarginThreshold,
-        categoryThresholds: usePerCategoryThresholds ? categoryThresholdsArray : undefined,
-      });
-
-    } catch (err: any) {
-      console.error('Menu Engineering fetch error:', err);
-      setError(err.message || 'Error loading data');
+      setItems(mappedItems);
+      setStats(statsData);
+    } catch (err) {
+      console.error('Menu engineering fetch error:', err);
+      setError(err instanceof Error ? err.message : 'Error al cargar datos');
     } finally {
       setLoading(false);
     }
-  }, [selectedLocationId, datePreset, customDateFrom, customDateTo, selectedCategory, usePerCategoryThresholds, getDateRange, getLowDataThreshold]);
+  }, [getDateRange, selectedLocationId]);
 
-  // Initial load and refetch on filter changes
+  // Refetch on filter changes
   useEffect(() => {
-    // Set default location
-    if (!selectedLocationId && accessibleLocations.length > 0) {
-      if (canShowAllLocations) {
-        setSelectedLocationId('all');
-      } else {
-        setSelectedLocationId(accessibleLocations[0].id);
-      }
-    }
-  }, [accessibleLocations, canShowAllLocations, selectedLocationId]);
+    fetchData();
+  }, [fetchData]);
 
-  useEffect(() => {
-    if (selectedLocationId) {
-      fetchData();
-    }
-  }, [selectedLocationId, datePreset, customDateFrom, customDateTo, selectedCategory, fetchData]);
+  // Filter items by category
+  const filteredItems = useMemo(() => {
+    if (!selectedCategory) return items;
+    return items.filter(i => i.category === selectedCategory);
+  }, [items, selectedCategory]);
 
-  // Filtered items based on includeLowData toggle
-  const displayItems = useMemo(() => {
-    if (includeLowData) return items;
-    return items.filter(i => !i.lowData);
-  }, [items, includeLowData]);
+  // Items by classification
+  const itemsByClassification = useMemo(() => {
+    return {
+      star: filteredItems.filter(i => i.classification === 'star'),
+      plow_horse: filteredItems.filter(i => i.classification === 'plow_horse'),
+      puzzle: filteredItems.filter(i => i.classification === 'puzzle'),
+      dog: filteredItems.filter(i => i.classification === 'dog'),
+    };
+  }, [filteredItems]);
 
-  // Items for scatter plot (exclude low data by default)
-  const scatterItems = useMemo(() => {
-    return items.filter(i => !i.lowData);
-  }, [items]);
+  // Save action to database
+  const saveAction = useCallback(async (
+    productId: string | null,
+    actionType: string,
+    classification: string,
+    estimatedImpact: number | null
+  ) => {
+    const { from, to } = getDateRange();
 
-  // Generate recommendations based on classification
-  const recommendations = useMemo(() => {
-    if (!items.length || !stats) return [];
-
-    const recs: { type: Classification; title: string; description: string; items: string[] }[] = [];
-
-    // Stars recommendation
-    const stars = items.filter(i => i.classification === 'star').slice(0, 3);
-    if (stars.length > 0) {
-      recs.push({
-        type: 'star',
-        title: 'Mantener y destacar',
-        description: 'Estos productos tienen alta rentabilidad y popularidad. Asegurar stock y posición en menú.',
-        items: stars.map(i => i.name),
+    const { error: insertError } = await supabase
+      .from('menu_engineering_actions')
+      .insert({
+        location_id: selectedLocationId || null,
+        date_from: from,
+        date_to: to,
+        product_id: productId,
+        action_type: actionType,
+        classification,
+        estimated_impact_eur: estimatedImpact,
       });
-    }
 
-    // Plow Horses recommendation
-    const plowHorses = items.filter(i => i.classification === 'plow_horse').slice(0, 3);
-    if (plowHorses.length > 0 && stats.marginThreshold > 0) {
-      const avgCM = plowHorses.reduce((s, i) => s + i.cm, 0) / plowHorses.length;
-      recs.push({
-        type: 'plow_horse',
-        title: 'Mejorar margen',
-        description: `CM promedio €${avgCM.toFixed(2)} vs mediana €${stats.marginThreshold.toFixed(2)}. Subir precio 2-5% o reducir costes.`,
-        items: plowHorses.map(i => i.name),
-      });
+    if (insertError) {
+      console.error('Error saving action:', insertError);
+      throw insertError;
     }
-
-    // Puzzles recommendation
-    const puzzles = items.filter(i => i.classification === 'puzzle').slice(0, 3);
-    if (puzzles.length > 0) {
-      recs.push({
-        type: 'puzzle',
-        title: 'Aumentar visibilidad',
-        description: 'Alta rentabilidad pero baja popularidad. Mejorar posición en menú, naming o promociones.',
-        items: puzzles.map(i => i.name),
-      });
-    }
-
-    // Dogs recommendation
-    const dogs = items.filter(i => i.classification === 'dog' && !i.lowData).slice(0, 3);
-    if (dogs.length > 0) {
-      recs.push({
-        type: 'dog',
-        title: 'Reevaluar o eliminar',
-        description: 'Baja rentabilidad y popularidad. Considerar eliminar del menú o reformular receta.',
-        items: dogs.map(i => i.name),
-      });
-    }
-
-    return recs;
-  }, [items, stats]);
+  }, [getDateRange, selectedLocationId]);
 
   return {
     // Data
-    items: displayItems,
-    scatterItems,
+    items: filteredItems,
+    allItems: items,
     stats,
     categories,
-    recommendations,
-    
+    itemsByClassification,
+
     // State
     loading,
     error,
-    
+
     // Filters
     selectedLocationId,
     setSelectedLocationId,
@@ -443,12 +218,14 @@ export function useMenuEngineeringData() {
     setCustomDateTo,
     selectedCategory,
     setSelectedCategory,
-    includeLowData,
-    setIncludeLowData,
-    usePerCategoryThresholds,
-    setUsePerCategoryThresholds,
-    
+    popularityMode,
+    setPopularityMode,
+
     // Actions
     refetch: fetchData,
+    saveAction,
+
+    // Context
+    accessibleLocations,
   };
 }

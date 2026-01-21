@@ -1,22 +1,21 @@
-import { 
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Database, RefreshCw, CalendarPlus } from 'lucide-react';
+import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
+import {
   MenuEngineeringHeader,
   MenuEngineeringKPICards,
   MenuEngineeringMatrix,
-  MenuEngineeringRecommendations,
-  MenuEngineeringTable
+  MenuEngineeringActions,
+  MenuEngineeringTable,
 } from '@/components/menu-engineering';
-import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Database, RefreshCw } from 'lucide-react';
 
 export default function MenuEngineering() {
   const {
     items,
-    scatterItems,
     stats,
     categories,
-    recommendations,
+    itemsByClassification,
     loading,
     error,
     selectedLocationId,
@@ -29,19 +28,18 @@ export default function MenuEngineering() {
     setCustomDateTo,
     selectedCategory,
     setSelectedCategory,
-    includeLowData,
-    setIncludeLowData,
-    usePerCategoryThresholds,
-    setUsePerCategoryThresholds,
+    popularityMode,
+    setPopularityMode,
     refetch,
+    saveAction,
+    accessibleLocations,
   } = useMenuEngineeringData();
 
-  // Empty state when no data
-  const showEmptyState = !loading && items.length === 0 && !error;
+  const showEmptyState = !loading && !error && items.length === 0;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header with filters */}
+    <div className="space-y-6">
+      {/* Header */}
       <MenuEngineeringHeader
         selectedLocationId={selectedLocationId}
         onLocationChange={setSelectedLocationId}
@@ -54,31 +52,20 @@ export default function MenuEngineering() {
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
-        includeLowData={includeLowData}
-        onIncludeLowDataChange={setIncludeLowData}
-        usePerCategoryThresholds={usePerCategoryThresholds}
-        onPerCategoryThresholdsChange={setUsePerCategoryThresholds}
         onRefresh={refetch}
         loading={loading}
+        accessibleLocations={accessibleLocations}
       />
 
       {/* Error state */}
       {error && (
         <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <div className="text-center text-destructive">
-              <p className="font-medium">Error al cargar datos</p>
-              <p className="text-sm mt-1">{error}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4"
-                onClick={refetch}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Reintentar
-              </Button>
-            </div>
+          <CardContent className="py-8 text-center">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button variant="outline" onClick={refetch}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Reintentar
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -86,41 +73,57 @@ export default function MenuEngineering() {
       {/* Empty state */}
       {showEmptyState && (
         <Card>
-          <CardContent className="pt-12 pb-12">
-            <div className="text-center">
-              <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="font-semibold text-lg mb-2">No hay datos de ventas</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                No se encontraron datos de ventas de productos para el rango de fechas y ubicación seleccionados.
-              </p>
-              <div className="flex justify-center gap-3">
-                <Button variant="outline" onClick={refetch}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Actualizar
-                </Button>
-              </div>
+          <CardContent className="py-12 text-center">
+            <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Sin datos en este periodo</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              No hay ventas de productos en el rango de fechas seleccionado. Prueba a ampliar el
+              periodo o seleccionar otro local.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDatePreset('last30');
+                  refetch();
+                }}
+              >
+                <CalendarPlus className="h-4 w-4 mr-2" />
+                Ampliar a 30 días
+              </Button>
+              <Button variant="outline" onClick={refetch}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Actualizar
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Main content */}
-      {!showEmptyState && !error && (
+      {!error && !showEmptyState && (
         <>
           {/* KPI Cards */}
           <MenuEngineeringKPICards stats={stats} loading={loading} />
 
-          {/* Matrix and Recommendations */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <MenuEngineeringMatrix 
-              items={scatterItems} 
-              stats={stats} 
-              loading={loading} 
-            />
-            <MenuEngineeringRecommendations 
-              recommendations={recommendations} 
-              loading={loading} 
-            />
+          {/* Matrix + Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <MenuEngineeringMatrix
+                items={items}
+                stats={stats}
+                loading={loading}
+                popularityMode={popularityMode}
+                onPopularityModeChange={setPopularityMode}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <MenuEngineeringActions
+                itemsByClassification={itemsByClassification}
+                loading={loading}
+                onSaveAction={saveAction}
+              />
+            </div>
           </div>
 
           {/* Products Table */}
