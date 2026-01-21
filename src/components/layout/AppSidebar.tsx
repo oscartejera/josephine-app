@@ -58,7 +58,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
-  const { isOwner, primaryRole, hasPermission, hasAnyPermission } = usePermissions();
+  const { isOwner, primaryRole, hasPermission, loading: permissionsLoading, roles } = usePermissions();
 
   const isInsightsRoute = location.pathname.startsWith('/insights');
 
@@ -68,28 +68,39 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     return stored === 'true';
   });
 
-  // Filter nav items based on permissions
-  // Availability is only for employees (not owner, admin, ops_manager, store_manager)
+  // Determine if user has any management role or is owner
+  // If no roles assigned yet, show all items (fallback for new users)
+  const hasNoRolesAssigned = roles.length === 0;
   const isManagerOrAbove = useMemo(() => {
     return isOwner || ['admin', 'ops_manager', 'store_manager'].includes(primaryRole || '');
   }, [isOwner, primaryRole]);
 
+  // If still loading permissions or no roles assigned, show all items
+  // Otherwise filter based on permissions
   const visibleNavItems = useMemo(() => {
+    // Show all items (except employee-only for managers) when:
+    // - User is owner
+    // - Permissions are still loading
+    // - User has no roles assigned (new user, fallback to show everything)
+    const showAll = isOwner || permissionsLoading || hasNoRolesAssigned;
+    
     return navItems.filter(item => {
       // Availability is only for employees, not managers/owners
       if (item.employeeOnly && isManagerOrAbove) {
         return false;
       }
-      // Check permission (owners always see everything)
-      if (isOwner) return !item.employeeOnly; // Owners don't see employee-only items
+      // Show all items for owners or when loading/no roles
+      if (showAll) return !item.employeeOnly;
+      // Otherwise check permission
       return hasPermission(item.permission);
     });
-  }, [isOwner, isManagerOrAbove, hasPermission]);
+  }, [isOwner, isManagerOrAbove, hasPermission, permissionsLoading, hasNoRolesAssigned]);
 
   const visibleInsightsChildren = useMemo(() => {
-    if (isOwner) return insightsChildren;
+    // Show all if owner, loading, or no roles assigned
+    if (isOwner || permissionsLoading || hasNoRolesAssigned) return insightsChildren;
     return insightsChildren.filter(item => hasPermission(item.permission));
-  }, [isOwner, hasPermission]);
+  }, [isOwner, hasPermission, permissionsLoading, hasNoRolesAssigned]);
 
   useEffect(() => {
     if (isInsightsRoute) {
