@@ -19,6 +19,16 @@ export interface MenuEngineeringItem {
   popularity: number;  // Share of units = units / totalUnits
   classification: Classification;
   lowData: boolean;    // Flag for insufficient data
+  // Per-category thresholds (when enabled)
+  categoryPopularityThreshold?: number;
+  categoryMarginThreshold?: number;
+}
+
+export interface CategoryThresholds {
+  category: string;
+  popularityThreshold: number;
+  marginThreshold: number;
+  itemCount: number;
 }
 
 export interface MenuEngineeringStats {
@@ -27,8 +37,9 @@ export interface MenuEngineeringStats {
   plowHorses: number;
   puzzles: number;
   dogs: number;
-  popularityThreshold: number;  // P*
-  marginThreshold: number;      // M* (median CM)
+  popularityThreshold: number;  // P* (global)
+  marginThreshold: number;      // M* (global median CM)
+  categoryThresholds?: CategoryThresholds[];  // Per-category thresholds
 }
 
 interface RawAggregation {
@@ -55,6 +66,7 @@ export function useMenuEngineeringData() {
   const [customDateTo, setCustomDateTo] = useState<Date>(new Date());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [includeLowData, setIncludeLowData] = useState(false);
+  const [usePerCategoryThresholds, setUsePerCategoryThresholds] = useState(false);
 
   // Categories from data
   const [categories, setCategories] = useState<string[]>([]);
@@ -203,26 +215,77 @@ export function useMenuEngineeringData() {
         return;
       }
 
-      // Calculate thresholds
+      // Calculate GLOBAL thresholds
       // P* = 0.70 * (1 / N) as a percentage
-      const popularityThreshold = (0.70 / N) * 100;
+      const globalPopularityThreshold = (0.70 / N) * 100;
 
       // M* = Median of CM for valid items
       const sortedCMs = validItems.map(i => i.cm).sort((a, b) => a - b);
       const midIndex = Math.floor(sortedCMs.length / 2);
-      const marginThreshold = sortedCMs.length % 2 === 0
+      const globalMarginThreshold = sortedCMs.length % 2 === 0
         ? (sortedCMs[midIndex - 1] + sortedCMs[midIndex]) / 2
         : sortedCMs[midIndex];
+
+      // Calculate PER-CATEGORY thresholds if enabled
+      const categoryThresholdsMap = new Map<string, { popularityThreshold: number; marginThreshold: number; itemCount: number }>();
+      
+      if (usePerCategoryThresholds) {
+        // Group valid items by category
+        const categoryGroups = new Map<string, typeof validItems>();
+        validItems.forEach(item => {
+          const group = categoryGroups.get(item.category) || [];
+          group.push(item);
+          categoryGroups.set(item.category, group);
+        });
+
+        // Calculate thresholds for each category
+        categoryGroups.forEach((categoryItems, category) => {
+          const categoryN = categoryItems.length;
+          if (categoryN === 0) return;
+
+          // Category popularity threshold: P* = 0.70 / N_category
+          const categoryPopThreshold = (0.70 / categoryN) * 100;
+
+          // Category margin threshold: Median CM within category
+          const categoryCMs = categoryItems.map(i => i.cm).sort((a, b) => a - b);
+          const catMidIndex = Math.floor(categoryCMs.length / 2);
+          const categoryMarginThreshold = categoryCMs.length % 2 === 0
+            ? (categoryCMs[catMidIndex - 1] + categoryCMs[catMidIndex]) / 2
+            : categoryCMs[catMidIndex];
+
+          categoryThresholdsMap.set(category, {
+            popularityThreshold: categoryPopThreshold,
+            marginThreshold: categoryMarginThreshold,
+            itemCount: categoryN,
+          });
+        });
+      }
 
       // Classify each item
       const classifiedItems = itemsWithMetrics.map(item => {
         let classification: Classification;
+        let categoryPopularityThreshold: number | undefined;
+        let categoryMarginThreshold: number | undefined;
         
         if (item.lowData) {
           classification = 'dog'; // Default for low data items
+        } else if (usePerCategoryThresholds && categoryThresholdsMap.has(item.category)) {
+          // Use per-category thresholds
+          const catThresholds = categoryThresholdsMap.get(item.category)!;
+          categoryPopularityThreshold = catThresholds.popularityThreshold;
+          categoryMarginThreshold = catThresholds.marginThreshold;
+          
+          const highPopularity = item.popularity >= catThresholds.popularityThreshold;
+          const highMargin = item.cm >= catThresholds.marginThreshold;
+
+          if (highPopularity && highMargin) classification = 'star';
+          else if (highPopularity && !highMargin) classification = 'plow_horse';
+          else if (!highPopularity && highMargin) classification = 'puzzle';
+          else classification = 'dog';
         } else {
-          const highPopularity = item.popularity >= popularityThreshold;
-          const highMargin = item.cm >= marginThreshold;
+          // Use global thresholds
+          const highPopularity = item.popularity >= globalPopularityThreshold;
+          const highMargin = item.cm >= globalMarginThreshold;
 
           if (highPopularity && highMargin) classification = 'star';
           else if (highPopularity && !highMargin) classification = 'plow_horse';
@@ -230,7 +293,12 @@ export function useMenuEngineeringData() {
           else classification = 'dog';
         }
 
-        return { ...item, classification };
+        return { 
+          ...item, 
+          classification,
+          categoryPopularityThreshold,
+          categoryMarginThreshold,
+        };
       });
 
       // Count by classification
@@ -244,12 +312,21 @@ export function useMenuEngineeringData() {
       // Sort by sales descending
       classifiedItems.sort((a, b) => b.sales - a.sales);
 
+      // Build category thresholds array for stats
+      const categoryThresholdsArray: CategoryThresholds[] = Array.from(categoryThresholdsMap.entries())
+        .map(([category, thresholds]) => ({
+          category,
+          ...thresholds,
+        }))
+        .sort((a, b) => a.category.localeCompare(b.category));
+
       setItems(classifiedItems);
       setStats({
         totalProducts: classifiedItems.length,
         ...counts,
-        popularityThreshold,
-        marginThreshold,
+        popularityThreshold: globalPopularityThreshold,
+        marginThreshold: globalMarginThreshold,
+        categoryThresholds: usePerCategoryThresholds ? categoryThresholdsArray : undefined,
       });
 
     } catch (err: any) {
@@ -258,7 +335,7 @@ export function useMenuEngineeringData() {
     } finally {
       setLoading(false);
     }
-  }, [selectedLocationId, datePreset, customDateFrom, customDateTo, selectedCategory, getDateRange, getLowDataThreshold]);
+  }, [selectedLocationId, datePreset, customDateFrom, customDateTo, selectedCategory, usePerCategoryThresholds, getDateRange, getLowDataThreshold]);
 
   // Initial load and refetch on filter changes
   useEffect(() => {
@@ -368,6 +445,8 @@ export function useMenuEngineeringData() {
     setSelectedCategory,
     includeLowData,
     setIncludeLowData,
+    usePerCategoryThresholds,
+    setUsePerCategoryThresholds,
     
     // Actions
     refetch: fetchData,

@@ -26,6 +26,8 @@ interface MenuEngineeringHeaderProps {
   onCategoryChange: (category: string | null) => void;
   includeLowData: boolean;
   onIncludeLowDataChange: (include: boolean) => void;
+  usePerCategoryThresholds: boolean;
+  onPerCategoryThresholdsChange: (use: boolean) => void;
   onRefresh: () => void;
   loading: boolean;
 }
@@ -44,6 +46,8 @@ export function MenuEngineeringHeader({
   onCategoryChange,
   includeLowData,
   onIncludeLowDataChange,
+  usePerCategoryThresholds,
+  onPerCategoryThresholdsChange,
   onRefresh,
   loading,
 }: MenuEngineeringHeaderProps) {
@@ -172,16 +176,33 @@ export function MenuEngineeringHeader({
           </SelectContent>
         </Select>
 
-        {/* Include low data toggle */}
-        <div className="flex items-center gap-2 ml-auto">
-          <Switch
-            id="include-low-data"
-            checked={includeLowData}
-            onCheckedChange={onIncludeLowDataChange}
-          />
-          <Label htmlFor="include-low-data" className="text-sm cursor-pointer">
-            Incluir low data
-          </Label>
+        {/* Toggles */}
+        <div className="flex items-center gap-4 ml-auto">
+          {/* Per-category thresholds toggle - only show when "All categories" selected */}
+          {!selectedCategory && (
+            <div className="flex items-center gap-2">
+              <Switch
+                id="per-category-thresholds"
+                checked={usePerCategoryThresholds}
+                onCheckedChange={onPerCategoryThresholdsChange}
+              />
+              <Label htmlFor="per-category-thresholds" className="text-sm cursor-pointer">
+                Umbrales por categoría
+              </Label>
+            </div>
+          )}
+          
+          {/* Include low data toggle */}
+          <div className="flex items-center gap-2">
+            <Switch
+              id="include-low-data"
+              checked={includeLowData}
+              onCheckedChange={onIncludeLowDataChange}
+            />
+            <Label htmlFor="include-low-data" className="text-sm cursor-pointer">
+              Incluir low data
+            </Label>
+          </div>
         </div>
       </div>
     </div>
