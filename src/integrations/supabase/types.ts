@@ -1350,6 +1350,83 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          ai_draft: string | null
+          ai_tone: string | null
+          author_avatar_url: string | null
+          author_name: string
+          created_at: string
+          external_id: string | null
+          id: string
+          is_verified: boolean | null
+          language: string | null
+          location_id: string
+          platform: string
+          rating: number
+          response_date: string | null
+          response_status: string | null
+          response_text: string | null
+          review_date: string
+          review_text: string | null
+          sentiment: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          ai_draft?: string | null
+          ai_tone?: string | null
+          author_avatar_url?: string | null
+          author_name: string
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          is_verified?: boolean | null
+          language?: string | null
+          location_id: string
+          platform: string
+          rating: number
+          response_date?: string | null
+          response_status?: string | null
+          response_text?: string | null
+          review_date: string
+          review_text?: string | null
+          sentiment?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          ai_draft?: string | null
+          ai_tone?: string | null
+          author_avatar_url?: string | null
+          author_name?: string
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          is_verified?: boolean | null
+          language?: string | null
+          location_id?: string
+          platform?: string
+          rating?: number
+          response_date?: string | null
+          response_status?: string | null
+          response_text?: string | null
+          review_date?: string
+          review_text?: string | null
+          sentiment?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           permission_id: string
