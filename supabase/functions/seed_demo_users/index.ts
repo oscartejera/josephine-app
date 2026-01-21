@@ -182,7 +182,253 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Seed demo data (products, sales, etc.) if not already done
+    // 5. Seed employees for timesheets/labour data
+    const employeeRoles = ['Jefe de Cocina', 'Cocinero', 'Camarero', 'Camarera', 'Ayudante Cocina'];
+    const createdEmployees: { id: string; locationId: string }[] = [];
+    
+    for (const [locName, locId] of Object.entries(locationMap)) {
+      // Check if employees exist for this location
+      const { data: existingEmployees } = await supabaseAdmin
+        .from('employees')
+        .select('id')
+        .eq('location_id', locId)
+        .limit(1);
+      
+      if (!existingEmployees || existingEmployees.length === 0) {
+        // Create 5 employees per location
+        for (let i = 0; i < 5; i++) {
+          const { data: emp, error: empError } = await supabaseAdmin
+            .from('employees')
+            .insert({
+              location_id: locId,
+              full_name: `${employeeRoles[i]} ${locName.split(' ')[0]}`,
+              role_name: employeeRoles[i],
+              hourly_cost: 12 + Math.random() * 8, // €12-20/hour
+              active: true
+            })
+            .select('id')
+            .single();
+          
+          if (!empError && emp) {
+            createdEmployees.push({ id: emp.id, locationId: locId });
+          }
+        }
+      }
+    }
+    results.push({ step: 'employees', status: 'ready', details: { count: createdEmployees.length } });
+
+    // 6. Seed timesheets for the last 30 days
+    const now = new Date();
+    for (const [, locId] of Object.entries(locationMap)) {
+      const { data: locEmployees } = await supabaseAdmin
+        .from('employees')
+        .select('id, hourly_cost')
+        .eq('location_id', locId);
+      
+      if (locEmployees && locEmployees.length > 0) {
+        // Check if timesheets exist
+        const { data: existingTs } = await supabaseAdmin
+          .from('timesheets')
+          .select('id')
+          .eq('location_id', locId)
+          .limit(1);
+        
+        if (!existingTs || existingTs.length === 0) {
+          const timesheetInserts = [];
+          
+          for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - dayOffset);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            for (const emp of locEmployees) {
+              // Random shift (some days off)
+              if (Math.random() > 0.2) {
+                const shiftStart = 9 + Math.floor(Math.random() * 4); // 9-12
+                const shiftLength = 6 + Math.floor(Math.random() * 4); // 6-9 hours
+                const minutes = shiftLength * 60;
+                const laborCost = (emp.hourly_cost || 15) * shiftLength;
+                
+                timesheetInserts.push({
+                  employee_id: emp.id,
+                  location_id: locId,
+                  clock_in: `${dateStr}T${String(shiftStart).padStart(2, '0')}:00:00`,
+                  clock_out: `${dateStr}T${String(shiftStart + shiftLength).padStart(2, '0')}:00:00`,
+                  minutes,
+                  labor_cost: laborCost,
+                  approved: true
+                });
+              }
+            }
+          }
+          
+          if (timesheetInserts.length > 0) {
+            await supabaseAdmin.from('timesheets').insert(timesheetInserts);
+          }
+        }
+      }
+    }
+    results.push({ step: 'timesheets', status: 'seeded' });
+
+    // 7. Seed tickets for the last 30 days
+    for (const [, locId] of Object.entries(locationMap)) {
+      const { data: existingTickets } = await supabaseAdmin
+        .from('tickets')
+        .select('id')
+        .eq('location_id', locId)
+        .limit(1);
+      
+      if (!existingTickets || existingTickets.length === 0) {
+        const ticketInserts = [];
+        
+        for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - dayOffset);
+          const dateStr = date.toISOString().split('T')[0];
+          
+          // Create 30-60 tickets per day per location
+          const ticketCount = 30 + Math.floor(Math.random() * 30);
+          for (let t = 0; t < ticketCount; t++) {
+            const hour = 11 + Math.floor(Math.random() * 12); // 11:00 - 22:00
+            const grossTotal = 15 + Math.random() * 85; // €15-100
+            const covers = 1 + Math.floor(Math.random() * 4);
+            
+            ticketInserts.push({
+              location_id: locId,
+              opened_at: `${dateStr}T${String(hour).padStart(2, '0')}:00:00`,
+              closed_at: `${dateStr}T${String(hour).padStart(2, '0')}:45:00`,
+              gross_total: grossTotal,
+              net_total: grossTotal * 0.9,
+              tax_total: grossTotal * 0.1,
+              covers,
+              status: 'closed',
+              channel: ['dinein', 'takeaway', 'delivery'][Math.floor(Math.random() * 3)]
+            });
+          }
+        }
+        
+        if (ticketInserts.length > 0) {
+          await supabaseAdmin.from('tickets').insert(ticketInserts);
+        }
+      }
+    }
+    results.push({ step: 'tickets', status: 'seeded' });
+
+    // 8. Seed inventory items for the group
+    const { data: existingInv } = await supabaseAdmin
+      .from('inventory_items')
+      .select('id')
+      .eq('group_id', groupId)
+      .limit(1);
+    
+    if (!existingInv || existingInv.length === 0) {
+      const inventoryItems = [
+        { name: 'Tomate', category: 'Verduras', current_stock: 15, par_level: 25, unit: 'kg', last_cost: 2.5 },
+        { name: 'Cebolla', category: 'Verduras', current_stock: 8, par_level: 15, unit: 'kg', last_cost: 1.8 },
+        { name: 'Aceite de Oliva', category: 'Aceites', current_stock: 5, par_level: 12, unit: 'L', last_cost: 8.5 },
+        { name: 'Solomillo', category: 'Carnes', current_stock: 3, par_level: 10, unit: 'kg', last_cost: 28 },
+        { name: 'Gambas', category: 'Mariscos', current_stock: 2, par_level: 8, unit: 'kg', last_cost: 22 },
+        { name: 'Vino Rioja', category: 'Bebidas', current_stock: 12, par_level: 24, unit: 'botellas', last_cost: 9.5 },
+        { name: 'Jamón Ibérico', category: 'Embutidos', current_stock: 1.5, par_level: 5, unit: 'kg', last_cost: 85 },
+        { name: 'Queso Manchego', category: 'Lácteos', current_stock: 3, par_level: 8, unit: 'kg', last_cost: 18 },
+        { name: 'Patatas', category: 'Verduras', current_stock: 20, par_level: 30, unit: 'kg', last_cost: 1.2 },
+        { name: 'Pimiento Rojo', category: 'Verduras', current_stock: 4, par_level: 10, unit: 'kg', last_cost: 3.5 },
+      ];
+      
+      await supabaseAdmin.from('inventory_items').insert(
+        inventoryItems.map(item => ({ ...item, group_id: groupId }))
+      );
+    }
+    results.push({ step: 'inventory', status: 'seeded' });
+
+    // 9. Seed planned_shifts for variance analysis
+    for (const [, locId] of Object.entries(locationMap)) {
+      const { data: locEmployees } = await supabaseAdmin
+        .from('employees')
+        .select('id, role_name')
+        .eq('location_id', locId);
+      
+      const { data: existingShifts } = await supabaseAdmin
+        .from('planned_shifts')
+        .select('id')
+        .eq('location_id', locId)
+        .limit(1);
+      
+      if (locEmployees && locEmployees.length > 0 && (!existingShifts || existingShifts.length === 0)) {
+        const shiftInserts = [];
+        
+        for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - dayOffset);
+          const dateStr = date.toISOString().split('T')[0];
+          
+          for (const emp of locEmployees) {
+            if (Math.random() > 0.15) {
+              const shiftStart = 9 + Math.floor(Math.random() * 3);
+              const plannedHours = 7 + Math.floor(Math.random() * 2);
+              
+              shiftInserts.push({
+                employee_id: emp.id,
+                location_id: locId,
+                shift_date: dateStr,
+                start_time: `${String(shiftStart).padStart(2, '0')}:00`,
+                end_time: `${String(shiftStart + plannedHours).padStart(2, '0')}:00`,
+                planned_hours: plannedHours,
+                planned_cost: plannedHours * 15,
+                role: emp.role_name,
+                status: 'published'
+              });
+            }
+          }
+        }
+        
+        if (shiftInserts.length > 0) {
+          await supabaseAdmin.from('planned_shifts').insert(shiftInserts);
+        }
+      }
+    }
+    results.push({ step: 'planned_shifts', status: 'seeded' });
+
+    // 10. Seed forecasts
+    for (const [, locId] of Object.entries(locationMap)) {
+      const { data: existingForecasts } = await supabaseAdmin
+        .from('forecasts')
+        .select('id')
+        .eq('location_id', locId)
+        .limit(1);
+      
+      if (!existingForecasts || existingForecasts.length === 0) {
+        const forecastInserts = [];
+        
+        for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - dayOffset);
+          const dateStr = date.toISOString().split('T')[0];
+          
+          // Hourly forecasts from 10:00 to 23:00
+          for (let hour = 10; hour <= 23; hour++) {
+            const baseValue = hour >= 12 && hour <= 14 ? 400 : (hour >= 19 && hour <= 21 ? 500 : 200);
+            const forecastSales = baseValue + Math.random() * 150;
+            const forecastCovers = Math.floor(forecastSales / 25);
+            
+            forecastInserts.push({
+              location_id: locId,
+              forecast_date: dateStr,
+              hour,
+              forecast_sales: forecastSales,
+              forecast_covers: forecastCovers
+            });
+          }
+        }
+        
+        if (forecastInserts.length > 0) {
+          await supabaseAdmin.from('forecasts').insert(forecastInserts);
+        }
+      }
+    }
+    results.push({ step: 'forecasts', status: 'seeded' });
+
+    // Legacy seeds
     try {
       await supabaseAdmin.rpc('seed_roles_and_permissions');
       results.push({ step: 'seed_permissions', status: 'done' });
