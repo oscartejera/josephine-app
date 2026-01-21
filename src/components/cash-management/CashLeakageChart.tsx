@@ -65,10 +65,20 @@ export function CashLeakageChart({ data, isLoading = false, currency = '€' }: 
                 axisLine={false}
               />
               <YAxis 
+                yAxisId="left"
                 tick={{ fontSize: 11 }} 
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => viewMode === 'pct' ? `${value}%` : `${currency}${value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}`}
+              />
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                tick={{ fontSize: 11 }} 
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `${value.toFixed(1)}%`}
+                hide={viewMode === 'pct'}
               />
               <Tooltip 
                 formatter={(value: number, name: string) => [formatValue(value), name]}
@@ -84,25 +94,29 @@ export function CashLeakageChart({ data, isLoading = false, currency = '€' }: 
                 dataKey={viewMode === 'pct' ? 'discountsPct' : 'discounts'} 
                 stackId="a" 
                 fill="hsl(var(--warning))" 
-                name="Discounts" 
+                name="Discounts"
+                yAxisId="left"
               />
               <Bar 
                 dataKey={viewMode === 'pct' ? 'compsPct' : 'comps'} 
                 stackId="a" 
                 fill="hsl(var(--info))" 
-                name="Comps" 
+                name="Comps"
+                yAxisId="left"
               />
               <Bar 
                 dataKey={viewMode === 'pct' ? 'voidsPct' : 'voids'} 
                 stackId="a" 
                 fill="hsl(var(--muted-foreground))" 
-                name="Voids" 
+                name="Voids"
+                yAxisId="left"
               />
               <Bar 
                 dataKey={viewMode === 'pct' ? 'refundsPct' : 'refunds'} 
                 stackId="a" 
                 fill="hsl(var(--destructive))" 
-                name="Refunds" 
+                name="Refunds"
+                yAxisId="left"
               />
               <Line 
                 type="monotone" 
@@ -111,7 +125,7 @@ export function CashLeakageChart({ data, isLoading = false, currency = '€' }: 
                 strokeWidth={2}
                 dot={false}
                 name="Leakage %"
-                yAxisId={viewMode === 'pct' ? 0 : 1}
+                yAxisId={viewMode === 'pct' ? 'left' : 'right'}
               />
             </ComposedChart>
           </ResponsiveContainer>
