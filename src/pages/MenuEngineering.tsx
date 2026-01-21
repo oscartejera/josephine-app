@@ -31,6 +31,8 @@ export default function MenuEngineering() {
     setSelectedCategory,
     includeLowData,
     setIncludeLowData,
+    usePerCategoryThresholds,
+    setUsePerCategoryThresholds,
     refetch,
   } = useMenuEngineeringData();
 
@@ -54,6 +56,8 @@ export default function MenuEngineering() {
         onCategoryChange={setSelectedCategory}
         includeLowData={includeLowData}
         onIncludeLowDataChange={setIncludeLowData}
+        usePerCategoryThresholds={usePerCategoryThresholds}
+        onPerCategoryThresholdsChange={setUsePerCategoryThresholds}
         onRefresh={refetch}
         loading={loading}
       />
