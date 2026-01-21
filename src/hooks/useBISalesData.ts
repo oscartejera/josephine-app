@@ -239,14 +239,34 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         .eq('status', 'closed');
 
       // Fetch ticket lines for categories and products
+      // Use a more efficient approach - fetch by ticket IDs in batches to avoid query limits
       const ticketIds = tickets?.map(t => t.id) || [];
       let ticketLines: any[] = [];
+      
       if (ticketIds.length > 0) {
-        const { data: lines } = await supabase
-          .from('ticket_lines')
-          .select('ticket_id, item_name, category_name, gross_line_total, quantity')
-          .in('ticket_id', ticketIds);
-        ticketLines = lines || [];
+        // Batch ticket IDs to avoid query limits (max ~500 per query)
+        const batchSize = 500;
+        const batches: string[][] = [];
+        for (let i = 0; i < ticketIds.length; i += batchSize) {
+          batches.push(ticketIds.slice(i, i + batchSize));
+        }
+        
+        // Fetch all batches in parallel
+        const batchResults = await Promise.all(
+          batches.map(batch => 
+            supabase
+              .from('ticket_lines')
+              .select('ticket_id, item_name, category_name, gross_line_total, quantity')
+              .in('ticket_id', batch)
+          )
+        );
+        
+        // Combine results
+        batchResults.forEach(result => {
+          if (result.data) {
+            ticketLines.push(...result.data);
+          }
+        });
       }
 
       // Fetch forecasts
