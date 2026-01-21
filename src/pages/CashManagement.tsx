@@ -6,7 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MapPin, ChevronDown, Sparkles } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
-import { NoAccess } from '@/components/common/NoAccess';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { CashKPICards, CashLeakageChart, CashLocationTable } from '@/components/cash-management';
 import { useCashManagementData } from '@/hooks/useCashManagementData';
@@ -77,8 +76,8 @@ export default function CashManagement() {
     }
   };
 
+  // Loading state only - no access blocking
   if (permLoading) return null;
-  if (!hasPermission('cash_management.view')) return <NoAccess />;
 
   const locationsLabel = selectedLocations.length === 0 ? 'All locations' : 
     selectedLocations.length === 1 ? locations.find(l => l.id === selectedLocations[0])?.name : 

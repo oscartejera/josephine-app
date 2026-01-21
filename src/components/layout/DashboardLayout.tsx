@@ -5,6 +5,7 @@ import { TopBar } from './TopBar';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useGlobalRealtimeNotifications } from '@/hooks/useGlobalRealtimeNotifications';
+import { DemoModeBanner } from '@/components/common/DemoModeBanner';
 
 export function DashboardLayout() {
   useGlobalRealtimeNotifications();
@@ -30,6 +31,8 @@ export function DashboardLayout() {
         "transition-all duration-300",
         sidebarCollapsed ? "md:ml-16" : "md:ml-64"
       )}>
+        {/* Demo Mode Banner */}
+        <DemoModeBanner />
         <TopBar onMenuClick={() => setMobileMenuOpen(true)} />
         <main className="p-4 md:p-6 min-h-[calc(100vh-4rem)]">
           <Outlet />

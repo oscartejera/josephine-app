@@ -177,11 +177,10 @@ export function LabourHeaderNew({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {canShowAllLocations && (
-                <DropdownMenuItem onClick={() => handleLocationSelect(null)}>
-                  All locations
-                </DropdownMenuItem>
-              )}
+              {/* Always show All locations option */}
+              <DropdownMenuItem onClick={() => handleLocationSelect(null)}>
+                All locations
+              </DropdownMenuItem>
               {accessibleLocations.map(loc => (
                 <DropdownMenuItem key={loc.id} onClick={() => handleLocationSelect(loc.id)}>
                   {loc.name}

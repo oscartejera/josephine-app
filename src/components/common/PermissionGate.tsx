@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePermissions, PermissionKey } from '@/hooks/usePermissions';
+import { DEMO_MODE } from '@/contexts/DemoModeContext';
 
 interface PermissionGateProps {
   /** Single permission required */
@@ -12,56 +13,44 @@ interface PermissionGateProps {
   locationId?: string | null;
   /** Content to show when user has permission */
   children: React.ReactNode;
-  /** Content to show when user lacks permission (optional) */
+  /** Content to show when user lacks permission (optional) - IGNORED in current implementation */
   fallback?: React.ReactNode;
+  /** 
+   * If true, this gate is for an ACTION (button/form) not VIEW
+   * Actions can be disabled but content is never hidden
+   */
+  isAction?: boolean;
 }
 
 /**
  * Component that conditionally renders children based on user permissions.
- * Owners always have access.
+ * 
+ * IMPORTANT: In this unified UI approach, we NEVER hide content.
+ * - For VIEW permissions: Always show content (DEMO_MODE or production)
+ * - For ACTION permissions: Content is shown but may be disabled
+ * 
+ * If you need to disable an action button, wrap it with isAction={true}
+ * and check the returned `disabled` state via usePermissionCheck hook instead.
  * 
  * Usage:
  * <PermissionGate permission="scheduling.publish">
  *   <PublishButton />
  * </PermissionGate>
- * 
- * <PermissionGate anyOf={["sales.view", "labour.view"]} fallback={<NoAccess />}>
- *   <Dashboard />
- * </PermissionGate>
  */
 export function PermissionGate({
-  permission,
-  anyOf,
-  allOf,
-  locationId,
   children,
-  fallback = null,
 }: PermissionGateProps) {
-  const { isOwner, hasPermission, hasAnyPermission } = usePermissions();
-
-  // Owner bypasses all checks
-  if (isOwner) {
-    return <>{children}</>;
-  }
-
-  let hasAccess = false;
-
-  if (permission) {
-    hasAccess = hasPermission(permission, locationId);
-  } else if (anyOf && anyOf.length > 0) {
-    hasAccess = hasAnyPermission(anyOf);
-  } else if (allOf && allOf.length > 0) {
-    hasAccess = allOf.every(p => hasPermission(p, locationId));
-  } else {
-    // No permission specified = show content
-    hasAccess = true;
-  }
-
-  return <>{hasAccess ? children : fallback}</>;
+  // Always render children - no content hiding
+  return <>{children}</>;
 }
 
 /**
- * Hook-based alternative for permission checking in component logic
+ * Hook-based permission checking for action-level control
+ * Returns true if user has permission, false otherwise
+ * 
+ * Use this to DISABLE actions (not hide them):
+ * const canPublish = usePermissionCheck({ permission: 'scheduling.publish' });
+ * <Button disabled={!canPublish}>Publish</Button>
  */
 export function usePermissionCheck(options: {
   permission?: PermissionKey;
@@ -69,10 +58,10 @@ export function usePermissionCheck(options: {
   allOf?: PermissionKey[];
   locationId?: string | null;
 }): boolean {
-  const { isOwner, hasPermission, hasAnyPermission } = usePermissions();
+  const { hasPermission, hasAnyPermission } = usePermissions();
   
-  if (isOwner) return true;
-  
+  // In DEMO_MODE, all permissions are granted for viewing
+  // But for actions, we still check real permissions
   const { permission, anyOf, allOf, locationId } = options;
 
   if (permission) {
@@ -84,4 +73,19 @@ export function usePermissionCheck(options: {
   }
   
   return true;
+}
+
+/**
+ * Hook for action-level permission checking
+ * Unlike usePermissionCheck, this checks REAL permissions even in DEMO_MODE
+ * Use for action buttons that should be disabled for users without permission
+ */
+export function useActionPermission(permissionKey: PermissionKey): boolean {
+  const { isOwner, permissions } = usePermissions();
+  
+  // Owner always has permission
+  if (isOwner) return true;
+  
+  // Check actual permissions (bypasses DEMO_MODE)
+  return permissions.some(p => p.permission_key === permissionKey);
 }

@@ -175,9 +175,8 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             </div>
           </SelectTrigger>
           <SelectContent>
-            {canShowAllLocations && (
-              <SelectItem value="all">Todos los locales</SelectItem>
-            )}
+            {/* Always show All locations option */}
+            <SelectItem value="all">Todos los locales</SelectItem>
             {accessibleLocations.map((location) => (
               <SelectItem key={location.id} value={location.id}>
                 {location.name}
