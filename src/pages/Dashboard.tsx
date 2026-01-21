@@ -9,9 +9,31 @@ import { HourlySalesChart, HourlyLaborChart } from '@/components/dashboard/Chart
 import { CategoryBreakdownChart } from '@/components/dashboard/CategoryBreakdownChart';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
 
+interface Metrics {
+  sales: number;
+  covers: number;
+  avgTicket: number;
+  laborCost: number;
+  cogsPercent: number;
+}
+
+interface ComparisonMetrics {
+  current: Metrics;
+  previous: Metrics;
+}
+
+function calculateDelta(current: number, previous: number): { value: number; positive: boolean } | undefined {
+  if (previous === 0) return current > 0 ? { value: 100, positive: true } : undefined;
+  const delta = ((current - previous) / previous) * 100;
+  return { value: Math.round(delta * 10) / 10, positive: delta >= 0 };
+}
+
 export default function Dashboard() {
-  const { selectedLocationId, getDateRangeValues } = useApp();
-  const [metrics, setMetrics] = useState({ sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 });
+  const { selectedLocationId, getDateRangeValues, customDateRange } = useApp();
+  const [metrics, setMetrics] = useState<ComparisonMetrics>({
+    current: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 },
+    previous: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 }
+  });
   const [topItems, setTopItems] = useState<any[]>([]);
   const [hourlySales, setHourlySales] = useState<any[]>([]);
   const [hourlyLabor, setHourlyLabor] = useState<any[]>([]);
@@ -27,15 +49,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedLocationId]);
+  }, [selectedLocationId, customDateRange]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    const { from, to } = getDateRangeValues();
-    
+  const getPreviousPeriod = (from: Date, to: Date): { from: Date; to: Date } => {
+    const periodLength = to.getTime() - from.getTime();
+    const previousTo = new Date(from.getTime() - 1); // 1ms before current from
+    const previousFrom = new Date(previousTo.getTime() - periodLength);
+    return { from: previousFrom, to: previousTo };
+  };
+
+  const fetchPeriodMetrics = async (from: Date, to: Date, locationId: string | null): Promise<Metrics> => {
     let query = supabase.from('tickets').select('gross_total, covers').eq('status', 'closed');
-    if (selectedLocationId && selectedLocationId !== 'all') {
-      query = query.eq('location_id', selectedLocationId);
+    if (locationId && locationId !== 'all') {
+      query = query.eq('location_id', locationId);
     }
     query = query.gte('closed_at', from.toISOString()).lte('closed_at', to.toISOString());
     
@@ -47,14 +73,28 @@ export default function Dashboard() {
 
     // Get labor cost
     let laborQuery = supabase.from('timesheets').select('labor_cost');
-    if (selectedLocationId && selectedLocationId !== 'all') {
-      laborQuery = laborQuery.eq('location_id', selectedLocationId);
+    if (locationId && locationId !== 'all') {
+      laborQuery = laborQuery.eq('location_id', locationId);
     }
     laborQuery = laborQuery.gte('clock_in', from.toISOString()).lte('clock_in', to.toISOString());
     const { data: timesheets } = await laborQuery;
     const laborCost = timesheets?.reduce((sum, t) => sum + (Number(t.labor_cost) || 0), 0) || 0;
 
-    setMetrics({ sales, covers, avgTicket, laborCost, cogsPercent: 30 });
+    return { sales, covers, avgTicket, laborCost, cogsPercent: 30 };
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    const { from, to } = getDateRangeValues();
+    const { from: prevFrom, to: prevTo } = getPreviousPeriod(from, to);
+    
+    // Fetch current and previous period metrics in parallel
+    const [currentMetrics, previousMetrics] = await Promise.all([
+      fetchPeriodMetrics(from, to, selectedLocationId),
+      fetchPeriodMetrics(prevFrom, prevTo, selectedLocationId)
+    ]);
+
+    setMetrics({ current: currentMetrics, previous: previousMetrics });
 
     // Get top items
     let linesQuery = supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total');
@@ -79,8 +119,26 @@ export default function Dashboard() {
     setLoading(false);
   };
 
-  const gpPercent = 100 - metrics.cogsPercent;
-  const colPercent = metrics.sales > 0 ? (metrics.laborCost / metrics.sales) * 100 : 0;
+  const current = metrics.current;
+  const previous = metrics.previous;
+  
+  const gpPercent = 100 - current.cogsPercent;
+  const prevGpPercent = 100 - previous.cogsPercent;
+  const colPercent = current.sales > 0 ? (current.laborCost / current.sales) * 100 : 0;
+  const prevColPercent = previous.sales > 0 ? (previous.laborCost / previous.sales) * 100 : 0;
+  const currentCogs = current.sales * current.cogsPercent / 100;
+  const prevCogs = previous.sales * previous.cogsPercent / 100;
+
+  // Calculate deltas
+  const salesDelta = calculateDelta(current.sales, previous.sales);
+  const gpDelta = calculateDelta(gpPercent, prevGpPercent);
+  const cogsDelta = calculateDelta(currentCogs, prevCogs);
+  const laborDelta = calculateDelta(current.laborCost, previous.laborCost);
+  // For COL%, lower is better, so invert the positive flag
+  const colDelta = calculateDelta(colPercent, prevColPercent);
+  if (colDelta) colDelta.positive = !colDelta.positive;
+  const coversDelta = calculateDelta(current.covers, previous.covers);
+  const avgTicketDelta = calculateDelta(current.avgTicket, previous.avgTicket);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -91,13 +149,51 @@ export default function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <MetricCard title="Ventas" value={`€${metrics.sales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`} icon={DollarSign} variant="success" />
-        <MetricCard title="GP%" value={`${gpPercent.toFixed(1)}%`} icon={Percent} variant={gpPercent >= 65 ? 'success' : 'warning'} />
-        <MetricCard title="COGS" value={`€${(metrics.sales * metrics.cogsPercent / 100).toLocaleString('es-ES', { maximumFractionDigits: 0 })}`} icon={Receipt} />
-        <MetricCard title="Labor" value={`€${metrics.laborCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`} icon={Users} />
-        <MetricCard title="COL%" value={`${colPercent.toFixed(1)}%`} icon={TrendingUp} variant={colPercent <= 25 ? 'success' : 'warning'} />
-        <MetricCard title="Covers" value={metrics.covers} icon={Users} />
-        <MetricCard title="Avg Ticket" value={`€${metrics.avgTicket.toFixed(2)}`} icon={Flame} />
+        <MetricCard 
+          title="Ventas" 
+          value={`€${current.sales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`} 
+          icon={DollarSign} 
+          variant="success"
+          trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: 'vs anterior' } : undefined}
+        />
+        <MetricCard 
+          title="GP%" 
+          value={`${gpPercent.toFixed(1)}%`} 
+          icon={Percent} 
+          variant={gpPercent >= 65 ? 'success' : 'warning'}
+          trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: 'vs anterior' } : undefined}
+        />
+        <MetricCard 
+          title="COGS" 
+          value={`€${currentCogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`} 
+          icon={Receipt}
+          trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: 'vs anterior' } : undefined}
+        />
+        <MetricCard 
+          title="Labor" 
+          value={`€${current.laborCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`} 
+          icon={Users}
+          trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: 'vs anterior' } : undefined}
+        />
+        <MetricCard 
+          title="COL%" 
+          value={`${colPercent.toFixed(1)}%`} 
+          icon={TrendingUp} 
+          variant={colPercent <= 25 ? 'success' : 'warning'}
+          trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: 'vs anterior' } : undefined}
+        />
+        <MetricCard 
+          title="Covers" 
+          value={current.covers} 
+          icon={Users}
+          trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: 'vs anterior' } : undefined}
+        />
+        <MetricCard 
+          title="Avg Ticket" 
+          value={`€${current.avgTicket.toFixed(2)}`} 
+          icon={Flame}
+          trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: 'vs anterior' } : undefined}
+        />
       </div>
 
       {/* Charts */}
