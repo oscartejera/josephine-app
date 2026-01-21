@@ -60,16 +60,16 @@ export function OrderSummaryPanel({
         {/* Min order progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Min. order: £{summary.minOrder.toFixed(0)}</span>
+            <span className="text-muted-foreground">Min. order: €{summary.minOrder.toFixed(0)}</span>
             <span className={`font-medium ${meetsMinOrder ? 'text-success' : 'text-warning'}`}>
-              {meetsMinOrder ? '✓ Met' : `£${amountNeeded.toFixed(2)} to go`}
+              {meetsMinOrder ? '✓ Met' : `€${amountNeeded.toFixed(2)} to go`}
             </span>
           </div>
           <Progress value={summary.minOrderProgress} className="h-2" />
           {!meetsMinOrder && summary.subtotal > 0 && (
             <div className="flex items-start gap-2 p-2 bg-warning/10 rounded-lg text-xs text-warning">
               <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>Add £{amountNeeded.toFixed(2)} more to avoid the £{summary.deliveryFee.toFixed(2)} delivery fee</span>
+              <span>Add €{amountNeeded.toFixed(2)} more to avoid the €{summary.deliveryFee.toFixed(2)} delivery fee</span>
             </div>
           )}
         </div>
@@ -111,12 +111,12 @@ export function OrderSummaryPanel({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Subtotal</span>
-            <span className="text-foreground">£{summary.subtotal.toFixed(2)}</span>
+            <span className="text-foreground">€{summary.subtotal.toFixed(2)}</span>
           </div>
           {summary.deliveryFee > 0 && (
             <div className="flex justify-between text-warning">
               <span>Delivery fee</span>
-              <span>£{summary.deliveryFee.toFixed(2)}</span>
+              <span>€{summary.deliveryFee.toFixed(2)}</span>
             </div>
           )}
           {summary.deliveryFee === 0 && summary.subtotal >= summary.minOrder && (
@@ -127,12 +127,12 @@ export function OrderSummaryPanel({
           )}
           <div className="flex justify-between">
             <span className="text-muted-foreground">VAT (21%)</span>
-            <span className="text-foreground">£{summary.tax.toFixed(2)}</span>
+            <span className="text-foreground">€{summary.tax.toFixed(2)}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-semibold text-base">
             <span className="text-foreground">Total</span>
-            <span className="text-foreground">£{summary.total.toFixed(2)}</span>
+            <span className="text-foreground">€{summary.total.toFixed(2)}</span>
           </div>
         </div>
 

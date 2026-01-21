@@ -189,7 +189,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                         {getStatusBadge(order.status)}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {order.supplierName} • {order.items.length} items • £{order.total.toFixed(2)}
+                        {order.supplierName} • {order.items.length} items • €{order.total.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -253,8 +253,8 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                             <TableCell className="font-medium">{item.name}</TableCell>
                             <TableCell className="text-muted-foreground">{item.packSize}</TableCell>
                             <TableCell className="text-right">{item.packs}</TableCell>
-                            <TableCell className="text-right">£{item.unitPrice.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-medium">£{(item.packs * item.unitPrice).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">€{item.unitPrice.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-medium">€{(item.packs * item.unitPrice).toFixed(2)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -263,19 +263,19 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                       <div className="text-right space-y-1 text-sm">
                         <div className="flex justify-between gap-8">
                           <span className="text-muted-foreground">Subtotal</span>
-                          <span>£{order.subtotal.toFixed(2)}</span>
+                          <span>€{order.subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between gap-8">
                           <span className="text-muted-foreground">Delivery</span>
-                          <span>{order.deliveryFee === 0 ? 'Free' : `£${order.deliveryFee.toFixed(2)}`}</span>
+                          <span>{order.deliveryFee === 0 ? 'Free' : `€${order.deliveryFee.toFixed(2)}`}</span>
                         </div>
                         <div className="flex justify-between gap-8">
                           <span className="text-muted-foreground">VAT (21%)</span>
-                          <span>£{order.tax.toFixed(2)}</span>
+                          <span>€{order.tax.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between gap-8 font-semibold pt-2 border-t">
                           <span>Total</span>
-                          <span>£{order.total.toFixed(2)}</span>
+                          <span>€{order.total.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -335,8 +335,8 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell className="text-muted-foreground">{item.packSize}</TableCell>
                           <TableCell className="text-right">{item.packs}</TableCell>
-                          <TableCell className="text-right">£{item.unitPrice.toFixed(2)}</TableCell>
-                          <TableCell className="text-right">£{(item.packs * item.unitPrice).toFixed(2)}</TableCell>
+                          <TableCell className="text-right">€{item.unitPrice.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">€{(item.packs * item.unitPrice).toFixed(2)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -346,19 +346,19 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                 <div className="border-t pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>£{selectedOrder.subtotal.toFixed(2)}</span>
+                    <span>€{selectedOrder.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery Fee</span>
-                    <span>{selectedOrder.deliveryFee === 0 ? 'Free' : `£${selectedOrder.deliveryFee.toFixed(2)}`}</span>
+                    <span>{selectedOrder.deliveryFee === 0 ? 'Free' : `€${selectedOrder.deliveryFee.toFixed(2)}`}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">VAT (21%)</span>
-                    <span>£{selectedOrder.tax.toFixed(2)}</span>
+                    <span>€{selectedOrder.tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-base pt-2 border-t">
                     <span>Total</span>
-                    <span>£{selectedOrder.total.toFixed(2)}</span>
+                    <span>€{selectedOrder.total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

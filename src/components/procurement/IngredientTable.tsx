@@ -104,10 +104,10 @@ function IngredientRowDesktop({
         {/* Price */}
         <div className="text-right">
           <p className="text-base font-semibold text-foreground">
-            £{(packs * sku.unitPrice).toFixed(2)}
+            €{(packs * sku.unitPrice).toFixed(2)}
           </p>
           <p className="text-xs text-muted-foreground">
-            £{sku.unitPrice.toFixed(2)}/pack
+            €{sku.unitPrice.toFixed(2)}/pack
           </p>
         </div>
 
