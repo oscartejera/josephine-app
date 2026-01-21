@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowUpDown, Sparkles } from 'lucide-react';
+import { Search, ArrowDown, Sparkles } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -22,14 +22,6 @@ const REASON_LABELS: Record<WasteReason, string> = {
   expired: 'Expired',
   theft: 'Theft',
   other: 'Other'
-};
-
-const REASON_COLORS: Record<WasteReason, string> = {
-  broken: 'bg-chart-5/20 text-[hsl(var(--chart-5))] border-chart-5/30',
-  end_of_day: 'bg-chart-1/20 text-[hsl(var(--chart-1))] border-chart-1/30',
-  expired: 'bg-warning/20 text-warning border-warning/30',
-  theft: 'bg-destructive/20 text-destructive border-destructive/30',
-  other: 'bg-muted text-muted-foreground border-border'
 };
 
 interface WasteItemsTableProps {
@@ -71,24 +63,15 @@ export function WasteItemsTable({
   }, [items, search, sortBy, sortOrder]);
 
   const totalValue = items.reduce((sum, item) => sum + item.value, 0);
-  const maxValue = Math.max(...items.map(i => i.value), 1);
-
-  const handleSort = (column: 'value' | 'quantity' | 'percentOfSales') => {
-    if (sortBy === column) {
-      setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
-    } else {
-      setSortBy(column);
-      setSortOrder('desc');
-    }
-  };
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
   if (isLoading) {
     return (
-      <Card className="border-[hsl(var(--bi-border))]">
-        <CardHeader>
+      <Card className="border-border">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-9 w-48" />
           </div>
         </CardHeader>
         <CardContent>
@@ -101,7 +84,7 @@ export function WasteItemsTable({
   // Empty state with generate demo button
   if (items.length === 0) {
     return (
-      <Card className="border-[hsl(var(--bi-border))]">
+      <Card className="border-border">
         <CardContent className="py-16">
           <div className="flex flex-col items-center justify-center text-center">
             <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
@@ -122,60 +105,45 @@ export function WasteItemsTable({
   }
 
   return (
-    <Card className="border-[hsl(var(--bi-border))]">
-      <CardHeader className="pb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">% of total waste</p>
-            <CardTitle className="text-base font-semibold">Items</CardTitle>
-          </div>
-          <div className="relative w-full sm:w-64">
+    <Card className="border-border">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm font-medium text-foreground">% of total waste</p>
+          <div className="relative w-full sm:w-56">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by item name"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 h-9 text-sm"
             />
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="text-xs font-semibold sticky left-0 bg-muted/50 z-10 min-w-[180px]">
-                  % of total waste
+              <TableRow className="hover:bg-transparent border-b">
+                <TableHead className="text-xs font-medium text-muted-foreground min-w-[180px]">
+                  Items
                 </TableHead>
-                <TableHead className="text-xs font-semibold min-w-[200px]">Items</TableHead>
-                <TableHead 
-                  className="text-xs font-semibold text-right cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('quantity')}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    Quantity
-                    <ArrowUpDown className="h-3 w-3" />
-                  </div>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">
+                  Quantity
                 </TableHead>
-                <TableHead 
-                  className="text-xs font-semibold text-right cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('value')}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    Value
-                    <ArrowUpDown className="h-3 w-3" />
-                  </div>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">
+                  Value
                 </TableHead>
-                <TableHead className="text-xs font-semibold">Type</TableHead>
-                <TableHead className="text-xs font-semibold">Top reason by value</TableHead>
-                <TableHead 
-                  className="text-xs font-semibold text-right cursor-pointer hover:text-primary"
-                  onClick={() => handleSort('percentOfSales')}
-                >
+                <TableHead className="text-xs font-medium text-muted-foreground w-24">
+                  Type
+                </TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground w-32">
+                  Top reason by value
+                </TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">
                   <div className="flex items-center justify-end gap-1">
                     % of sales
-                    <ArrowUpDown className="h-3 w-3" />
+                    <ArrowDown className="h-3 w-3" />
                   </div>
                 </TableHead>
               </TableRow>
@@ -185,64 +153,54 @@ export function WasteItemsTable({
                 const percentOfTotal = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
                 
                 return (
-                  <TableRow key={item.itemId} className="hover:bg-muted/30 transition-colors">
-                    {/* % of total waste with horizontal bar - Nory style */}
-                    <TableCell className="py-3 sticky left-0 bg-card z-10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-20 h-2.5 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary rounded-full transition-all"
-                            style={{ width: `${Math.min(percentOfTotal, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-medium w-14 text-right">
-                          {percentOfTotal.toFixed(1)}%
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 font-medium">
+                  <TableRow key={item.itemId} className="hover:bg-muted/30">
+                    <TableCell className="py-3 font-medium text-sm">
                       {item.itemName}
                     </TableCell>
                     <TableCell className="py-3 text-right text-sm tabular-nums">
-                      {item.quantity.toFixed(1)}
+                      {item.quantity.toFixed(2)}
                     </TableCell>
-                    <TableCell className="py-3 text-right text-sm font-medium tabular-nums">
-                      {currency}{item.value.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                    <TableCell className="py-3 text-right text-sm tabular-nums">
+                      {currency}{item.value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className="py-3 text-sm capitalize text-muted-foreground">
+                    <TableCell className="py-3 text-sm text-muted-foreground">
                       {item.type === 'ingredient' ? 'Ingredient' : 'Menu item'}
                     </TableCell>
                     <TableCell className="py-3">
                       <Badge 
-                        variant="outline" 
-                        className={`text-xs ${REASON_COLORS[item.topReason]}`}
+                        variant="secondary" 
+                        className="text-[11px] font-normal bg-primary/10 text-primary border-0 px-2 py-0.5"
                       >
                         {REASON_LABELS[item.topReason]}
                       </Badge>
                     </TableCell>
-                    <TableCell className="py-3 text-right text-sm tabular-nums">
-                      {item.percentOfSales.toFixed(2)}%
+                    <TableCell className="py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Progress bar - Nory style light purple */}
+                        <div className="w-16 h-2 bg-muted rounded-sm overflow-hidden">
+                          <div 
+                            className="h-full bg-primary/30 rounded-sm transition-all"
+                            style={{ width: `${Math.min(item.percentOfSales * 5, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-sm tabular-nums w-14 text-right">
+                          {item.percentOfSales.toFixed(2)}%
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
             <TableFooter>
-              <TableRow>
-                <TableCell className="font-semibold sticky left-0 bg-muted z-10">
-                  <span className="text-sm">100%</span>
+              <TableRow className="bg-transparent hover:bg-transparent border-t">
+                <TableCell className="py-3 text-sm text-muted-foreground" colSpan={2}>
+                  SUM
                 </TableCell>
-                <TableCell className="font-semibold">Total</TableCell>
-                <TableCell className="text-right font-semibold tabular-nums">
-                  {items.reduce((sum, i) => sum + i.quantity, 0).toFixed(1)}
+                <TableCell className="py-3 text-right text-sm font-medium tabular-nums">
+                  {currency}{totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </TableCell>
-                <TableCell className="text-right font-semibold tabular-nums">
-                  {currency}{totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell colSpan={2} />
-                <TableCell className="text-right font-semibold tabular-nums">
-                  {totalWastePercent.toFixed(2)}%
-                </TableCell>
+                <TableCell colSpan={3} />
               </TableRow>
             </TableFooter>
           </Table>

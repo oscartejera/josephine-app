@@ -21,11 +21,11 @@ import { format, parseISO } from 'date-fns';
 import type { WasteTrendData, WasteReason, WasteByReason } from '@/hooks/useWasteData';
 
 const REASON_COLORS: Record<WasteReason, string> = {
-  broken: 'hsl(var(--chart-5))',
-  end_of_day: 'hsl(var(--chart-1))',
-  expired: 'hsl(var(--warning))',
-  theft: 'hsl(var(--destructive))',
-  other: 'hsl(var(--muted-foreground))'
+  broken: '#22c55e',      // Green
+  end_of_day: '#3b82f6',  // Blue
+  expired: '#84cc16',     // Lime/yellow-green
+  theft: '#f97316',       // Orange
+  other: '#ef4444'        // Red
 };
 
 const REASON_LABELS: Record<WasteReason, string> = {
@@ -49,60 +49,72 @@ export function WasteTrendChart({
 }: WasteTrendChartProps) {
   if (isLoading) {
     return (
-      <Card className="border-[hsl(var(--bi-border))]">
-        <CardHeader>
+      <Card className="border-border">
+        <CardHeader className="pb-2">
           <Skeleton className="h-5 w-40" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[250px] w-full mb-4" />
+          <Skeleton className="h-[220px] w-full mb-4" />
           <Skeleton className="h-32 w-full" />
         </CardContent>
       </Card>
     );
   }
 
+  // Convert data to show count per day (like Nory shows the number of logs trend)
   const chartData = trendData.map(d => ({
     ...d,
     dateLabel: format(parseISO(d.date), 'EEE')
   }));
 
+  // Get max value for Y axis
+  const allValues = trendData.flatMap(d => [d.broken, d.end_of_day, d.expired, d.theft, d.other]);
+  const maxValue = Math.max(...allValues, 1);
+  const yAxisMax = Math.ceil(maxValue / 10) * 10 + 10;
+
   return (
-    <Card className="border-[hsl(var(--bi-border))]">
+    <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Waste by Reason trend</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">Waste by Reason trend</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-[250px]">
+      <CardContent className="pt-0">
+        <div className="h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
               <XAxis 
                 dataKey="dateLabel" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                tickFormatter={(v) => `€${v.toFixed(0)}`}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                domain={[0, yAxisMax]}
+                tickCount={5}
               />
               <Tooltip 
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                  boxShadow: 'var(--shadow-md)'
+                  borderRadius: '6px',
+                  fontSize: '12px'
                 }}
                 formatter={(value: number, name: string) => [
-                  `€${value.toFixed(2)}`,
+                  value.toFixed(0),
                   REASON_LABELS[name as WasteReason] || name
                 ]}
-                labelFormatter={(label) => `Day: ${label}`}
               />
               <Legend 
-                wrapperStyle={{ paddingTop: '10px' }}
-                formatter={(value) => REASON_LABELS[value as WasteReason] || value}
+                wrapperStyle={{ paddingTop: '8px', fontSize: '11px' }}
+                formatter={(value) => (
+                  <span style={{ color: 'hsl(var(--muted-foreground))', marginLeft: '2px' }}>
+                    {REASON_LABELS[value as WasteReason] || value}
+                  </span>
+                )}
+                iconType="plainline"
+                iconSize={16}
               />
               {Object.keys(REASON_COLORS).map(reason => (
                 <Line
@@ -112,40 +124,42 @@ export function WasteTrendChart({
                   stroke={REASON_COLORS[reason as WasteReason]}
                   strokeWidth={2}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  activeDot={{ r: 3, strokeWidth: 0 }}
                 />
               ))}
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Reason table */}
-        <Table className="mt-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">Reason</TableHead>
-              <TableHead className="text-xs text-right">Logged</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {byReason.map(item => (
-              <TableRow key={item.reason}>
-                <TableCell className="py-2">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: REASON_COLORS[item.reason] }}
-                    />
-                    <span className="text-sm">{REASON_LABELS[item.reason]}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="py-2 text-right text-sm font-medium">
-                  {item.count}
-                </TableCell>
+        {/* Reason table - Nory style */}
+        <div className="mt-4 border-t border-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">Reason</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Logged</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {byReason.filter(r => r.count > 0).map(item => (
+                <TableRow key={item.reason} className="hover:bg-muted/30">
+                  <TableCell className="py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-2.5 h-2.5 rounded-sm" 
+                        style={{ backgroundColor: REASON_COLORS[item.reason] }}
+                      />
+                      <span className="text-sm">{REASON_LABELS[item.reason]}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2.5 text-right text-sm">
+                    {item.count}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

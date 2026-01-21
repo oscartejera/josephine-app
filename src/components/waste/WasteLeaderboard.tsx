@@ -25,8 +25,8 @@ export function WasteLeaderboard({
 }: WasteLeaderboardProps) {
   if (isLoading) {
     return (
-      <Card className="border-[hsl(var(--bi-border))]">
-        <CardHeader>
+      <Card className="border-border">
+        <CardHeader className="pb-2">
           <Skeleton className="h-5 w-48" />
         </CardHeader>
         <CardContent>
@@ -39,50 +39,52 @@ export function WasteLeaderboard({
   const totalValue = leaderboard.reduce((sum, l) => sum + l.totalValue, 0);
 
   return (
-    <Card className="border-[hsl(var(--bi-border))]">
+    <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Waste Logs Leaderboard</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">Waste Logs Leaderboard</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">Team Member</TableHead>
-              <TableHead className="text-xs text-right">Waste Logs</TableHead>
-              <TableHead className="text-xs">Location</TableHead>
-              <TableHead className="text-xs text-right">Logged waste value</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="text-xs font-medium text-muted-foreground h-9">Team Member</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Waste Logs</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground h-9">Location</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Logged waste value</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {leaderboard.map((item, index) => (
-              <TableRow key={item.employeeId || index}>
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+              <TableRow key={item.employeeId || index} className="hover:bg-muted/30">
+                <TableCell className="py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
                         {item.initials}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">{item.employeeName}</span>
+                    <span className="text-sm">{item.employeeName}</span>
                   </div>
                 </TableCell>
-                <TableCell className="py-3 text-right text-sm">
+                <TableCell className="py-2.5 text-right text-sm">
                   {item.logsCount}
                 </TableCell>
-                <TableCell className="py-3 text-sm text-muted-foreground">
-                  {item.locationName}
+                <TableCell className="py-2.5 text-sm text-muted-foreground">
+                  {item.locationName || '-'}
                 </TableCell>
-                <TableCell className="py-3 text-right text-sm font-medium">
-                  {currency}{item.totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                <TableCell className="py-2.5 text-right text-sm">
+                  {currency}{item.totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
           <TableFooter>
-            <TableRow>
-              <TableCell colSpan={3} className="font-semibold">Total</TableCell>
-              <TableCell className="text-right font-semibold">
-                {currency}{totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+            <TableRow className="bg-transparent hover:bg-transparent">
+              <TableCell colSpan={3} className="text-right text-xs text-muted-foreground font-medium py-2.5">
+                SUM
+              </TableCell>
+              <TableCell className="text-right text-sm font-medium py-2.5">
+                {currency}{totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </TableCell>
             </TableRow>
           </TableFooter>

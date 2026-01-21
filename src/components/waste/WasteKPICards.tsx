@@ -17,17 +17,17 @@ export function WasteKPICards({
   currency = '€'
 }: WasteKPICardsProps) {
   const formatCurrency = (value: number) => {
-    return `${currency}${value.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    return `${currency}${value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map(i => (
-          <Card key={i} className="border-[hsl(var(--bi-border))]">
-            <CardContent className="pt-6">
-              <Skeleton className="h-4 w-24 mb-3" />
-              <Skeleton className="h-10 w-32" />
+          <Card key={i} className="border-border">
+            <CardContent className="py-4 px-5">
+              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-8 w-32" />
             </CardContent>
           </Card>
         ))}
@@ -38,30 +38,30 @@ export function WasteKPICards({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Total Sales */}
-      <Card className="border-[hsl(var(--bi-border))] shadow-sm">
-        <CardContent className="pt-6">
-          <p className="text-sm font-medium text-muted-foreground mb-1">Total Sales</p>
-          <p className="text-3xl font-bold text-foreground">
+      <Card className="border-border">
+        <CardContent className="py-4 px-5">
+          <p className="text-sm text-muted-foreground mb-1">Total Sales</p>
+          <p className="text-2xl font-semibold text-foreground">
             {formatCurrency(totalSales)}
           </p>
         </CardContent>
       </Card>
 
       {/* Total Accounted Waste */}
-      <Card className="border-[hsl(var(--bi-border))] shadow-sm">
-        <CardContent className="pt-6">
-          <p className="text-sm font-medium text-muted-foreground mb-1">Total Accounted Waste</p>
-          <p className="text-3xl font-bold text-destructive">
+      <Card className="border-border">
+        <CardContent className="py-4 px-5">
+          <p className="text-sm text-muted-foreground mb-1">Total Accounted Waste</p>
+          <p className="text-2xl font-semibold text-foreground">
             {formatCurrency(totalAccountedWaste)}
           </p>
         </CardContent>
       </Card>
 
       {/* % of Sales */}
-      <Card className="border-[hsl(var(--bi-border))] shadow-sm">
-        <CardContent className="pt-6">
-          <p className="text-sm font-medium text-muted-foreground mb-1">% Accounted Waste vs Sales</p>
-          <p className="text-3xl font-bold text-foreground">
+      <Card className="border-border">
+        <CardContent className="py-4 px-5">
+          <p className="text-sm text-muted-foreground mb-1">% Accounted Waste vs Sales</p>
+          <p className="text-2xl font-semibold text-foreground">
             {wastePercentOfSales.toFixed(2)}%
           </p>
         </CardContent>
