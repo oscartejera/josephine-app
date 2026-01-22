@@ -1,8 +1,8 @@
 import { useMemo, useState, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
-import { Cloud, Sun, CloudRain, GripVertical, Plus, ArrowRightLeft, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Cloud, Sun, CloudRain, GripVertical, Plus, ArrowRightLeft, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ScheduleData, ViewMode, Employee, Shift } from '@/hooks/useSchedulingData';
+import { ScheduleData, ViewMode, Employee, Shift } from '@/hooks/useSchedulingSupabase';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { CreateShiftDialog } from './CreateShiftDialog';
@@ -12,6 +12,12 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ScheduleGridProps {
   data: ScheduleData;
@@ -421,6 +427,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
       endTime: shiftData.endTime,
       hours,
       role: shiftData.role,
+      plannedCost: null, // Will be calculated by DB trigger when saved
     });
     
     toast.success(`New shift created for ${createShiftTarget.employeeName}`);
@@ -493,55 +500,88 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           })}
         </div>
         
-        {/* Cost / COL % row */}
-        <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
-          <button 
-            onClick={() => {
-              setColSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
-              setSalesSort('none');
-            }}
-            className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1 hover:bg-muted/50 transition-colors"
-          >
-            Cost / COL %
-            {colSort === 'none' && <ArrowUpDown className="h-3 w-3" />}
-            {colSort === 'desc' && <ArrowDown className="h-3 w-3 text-primary" />}
-            {colSort === 'asc' && <ArrowUp className="h-3 w-3 text-primary" />}
-          </button>
-          {days.map((day, i) => {
-            const kpi = data.dailyKPIs[i];
-            const colValues = data.dailyKPIs.map(k => k.colPercent);
-            const maxCol = Math.max(...colValues);
-            const minCol = Math.min(...colValues);
-            const isHighest = colSort !== 'none' && kpi.colPercent === maxCol;
-            const isLowest = colSort !== 'none' && kpi.colPercent === minCol;
-            const isHigh = kpi.colPercent > 35;
-            
-            return (
-              <div 
-                key={`col-${day.dateStr}`} 
-                className={cn(
-                  "p-2 px-3 border-r border-border last:border-r-0 transition-colors",
-                  isHighest && colSort === 'desc' && "bg-destructive/10",
-                  isLowest && colSort === 'asc' && "bg-emerald-50"
-                )}
-              >
-                <span className={cn(
-                  "text-sm font-medium",
-                  isHighest && colSort === 'desc' ? "text-destructive" : 
-                  isLowest && colSort === 'asc' ? "text-emerald-700" :
-                  isHigh ? "text-destructive" : "text-muted-foreground"
-                )}>
-                  {kpi.colPercent > 0 ? `${kpi.colPercent.toFixed(1)}%` : '-'}
-                </span>
-                {kpi.cost > 0 && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    / €{kpi.cost.toLocaleString()}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* Cost / COL % row with variance tooltip */}
+        <TooltipProvider>
+          <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
+            <button 
+              onClick={() => {
+                setColSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
+                setSalesSort('none');
+              }}
+              className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1 hover:bg-muted/50 transition-colors"
+            >
+              Cost / COL %
+              {colSort === 'none' && <ArrowUpDown className="h-3 w-3" />}
+              {colSort === 'desc' && <ArrowDown className="h-3 w-3 text-primary" />}
+              {colSort === 'asc' && <ArrowUp className="h-3 w-3 text-primary" />}
+            </button>
+            {days.map((day, i) => {
+              const kpi = data.dailyKPIs[i];
+              const colValues = data.dailyKPIs.map(k => k.colPercent);
+              const maxCol = Math.max(...colValues);
+              const minCol = Math.min(...colValues);
+              const isHighest = colSort !== 'none' && kpi.colPercent === maxCol;
+              const isLowest = colSort !== 'none' && kpi.colPercent === minCol;
+              const isHigh = kpi.colPercent > 35;
+              
+              // Variance data - check if extended KPI fields exist
+              const hasVariance = 'varianceCost' in kpi && kpi.varianceCost !== 0;
+              const varianceIsPositive = (kpi as any).varianceCost > 0;
+              const varianceAbs = Math.abs((kpi as any).varianceCost || 0);
+              const shiftsCost = (kpi as any).shiftsCost || 0;
+              const forecastCost = (kpi as any).forecastLaborCost || kpi.cost;
+              
+              return (
+                <Tooltip key={`col-${day.dateStr}`}>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className={cn(
+                        "p-2 px-3 border-r border-border last:border-r-0 transition-colors cursor-default",
+                        isHighest && colSort === 'desc' && "bg-destructive/10",
+                        isLowest && colSort === 'asc' && "bg-emerald-50",
+                        hasVariance && varianceAbs > 50 && (varianceIsPositive ? "border-l-2 border-l-red-400" : "border-l-2 border-l-green-400")
+                      )}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className={cn(
+                          "text-sm font-medium",
+                          isHighest && colSort === 'desc' ? "text-destructive" : 
+                          isLowest && colSort === 'asc' ? "text-emerald-700" :
+                          isHigh ? "text-destructive" : "text-muted-foreground"
+                        )}>
+                          {kpi.colPercent > 0 ? `${kpi.colPercent.toFixed(1)}%` : '-'}
+                        </span>
+                        {hasVariance && varianceAbs > 50 && (
+                          varianceIsPositive 
+                            ? <TrendingUp className="h-3 w-3 text-red-500" />
+                            : <TrendingDown className="h-3 w-3 text-green-500" />
+                        )}
+                      </div>
+                      {kpi.cost > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          €{Math.round(kpi.cost).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    <div className="space-y-1">
+                      <div>Forecast labour: €{Math.round(forecastCost).toLocaleString()}</div>
+                      {shiftsCost > 0 && (
+                        <div>Shifts cost: €{Math.round(shiftsCost).toLocaleString()}</div>
+                      )}
+                      {hasVariance && (
+                        <div className={varianceIsPositive ? "text-red-600 font-medium" : "text-green-600 font-medium"}>
+                          Δ: {varianceIsPositive ? '+' : ''}€{Math.round((kpi as any).varianceCost).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
         
         {/* Open shifts row */}
         <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-amber-50/30">
