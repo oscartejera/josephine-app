@@ -203,10 +203,11 @@ function calculateConfidence(
   let base: number;
   const mapePercent = mape * 100;
   
-  if (mapePercent < 10) base = 90;
-  else if (mapePercent < 20) base = 75;
-  else if (mapePercent < 30) base = 60;
-  else base = 40;
+  // More forgiving thresholds - restaurant sales typically have 25-35% MAPE due to volatility
+  if (mapePercent < 15) base = 90;
+  else if (mapePercent < 25) base = 75;
+  else if (mapePercent < 35) base = 60;  // Raised from 30% to accommodate typical restaurant volatility
+  else base = 45;
 
   // Penalize for low data points
   if (dataPoints < MIN_DAYS_FOR_FULL_MODEL) {

@@ -199,7 +199,8 @@ Deno.serve(async (req) => {
           warnings.push(`LOW_CONFIDENCE: ${confidence}% (expected higher with ${daysWithData} days)`);
         }
 
-        if (mape > 0.3) {
+        // Restaurant sales typically have 25-35% MAPE - only warn above 35%
+        if (mape > 0.35) {
           warnings.push(`HIGH_ERROR: MAPE ${(mape * 100).toFixed(1)}% may indicate volatility`);
         }
       }
