@@ -36,6 +36,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import POS from "@/pages/POS";
 import POSTerminal from "@/pages/POSTerminal";
 import KDS from "@/pages/KDS";
+import KDSDashboard from "@/pages/KDSDashboard";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -101,6 +102,7 @@ function AppRoutes() {
         <Route path="/insights/menu-engineering" element={<MenuEngineering />} />
         <Route path="/insights/cash-management" element={<CashManagement />} />
         <Route path="/insights/budgets" element={<Budgets />} />
+        <Route path="/insights/kds" element={<KDSDashboard />} />
         
         {/* Redirects from old routes */}
         <Route path="/sales" element={<Navigate to="/insights/sales" replace />} />
