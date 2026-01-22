@@ -2,14 +2,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
 /**
- * Forecast Audit Edge Function
+ * Forecast Audit Edge Function v2
  * 
- * Returns audit metrics for each location:
- * - Historical P50/P90 daily sales (last 365 days)
- * - Forecast min/avg/max for next 30 days
- * - Count of days clamped due to sanity checks
- * - MAPE, MSE, Confidence from last model run
- * - Warning flags if forecast seems unrealistic
+ * Improvements:
+ * - Compares each location against ITS OWN historical data (not global)
+ * - Better status classification (not everything is "critical")
+ * - New flags for data quality vs forecast quality issues
+ * - Model tier awareness
  */
 
 interface AuditResult {
@@ -21,22 +20,25 @@ interface AuditResult {
     p90_daily_sales: number;
     avg_daily_sales: number;
     max_daily_sales: number;
+    data_quality: 'excellent' | 'good' | 'limited' | 'insufficient';
   };
   forecast_next_30d: {
     min: number;
     avg: number;
     max: number;
     days_count: number;
+    within_historical_range: boolean;
   };
   model: {
     version: string;
+    tier: string;
     mape_percent: number;
     mse: number;
     confidence: number;
     generated_at: string | null;
   };
   warnings: string[];
-  status: 'healthy' | 'warning' | 'critical';
+  status: 'healthy' | 'warning' | 'needs_attention';
 }
 
 Deno.serve(async (req) => {
@@ -50,20 +52,20 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json().catch(() => ({}));
-    const locationId = body.location_id; // Optional: audit single location
+    const locationId = body.location_id;
 
-    console.log(`[AUDIT] Starting forecast audit for ${locationId || 'all locations'}`);
+    console.log(`[AUDIT v2] Starting forecast audit for ${locationId || 'all locations'}`);
 
-    // Get locations to audit
-    let locationsQuery = supabase.from("locations").select("id, name");
+    // Get ACTIVE locations only
+    let locationsQuery = supabase.from("locations").select("id, name").eq("active", true);
     if (locationId) {
-      locationsQuery = locationsQuery.eq("id", locationId);
+      locationsQuery = supabase.from("locations").select("id, name").eq("id", locationId);
     }
     const { data: locations, error: locError } = await locationsQuery;
 
     if (locError || !locations || locations.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No locations found", details: locError?.message }),
+        JSON.stringify({ error: "No active locations found", details: locError?.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -81,34 +83,54 @@ Deno.serve(async (req) => {
     const results: AuditResult[] = [];
 
     for (const location of locations) {
-      console.log(`[AUDIT] Processing ${location.name}...`);
+      console.log(`[AUDIT v2] Processing ${location.name}...`);
       const warnings: string[] = [];
 
       // ============================================
-      // 1. Fetch historical daily sales (last 365 days)
+      // 1. Fetch historical daily sales (ALL history, paginated)
       // ============================================
-      const { data: ticketData } = await supabase
-        .from("tickets")
-        .select("opened_at, net_total")
-        .eq("location_id", location.id)
-        .gte("opened_at", yearAgoStr)
-        .lt("opened_at", todayStr);
-
-      // Aggregate by date
       const dailySales: Record<string, number> = {};
-      (ticketData || []).forEach((t: any) => {
-        const dateStr = new Date(t.opened_at).toISOString().split("T")[0];
-        dailySales[dateStr] = (dailySales[dateStr] || 0) + (Number(t.net_total) || 0);
-      });
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      const salesValues = Object.values(dailySales).sort((a, b) => a - b);
+      while (hasMore) {
+        const { data: ticketBatch } = await supabase
+          .from("tickets")
+          .select("opened_at, net_total")
+          .eq("location_id", location.id)
+          .order("opened_at")
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (!ticketBatch || ticketBatch.length === 0) {
+          hasMore = false;
+        } else {
+          ticketBatch.forEach((t: any) => {
+            const dateStr = new Date(t.opened_at).toISOString().split("T")[0];
+            dailySales[dateStr] = (dailySales[dateStr] || 0) + (Number(t.net_total) || 0);
+          });
+          hasMore = ticketBatch.length === pageSize;
+          page++;
+        }
+      }
+
+      const salesValues = Object.values(dailySales).filter(v => v > 0).sort((a, b) => a - b);
       const daysWithData = salesValues.length;
 
-      // Calculate percentiles
+      // Calculate percentiles for THIS location (daily aggregated values)
       const p50 = daysWithData > 0 ? salesValues[Math.floor(daysWithData * 0.5)] : 0;
       const p90 = daysWithData > 0 ? salesValues[Math.floor(daysWithData * 0.9)] : 0;
       const avgSales = daysWithData > 0 ? salesValues.reduce((a, b) => a + b, 0) / daysWithData : 0;
       const maxSales = daysWithData > 0 ? salesValues[daysWithData - 1] : 0;
+
+      console.log(`[AUDIT v2] ${location.name}: ${daysWithData} days, P50=€${p50.toFixed(0)}, P90=€${p90.toFixed(0)}, Avg=€${avgSales.toFixed(0)}`);
+
+      // Classify data quality
+      let dataQuality: 'excellent' | 'good' | 'limited' | 'insufficient';
+      if (daysWithData >= 365) dataQuality = 'excellent';
+      else if (daysWithData >= 90) dataQuality = 'good';
+      else if (daysWithData >= 30) dataQuality = 'limited';
+      else dataQuality = 'insufficient';
 
       // ============================================
       // 2. Fetch forecast for next 30 days
@@ -127,56 +149,80 @@ Deno.serve(async (req) => {
       const forecastMax = forecastCount > 0 ? Math.max(...forecasts) : 0;
       const forecastAvg = forecastCount > 0 ? forecasts.reduce((a, b) => a + b, 0) / forecastCount : 0;
 
-      // Get model info from first forecast row
+      // Check if forecast is within historical range
+      const withinRange = daysWithData > 0 && 
+        forecastAvg >= p50 * 0.5 && 
+        forecastAvg <= p90 * 2;
+
+      // Get model info
       const modelVersion = forecastData?.[0]?.model_version || "unknown";
       const mape = Number(forecastData?.[0]?.mape) || 0;
       const mse = Number(forecastData?.[0]?.mse) || 0;
       const confidence = Number(forecastData?.[0]?.confidence) || 0;
       const generatedAt = forecastData?.[0]?.generated_at || null;
 
+      // Determine model tier from version
+      let modelTier = "unknown";
+      if (modelVersion.includes("AVG")) modelTier = "simple_average";
+      else if (modelVersion.includes("WEEKLY")) modelTier = "trend_weekly";
+      else if (modelVersion.includes("MONTH")) modelTier = "trend_monthly";
+
       // ============================================
-      // 3. Sanity checks and warnings
+      // 3. Generate warnings based on THIS location's data
       // ============================================
       
-      // Check: No forecast data
-      if (forecastCount === 0) {
-        warnings.push("NO_FORECAST_DATA: No forecast found for next 30 days");
-      } else if (forecastCount < 30) {
-        warnings.push(`INCOMPLETE_FORECAST: Only ${forecastCount}/30 days forecasted`);
-      }
-
-      // Check: No historical data
+      // Data quality warnings
       if (daysWithData === 0) {
-        warnings.push("NO_HISTORICAL_DATA: No sales data in last 365 days");
+        warnings.push("NO_HISTORY: No sales data in last 365 days");
       } else if (daysWithData < 30) {
-        warnings.push(`LOW_HISTORY: Only ${daysWithData} days of historical data`);
+        warnings.push(`LIMITED_HISTORY: Only ${daysWithData} days of data`);
+      } else if (daysWithData < 90) {
+        warnings.push(`GROWING_HISTORY: ${daysWithData} days (model improving)`);
       }
 
-      // Check: Forecast exceeds 3x P90 (unrealistic)
-      if (p90 > 0 && forecastMax > 3 * p90) {
-        warnings.push(`FORECAST_TOO_HIGH: Max forecast €${forecastMax.toFixed(0)} > 3x P90 €${(3 * p90).toFixed(0)}`);
+      // Forecast quality warnings
+      if (forecastCount === 0) {
+        warnings.push("NO_FORECAST: Run generate_forecast to create predictions");
+      } else if (forecastCount < 30) {
+        warnings.push(`INCOMPLETE_FORECAST: Only ${forecastCount}/30 days`);
       }
 
-      // Check: Forecast is below P50 (might be too conservative)
-      if (p50 > 0 && forecastAvg < p50 * 0.5) {
-        warnings.push(`FORECAST_TOO_LOW: Avg forecast €${forecastAvg.toFixed(0)} < 50% of P50 €${(p50 * 0.5).toFixed(0)}`);
+      // Range checks (only if we have both data and forecast)
+      if (daysWithData > 0 && forecastCount > 0) {
+        if (forecastAvg > p90 * 2) {
+          warnings.push(`HIGH_FORECAST: Avg €${forecastAvg.toFixed(0)} > 2x P90 €${(p90 * 2).toFixed(0)}`);
+        } else if (forecastAvg < p50 * 0.5 && p50 > 0) {
+          warnings.push(`LOW_FORECAST: Avg €${forecastAvg.toFixed(0)} < 50% of P50 €${(p50 * 0.5).toFixed(0)}`);
+        }
+
+        if (confidence < 50 && dataQuality !== 'insufficient') {
+          warnings.push(`LOW_CONFIDENCE: ${confidence}% (expected higher with ${daysWithData} days)`);
+        }
+
+        if (mape > 0.3) {
+          warnings.push(`HIGH_ERROR: MAPE ${(mape * 100).toFixed(1)}% may indicate volatility`);
+        }
       }
 
-      // Check: Low confidence
-      if (confidence < 50) {
-        warnings.push(`LOW_CONFIDENCE: Model confidence is ${confidence}%`);
-      }
-
-      // Check: High MAPE
-      if (mape > 0.3) {
-        warnings.push(`HIGH_MAPE: Model error rate is ${(mape * 100).toFixed(1)}%`);
-      }
-
-      // Determine overall status
-      let status: 'healthy' | 'warning' | 'critical' = 'healthy';
-      if (warnings.some(w => w.startsWith('NO_FORECAST') || w.startsWith('NO_HISTORICAL') || w.startsWith('FORECAST_TOO_HIGH'))) {
-        status = 'critical';
-      } else if (warnings.length > 0) {
+      // ============================================
+      // 4. Determine status
+      // ============================================
+      let status: 'healthy' | 'warning' | 'needs_attention' = 'healthy';
+      
+      if (warnings.some(w => w.startsWith('NO_FORECAST') || w.startsWith('NO_HISTORY'))) {
+        status = 'needs_attention';
+      } else if (warnings.some(w => 
+        w.startsWith('HIGH_FORECAST') || 
+        w.startsWith('LOW_FORECAST') ||
+        w.startsWith('LOW_CONFIDENCE') ||
+        w.startsWith('HIGH_ERROR')
+      )) {
+        status = 'warning';
+      } else if (warnings.some(w => 
+        w.startsWith('LIMITED_HISTORY') ||
+        w.startsWith('GROWING_HISTORY') ||
+        w.startsWith('INCOMPLETE_FORECAST')
+      )) {
         status = 'warning';
       }
 
@@ -189,15 +235,18 @@ Deno.serve(async (req) => {
           p90_daily_sales: Math.round(p90),
           avg_daily_sales: Math.round(avgSales),
           max_daily_sales: Math.round(maxSales),
+          data_quality: dataQuality,
         },
         forecast_next_30d: {
           min: Math.round(forecastMin),
           avg: Math.round(forecastAvg),
           max: Math.round(forecastMax),
           days_count: forecastCount,
+          within_historical_range: withinRange,
         },
         model: {
           version: modelVersion,
+          tier: modelTier,
           mape_percent: Math.round(mape * 1000) / 10,
           mse: Math.round(mse),
           confidence: Math.round(confidence),
@@ -207,22 +256,33 @@ Deno.serve(async (req) => {
         status,
       });
 
-      console.log(`[AUDIT] ${location.name}: ${status.toUpperCase()} - ${warnings.length} warnings`);
+      console.log(`[AUDIT v2] ${location.name}: ${status.toUpperCase()} - ${warnings.length} warnings`);
     }
 
-    // Summary stats
+    // Summary
     const summary = {
       total_locations: results.length,
       healthy: results.filter(r => r.status === 'healthy').length,
       warning: results.filter(r => r.status === 'warning').length,
-      critical: results.filter(r => r.status === 'critical').length,
-      all_warnings: results.flatMap(r => r.warnings.map(w => ({ location: r.location_name, warning: w }))),
+      needs_attention: results.filter(r => r.status === 'needs_attention').length,
+      data_quality_breakdown: {
+        excellent: results.filter(r => r.historical.data_quality === 'excellent').length,
+        good: results.filter(r => r.historical.data_quality === 'good').length,
+        limited: results.filter(r => r.historical.data_quality === 'limited').length,
+        insufficient: results.filter(r => r.historical.data_quality === 'insufficient').length,
+      },
+      all_warnings: results.flatMap(r => r.warnings.map(w => ({ 
+        location: r.location_name, 
+        warning: w,
+        status: r.status
+      }))),
     };
 
     return new Response(
       JSON.stringify({
         success: true,
         audit_date: todayStr,
+        version: "v2",
         summary,
         results,
       }),
@@ -230,7 +290,7 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[AUDIT] Error:", message);
+    console.error("[AUDIT v2] Error:", message);
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
