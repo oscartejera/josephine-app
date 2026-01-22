@@ -1,12 +1,14 @@
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useKDSData } from '@/hooks/useKDSData';
-import { KDSHeader, KDSBoard } from '@/components/kds';
+import { KDSHeader, KDSBoard, KDSDestinationFilter, type KDSDestination } from '@/components/kds';
 
 export default function KDS() {
   const { locationId } = useParams<{ locationId: string }>();
   const navigate = useNavigate();
   const { locations } = useApp();
+  const [selectedDestination, setSelectedDestination] = useState<KDSDestination>('all');
   
   const location = locations.find(l => l.id === locationId);
   const { 
@@ -33,12 +35,40 @@ export default function KDS() {
     );
   }
 
-  // Calculate stats
-  const pendingCount = orders.reduce(
+  // Filter orders by destination
+  const filteredOrders = useMemo(() => {
+    if (selectedDestination === 'all') return orders;
+    
+    return orders
+      .map(order => ({
+        ...order,
+        items: order.items.filter(item => item.destination === selectedDestination)
+      }))
+      .filter(order => order.items.length > 0);
+  }, [orders, selectedDestination]);
+
+  // Calculate destination counts
+  const destinationCounts = useMemo(() => {
+    const counts = { all: 0, kitchen: 0, bar: 0, prep: 0 };
+    
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        if (item.prep_status === 'pending' || item.prep_status === 'preparing') {
+          counts.all++;
+          counts[item.destination]++;
+        }
+      });
+    });
+    
+    return counts;
+  }, [orders]);
+
+  // Calculate stats for filtered orders
+  const pendingCount = filteredOrders.reduce(
     (acc, order) => acc + order.items.filter(i => i.prep_status === 'pending').length, 
     0
   );
-  const preparingCount = orders.reduce(
+  const preparingCount = filteredOrders.reduce(
     (acc, order) => acc + order.items.filter(i => i.prep_status === 'preparing').length, 
     0
   );
@@ -60,8 +90,17 @@ export default function KDS() {
         preparingCount={preparingCount}
       />
       
+      {/* Destination Filter */}
+      <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-800">
+        <KDSDestinationFilter
+          selected={selectedDestination}
+          onChange={setSelectedDestination}
+          counts={destinationCounts}
+        />
+      </div>
+      
       <KDSBoard 
-        orders={orders}
+        orders={filteredOrders}
         onItemStatusChange={handleItemStatusChange}
         onCompleteOrder={handleCompleteOrder}
       />
