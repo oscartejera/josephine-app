@@ -43,6 +43,9 @@ export default function KDS() {
   const {
     settings: alertSettings,
     updateSettings: updateAlertSettings,
+    soundSettings,
+    updateSoundSettings,
+    testSound,
     alerts,
     alertCount,
     dismissAlert,
@@ -200,6 +203,9 @@ export default function KDS() {
         onShowStats={() => setShowStats(true)}
         alertSettings={alertSettings}
         onUpdateAlertSettings={updateAlertSettings}
+        soundSettings={soundSettings}
+        onUpdateSoundSettings={updateSoundSettings}
+        onTestSound={testSound}
         alertCount={alertCount}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
