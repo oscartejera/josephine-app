@@ -5,7 +5,7 @@ interface KDSBoardProps {
   orders: KDSOrder[];
   onItemStatusChange: (lineId: string, newStatus: 'pending' | 'preparing' | 'ready' | 'served') => void;
   onCompleteOrder: (ticketId: string) => void;
-  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; overdueMinutes: number };
+  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; overdueMinutes: number; threshold: number };
 }
 
 export function KDSBoard({ orders, onItemStatusChange, onCompleteOrder, getItemOverdueInfo }: KDSBoardProps) {

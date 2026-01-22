@@ -12,6 +12,8 @@ export interface KDSTicketLine {
   ready_at: string | null;
   sent_at: string | null;
   destination: 'kitchen' | 'bar' | 'prep';
+  product_id: string | null;
+  target_prep_time: number | null; // Product-specific prep time in minutes
 }
 
 export interface KDSOrder {
@@ -94,10 +96,10 @@ export function useKDSData(locationId: string) {
 
       const ticketIds = tickets.map(t => t.id);
 
-      // Get ticket lines for these tickets
+      // Get ticket lines for these tickets with product info for target_prep_time
       const { data: ticketLines, error: linesError } = await supabase
         .from('ticket_lines')
-        .select('*')
+        .select('*, products:product_id(target_prep_time)')
         .in('ticket_id', ticketIds)
         .eq('sent_to_kitchen', true)
         .order('sent_at', { ascending: true });
@@ -141,6 +143,7 @@ export function useKDSData(locationId: string) {
           });
         }
 
+        const lineData = line as any;
         ordersMap.get(line.ticket_id)!.items.push({
           id: line.id,
           ticket_id: line.ticket_id,
@@ -151,7 +154,9 @@ export function useKDSData(locationId: string) {
           prep_started_at: line.prep_started_at,
           ready_at: line.ready_at,
           sent_at: line.sent_at,
-          destination: (line.destination || 'kitchen') as KDSTicketLine['destination']
+          destination: (line.destination || 'kitchen') as KDSTicketLine['destination'],
+          product_id: lineData.product_id ?? null,
+          target_prep_time: lineData.products?.target_prep_time ?? null,
         });
       }
 

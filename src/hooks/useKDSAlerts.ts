@@ -83,7 +83,8 @@ export function useKDSAlerts(orders: KDSOrder[]) {
 
           const startTime = new Date(item.prep_started_at).getTime();
           const elapsedMinutes = Math.floor((now - startTime) / 60000);
-          const threshold = settings[item.destination];
+          // Use product-specific time if set, otherwise use station default
+          const threshold = item.target_prep_time ?? settings[item.destination];
 
           if (elapsedMinutes >= threshold) {
             const alertId = `${item.id}-${Math.floor(elapsedMinutes / threshold)}`;
@@ -147,19 +148,21 @@ export function useKDSAlerts(orders: KDSOrder[]) {
   }, [orders]);
 
   // Calculate overdue count per item (for visual indicators)
-  const getItemOverdueInfo = useCallback((item: KDSTicketLine): { isOverdue: boolean; overdueMinutes: number } => {
+  const getItemOverdueInfo = useCallback((item: KDSTicketLine): { isOverdue: boolean; overdueMinutes: number; threshold: number } => {
     if (item.prep_status !== 'preparing' || !item.prep_started_at) {
-      return { isOverdue: false, overdueMinutes: 0 };
+      return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
     }
 
     const startTime = new Date(item.prep_started_at).getTime();
     const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
-    const threshold = settings[item.destination];
+    // Use product-specific time if set, otherwise use station default
+    const threshold = item.target_prep_time ?? settings[item.destination];
     const overdueMinutes = elapsedMinutes - threshold;
 
     return {
       isOverdue: overdueMinutes >= 0,
       overdueMinutes: Math.max(0, overdueMinutes),
+      threshold,
     };
   }, [settings]);
 
