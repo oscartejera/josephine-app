@@ -8,3 +8,4 @@ export * from './POSOpenTables';
 export * from './POSCashSession';
 export * from './POSFloorEditor';
 export * from './PrintQueuePanel';
+export * from './POSModifierDialog';

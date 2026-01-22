@@ -132,10 +132,10 @@ export function useKDSData(locationId: string) {
 
       const ticketIds = tickets.map(t => t.id);
 
-      // Get ticket lines for these tickets with product info
+      // Get ticket lines for these tickets
       const { data: ticketLines, error: linesError } = await supabase
         .from('ticket_lines')
-        .select('*, products:product_id(target_prep_time)')
+        .select('*')
         .in('ticket_id', ticketIds)
         .eq('sent_to_kitchen', true)
         .order('sent_at', { ascending: true });
@@ -143,6 +143,25 @@ export function useKDSData(locationId: string) {
       if (linesError) {
         console.error('Error fetching ticket lines:', linesError);
         return;
+      }
+
+      // Get product prep times for products in the lines
+      const productIds = [...new Set((ticketLines || []).map(l => (l as any).product_id).filter(Boolean))] as string[];
+      let productPrepTimes = new Map<string, number>();
+      
+      if (productIds.length > 0) {
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, target_prep_time')
+          .in('id', productIds);
+        
+        if (productsData) {
+          productsData.forEach(p => {
+            if (p.target_prep_time) {
+              productPrepTimes.set(p.id, p.target_prep_time);
+            }
+          });
+        }
       }
 
       // Filter by prep_status in memory
@@ -219,7 +238,7 @@ export function useKDSData(locationId: string) {
           sent_at: line.sent_at,
           destination: (line.destination || 'kitchen') as KDSTicketLine['destination'],
           product_id: lineData.product_id ?? null,
-          target_prep_time: lineData.products?.target_prep_time ?? null,
+          target_prep_time: lineData.product_id ? productPrepTimes.get(lineData.product_id) ?? null : null,
           is_rush: lineData.is_rush ?? false,
           modifiers: modifiersMap.get(line.id) || [],
         });
