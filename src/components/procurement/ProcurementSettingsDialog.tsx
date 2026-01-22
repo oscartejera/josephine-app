@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Settings, RotateCcw, HelpCircle, TrendingUp, TrendingDown, Minus, Package } from 'lucide-react';
@@ -32,52 +31,32 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  CategorySettings,
+  ProcurementCategorySettings,
+  DEFAULT_CATEGORY_SETTINGS,
+  SAMPLE_SKUS_FOR_PREVIEW,
+  calculateRecommendation,
+} from '@/lib/procurementConstants';
 
-export interface CategorySettings {
-  wasteFactor: number;
-  safetyStockPct: number;
-  yieldFactor: number;
-}
+// Re-export types for backwards compatibility
+export type { CategorySettings, ProcurementCategorySettings };
+export { DEFAULT_CATEGORY_SETTINGS };
 
-export interface ProcurementCategorySettings {
-  [category: string]: CategorySettings;
-}
-
-// Default settings per category
-export const DEFAULT_CATEGORY_SETTINGS: ProcurementCategorySettings = {
-  'Produce': { wasteFactor: 0.06, safetyStockPct: 0.15, yieldFactor: 1.0 },
-  'Proteins': { wasteFactor: 0.05, safetyStockPct: 0.15, yieldFactor: 1.0 },
-  'Dairy': { wasteFactor: 0.03, safetyStockPct: 0.15, yieldFactor: 1.0 },
-  'Dry Goods': { wasteFactor: 0.01, safetyStockPct: 0.10, yieldFactor: 1.0 },
-  'Beverages': { wasteFactor: 0.01, safetyStockPct: 0.10, yieldFactor: 1.0 },
-  'Bakery': { wasteFactor: 0.04, safetyStockPct: 0.20, yieldFactor: 1.0 },
-  'Condiments': { wasteFactor: 0.02, safetyStockPct: 0.10, yieldFactor: 1.0 },
-};
-
-// Sample SKU data for impact preview
-const SAMPLE_SKUS: Record<string, { name: string; forecastUsage: number; onHand: number; packSize: number }> = {
-  'Produce': { name: 'Tomatoes Vine', forecastUsage: 35, onHand: 4, packSize: 5 },
-  'Proteins': { name: 'Chicken Breast', forecastUsage: 28, onHand: 8, packSize: 5 },
-  'Dairy': { name: 'Whole Milk', forecastUsage: 42, onHand: 18, packSize: 12 },
-  'Dry Goods': { name: 'Pasta Penne', forecastUsage: 20, onHand: 6, packSize: 5 },
-  'Beverages': { name: 'Coca-Cola', forecastUsage: 60, onHand: 48, packSize: 24 },
-  'Bakery': { name: 'Burger Buns', forecastUsage: 64, onHand: 32, packSize: 48 },
-  'Condiments': { name: 'Mayonnaise', forecastUsage: 8, onHand: 3, packSize: 5 },
-};
-
-// Calculate recommendation with given settings
+// Calculate impact for preview using shared function
 function calculateImpact(
   forecastUsage: number,
   onHand: number,
   packSize: number,
   settings: CategorySettings
 ): { adjustedForecast: number; safetyStock: number; netNeeded: number; recommendedPacks: number } {
-  const adjustedForecast = (forecastUsage * (1 + settings.wasteFactor)) / settings.yieldFactor;
-  const safetyStock = forecastUsage * settings.safetyStockPct;
-  const netNeeded = Math.max(0, adjustedForecast + safetyStock - onHand);
-  const recommendedPacks = Math.ceil(netNeeded / packSize);
-  
-  return { adjustedForecast, safetyStock, netNeeded, recommendedPacks };
+  const result = calculateRecommendation(forecastUsage, onHand, 0, packSize, settings, true);
+  return {
+    adjustedForecast: result.adjustedForecast,
+    safetyStock: result.safetyStock,
+    netNeeded: result.netNeeded,
+    recommendedPacks: result.recommendedPacks,
+  };
 }
 
 interface ProcurementSettingsDialogProps {
@@ -192,7 +171,7 @@ export function ProcurementSettingsDialog({
                 settings.yieldFactor !== defaults.yieldFactor;
 
               // Calculate impact preview
-              const sampleSku = SAMPLE_SKUS[category];
+              const sampleSku = SAMPLE_SKUS_FOR_PREVIEW[category];
               const currentImpact = calculateImpact(
                 sampleSku.forecastUsage,
                 sampleSku.onHand,
