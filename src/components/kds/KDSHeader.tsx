@@ -42,7 +42,14 @@ export function KDSHeader({
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // Try to go back, but if there's no history, go to KDS dashboard or POS
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/insights/kds');
+            }
+          }}
           className="text-zinc-400 hover:text-white hover:bg-zinc-800"
         >
           <ArrowLeft className="h-5 w-5" />
