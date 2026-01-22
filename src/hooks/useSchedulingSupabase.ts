@@ -66,9 +66,17 @@ export interface DayKPI {
   shiftsCost: number;
   shiftsHours: number;
   shiftsCount: number;
-  // Variance
+  // Variance (Shifts vs Forecast)
   varianceCost: number;
   varianceCostPct: number;
+  // Actual data (from sales_daily_unified for past days)
+  actualSales?: number;
+  actualLaborCost?: number;
+  actualColPercent?: number;
+  // Variance Actual vs Forecast
+  salesVarianceVsForecast?: number;
+  salesVarianceVsForecastPct?: number;
+  isPastDay?: boolean;
   // Legacy fields for UI compatibility
   sales: number;
   cost: number;
@@ -95,6 +103,9 @@ export interface ScheduleData {
   // Variance
   totalVarianceCost: number;
   totalVarianceCostPct: number;
+  // Actual totals (for past days)
+  totalActualSales: number;
+  totalActualLaborCost: number;
   // Target
   targetColPercent: number;
   totalHours: number;
@@ -227,13 +238,46 @@ async function fetchTargetCol(locationId: string): Promise<number> {
   return data?.target_col_percent ?? 25; // Default 25%
 }
 
-// Build DayKPIs from forecast + shifts
+// Fetch actual sales from sales_daily_unified (for past days comparison)
+async function fetchActualSales(
+  locationId: string,
+  weekStartISO: string,
+  weekEndISO: string
+): Promise<Record<string, { actualSales: number; actualLaborCost: number; actualColPercent: number }>> {
+  const { data, error } = await supabase
+    .from('sales_daily_unified')
+    .select('date, net_sales, labor_cost')
+    .eq('location_id', locationId)
+    .gte('date', weekStartISO)
+    .lte('date', weekEndISO);
+  
+  if (error) {
+    console.warn('Error fetching actual sales:', error);
+    return {};
+  }
+  
+  const byDate: Record<string, any> = {};
+  (data || []).forEach(row => {
+    const actualSales = Number(row.net_sales) || 0;
+    const actualLaborCost = Number(row.labor_cost) || 0;
+    const actualColPercent = actualSales > 0 
+      ? Math.round((actualLaborCost / actualSales) * 1000) / 10 
+      : 0;
+    byDate[row.date] = { actualSales, actualLaborCost, actualColPercent };
+  });
+  
+  return byDate;
+}
+
+// Build DayKPIs from forecast + shifts + actual
 function buildDailyKPIs(
   weekStart: Date,
   forecastByDate: Record<string, any>,
-  shifts: Shift[]
+  shifts: Shift[],
+  actualByDate: Record<string, { actualSales: number; actualLaborCost: number; actualColPercent: number }> = {}
 ): DayKPI[] {
   const kpis: DayKPI[] = [];
+  const today = format(new Date(), 'yyyy-MM-dd');
   
   // Aggregate shifts by date
   const shiftsByDate: Record<string, { cost: number; hours: number; count: number }> = {};
@@ -251,6 +295,9 @@ function buildDailyKPIs(
     const dateStr = format(date, 'yyyy-MM-dd');
     const forecast = forecastByDate[dateStr];
     const shiftsData = shiftsByDate[dateStr] || { cost: 0, hours: 0, count: 0 };
+    const actual = actualByDate[dateStr];
+    
+    const isPastDay = dateStr < today;
     
     const forecastSales = forecast?.forecast_sales || 0;
     const forecastLaborCost = forecast?.planned_labor_cost || 0;
@@ -259,10 +306,22 @@ function buildDailyKPIs(
       ? Math.round((forecastLaborCost / forecastSales) * 1000) / 10 
       : 0;
     
+    // Variance Shifts vs Forecast
     const varianceCost = shiftsData.cost - forecastLaborCost;
     const varianceCostPct = forecastLaborCost > 0 
       ? Math.round((varianceCost / forecastLaborCost) * 1000) / 10 
       : 0;
+    
+    // Actual data + Variance Actual vs Forecast (only for past days)
+    const actualSales = actual?.actualSales;
+    const actualLaborCost = actual?.actualLaborCost;
+    const actualColPercent = actual?.actualColPercent;
+    const salesVarianceVsForecast = actualSales !== undefined && forecastSales > 0
+      ? actualSales - forecastSales
+      : undefined;
+    const salesVarianceVsForecastPct = salesVarianceVsForecast !== undefined && forecastSales > 0
+      ? Math.round((salesVarianceVsForecast / forecastSales) * 1000) / 10
+      : undefined;
     
     kpis.push({
       date: dateStr,
@@ -276,9 +335,16 @@ function buildDailyKPIs(
       shiftsCost: Math.round(shiftsData.cost * 100) / 100,
       shiftsHours: Math.round(shiftsData.hours * 10) / 10,
       shiftsCount: shiftsData.count,
-      // Variance
+      // Variance Shifts vs Forecast
       varianceCost: Math.round(varianceCost * 100) / 100,
       varianceCostPct,
+      // Actual data (past days only)
+      actualSales: isPastDay ? actualSales : undefined,
+      actualLaborCost: isPastDay ? actualLaborCost : undefined,
+      actualColPercent: isPastDay ? actualColPercent : undefined,
+      salesVarianceVsForecast: isPastDay ? salesVarianceVsForecast : undefined,
+      salesVarianceVsForecastPct: isPastDay ? salesVarianceVsForecastPct : undefined,
+      isPastDay,
       // Legacy UI fields (use forecast as "projected")
       sales: forecastSales,
       cost: forecastLaborCost,
@@ -343,6 +409,14 @@ export function useSchedulingSupabase(
     staleTime: 5 * 60 * 1000,
   });
   
+  // Fetch actual sales from sales_daily_unified (for past days comparison)
+  const { data: actualByDate = {} } = useQuery({
+    queryKey: ['scheduling-actual-sales', locationId, weekStartISO],
+    queryFn: () => fetchActualSales(locationId!, weekStartISO, weekEndISO),
+    enabled: !!locationId,
+    staleTime: 60 * 1000,
+  });
+  
   const isLoading = employeesLoading || shiftsLoading || forecastLoading;
   
   // Build schedule data
@@ -380,8 +454,8 @@ export function useSchedulingSupabase(
       return { ...emp, weeklyHours, availability };
     });
     
-    // Build KPIs
-    const dailyKPIs = buildDailyKPIs(weekStart, forecastByDate, regularShifts);
+    // Build KPIs with actual sales data
+    const dailyKPIs = buildDailyKPIs(weekStart, forecastByDate, regularShifts, actualByDate);
     
     // Calculate totals
     const projectedSales = dailyKPIs.reduce((sum, d) => sum + d.forecastSales, 0);
@@ -396,6 +470,14 @@ export function useSchedulingSupabase(
     const totalVarianceCostPct = projectedLabourCost > 0 
       ? Math.round((totalVarianceCost / projectedLabourCost) * 1000) / 10 
       : 0;
+    
+    // Calculate total actual sales (for past days only)
+    const totalActualSales = dailyKPIs
+      .filter(d => d.isPastDay && d.actualSales !== undefined)
+      .reduce((sum, d) => sum + (d.actualSales || 0), 0);
+    const totalActualLaborCost = dailyKPIs
+      .filter(d => d.isPastDay && d.actualLaborCost !== undefined)
+      .reduce((sum, d) => sum + (d.actualLaborCost || 0), 0);
     
     const totalHours = regularShifts.reduce((sum, s) => sum + s.hours, 0) 
                      + openShifts.reduce((sum, s) => sum + s.hours, 0);
@@ -424,10 +506,13 @@ export function useSchedulingSupabase(
       status: 'draft',
       timeOffConflicts: 0,
       missingPayrollCount,
+      // Actual totals for past days
+      totalActualSales,
+      totalActualLaborCost,
     };
   }, [
     locationId, hasSchedule, locations, employees, dbShifts, 
-    forecastByDate, weekStart, weekEnd, shiftOverrides, newShifts, targetColPercent
+    forecastByDate, weekStart, weekEnd, shiftOverrides, newShifts, targetColPercent, actualByDate
   ]);
   
   // Create schedule (just reveals existing data)

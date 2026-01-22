@@ -463,42 +463,78 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           })}
         </div>
         
-        {/* Sales row */}
-        <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
-          <button 
-            onClick={() => {
-              setSalesSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
-              setColSort('none');
-            }}
-            className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1 hover:bg-muted/50 transition-colors"
-          >
-            Sales
-            {salesSort === 'none' && <ArrowUpDown className="h-3 w-3" />}
-            {salesSort === 'desc' && <ArrowDown className="h-3 w-3 text-primary" />}
-            {salesSort === 'asc' && <ArrowUp className="h-3 w-3 text-primary" />}
-          </button>
-          {days.map((day, i) => {
-            const kpi = data.dailyKPIs[i];
-            const salesValues = data.dailyKPIs.map(k => k.sales);
-            const maxSales = Math.max(...salesValues);
-            const minSales = Math.min(...salesValues);
-            const isHighest = salesSort !== 'none' && kpi.sales === maxSales;
-            const isLowest = salesSort !== 'none' && kpi.sales === minSales;
-            
-            return (
-              <div 
-                key={`sales-${day.dateStr}`} 
-                className={cn(
-                  "p-2 px-3 border-r border-border last:border-r-0 text-sm font-medium transition-colors",
-                  isHighest && salesSort === 'desc' && "bg-emerald-50 text-emerald-700",
-                  isLowest && salesSort === 'asc' && "bg-amber-50 text-amber-700"
-                )}
-              >
-                €{kpi.sales.toLocaleString()}
-              </div>
-            );
-          })}
-        </div>
+        {/* Sales row with Actual vs Forecast tooltip */}
+        <TooltipProvider>
+          <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
+            <button 
+              onClick={() => {
+                setSalesSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
+                setColSort('none');
+              }}
+              className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1 hover:bg-muted/50 transition-colors"
+            >
+              Sales
+              {salesSort === 'none' && <ArrowUpDown className="h-3 w-3" />}
+              {salesSort === 'desc' && <ArrowDown className="h-3 w-3 text-primary" />}
+              {salesSort === 'asc' && <ArrowUp className="h-3 w-3 text-primary" />}
+            </button>
+            {days.map((day, i) => {
+              const kpi = data.dailyKPIs[i];
+              const salesValues = data.dailyKPIs.map(k => k.sales);
+              const maxSales = Math.max(...salesValues);
+              const minSales = Math.min(...salesValues);
+              const isHighest = salesSort !== 'none' && kpi.sales === maxSales;
+              const isLowest = salesSort !== 'none' && kpi.sales === minSales;
+              
+              // Actual vs Forecast for past days
+              const isPastDay = kpi.isPastDay;
+              const actualSales = kpi.actualSales;
+              const hasActual = isPastDay && actualSales !== undefined && actualSales > 0;
+              const salesVariance = kpi.salesVarianceVsForecast;
+              const salesVariancePct = kpi.salesVarianceVsForecastPct;
+              const varianceIsPositive = (salesVariance || 0) > 0;
+              
+              return (
+                <Tooltip key={`sales-${day.dateStr}`}>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className={cn(
+                        "p-2 px-3 border-r border-border last:border-r-0 text-sm font-medium transition-colors cursor-default",
+                        isHighest && salesSort === 'desc' && "bg-emerald-50 text-emerald-700",
+                        isLowest && salesSort === 'asc' && "bg-amber-50 text-amber-700",
+                        hasActual && Math.abs(salesVariancePct || 0) > 5 && (varianceIsPositive ? "border-l-2 border-l-green-400" : "border-l-2 border-l-amber-400")
+                      )}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>€{(hasActual ? actualSales : kpi.sales).toLocaleString()}</span>
+                        {hasActual && Math.abs(salesVariancePct || 0) > 5 && (
+                          varianceIsPositive 
+                            ? <TrendingUp className="h-3 w-3 text-green-500" />
+                            : <TrendingDown className="h-3 w-3 text-amber-500" />
+                        )}
+                      </div>
+                      {hasActual && <span className="text-[10px] text-muted-foreground">Actual</span>}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    <div className="space-y-1">
+                      <div>Forecast: €{kpi.sales.toLocaleString()}</div>
+                      {hasActual && (
+                        <>
+                          <div>Actual: €{actualSales.toLocaleString()}</div>
+                          <div className={varianceIsPositive ? "text-green-600 font-medium" : "text-amber-600 font-medium"}>
+                            Δ: {varianceIsPositive ? '+' : ''}€{Math.round(salesVariance || 0).toLocaleString()} ({salesVariancePct?.toFixed(1)}%)
+                          </div>
+                        </>
+                      )}
+                      {!hasActual && isPastDay && <div className="text-muted-foreground">No actual data</div>}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
         
         {/* Cost / COL % row with variance tooltip */}
         <TooltipProvider>
