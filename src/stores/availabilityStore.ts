@@ -41,37 +41,8 @@ export interface TimeOffRequest {
 // Constants
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-// Seeded random for consistent mock data
-class SeededRandom {
-  private seed: number;
-  
-  constructor(seed: string) {
-    this.seed = this.hashString(seed);
-  }
-  
-  private hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash);
-  }
-  
-  next(): number {
-    this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff;
-    return this.seed / 0x7fffffff;
-  }
-  
-  pick<T>(arr: T[]): T {
-    return arr[Math.floor(this.next() * arr.length)];
-  }
-  
-  intRange(min: number, max: number): number {
-    return Math.floor(min + this.next() * (max - min + 1));
-  }
-}
+// Use centralized SeededRandom
+import { SeededRandom } from '@/lib/seededRandom';
 
 // In-memory store (would be database in production)
 let employeeAvailabilities: Map<string, EmployeeAvailability> = new Map();

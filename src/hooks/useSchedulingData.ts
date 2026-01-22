@@ -81,41 +81,8 @@ export interface ScheduleData {
   timeOffConflicts: number; // Count of employees with time-off during the week
 }
 
-// Seeded random for consistent data
-class SeededRandom {
-  private seed: number;
-  
-  constructor(seed: string) {
-    this.seed = this.hashString(seed);
-  }
-  
-  private hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash);
-  }
-  
-  next(): number {
-    this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff;
-    return this.seed / 0x7fffffff;
-  }
-  
-  range(min: number, max: number): number {
-    return min + this.next() * (max - min);
-  }
-  
-  intRange(min: number, max: number): number {
-    return Math.floor(this.range(min, max + 1));
-  }
-  
-  pick<T>(arr: T[]): T {
-    return arr[Math.floor(this.next() * arr.length)];
-  }
-}
+// Use centralized SeededRandom
+import { SeededRandom } from '@/lib/seededRandom';
 
 const LOCATIONS = [
   { id: 'cpu', name: 'CPU' },

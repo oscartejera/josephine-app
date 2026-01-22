@@ -91,32 +91,8 @@ interface UseInstantPLDataParams {
   activeChips: ChipFilter[];
 }
 
-// ============= SEEDED RANDOM =============
-
-class SeededRandom {
-  private seed: number;
-
-  constructor(seed: number) {
-    this.seed = seed;
-  }
-
-  next(): number {
-    this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff;
-    return this.seed / 0x7fffffff;
-  }
-
-  between(min: number, max: number): number {
-    return min + this.next() * (max - min);
-  }
-}
-
-function hashString(str: string): number {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) + str.charCodeAt(i);
-  }
-  return Math.abs(hash);
-}
+// Use centralized SeededRandom
+import { SeededRandom, hashString } from '@/lib/seededRandom';
 
 // ============= DEMO DATA GENERATOR =============
 
