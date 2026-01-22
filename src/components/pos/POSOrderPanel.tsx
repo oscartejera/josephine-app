@@ -105,7 +105,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
 
     setOrderLines(lines.map(line => ({
       id: line.id,
-      product_id: line.item_external_id || '',
+      product_id: (line as any).product_id || line.item_external_id || '',
       name: line.item_name,
       quantity: line.quantity,
       unit_price: line.unit_price,
@@ -113,6 +113,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       notes: (line as any).notes || undefined,
       modifiers: modifiersMap.get(line.id) || [],
       sent_to_kitchen: (line as any).sent_to_kitchen || false,
+      kds_destination: (line as any).destination || 'kitchen',
       is_rush: (line as any).is_rush || false,
     })));
   };

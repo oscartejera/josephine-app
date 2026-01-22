@@ -2431,17 +2431,20 @@ export type Database = {
         Row: {
           category_name: string | null
           comped: boolean | null
+          course: number | null
           created_at: string
           destination: string | null
           discount_line_total: number | null
           external_line_id: string | null
           gross_line_total: number | null
           id: string
+          is_rush: boolean | null
           item_external_id: string | null
           item_name: string
           notes: string | null
           prep_started_at: string | null
           prep_status: string | null
+          product_id: string | null
           quantity: number | null
           ready_at: string | null
           sent_at: string | null
@@ -2454,17 +2457,20 @@ export type Database = {
         Insert: {
           category_name?: string | null
           comped?: boolean | null
+          course?: number | null
           created_at?: string
           destination?: string | null
           discount_line_total?: number | null
           external_line_id?: string | null
           gross_line_total?: number | null
           id?: string
+          is_rush?: boolean | null
           item_external_id?: string | null
           item_name: string
           notes?: string | null
           prep_started_at?: string | null
           prep_status?: string | null
+          product_id?: string | null
           quantity?: number | null
           ready_at?: string | null
           sent_at?: string | null
@@ -2477,17 +2483,20 @@ export type Database = {
         Update: {
           category_name?: string | null
           comped?: boolean | null
+          course?: number | null
           created_at?: string
           destination?: string | null
           discount_line_total?: number | null
           external_line_id?: string | null
           gross_line_total?: number | null
           id?: string
+          is_rush?: boolean | null
           item_external_id?: string | null
           item_name?: string
           notes?: string | null
           prep_started_at?: string | null
           prep_status?: string | null
+          product_id?: string | null
           quantity?: number | null
           ready_at?: string | null
           sent_at?: string | null
@@ -2498,6 +2507,13 @@ export type Database = {
           voided?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "ticket_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ticket_lines_ticket_id_fkey"
             columns: ["ticket_id"]
