@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LayoutGrid, ShoppingCart, ClipboardList, Monitor } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ArrowLeft, LayoutGrid, ShoppingCart, ClipboardList, Monitor, Printer } from 'lucide-react';
 import { POSFloorPlan } from '@/components/pos/POSFloorPlan';
 import { POSQuickOrder } from '@/components/pos/POSQuickOrder';
 import { POSOpenTables } from '@/components/pos/POSOpenTables';
 import { POSCashSession } from '@/components/pos/POSCashSession';
+import { PrintQueuePanel } from '@/components/pos/PrintQueuePanel';
 import { usePOSData } from '@/hooks/usePOSData';
+import { usePrintQueue } from '@/hooks/usePrintQueue';
 
 export default function POSTerminal() {
   const { locationId } = useParams<{ locationId: string }>();
@@ -26,6 +29,8 @@ export default function POSTerminal() {
     loading,
     refetch
   } = usePOSData(locationId || '');
+  
+  const { pendingCount } = usePrintQueue(locationId || '');
 
   if (!locationId || !location) {
     return (
@@ -60,6 +65,24 @@ export default function POSTerminal() {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Print Queue Button */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 relative">
+                <Printer className="h-4 w-4" />
+                <span className="hidden sm:inline">Impresión</span>
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                    {pendingCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[400px] sm:w-[450px] p-0">
+              <PrintQueuePanel locationId={locationId} />
+            </SheetContent>
+          </Sheet>
+          
           <Button 
             variant="outline" 
             size="sm"
