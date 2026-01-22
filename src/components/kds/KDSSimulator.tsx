@@ -177,35 +177,32 @@ export function KDSSimulator({ locationId, onComplete }: KDSSimulatorProps) {
 
       if (tickets && tickets.length > 0) {
         const ticketIds = tickets.map(t => t.id);
-        
-        // Get all lines for these tickets
-        const { data: lines } = await supabase
+        const nowIso = new Date().toISOString();
+
+        // Mark all lines as served (so they disappear from Kitchen/Expeditor views)
+        const { error: linesError } = await supabase
           .from('ticket_lines')
-          .select('id')
+          .update({ prep_status: 'served', ready_at: nowIso } as any)
           .in('ticket_id', ticketIds);
 
-        if (lines && lines.length > 0) {
-          // Delete modifiers
-          await supabase
-            .from('ticket_line_modifiers')
-            .delete()
-            .in('ticket_line_id', lines.map(l => l.id));
+        if (linesError) {
+          console.error('Clear: error updating lines', linesError);
+          throw linesError;
         }
 
-        // Delete lines
-        await supabase
-          .from('ticket_lines')
-          .delete()
-          .in('ticket_id', ticketIds);
-
-        // Delete tickets
-        await supabase
+        // Close tickets (so they disappear from KDS fetchOrders which uses status=open)
+        const { error: ticketsError } = await supabase
           .from('tickets')
-          .delete()
+          .update({ status: 'closed', closed_at: nowIso } as any)
           .in('id', ticketIds);
+
+        if (ticketsError) {
+          console.error('Clear: error updating tickets', ticketsError);
+          throw ticketsError;
+        }
       }
 
-      toast.success('🗑️ Comandas limpiadas', { description: 'Todas las comandas eliminadas' });
+      toast.success('🗑️ Comandas limpiadas', { description: 'Todas las comandas cerradas y retiradas del KDS' });
       onComplete();
     } catch (error) {
       console.error('Clear error:', error);
