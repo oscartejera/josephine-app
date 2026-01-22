@@ -11,3 +11,5 @@ export { KDSHistoryBoard } from './KDSHistoryBoard';
 export { KDSStatsPanel } from './KDSStatsPanel';
 export { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
 export { KDSAlertsPanel } from './KDSAlertsPanel';
+export { KDSRecallPanel } from './KDSRecallPanel';
+export { KDSKeyboardHints } from './KDSKeyboardHints';

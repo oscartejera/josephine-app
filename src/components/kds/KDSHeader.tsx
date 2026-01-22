@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, ChevronDown, History } from 'lucide-react';
+import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, ChevronDown, History, Maximize, Minimize, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
@@ -10,6 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface KDSHeaderProps {
   locationName: string;
@@ -20,6 +27,10 @@ interface KDSHeaderProps {
   alertSettings?: KDSAlertSettings;
   onUpdateAlertSettings?: (settings: Partial<KDSAlertSettings>) => void;
   alertCount?: number;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  keyboardEnabled?: boolean;
+  onToggleKeyboard?: () => void;
 }
 
 export function KDSHeader({ 
@@ -31,6 +42,10 @@ export function KDSHeader({
   alertSettings,
   onUpdateAlertSettings,
   alertCount = 0,
+  isFullscreen = false,
+  onToggleFullscreen,
+  keyboardEnabled = false,
+  onToggleKeyboard,
 }: KDSHeaderProps) {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -127,6 +142,62 @@ export function KDSHeader({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Keyboard toggle */}
+          {onToggleKeyboard && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={onToggleKeyboard}
+                    className={cn(
+                      "h-9 w-9 border-zinc-700",
+                      keyboardEnabled 
+                        ? "bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-500" 
+                        : "bg-zinc-800 text-white hover:bg-zinc-700"
+                    )}
+                  >
+                    <Keyboard className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-zinc-800 text-white border-zinc-700">
+                  <p>{keyboardEnabled ? 'Desactivar atajos' : 'Activar atajos de teclado'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {/* Fullscreen toggle */}
+          {onToggleFullscreen && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={onToggleFullscreen}
+                    className={cn(
+                      "h-9 w-9 border-zinc-700",
+                      isFullscreen 
+                        ? "bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-500" 
+                        : "bg-zinc-800 text-white hover:bg-zinc-700"
+                    )}
+                  >
+                    {isFullscreen ? (
+                      <Minimize className="h-4 w-4" />
+                    ) : (
+                      <Maximize className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-zinc-800 text-white border-zinc-700">
+                  <p>{isFullscreen ? 'Salir de pantalla completa' : 'Modo Kiosk (pantalla completa)'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
           {alertSettings && onUpdateAlertSettings && (
             <KDSAlertSettingsDialog
               settings={alertSettings}
