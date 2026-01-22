@@ -11,6 +11,7 @@ export interface KDSTicketLine {
   prep_started_at: string | null;
   ready_at: string | null;
   sent_at: string | null;
+  destination: 'kitchen' | 'bar' | 'prep';
 }
 
 export interface KDSOrder {
@@ -116,7 +117,8 @@ export function useKDSData(locationId: string) {
           prep_status: (line.prep_status || 'pending') as KDSTicketLine['prep_status'],
           prep_started_at: line.prep_started_at,
           ready_at: line.ready_at,
-          sent_at: line.sent_at
+          sent_at: line.sent_at,
+          destination: (line.destination || 'kitchen') as KDSTicketLine['destination']
         });
       }
 

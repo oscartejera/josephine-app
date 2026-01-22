@@ -2426,6 +2426,7 @@ export type Database = {
           category_name: string | null
           comped: boolean | null
           created_at: string
+          destination: string | null
           discount_line_total: number | null
           external_line_id: string | null
           gross_line_total: number | null
@@ -2448,6 +2449,7 @@ export type Database = {
           category_name?: string | null
           comped?: boolean | null
           created_at?: string
+          destination?: string | null
           discount_line_total?: number | null
           external_line_id?: string | null
           gross_line_total?: number | null
@@ -2470,6 +2472,7 @@ export type Database = {
           category_name?: string | null
           comped?: boolean | null
           created_at?: string
+          destination?: string | null
           discount_line_total?: number | null
           external_line_id?: string | null
           gross_line_total?: number | null
