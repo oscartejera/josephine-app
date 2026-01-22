@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ViewMode } from '@/hooks/useSchedulingData';
+import { ViewMode } from '@/hooks/useSchedulingSupabase';
 
 interface ViewModeDropdownProps {
   value: ViewMode;

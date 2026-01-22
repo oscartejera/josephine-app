@@ -469,32 +469,47 @@ export type Database = {
       }
       forecast_daily_metrics: {
         Row: {
+          confidence: number | null
           created_at: string
           date: string
           forecast_orders: number
           forecast_sales: number
+          generated_at: string | null
           id: string
           location_id: string
+          mape: number | null
+          model_version: string | null
+          mse: number | null
           planned_labor_cost: number
           planned_labor_hours: number
         }
         Insert: {
+          confidence?: number | null
           created_at?: string
           date: string
           forecast_orders?: number
           forecast_sales?: number
+          generated_at?: string | null
           id?: string
           location_id: string
+          mape?: number | null
+          model_version?: string | null
+          mse?: number | null
           planned_labor_cost?: number
           planned_labor_hours?: number
         }
         Update: {
+          confidence?: number | null
           created_at?: string
           date?: string
           forecast_orders?: number
           forecast_sales?: number
+          generated_at?: string | null
           id?: string
           location_id?: string
+          mape?: number | null
+          model_version?: string | null
+          mse?: number | null
           planned_labor_cost?: number
           planned_labor_hours?: number
         }
@@ -685,6 +700,7 @@ export type Database = {
         Row: {
           created_at: string
           default_cogs_percent: number | null
+          default_hourly_cost: number | null
           id: string
           location_id: string
           target_col_percent: number | null
@@ -693,6 +709,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_cogs_percent?: number | null
+          default_hourly_cost?: number | null
           id?: string
           location_id: string
           target_col_percent?: number | null
@@ -701,6 +718,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_cogs_percent?: number | null
+          default_hourly_cost?: number | null
           id?: string
           location_id?: string
           target_col_percent?: number | null

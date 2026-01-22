@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { SwapRequest } from '@/hooks/useSchedulingData';
+import { SwapRequest } from '@/hooks/useSchedulingSupabase';
 
 interface SwapRequestsPanelProps {
   isOpen: boolean;

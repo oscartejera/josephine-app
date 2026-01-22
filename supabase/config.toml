@@ -2,3 +2,6 @@ project_id = "gbddbubzvhmgnwyowucd"
 
 [functions.inventory_insights]
 verify_jwt = false
+
+[functions.generate_forecast]
+verify_jwt = true

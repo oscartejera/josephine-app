@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
-import { Shift, Employee } from '@/hooks/useSchedulingData';
+import { Shift, Employee } from '@/hooks/useSchedulingSupabase';
 
 interface SwapShiftDialogProps {
   isOpen: boolean;
