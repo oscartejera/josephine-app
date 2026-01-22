@@ -51,7 +51,7 @@ export function KDSOrderCard({
 
   const urgency = getUrgencyColor(elapsedMinutes);
   const displayName = order.tableNumber 
-    ? `Mesa ${order.tableNumber}` 
+    ? (order.tableName?.includes('Mesa') ? order.tableName : `Mesa ${order.tableNumber}`)
     : order.tableName || 'Sin mesa';
 
   const pendingItems = order.items.filter(i => i.prep_status === 'pending').length;
@@ -214,8 +214,11 @@ export function KDSOrderCard({
       {/* Footer */}
       <div className="px-3 py-2 border-t border-zinc-800 bg-zinc-900/50">
         <Button
-          onClick={() => onCompleteOrder(order.ticketId)}
-          disabled={pendingItems === 0 && preparingItems === 0}
+          onClick={() => {
+            console.log('TODO LISTO clicked for ticket:', order.ticketId);
+            onCompleteOrder(order.ticketId);
+          }}
+          disabled={activeItems.length === 0}
           className={cn(
             "w-full h-12 text-lg font-bold",
             "bg-emerald-600 hover:bg-emerald-500 text-white",

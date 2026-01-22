@@ -40,41 +40,45 @@ export function KDSHistoryBoard({ locationId, onRecoverOrder }: KDSHistoryBoardP
       const yesterday = new Date();
       yesterday.setHours(yesterday.getHours() - 24);
 
-      const { data: ticketLines, error } = await supabase
+      // First get tickets for this location
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('id, table_name, closed_at, status')
+        .eq('location_id', locationId)
+        .gte('opened_at', yesterday.toISOString())
+        .order('opened_at', { ascending: false });
+
+      if (ticketsError || !tickets || tickets.length === 0) {
+        console.log('No tickets found or error:', ticketsError);
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      const ticketIds = tickets.map(t => t.id);
+
+      // Get served lines for these tickets
+      const { data: ticketLines, error: linesError } = await supabase
         .from('ticket_lines')
-        .select(`
-          id,
-          ticket_id,
-          item_name,
-          quantity,
-          notes,
-          ready_at,
-          destination,
-          prep_status,
-          tickets!inner (
-            id,
-            table_name,
-            location_id,
-            closed_at,
-            status
-          )
-        `)
-        .eq('tickets.location_id', locationId)
+        .select('id, ticket_id, item_name, quantity, notes, ready_at, destination, prep_status')
+        .in('ticket_id', ticketIds)
         .eq('prep_status', 'served')
-        .gte('ready_at', yesterday.toISOString())
         .order('ready_at', { ascending: false })
         .limit(200);
 
-      if (error) {
-        console.error('Error fetching history:', error);
+      if (linesError) {
+        console.error('Error fetching lines:', linesError);
         return;
       }
+
+      // Create tickets map for quick lookup
+      const ticketsMap = new Map(tickets.map(t => [t.id, t]));
 
       // Group by ticket
       const ordersMap = new Map<string, ServedOrder>();
 
       for (const line of ticketLines || []) {
-        const ticket = line.tickets as any;
+        const ticket = ticketsMap.get(line.ticket_id);
         if (!ticket) continue;
 
         if (!ordersMap.has(line.ticket_id)) {
