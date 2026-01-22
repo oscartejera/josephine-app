@@ -124,6 +124,61 @@ const DEPARTMENTS = ['Management', 'BOH', 'FOH'];
 const STATIONS = ['Grill', 'Prep', 'Bar', 'Floor', 'Counter', 'Drive-thru'];
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Legacy location name mappings (for old URLs like /scheduling?location=southside)
+const LEGACY_LOCATION_ALIASES: Record<string, string[]> = {
+  'southside': ['southside', 'south'],
+  'westside': ['westside', 'west'],
+  'central': ['central', 'centro', 'downtown'],
+  'hq': ['hq', 'headquarters', 'main'],
+};
+
+/**
+ * Resolve a location parameter (UUID or legacy string) to a valid UUID
+ * @param locationParam - The location parameter from URL (could be UUID or legacy string)
+ * @param locations - Available locations from DB
+ * @returns Valid UUID or null
+ */
+export function resolveLocationId(
+  locationParam: string | null,
+  locations: Location[]
+): string | null {
+  if (!locationParam || locations.length === 0) return null;
+  
+  // If it's already a valid UUID, check if it exists in locations
+  if (UUID_REGEX.test(locationParam)) {
+    const exists = locations.find(l => l.id === locationParam);
+    return exists ? locationParam : locations[0]?.id || null;
+  }
+  
+  // Try to match by legacy alias or partial name
+  const lowerParam = locationParam.toLowerCase();
+  
+  // Check legacy aliases
+  for (const [alias, variants] of Object.entries(LEGACY_LOCATION_ALIASES)) {
+    if (variants.includes(lowerParam)) {
+      const match = locations.find(l => 
+        l.name.toLowerCase().includes(alias) ||
+        l.name.toLowerCase().includes(lowerParam)
+      );
+      if (match) return match.id;
+    }
+  }
+  
+  // Direct partial name match
+  const match = locations.find(l => 
+    l.name.toLowerCase().includes(lowerParam) ||
+    lowerParam.includes(l.name.toLowerCase())
+  );
+  
+  if (match) return match.id;
+  
+  // Fallback to first location
+  return locations[0]?.id || null;
+}
+
 // Fetch locations from DB
 async function fetchLocations(): Promise<Location[]> {
   const { data, error } = await supabase
@@ -419,9 +474,11 @@ export function useSchedulingSupabase(
   
   const isLoading = employeesLoading || shiftsLoading || forecastLoading;
   
-  // Build schedule data
+  // Build schedule data - show data if we have shifts OR hasSchedule flag
+  const hasShiftsInDB = dbShifts.length > 0;
+  
   const data = useMemo((): ScheduleData | null => {
-    if (!locationId || !hasSchedule) return null;
+    if (!locationId || (!hasSchedule && !hasShiftsInDB)) return null;
     
     const location = locations.find(l => l.id === locationId);
     if (!location) return null;
@@ -515,14 +572,56 @@ export function useSchedulingSupabase(
     forecastByDate, weekStart, weekEnd, shiftOverrides, newShifts, targetColPercent, actualByDate
   ]);
   
-  // Create schedule (just reveals existing data)
+  // Create schedule - calls Edge Function to generate real shifts
   const createSchedule = useCallback(async () => {
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    setShiftOverrides({});
-    setNewShifts([]);
-    setHasSchedule(true);
-  }, []);
+    if (!locationId) {
+      toast.error('No location selected');
+      return;
+    }
+    
+    try {
+      console.log('[createSchedule] Calling generate_schedule for', locationId, weekStartISO);
+      
+      const { data: result, error } = await supabase.functions.invoke('generate_schedule', {
+        body: { 
+          location_id: locationId, 
+          week_start: weekStartISO 
+        }
+      });
+      
+      if (error) {
+        console.error('[createSchedule] Edge function error:', error);
+        toast.error(`Error generando turnos: ${error.message}`);
+        return;
+      }
+      
+      if (result?.error) {
+        console.error('[createSchedule] Result error:', result.error);
+        toast.error(result.error);
+        return;
+      }
+      
+      console.log('[createSchedule] Success:', result);
+      
+      // Refetch shifts from DB
+      await refetchShifts();
+      
+      // Reset local overrides and show schedule
+      setShiftOverrides({});
+      setNewShifts([]);
+      setHasSchedule(true);
+      
+      toast.success(`Creados ${result.shifts_created} turnos para ${result.days_generated} días`);
+      
+      if (result.warnings?.length > 0) {
+        console.warn('[createSchedule] Warnings:', result.warnings);
+      }
+      
+    } catch (err) {
+      console.error('[createSchedule] Exception:', err);
+      toast.error('Error al generar el horario');
+    }
+  }, [locationId, weekStartISO, refetchShifts]);
   
   const undoSchedule = useCallback(() => {
     setHasSchedule(false);
@@ -531,13 +630,37 @@ export function useSchedulingSupabase(
   }, []);
   
   const acceptSchedule = useCallback(() => {
-    // Accept current state
+    // Accept current state - shifts are already in DB
+    toast.success('Horario aceptado');
   }, []);
   
   const publishSchedule = useCallback(async (emailBody?: string) => {
-    // In real implementation, update planned_shifts status to 'published'
-    await new Promise(resolve => setTimeout(resolve, 1500));
-  }, []);
+    if (!locationId) return;
+    
+    try {
+      // Update all draft shifts to published status
+      const { error } = await supabase
+        .from('planned_shifts')
+        .update({ status: 'published' })
+        .eq('location_id', locationId)
+        .gte('shift_date', weekStartISO)
+        .lte('shift_date', weekEndISO)
+        .eq('status', 'draft');
+      
+      if (error) {
+        console.error('[publishSchedule] Error:', error);
+        toast.error('Error al publicar el horario');
+        return;
+      }
+      
+      await refetchShifts();
+      toast.success('Horario publicado');
+      
+    } catch (err) {
+      console.error('[publishSchedule] Exception:', err);
+      toast.error('Error al publicar');
+    }
+  }, [locationId, weekStartISO, weekEndISO, refetchShifts]);
   
   const moveShift = useCallback((shiftId: string, toEmployeeId: string, toDate: string) => {
     setShiftOverrides(prev => ({
