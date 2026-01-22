@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, ChevronDown, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
 import type { KDSAlertSettings } from '@/hooks/useKDSAlerts';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface KDSHeaderProps {
   locationName: string;
@@ -39,21 +45,44 @@ export function KDSHeader({
   return (
     <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => {
-            // Try to go back, but if there's no history, go to KDS dashboard or POS
-            if (window.history.length > 1) {
-              navigate(-1);
-            } else {
-              navigate('/insights/kds');
-            }
-          }}
-          className="text-zinc-400 hover:text-white hover:bg-zinc-800"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-zinc-400 hover:text-white hover:bg-zinc-800 gap-1 px-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="start" 
+            className="w-48 bg-zinc-800 border-zinc-700 z-50"
+          >
+            <DropdownMenuItem 
+              onClick={() => navigate(-1)}
+              className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
+            >
+              <History className="h-4 w-4 mr-2" />
+              Página anterior
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => navigate('/insights/kds')}
+              className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
+            >
+              <ChefHat className="h-4 w-4 mr-2" />
+              Dashboard KDS
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => navigate('/pos')}
+              className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
+            >
+              <Monitor className="h-4 w-4 mr-2" />
+              POS
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <div>
           <h1 className="text-xl font-bold text-white">KDS - {locationName}</h1>
           <div className="flex items-center gap-3 text-sm">
