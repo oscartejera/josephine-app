@@ -40,24 +40,25 @@ const CONFIG = {
   shiftDuration: 8,
   
   // Minimum staffing per service (casual dining 30 tables)
+  // Using standardized role names
   minStaff: {
     lunch: {
       'Cocinero/a': 2,
-      'Preparación': 1,
+      'Personal de preparación': 1,
       'Lavaplatos': 0,
       'Camarero/a': 4,
-      'Barra': 0,
+      'Personal de barra': 0,
       'Gerente': 0,
-      'Limpieza': 0,
+      'Equipo de limpieza': 0,
     },
     dinner: {
       'Cocinero/a': 3,
-      'Preparación': 0,
+      'Personal de preparación': 0,
       'Lavaplatos': 1,
       'Camarero/a': 5,
-      'Barra': 1,
+      'Personal de barra': 1,
       'Gerente': 1,
-      'Limpieza': 1,
+      'Equipo de limpieza': 1,
     },
   },
 };
@@ -428,15 +429,15 @@ Deno.serve(async (req) => {
         const cooksLunch = Math.max(CONFIG.minStaff.lunch['Cocinero/a'], isHighDemand ? 3 : 2);
         const cooksDinner = Math.max(CONFIG.minStaff.dinner['Cocinero/a'], isHighDemand ? 4 : 3);
         
-        // Calculate initial staff needs
+        // Calculate initial staff needs (using standardized role names)
         plan.staffNeeded = {
           'Cocinero/a': { shiftA: cooksLunch, shiftB: cooksDinner },
-          'Preparación': { shiftA: CONFIG.minStaff.lunch['Preparación'], shiftB: isHighDemand ? 1 : 0 },
+          'Personal de preparación': { shiftA: CONFIG.minStaff.lunch['Personal de preparación'], shiftB: isHighDemand ? 1 : 0 },
           'Lavaplatos': { shiftA: isHighDemand ? 1 : 0, shiftB: CONFIG.minStaff.dinner['Lavaplatos'] },
           'Camarero/a': { shiftA: serversLunch, shiftB: serversDinner },
-          'Barra': { shiftA: isHighDemand ? 1 : 0, shiftB: CONFIG.minStaff.dinner['Barra'] },
+          'Personal de barra': { shiftA: isHighDemand ? 1 : 0, shiftB: CONFIG.minStaff.dinner['Personal de barra'] },
           'Gerente': { shiftA: isHighDemand ? 1 : 0, shiftB: CONFIG.minStaff.dinner['Gerente'] },
-          'Limpieza': { shiftA: 0, shiftB: CONFIG.minStaff.dinner['Limpieza'] },
+          'Equipo de limpieza': { shiftA: 0, shiftB: CONFIG.minStaff.dinner['Equipo de limpieza'] },
         };
       }
       
@@ -541,8 +542,8 @@ Deno.serve(async (req) => {
       
       // Optimization: if COL% > target, try to reduce flex roles
       if (plan.colPercent > targetColPercent && plan.forecastSales > 0) {
-        // Remove last added non-essential shifts (Preparación extra, second Barra, etc.)
-        const flexRoles = ['Preparación', 'Barra'];
+        // Remove last added non-essential shifts (prep extra, second barra, etc.)
+        const flexRoles = ['Personal de preparación', 'Personal de barra'];
         let removed = false;
         
         for (let i = plan.assignments.length - 1; i >= 0 && !removed; i--) {
