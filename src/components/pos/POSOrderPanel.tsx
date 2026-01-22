@@ -147,7 +147,19 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         return;
       }
 
-      // Insert new lines
+      // Determine destination based on product category (can be extended with product config)
+      const getDestination = (line: typeof newLines[0]): 'kitchen' | 'bar' | 'prep' => {
+        const name = line.name.toLowerCase();
+        // Simple heuristic: drinks go to bar, everything else to kitchen
+        if (name.includes('cerveza') || name.includes('vino') || name.includes('copa') || 
+            name.includes('gin') || name.includes('mojito') || name.includes('cocktail') ||
+            name.includes('whisky') || name.includes('vodka') || name.includes('ron')) {
+          return 'bar';
+        }
+        return 'kitchen';
+      };
+
+      // Insert new lines with destination
       const { error: linesError } = await supabase
         .from('ticket_lines')
         .insert(newLines.map(line => ({
@@ -160,22 +172,35 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           notes: line.notes,
           sent_to_kitchen: true,
           sent_at: new Date().toISOString(),
+          destination: getDestination(line),
+          prep_status: 'pending',
         })));
 
       if (linesError) throw linesError;
 
-      // Add to print queue
-      await supabase.from('pos_print_queue').insert({
-        location_id: locationId,
-        ticket_id: currentTicketId,
-        destination: 'kitchen',
-        items_json: newLines.map(l => ({
-          name: l.name,
-          qty: l.quantity,
-          notes: l.notes,
-        })),
-        status: 'pending',
-      });
+      // Group lines by destination for print queue
+      const destinations = ['kitchen', 'bar', 'prep'] as const;
+      const printQueueInserts = destinations
+        .map(dest => {
+          const destLines = newLines.filter(l => getDestination(l) === dest);
+          if (destLines.length === 0) return null;
+          return {
+            location_id: locationId,
+            ticket_id: currentTicketId,
+            destination: dest,
+            items_json: destLines.map(l => ({
+              name: l.name,
+              qty: l.quantity,
+              notes: l.notes,
+            })),
+            status: 'pending',
+          };
+        })
+        .filter(Boolean);
+
+      if (printQueueInserts.length > 0) {
+        await supabase.from('pos_print_queue').insert(printQueueInserts);
+      }
 
       // Update ticket totals
       await supabase
@@ -183,7 +208,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         .update({ gross_total: total, net_total: subtotal })
         .eq('id', currentTicketId);
 
-      toast.success('Comanda enviada a cocina');
+      toast.success('Comanda enviada');
       onRefresh();
       await loadTicketLines(currentTicketId);
     } catch (error) {
