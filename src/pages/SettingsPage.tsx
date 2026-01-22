@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
 import { TeamManager } from '@/components/settings/TeamManager';
 import { DemoDataManager } from '@/components/settings/DemoDataManager';
+import { ProductKDSManager } from '@/components/settings/ProductKDSManager';
 import { Progress } from '@/components/ui/progress';
 
 interface PaymentMethod {
@@ -259,6 +260,7 @@ export default function SettingsPage() {
           <TabsTrigger value="locations">Locales</TabsTrigger>
           {canManageUsers && <TabsTrigger value="users">Roles</TabsTrigger>}
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
+          <TabsTrigger value="kds">Destinos KDS</TabsTrigger>
           {canManageBilling && <TabsTrigger value="payment">Payment</TabsTrigger>}
           <TabsTrigger value="export">Exportar</TabsTrigger>
           {isOwner && <TabsTrigger value="demo">Demo</TabsTrigger>}
@@ -401,6 +403,10 @@ export default function SettingsPage() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="kds">
+          <ProductKDSManager />
         </TabsContent>
 
         <TabsContent value="payment">
