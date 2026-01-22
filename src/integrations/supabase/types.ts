@@ -591,44 +591,6 @@ export type Database = {
           },
         ]
       }
-      forecasts: {
-        Row: {
-          created_at: string
-          forecast_covers: number | null
-          forecast_date: string
-          forecast_sales: number | null
-          hour: number
-          id: string
-          location_id: string
-        }
-        Insert: {
-          created_at?: string
-          forecast_covers?: number | null
-          forecast_date: string
-          forecast_sales?: number | null
-          hour: number
-          id?: string
-          location_id: string
-        }
-        Update: {
-          created_at?: string
-          forecast_covers?: number | null
-          forecast_date?: string
-          forecast_sales?: number | null
-          hour?: number
-          id?: string
-          location_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forecasts_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       groups: {
         Row: {
           created_at: string

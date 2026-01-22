@@ -389,44 +389,29 @@ Deno.serve(async (req) => {
     }
     results.push({ step: 'planned_shifts', status: 'seeded' });
 
-    // 10. Seed forecasts
-    for (const [, locId] of Object.entries(locationMap)) {
-      const { data: existingForecasts } = await supabaseAdmin
-        .from('forecasts')
-        .select('id')
-        .eq('location_id', locId)
-        .limit(1);
-      
-      if (!existingForecasts || existingForecasts.length === 0) {
-        const forecastInserts = [];
+    // 10. Trigger forecast generation via generate_forecast edge function
+    // The LR+SI v3 model generates daily forecasts stored in forecast_daily_metrics
+    // Hourly distribution is handled client-side using HOURLY_WEIGHTS
+    try {
+      // Call generate_forecast for each location
+      for (const [locName, locId] of Object.entries(locationMap)) {
+        const forecastResp = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate_forecast`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({ location_id: locId, horizon_days: 365 })
+        });
         
-        for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
-          const date = new Date(now);
-          date.setDate(date.getDate() - dayOffset);
-          const dateStr = date.toISOString().split('T')[0];
-          
-          // Hourly forecasts from 10:00 to 23:00
-          for (let hour = 10; hour <= 23; hour++) {
-            const baseValue = hour >= 12 && hour <= 14 ? 400 : (hour >= 19 && hour <= 21 ? 500 : 200);
-            const forecastSales = baseValue + Math.random() * 150;
-            const forecastCovers = Math.floor(forecastSales / 25);
-            
-            forecastInserts.push({
-              location_id: locId,
-              forecast_date: dateStr,
-              hour,
-              forecast_sales: forecastSales,
-              forecast_covers: forecastCovers
-            });
-          }
-        }
-        
-        if (forecastInserts.length > 0) {
-          await supabaseAdmin.from('forecasts').insert(forecastInserts);
+        if (!forecastResp.ok) {
+          console.warn(`Forecast generation for ${locName} returned ${forecastResp.status}`);
         }
       }
+      results.push({ step: 'forecasts', status: 'generated via LR+SI v3' });
+    } catch (e) {
+      results.push({ step: 'forecasts', status: 'skipped', details: String(e) });
     }
-    results.push({ step: 'forecasts', status: 'seeded' });
 
     // Legacy seeds
     try {
