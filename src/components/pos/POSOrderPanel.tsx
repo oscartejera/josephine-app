@@ -203,7 +203,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       await supabase.from('payments').insert([{
         ticket_id: ticketId,
         amount,
-        method,
+        method: method as 'card' | 'cash' | 'other',
       }]);
 
       // Close ticket

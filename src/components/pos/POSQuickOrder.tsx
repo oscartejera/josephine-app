@@ -107,7 +107,7 @@ export function POSQuickOrder({ locationId, products, cashSession, onRefresh }: 
       await supabase.from('payments').insert([{
         ticket_id: ticket.id,
         amount,
-        method,
+        method: method as 'card' | 'cash' | 'other',
       }]);
 
       toast.success('Venta completada');

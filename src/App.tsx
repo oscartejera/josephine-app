@@ -33,6 +33,8 @@ import Budgets from "@/pages/Budgets";
 import Integrations from "@/pages/Integrations";
 import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
+import POS from "@/pages/POS";
+import POSTerminal from "@/pages/POSTerminal";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -121,6 +123,10 @@ function AppRoutes() {
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/:step" element={<Payroll />} />
         <Route path="/settings" element={<SettingsPage />} />
+        
+        {/* POS routes */}
+        <Route path="/pos" element={<POS />} />
+        <Route path="/pos/:locationId" element={<POSTerminal />} />
       </Route>
       
       <Route path="*" element={<NotFound />} />
