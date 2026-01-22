@@ -27,22 +27,8 @@ export default function KDS() {
     completeOrder 
   } = useKDSData(locationId || '');
 
-  if (!locationId || !location) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <p className="text-zinc-400">Local no encontrado</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-      </div>
-    );
-  }
-
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  
   // Filter orders by destination (for kitchen view)
   const filteredOrders = useMemo(() => {
     if (selectedDestination === 'all') return orders;
@@ -93,6 +79,23 @@ export default function KDS() {
     (acc, order) => acc + order.items.filter(i => i.prep_status === 'preparing').length, 
     0
   );
+
+  // CONDITIONAL RETURNS AFTER ALL HOOKS
+  if (!locationId || !location) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <p className="text-zinc-400">Local no encontrado</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   const handleItemStatusChange = async (lineId: string, newStatus: 'pending' | 'preparing' | 'ready' | 'served') => {
     await updateItemStatus(lineId, newStatus);
