@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Wifi, WifiOff, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
+import type { KDSAlertSettings } from '@/hooks/useKDSAlerts';
 
 interface KDSHeaderProps {
   locationName: string;
@@ -9,9 +11,21 @@ interface KDSHeaderProps {
   pendingCount: number;
   preparingCount: number;
   onShowStats?: () => void;
+  alertSettings?: KDSAlertSettings;
+  onUpdateAlertSettings?: (settings: Partial<KDSAlertSettings>) => void;
+  alertCount?: number;
 }
 
-export function KDSHeader({ locationName, isConnected, pendingCount, preparingCount, onShowStats }: KDSHeaderProps) {
+export function KDSHeader({ 
+  locationName, 
+  isConnected, 
+  pendingCount, 
+  preparingCount, 
+  onShowStats,
+  alertSettings,
+  onUpdateAlertSettings,
+  alertCount = 0,
+}: KDSHeaderProps) {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -65,19 +79,37 @@ export function KDSHeader({ locationName, isConnected, pendingCount, preparingCo
             <p className="text-2xl font-bold text-blue-400">{preparingCount}</p>
             <p className="text-xs text-zinc-500">En preparación</p>
           </div>
+          {alertCount > 0 && (
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1">
+                <AlertTriangle className="h-5 w-5 text-red-400 animate-pulse" />
+                <p className="text-2xl font-bold text-red-400">{alertCount}</p>
+              </div>
+              <p className="text-xs text-zinc-500">Alertas</p>
+            </div>
+          )}
         </div>
         
-        {onShowStats && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onShowStats}
-            className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white"
-          >
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Stats
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {alertSettings && onUpdateAlertSettings && (
+            <KDSAlertSettingsDialog
+              settings={alertSettings}
+              onUpdateSettings={onUpdateAlertSettings}
+            />
+          )}
+          
+          {onShowStats && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onShowStats}
+              className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Stats
+            </Button>
+          )}
+        </div>
         
         <div className="text-right">
           <p className="text-3xl font-mono font-bold text-white">
