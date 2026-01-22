@@ -1,4 +1,5 @@
 export { KDSHeader } from './KDSHeader';
+export { KDSSimulator } from './KDSSimulator';
 export { KDSBoard } from './KDSBoard';
 export { KDSOrderCard } from './KDSOrderCard';
 export { KDSDestinationFilter } from './KDSDestinationFilter';
