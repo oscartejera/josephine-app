@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export type KDSViewMode = 'kitchen' | 'expeditor';
+export type KDSViewMode = 'kitchen' | 'expeditor' | 'history';
 
 interface KDSViewToggleProps {
   mode: KDSViewMode;
@@ -52,6 +52,19 @@ export function KDSViewToggle({ mode, onChange, kitchenCount, expeditorCount }: 
             {expeditorCount}
           </span>
         )}
+      </button>
+      
+      <button
+        onClick={() => onChange('history')}
+        className={cn(
+          "flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all text-sm",
+          mode === 'history'
+            ? "bg-zinc-600 text-white shadow"
+            : "text-zinc-400 hover:text-zinc-200"
+        )}
+      >
+        <span>📋</span>
+        <span>Historial</span>
       </button>
     </div>
   );

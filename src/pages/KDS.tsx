@@ -1,13 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useKDSData } from '@/hooks/useKDSData';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   KDSHeader, 
   KDSBoard, 
   KDSDestinationFilter, 
   KDSViewToggle,
   KDSExpeditorBoard,
+  KDSHistoryBoard,
   type KDSDestination,
   type KDSViewMode 
 } from '@/components/kds';
@@ -24,7 +27,8 @@ export default function KDS() {
     loading, 
     isConnected, 
     updateItemStatus, 
-    completeOrder 
+    completeOrder,
+    refetch
   } = useKDSData(locationId || '');
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
@@ -80,6 +84,29 @@ export default function KDS() {
     0
   );
 
+  // Recover order handler - moves items back to 'ready' status
+  const handleRecoverOrder = useCallback(async (ticketId: string) => {
+    try {
+      const { error } = await supabase
+        .from('ticket_lines')
+        .update({ 
+          prep_status: 'ready',
+          ready_at: new Date().toISOString()
+        })
+        .eq('ticket_id', ticketId)
+        .eq('prep_status', 'served');
+
+      if (error) throw error;
+
+      toast.success('Comanda recuperada al expedidor');
+      refetch();
+      setViewMode('expeditor');
+    } catch (error) {
+      console.error('Error recovering order:', error);
+      toast.error('Error al recuperar comanda');
+    }
+  }, [refetch]);
+
   // CONDITIONAL RETURNS AFTER ALL HOOKS
   if (!locationId || !location) {
     return (
@@ -123,7 +150,7 @@ export default function KDS() {
       <KDSHeader 
         locationName={location.name}
         isConnected={isConnected}
-        pendingCount={viewMode === 'kitchen' ? pendingCount : expeditorCount}
+        pendingCount={viewMode === 'kitchen' ? pendingCount : viewMode === 'expeditor' ? expeditorCount : 0}
         preparingCount={viewMode === 'kitchen' ? preparingCount : 0}
       />
       
@@ -151,11 +178,16 @@ export default function KDS() {
           onItemStatusChange={handleItemStatusChange}
           onCompleteOrder={handleCompleteOrder}
         />
-      ) : (
+      ) : viewMode === 'expeditor' ? (
         <KDSExpeditorBoard
           orders={orders}
           onServeItem={handleServeItem}
           onServeAll={handleServeAll}
+        />
+      ) : (
+        <KDSHistoryBoard
+          locationId={locationId}
+          onRecoverOrder={handleRecoverOrder}
         />
       )}
     </div>
