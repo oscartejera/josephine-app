@@ -19,6 +19,7 @@ interface OrderLine {
   notes?: string;
   modifiers?: { name: string; option: string; price: number }[];
   sent_to_kitchen: boolean;
+  kds_destination?: 'kitchen' | 'bar' | 'prep';
 }
 
 interface POSOrderPanelProps {
@@ -79,7 +80,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       updated[existingIndex].total = updated[existingIndex].quantity * updated[existingIndex].unit_price;
       setOrderLines(updated);
     } else {
-      // Add new line
+      // Add new line with product's kds_destination
       setOrderLines([...orderLines, {
         product_id: product.id,
         name: product.name,
@@ -87,6 +88,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         unit_price: product.price,
         total: product.price,
         sent_to_kitchen: false,
+        kds_destination: product.kds_destination || 'kitchen',
       }]);
     }
   };
@@ -147,16 +149,9 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         return;
       }
 
-      // Determine destination based on product category (can be extended with product config)
+      // Use product's configured kds_destination
       const getDestination = (line: typeof newLines[0]): 'kitchen' | 'bar' | 'prep' => {
-        const name = line.name.toLowerCase();
-        // Simple heuristic: drinks go to bar, everything else to kitchen
-        if (name.includes('cerveza') || name.includes('vino') || name.includes('copa') || 
-            name.includes('gin') || name.includes('mojito') || name.includes('cocktail') ||
-            name.includes('whisky') || name.includes('vodka') || name.includes('ron')) {
-          return 'bar';
-        }
-        return 'kitchen';
+        return line.kds_destination || 'kitchen';
       };
 
       // Insert new lines with destination
