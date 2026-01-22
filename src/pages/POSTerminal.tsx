@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LayoutGrid, ShoppingCart, ClipboardList, Settings, Receipt } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, ShoppingCart, ClipboardList, Monitor } from 'lucide-react';
 import { POSFloorPlan } from '@/components/pos/POSFloorPlan';
 import { POSQuickOrder } from '@/components/pos/POSQuickOrder';
 import { POSOpenTables } from '@/components/pos/POSOpenTables';
@@ -60,6 +60,15 @@ export default function POSTerminal() {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate(`/kds/${locationId}`)}
+            className="gap-2"
+          >
+            <Monitor className="h-4 w-4" />
+            <span className="hidden sm:inline">KDS</span>
+          </Button>
           <POSCashSession 
             locationId={locationId} 
             session={cashSession} 

@@ -35,6 +35,7 @@ import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
 import POS from "@/pages/POS";
 import POSTerminal from "@/pages/POSTerminal";
+import KDS from "@/pages/KDS";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -128,6 +129,15 @@ function AppRoutes() {
         <Route path="/pos" element={<POS />} />
         <Route path="/pos/:locationId" element={<POSTerminal />} />
       </Route>
+      
+      {/* KDS route - outside protected layout for fullscreen */}
+      <Route path="/kds/:locationId" element={
+        <ProtectedRoute>
+          <AppProvider>
+            <KDS />
+          </AppProvider>
+        </ProtectedRoute>
+      } />
       
       <Route path="*" element={<NotFound />} />
     </Routes>

@@ -2433,7 +2433,10 @@ export type Database = {
           item_external_id: string | null
           item_name: string
           notes: string | null
+          prep_started_at: string | null
+          prep_status: string | null
           quantity: number | null
+          ready_at: string | null
           sent_at: string | null
           sent_to_kitchen: boolean | null
           tax_rate: number | null
@@ -2452,7 +2455,10 @@ export type Database = {
           item_external_id?: string | null
           item_name: string
           notes?: string | null
+          prep_started_at?: string | null
+          prep_status?: string | null
           quantity?: number | null
+          ready_at?: string | null
           sent_at?: string | null
           sent_to_kitchen?: boolean | null
           tax_rate?: number | null
@@ -2471,7 +2477,10 @@ export type Database = {
           item_external_id?: string | null
           item_name?: string
           notes?: string | null
+          prep_started_at?: string | null
+          prep_status?: string | null
           quantity?: number | null
+          ready_at?: string | null
           sent_at?: string | null
           sent_to_kitchen?: boolean | null
           tax_rate?: number | null
