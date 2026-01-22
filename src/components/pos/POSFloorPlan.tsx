@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { FloorMap, POSTable, POSProduct } from '@/hooks/usePOSData';
 import { POSOrderPanel } from './POSOrderPanel';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, Calendar } from 'lucide-react';
 import { POSTableCard } from './POSTableCard';
 import { POSFloorEditor } from './POSFloorEditor';
+import { POSReservationDialog, ReservationFormData } from './POSReservationDialog';
+import { POSReservationsPanel } from './POSReservationsPanel';
+import { useReservationsData } from '@/hooks/useReservationsData';
+import { toast } from 'sonner';
 
 interface POSFloorPlanProps {
   locationId: string;
@@ -20,9 +24,51 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
   const [selectedMapId, setSelectedMapId] = useState<string>(floorMaps[0]?.id || '');
   const [selectedTable, setSelectedTable] = useState<POSTable | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [showReservations, setShowReservations] = useState(true);
+  const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const { 
+    reservations, 
+    createReservation, 
+    updateReservation, 
+    seatGuests 
+  } = useReservationsData(locationId, selectedDate);
 
   const currentMap = floorMaps.find(m => m.id === selectedMapId);
   const currentTables = tables.filter(t => t.floor_map_id === selectedMapId);
+
+  // Map reservations to tables for display
+  const tableReservationsMap = useMemo(() => {
+    const map = new Map<string, typeof reservations[0]>();
+    reservations
+      .filter(r => r.pos_table_id && ['pending', 'confirmed'].includes(r.status))
+      .forEach(r => {
+        if (r.pos_table_id && !map.has(r.pos_table_id)) {
+          map.set(r.pos_table_id, r);
+        }
+      });
+    return map;
+  }, [reservations]);
+
+  const handleCreateReservation = async (data: ReservationFormData) => {
+    await createReservation(data as any);
+  };
+
+  const handleSeatGuests = async (reservationId: string) => {
+    await seatGuests(reservationId);
+    toast.success('Clientes sentados');
+  };
+
+  const handleCancelReservation = async (reservationId: string) => {
+    await updateReservation(reservationId, { status: 'cancelled' });
+    toast.success('Reserva cancelada');
+  };
+
+  const handleAssignTable = (reservationId: string) => {
+    // For now, show a toast - could open a dialog to select table
+    toast.info('Selecciona una mesa en el plano para asignarla');
+  };
 
   // Empty state - no floor maps configured
   if (floorMaps.length === 0) {
@@ -62,23 +108,49 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Floor Map Selector */}
         <div className="p-3 border-b border-border flex items-center justify-between shrink-0">
-          <Select value={selectedMapId} onValueChange={setSelectedMapId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Seleccionar sala" />
-            </SelectTrigger>
-            <SelectContent>
-              {floorMaps.map((map) => (
-                <SelectItem key={map.id} value={map.id}>
-                  {map.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3">
+            <Select value={selectedMapId} onValueChange={setSelectedMapId}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Seleccionar sala" />
+              </SelectTrigger>
+              <SelectContent>
+                {floorMaps.map((map) => (
+                  <SelectItem key={map.id} value={map.id}>
+                    {map.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Button variant="outline" size="sm" onClick={() => setShowEditor(true)}>
-            <Settings className="h-4 w-4 mr-2" />
-            Editar
-          </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowEditor(true)}>
+              <Settings className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={() => setShowReservationDialog(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Reserva
+            </Button>
+            <Button 
+              variant={showReservations ? "secondary" : "ghost"}
+              size="sm" 
+              onClick={() => setShowReservations(!showReservations)}
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Reservas
+              {reservations.length > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                  {reservations.length}
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Tables Grid */}
@@ -96,6 +168,7 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
                 table={table}
                 isSelected={selectedTable?.id === table.id}
                 onClick={() => setSelectedTable(table)}
+                reservation={tableReservationsMap.get(table.id)}
               />
             ))}
 
@@ -112,6 +185,20 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
           </div>
         </div>
       </div>
+
+      {/* Reservations Panel */}
+      {showReservations && !selectedTable && (
+        <div className="w-80 shrink-0">
+          <POSReservationsPanel
+            reservations={reservations}
+            onSeatGuests={handleSeatGuests}
+            onCancel={handleCancelReservation}
+            onAssignTable={handleAssignTable}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
+        </div>
+      )}
 
       {/* Order Panel - slides in when table selected */}
       {selectedTable && (
@@ -135,6 +222,17 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
             setShowEditor(false);
             onRefresh();
           }}
+        />
+      )}
+
+      {/* Reservation Dialog */}
+      {showReservationDialog && (
+        <POSReservationDialog
+          open={showReservationDialog}
+          onClose={() => setShowReservationDialog(false)}
+          onSubmit={handleCreateReservation}
+          tables={tables}
+          locationId={locationId}
         />
       )}
     </div>
