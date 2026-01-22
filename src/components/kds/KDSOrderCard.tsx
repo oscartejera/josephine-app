@@ -9,7 +9,7 @@ interface KDSOrderCardProps {
   onItemStatusChange: (lineId: string, newStatus: 'pending' | 'preparing' | 'ready' | 'served') => void;
   onCompleteOrder: (ticketId: string) => void;
   isNew?: boolean;
-  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; overdueMinutes: number };
+  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; overdueMinutes: number; threshold: number };
 }
 
 function getElapsedMinutes(dateString: string): number {
@@ -98,7 +98,7 @@ export function KDSOrderCard({ order, onItemStatusChange, onCompleteOrder, isNew
       {/* Items */}
       <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
         {order.items.map((item) => {
-          const overdueInfo = getItemOverdueInfo?.(item) || { isOverdue: false, overdueMinutes: 0 };
+          const overdueInfo = getItemOverdueInfo?.(item) || { isOverdue: false, overdueMinutes: 0, threshold: 0 };
           
           return (
             <button

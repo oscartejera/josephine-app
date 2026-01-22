@@ -1831,6 +1831,7 @@ export type Database = {
           kds_destination: string | null
           location_id: string | null
           name: string
+          target_prep_time: number | null
         }
         Insert: {
           category?: string | null
@@ -1841,6 +1842,7 @@ export type Database = {
           kds_destination?: string | null
           location_id?: string | null
           name: string
+          target_prep_time?: number | null
         }
         Update: {
           category?: string | null
@@ -1851,6 +1853,7 @@ export type Database = {
           kds_destination?: string | null
           location_id?: string | null
           name?: string
+          target_prep_time?: number | null
         }
         Relationships: [
           {

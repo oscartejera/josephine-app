@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChefHat, Wine, Timer, Search, Save, Loader2 } from 'lucide-react';
+import { ChefHat, Wine, Timer, Search, Save, Loader2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -29,14 +29,20 @@ interface Product {
   name: string;
   category: string | null;
   kds_destination: 'kitchen' | 'bar' | 'prep';
+  target_prep_time: number | null;
   location_id: string;
 }
 
 const destinationConfig = {
-  kitchen: { icon: ChefHat, label: 'Cocina', color: 'bg-orange-500/20 text-orange-500 border-orange-500/30' },
-  bar: { icon: Wine, label: 'Bar', color: 'bg-purple-500/20 text-purple-500 border-purple-500/30' },
-  prep: { icon: Timer, label: 'Prep', color: 'bg-blue-500/20 text-blue-500 border-blue-500/30' },
+  kitchen: { icon: ChefHat, label: 'Cocina', color: 'bg-orange-500/20 text-orange-500 border-orange-500/30', defaultTime: 8 },
+  bar: { icon: Wine, label: 'Bar', color: 'bg-purple-500/20 text-purple-500 border-purple-500/30', defaultTime: 3 },
+  prep: { icon: Timer, label: 'Prep', color: 'bg-blue-500/20 text-blue-500 border-blue-500/30', defaultTime: 5 },
 };
+
+interface PendingChange {
+  kds_destination?: 'kitchen' | 'bar' | 'prep';
+  target_prep_time?: number | null;
+}
 
 export function ProductKDSManager() {
   const { selectedLocationId, locations } = useApp();
@@ -46,7 +52,7 @@ export function ProductKDSManager() {
   const [saving, setSaving] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [pendingChanges, setPendingChanges] = useState<Map<string, 'kitchen' | 'bar' | 'prep'>>(new Map());
+  const [pendingChanges, setPendingChanges] = useState<Map<string, PendingChange>>(new Map());
 
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))] as string[];
 
@@ -75,7 +81,7 @@ export function ProductKDSManager() {
     try {
       let query = supabase
         .from('products')
-        .select('id, name, category, kds_destination, location_id')
+        .select('id, name, category, kds_destination, target_prep_time, location_id')
         .eq('is_active', true)
         .order('category')
         .order('name');
@@ -90,7 +96,8 @@ export function ProductKDSManager() {
 
       setProducts((data || []).map(p => ({
         ...p,
-        kds_destination: (p.kds_destination || 'kitchen') as 'kitchen' | 'bar' | 'prep'
+        kds_destination: (p.kds_destination || 'kitchen') as 'kitchen' | 'bar' | 'prep',
+        target_prep_time: p.target_prep_time,
       })));
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -103,25 +110,38 @@ export function ProductKDSManager() {
   const handleDestinationChange = (productId: string, destination: 'kitchen' | 'bar' | 'prep') => {
     setPendingChanges(prev => {
       const next = new Map(prev);
-      next.set(productId, destination);
+      const existing = next.get(productId) || {};
+      next.set(productId, { ...existing, kds_destination: destination });
       return next;
     });
     
-    // Also update local state for immediate UI feedback
     setProducts(prev => prev.map(p => 
       p.id === productId ? { ...p, kds_destination: destination } : p
     ));
   };
 
+  const handlePrepTimeChange = (productId: string, time: number | null) => {
+    setPendingChanges(prev => {
+      const next = new Map(prev);
+      const existing = next.get(productId) || {};
+      next.set(productId, { ...existing, target_prep_time: time });
+      return next;
+    });
+    
+    setProducts(prev => prev.map(p => 
+      p.id === productId ? { ...p, target_prep_time: time } : p
+    ));
+  };
+
   const saveChange = async (productId: string) => {
-    const destination = pendingChanges.get(productId);
-    if (!destination) return;
+    const changes = pendingChanges.get(productId);
+    if (!changes) return;
 
     setSaving(productId);
     try {
       const { error } = await supabase
         .from('products')
-        .update({ kds_destination: destination })
+        .update(changes)
         .eq('id', productId);
 
       if (error) throw error;
@@ -132,9 +152,9 @@ export function ProductKDSManager() {
         return next;
       });
 
-      toast.success('Destino actualizado');
+      toast.success('Producto actualizado');
     } catch (error) {
-      console.error('Error saving destination:', error);
+      console.error('Error saving:', error);
       toast.error('Error al guardar');
     } finally {
       setSaving(null);
@@ -146,10 +166,10 @@ export function ProductKDSManager() {
 
     setSaving('all');
     try {
-      const updates = Array.from(pendingChanges.entries()).map(([id, destination]) => 
+      const updates = Array.from(pendingChanges.entries()).map(([id, changes]) => 
         supabase
           .from('products')
-          .update({ kds_destination: destination })
+          .update(changes)
           .eq('id', id)
       );
 
@@ -212,10 +232,10 @@ export function ProductKDSManager() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <ChefHat className="h-5 w-5" />
-              Destinos KDS por Producto
+              Destinos y Tiempos KDS por Producto
             </CardTitle>
             <CardDescription>
-              Configura a qué estación (Cocina, Bar, Prep) se envía cada producto
+              Configura a qué estación se envía cada producto y su tiempo objetivo de preparación
             </CardDescription>
           </div>
           {pendingChanges.size > 0 && (
@@ -289,13 +309,19 @@ export function ProductKDSManager() {
                 <TableHead>Categoría</TableHead>
                 {!selectedLocationId && <TableHead>Local</TableHead>}
                 <TableHead>Destino KDS</TableHead>
+                <TableHead>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    Tiempo Objetivo
+                  </div>
+                </TableHead>
                 <TableHead className="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={selectedLocationId ? 4 : 5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={selectedLocationId ? 5 : 6} className="text-center py-8 text-muted-foreground">
                     No hay productos que coincidan con los filtros
                   </TableCell>
                 </TableRow>
@@ -345,6 +371,29 @@ export function ProductKDSManager() {
                         </Select>
                       </TableCell>
                       <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={60}
+                            placeholder={`${config.defaultTime}`}
+                            value={product.target_prep_time ?? ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              handlePrepTimeChange(
+                                product.id, 
+                                val === '' ? null : parseInt(val)
+                              );
+                            }}
+                            className="w-20 text-center"
+                          />
+                          <span className="text-xs text-muted-foreground">min</span>
+                          {product.target_prep_time === null && (
+                            <span className="text-xs text-muted-foreground">(default: {config.defaultTime}m)</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         {hasPendingChange && (
                           <Button 
                             size="sm" 
@@ -369,7 +418,7 @@ export function ProductKDSManager() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {filteredProducts.length} de {products.length} productos
+          {filteredProducts.length} de {products.length} productos • Los tiempos vacíos usan el valor por defecto de la estación
         </p>
       </CardContent>
     </Card>
