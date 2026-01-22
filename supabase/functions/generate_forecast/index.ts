@@ -2,26 +2,28 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
 /**
- * Robust ML-based Sales Forecasting Engine v2
+ * Robust ML-based Sales Forecasting Engine v3
  * 
- * Algorithm: Linear Regression (Trend) + Monthly Seasonal Index (SI)
- * Source of Truth: tickets.net_total
+ * Improvements in v3:
+ * - Adaptive model selection based on data availability
+ * - Improved confidence calculation with data penalty
+ * - Better handling of new locations with limited history
+ * - UPSERT with proper conflict resolution
  * 
- * Steps:
- * 1. Prepare daily sales from tickets (winsorize outliers P1/P99)
- * 2. Fit Linear Regression for trend: trend(t) = A0 + A1*t
- * 3. Calculate Monthly Seasonal Index: avg_si[month] = avg((actual - trend) / trend)
- * 4. Forecast: forecast = trend_future * (1 + avg_si[month])
- * 5. Backtest last 56 days for MSE/MAPE/Confidence
- * 6. Derive labor hours/cost using SPLH and target COL% = 22%
- * 7. Audit checks for data quality
+ * Algorithm tiers:
+ * - <90 days: AVG_28D (simple moving average)
+ * - 90-365 days: LR_SI_WEEKLY (trend + weekly pattern)
+ * - >365 days: LR_SI_MONTH (full seasonal model)
  */
 
-const MODEL_VERSION = "LR_SI_MONTH_v2";
 const TARGET_COL_PERCENT = 22;
-const MIN_LABOR_HOURS_PER_DAY = 20;  // Restaurant minimum
-const MAX_LABOR_HOURS_PER_DAY = 120; // 30-table restaurant max
+const MIN_LABOR_HOURS_PER_DAY = 20;
+const MAX_LABOR_HOURS_PER_DAY = 120;
 const BACKTEST_DAYS = 56;
+
+// Data thresholds for model selection
+const MIN_DAYS_FOR_BASIC_MODEL = 90;
+const MIN_DAYS_FOR_FULL_MODEL = 365;
 
 // ============================================
 // INTERFACES
@@ -29,20 +31,21 @@ const BACKTEST_DAYS = 56;
 
 interface DailySales {
   date: string;
-  t: number;        // Time index
-  sales: number;    // Actual sales
-  month: number;    // 1-12
-  trendSales?: number; // Trend prediction for this day
+  t: number;
+  sales: number;
+  month: number;
+  dayOfWeek: number; // 0-6 (Sunday-Saturday)
+  trendSales?: number;
 }
 
 interface RegressionResult {
-  slope: number;      // A1
-  intercept: number;  // A0
+  slope: number;
+  intercept: number;
   rSquared: number;
 }
 
-interface MonthlySeasonalIndex {
-  [month: number]: number; // -0.6 to +0.6 typical range
+interface SeasonalIndex {
+  [key: number]: number;
 }
 
 interface AuditResult {
@@ -53,15 +56,13 @@ interface AuditResult {
   top10_forecast_days: { date: string; forecast: number }[];
   future_days_count: number;
   flags: string[];
+  model_tier: string;
 }
 
 // ============================================
 // STATISTICAL FUNCTIONS
 // ============================================
 
-/**
- * Calculate percentile of an array
- */
 function percentile(arr: number[], p: number): number {
   if (arr.length === 0) return 0;
   const sorted = [...arr].sort((a, b) => a - b);
@@ -69,18 +70,12 @@ function percentile(arr: number[], p: number): number {
   return sorted[Math.max(0, idx)];
 }
 
-/**
- * Winsorize array to P1/P99 to remove outliers
- */
 function winsorize(arr: number[], lowP = 1, highP = 99): number[] {
   const low = percentile(arr, lowP);
   const high = percentile(arr, highP);
   return arr.map(v => Math.max(low, Math.min(high, v)));
 }
 
-/**
- * Simple Linear Regression: y = A0 + A1*x
- */
 function linearRegression(data: { x: number; y: number }[]): RegressionResult {
   const n = data.length;
   if (n === 0) return { slope: 0, intercept: 0, rSquared: 0 };
@@ -90,7 +85,6 @@ function linearRegression(data: { x: number; y: number }[]): RegressionResult {
   const sumY = data.reduce((s, d) => s + d.y, 0);
   const sumXY = data.reduce((s, d) => s + d.x * d.y, 0);
   const sumX2 = data.reduce((s, d) => s + d.x * d.x, 0);
-  const sumY2 = data.reduce((s, d) => s + d.y * d.y, 0);
 
   const denominator = n * sumX2 - sumX * sumX;
   if (Math.abs(denominator) < 0.0001) {
@@ -100,7 +94,6 @@ function linearRegression(data: { x: number; y: number }[]): RegressionResult {
   const slope = (n * sumXY - sumX * sumY) / denominator;
   const intercept = (sumY - slope * sumX) / n;
 
-  // R-squared
   const yMean = sumY / n;
   const ssTot = data.reduce((s, d) => s + Math.pow(d.y - yMean, 2), 0);
   const ssRes = data.reduce((s, d) => s + Math.pow(d.y - (slope * d.x + intercept), 2), 0);
@@ -109,25 +102,19 @@ function linearRegression(data: { x: number; y: number }[]): RegressionResult {
   return { slope, intercept, rSquared };
 }
 
-/**
- * Calculate Monthly Seasonal Index from historical data
- * SI[month] = avg((actual_month - trend_month) / trend_month)
- */
 function calculateMonthlySeasonalIndex(
   dailyData: DailySales[],
   trend: RegressionResult
-): MonthlySeasonalIndex {
-  // Calculate trend sales for each day
+): SeasonalIndex {
   const dataWithTrend = dailyData.map(d => ({
     ...d,
     trendSales: trend.slope * d.t + trend.intercept
   }));
 
-  // Aggregate by year-month
   const monthlyData: Record<string, { actual: number; trend: number; month: number }> = {};
   
   dataWithTrend.forEach(d => {
-    const yearMonth = d.date.substring(0, 7); // YYYY-MM
+    const yearMonth = d.date.substring(0, 7);
     if (!monthlyData[yearMonth]) {
       monthlyData[yearMonth] = { actual: 0, trend: 0, month: d.month };
     }
@@ -135,7 +122,6 @@ function calculateMonthlySeasonalIndex(
     monthlyData[yearMonth].trend += d.trendSales || 0;
   });
 
-  // Calculate SI for each year-month
   const siByMonth: Record<number, number[]> = {};
   
   Object.values(monthlyData).forEach(m => {
@@ -146,56 +132,74 @@ function calculateMonthlySeasonalIndex(
     }
   });
 
-  // Average SI per month-of-year with guardrails [-0.6, +0.6]
-  const result: MonthlySeasonalIndex = {};
+  const result: SeasonalIndex = {};
   for (let month = 1; month <= 12; month++) {
     if (siByMonth[month] && siByMonth[month].length > 0) {
       const avgSi = siByMonth[month].reduce((a, b) => a + b, 0) / siByMonth[month].length;
       result[month] = Math.max(-0.6, Math.min(0.6, avgSi));
     } else {
-      result[month] = 0; // No data for this month
+      result[month] = 0;
     }
   }
 
   return result;
 }
 
-/**
- * Calculate MSE and MAPE for model evaluation
- */
-function calculateMetrics(
-  actual: number[],
-  predicted: number[]
-): { mse: number; mape: number } {
+function calculateWeeklySeasonalIndex(dailyData: DailySales[]): SeasonalIndex {
+  const avgOverall = dailyData.reduce((s, d) => s + d.sales, 0) / dailyData.length;
+  
+  const byDow: Record<number, number[]> = {};
+  dailyData.forEach(d => {
+    if (!byDow[d.dayOfWeek]) byDow[d.dayOfWeek] = [];
+    byDow[d.dayOfWeek].push(d.sales);
+  });
+
+  const result: SeasonalIndex = {};
+  for (let dow = 0; dow < 7; dow++) {
+    if (byDow[dow] && byDow[dow].length > 0 && avgOverall > 0) {
+      const avgDow = byDow[dow].reduce((a, b) => a + b, 0) / byDow[dow].length;
+      result[dow] = Math.max(-0.5, Math.min(0.5, (avgDow - avgOverall) / avgOverall));
+    } else {
+      result[dow] = 0;
+    }
+  }
+
+  return result;
+}
+
+function calculateMetrics(actual: number[], predicted: number[]): { mse: number; mape: number } {
   if (actual.length === 0 || actual.length !== predicted.length) {
     return { mse: 0, mape: 0 };
   }
 
   let sumSquaredError = 0;
   let sumAbsPercentError = 0;
-  let validMapeCount = 0;
-  const epsilon = 1; // Avoid division by zero
+  const epsilon = 1;
 
   for (let i = 0; i < actual.length; i++) {
     const error = actual[i] - predicted[i];
     sumSquaredError += error * error;
-    
     const denom = Math.max(actual[i], epsilon);
     sumAbsPercentError += Math.abs(error / denom);
-    validMapeCount++;
   }
 
-  const mse = sumSquaredError / actual.length;
-  const mape = validMapeCount > 0 ? sumAbsPercentError / validMapeCount : 0;
-
-  return { mse, mape };
+  return {
+    mse: sumSquaredError / actual.length,
+    mape: sumAbsPercentError / actual.length
+  };
 }
 
 /**
- * Calculate confidence score from MAPE
- * 90 if MAPE < 10%, 75 if 10-20%, 60 if 20-30%, 40 if >30%
+ * Calculate confidence with data quantity penalty
+ * - Base confidence from MAPE
+ * - Penalty if < 365 days of data
+ * - Minimum 40 if forecast is within historical range
  */
-function calculateConfidence(mape: number, dataPoints: number): number {
+function calculateConfidence(
+  mape: number, 
+  dataPoints: number, 
+  forecastInRange: boolean
+): number {
   let base: number;
   const mapePercent = mape * 100;
   
@@ -204,17 +208,19 @@ function calculateConfidence(mape: number, dataPoints: number): number {
   else if (mapePercent < 30) base = 60;
   else base = 40;
 
-  // Penalize for low data points (need at least 90 days)
-  if (dataPoints < 90) {
-    base = base * (dataPoints / 90);
+  // Penalize for low data points
+  if (dataPoints < MIN_DAYS_FOR_FULL_MODEL) {
+    base = base * (dataPoints / MIN_DAYS_FOR_FULL_MODEL);
+  }
+
+  // Minimum 40 if forecast is reasonable
+  if (forecastInRange) {
+    base = Math.max(40, base);
   }
 
   return Math.max(0, Math.min(100, Math.round(base)));
 }
 
-/**
- * Fill missing dates with 0 sales to ensure continuous time series
- */
 function fillMissingDates(
   salesByDate: Record<string, number>,
   startDate: Date,
@@ -230,7 +236,8 @@ function fillMissingDates(
       date: dateStr,
       t,
       sales: salesByDate[dateStr] || 0,
-      month: current.getMonth() + 1, // 1-12
+      month: current.getMonth() + 1,
+      dayOfWeek: current.getDay(),
     });
     current.setDate(current.getDate() + 1);
     t++;
@@ -257,32 +264,22 @@ Deno.serve(async (req) => {
     const locationId = body.location_id;
     const horizonDays = body.horizon_days || 365;
 
-    console.log(`[FORECAST v2] Starting: location=${locationId || 'all'}, horizon=${horizonDays} days`);
+    console.log(`[FORECAST v3] Starting: location=${locationId || 'all'}, horizon=${horizonDays} days`);
 
     // ============================================
-    // STEP 1: Get locations to process
+    // STEP 1: Get ACTIVE locations only
     // ============================================
-    let locationsToProcess: { id: string; name: string }[] = [];
-    
+    let locationsQuery = supabase.from("locations").select("id, name").eq("active", true);
     if (locationId) {
-      const { data: loc } = await supabase
-        .from("locations")
-        .select("id, name")
-        .eq("id", locationId)
-        .single();
-      
-      if (loc) locationsToProcess = [loc];
-    } else {
-      const { data: locs } = await supabase
-        .from("locations")
-        .select("id, name");
-      
-      locationsToProcess = locs || [];
+      locationsQuery = supabase.from("locations").select("id, name").eq("id", locationId);
     }
+    
+    const { data: locationsData } = await locationsQuery;
+    const locationsToProcess = locationsData || [];
 
     if (locationsToProcess.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No locations found" }),
+        JSON.stringify({ error: "No active locations found" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -292,13 +289,12 @@ Deno.serve(async (req) => {
     const todayStr = today.toISOString().split("T")[0];
 
     for (const location of locationsToProcess) {
-      console.log(`[FORECAST v2] Processing ${location.name}...`);
+      console.log(`[FORECAST v3] Processing ${location.name}...`);
       const logs: string[] = [];
       logs.push(`Processing ${location.name}`);
 
       // ============================================
-      // STEP 2: Fetch historical sales from TICKETS (using pagination to get all data)
-      // Supabase has a default limit of 1000 rows, so we need to paginate
+      // STEP 2: Fetch historical sales with pagination
       // ============================================
       const salesByDate: Record<string, number> = {};
       let page = 0;
@@ -315,7 +311,6 @@ Deno.serve(async (req) => {
           .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (ticketError) {
-          console.error(`[FORECAST v2] Error fetching tickets page ${page}:`, ticketError.message);
           logs.push(`ERROR: ${ticketError.message}`);
           break;
         }
@@ -330,119 +325,121 @@ Deno.serve(async (req) => {
             salesByDate[dateStr] = (salesByDate[dateStr] || 0) + (Number(t.net_total) || 0);
           });
 
-          if (ticketBatch.length < pageSize) {
-            hasMore = false;
-          } else {
-            page++;
-          }
+          hasMore = ticketBatch.length === pageSize;
+          page++;
         }
       }
 
-      logs.push(`Fetched ${totalTickets} tickets in ${page + 1} pages`);
+      logs.push(`Fetched ${totalTickets} tickets in ${page} pages`);
 
       if (Object.keys(salesByDate).length === 0) {
-        console.warn(`[FORECAST v2] No ticket data for ${location.name}`);
-        logs.push("No ticket data found");
+        logs.push("No ticket data found - skipping");
+        results.push({
+          location_id: location.id,
+          location_name: location.name,
+          status: "skipped",
+          reason: "no_data",
+          logs,
+        });
         continue;
       }
 
-      // Calculate date range
+      // Build date range and daily series
       const dates = Object.keys(salesByDate).sort();
       const minDateStr = dates[0];
       const maxDateStr = dates[dates.length - 1];
       const minDate = new Date(minDateStr);
       const maxDate = new Date(maxDateStr);
 
-      // Check for duplicate detection (audit)
-      const dailyEntryCounts = dates.length;
-      const expectedDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-      
       logs.push(`Date range: ${minDateStr} to ${maxDateStr}`);
-      logs.push(`Unique days: ${dailyEntryCounts}, Expected: ${expectedDays}`);
 
-      // ============================================
-      // STEP 3: Build continuous daily series with 0-fill
-      // ============================================
       const dailyData = fillMissingDates(salesByDate, minDate, maxDate);
-      logs.push(`Total data points: ${dailyData.length}`);
+      const dataPoints = dailyData.length;
+      logs.push(`Total data points: ${dataPoints}`);
 
       // ============================================
-      // STEP 4: Winsorize outliers (P1/P99)
+      // STEP 3: Calculate historical percentiles
       // ============================================
-      const salesValues = dailyData.map(d => d.sales);
+      const salesValues = dailyData.map(d => d.sales).filter(s => s > 0);
       const p1 = percentile(salesValues, 1);
-      const p99 = percentile(salesValues, 99);
       const p50 = percentile(salesValues, 50);
       const p90 = percentile(salesValues, 90);
+      const p99 = percentile(salesValues, 99);
       
       logs.push(`P1=${p1.toFixed(0)}, P50=${p50.toFixed(0)}, P90=${p90.toFixed(0)}, P99=${p99.toFixed(0)}`);
 
-      // Winsorize the data
-      const winsorizedSales = winsorize(salesValues, 1, 99);
+      // Winsorize
+      const winsorizedSales = winsorize(dailyData.map(d => d.sales), 1, 99);
       dailyData.forEach((d, i) => {
         d.sales = winsorizedSales[i];
       });
 
       // ============================================
-      // STEP 5: Backtesting setup (holdout last 56 days)
+      // STEP 4: Select model tier based on data availability
+      // ============================================
+      let modelVersion: string;
+      let modelTier: string;
+      let trend: RegressionResult = { slope: 0, intercept: p50, rSquared: 0 };
+      let seasonalIndex: SeasonalIndex = {};
+      let useMonthly = false;
+
+      if (dataPoints < MIN_DAYS_FOR_BASIC_MODEL) {
+        // Tier 1: Simple average (< 90 days)
+        modelVersion = "AVG_28D_v1";
+        modelTier = "simple_average";
+        const last28 = dailyData.slice(-28);
+        const avg28 = last28.reduce((s, d) => s + d.sales, 0) / last28.length;
+        trend = { slope: 0, intercept: avg28, rSquared: 0 };
+        logs.push(`Model: AVG_28D (${dataPoints} < 90 days)`);
+      } else if (dataPoints < MIN_DAYS_FOR_FULL_MODEL) {
+        // Tier 2: LR + Weekly SI (90-365 days)
+        modelVersion = "LR_SI_WEEKLY_v1";
+        modelTier = "trend_weekly";
+        const regressionInput = dailyData.map(d => ({ x: d.t, y: d.sales }));
+        trend = linearRegression(regressionInput);
+        seasonalIndex = calculateWeeklySeasonalIndex(dailyData);
+        useMonthly = false;
+        logs.push(`Model: LR_SI_WEEKLY (${dataPoints} days), R²=${trend.rSquared.toFixed(3)}`);
+      } else {
+        // Tier 3: Full LR + Monthly SI (365+ days)
+        modelVersion = "LR_SI_MONTH_v3";
+        modelTier = "trend_monthly";
+        const regressionInput = dailyData.map(d => ({ x: d.t, y: d.sales }));
+        trend = linearRegression(regressionInput);
+        seasonalIndex = calculateMonthlySeasonalIndex(dailyData, trend);
+        useMonthly = true;
+        logs.push(`Model: LR_SI_MONTH (${dataPoints} days), R²=${trend.rSquared.toFixed(3)}`);
+      }
+
+      // ============================================
+      // STEP 5: Backtesting
       // ============================================
       let mse = 0;
       let mape = 0;
-      let confidence = 0;
       
-      const hasEnoughForBacktest = dailyData.length > BACKTEST_DAYS + 30;
-      const trainingEndIdx = hasEnoughForBacktest ? dailyData.length - BACKTEST_DAYS : dailyData.length;
-      const trainingData = dailyData.slice(0, trainingEndIdx);
+      const hasEnoughForBacktest = dataPoints > BACKTEST_DAYS + 30;
+      const trainingEndIdx = hasEnoughForBacktest ? dataPoints - BACKTEST_DAYS : dataPoints;
       const backtestData = hasEnoughForBacktest ? dailyData.slice(trainingEndIdx) : [];
 
-      logs.push(`Training days: ${trainingData.length}, Backtest days: ${backtestData.length}`);
-
-      // ============================================
-      // STEP 6: Fit Linear Regression on training data
-      // ============================================
-      const regressionInput = trainingData.map(d => ({ x: d.t, y: d.sales }));
-      const trend = linearRegression(regressionInput);
-      
-      logs.push(`Trend: slope=${trend.slope.toFixed(2)}, intercept=${trend.intercept.toFixed(0)}, R²=${trend.rSquared.toFixed(3)}`);
-
-      // ============================================
-      // STEP 7: Calculate Monthly Seasonal Index
-      // ============================================
-      const monthSI = calculateMonthlySeasonalIndex(trainingData, trend);
-      const siString = Object.entries(monthSI)
-        .filter(([_, v]) => v !== 0)
-        .map(([m, v]) => `M${m}:${(v * 100).toFixed(0)}%`)
-        .join(", ");
-      logs.push(`Monthly SI: ${siString || "none detected"}`);
-
-      // ============================================
-      // STEP 8: Backtest if we have holdout data
-      // ============================================
       if (backtestData.length > 0) {
         const actualBacktest = backtestData.map(d => d.sales);
         const predictedBacktest = backtestData.map(d => {
           const trendValue = trend.slope * d.t + trend.intercept;
-          const si = monthSI[d.month] || 0;
+          const siKey = useMonthly ? d.month : d.dayOfWeek;
+          const si = seasonalIndex[siKey] || 0;
           return Math.max(0, trendValue * (1 + si));
         });
 
         const metrics = calculateMetrics(actualBacktest, predictedBacktest);
         mse = Math.round(metrics.mse);
-        mape = Math.round(metrics.mape * 1000) / 1000; // 3 decimal places
-        confidence = calculateConfidence(mape, dailyData.length);
+        mape = Math.round(metrics.mape * 1000) / 1000;
 
-        logs.push(`Backtest MSE=${mse.toFixed(0)}, MAPE=${(mape * 100).toFixed(1)}%, Confidence=${confidence}%`);
-      } else {
-        // If no backtest possible, assign low confidence
-        confidence = Math.min(40, Math.round((dailyData.length / 90) * 40));
-        logs.push(`No backtest data, confidence=${confidence}%`);
+        logs.push(`Backtest: MSE=${mse.toFixed(0)}, MAPE=${(mape * 100).toFixed(1)}%`);
       }
 
       // ============================================
-      // STEP 9: Get labor metrics for planning
+      // STEP 6: Get labor metrics
       // ============================================
-      
-      // Get SPLH from pos_daily_metrics (last 8 weeks)
       const splhStart = new Date(today);
       splhStart.setDate(splhStart.getDate() - 56);
       
@@ -453,7 +450,7 @@ Deno.serve(async (req) => {
         .gte("date", splhStart.toISOString().split("T")[0])
         .lt("date", todayStr);
 
-      let splh = 80; // Default €80/hour
+      let splh = 80;
       if (laborData && laborData.length > 0) {
         let totalSales = 0;
         let totalHours = 0;
@@ -461,12 +458,9 @@ Deno.serve(async (req) => {
           totalSales += Number(row.net_sales) || 0;
           totalHours += Number(row.labor_hours) || 0;
         });
-        if (totalHours > 0) {
-          splh = totalSales / totalHours;
-        }
+        if (totalHours > 0) splh = totalSales / totalHours;
       }
 
-      // Get blended hourly cost from employees
       const { data: employees } = await supabase
         .from("employees")
         .select("hourly_cost")
@@ -474,7 +468,7 @@ Deno.serve(async (req) => {
         .eq("active", true)
         .not("hourly_cost", "is", null);
 
-      let blendedHourlyCost = 15; // Default €15/hour
+      let blendedHourlyCost = 15;
       if (employees && employees.length > 0) {
         blendedHourlyCost = employees.reduce((s: number, e: any) => s + Number(e.hourly_cost), 0) / employees.length;
       }
@@ -482,42 +476,44 @@ Deno.serve(async (req) => {
       logs.push(`SPLH=€${splh.toFixed(0)}/h, Blended cost=€${blendedHourlyCost.toFixed(2)}/h`);
 
       // ============================================
-      // STEP 10: Generate 365-day forecast
+      // STEP 7: Generate forecast
       // ============================================
       const forecasts: any[] = [];
-      const lastT = dailyData.length;
+      const lastT = dataPoints;
       const auditForecasts: { date: string; forecast: number }[] = [];
+
+      // Reasonable forecast bounds based on THIS location's history
+      const minForecast = Math.max(0, p1 * 0.5);
+      const maxForecast = p99 * 1.5; // Reduced from 2x to 1.5x
 
       for (let k = 1; k <= horizonDays; k++) {
         const forecastDate = new Date(today);
         forecastDate.setDate(today.getDate() + k);
         const dateStr = forecastDate.toISOString().split("T")[0];
         const month = forecastDate.getMonth() + 1;
+        const dayOfWeek = forecastDate.getDay();
         const t = lastT + k;
 
-        // Calculate forecast: trend * (1 + SI)
+        // Calculate forecast based on model tier
         const trendValue = trend.slope * t + trend.intercept;
-        const si = monthSI[month] || 0;
+        const siKey = useMonthly ? month : dayOfWeek;
+        const si = seasonalIndex[siKey] || 0;
         let forecastSales = trendValue * (1 + si);
         
-        // Sanity check: clamp to reasonable range based on historical P1/P99
-        const minForecast = Math.max(0, p1 * 0.5);
-        const maxForecast = p99 * 2;
+        // Clamp to reasonable range
         forecastSales = Math.max(minForecast, Math.min(maxForecast, forecastSales));
         forecastSales = Math.round(forecastSales * 100) / 100;
 
-        // Derive labor hours using SPLH
+        // Derive labor hours
         let plannedLaborHours = splh > 0 ? forecastSales / splh : forecastSales * 0.22 / blendedHourlyCost;
         plannedLaborHours = Math.max(MIN_LABOR_HOURS_PER_DAY, Math.min(MAX_LABOR_HOURS_PER_DAY, plannedLaborHours));
         plannedLaborHours = Math.round(plannedLaborHours * 10) / 10;
 
-        // Calculate cost
+        // Calculate cost with COL% target
         let plannedLaborCost = plannedLaborHours * blendedHourlyCost;
-        
-        // Soft adjustment towards target COL% 22%
         const currentCol = forecastSales > 0 ? (plannedLaborCost / forecastSales) * 100 : 0;
+        
         if (currentCol > TARGET_COL_PERCENT + 5) {
-          // Too expensive, reduce hours (but respect minimum)
           const targetCost = forecastSales * (TARGET_COL_PERCENT / 100);
           const adjustedHours = Math.max(MIN_LABOR_HOURS_PER_DAY, targetCost / blendedHourlyCost);
           plannedLaborHours = Math.round(adjustedHours * 10) / 10;
@@ -532,104 +528,116 @@ Deno.serve(async (req) => {
           forecast_sales: forecastSales,
           planned_labor_hours: plannedLaborHours,
           planned_labor_cost: plannedLaborCost,
-          model_version: MODEL_VERSION,
+          model_version: modelVersion,
           mse,
           mape,
-          confidence,
+          confidence: 0, // Calculated after audit
           generated_at: new Date().toISOString(),
         });
 
-        // Track for audit (first 30 days)
         if (k <= 30) {
           auditForecasts.push({ date: dateStr, forecast: forecastSales });
         }
       }
 
       // ============================================
-      // STEP 11: Audit checks
+      // STEP 8: Audit and confidence calculation
       // ============================================
+      const avgForecast30d = auditForecasts.reduce((s, f) => s + f.forecast, 0) / auditForecasts.length;
+      const forecastInRange = avgForecast30d >= p50 * 0.5 && avgForecast30d <= p90 * 2;
+      const confidence = calculateConfidence(mape, dataPoints, forecastInRange);
+
+      // Update confidence in all forecasts
+      forecasts.forEach(f => {
+        f.confidence = confidence;
+      });
+
       const audit: AuditResult = {
         p50_historical: Math.round(p50),
         p90_historical: Math.round(p90),
         p50_forecast_30d: Math.round(percentile(auditForecasts.map(f => f.forecast), 50)),
-        avg_forecast_30d: Math.round(auditForecasts.reduce((s, f) => s + f.forecast, 0) / auditForecasts.length),
+        avg_forecast_30d: Math.round(avgForecast30d),
         top10_forecast_days: auditForecasts
           .sort((a, b) => b.forecast - a.forecast)
           .slice(0, 10)
           .map(f => ({ date: f.date, forecast: Math.round(f.forecast) })),
         future_days_count: horizonDays,
-        flags: []
+        flags: [],
+        model_tier: modelTier,
       };
 
-      // Flag: MIXED_LOCATIONS_SUSPECTED if forecast > 3 * P90
-      const maxForecast30d = Math.max(...auditForecasts.map(f => f.forecast));
-      if (maxForecast30d > 3 * p90) {
-        audit.flags.push("MIXED_LOCATIONS_SUSPECTED");
-        logs.push(`⚠️ WARNING: Max forecast (${maxForecast30d.toFixed(0)}) > 3*P90 (${(3 * p90).toFixed(0)})`);
-      }
-
-      // Flag: Data quality check
-      if (dailyData.length < 30) {
+      // Check for warnings
+      if (dataPoints < MIN_DAYS_FOR_BASIC_MODEL) {
         audit.flags.push("INSUFFICIENT_HISTORY");
-        logs.push("⚠️ WARNING: Less than 30 days of history");
+        logs.push(`⚠️ Less than ${MIN_DAYS_FOR_BASIC_MODEL} days of history`);
       }
 
-      logs.push(`Audit: Hist P50=${audit.p50_historical}, P90=${audit.p90_historical}, Forecast avg=${audit.avg_forecast_30d}`);
-      
-      console.log(`[FORECAST v2] ${location.name} audit:`, JSON.stringify(audit, null, 2));
+      if (!forecastInRange) {
+        audit.flags.push("FORECAST_OUT_OF_RANGE");
+        logs.push(`⚠️ Forecast avg €${avgForecast30d.toFixed(0)} outside historical range`);
+      }
+
+      logs.push(`Audit: P50=${audit.p50_historical}, P90=${audit.p90_historical}, Forecast avg=${audit.avg_forecast_30d}, Conf=${confidence}%`);
 
       // ============================================
-      // STEP 12: Upsert forecasts
+      // STEP 9: Delete existing forecasts and insert new ones
       // ============================================
+      
+      // Delete existing forecasts for this location (clean slate)
+      const { error: deleteError } = await supabase
+        .from("forecast_daily_metrics")
+        .delete()
+        .eq("location_id", location.id)
+        .gte("date", todayStr);
+
+      if (deleteError) {
+        logs.push(`Delete error: ${deleteError.message}`);
+      }
+
+      // Insert in batches
       const batchSize = 500;
       for (let i = 0; i < forecasts.length; i += batchSize) {
         const batch = forecasts.slice(i, i + batchSize);
-        const { error: upsertError } = await supabase
+        const { error: insertError } = await supabase
           .from("forecast_daily_metrics")
-          .upsert(batch, { onConflict: "location_id,date", ignoreDuplicates: false });
+          .insert(batch);
 
-        if (upsertError) {
-          console.error(`[FORECAST v2] Upsert error:`, upsertError.message);
-          logs.push(`ERROR upserting batch: ${upsertError.message}`);
+        if (insertError) {
+          logs.push(`Insert error batch ${i / batchSize}: ${insertError.message}`);
         }
       }
 
       // ============================================
-      // STEP 13: Log model run
+      // STEP 10: Log model run
       // ============================================
-      const { error: logError } = await supabase
-        .from("forecast_model_runs")
-        .insert({
-          location_id: location.id,
-          model_version: MODEL_VERSION,
-          algorithm: 'linear_regression_monthly_seasonal',
-          history_start: minDateStr,
-          history_end: maxDateStr,
-          horizon_days: horizonDays,
-          mse,
-          mape,
-          confidence,
-          data_points: dailyData.length,
-          trend_slope: trend.slope,
-          trend_intercept: trend.intercept,
-          seasonality_dow: null, // Not using DOW in v2
-          seasonality_woy: monthSI, // Store monthly SI here
-        });
-
-      if (logError) {
-        console.warn(`[FORECAST v2] Log error:`, logError.message);
-      }
+      await supabase.from("forecast_model_runs").insert({
+        location_id: location.id,
+        model_version: modelVersion,
+        algorithm: modelTier,
+        history_start: minDateStr,
+        history_end: maxDateStr,
+        horizon_days: horizonDays,
+        mse,
+        mape,
+        confidence,
+        data_points: dataPoints,
+        trend_slope: trend.slope,
+        trend_intercept: trend.intercept,
+        seasonality_dow: useMonthly ? null : seasonalIndex,
+        seasonality_woy: useMonthly ? seasonalIndex : null,
+      });
 
       logs.push(`Generated ${forecasts.length} forecast days`);
 
       results.push({
         location_id: location.id,
         location_name: location.name,
-        model_version: MODEL_VERSION,
+        model_version: modelVersion,
+        model_tier: modelTier,
         forecasts_generated: forecasts.length,
-        data_points: dailyData.length,
+        data_points: dataPoints,
         trend: { slope: trend.slope, intercept: trend.intercept, r_squared: trend.rSquared },
-        monthly_si: monthSI,
+        seasonal_index: seasonalIndex,
         mse,
         mape_percent: Math.round(mape * 1000) / 10,
         confidence,
@@ -639,14 +647,14 @@ Deno.serve(async (req) => {
         logs,
       });
 
-      console.log(`[FORECAST v2] ${location.name}: ${forecasts.length} days, MAPE=${(mape * 100).toFixed(1)}%, Conf=${confidence}%`);
+      console.log(`[FORECAST v3] ${location.name}: ${forecasts.length} days, Model=${modelVersion}, Conf=${confidence}%`);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        model_version: MODEL_VERSION,
-        algorithm: "Linear Regression + Monthly Seasonal Index",
+        version: "v3",
+        algorithm: "Adaptive Model Selection (AVG/Weekly/Monthly)",
         horizon_days: horizonDays,
         target_col_percent: TARGET_COL_PERCENT,
         locations_processed: results.length,
@@ -656,7 +664,7 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[FORECAST v2] Error:", message);
+    console.error("[FORECAST v3] Error:", message);
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

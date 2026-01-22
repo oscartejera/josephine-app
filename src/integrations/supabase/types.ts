@@ -804,6 +804,7 @@ export type Database = {
       }
       locations: {
         Row: {
+          active: boolean | null
           city: string | null
           created_at: string
           currency: string | null
@@ -813,6 +814,7 @@ export type Database = {
           timezone: string | null
         }
         Insert: {
+          active?: boolean | null
           city?: string | null
           created_at?: string
           currency?: string | null
@@ -822,6 +824,7 @@ export type Database = {
           timezone?: string | null
         }
         Update: {
+          active?: boolean | null
           city?: string | null
           created_at?: string
           currency?: string | null
