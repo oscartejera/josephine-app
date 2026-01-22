@@ -29,6 +29,39 @@ export function useKDSData(locationId: string) {
   const [isConnected, setIsConnected] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const previousOrderCountRef = useRef(0);
+  const notificationPermissionRef = useRef<NotificationPermission>('default');
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      notificationPermissionRef.current = Notification.permission;
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then((permission) => {
+          notificationPermissionRef.current = permission;
+        });
+      }
+    }
+  }, []);
+
+  const showBrowserNotification = useCallback((title: string, body: string) => {
+    if ('Notification' in window && notificationPermissionRef.current === 'granted') {
+      const notification = new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: 'kds-new-order',
+        requireInteraction: true,
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      // Auto-close after 10 seconds
+      setTimeout(() => notification.close(), 10000);
+    }
+  }, []);
 
   const playNotificationSound = useCallback(() => {
     if (!audioRef.current) {
@@ -126,9 +159,14 @@ export function useKDSData(locationId: string) {
         (a, b) => new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime()
       );
 
-      // Play sound if new orders arrived
+      // Play sound and show browser notification if new orders arrived
       if (newOrders.length > previousOrderCountRef.current && previousOrderCountRef.current > 0) {
+        const newOrdersCount = newOrders.length - previousOrderCountRef.current;
         playNotificationSound();
+        showBrowserNotification(
+          `🍳 ${newOrdersCount} nueva${newOrdersCount > 1 ? 's' : ''} comanda${newOrdersCount > 1 ? 's' : ''}`,
+          `Tienes ${newOrders.length} comanda${newOrders.length > 1 ? 's' : ''} pendiente${newOrders.length > 1 ? 's' : ''} en cocina`
+        );
       }
       previousOrderCountRef.current = newOrders.length;
 
@@ -138,7 +176,7 @@ export function useKDSData(locationId: string) {
     } finally {
       setLoading(false);
     }
-  }, [locationId, playNotificationSound]);
+  }, [locationId, playNotificationSound, showBrowserNotification]);
 
   // Update item status - using raw SQL update to handle new columns
   const updateItemStatus = useCallback(async (
