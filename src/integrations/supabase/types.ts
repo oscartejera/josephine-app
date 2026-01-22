@@ -2440,7 +2440,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sales_daily_unified: {
+        Row: {
+          comps_amount: number | null
+          date: string | null
+          discounts_amount: number | null
+          gross_sales: number | null
+          labor_cost: number | null
+          labor_hours: number | null
+          location_id: string | null
+          net_sales: number | null
+          orders_count: number | null
+          payments_card: number | null
+          payments_cash: number | null
+          payments_other: number | null
+          refunds_amount: number | null
+          refunds_count: number | null
+          voids_amount: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_access_location: { Args: { _location_id: string }; Returns: boolean }
