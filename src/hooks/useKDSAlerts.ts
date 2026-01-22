@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { KDSOrder, KDSTicketLine } from './useKDSData';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { kdsSoundManager, type KDSSoundSettings, DEFAULT_SOUND_SETTINGS } from '@/lib/kdsSounds';
 
 export interface KDSAlertSettings {
-  kitchen: number; // minutes
+  kitchen: number; // minutes threshold
   bar: number;
   prep: number;
 }
@@ -17,9 +18,10 @@ export interface KDSAlert {
   ticketId: string;
   tableName: string | null;
   triggeredAt: Date;
+  isRush?: boolean;
 }
 
-const DEFAULT_SETTINGS: KDSAlertSettings = {
+const DEFAULT_ALERT_SETTINGS: KDSAlertSettings = {
   kitchen: 8,
   bar: 3,
   prep: 5,
@@ -30,16 +32,20 @@ const STORAGE_KEY = 'kds-alert-settings';
 export function useKDSAlerts(orders: KDSOrder[]) {
   const [settings, setSettings] = useState<KDSAlertSettings>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
+    return stored ? JSON.parse(stored) : DEFAULT_ALERT_SETTINGS;
+  });
+  
+  const [soundSettings, setSoundSettings] = useState<KDSSoundSettings>(() => {
+    return kdsSoundManager.getSettings();
   });
   
   const [alerts, setAlerts] = useState<KDSAlert[]>([]);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const notifiedItemsRef = useRef<Set<string>>(new Set());
+  const previousOrderCountRef = useRef(orders.length);
 
-  // Persist settings
+  // Persist alert settings
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   }, [settings]);
@@ -48,11 +54,25 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     setSettings(prev => ({ ...prev, ...newSettings }));
   }, []);
 
-  const playAlertSound = useCallback(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio('/sounds/notification.mp3');
+  const updateSoundSettings = useCallback((newSettings: Partial<KDSSoundSettings>) => {
+    kdsSoundManager.updateSettings(newSettings);
+    setSoundSettings(kdsSoundManager.getSettings());
+  }, []);
+
+  const playAlertSound = useCallback((destination: 'kitchen' | 'bar' | 'prep', isRush: boolean = false) => {
+    if (isRush) {
+      kdsSoundManager.playSound('rush');
+    } else {
+      kdsSoundManager.playSound(destination);
     }
-    audioRef.current.play().catch(console.error);
+  }, []);
+
+  const playNewOrderSound = useCallback(() => {
+    kdsSoundManager.playSound('newOrder');
+  }, []);
+
+  const testSound = useCallback((station: 'kitchen' | 'bar' | 'prep' | 'rush' | 'newOrder') => {
+    kdsSoundManager.testSound(station);
   }, []);
 
   const dismissAlert = useCallback((alertId: string) => {
@@ -70,6 +90,32 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     setAlerts([]);
   }, [alerts]);
 
+  // Check for new orders and play sound
+  useEffect(() => {
+    if (orders.length > previousOrderCountRef.current) {
+      // New order(s) arrived
+      const newOrders = orders.slice(previousOrderCountRef.current);
+      
+      // Check if any new order has rush items
+      const hasRushOrder = newOrders.some(order => 
+        order.items.some(item => item.is_rush)
+      );
+      
+      if (hasRushOrder) {
+        kdsSoundManager.playSound('rush');
+      } else if (newOrders.length > 0) {
+        // Play sound based on first item's destination
+        const firstItem = newOrders[0]?.items[0];
+        if (firstItem) {
+          kdsSoundManager.playSound(firstItem.destination);
+        } else {
+          kdsSoundManager.playSound('newOrder');
+        }
+      }
+    }
+    previousOrderCountRef.current = orders.length;
+  }, [orders]);
+
   // Check for overdue items
   useEffect(() => {
     const checkAlerts = () => {
@@ -83,13 +129,11 @@ export function useKDSAlerts(orders: KDSOrder[]) {
 
           const startTime = new Date(item.prep_started_at).getTime();
           const elapsedMinutes = Math.floor((now - startTime) / 60000);
-          // Use product-specific time if set, otherwise use station default
           const threshold = item.target_prep_time ?? settings[item.destination];
 
           if (elapsedMinutes >= threshold) {
             const alertId = `${item.id}-${Math.floor(elapsedMinutes / threshold)}`;
             
-            // Skip if already dismissed
             if (dismissedAlerts.has(alertId)) continue;
 
             newAlerts.push({
@@ -101,16 +145,20 @@ export function useKDSAlerts(orders: KDSOrder[]) {
               ticketId: order.ticketId,
               tableName: order.tableName || order.tableNumber || 'Sin mesa',
               triggeredAt: new Date(),
+              isRush: item.is_rush,
             });
 
             // Send notification only once per item crossing threshold
             const notifKey = `${item.id}-overdue`;
             if (!notifiedItemsRef.current.has(notifKey)) {
               notifiedItemsRef.current.add(notifKey);
-              playAlertSound();
+              
+              // Play station-specific sound
+              playAlertSound(item.destination, item.is_rush);
+              
               addNotification({
                 type: 'alert',
-                title: '⏰ Tiempo excedido',
+                title: item.is_rush ? '🔥 RUSH excedido' : '⏰ Tiempo excedido',
                 message: `${item.item_name} en ${order.tableName || order.tableNumber || 'Sin mesa'} supera los ${threshold} min`,
                 data: { itemId: item.id, ticketId: order.ticketId },
               });
@@ -122,10 +170,7 @@ export function useKDSAlerts(orders: KDSOrder[]) {
       setAlerts(newAlerts);
     };
 
-    // Initial check
     checkAlerts();
-
-    // Check every 30 seconds
     const interval = setInterval(checkAlerts, 30000);
     return () => clearInterval(interval);
   }, [orders, settings, dismissedAlerts, addNotification, playAlertSound]);
@@ -147,15 +192,18 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     });
   }, [orders]);
 
-  // Calculate overdue count per item (for visual indicators)
-  const getItemOverdueInfo = useCallback((item: KDSTicketLine): { isOverdue: boolean; overdueMinutes: number; threshold: number } => {
+  // Calculate overdue info per item
+  const getItemOverdueInfo = useCallback((item: KDSTicketLine): { 
+    isOverdue: boolean; 
+    overdueMinutes: number; 
+    threshold: number 
+  } => {
     if (item.prep_status !== 'preparing' || !item.prep_started_at) {
       return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
     }
 
     const startTime = new Date(item.prep_started_at).getTime();
     const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
-    // Use product-specific time if set, otherwise use station default
     const threshold = item.target_prep_time ?? settings[item.destination];
     const overdueMinutes = elapsedMinutes - threshold;
 
@@ -169,6 +217,9 @@ export function useKDSAlerts(orders: KDSOrder[]) {
   return {
     settings,
     updateSettings,
+    soundSettings,
+    updateSoundSettings,
+    testSound,
     alerts,
     alertCount: alerts.length,
     dismissAlert,
@@ -176,3 +227,7 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     getItemOverdueInfo,
   };
 }
+
+// Re-export types
+export type { KDSSoundSettings };
+export { DEFAULT_SOUND_SETTINGS };

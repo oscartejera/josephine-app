@@ -3,7 +3,7 @@ import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, C
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
-import type { KDSAlertSettings } from '@/hooks/useKDSAlerts';
+import type { KDSAlertSettings, KDSSoundSettings } from '@/hooks/useKDSAlerts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,9 @@ interface KDSHeaderProps {
   onShowStats?: () => void;
   alertSettings?: KDSAlertSettings;
   onUpdateAlertSettings?: (settings: Partial<KDSAlertSettings>) => void;
+  soundSettings?: KDSSoundSettings;
+  onUpdateSoundSettings?: (settings: Partial<KDSSoundSettings>) => void;
+  onTestSound?: (station: 'kitchen' | 'bar' | 'prep' | 'rush' | 'newOrder') => void;
   alertCount?: number;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
@@ -41,6 +44,9 @@ export function KDSHeader({
   onShowStats,
   alertSettings,
   onUpdateAlertSettings,
+  soundSettings,
+  onUpdateSoundSettings,
+  onTestSound,
   alertCount = 0,
   isFullscreen = false,
   onToggleFullscreen,
@@ -202,6 +208,9 @@ export function KDSHeader({
             <KDSAlertSettingsDialog
               settings={alertSettings}
               onUpdateSettings={onUpdateAlertSettings}
+              soundSettings={soundSettings}
+              onUpdateSoundSettings={onUpdateSoundSettings}
+              onTestSound={onTestSound}
             />
           )}
           
