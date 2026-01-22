@@ -211,6 +211,8 @@ export default function KDS() {
         onToggleFullscreen={toggleFullscreen}
         keyboardEnabled={keyboardEnabled}
         onToggleKeyboard={() => setKeyboardEnabled(prev => !prev)}
+        locationId={locationId}
+        onRefetch={refetch}
       />
       
       {/* View Mode Toggle + Destination Filter */}

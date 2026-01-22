@@ -3,6 +3,7 @@ import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, C
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
+import { KDSSimulator } from './KDSSimulator';
 import type { KDSAlertSettings, KDSSoundSettings } from '@/hooks/useKDSAlerts';
 import {
   DropdownMenu,
@@ -34,6 +35,8 @@ interface KDSHeaderProps {
   onToggleFullscreen?: () => void;
   keyboardEnabled?: boolean;
   onToggleKeyboard?: () => void;
+  locationId?: string;
+  onRefetch?: () => void;
 }
 
 export function KDSHeader({ 
@@ -52,6 +55,8 @@ export function KDSHeader({
   onToggleFullscreen,
   keyboardEnabled = false,
   onToggleKeyboard,
+  locationId,
+  onRefetch,
 }: KDSHeaderProps) {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -202,6 +207,11 @@ export function KDSHeader({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+          )}
+          
+          {/* Simulator button */}
+          {locationId && onRefetch && (
+            <KDSSimulator locationId={locationId} onComplete={onRefetch} />
           )}
           
           {alertSettings && onUpdateAlertSettings && (
