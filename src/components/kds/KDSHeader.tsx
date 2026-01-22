@@ -3,7 +3,6 @@ import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, C
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
-import { KDSSimulator } from './KDSSimulator';
 import type { KDSAlertSettings, KDSSoundSettings } from '@/hooks/useKDSAlerts';
 import {
   DropdownMenu,
@@ -207,11 +206,6 @@ export function KDSHeader({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
-          
-          {/* Simulator button */}
-          {locationId && onRefetch && (
-            <KDSSimulator locationId={locationId} onComplete={onRefetch} />
           )}
           
           {alertSettings && onUpdateAlertSettings && (
