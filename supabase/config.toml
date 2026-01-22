@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate_forecast]
 verify_jwt = false
+
+[functions.generate_schedule]
+verify_jwt = false
