@@ -870,6 +870,7 @@ export type Database = {
           method: Database["public"]["Enums"]["payment_method"] | null
           paid_at: string
           ticket_id: string
+          tip_amount: number | null
         }
         Insert: {
           amount: number
@@ -878,6 +879,7 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"] | null
           paid_at?: string
           ticket_id: string
+          tip_amount?: number | null
         }
         Update: {
           amount?: number
@@ -886,6 +888,7 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"] | null
           paid_at?: string
           ticket_id?: string
+          tip_amount?: number | null
         }
         Relationships: [
           {
@@ -2622,6 +2625,7 @@ export type Database = {
           status: Database["public"]["Enums"]["ticket_status"] | null
           table_name: string | null
           tax_total: number | null
+          tip_total: number | null
         }
         Insert: {
           cash_session_id?: string | null
@@ -2643,6 +2647,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["ticket_status"] | null
           table_name?: string | null
           tax_total?: number | null
+          tip_total?: number | null
         }
         Update: {
           cash_session_id?: string | null
@@ -2664,6 +2669,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["ticket_status"] | null
           table_name?: string | null
           tax_total?: number | null
+          tip_total?: number | null
         }
         Relationships: [
           {

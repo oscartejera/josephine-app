@@ -7,7 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSProductGrid } from './POSProductGrid';
-import { POSPaymentModal } from './POSPaymentModal';
+import { POSSplitPaymentModal, ReceiptData } from './POSSplitPaymentModal';
+import { POSReceiptDialog } from './POSReceiptDialog';
 import { POSModifierDialog } from './POSModifierDialog';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +46,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [ticketId, setTicketId] = useState<string | null>(table.current_ticket_id);
   const [loading, setLoading] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [notes, setNotes] = useState('');
   
   // Modifier dialog state
@@ -325,36 +328,85 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
   };
 
-  const handlePayment = async (method: string, amount: number) => {
+  const handlePayment = async (payments: { method: string; amount: number; tip: number }[]) => {
     if (!ticketId) return;
 
     setLoading(true);
     try {
-      await supabase.from('payments').insert([{
-        ticket_id: ticketId,
-        amount,
-        method: method as 'card' | 'cash' | 'other',
-      }]);
+      // Calculate total tip
+      const totalTip = payments.reduce((sum, p) => sum + p.tip, 0);
+      
+      // Insert all payments
+      for (const payment of payments) {
+        await supabase.from('payments').insert([{
+          ticket_id: ticketId,
+          amount: payment.amount,
+          method: payment.method as 'card' | 'cash' | 'other',
+          tip_amount: payment.tip,
+        }]);
+      }
+
+      // Determine primary payment method
+      const primaryMethod = payments.length > 1 ? 'split' : payments[0]?.method || 'card';
 
       await supabase
         .from('tickets')
         .update({
           status: 'closed', 
           closed_at: new Date().toISOString(),
-          payment_method: method,
+          payment_method: primaryMethod,
+          tip_total: totalTip,
         })
         .eq('id', ticketId);
 
-      toast.success('Pago completado');
+      // Generate receipt data
+      const receipt: ReceiptData = {
+        ticketNumber: `#${ticketId.slice(-6).toUpperCase()}`,
+        date: new Date().toLocaleString('es-ES'),
+        tableName: table.table_number,
+        items: orderLines.map(l => ({
+          name: l.name,
+          qty: l.quantity,
+          price: l.unit_price,
+          total: calculateLineTotal(l),
+        })),
+        subtotal,
+        tax,
+        tip: totalTip,
+        total: total + totalTip,
+        paymentMethod: payments.map(p => {
+          switch(p.method) {
+            case 'card': return 'Tarjeta';
+            case 'cash': return 'Efectivo';
+            case 'other': return 'Bizum';
+            default: return p.method;
+          }
+        }).join(', '),
+      };
+      
+      setReceiptData(receipt);
       setShowPayment(false);
-      onClose();
-      onRefresh();
+      setShowReceipt(true);
+      
+      toast.success('Pago completado');
     } catch (error) {
       console.error('Error processing payment:', error);
       toast.error('Error al procesar pago');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReceiptClose = () => {
+    setShowReceipt(false);
+    setReceiptData(null);
+    onClose();
+    onRefresh();
+  };
+
+  const handlePrintReceipt = (data: ReceiptData) => {
+    // This is called from the payment modal for immediate print
+    setReceiptData(data);
   };
 
   const getModifierBadgeColor = (type: 'add' | 'remove' | 'substitute') => {
@@ -557,10 +609,30 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       )}
 
       {showPayment && (
-        <POSPaymentModal
+        <POSSplitPaymentModal
           total={total}
+          subtotal={subtotal}
+          tax={tax}
+          orderLines={orderLines.map(l => ({
+            id: l.id,
+            name: l.name,
+            quantity: l.quantity,
+            unit_price: l.unit_price,
+            total: calculateLineTotal(l),
+          }))}
+          tableName={table.table_number}
+          covers={table.seats}
           onClose={() => setShowPayment(false)}
           onPayment={handlePayment}
+          onPrintReceipt={handlePrintReceipt}
+        />
+      )}
+
+      {showReceipt && receiptData && (
+        <POSReceiptDialog
+          open={showReceipt}
+          onClose={handleReceiptClose}
+          data={receiptData}
         />
       )}
     </>
