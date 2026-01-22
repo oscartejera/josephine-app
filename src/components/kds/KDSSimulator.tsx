@@ -78,7 +78,7 @@ export function KDSSimulator({ locationId, onComplete }: KDSSimulatorProps) {
           item_name: item.name,
           quantity: item.quantity,
           unit_price: item.price,
-          line_total: item.price * item.quantity,
+          gross_line_total: item.price * item.quantity,
           destination: item.destination,
           sent_to_kitchen: true,
           sent_at: new Date().toISOString(),

@@ -295,14 +295,21 @@ export function useKDSData(locationId: string) {
   }, [fetchOrders]);
 
   const completeOrder = useCallback(async (ticketId: string) => {
-    const { error } = await supabase
+    console.log('completeOrder called for ticketId:', ticketId);
+    
+    // Update all pending/preparing items to ready
+    const { data, error } = await supabase
       .from('ticket_lines')
       .update({
         prep_status: 'ready',
         ready_at: new Date().toISOString()
       } as any)
       .eq('ticket_id', ticketId)
-      .eq('sent_to_kitchen', true);
+      .eq('sent_to_kitchen', true)
+      .in('prep_status', ['pending', 'preparing'])
+      .select();
+
+    console.log('completeOrder result:', { data, error });
 
     if (error) {
       console.error('Error completing order:', error);
