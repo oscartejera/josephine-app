@@ -247,7 +247,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           item_name: line.name,
           quantity: line.quantity,
           unit_price: line.unit_price,
-          line_total: calculateLineTotal(line),
+          gross_line_total: calculateLineTotal(line),
           notes: line.notes,
           sent_to_kitchen: true,
           sent_at: new Date().toISOString(),

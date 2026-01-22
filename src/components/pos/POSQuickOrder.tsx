@@ -98,7 +98,7 @@ export function POSQuickOrder({ locationId, products, cashSession, onRefresh }: 
           item_name: line.name,
           quantity: line.quantity,
           unit_price: line.unit_price,
-          line_total: line.total,
+          gross_line_total: line.total,
         })));
 
       if (linesError) throw linesError;
