@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { startOfWeek, endOfWeek, addDays, format, parseISO, differenceInMinutes } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -120,8 +120,8 @@ export interface Location {
   name: string;
 }
 
-const DEPARTMENTS = ['Management', 'BOH', 'FOH'];
-const STATIONS = ['Grill', 'Prep', 'Bar', 'Floor', 'Counter', 'Drive-thru'];
+const DEPARTMENTS = ['BOH', 'FOH'];
+const STATIONS = ['Cocina', 'Prep', 'Bar', 'Sala', 'Limpieza'];
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // UUID validation regex
@@ -133,6 +133,9 @@ const LEGACY_LOCATION_ALIASES: Record<string, string[]> = {
   'westside': ['westside', 'west'],
   'central': ['central', 'centro', 'downtown'],
   'hq': ['hq', 'headquarters', 'main'],
+  'chamberi': ['chamberi', 'chamberí'],
+  'malasana': ['malasana', 'malasaña'],
+  'salamanca': ['salamanca'],
 };
 
 /**
@@ -200,15 +203,30 @@ async function fetchEmployees(locationId: string): Promise<Employee[]> {
   
   if (error) throw error;
   
-  return (data || []).map((emp, idx) => {
+  // Filter out OPEN placeholder employees for display
+  const filtered = (data || []).filter(e => !e.full_name.startsWith('OPEN -'));
+  
+  return filtered.map((emp, idx) => {
     const nameParts = emp.full_name.split(' ');
     const initials = nameParts.length >= 2 
       ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
       : emp.full_name.substring(0, 2).toUpperCase();
     
-    // Assign pseudo-random department/station based on role or index
-    const department = DEPARTMENTS[idx % DEPARTMENTS.length];
-    const station = STATIONS[idx % STATIONS.length];
+    // Assign department based on role
+    const bohRoles = ['Cocinero/a', 'Preparación', 'Lavaplatos'];
+    const department = bohRoles.includes(emp.role_name || '') ? 'BOH' : 'FOH';
+    
+    // Assign station based on role
+    const stationMap: Record<string, string> = {
+      'Cocinero/a': 'Cocina',
+      'Preparación': 'Prep',
+      'Lavaplatos': 'Cocina',
+      'Camarero/a': 'Sala',
+      'Barra': 'Bar',
+      'Gerente': 'Sala',
+      'Limpieza': 'Limpieza',
+    };
+    const station = stationMap[emp.role_name || ''] || 'Sala';
     
     return {
       id: emp.id,
@@ -290,7 +308,7 @@ async function fetchTargetCol(locationId: string): Promise<number> {
     .eq('location_id', locationId)
     .maybeSingle();
   
-  return data?.target_col_percent ?? 25; // Default 25%
+  return data?.target_col_percent ?? 22; // Default 22%
 }
 
 // Fetch actual sales from sales_daily_unified (for past days comparison)
@@ -322,6 +340,52 @@ async function fetchActualSales(
   });
   
   return byDate;
+}
+
+// Check if forecast exists for the next 30 days
+async function checkForecastExists(locationId: string): Promise<boolean> {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const futureDate = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+  
+  const { count, error } = await supabase
+    .from('forecast_daily_metrics')
+    .select('id', { count: 'exact', head: true })
+    .eq('location_id', locationId)
+    .gte('date', today)
+    .lte('date', futureDate);
+  
+  if (error) {
+    console.warn('Error checking forecast:', error);
+    return false;
+  }
+  
+  // Consider forecast exists if we have at least 20 days (allows some gaps)
+  return (count || 0) >= 20;
+}
+
+// Generate forecast for 365 days
+async function generateForecast(locationId: string): Promise<boolean> {
+  console.log('[useSchedulingSupabase] Generating forecast for location:', locationId);
+  
+  try {
+    const { data, error } = await supabase.functions.invoke('generate_forecast', {
+      body: { 
+        location_id: locationId, 
+        horizon_days: 365 
+      }
+    });
+    
+    if (error) {
+      console.error('[useSchedulingSupabase] Forecast generation error:', error);
+      return false;
+    }
+    
+    console.log('[useSchedulingSupabase] Forecast generated:', data);
+    return true;
+  } catch (err) {
+    console.error('[useSchedulingSupabase] Forecast generation exception:', err);
+    return false;
+  }
 }
 
 // Build DayKPIs from forecast + shifts + actual
@@ -420,6 +484,7 @@ export function useSchedulingSupabase(
   const [shiftOverrides, setShiftOverrides] = useState<Record<string, { employeeId: string; date: string }>>({});
   const [newShifts, setNewShifts] = useState<Shift[]>([]);
   const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
+  const [forecastGenerating, setForecastGenerating] = useState(false);
   
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const weekStartISO = format(weekStart, 'yyyy-MM-dd');
@@ -431,6 +496,33 @@ export function useSchedulingSupabase(
     queryFn: fetchLocations,
     staleTime: 5 * 60 * 1000,
   });
+  
+  // Check if forecast exists and generate if missing
+  const { data: forecastExists = true, refetch: refetchForecastCheck } = useQuery({
+    queryKey: ['scheduling-forecast-check', locationId],
+    queryFn: () => checkForecastExists(locationId!),
+    enabled: !!locationId,
+    staleTime: 60 * 1000,
+  });
+  
+  // Auto-generate forecast if missing
+  useEffect(() => {
+    if (locationId && forecastExists === false && !forecastGenerating) {
+      setForecastGenerating(true);
+      console.log('[useSchedulingSupabase] Forecast missing, auto-generating...');
+      
+      generateForecast(locationId).then(success => {
+        setForecastGenerating(false);
+        if (success) {
+          // Refetch forecast data
+          queryClient.invalidateQueries({ queryKey: ['scheduling-forecast', locationId] });
+          refetchForecastCheck();
+        } else {
+          toast.error('No se pudo generar el forecast. Intenta de nuevo.');
+        }
+      });
+    }
+  }, [locationId, forecastExists, forecastGenerating, queryClient, refetchForecastCheck]);
   
   // Fetch employees
   const { data: employees = [], isLoading: employeesLoading } = useQuery({
@@ -449,7 +541,7 @@ export function useSchedulingSupabase(
   });
   
   // Fetch forecast metrics
-  const { data: forecastByDate = {}, isLoading: forecastLoading } = useQuery({
+  const { data: forecastByDate = {}, isLoading: forecastLoading, refetch: refetchForecast } = useQuery({
     queryKey: ['scheduling-forecast', locationId, weekStartISO],
     queryFn: () => fetchForecastMetrics(locationId!, weekStartISO, weekEndISO),
     enabled: !!locationId,
@@ -457,7 +549,7 @@ export function useSchedulingSupabase(
   });
   
   // Fetch target COL%
-  const { data: targetColPercent = 25 } = useQuery({
+  const { data: targetColPercent = 22 } = useQuery({
     queryKey: ['scheduling-target-col', locationId],
     queryFn: () => fetchTargetCol(locationId!),
     enabled: !!locationId,
@@ -472,7 +564,7 @@ export function useSchedulingSupabase(
     staleTime: 60 * 1000,
   });
   
-  const isLoading = employeesLoading || shiftsLoading || forecastLoading;
+  const isLoading = employeesLoading || shiftsLoading || forecastLoading || forecastGenerating;
   
   // Build schedule data - show data if we have shifts OR hasSchedule flag
   const hasShiftsInDB = dbShifts.length > 0;
@@ -493,9 +585,13 @@ export function useSchedulingSupabase(
     });
     allShifts = [...allShifts, ...newShifts];
     
-    // Separate regular shifts from open shifts
-    const regularShifts = allShifts.filter(s => s.employeeId && !s.isOpen);
-    const openShifts = allShifts.filter(s => !s.employeeId || s.isOpen);
+    // Separate regular shifts from open shifts (OPEN - prefix employees)
+    const openEmployeeIds = new Set(
+      employees.filter(e => e.name.startsWith('OPEN -')).map(e => e.id)
+    );
+    
+    const regularShifts = allShifts.filter(s => s.employeeId && !openEmployeeIds.has(s.employeeId));
+    const openShifts = allShifts.filter(s => !s.employeeId || openEmployeeIds.has(s.employeeId) || s.isOpen);
     
     // Calculate employee weekly hours
     const employeesWithHours = employees.map(emp => {
@@ -505,7 +601,8 @@ export function useSchedulingSupabase(
       // Generate availability (default available for all days)
       const availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'> = {};
       for (let d = 0; d < 7; d++) {
-        availability[d.toString()] = 'available';
+        // Monday (d=0 in our grid) is closed
+        availability[d.toString()] = d === 0 ? 'unavailable' : 'available';
       }
       
       return { ...emp, weeklyHours, availability };
@@ -582,6 +679,18 @@ export function useSchedulingSupabase(
     try {
       console.log('[createSchedule] Calling generate_schedule for', locationId, weekStartISO);
       
+      // First ensure forecast exists
+      const hasForecast = await checkForecastExists(locationId);
+      if (!hasForecast) {
+        toast.info('Generando forecast primero...');
+        const forecastSuccess = await generateForecast(locationId);
+        if (!forecastSuccess) {
+          toast.error('Error generando forecast');
+          return;
+        }
+        await refetchForecast();
+      }
+      
       const { data: result, error } = await supabase.functions.invoke('generate_schedule', {
         body: { 
           location_id: locationId, 
@@ -603,6 +712,18 @@ export function useSchedulingSupabase(
       
       console.log('[createSchedule] Success:', result);
       
+      // Log summary to console
+      if (result?.summary) {
+        console.log('=== SCHEDULE SUMMARY ===');
+        console.log(`Total Cost: €${result.summary.totalCost}`);
+        console.log(`Forecast Sales: €${result.summary.totalForecastSales}`);
+        console.log(`COL%: ${result.summary.colPercent}% (Target: ${result.summary.targetColPercent}%)`);
+        console.log(`ACS (28d): €${result.summary.acs28d}`);
+        console.log(`Avg Dwell Time: ${result.summary.avgDwellTime} min`);
+        console.log(`Shifts by role:`, result.summary.shiftsByRole);
+        console.log('========================');
+      }
+      
       // Refetch shifts from DB
       await refetchShifts();
       
@@ -611,17 +732,26 @@ export function useSchedulingSupabase(
       setNewShifts([]);
       setHasSchedule(true);
       
-      toast.success(`Creados ${result.shifts_created} turnos para ${result.days_generated} días`);
+      const colStatus = result.summary?.colPercent <= result.summary?.targetColPercent 
+        ? '✓' 
+        : `⚠ (objetivo ${result.summary?.targetColPercent}%)`;
+      
+      toast.success(
+        `Creados ${result.shifts_created} turnos • COL% ${result.summary?.colPercent}% ${colStatus}`,
+        { duration: 5000 }
+      );
       
       if (result.warnings?.length > 0) {
         console.warn('[createSchedule] Warnings:', result.warnings);
+        // Show first warning as toast
+        toast.warning(result.warnings[0], { duration: 4000 });
       }
       
     } catch (err) {
       console.error('[createSchedule] Exception:', err);
       toast.error('Error al generar el horario');
     }
-  }, [locationId, weekStartISO, refetchShifts]);
+  }, [locationId, weekStartISO, refetchShifts, refetchForecast]);
   
   const undoSchedule = useCallback(() => {
     setHasSchedule(false);
@@ -750,6 +880,7 @@ export function useSchedulingSupabase(
     swapRequests,
     pendingSwapRequests,
     timeOffConflicts: 0,
+    forecastGenerating,
     createSchedule,
     undoSchedule,
     acceptSchedule,
