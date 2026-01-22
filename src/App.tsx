@@ -13,7 +13,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
 import Sales from "@/pages/Sales";
-import LabourNew from "@/pages/LabourNew";
+import Labour from "@/pages/Labour";
 import InstantPL from "@/pages/InstantPL";
 import Reviews from "@/pages/Reviews";
 import ReviewsAll from "@/pages/ReviewsAll";
@@ -85,8 +85,8 @@ function AppRoutes() {
         
         {/* Insights routes */}
         <Route path="/insights/sales" element={<Sales />} />
-        <Route path="/insights/labour" element={<LabourNew />} />
-        <Route path="/insights/labour/:locationId" element={<LabourNew />} />
+        <Route path="/insights/labour" element={<Labour />} />
+        <Route path="/insights/labour/:locationId" element={<Labour />} />
         <Route path="/insights/instant-pl" element={<InstantPL />} />
         <Route path="/insights/reviews" element={<Reviews />} />
         <Route path="/insights/reviews/all" element={<ReviewsAll />} />

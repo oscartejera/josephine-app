@@ -1,6 +1,5 @@
 /**
- * Labour Header Component - Nory-style header with breadcrumbs, date picker, toggles
- * Identical layout to Nory with proper spacing and grouping
+ * LabourHeader - Nory-style header with breadcrumbs, date picker, toggles
  */
 
 import { ChevronDown, Sparkles, MoreHorizontal } from 'lucide-react';
@@ -14,17 +13,16 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
-import type { LabourDateRange, MetricMode, CompareMode } from '@/hooks/useLabourData';
+import type { LabourDateRange, MetricMode } from '@/hooks/useLabourData';
 
 interface LabourHeaderProps {
   dateRange: LabourDateRange;
   setDateRange: (range: LabourDateRange) => void;
   metricMode: MetricMode;
   setMetricMode: (mode: MetricMode) => void;
-  compareMode: CompareMode;
-  setCompareMode: (mode: CompareMode) => void;
-  locationId?: string;
+  locationId?: string | null;
   locationName?: string;
   onAskJosephine: () => void;
 }
@@ -34,13 +32,12 @@ export function LabourHeader({
   setDateRange,
   metricMode,
   setMetricMode,
-  compareMode,
-  setCompareMode,
   locationId,
   locationName,
   onAskJosephine
-}: LabourHeaderProps) {
-  const { locations } = useApp();
+}: LabourHeaderNewProps) {
+  const { accessibleLocations, canShowAllLocations } = useApp();
+  const navigate = useNavigate();
   const [dateMode, setDateMode] = useState<DateMode>('weekly');
 
   const handleDateChange = (range: { from: Date; to: Date }, mode: DateMode, _granularity: ChartGranularity) => {
@@ -52,15 +49,21 @@ export function LabourHeader({
     setDateMode(mode);
   };
 
+  const handleLocationSelect = (locId: string | null) => {
+    if (locId) {
+      navigate(`/insights/labour/${locId}`);
+    } else {
+      navigate('/insights/labour');
+    }
+  };
+
   const pageTitle = locationId && locationName 
     ? `Labour - ${locationName}` 
     : 'Labour - All locations';
 
-  const compareLabel = compareMode === 'forecast' 
-    ? 'Forecast' 
-    : compareMode === 'last_week' 
-      ? 'Last week' 
-      : 'Last month';
+  const currentLocationLabel = locationId && locationName 
+    ? locationName 
+    : 'All locations';
 
   return (
     <div className="space-y-4">
@@ -76,9 +79,9 @@ export function LabourHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Sales</DropdownMenuItem>
-              <DropdownMenuItem>Labour</DropdownMenuItem>
-              <DropdownMenuItem>Inventory</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/insights/sales')}>Sales</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/insights/labour')}>Labour</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/insights/instant-pl')}>Instant P&L</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -92,7 +95,7 @@ export function LabourHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Labour</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/insights/labour')}>Labour</DropdownMenuItem>
               <DropdownMenuItem disabled>Scheduling (coming soon)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -111,20 +114,12 @@ export function LabourHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-2 text-sm">
-                Compare: {compareLabel}
+                Compare: Forecast
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setCompareMode('forecast')}>
-                Forecast
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCompareMode('last_week')}>
-                Last week
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCompareMode('last_month')}>
-                Last month
-              </DropdownMenuItem>
+              <DropdownMenuItem>Forecast</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -173,23 +168,26 @@ export function LabourHeader({
             </Button>
           </div>
 
-          {/* Location dropdown (only for all locations view) */}
-          {!locationId && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-2 text-sm">
-                  All locations
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>All locations</DropdownMenuItem>
-                {locations.map(loc => (
-                  <DropdownMenuItem key={loc.id}>{loc.name}</DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          {/* Location dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-2 text-sm">
+                {currentLocationLabel}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {/* Always show All locations option */}
+              <DropdownMenuItem onClick={() => handleLocationSelect(null)}>
+                All locations
+              </DropdownMenuItem>
+              {accessibleLocations.map(loc => (
+                <DropdownMenuItem key={loc.id} onClick={() => handleLocationSelect(loc.id)}>
+                  {loc.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* More actions */}
           <Button variant="ghost" size="icon" className="h-8 w-8">

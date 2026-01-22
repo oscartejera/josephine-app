@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sparkles, Send, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { LabourKpis, LabourLocationRow } from '@/hooks/useLabourDataNew';
+import type { LabourKpis, LabourLocationRow } from '@/hooks/useLabourData';
 
 interface AskJosephineLabourPanelProps {
   open: boolean;

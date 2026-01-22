@@ -1,15 +1,14 @@
 /**
- * LabourLocationsTableNew - Table with 2-level headers like Nory
- * Columns: Location | Sales (Actual, Projected) | COL (Actual, Projected) | SPLH (Actual, Projected)
+ * LabourLocationsTable - Table with 2-level headers like Nory
  */
 
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { LabourLocationRow, MetricMode } from '@/hooks/useLabourDataNew';
+import type { LabourLocationRow, MetricMode } from '@/hooks/useLabourData';
 
-interface LabourLocationsTableNewProps {
+interface LabourLocationsTableProps {
   data: LabourLocationRow[];
   isLoading: boolean;
   metricMode: MetricMode;
@@ -74,7 +73,7 @@ function TableSkeleton() {
   );
 }
 
-export function LabourLocationsTableNew({ data, isLoading, metricMode }: LabourLocationsTableNewProps) {
+export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLocationsTableProps) {
   const navigate = useNavigate();
 
   if (isLoading) {
