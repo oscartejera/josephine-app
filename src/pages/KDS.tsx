@@ -1,14 +1,22 @@
 import { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useKDSData } from '@/hooks/useKDSData';
-import { KDSHeader, KDSBoard, KDSDestinationFilter, type KDSDestination } from '@/components/kds';
+import { 
+  KDSHeader, 
+  KDSBoard, 
+  KDSDestinationFilter, 
+  KDSViewToggle,
+  KDSExpeditorBoard,
+  type KDSDestination,
+  type KDSViewMode 
+} from '@/components/kds';
 
 export default function KDS() {
   const { locationId } = useParams<{ locationId: string }>();
-  const navigate = useNavigate();
   const { locations } = useApp();
   const [selectedDestination, setSelectedDestination] = useState<KDSDestination>('all');
+  const [viewMode, setViewMode] = useState<KDSViewMode>('kitchen');
   
   const location = locations.find(l => l.id === locationId);
   const { 
@@ -35,7 +43,7 @@ export default function KDS() {
     );
   }
 
-  // Filter orders by destination
+  // Filter orders by destination (for kitchen view)
   const filteredOrders = useMemo(() => {
     if (selectedDestination === 'all') return orders;
     
@@ -63,6 +71,19 @@ export default function KDS() {
     return counts;
   }, [orders]);
 
+  // Calculate view mode counts
+  const kitchenCount = useMemo(() => {
+    return orders.reduce((acc, order) => 
+      acc + order.items.filter(i => i.prep_status === 'pending' || i.prep_status === 'preparing').length, 
+    0);
+  }, [orders]);
+
+  const expeditorCount = useMemo(() => {
+    return orders.reduce((acc, order) => 
+      acc + order.items.filter(i => i.prep_status === 'ready').length, 
+    0);
+  }, [orders]);
+
   // Calculate stats for filtered orders
   const pendingCount = filteredOrders.reduce(
     (acc, order) => acc + order.items.filter(i => i.prep_status === 'pending').length, 
@@ -81,29 +102,59 @@ export default function KDS() {
     await completeOrder(ticketId);
   };
 
+  const handleServeItem = async (lineId: string) => {
+    await updateItemStatus(lineId, 'served');
+  };
+
+  const handleServeAll = async (ticketId: string) => {
+    // Mark all ready items in the order as served
+    const order = orders.find(o => o.ticketId === ticketId);
+    if (order) {
+      const readyItems = order.items.filter(i => i.prep_status === 'ready');
+      await Promise.all(readyItems.map(item => updateItemStatus(item.id, 'served')));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <KDSHeader 
         locationName={location.name}
         isConnected={isConnected}
-        pendingCount={pendingCount}
-        preparingCount={preparingCount}
+        pendingCount={viewMode === 'kitchen' ? pendingCount : expeditorCount}
+        preparingCount={viewMode === 'kitchen' ? preparingCount : 0}
       />
       
-      {/* Destination Filter */}
-      <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-800">
-        <KDSDestinationFilter
-          selected={selectedDestination}
-          onChange={setSelectedDestination}
-          counts={destinationCounts}
+      {/* View Mode Toggle + Destination Filter */}
+      <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-800 flex flex-wrap items-center gap-4">
+        <KDSViewToggle
+          mode={viewMode}
+          onChange={setViewMode}
+          kitchenCount={kitchenCount}
+          expeditorCount={expeditorCount}
         />
+        
+        {viewMode === 'kitchen' && (
+          <KDSDestinationFilter
+            selected={selectedDestination}
+            onChange={setSelectedDestination}
+            counts={destinationCounts}
+          />
+        )}
       </div>
       
-      <KDSBoard 
-        orders={filteredOrders}
-        onItemStatusChange={handleItemStatusChange}
-        onCompleteOrder={handleCompleteOrder}
-      />
+      {viewMode === 'kitchen' ? (
+        <KDSBoard 
+          orders={filteredOrders}
+          onItemStatusChange={handleItemStatusChange}
+          onCompleteOrder={handleCompleteOrder}
+        />
+      ) : (
+        <KDSExpeditorBoard
+          orders={orders}
+          onServeItem={handleServeItem}
+          onServeAll={handleServeAll}
+        />
+      )}
     </div>
   );
 }
