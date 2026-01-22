@@ -1,14 +1,15 @@
 /**
- * Labour Chart - "Labour over time" with SPLH/OPLH toggle
- * Mixed bar + line chart like Nory - purple bars, orange lines
+ * LabourChart - Labour over time chart matching Nory design
+ * Bars: COL% Actual vs Planned (or Amount/Hours based on mode)
+ * Lines: SPLH or OPLH (toggle)
  */
 
-import { Card, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { format } from 'date-fns';
 import {
   ComposedChart,
   Bar,
@@ -18,27 +19,28 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from 'recharts';
-import type { LabourData, MetricMode, ChartMode } from '@/hooks/useLabourData';
+import type { LabourTimeseriesRow, MetricMode } from '@/hooks/useLabourData';
 
 interface LabourChartProps {
-  data: LabourData | undefined;
+  data: LabourTimeseriesRow[];
   isLoading: boolean;
   metricMode: MetricMode;
 }
 
+type ChartMode = 'splh' | 'oplh';
+
 function ChartSkeleton() {
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-6">
+    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
           <Skeleton className="h-6 w-40" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-28" />
-            <Skeleton className="h-8 w-8" />
-          </div>
+          <Skeleton className="h-8 w-32" />
         </div>
+      </CardHeader>
+      <CardContent>
         <Skeleton className="h-[350px] w-full" />
       </CardContent>
     </Card>
@@ -47,52 +49,41 @@ function ChartSkeleton() {
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+    dataKey: string;
+  }>;
   label?: string;
   metricMode: MetricMode;
+  chartMode: ChartMode;
 }
 
-function CustomTooltip({ active, payload, label, metricMode }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, label, metricMode, chartMode }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
 
-  // Label is the dateLabel (e.g., "Mon 13")
-  const displayLabel = label || '';
-
-  const formatValue = (name: string, value: number) => {
-    if (name.includes('COL') || name.includes('%')) {
-      return `${value.toFixed(1)}%`;
-    }
-    if (name.includes('SPLH') || name.includes('OPLH')) {
-      return `€${value.toFixed(0)}`;
-    }
-    if (name.includes('Cost') || name.includes('Labour')) {
-      return `€${value.toFixed(0)}`;
-    }
-    if (name.includes('Hours')) {
-      return `${value.toFixed(1)}h`;
-    }
-    return value.toFixed(1);
+  const formatValue = (dataKey: string, value: number) => {
+    if (dataKey.includes('col_pct')) return `${value.toFixed(2)}%`;
+    if (dataKey.includes('splh') || dataKey.includes('oplh')) return `€${value.toFixed(2)}`;
+    if (dataKey.includes('cost')) return `€${value.toLocaleString()}`;
+    if (dataKey.includes('hours')) return `${value.toFixed(1)}h`;
+    return value.toFixed(2);
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-lg p-4 min-w-[220px]">
-      <p className="text-sm font-semibold mb-3 capitalize">{displayLabel}</p>
-      <div className="space-y-2">
-        {payload.map((entry, idx) => (
-          <div key={idx} className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-sm" 
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-xs text-muted-foreground">{entry.name}</span>
-            </div>
-            <span className="text-xs font-medium">
-              {formatValue(entry.name, entry.value)}
-            </span>
-          </div>
-        ))}
-      </div>
+    <div className="bg-card border border-border rounded-lg shadow-lg p-3 text-sm">
+      <p className="font-medium mb-2">{label}</p>
+      {payload.map((entry, index) => (
+        <div key={index} className="flex items-center gap-2 py-0.5">
+          <span 
+            className="w-3 h-3 rounded-sm" 
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-muted-foreground">{entry.name}:</span>
+          <span className="font-medium">{formatValue(entry.dataKey, entry.value)}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -100,168 +91,173 @@ function CustomTooltip({ active, payload, label, metricMode }: CustomTooltipProp
 export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   const [chartMode, setChartMode] = useState<ChartMode>('splh');
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return <ChartSkeleton />;
   }
 
-  const chartData = data.dailyData.map(d => ({
-    date: d.date,
-    dateLabel: d.dateLabel,
-    colActual: d.colActual,
-    colPlanned: d.colPlanned,
-    splhActual: d.splhActual,
-    splhPlanned: d.splhPlanned,
-    oplhActual: d.oplhActual,
-    oplhPlanned: d.oplhPlanned,
-    labourCostActual: d.labourCostActual,
-    labourCostPlanned: d.labourCostPlanned,
-    hoursActual: d.hoursActual,
-    hoursPlanned: d.hoursPlanned
+  // Transform data for chart
+  const chartData = data.map(row => ({
+    ...row,
+    date: format(new Date(row.date), 'dd MMM'),
   }));
 
-  // Determine which metrics to show based on mode
-  const getBarMetrics = () => {
+  // Determine bar and line data keys based on metric mode
+  const getBarConfig = () => {
     if (metricMode === 'percentage') {
-      return { actual: 'colActual', planned: 'colPlanned', label: 'COL %' };
+      return {
+        actualKey: 'actual_col_pct',
+        plannedKey: 'planned_col_pct',
+        actualName: 'COL % Actual',
+        plannedName: 'COL % Planned',
+        unit: '%',
+      };
     }
     if (metricMode === 'amount') {
-      return { actual: 'labourCostActual', planned: 'labourCostPlanned', label: 'Labour Cost' };
+      return {
+        actualKey: 'actual_labor_cost',
+        plannedKey: 'planned_labor_cost',
+        actualName: 'Labour Cost Actual',
+        plannedName: 'Labour Cost Planned',
+        unit: '€',
+      };
     }
-    return { actual: 'hoursActual', planned: 'hoursPlanned', label: 'Hours' };
+    return {
+      actualKey: 'actual_hours',
+      plannedKey: 'planned_hours',
+      actualName: 'Hours Actual',
+      plannedName: 'Hours Planned',
+      unit: 'h',
+    };
   };
 
-  const barMetrics = getBarMetrics();
-  const lineMetric = chartMode === 'splh' 
-    ? { actual: 'splhActual', planned: 'splhPlanned', label: 'SPLH' }
-    : { actual: 'oplhActual', planned: 'oplhPlanned', label: 'OPLH' };
+  const getLineConfig = () => {
+    if (chartMode === 'splh') {
+      return {
+        actualKey: 'actual_splh',
+        plannedKey: 'planned_splh',
+        actualName: 'SPLH Actual',
+        plannedName: 'SPLH Planned',
+      };
+    }
+    return {
+      actualKey: 'actual_oplh',
+      plannedKey: 'planned_oplh',
+      actualName: 'OPLH Actual',
+      plannedName: 'OPLH Planned',
+    };
+  };
+
+  const barConfig = getBarConfig();
+  const lineConfig = getLineConfig();
 
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Labour over time</h3>
+    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-semibold">Labour over time</CardTitle>
           
-          <div className="flex items-center gap-2">
-            {/* SPLH / OPLH Toggle */}
-            <div className="flex items-center bg-muted rounded-lg p-0.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                  chartMode === 'splh' 
-                    ? "bg-background shadow-sm text-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => setChartMode('splh')}
-              >
-                SPLH
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                  chartMode === 'oplh' 
-                    ? "bg-background shadow-sm text-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => setChartMode('oplh')}
-              >
-                OPLH
-              </Button>
-            </div>
-            
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
+          {/* SPLH / OPLH Toggle */}
+          <div className="flex items-center bg-muted rounded-lg p-0.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 px-3 rounded-md text-xs font-medium transition-all",
+                chartMode === 'splh' 
+                  ? "bg-background shadow-sm text-foreground" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setChartMode('splh')}
+            >
+              SPLH
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 px-3 rounded-md text-xs font-medium transition-all",
+                chartMode === 'oplh' 
+                  ? "bg-background shadow-sm text-foreground" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setChartMode('oplh')}
+            >
+              OPLH
             </Button>
           </div>
         </div>
-
+      </CardHeader>
+      <CardContent>
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="hsl(var(--border))" 
-                vertical={false}
-              />
+            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
               <XAxis 
-                dataKey="dateLabel" 
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                dataKey="date" 
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                 axisLine={{ stroke: 'hsl(var(--border))' }}
                 tickLine={false}
               />
               <YAxis 
                 yAxisId="left"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => 
-                  metricMode === 'percentage' 
-                    ? `${v}%` 
-                    : metricMode === 'amount' 
-                      ? `€${(v/1000).toFixed(0)}k`
-                      : `${v}h`
-                }
+                tickFormatter={(value) => `${value}${barConfig.unit === '€' ? '€' : barConfig.unit}`}
               />
               <YAxis 
                 yAxisId="right"
                 orientation="right"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => `€${v.toFixed(0)}`}
+                tickFormatter={(value) => `€${value}`}
               />
-              <Tooltip content={<CustomTooltip metricMode={metricMode} />} />
+              <Tooltip 
+                content={<CustomTooltip metricMode={metricMode} chartMode={chartMode} />}
+              />
               <Legend 
-                verticalAlign="bottom"
-                height={36}
-                iconType="rect"
-                iconSize={12}
-                formatter={(value) => (
-                  <span className="text-xs text-muted-foreground">{value}</span>
-                )}
+                wrapperStyle={{ paddingTop: '20px' }}
+                formatter={(value) => <span className="text-sm text-muted-foreground">{value}</span>}
               />
               
-              {/* Bars for COL / Labour Cost / Hours */}
+              {/* Bars for COL/Cost/Hours */}
               <Bar 
                 yAxisId="left"
-                dataKey={barMetrics.actual}
-                name={`${barMetrics.label} Actual`}
+                dataKey={barConfig.actualKey} 
+                name={barConfig.actualName}
                 fill="hsl(var(--bi-actual))"
                 radius={[4, 4, 0, 0]}
-                barSize={16}
+                barSize={20}
               />
               <Bar 
                 yAxisId="left"
-                dataKey={barMetrics.planned}
-                name={`${barMetrics.label} Planned`}
+                dataKey={barConfig.plannedKey} 
+                name={barConfig.plannedName}
                 fill="hsl(var(--bi-forecast))"
                 radius={[4, 4, 0, 0]}
-                barSize={16}
+                barSize={20}
               />
               
-              {/* Lines for SPLH / OPLH */}
+              {/* Lines for SPLH/OPLH */}
               <Line 
                 yAxisId="right"
                 type="monotone"
-                dataKey={lineMetric.actual}
-                name={`${lineMetric.label} Actual`}
+                dataKey={lineConfig.actualKey}
+                name={lineConfig.actualName}
                 stroke="hsl(var(--bi-acs))"
                 strokeWidth={2}
-                dot={{ fill: 'hsl(var(--bi-acs))', r: 4 }}
-                activeDot={{ r: 6 }}
+                dot={{ r: 4, fill: 'hsl(var(--bi-acs))' }}
               />
               <Line 
                 yAxisId="right"
                 type="monotone"
-                dataKey={lineMetric.planned}
-                name={`${lineMetric.label} Planned`}
+                dataKey={lineConfig.plannedKey}
+                name={lineConfig.plannedName}
                 stroke="hsl(var(--bi-acs-forecast))"
                 strokeWidth={2}
                 strokeDasharray="5 5"
-                dot={{ fill: 'hsl(var(--bi-acs-forecast))', r: 4 }}
+                dot={{ r: 4, fill: 'hsl(var(--bi-acs-forecast))' }}
               />
             </ComposedChart>
           </ResponsiveContainer>

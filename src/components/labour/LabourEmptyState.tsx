@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Database, BarChart3 } from 'lucide-react';
-import { seedLabourDemoData } from '@/hooks/useLabourDataNew';
+import { seedLabourDemoData } from '@/hooks/useLabourData';
 import { toast } from 'sonner';
 
 interface LabourEmptyStateProps {

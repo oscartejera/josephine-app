@@ -1,279 +1,152 @@
 /**
- * Labour Page - Nory-style labour analytics dashboard
- * Supports both all-locations view (/labour) and single location view (/labour/:locationId)
+ * Labour - Complete Labour page with Nory-style design
+ * Uses optimized RPCs for data fetching
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import { startOfWeek, endOfWeek } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
-import { useLabourData, MetricMode, CompareMode, LabourDateRange } from '@/hooks/useLabourData';
-import { 
-  LabourHeader, 
-  LabourKPICards, 
-  LabourChart, 
-  LabourLocationTable,
-  DepartmentDistribution,
-  ShiftTypes 
-} from '@/components/labour';
-import { AskJosephinePanel } from '@/components/bi/AskJosephinePanel';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { useLabourData, type MetricMode, type LabourDateRange } from '@/hooks/useLabourData';
+import { LabourHeader } from '@/components/labour/LabourHeader';
+import { LabourKPICards } from '@/components/labour/LabourKPICards';
+import { LabourChart } from '@/components/labour/LabourChart';
+import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
+import { LabourEmptyState } from '@/components/labour/LabourEmptyState';
+import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
-import { startOfWeek, endOfWeek, parseISO, isValid, format } from 'date-fns';
-import { getDemoGenerator } from '@/lib/demoDataGenerator';
 
-// Validate locationId format (demo IDs or UUIDs)
-function isValidLocationId(id: string | undefined): boolean {
+// Validate UUID format
+function isValidUUID(id: string | undefined): boolean {
   if (!id) return false;
-  // Demo IDs like "loc-west-001" or UUIDs
-  const demoPattern = /^loc-[a-z]+-\d{3}$/;
-  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return demoPattern.test(id) || uuidPattern.test(id);
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
 }
 
 export default function Labour() {
   const { locationId } = useParams<{ locationId?: string }>();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { locations, loading: appLoading } = useApp();
+  const { accessibleLocations, loading: appLoading } = useApp();
 
-  // Initialize date range from URL or default to current week - memoized to prevent re-computation
-  const initialDateRange = useMemo((): LabourDateRange => {
-    const startParam = searchParams.get('start');
-    const endParam = searchParams.get('end');
-    
-    if (startParam && endParam) {
-      const from = parseISO(startParam);
-      const to = parseISO(endParam);
-      if (isValid(from) && isValid(to)) {
-        return { from, to };
-      }
-    }
-    
-    const today = new Date();
-    return {
-      from: startOfWeek(today, { weekStartsOn: 1 }),
-      to: endOfWeek(today, { weekStartsOn: 1 })
-    };
-  }, []); // Only compute once on mount
+  // Initial date range: current week
+  const initialDateRange = useMemo(() => ({
+    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
+    to: endOfWeek(new Date(), { weekStartsOn: 1 }),
+  }), []);
 
-  // Initialize metric mode from URL
-  const initialMetricMode = useMemo((): MetricMode => {
-    const modeParam = searchParams.get('mode');
-    if (modeParam === 'amount' || modeParam === 'hours' || modeParam === 'percentage') {
-      return modeParam;
-    }
-    return 'percentage';
-  }, []);
-
-  // State
   const [dateRange, setDateRange] = useState<LabourDateRange>(initialDateRange);
-  const [metricMode, setMetricMode] = useState<MetricMode>(initialMetricMode);
-  const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
-  const [askPanelOpen, setAskPanelOpen] = useState(false);
+  const [metricMode, setMetricMode] = useState<MetricMode>('percentage');
+  const [showJosephine, setShowJosephine] = useState(false);
 
-  // Validate locationId
-  const isValidLocation = useMemo(() => {
-    if (!locationId) return true; // No locationId means all locations view
-    return isValidLocationId(locationId);
-  }, [locationId]);
-
-  // Find location name if in single location view
+  // Validate location ID
+  const validLocationId = isValidUUID(locationId) ? locationId : null;
+  
+  // Find location name if we have a location ID
   const locationInfo = useMemo(() => {
-    if (!locationId || !isValidLocation) return null;
-    
-    // First check real locations
-    const realLoc = locations.find(l => l.id === locationId);
-    if (realLoc) return { id: realLoc.id, name: realLoc.name };
-    
-    // Fall back to demo locations
-    try {
-      const generator = getDemoGenerator(dateRange.from, dateRange.to);
-      const demoLoc = generator.getLocations().find(l => l.id === locationId);
-      if (demoLoc) return { id: demoLoc.id, name: demoLoc.name };
-    } catch {
-      // Ignore errors
-    }
-    
-    return null;
-  }, [locationId, isValidLocation, locations, dateRange.from, dateRange.to]);
-
-  // Only fetch data when we have valid inputs
-  const shouldFetchData = isValidLocation && !appLoading;
+    if (!validLocationId) return null;
+    const loc = accessibleLocations.find(l => l.id === validLocationId);
+    return loc ? { id: loc.id, name: loc.name } : null;
+  }, [validLocationId, accessibleLocations]);
 
   // Fetch data
-  const { data, isLoading, error, refetch } = useLabourData({
+  const { 
+    kpis, 
+    timeseries, 
+    locations, 
+    isLoading, 
+    isError,
+    isEmpty,
+    refetch 
+  } = useLabourData({
     dateRange,
-    metricMode,
-    compareMode,
-    locationId: shouldFetchData ? locationId : undefined
+    locationId: validLocationId,
   });
 
-  // Navigation back to all locations
-  const handleBackToAll = useCallback(() => {
-    const params = new URLSearchParams();
-    params.set('start', format(dateRange.from, 'yyyy-MM-dd'));
-    params.set('end', format(dateRange.to, 'yyyy-MM-dd'));
-    params.set('mode', metricMode);
-    navigate(`/labour?${params.toString()}`);
-  }, [navigate, dateRange, metricMode]);
-
-  // Show loading state while app is initializing
+  // Loading state
   if (appLoading) {
     return (
-      <div className="flex flex-col gap-6 p-6 animate-fade-in">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-8 w-48" />
+      <div className="space-y-6 p-6">
+        <Skeleton className="h-20 w-full" />
+        <div className="grid grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <Card key={i} className="p-6">
-              <Skeleton className="h-6 w-24 mb-4" />
-              <Skeleton className="h-10 w-full" />
-            </Card>
-          ))}
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  // Invalid location ID
+  if (locationId && !validLocationId) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Invalid Location</h2>
+          <p className="text-muted-foreground">The location ID is not valid.</p>
         </div>
-        <Card className="p-6">
-          <Skeleton className="h-[350px] w-full" />
-        </Card>
       </div>
     );
   }
 
-  // Invalid location guard
-  if (locationId && !isValidLocation) {
+  // Location not accessible
+  if (validLocationId && !locationInfo && !isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] p-6">
-        <Card className="max-w-md border-border/60">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-destructive" />
-              <div>
-                <h2 className="text-lg font-semibold">Invalid Location</h2>
-                <p className="text-muted-foreground mt-1">
-                  The location "{locationId}" could not be found or is invalid.
-                </p>
-              </div>
-              <Button onClick={handleBackToAll} className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to All Locations
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have access to this location.</p>
+        </div>
       </div>
     );
   }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px] p-6">
-        <Card className="max-w-md border-border/60">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-amber-500" />
-              <div>
-                <h2 className="text-lg font-semibold">Something went wrong</h2>
-                <p className="text-muted-foreground mt-1">
-                  Failed to load labour data. Please try again.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                {locationId && (
-                  <Button variant="outline" onClick={handleBackToAll} className="gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to All Locations
-                  </Button>
-                )}
-                <Button onClick={() => refetch()} className="gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  Retry
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const isLocationView = !!locationId && isValidLocation;
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in">
-      {/* Back button for single location view */}
-      {isLocationView && (
-        <Button 
-          variant="ghost" 
-          className="w-fit gap-2 -mb-2 text-muted-foreground hover:text-foreground"
-          onClick={handleBackToAll}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          All locations
-        </Button>
-      )}
-
+    <div className="space-y-6">
       {/* Header */}
-      <LabourHeader
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        metricMode={metricMode}
-        setMetricMode={setMetricMode}
-        compareMode={compareMode}
-        setCompareMode={setCompareMode}
-        locationId={locationId}
-        locationName={locationInfo?.name}
-        onAskJosephine={() => setAskPanelOpen(true)}
-      />
-
-      {/* KPI Cards */}
-      <LabourKPICards 
-        data={data} 
-        isLoading={isLoading} 
-        metricMode={metricMode}
-        dateRange={dateRange}
-      />
-
-      {/* Chart */}
-      <LabourChart 
-        data={data} 
-        isLoading={isLoading} 
-        metricMode={metricMode}
-      />
-
-      {/* Location-specific views: Department Distribution and Shift Types */}
-      {isLocationView && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <DepartmentDistribution 
-            data={data?.departmentData} 
-            isLoading={isLoading} 
-          />
-          <ShiftTypes 
-            data={data?.shiftTypeData} 
-            isLoading={isLoading} 
-          />
-        </div>
-      )}
-
-      {/* Location Table (only show for all locations view) */}
-      {!isLocationView && (
-        <LabourLocationTable
-          data={data}
-          isLoading={isLoading}
+        <LabourHeader
           dateRange={dateRange}
+          setDateRange={setDateRange}
           metricMode={metricMode}
+          setMetricMode={setMetricMode}
+          locationId={validLocationId}
+          locationName={locationInfo?.name}
+          onAskJosephine={() => setShowJosephine(true)}
         />
-      )}
 
-      {/* Ask Josephine Panel */}
-      <AskJosephinePanel 
-        open={askPanelOpen} 
-        onClose={() => setAskPanelOpen(false)}
-        data={data as any}
-      />
+        {/* Ask Josephine Panel */}
+        <AskJosephineLabourPanel
+          open={showJosephine}
+          onClose={() => setShowJosephine(false)}
+          kpis={kpis}
+          locations={locations}
+        />
+
+      {/* Empty State */}
+      {isEmpty && !isLoading ? (
+        <LabourEmptyState onDataSeeded={refetch} />
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <LabourKPICards
+            kpis={kpis}
+            isLoading={isLoading}
+            metricMode={metricMode}
+            dateRange={dateRange}
+          />
+
+          {/* Chart */}
+          <LabourChart
+            data={timeseries}
+            isLoading={isLoading}
+            metricMode={metricMode}
+          />
+
+          {/* Locations Table */}
+          <LabourLocationsTable
+            data={locations}
+            isLoading={isLoading}
+            metricMode={metricMode}
+          />
+        </>
+      )}
     </div>
   );
 }

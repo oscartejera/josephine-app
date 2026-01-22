@@ -1,17 +1,16 @@
 /**
- * Labour KPI Cards - 4 cards matching Nory design exactly
+ * LabourKPICards - 4 KPI cards matching Nory design
  * Sales, Projected Sales, Actual COL, Projected COL
- * Date range labels and delta badges
  */
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { LabourData, MetricMode, LabourDateRange } from '@/hooks/useLabourData';
+import type { LabourKpis, LabourDateRange, MetricMode } from '@/hooks/useLabourData';
 
 interface LabourKPICardsProps {
-  data: LabourData | undefined;
+  kpis: LabourKpis | undefined;
   isLoading: boolean;
   metricMode: MetricMode;
   dateRange: LabourDateRange;
@@ -34,7 +33,13 @@ function formatHours(value: number): string {
   return `${value.toFixed(1)}h`;
 }
 
-function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: { value: number; inverted?: boolean; label?: string }) {
+interface DeltaBadgeProps {
+  value: number;
+  inverted?: boolean;
+  label?: string;
+}
+
+function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: DeltaBadgeProps) {
   // For COL, lower is better (inverted)
   const isPositive = inverted ? value <= 0 : value >= 0;
   const arrow = value >= 0 ? '▲' : '▼';
@@ -67,8 +72,8 @@ function KpiCardSkeleton() {
   );
 }
 
-export function LabourKPICards({ data, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
-  if (isLoading || !data) {
+export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
+  if (isLoading || !kpis) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCardSkeleton />
@@ -79,40 +84,36 @@ export function LabourKPICards({ data, isLoading, metricMode, dateRange }: Labou
     );
   }
 
-  const { kpis } = data;
-  
-  // Format date range label like Nory
   const dateLabel = `${format(dateRange.from, 'd MMM')} - ${format(dateRange.to, 'd MMM')}`;
 
-  // Determine display values based on metric mode for COL cards
-  const getColValue = () => {
-    if (metricMode === 'percentage') return formatPercent(kpis.colActual);
-    if (metricMode === 'amount') return formatCurrency(kpis.labourCostActual);
-    return formatHours(kpis.hoursActual);
+  // Determine display values based on metric mode
+  const getActualColValue = () => {
+    if (metricMode === 'percentage') return formatPercent(kpis.actual_col_pct);
+    if (metricMode === 'amount') return formatCurrency(kpis.actual_labor_cost);
+    return formatHours(kpis.actual_labor_hours);
   };
 
-  const getColPlannedValue = () => {
-    if (metricMode === 'percentage') return formatPercent(kpis.colPlanned);
-    if (metricMode === 'amount') return formatCurrency(kpis.labourCostPlanned);
-    return formatHours(kpis.hoursPlanned);
+  const getPlannedColValue = () => {
+    if (metricMode === 'percentage') return formatPercent(kpis.planned_col_pct);
+    if (metricMode === 'amount') return formatCurrency(kpis.planned_labor_cost);
+    return formatHours(kpis.planned_labor_hours);
   };
 
-  const getColLabel = () => {
+  const getActualLabel = () => {
     if (metricMode === 'percentage') return 'Actual COL';
     if (metricMode === 'amount') return 'Actual Labour Cost';
     return 'Actual Hours';
   };
 
-  const getColPlannedLabel = () => {
+  const getPlannedLabel = () => {
     if (metricMode === 'percentage') return 'Projected COL';
     if (metricMode === 'amount') return 'Projected Labour Cost';
     return 'Projected Hours';
   };
 
   const getColDelta = () => {
-    if (metricMode === 'percentage') return kpis.colDelta;
-    if (metricMode === 'amount') return kpis.colDelta;
-    return kpis.hoursDelta;
+    if (metricMode === 'hours') return kpis.hours_delta_pct;
+    return kpis.col_delta_pct;
   };
 
   return (
@@ -122,14 +123,12 @@ export function LabourKPICards({ data, isLoading, metricMode, dateRange }: Labou
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
             <span className="text-sm font-medium text-muted-foreground">Sales</span>
-            <DeltaBadge value={kpis.salesDelta} />
+            <DeltaBadge value={kpis.sales_delta_pct} />
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
-            {formatCurrency(kpis.salesActual)}
+            {formatCurrency(kpis.actual_sales)}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {dateLabel}
-          </p>
+          <p className="text-xs text-muted-foreground">{dateLabel}</p>
         </CardContent>
       </Card>
 
@@ -140,11 +139,9 @@ export function LabourKPICards({ data, isLoading, metricMode, dateRange }: Labou
             <span className="text-sm font-medium text-muted-foreground">Projected Sales</span>
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
-            {formatCurrency(kpis.salesProjected)}
+            {formatCurrency(kpis.forecast_sales)}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {dateLabel}
-          </p>
+          <p className="text-xs text-muted-foreground">{dateLabel}</p>
         </CardContent>
       </Card>
 
@@ -152,15 +149,13 @@ export function LabourKPICards({ data, isLoading, metricMode, dateRange }: Labou
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm font-medium text-muted-foreground">{getColLabel()}</span>
+            <span className="text-sm font-medium text-muted-foreground">{getActualLabel()}</span>
             <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label="vs planned" />
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
-            {getColValue()}
+            {getActualColValue()}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {dateLabel}
-          </p>
+          <p className="text-xs text-muted-foreground">{dateLabel}</p>
         </CardContent>
       </Card>
 
@@ -168,14 +163,12 @@ export function LabourKPICards({ data, isLoading, metricMode, dateRange }: Labou
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm font-medium text-muted-foreground">{getColPlannedLabel()}</span>
+            <span className="text-sm font-medium text-muted-foreground">{getPlannedLabel()}</span>
           </div>
           <div className="text-3xl font-bold tracking-tight mb-1">
-            {getColPlannedValue()}
+            {getPlannedColValue()}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {dateLabel}
-          </p>
+          <p className="text-xs text-muted-foreground">{dateLabel}</p>
         </CardContent>
       </Card>
     </div>
