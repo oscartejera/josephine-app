@@ -341,6 +341,233 @@ Deno.serve(async (req) => {
     }
     results.push({ step: 'inventory', status: 'seeded' });
 
+    // 9b. Seed POS products with real prices by category
+    const posProducts = [
+      // Bebidas
+      { name: 'Cerveza Mahou', category: 'Bebidas', price: 3.50 },
+      { name: 'Cerveza Estrella Galicia', category: 'Bebidas', price: 3.80 },
+      { name: 'Agua Mineral 50cl', category: 'Bebidas', price: 2.00 },
+      { name: 'Refresco Cola', category: 'Bebidas', price: 2.50 },
+      { name: 'Tinto de Verano', category: 'Bebidas', price: 4.00 },
+      { name: 'Copa Vino Rioja', category: 'Bebidas', price: 4.50 },
+      { name: 'Café Solo', category: 'Bebidas', price: 1.50 },
+      { name: 'Café con Leche', category: 'Bebidas', price: 1.80 },
+      // Entrantes
+      { name: 'Patatas Bravas', category: 'Entrantes', price: 6.50 },
+      { name: 'Croquetas Caseras (6 uds)', category: 'Entrantes', price: 8.00 },
+      { name: 'Jamón Ibérico', category: 'Entrantes', price: 18.00 },
+      { name: 'Tabla Quesos', category: 'Entrantes', price: 14.00 },
+      { name: 'Ensalada Mixta', category: 'Entrantes', price: 7.50 },
+      { name: 'Gazpacho', category: 'Entrantes', price: 5.50 },
+      { name: 'Tortilla Española', category: 'Entrantes', price: 9.00 },
+      { name: 'Gambas al Ajillo', category: 'Entrantes', price: 12.00 },
+      // Principales
+      { name: 'Entrecot a la Parrilla', category: 'Principales', price: 22.00 },
+      { name: 'Solomillo al Whisky', category: 'Principales', price: 24.00 },
+      { name: 'Merluza a la Plancha', category: 'Principales', price: 18.00 },
+      { name: 'Paella Valenciana', category: 'Principales', price: 16.00 },
+      { name: 'Cochinillo Asado', category: 'Principales', price: 26.00 },
+      { name: 'Secreto Ibérico', category: 'Principales', price: 19.00 },
+      { name: 'Pulpo a la Gallega', category: 'Principales', price: 21.00 },
+      { name: 'Rabo de Toro', category: 'Principales', price: 20.00 },
+      // Postres
+      { name: 'Tarta de Queso', category: 'Postres', price: 6.00 },
+      { name: 'Flan Casero', category: 'Postres', price: 4.50 },
+      { name: 'Crema Catalana', category: 'Postres', price: 5.00 },
+      { name: 'Helado Artesano', category: 'Postres', price: 4.00 },
+      { name: 'Tiramisú', category: 'Postres', price: 6.50 },
+      { name: 'Brownie con Helado', category: 'Postres', price: 7.00 },
+    ];
+
+    for (const [locName, locId] of Object.entries(locationMap)) {
+      const { data: existingProducts } = await supabaseAdmin
+        .from('products')
+        .select('id')
+        .eq('location_id', locId)
+        .limit(1);
+
+      if (!existingProducts || existingProducts.length === 0) {
+        const productInserts = posProducts.map(p => ({
+          location_id: locId,
+          group_id: groupId,
+          name: p.name,
+          category: p.category,
+          is_active: true,
+        }));
+        
+        await supabaseAdmin.from('products').insert(productInserts);
+      }
+    }
+    results.push({ step: 'pos_products', status: 'seeded' });
+
+    // 9c. Seed POS floor maps and tables for first location
+    const firstLocationId = Object.values(locationMap)[0];
+    const { data: existingFloorMap } = await supabaseAdmin
+      .from('pos_floor_maps')
+      .select('id')
+      .eq('location_id', firstLocationId)
+      .limit(1);
+
+    if (!existingFloorMap || existingFloorMap.length === 0) {
+      // Create floor map
+      const { data: newMap } = await supabaseAdmin
+        .from('pos_floor_maps')
+        .insert({
+          location_id: firstLocationId,
+          name: 'Sala Principal',
+          config_json: { width: 800, height: 600, background: null },
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (newMap) {
+        // Create tables in a realistic layout
+        const demoTables = [
+          { table_number: 'Mesa 1', seats: 4, position_x: 50, position_y: 50, shape: 'square', width: 80, height: 80 },
+          { table_number: 'Mesa 2', seats: 4, position_x: 170, position_y: 50, shape: 'square', width: 80, height: 80 },
+          { table_number: 'Mesa 3', seats: 6, position_x: 290, position_y: 50, shape: 'rectangle', width: 120, height: 80 },
+          { table_number: 'Mesa 4', seats: 2, position_x: 50, position_y: 170, shape: 'round', width: 70, height: 70 },
+          { table_number: 'Mesa 5', seats: 2, position_x: 160, position_y: 170, shape: 'round', width: 70, height: 70 },
+          { table_number: 'Mesa 6', seats: 4, position_x: 270, position_y: 170, shape: 'square', width: 80, height: 80 },
+          { table_number: 'Mesa 7', seats: 8, position_x: 400, position_y: 50, shape: 'rectangle', width: 160, height: 80 },
+          { table_number: 'Barra 1', seats: 3, position_x: 50, position_y: 300, shape: 'rectangle', width: 150, height: 50 },
+          { table_number: 'Barra 2', seats: 3, position_x: 220, position_y: 300, shape: 'rectangle', width: 150, height: 50 },
+          { table_number: 'Terraza 1', seats: 4, position_x: 450, position_y: 200, shape: 'square', width: 80, height: 80 },
+          { table_number: 'Terraza 2', seats: 4, position_x: 550, position_y: 200, shape: 'square', width: 80, height: 80 },
+          { table_number: 'VIP', seats: 10, position_x: 450, position_y: 320, shape: 'rectangle', width: 180, height: 100 },
+        ];
+
+        await supabaseAdmin.from('pos_tables').insert(
+          demoTables.map(t => ({
+            ...t,
+            floor_map_id: newMap.id,
+            status: 'available',
+          }))
+        );
+      }
+    }
+    results.push({ step: 'pos_floor_maps', status: 'seeded' });
+
+    // 9d. Seed product modifiers for some products
+    const { data: productsWithMods } = await supabaseAdmin
+      .from('products')
+      .select('id, name')
+      .eq('location_id', firstLocationId)
+      .in('name', ['Café Solo', 'Café con Leche', 'Entrecot a la Parrilla', 'Helado Artesano']);
+
+    if (productsWithMods && productsWithMods.length > 0) {
+      for (const product of productsWithMods) {
+        const { data: existingMods } = await supabaseAdmin
+          .from('pos_product_modifiers')
+          .select('id')
+          .eq('product_id', product.id)
+          .limit(1);
+
+        if (!existingMods || existingMods.length === 0) {
+          let modifiers: { name: string; modifier_type: string; required: boolean; options: { name: string; price_delta: number; is_default?: boolean }[] }[] = [];
+
+          if (product.name.includes('Café')) {
+            modifiers = [
+              { 
+                name: 'Tipo de leche', 
+                modifier_type: 'single', 
+                required: false,
+                options: [
+                  { name: 'Normal', price_delta: 0, is_default: true },
+                  { name: 'Desnatada', price_delta: 0 },
+                  { name: 'Avena', price_delta: 0.40 },
+                  { name: 'Soja', price_delta: 0.30 },
+                ]
+              },
+              {
+                name: 'Descafeinado',
+                modifier_type: 'single',
+                required: false,
+                options: [
+                  { name: 'Normal', price_delta: 0, is_default: true },
+                  { name: 'Descafeinado', price_delta: 0 },
+                ]
+              }
+            ];
+          } else if (product.name.includes('Entrecot')) {
+            modifiers = [
+              {
+                name: 'Punto de cocción',
+                modifier_type: 'single',
+                required: true,
+                options: [
+                  { name: 'Poco hecho', price_delta: 0 },
+                  { name: 'Al punto', price_delta: 0, is_default: true },
+                  { name: 'Muy hecho', price_delta: 0 },
+                ]
+              },
+              {
+                name: 'Extras',
+                modifier_type: 'multiple',
+                required: false,
+                options: [
+                  { name: 'Salsa pimienta', price_delta: 2.00 },
+                  { name: 'Pimientos de Padrón', price_delta: 3.50 },
+                  { name: 'Patatas extra', price_delta: 2.50 },
+                ]
+              }
+            ];
+          } else if (product.name.includes('Helado')) {
+            modifiers = [
+              {
+                name: 'Sabor',
+                modifier_type: 'single',
+                required: true,
+                options: [
+                  { name: 'Vainilla', price_delta: 0, is_default: true },
+                  { name: 'Chocolate', price_delta: 0 },
+                  { name: 'Fresa', price_delta: 0 },
+                  { name: 'Limón', price_delta: 0 },
+                ]
+              },
+              {
+                name: 'Toppings',
+                modifier_type: 'multiple',
+                required: false,
+                options: [
+                  { name: 'Sirope chocolate', price_delta: 0.50 },
+                  { name: 'Nata', price_delta: 0.80 },
+                  { name: 'Virutas', price_delta: 0.30 },
+                ]
+              }
+            ];
+          }
+
+          for (const mod of modifiers) {
+            const { data: newMod } = await supabaseAdmin
+              .from('pos_product_modifiers')
+              .insert({
+                product_id: product.id,
+                name: mod.name,
+                modifier_type: mod.modifier_type,
+                required: mod.required,
+              })
+              .select('id')
+              .single();
+
+            if (newMod) {
+              await supabaseAdmin.from('pos_modifier_options').insert(
+                mod.options.map((opt, idx) => ({
+                  modifier_id: newMod.id,
+                  name: opt.name,
+                  price_delta: opt.price_delta,
+                  is_default: opt.is_default || false,
+                  sort_order: idx,
+                }))
+              );
+            }
+          }
+        }
+      }
+    }
+    results.push({ step: 'pos_modifiers', status: 'seeded' });
+
     // 9. Seed planned_shifts for variance analysis
     for (const [, locId] of Object.entries(locationMap)) {
       const { data: locEmployees } = await supabaseAdmin
