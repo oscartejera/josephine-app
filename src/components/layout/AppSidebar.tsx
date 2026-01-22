@@ -20,7 +20,8 @@ import {
   Clock,
   LineChart,
   Wallet,
-  PiggyBank
+  PiggyBank,
+  Monitor
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +47,7 @@ const insightsChildren = [
 // All nav items - always visible (no permission filtering)
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Monitor, label: 'POS', path: '/pos', highlight: true },
   { icon: CalendarDays, label: 'Scheduling', path: '/scheduling' },
   { icon: Clock, label: 'Availability', path: '/availability' },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement' },
@@ -188,13 +190,15 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           {navItems.slice(1).map((item) => {
             const isActive = location.pathname === item.path || 
               location.pathname.startsWith(item.path + '/');
+            const isHighlight = 'highlight' in item && item.highlight;
             return (
               <Button
                 key={item.path}
-                variant={isActive ? "secondary" : "ghost"}
+                variant={isActive ? "secondary" : isHighlight ? "default" : "ghost"}
                 className={cn(
                   "w-full justify-start gap-3 h-10",
                   isActive && "bg-accent text-accent-foreground font-medium",
+                  isHighlight && !isActive && "bg-primary text-primary-foreground hover:bg-primary/90",
                   collapsed && "justify-center px-2"
                 )}
                 onClick={() => navigate(item.path)}
