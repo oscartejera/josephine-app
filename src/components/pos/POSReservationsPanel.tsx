@@ -56,19 +56,20 @@ export function POSReservationsPanel({
   );
 
   return (
-    <div className="h-full flex flex-col bg-card border-l border-border">
+    <div className="flex flex-col max-h-[65vh]">
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <h3 className="font-semibold flex items-center gap-2">
+      <div className="p-3 border-b border-border">
+        <h3 className="font-semibold flex items-center gap-2 text-sm">
           <Calendar className="h-4 w-4" />
-          Reservas
+          Reservas del día
         </h3>
         
         {/* Date Navigation */}
-        <div className="flex items-center gap-2 mt-3">
+        <div className="flex items-center gap-2 mt-2">
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
             onClick={() => {
               const prev = new Date(selectedDate);
               prev.setDate(prev.getDate() - 1);
@@ -77,12 +78,13 @@ export function POSReservationsPanel({
           >
             ←
           </Button>
-          <span className="flex-1 text-center text-sm font-medium">
+          <span className="flex-1 text-center text-xs font-medium">
             {isToday(selectedDate) ? 'Hoy' : format(selectedDate, 'EEE d MMM', { locale: es })}
           </span>
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
             onClick={() => {
               const next = new Date(selectedDate);
               next.setDate(next.getDate() + 1);
@@ -182,15 +184,11 @@ export function POSReservationsPanel({
       </ScrollArea>
 
       {/* Summary Footer */}
-      <div className="p-3 border-t border-border bg-muted/30">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Total reservas:</span>
-          <span className="font-medium">{reservations.length}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Comensales esperados:</span>
-          <span className="font-medium">
-            {reservations.reduce((sum, r) => sum + r.party_size, 0)}
+      <div className="p-2 border-t border-border bg-muted/30 text-xs">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Reservas: {reservations.length}</span>
+          <span className="text-muted-foreground">
+            Comensales: {reservations.reduce((sum, r) => sum + r.party_size, 0)}
           </span>
         </div>
       </div>
