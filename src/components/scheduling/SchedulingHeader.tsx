@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
+import { ChevronLeft, ChevronRight, MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
+import { format, addWeeks, subWeeks, endOfWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,6 +16,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface SchedulingHeaderProps {
   weekStart: Date;
@@ -27,6 +34,8 @@ interface SchedulingHeaderProps {
   projectedSales?: number;
   projectedColPercent?: number;
   targetColPercent?: number;
+  totalShiftsCost?: number;
+  totalVarianceCost?: number;
 }
 
 export function SchedulingHeader({
@@ -39,9 +48,16 @@ export function SchedulingHeader({
   projectedSales,
   projectedColPercent,
   targetColPercent,
+  totalShiftsCost,
+  totalVarianceCost,
 }: SchedulingHeaderProps) {
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const weekLabel = `${format(weekStart, 'd')} - ${format(weekEnd, 'd MMM')}`;
+  
+  const hasVariance = totalVarianceCost !== undefined && totalVarianceCost !== 0;
+  const varianceIsPositive = (totalVarianceCost ?? 0) > 0;
+  const varianceAbs = Math.abs(totalVarianceCost ?? 0);
+  const varianceSignificant = varianceAbs > 100; // Show if > €100 difference
   
   return (
     <div className="space-y-4">
@@ -92,27 +108,73 @@ export function SchedulingHeader({
           </Badge>
           
           {/* KPI pills when schedule exists */}
-          {hasSchedule && projectedSales && (
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
-                <span className="text-muted-foreground">Projected</span>
-                <span className="font-medium">€{projectedSales.toLocaleString()}</span>
+          {hasSchedule && projectedSales !== undefined && (
+            <TooltipProvider>
+              <div className="flex items-center gap-3 text-sm">
+                {/* Projected Sales */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
+                  <span className="text-muted-foreground">Forecast</span>
+                  <span className="font-medium">€{projectedSales.toLocaleString()}</span>
+                </div>
+                
+                {/* COL% */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
+                  <span className="text-muted-foreground">COL</span>
+                  <span className={cn(
+                    "font-medium",
+                    projectedColPercent && targetColPercent && projectedColPercent <= targetColPercent 
+                      ? 'text-[hsl(var(--success))]' 
+                      : 'text-amber-600'
+                  )}>
+                    {projectedColPercent}%
+                  </span>
+                </div>
+                
+                {/* Target */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
+                  <span className="text-muted-foreground">Target</span>
+                  <span className="font-medium">{targetColPercent}%</span>
+                </div>
+                
+                {/* Shifts cost with variance tooltip */}
+                {totalShiftsCost !== undefined && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-md border",
+                        hasVariance && varianceSignificant
+                          ? varianceIsPositive 
+                            ? "bg-red-50 border-red-200" 
+                            : "bg-green-50 border-green-200"
+                          : "bg-muted/50 border-transparent"
+                      )}>
+                        <span className="text-muted-foreground">Shifts</span>
+                        <span className="font-medium">€{Math.round(totalShiftsCost).toLocaleString()}</span>
+                        {hasVariance && varianceSignificant && (
+                          <>
+                            {varianceIsPositive ? (
+                              <TrendingUp className="h-3.5 w-3.5 text-red-500" />
+                            ) : (
+                              <TrendingDown className="h-3.5 w-3.5 text-green-500" />
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      <div className="space-y-1">
+                        <div>Coste planificado (turnos): €{Math.round(totalShiftsCost).toLocaleString()}</div>
+                        {hasVariance && (
+                          <div className={varianceIsPositive ? "text-red-600" : "text-green-600"}>
+                            Δ vs Forecast: {varianceIsPositive ? '+' : ''}€{Math.round(totalVarianceCost ?? 0).toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
-                <span className="text-muted-foreground">COL</span>
-                <span className={`font-medium ${
-                  projectedColPercent && targetColPercent && projectedColPercent <= targetColPercent 
-                    ? 'text-[hsl(var(--success))]' 
-                    : 'text-amber-600'
-                }`}>
-                  {projectedColPercent}%
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
-                <span className="text-muted-foreground">Target</span>
-                <span className="font-medium">{targetColPercent}%</span>
-              </div>
-            </div>
+            </TooltipProvider>
           )}
         </div>
         

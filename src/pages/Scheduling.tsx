@@ -1,9 +1,9 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { startOfWeek, parseISO } from 'date-fns';
 import { toast } from 'sonner';
-import { ArrowRightLeft } from 'lucide-react';
-import { useSchedulingData, ViewMode, Shift } from '@/hooks/useSchedulingData';
+import { ArrowRightLeft, AlertTriangle } from 'lucide-react';
+import { useSchedulingSupabase, ViewMode, Shift } from '@/hooks/useSchedulingSupabase';
 import {
   SchedulingHeader,
   CreateScheduleModal,
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Generate placeholder KPIs for empty state
 function generatePlaceholderKPIs(weekStart: Date) {
@@ -31,10 +32,19 @@ function generatePlaceholderKPIs(weekStart: Date) {
   return days.map((dayName, i) => ({
     date: '',
     dayName,
-    sales: 2000 + Math.random() * 2000,
-    cost: 500 + Math.random() * 300,
-    colPercent: 20 + Math.random() * 8,
-    hours: 50 + Math.random() * 30,
+    sales: 0,
+    cost: 0,
+    colPercent: 0,
+    hours: 0,
+    forecastSales: 0,
+    forecastLaborCost: 0,
+    forecastLaborHours: 0,
+    forecastColPercent: 0,
+    shiftsCost: 0,
+    shiftsHours: 0,
+    shiftsCount: 0,
+    varianceCost: 0,
+    varianceCostPct: 0,
   }));
 }
 
@@ -42,7 +52,7 @@ export default function Scheduling() {
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Parse URL params
-  const locationId = searchParams.get('location') || 'westside';
+  const locationIdParam = searchParams.get('location');
   const startParam = searchParams.get('start');
   const weekStart = startParam 
     ? startOfWeek(parseISO(startParam), { weekStartsOn: 1 })
@@ -78,7 +88,18 @@ export default function Scheduling() {
     createSwapRequest,
     approveSwapRequest,
     rejectSwapRequest,
-  } = useSchedulingData(locationId, weekStart);
+  } = useSchedulingSupabase(locationIdParam, weekStart);
+  
+  // Set default location in URL when locations load
+  useEffect(() => {
+    if (locations.length > 0 && !locationIdParam) {
+      const params = new URLSearchParams(searchParams);
+      params.set('location', locations[0].id);
+      setSearchParams(params, { replace: true });
+    }
+  }, [locations, locationIdParam, searchParams, setSearchParams]);
+  
+  const currentLocationId = locationIdParam || (locations.length > 0 ? locations[0].id : '');
   
   // Placeholder KPIs for empty state
   const placeholderKPIs = useMemo(() => generatePlaceholderKPIs(weekStart), [weekStart]);
@@ -153,7 +174,7 @@ export default function Scheduling() {
       .filter(item => item.employee);
   }, [data, swapDialogData]);
   
-  const currentLocation = locations.find(l => l.id === locationId) || locations[0];
+  const currentLocation = locations.find(l => l.id === currentLocationId) || locations[0];
   
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -168,15 +189,30 @@ export default function Scheduling() {
         projectedSales={data?.projectedSales}
         projectedColPercent={data?.projectedColPercent}
         targetColPercent={data?.targetColPercent}
+        totalShiftsCost={data?.totalShiftsCost}
+        totalVarianceCost={data?.totalVarianceCost}
       />
+      
+      {/* Missing payroll warning */}
+      {hasSchedule && data && data.missingPayrollCount > 0 && (
+        <Alert variant="default" className="border-amber-200 bg-amber-50">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Faltan datos de nómina para {data.missingPayrollCount} empleados. 
+            <a href="/settings" className="underline ml-1 font-medium">
+              Completa Settings → Payroll
+            </a>
+          </AlertDescription>
+        </Alert>
+      )}
       
       {/* Controls row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ViewModeDropdown value={viewMode} onChange={setViewMode} />
           
-          <Select value={locationId} onValueChange={handleLocationChange}>
-            <SelectTrigger className="w-[180px]">
+          <Select value={currentLocationId} onValueChange={handleLocationChange}>
+            <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select location" />
             </SelectTrigger>
             <SelectContent>
@@ -252,7 +288,7 @@ export default function Scheduling() {
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
         onConfirm={handlePublish}
-        locationName={currentLocation.name}
+        locationName={currentLocation?.name || 'Location'}
       />
       
       {/* Swap shift dialog */}

@@ -281,6 +281,66 @@ export type Database = {
           },
         ]
       }
+      employee_payroll: {
+        Row: {
+          contract_type: string
+          created_at: string
+          employee_id: string
+          gross_annual: number | null
+          gross_monthly: number | null
+          hourly_override: number | null
+          id: string
+          location_id: string
+          pay_type: string
+          payments_per_year: number
+          updated_at: string
+          weekly_hours: number
+        }
+        Insert: {
+          contract_type?: string
+          created_at?: string
+          employee_id: string
+          gross_annual?: number | null
+          gross_monthly?: number | null
+          hourly_override?: number | null
+          id?: string
+          location_id: string
+          pay_type?: string
+          payments_per_year?: number
+          updated_at?: string
+          weekly_hours?: number
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string
+          employee_id?: string
+          gross_annual?: number | null
+          gross_monthly?: number | null
+          hourly_override?: number | null
+          id?: string
+          location_id?: string
+          pay_type?: string
+          payments_per_year?: number
+          updated_at?: string
+          weekly_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_payroll_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_payroll_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           active: boolean | null
@@ -923,6 +983,56 @@ export type Database = {
             foreignKeyName: "payroll_inputs_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_location_settings: {
+        Row: {
+          accident_rate_employer: number
+          contingencias_comunes_employer: number
+          created_at: string
+          desempleo_employer_indefinido: number
+          desempleo_employer_temporal: number
+          fogasa_employer: number
+          formacion_employer: number
+          id: string
+          location_id: string
+          mei_employer: number
+          updated_at: string
+        }
+        Insert: {
+          accident_rate_employer?: number
+          contingencias_comunes_employer?: number
+          created_at?: string
+          desempleo_employer_indefinido?: number
+          desempleo_employer_temporal?: number
+          fogasa_employer?: number
+          formacion_employer?: number
+          id?: string
+          location_id: string
+          mei_employer?: number
+          updated_at?: string
+        }
+        Update: {
+          accident_rate_employer?: number
+          contingencias_comunes_employer?: number
+          created_at?: string
+          desempleo_employer_indefinido?: number
+          desempleo_employer_temporal?: number
+          fogasa_employer?: number
+          formacion_employer?: number
+          id?: string
+          location_id?: string
+          mei_employer?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_location_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
@@ -2334,6 +2444,7 @@ export type Database = {
     }
     Functions: {
       can_access_location: { Args: { _location_id: string }; Returns: boolean }
+      compute_hourly_cost: { Args: { p_employee_id: string }; Returns: number }
       get_accessible_location_ids: { Args: never; Returns: string[] }
       get_labour_kpis: {
         Args: {
