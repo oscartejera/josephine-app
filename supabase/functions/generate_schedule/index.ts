@@ -326,15 +326,14 @@ Deno.serve(async (req) => {
     logs.push(`[SCHEDULE] Avg Party Size: ${avgPartySize.toFixed(2)}`);
     
     // =========================================================
-    // 2. DELETE EXISTING SHIFTS FOR THIS WEEK
+    // 2. DELETE EXISTING SHIFTS FOR THIS WEEK (ALL statuses)
     // =========================================================
     const { error: deleteError } = await supabase
       .from('planned_shifts')
       .delete()
       .eq('location_id', location_id)
       .gte('shift_date', week_start)
-      .lte('shift_date', weekEnd)
-      .in('status', ['draft', 'published']);
+      .lte('shift_date', weekEnd);
     
     if (deleteError) {
       warnings.push(`Delete existing shifts error: ${deleteError.message}`);
@@ -454,6 +453,9 @@ Deno.serve(async (req) => {
       employeeWeeklyShifts[emp.id] = { count: 0 };
     });
     
+    // Track used employee+date+time combinations to avoid duplicate key violations
+    const usedSlots = new Set<string>(); // "employeeId|date|startTime"
+    
     // Process each day
     for (const plan of dayPlans) {
       if (plan.isClosed) continue;
@@ -464,23 +466,28 @@ Deno.serve(async (req) => {
           const needed = shiftTemplate === 'A' ? needs.shiftA : needs.shiftB;
           const shiftConfig = shiftTemplate === 'A' ? CONFIG.shiftA : CONFIG.shiftB;
           
-          // Get available employees for this role
-          const roleEmployees = employeesByRole[role] || [];
+          // Get available employees for this role (clone to avoid mutation issues)
+          const roleEmployees = [...(employeesByRole[role] || [])];
           
           for (let i = 0; i < needed; i++) {
             let assignedEmployee: Employee | null = null;
+            const slotKey = (empId: string) => `${empId}|${plan.date}|${shiftConfig.start}`;
             
             // Try to find an available real employee
-            for (const emp of roleEmployees) {
+            for (let j = 0; j < roleEmployees.length; j++) {
+              const emp = roleEmployees[j];
               const weekData = employeeWeeklyShifts[emp.id];
               if (!weekData) continue;
+              
+              // Check if already assigned to this slot
+              if (usedSlots.has(slotKey(emp.id))) continue;
               
               // Check max shifts per week
               if (weekData.count >= CONFIG.maxShiftsPerWeek) continue;
               
               // Check 12h rest between shifts
               if (weekData.lastEndDate === plan.date) {
-                // Same day - already assigned, skip
+                // Same day - already assigned to a shift, skip
                 continue;
               }
               
@@ -492,42 +499,37 @@ Deno.serve(async (req) => {
               }
               
               assignedEmployee = emp;
+              // Remove from available pool for this role
+              roleEmployees.splice(j, 1);
               break;
             }
             
-            // If no real employee available, use OPEN placeholder
+            // If no real employee available, DON'T use OPEN placeholder for DB insert
+            // Instead, log a warning - we'll only create shifts for real employees
             if (!assignedEmployee) {
-              assignedEmployee = openByRole[role] || null;
-              if (assignedEmployee) {
-                warnings.push(`OPEN SHIFT needed for ${role} on ${plan.date} (${shiftTemplate})`);
-              }
+              warnings.push(`Need additional ${role} on ${plan.date} (Shift ${shiftTemplate}) - OPEN SLOT`);
+              // Skip creating this shift - no duplicate key issues
+              continue;
             }
             
-            if (assignedEmployee) {
-              const cost = assignedEmployee.hourly_cost * CONFIG.shiftDuration;
-              
-              plan.assignments.push({
-                employee_id: assignedEmployee.id,
-                role,
-                shift_template: shiftTemplate,
-                cost,
-              });
-              
-              plan.totalCost += cost;
-              
-              // Update tracking (only for real employees)
-              if (!assignedEmployee.isOpenShift && employeeWeeklyShifts[assignedEmployee.id]) {
-                employeeWeeklyShifts[assignedEmployee.id].count++;
-                employeeWeeklyShifts[assignedEmployee.id].lastEndDate = plan.date;
-                employeeWeeklyShifts[assignedEmployee.id].lastEndTime = shiftConfig.end;
-                
-                // Remove from available pool for this iteration
-                const idx = roleEmployees.indexOf(assignedEmployee);
-                if (idx > -1) roleEmployees.splice(idx, 1);
-              }
-            } else {
-              warnings.push(`No employee available for ${role} on ${plan.date} (${shiftTemplate})`);
-            }
+            // Mark slot as used
+            usedSlots.add(slotKey(assignedEmployee.id));
+            
+            const cost = assignedEmployee.hourly_cost * CONFIG.shiftDuration;
+            
+            plan.assignments.push({
+              employee_id: assignedEmployee.id,
+              role,
+              shift_template: shiftTemplate,
+              cost,
+            });
+            
+            plan.totalCost += cost;
+            
+            // Update tracking
+            employeeWeeklyShifts[assignedEmployee.id].count++;
+            employeeWeeklyShifts[assignedEmployee.id].lastEndDate = plan.date;
+            employeeWeeklyShifts[assignedEmployee.id].lastEndTime = shiftConfig.end;
           }
         }
       }
