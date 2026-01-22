@@ -42,6 +42,7 @@ const insightsChildren = [
   { icon: ChefHat, label: 'Menu Engineering', path: '/insights/menu-engineering' },
   { icon: Wallet, label: 'Cash Management', path: '/insights/cash-management' },
   { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets' },
+  { icon: ChefHat, label: 'KDS Dashboard', path: '/insights/kds' },
 ];
 
 // All nav items - always visible (no permission filtering)
