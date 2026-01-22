@@ -39,7 +39,7 @@ export function KDSAlertSettingsDialog({ settings, onUpdateSettings }: KDSAlertS
         <Button
           variant="outline"
           size="sm"
-          className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+          className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700"
         >
           <Settings className="h-4 w-4 mr-2" />
           Alertas
@@ -82,7 +82,7 @@ export function KDSAlertSettingsDialog({ settings, onUpdateSettings }: KDSAlertS
           <Button
             variant="outline"
             onClick={() => setOpen(false)}
-            className="bg-transparent border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+            className="bg-transparent border-zinc-700 text-white hover:bg-zinc-800"
           >
             Cancelar
           </Button>
