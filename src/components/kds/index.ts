@@ -7,3 +7,4 @@ export { KDSViewToggle } from './KDSViewToggle';
 export type { KDSViewMode } from './KDSViewToggle';
 export { KDSExpeditorBoard } from './KDSExpeditorBoard';
 export { KDSExpeditorCard } from './KDSExpeditorCard';
+export { KDSHistoryBoard } from './KDSHistoryBoard';
