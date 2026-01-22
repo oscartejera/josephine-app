@@ -2057,6 +2057,84 @@ export type Database = {
           },
         ]
       }
+      reservations: {
+        Row: {
+          confirmation_sent_at: string | null
+          created_at: string
+          created_by: string | null
+          duration_minutes: number | null
+          guest_email: string | null
+          guest_name: string
+          guest_phone: string | null
+          id: string
+          location_id: string
+          notes: string | null
+          party_size: number
+          pos_table_id: string | null
+          reminder_sent_at: string | null
+          reservation_date: string
+          reservation_time: string
+          special_requests: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confirmation_sent_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number | null
+          guest_email?: string | null
+          guest_name: string
+          guest_phone?: string | null
+          id?: string
+          location_id: string
+          notes?: string | null
+          party_size?: number
+          pos_table_id?: string | null
+          reminder_sent_at?: string | null
+          reservation_date: string
+          reservation_time: string
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confirmation_sent_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number | null
+          guest_email?: string | null
+          guest_name?: string
+          guest_phone?: string | null
+          id?: string
+          location_id?: string
+          notes?: string | null
+          party_size?: number
+          pos_table_id?: string | null
+          reminder_sent_at?: string | null
+          reservation_date?: string
+          reservation_time?: string
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_pos_table_id_fkey"
+            columns: ["pos_table_id"]
+            isOneToOne: false
+            referencedRelation: "pos_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           ai_draft: string | null

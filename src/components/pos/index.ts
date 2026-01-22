@@ -9,3 +9,5 @@ export * from './POSCashSession';
 export * from './POSFloorEditor';
 export * from './PrintQueuePanel';
 export * from './POSModifierDialog';
+export * from './POSReservationDialog';
+export * from './POSReservationsPanel';
