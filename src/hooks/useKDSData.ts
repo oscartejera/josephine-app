@@ -145,8 +145,8 @@ export function useKDSData(locationId: string) {
         return;
       }
 
-      // Get product prep times for products in the lines
-      const productIds = [...new Set((ticketLines || []).map(l => (l as any).product_id).filter(Boolean))] as string[];
+      // Get product prep times for products in the lines (now using real product_id column)
+      const productIds = [...new Set((ticketLines || []).map(l => l.product_id).filter(Boolean))] as string[];
       let productPrepTimes = new Map<string, number>();
       
       if (productIds.length > 0) {
@@ -225,7 +225,6 @@ export function useKDSData(locationId: string) {
           });
         }
 
-        const lineData = line as any;
         ordersMap.get(line.ticket_id)!.items.push({
           id: line.id,
           ticket_id: line.ticket_id,
@@ -237,9 +236,9 @@ export function useKDSData(locationId: string) {
           ready_at: line.ready_at,
           sent_at: line.sent_at,
           destination: (line.destination || 'kitchen') as KDSTicketLine['destination'],
-          product_id: lineData.product_id ?? null,
-          target_prep_time: lineData.product_id ? productPrepTimes.get(lineData.product_id) ?? null : null,
-          is_rush: lineData.is_rush ?? false,
+          product_id: line.product_id ?? null,
+          target_prep_time: line.product_id ? productPrepTimes.get(line.product_id) ?? null : null,
+          is_rush: line.is_rush ?? false,
           modifiers: modifiersMap.get(line.id) || [],
         });
       }
