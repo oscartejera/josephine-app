@@ -523,6 +523,74 @@ export type Database = {
           },
         ]
       }
+      forecast_model_runs: {
+        Row: {
+          algorithm: string
+          confidence: number | null
+          created_at: string
+          data_points: number | null
+          generated_at: string
+          history_end: string
+          history_start: string
+          horizon_days: number
+          id: string
+          location_id: string
+          mape: number | null
+          model_version: string
+          mse: number | null
+          seasonality_dow: Json | null
+          seasonality_woy: Json | null
+          trend_intercept: number | null
+          trend_slope: number | null
+        }
+        Insert: {
+          algorithm?: string
+          confidence?: number | null
+          created_at?: string
+          data_points?: number | null
+          generated_at?: string
+          history_end: string
+          history_start: string
+          horizon_days?: number
+          id?: string
+          location_id: string
+          mape?: number | null
+          model_version: string
+          mse?: number | null
+          seasonality_dow?: Json | null
+          seasonality_woy?: Json | null
+          trend_intercept?: number | null
+          trend_slope?: number | null
+        }
+        Update: {
+          algorithm?: string
+          confidence?: number | null
+          created_at?: string
+          data_points?: number | null
+          generated_at?: string
+          history_end?: string
+          history_start?: string
+          horizon_days?: number
+          id?: string
+          location_id?: string
+          mape?: number | null
+          model_version?: string
+          mse?: number | null
+          seasonality_dow?: Json | null
+          seasonality_woy?: Json | null
+          trend_intercept?: number | null
+          trend_slope?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_model_runs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecasts: {
         Row: {
           created_at: string
@@ -2482,6 +2550,10 @@ export type Database = {
     Functions: {
       can_access_location: { Args: { _location_id: string }; Returns: boolean }
       compute_hourly_cost: { Args: { p_employee_id: string }; Returns: number }
+      forecast_needs_refresh: {
+        Args: { p_location_id: string }
+        Returns: boolean
+      }
       get_accessible_location_ids: { Args: never; Returns: string[] }
       get_labour_kpis: {
         Args: {
@@ -2542,6 +2614,34 @@ export type Database = {
           planned_oplh: number
           planned_splh: number
         }[]
+      }
+      get_latest_forecast_run: {
+        Args: { p_location_id: string }
+        Returns: {
+          algorithm: string
+          confidence: number | null
+          created_at: string
+          data_points: number | null
+          generated_at: string
+          history_end: string
+          history_start: string
+          horizon_days: number
+          id: string
+          location_id: string
+          mape: number | null
+          model_version: string
+          mse: number | null
+          seasonality_dow: Json | null
+          seasonality_woy: Json | null
+          trend_intercept: number | null
+          trend_slope: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "forecast_model_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_top_products: {
         Args: {

@@ -4,4 +4,4 @@ project_id = "gbddbubzvhmgnwyowucd"
 verify_jwt = false
 
 [functions.generate_forecast]
-verify_jwt = true
+verify_jwt = false
