@@ -7,3 +7,4 @@ export * from './POSQuickOrder';
 export * from './POSOpenTables';
 export * from './POSCashSession';
 export * from './POSFloorEditor';
+export * from './PrintQueuePanel';
