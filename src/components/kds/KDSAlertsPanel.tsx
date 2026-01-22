@@ -30,7 +30,7 @@ export function KDSAlertsPanel({ alerts, onDismiss, onDismissAll }: KDSAlertsPan
           variant="ghost"
           size="sm"
           onClick={onDismissAll}
-          className="text-red-400 hover:text-red-300 hover:bg-red-500/20 h-8 px-2"
+          className="text-white hover:text-red-300 hover:bg-red-500/20 h-8 px-2"
         >
           <XCircle className="h-4 w-4 mr-1" />
           Cerrar todas
@@ -63,7 +63,7 @@ export function KDSAlertsPanel({ alerts, onDismiss, onDismissAll }: KDSAlertsPan
               variant="ghost"
               size="icon"
               onClick={() => onDismiss(alert.id)}
-              className="shrink-0 h-8 w-8 text-zinc-500 hover:text-white hover:bg-zinc-800"
+              className="shrink-0 h-8 w-8 text-white hover:text-white hover:bg-zinc-800"
             >
               <X className="h-4 w-4" />
             </Button>

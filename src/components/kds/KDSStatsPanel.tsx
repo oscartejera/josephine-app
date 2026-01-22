@@ -245,8 +245,8 @@ export function KDSStatsPanel({ locationId, onClose }: KDSStatsPanelProps) {
               7 días
             </button>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5 text-zinc-400" />
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-zinc-800">
+            <X className="h-5 w-5" />
           </Button>
         </div>
       </div>

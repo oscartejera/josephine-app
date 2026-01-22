@@ -139,7 +139,7 @@ export function KDSHeader({
               variant="outline"
               size="sm"
               onClick={onShowStats}
-              className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+              className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700"
             >
               <BarChart3 className="h-4 w-4 mr-2" />
               Stats
