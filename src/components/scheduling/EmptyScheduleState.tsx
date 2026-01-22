@@ -1,6 +1,6 @@
 import { Calendar, Sparkles } from 'lucide-react';
 import { format, addDays } from 'date-fns';
-import { DayKPI } from '@/hooks/useSchedulingData';
+import { DayKPI } from '@/hooks/useSchedulingSupabase';
 
 interface EmptyScheduleStateProps {
   weekStart: Date;
