@@ -168,7 +168,7 @@ export function DemoDataManager() {
             <li>• Regenera usuarios demo con roles y permisos</li>
             <li>• Crea 30 días de datos históricos para todos los dashboards</li>
             <li>• Genera productos, categorías y métricas de ventas</li>
-            <li>• Actualiza forecasts y datos de inventario</li>
+            <li>• Genera forecasts usando el modelo LR+SI v3</li>
           </ul>
         </div>
 
