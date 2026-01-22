@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface KDSModifier {
+  id: string;
+  modifier_name: string;
+  option_name: string;
+  price_delta: number;
+  type: 'add' | 'remove' | 'substitute'; // Derived from modifier_name prefix
+}
+
 export interface KDSTicketLine {
   id: string;
   ticket_id: string;
@@ -13,7 +21,9 @@ export interface KDSTicketLine {
   sent_at: string | null;
   destination: 'kitchen' | 'bar' | 'prep';
   product_id: string | null;
-  target_prep_time: number | null; // Product-specific prep time in minutes
+  target_prep_time: number | null;
+  is_rush: boolean;
+  modifiers: KDSModifier[];
 }
 
 export interface KDSOrder {
@@ -23,6 +33,33 @@ export interface KDSOrder {
   serverName: string | null;
   openedAt: string;
   items: KDSTicketLine[];
+}
+
+// Helper to determine modifier type from name
+function getModifierType(modifierName: string, optionName: string): 'add' | 'remove' | 'substitute' {
+  const lowerMod = modifierName.toLowerCase();
+  const lowerOpt = optionName.toLowerCase();
+  
+  // Check for removal indicators
+  if (lowerMod.includes('sin') || lowerMod.includes('without') || lowerMod.includes('no ') ||
+      lowerOpt.includes('sin') || lowerOpt.includes('without') || lowerOpt.startsWith('no ')) {
+    return 'remove';
+  }
+  
+  // Check for extra/addition indicators
+  if (lowerMod.includes('extra') || lowerMod.includes('añadir') || lowerMod.includes('add') ||
+      lowerOpt.includes('extra') || lowerOpt.includes('doble') || lowerOpt.includes('double')) {
+    return 'add';
+  }
+  
+  // Check for substitution indicators
+  if (lowerMod.includes('cambiar') || lowerMod.includes('sustituir') || lowerMod.includes('replace') ||
+      lowerMod.includes('swap') || lowerOpt.includes('en vez de') || lowerOpt.includes('instead')) {
+    return 'substitute';
+  }
+  
+  // Default to add for generic modifiers
+  return 'add';
 }
 
 export function useKDSData(locationId: string) {
@@ -60,7 +97,6 @@ export function useKDSData(locationId: string) {
         notification.close();
       };
 
-      // Auto-close after 10 seconds
       setTimeout(() => notification.close(), 10000);
     }
   }, []);
@@ -96,7 +132,7 @@ export function useKDSData(locationId: string) {
 
       const ticketIds = tickets.map(t => t.id);
 
-      // Get ticket lines for these tickets with product info for target_prep_time
+      // Get ticket lines for these tickets with product info
       const { data: ticketLines, error: linesError } = await supabase
         .from('ticket_lines')
         .select('*, products:product_id(target_prep_time)')
@@ -109,10 +145,38 @@ export function useKDSData(locationId: string) {
         return;
       }
 
-      // Filter by prep_status in memory (since it's a new column)
+      // Filter by prep_status in memory
       const pendingLines = (ticketLines || []).filter(
         line => !line.prep_status || line.prep_status === 'pending' || line.prep_status === 'preparing'
       );
+
+      // Get all line IDs to fetch modifiers
+      const lineIds = pendingLines.map(line => line.id);
+      
+      // Fetch modifiers for all lines in one query
+      let modifiersMap = new Map<string, KDSModifier[]>();
+      if (lineIds.length > 0) {
+        const { data: modifiersData, error: modifiersError } = await supabase
+          .from('ticket_line_modifiers')
+          .select('*')
+          .in('ticket_line_id', lineIds);
+
+        if (!modifiersError && modifiersData) {
+          for (const mod of modifiersData) {
+            const lineId = mod.ticket_line_id;
+            if (!modifiersMap.has(lineId)) {
+              modifiersMap.set(lineId, []);
+            }
+            modifiersMap.get(lineId)!.push({
+              id: mod.id,
+              modifier_name: mod.modifier_name,
+              option_name: mod.option_name || '',
+              price_delta: Number(mod.price_delta) || 0,
+              type: getModifierType(mod.modifier_name, mod.option_name || ''),
+            });
+          }
+        }
+      }
 
       // Group by ticket
       const ordersMap = new Map<string, KDSOrder>();
@@ -122,7 +186,6 @@ export function useKDSData(locationId: string) {
         if (!ticket) continue;
 
         if (!ordersMap.has(line.ticket_id)) {
-          // Fetch table number if exists
           let tableNumber: string | null = null;
           if (ticket.pos_table_id) {
             const { data: tableData } = await supabase
@@ -157,6 +220,8 @@ export function useKDSData(locationId: string) {
           destination: (line.destination || 'kitchen') as KDSTicketLine['destination'],
           product_id: lineData.product_id ?? null,
           target_prep_time: lineData.products?.target_prep_time ?? null,
+          is_rush: lineData.is_rush ?? false,
+          modifiers: modifiersMap.get(line.id) || [],
         });
       }
 
@@ -164,7 +229,7 @@ export function useKDSData(locationId: string) {
         (a, b) => new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime()
       );
 
-      // Play sound and show browser notification if new orders arrived
+      // Play sound and show notification if new orders arrived
       if (newOrders.length > previousOrderCountRef.current && previousOrderCountRef.current > 0) {
         const newOrdersCount = newOrders.length - previousOrderCountRef.current;
         playNotificationSound();
@@ -183,7 +248,6 @@ export function useKDSData(locationId: string) {
     }
   }, [locationId, playNotificationSound, showBrowserNotification]);
 
-  // Update item status - using raw SQL update to handle new columns
   const updateItemStatus = useCallback(async (
     lineId: string, 
     newStatus: 'pending' | 'preparing' | 'ready' | 'served'
@@ -208,12 +272,10 @@ export function useKDSData(locationId: string) {
       return false;
     }
 
-    // Refresh data
     fetchOrders();
     return true;
   }, [fetchOrders]);
 
-  // Mark all items in order as ready
   const completeOrder = useCallback(async (ticketId: string) => {
     const { error } = await supabase
       .from('ticket_lines')
@@ -229,17 +291,14 @@ export function useKDSData(locationId: string) {
       return false;
     }
 
-    // Refresh data
     fetchOrders();
     return true;
   }, [fetchOrders]);
 
-  // Initial fetch
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // Realtime subscription
   useEffect(() => {
     if (!locationId) return;
 
@@ -251,6 +310,17 @@ export function useKDSData(locationId: string) {
           event: '*',
           schema: 'public',
           table: 'ticket_lines'
+        },
+        () => {
+          fetchOrders();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ticket_line_modifiers'
         },
         () => {
           fetchOrders();
