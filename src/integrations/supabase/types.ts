@@ -1828,6 +1828,7 @@ export type Database = {
           group_id: string
           id: string
           is_active: boolean | null
+          kds_destination: string | null
           location_id: string | null
           name: string
         }
@@ -1837,6 +1838,7 @@ export type Database = {
           group_id: string
           id?: string
           is_active?: boolean | null
+          kds_destination?: string | null
           location_id?: string | null
           name: string
         }
@@ -1846,6 +1848,7 @@ export type Database = {
           group_id?: string
           id?: string
           is_active?: boolean | null
+          kds_destination?: string | null
           location_id?: string | null
           name?: string
         }

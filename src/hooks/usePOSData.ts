@@ -33,6 +33,7 @@ export interface POSProduct {
   category: string | null;
   price: number;
   is_active: boolean;
+  kds_destination: 'kitchen' | 'bar' | 'prep';
 }
 
 export interface POSTicket {
@@ -95,10 +96,10 @@ export function usePOSData(locationId: string) {
         setTables([]);
       }
 
-      // Fetch products for this location
+      // Fetch products for this location (including kds_destination)
       const { data: productsData } = await supabase
         .from('products')
-        .select('id, name, category, is_active')
+        .select('id, name, category, is_active, kds_destination')
         .eq('location_id', locationId)
         .eq('is_active', true)
         .order('category')
@@ -107,7 +108,8 @@ export function usePOSData(locationId: string) {
       // Add default price since products table doesn't have price yet
       setProducts((productsData || []).map(p => ({
         ...p,
-        price: 10.00 // Default price, should come from menu pricing
+        price: 10.00, // Default price, should come from menu pricing
+        kds_destination: (p.kds_destination || 'kitchen') as 'kitchen' | 'bar' | 'prep'
       })) as POSProduct[]);
 
       // Fetch open tickets
