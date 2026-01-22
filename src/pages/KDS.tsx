@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useKDSData } from '@/hooks/useKDSData';
 import { useKDSAlerts } from '@/hooks/useKDSAlerts';
+import { useKDSKeyboard } from '@/hooks/useKDSKeyboard';
+import { useKDSKiosk } from '@/hooks/useKDSKiosk';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -14,6 +16,7 @@ import {
   KDSHistoryBoard,
   KDSStatsPanel,
   KDSAlertsPanel,
+  KDSRecallPanel,
   type KDSDestination,
   type KDSViewMode 
 } from '@/components/kds';
@@ -24,6 +27,7 @@ export default function KDS() {
   const [selectedDestination, setSelectedDestination] = useState<KDSDestination>('all');
   const [viewMode, setViewMode] = useState<KDSViewMode>('kitchen');
   const [showStats, setShowStats] = useState(false);
+  const [keyboardEnabled, setKeyboardEnabled] = useState(false);
   
   const location = locations.find(l => l.id === locationId);
   const { 
@@ -46,8 +50,12 @@ export default function KDS() {
     getItemOverdueInfo,
   } = useKDSAlerts(orders);
 
-  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
-  
+  // Use Kiosk mode hook
+  const {
+    isFullscreen,
+    toggleFullscreen,
+  } = useKDSKiosk();
+
   // Filter orders by destination (for kitchen view)
   const filteredOrders = useMemo(() => {
     if (selectedDestination === 'all') return orders;
@@ -59,6 +67,29 @@ export default function KDS() {
       }))
       .filter(order => order.items.length > 0);
   }, [orders, selectedDestination]);
+
+  // Keyboard status change handler
+  const handleKeyboardItemStatusChange = useCallback(async (lineId: string, newStatus: 'pending' | 'preparing' | 'ready' | 'served') => {
+    await updateItemStatus(lineId, newStatus);
+  }, [updateItemStatus]);
+
+  // Keyboard complete order handler
+  const handleKeyboardCompleteOrder = useCallback(async (ticketId: string) => {
+    await completeOrder(ticketId);
+  }, [completeOrder]);
+
+  // Use keyboard shortcuts hook
+  const {
+    selection,
+    recallStack,
+    recall,
+    clearRecall,
+  } = useKDSKeyboard({
+    orders: filteredOrders,
+    onItemStatusChange: handleKeyboardItemStatusChange,
+    onCompleteOrder: handleKeyboardCompleteOrder,
+    enabled: keyboardEnabled && viewMode === 'kitchen',
+  });
 
   // Calculate destination counts
   const destinationCounts = useMemo(() => {
@@ -152,7 +183,6 @@ export default function KDS() {
   };
 
   const handleServeAll = async (ticketId: string) => {
-    // Mark all ready items in the order as served
     const order = orders.find(o => o.ticketId === ticketId);
     if (order) {
       const readyItems = order.items.filter(i => i.prep_status === 'ready');
@@ -171,6 +201,10 @@ export default function KDS() {
         alertSettings={alertSettings}
         onUpdateAlertSettings={updateAlertSettings}
         alertCount={alertCount}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        keyboardEnabled={keyboardEnabled}
+        onToggleKeyboard={() => setKeyboardEnabled(prev => !prev)}
       />
       
       {/* View Mode Toggle + Destination Filter */}
@@ -197,6 +231,8 @@ export default function KDS() {
           onItemStatusChange={handleItemStatusChange}
           onCompleteOrder={handleCompleteOrder}
           getItemOverdueInfo={getItemOverdueInfo}
+          selection={keyboardEnabled ? selection : undefined}
+          keyboardEnabled={keyboardEnabled}
         />
       ) : viewMode === 'expeditor' ? (
         <KDSExpeditorBoard
@@ -225,6 +261,15 @@ export default function KDS() {
           alerts={alerts}
           onDismiss={dismissAlert}
           onDismissAll={dismissAllAlerts}
+        />
+      )}
+
+      {/* Recall Panel */}
+      {keyboardEnabled && viewMode === 'kitchen' && (
+        <KDSRecallPanel
+          recallStack={recallStack}
+          onRecall={recall}
+          onClear={clearRecall}
         />
       )}
     </div>
