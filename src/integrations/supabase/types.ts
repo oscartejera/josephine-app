@@ -1351,6 +1351,59 @@ export type Database = {
           },
         ]
       }
+      pos_cash_sessions: {
+        Row: {
+          cash_difference: number | null
+          closed_at: string | null
+          closed_by: string | null
+          closing_cash: number | null
+          expected_cash: number | null
+          id: string
+          location_id: string
+          notes: string | null
+          opened_at: string | null
+          opened_by: string
+          opening_cash: number
+          status: string
+        }
+        Insert: {
+          cash_difference?: number | null
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          location_id: string
+          notes?: string | null
+          opened_at?: string | null
+          opened_by: string
+          opening_cash?: number
+          status?: string
+        }
+        Update: {
+          cash_difference?: number | null
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          location_id?: string
+          notes?: string | null
+          opened_at?: string | null
+          opened_by?: string
+          opening_cash?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_cash_sessions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_connections: {
         Row: {
           config_json: Json | null
@@ -1488,6 +1541,234 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_floor_maps: {
+        Row: {
+          config_json: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          location_id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          name?: string
+          updated_at?: string | null
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_floor_maps_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_modifier_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          modifier_id: string
+          name: string
+          price_delta: number | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          modifier_id: string
+          name: string
+          price_delta?: number | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          modifier_id?: string
+          name?: string
+          price_delta?: number | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_modifier_options_modifier_id_fkey"
+            columns: ["modifier_id"]
+            isOneToOne: false
+            referencedRelation: "pos_product_modifiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_print_queue: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string | null
+          destination: string
+          id: string
+          items_json: Json
+          location_id: string
+          printed_at: string | null
+          status: string
+          ticket_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string | null
+          destination: string
+          id?: string
+          items_json?: Json
+          location_id: string
+          printed_at?: string | null
+          status?: string
+          ticket_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string | null
+          destination?: string
+          id?: string
+          items_json?: Json
+          location_id?: string
+          printed_at?: string | null
+          status?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_print_queue_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_print_queue_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_product_modifiers: {
+        Row: {
+          created_at: string | null
+          id: string
+          modifier_type: string
+          name: string
+          product_id: string
+          required: boolean | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          modifier_type?: string
+          name: string
+          product_id: string
+          required?: boolean | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          modifier_type?: string
+          name?: string
+          product_id?: string
+          required?: boolean | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_product_modifiers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_tables: {
+        Row: {
+          created_at: string | null
+          current_ticket_id: string | null
+          floor_map_id: string
+          height: number
+          id: string
+          position_x: number
+          position_y: number
+          seats: number
+          shape: string
+          status: string
+          table_number: string
+          updated_at: string | null
+          width: number
+        }
+        Insert: {
+          created_at?: string | null
+          current_ticket_id?: string | null
+          floor_map_id: string
+          height?: number
+          id?: string
+          position_x?: number
+          position_y?: number
+          seats?: number
+          shape?: string
+          status?: string
+          table_number: string
+          updated_at?: string | null
+          width?: number
+        }
+        Update: {
+          created_at?: string | null
+          current_ticket_id?: string | null
+          floor_map_id?: string
+          height?: number
+          id?: string
+          position_x?: number
+          position_y?: number
+          seats?: number
+          shape?: string
+          status?: string
+          table_number?: string
+          updated_at?: string | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_tables_current_ticket_id_fkey"
+            columns: ["current_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_tables_floor_map_id_fkey"
+            columns: ["floor_map_id"]
+            isOneToOne: false
+            referencedRelation: "pos_floor_maps"
             referencedColumns: ["id"]
           },
         ]
@@ -2105,6 +2386,41 @@ export type Database = {
           },
         ]
       }
+      ticket_line_modifiers: {
+        Row: {
+          created_at: string | null
+          id: string
+          modifier_name: string
+          option_name: string
+          price_delta: number | null
+          ticket_line_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          modifier_name: string
+          option_name: string
+          price_delta?: number | null
+          ticket_line_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          modifier_name?: string
+          option_name?: string
+          price_delta?: number | null
+          ticket_line_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_line_modifiers_ticket_line_id_fkey"
+            columns: ["ticket_line_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_lines: {
         Row: {
           category_name: string | null
@@ -2116,7 +2432,10 @@ export type Database = {
           id: string
           item_external_id: string | null
           item_name: string
+          notes: string | null
           quantity: number | null
+          sent_at: string | null
+          sent_to_kitchen: boolean | null
           tax_rate: number | null
           ticket_id: string
           unit_price: number | null
@@ -2132,7 +2451,10 @@ export type Database = {
           id?: string
           item_external_id?: string | null
           item_name: string
+          notes?: string | null
           quantity?: number | null
+          sent_at?: string | null
+          sent_to_kitchen?: boolean | null
           tax_rate?: number | null
           ticket_id: string
           unit_price?: number | null
@@ -2148,7 +2470,10 @@ export type Database = {
           id?: string
           item_external_id?: string | null
           item_name?: string
+          notes?: string | null
           quantity?: number | null
+          sent_at?: string | null
+          sent_to_kitchen?: boolean | null
           tax_rate?: number | null
           ticket_id?: string
           unit_price?: number | null
@@ -2166,6 +2491,7 @@ export type Database = {
       }
       tickets: {
         Row: {
+          cash_session_id: string | null
           channel: Database["public"]["Enums"]["ticket_channel"] | null
           closed_at: string | null
           covers: number | null
@@ -2176,12 +2502,17 @@ export type Database = {
           id: string
           location_id: string
           net_total: number | null
+          notes: string | null
           opened_at: string
+          pos_table_id: string | null
+          server_id: string | null
+          service_type: string | null
           status: Database["public"]["Enums"]["ticket_status"] | null
           table_name: string | null
           tax_total: number | null
         }
         Insert: {
+          cash_session_id?: string | null
           channel?: Database["public"]["Enums"]["ticket_channel"] | null
           closed_at?: string | null
           covers?: number | null
@@ -2192,12 +2523,17 @@ export type Database = {
           id?: string
           location_id: string
           net_total?: number | null
+          notes?: string | null
           opened_at?: string
+          pos_table_id?: string | null
+          server_id?: string | null
+          service_type?: string | null
           status?: Database["public"]["Enums"]["ticket_status"] | null
           table_name?: string | null
           tax_total?: number | null
         }
         Update: {
+          cash_session_id?: string | null
           channel?: Database["public"]["Enums"]["ticket_channel"] | null
           closed_at?: string | null
           covers?: number | null
@@ -2208,17 +2544,42 @@ export type Database = {
           id?: string
           location_id?: string
           net_total?: number | null
+          notes?: string | null
           opened_at?: string
+          pos_table_id?: string | null
+          server_id?: string | null
+          service_type?: string | null
           status?: Database["public"]["Enums"]["ticket_status"] | null
           table_name?: string | null
           tax_total?: number | null
         }
         Relationships: [
           {
+            foreignKeyName: "tickets_cash_session_id_fkey"
+            columns: ["cash_session_id"]
+            isOneToOne: false
+            referencedRelation: "pos_cash_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tickets_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_pos_table_id_fkey"
+            columns: ["pos_table_id"]
+            isOneToOne: false
+            referencedRelation: "pos_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
