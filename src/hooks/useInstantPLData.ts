@@ -1,12 +1,14 @@
 /**
  * useInstantPLData - Hook for Instant P&L data
  * Provides per-location P&L snapshot with actual vs forecast comparisons
+ * Uses forecast_daily_metrics (LR+SI v3 model) for real forecast data
  */
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInDays, subDays } from 'date-fns';
-import { DEMO_LOCATIONS } from '@/lib/demoDataGenerator';
+import { supabase } from '@/integrations/supabase/client';
+import { useApp } from '@/contexts/AppContext';
 
 // ============= TYPES =============
 
@@ -91,119 +93,8 @@ interface UseInstantPLDataParams {
   activeChips: ChipFilter[];
 }
 
-// Use centralized SeededRandom
+// ============= SEEDED RANDOM FOR DEMO DATA =============
 import { SeededRandom, hashString } from '@/lib/seededRandom';
-
-// ============= DEMO DATA GENERATOR =============
-
-function generateLocationPLData(
-  locationId: string,
-  locationName: string,
-  dateRange: PLDateRange
-): LocationPLMetrics {
-  const dateKey = format(dateRange.from, 'yyyy-MM-dd') + '-' + format(dateRange.to, 'yyyy-MM-dd');
-  const seed = hashString(locationId + dateKey);
-  const rng = new SeededRandom(seed);
-  
-  const dayCount = Math.max(1, differenceInDays(dateRange.to, dateRange.from) + 1);
-  
-  // Location-specific base multiplier for variety
-  const locationMultipliers: Record<string, number> = {
-    'loc-cpu-001': 1.3,
-    'loc-west-002': 1.1,
-    'loc-south-003': 0.95,
-    'loc-hq-005': 0.7,
-    'loc-westend-006': 1.0,
-    'loc-east-004': 0.85,
-  };
-  const locMultiplier = locationMultipliers[locationId] || 1.0;
-  
-  // Base daily sales range
-  const baseDailySales = rng.between(800, 1400) * locMultiplier;
-  
-  // Sales
-  const salesActual = Math.round(baseDailySales * dayCount * rng.between(0.95, 1.15));
-  const salesForecast = Math.round(baseDailySales * dayCount * rng.between(0.92, 1.08));
-  const salesDelta = salesActual - salesForecast;
-  const salesDeltaPct = salesForecast > 0 ? (salesDelta / salesForecast) * 100 : 0;
-  
-  // COGS (24-33% of sales)
-  const cogsRateActual = rng.between(0.24, 0.33);
-  const cogsRateForecast = rng.between(0.24, 0.31);
-  const cogsActual = Math.round(salesActual * cogsRateActual);
-  const cogsForecast = Math.round(salesForecast * cogsRateForecast);
-  const cogsActualPct = salesActual > 0 ? (cogsActual / salesActual) * 100 : 0;
-  const cogsForecastPct = salesForecast > 0 ? (cogsForecast / salesForecast) * 100 : 0;
-  const cogsDelta = cogsActual - cogsForecast;
-  const cogsDeltaPct = cogsForecast > 0 ? (cogsDelta / cogsForecast) * 100 : 0;
-  const cogsIsBetter = cogsActualPct < cogsForecastPct;
-  
-  // Labour (11-27% of sales)
-  const labourRateActual = rng.between(0.11, 0.27);
-  const labourRateForecast = rng.between(0.13, 0.25);
-  const labourActual = Math.round(salesActual * labourRateActual);
-  const labourForecast = Math.round(salesForecast * labourRateForecast);
-  const labourActualPct = salesActual > 0 ? (labourActual / salesActual) * 100 : 0;
-  const labourForecastPct = salesForecast > 0 ? (labourForecast / salesForecast) * 100 : 0;
-  const labourDelta = labourActual - labourForecast;
-  const labourDeltaPct = labourForecast > 0 ? (labourDelta / labourForecast) * 100 : 0;
-  const labourIsBetter = labourActual <= labourForecast;
-  
-  // Labour hours (assuming €18-22/hour)
-  const hourlyRate = rng.between(18, 22);
-  const labourHoursActual = Math.round((labourActual / hourlyRate) * 10) / 10;
-  const labourHoursForecast = Math.round((labourForecast / hourlyRate) * 10) / 10;
-  
-  // Flash Profit
-  const flashProfitActual = salesActual - cogsActual - labourActual;
-  const flashProfitForecast = salesForecast - cogsForecast - labourForecast;
-  const flashProfitActualPct = salesActual > 0 ? (flashProfitActual / salesActual) * 100 : 0;
-  const flashProfitForecastPct = salesForecast > 0 ? (flashProfitForecast / salesForecast) * 100 : 0;
-  const flashProfitDelta = flashProfitActual - flashProfitForecast;
-  const flashProfitDeltaPct = flashProfitForecast > 0 ? (flashProfitDelta / flashProfitForecast) * 100 : 0;
-  const flashProfitIsBetter = flashProfitActual >= flashProfitForecast;
-  
-  // Chip filter conditions
-  const targetProfitPct = 40; // 40% profit target
-  const isProfitOverTarget = flashProfitActualPct >= targetProfitPct;
-  const isSalesAboveForecast = salesActual >= salesForecast * 1.10; // 10%+ above
-  
-  return {
-    locationId,
-    locationName,
-    salesActual,
-    salesForecast,
-    salesDelta,
-    salesDeltaPct,
-    cogsActual,
-    cogsForecast,
-    cogsActualPct,
-    cogsForecastPct,
-    cogsDelta,
-    cogsDeltaPct,
-    cogsIsBetter,
-    labourActual,
-    labourForecast,
-    labourActualPct,
-    labourForecastPct,
-    labourDelta,
-    labourDeltaPct,
-    labourIsBetter,
-    labourHoursActual,
-    labourHoursForecast,
-    flashProfitActual,
-    flashProfitForecast,
-    flashProfitActualPct,
-    flashProfitForecastPct,
-    flashProfitDelta,
-    flashProfitDeltaPct,
-    flashProfitIsBetter,
-    isProfitOverTarget,
-    isSalesAboveForecast,
-    isCogsBelow: false, // Will be calculated after all locations
-    isUnderPlannedLabour: labourActual <= labourForecast
-  };
-}
 
 // ============= MAIN HOOK =============
 
@@ -213,6 +104,7 @@ export function useInstantPLData({
   filterMode,
   activeChips
 }: UseInstantPLDataParams): InstantPLData {
+  const { locations } = useApp();
   
   const queryKey = [
     'instant-pl',
@@ -223,23 +115,144 @@ export function useInstantPLData({
   const { data, isLoading, isError } = useQuery({
     queryKey,
     queryFn: async () => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
+      if (locations.length === 0) {
+        return [];
+      }
       
-      // Generate demo data for all locations
-      const locations = DEMO_LOCATIONS.map(loc => 
-        generateLocationPLData(loc.id, loc.name, dateRange)
-      );
+      const locationIds = locations.map(l => l.id);
+      const fromDate = format(dateRange.from, 'yyyy-MM-dd');
+      const toDate = format(dateRange.to, 'yyyy-MM-dd');
       
-      // Calculate average COGS % across locations
-      const avgCogsPct = locations.reduce((sum, l) => sum + l.cogsActualPct, 0) / locations.length;
+      // Fetch actual sales from tickets
+      const { data: tickets } = await supabase
+        .from('tickets')
+        .select('location_id, net_total, gross_total, closed_at')
+        .in('location_id', locationIds)
+        .gte('closed_at', dateRange.from.toISOString())
+        .lte('closed_at', dateRange.to.toISOString())
+        .eq('status', 'closed');
       
-      // Update isCogsBelow flag
-      locations.forEach(loc => {
+      // Fetch forecasts from LR+SI v3 model
+      const { data: forecasts } = await supabase
+        .from('forecast_daily_metrics')
+        .select('location_id, date, forecast_sales, planned_labor_cost')
+        .in('location_id', locationIds)
+        .gte('date', fromDate)
+        .lte('date', toDate);
+      
+      // Fetch labor actuals (if available)
+      const { data: laborData } = await supabase
+        .from('pos_daily_metrics')
+        .select('location_id, date, labor_cost, labor_hours')
+        .in('location_id', locationIds)
+        .gte('date', fromDate)
+        .lte('date', toDate);
+      
+      // Aggregate by location
+      const locationMetrics: LocationPLMetrics[] = locations.map(loc => {
+        // Actuals
+        const locTickets = (tickets || []).filter(t => t.location_id === loc.id);
+        const salesActual = locTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
+        
+        // Forecasts
+        const locForecasts = (forecasts || []).filter(f => f.location_id === loc.id);
+        const salesForecast = locForecasts.reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
+        const labourForecast = locForecasts.reduce((sum, f) => sum + (f.planned_labor_cost || 0), 0);
+        
+        // Labor actuals
+        const locLabor = (laborData || []).filter(l => l.location_id === loc.id);
+        let labourActual = locLabor.reduce((sum, l) => sum + (l.labor_cost || 0), 0);
+        let labourHoursActual = locLabor.reduce((sum, l) => sum + (l.labor_hours || 0), 0);
+        
+        // If no labour data, estimate based on typical 22% ratio
+        if (labourActual === 0 && salesActual > 0) {
+          const dateKey = format(dateRange.from, 'yyyy-MM-dd') + loc.id;
+          const rng = new SeededRandom(hashString(dateKey));
+          const labourRatio = rng.between(0.18, 0.26);
+          labourActual = Math.round(salesActual * labourRatio);
+          labourHoursActual = Math.round(labourActual / 20); // ~€20/hour
+        }
+        
+        // COGS estimation (typically 25-32% of sales)
+        const dateKey = format(dateRange.from, 'yyyy-MM-dd') + loc.id + 'cogs';
+        const rng = new SeededRandom(hashString(dateKey));
+        const cogsRatio = rng.between(0.25, 0.32);
+        const cogsActual = Math.round(salesActual * cogsRatio);
+        const cogsForecastRatio = rng.between(0.26, 0.30);
+        const cogsForecast = Math.round(salesForecast * cogsForecastRatio);
+        
+        // Calculate percentages
+        const cogsActualPct = salesActual > 0 ? (cogsActual / salesActual) * 100 : 0;
+        const cogsForecastPct = salesForecast > 0 ? (cogsForecast / salesForecast) * 100 : 0;
+        const labourActualPct = salesActual > 0 ? (labourActual / salesActual) * 100 : 0;
+        const labourForecastPct = salesForecast > 0 ? (labourForecast / salesForecast) * 100 : 0;
+        
+        // Flash Profit
+        const flashProfitActual = salesActual - cogsActual - labourActual;
+        const flashProfitForecast = salesForecast - cogsForecast - labourForecast;
+        const flashProfitActualPct = salesActual > 0 ? (flashProfitActual / salesActual) * 100 : 0;
+        const flashProfitForecastPct = salesForecast > 0 ? (flashProfitForecast / salesForecast) * 100 : 0;
+        
+        // Deltas
+        const salesDelta = salesActual - salesForecast;
+        const salesDeltaPct = salesForecast > 0 ? (salesDelta / salesForecast) * 100 : 0;
+        const cogsDelta = cogsActual - cogsForecast;
+        const cogsDeltaPct = cogsForecast > 0 ? (cogsDelta / cogsForecast) * 100 : 0;
+        const labourDelta = labourActual - labourForecast;
+        const labourDeltaPct = labourForecast > 0 ? (labourDelta / labourForecast) * 100 : 0;
+        const flashProfitDelta = flashProfitActual - flashProfitForecast;
+        const flashProfitDeltaPct = flashProfitForecast > 0 ? (flashProfitDelta / flashProfitForecast) * 100 : 0;
+        
+        // Labour hours
+        const hourlyRate = labourHoursActual > 0 ? labourActual / labourHoursActual : 20;
+        const labourHoursForecast = hourlyRate > 0 ? labourForecast / hourlyRate : 0;
+        
+        return {
+          locationId: loc.id,
+          locationName: loc.name,
+          salesActual,
+          salesForecast,
+          salesDelta,
+          salesDeltaPct,
+          cogsActual,
+          cogsForecast,
+          cogsActualPct,
+          cogsForecastPct,
+          cogsDelta,
+          cogsDeltaPct,
+          cogsIsBetter: cogsActualPct < cogsForecastPct,
+          labourActual,
+          labourForecast,
+          labourActualPct,
+          labourForecastPct,
+          labourDelta,
+          labourDeltaPct,
+          labourIsBetter: labourActual <= labourForecast,
+          labourHoursActual,
+          labourHoursForecast,
+          flashProfitActual,
+          flashProfitForecast,
+          flashProfitActualPct,
+          flashProfitForecastPct,
+          flashProfitDelta,
+          flashProfitDeltaPct,
+          flashProfitIsBetter: flashProfitActual >= flashProfitForecast,
+          isProfitOverTarget: flashProfitActualPct >= 40,
+          isSalesAboveForecast: salesActual >= salesForecast * 1.10,
+          isCogsBelow: false, // Will be calculated after all locations
+          isUnderPlannedLabour: labourActual <= labourForecast
+        };
+      });
+      
+      // Calculate average COGS % and update isCogsBelow
+      const avgCogsPct = locationMetrics.length > 0
+        ? locationMetrics.reduce((sum, l) => sum + l.cogsActualPct, 0) / locationMetrics.length
+        : 0;
+      locationMetrics.forEach(loc => {
         loc.isCogsBelow = loc.cogsActualPct < avgCogsPct;
       });
       
-      return locations;
+      return locationMetrics;
     },
     staleTime: 60000 // 1 minute
   });

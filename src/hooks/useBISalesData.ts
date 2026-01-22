@@ -269,13 +269,24 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         });
       }
 
-      // Fetch forecasts
-      const { data: forecasts } = await supabase
-        .from('forecasts')
-        .select('location_id, forecast_date, hour, forecast_sales')
+      // Fetch forecasts from the LR+SI v3 model (daily forecasts)
+      const { data: dailyForecasts } = await supabase
+        .from('forecast_daily_metrics')
+        .select('location_id, date, forecast_sales, confidence')
         .in('location_id', effectiveLocationIds)
-        .gte('forecast_date', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('forecast_date', format(dateRange.to, 'yyyy-MM-dd'));
+        .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
+        .lte('date', format(dateRange.to, 'yyyy-MM-dd'));
+      
+      // Hourly weights for distributing daily forecast (typical restaurant pattern)
+      const HOURLY_WEIGHTS: Record<number, number> = {
+        10: 0.02, 11: 0.04, 12: 0.10, 13: 0.14, 14: 0.10, 15: 0.04,
+        16: 0.03, 17: 0.05, 18: 0.08, 19: 0.12, 20: 0.14, 21: 0.10, 22: 0.04
+      };
+      
+      // Helper to get hourly forecast from daily
+      const getHourlyForecast = (dailyForecast: number, hour: number): number => {
+        return dailyForecast * (HOURLY_WEIGHTS[hour] || 0);
+      };
 
       // If no data, return demo data
       if (!tickets || tickets.length === 0) {
@@ -287,7 +298,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const totalOrders = tickets.length;
       const totalCovers = tickets.reduce((sum, t) => sum + (t.covers || 1), 0);
       const avgCheckSize = totalCovers > 0 ? totalSales / totalCovers : 0;
-      const totalForecast = (forecasts || []).reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
+      const totalForecast = (dailyForecasts || []).reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
       const salesToDateDelta = totalForecast > 0 ? ((totalSales - totalForecast) / totalForecast) * 100 : 0;
 
       // Calculate dwell time (only for dine-in with opened_at)
@@ -356,9 +367,12 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           });
           const hourSales = hourTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
           const hourCovers = hourTickets.reduce((sum, t) => sum + (t.covers || 1), 0);
-          const hourForecast = (forecasts || [])
-            .filter(f => f.hour === hourNum)
+          // Get daily forecast for this date and distribute by hourly weight
+          const dayStr = format(dateRange.from, 'yyyy-MM-dd');
+          const dailyForecastTotal = (dailyForecasts || [])
+            .filter(f => f.date === dayStr)
             .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
+          const hourForecast = getHourlyForecast(dailyForecastTotal, hourNum);
 
           chartData.push({
             label: format(hour, 'HH:mm'),
@@ -379,8 +393,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           });
           const daySales = dayTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
           const dayCovers = dayTickets.reduce((sum, t) => sum + (t.covers || 1), 0);
-          const dayForecast = (forecasts || [])
-            .filter(f => f.forecast_date === dayStr)
+          const dayForecast = (dailyForecasts || [])
+            .filter(f => f.date === dayStr)
             .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
 
           chartData.push({
@@ -450,7 +464,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         const locTickets = tickets.filter(t => t.location_id === loc.id);
         const locSales = locTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
         const locCovers = locTickets.reduce((sum, t) => sum + (t.covers || 1), 0);
-        const locForecast = (forecasts || [])
+        const locForecast = (dailyForecasts || [])
           .filter(f => f.location_id === loc.id)
           .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
 
