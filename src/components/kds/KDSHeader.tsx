@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Wifi, WifiOff, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,9 +8,10 @@ interface KDSHeaderProps {
   isConnected: boolean;
   pendingCount: number;
   preparingCount: number;
+  onShowStats?: () => void;
 }
 
-export function KDSHeader({ locationName, isConnected, pendingCount, preparingCount }: KDSHeaderProps) {
+export function KDSHeader({ locationName, isConnected, pendingCount, preparingCount, onShowStats }: KDSHeaderProps) {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -65,6 +66,19 @@ export function KDSHeader({ locationName, isConnected, pendingCount, preparingCo
             <p className="text-xs text-zinc-500">En preparación</p>
           </div>
         </div>
+        
+        {onShowStats && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onShowStats}
+            className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Stats
+          </Button>
+        )}
+        
         <div className="text-right">
           <p className="text-3xl font-mono font-bold text-white">
             {currentTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}

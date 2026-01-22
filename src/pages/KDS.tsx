@@ -11,6 +11,7 @@ import {
   KDSViewToggle,
   KDSExpeditorBoard,
   KDSHistoryBoard,
+  KDSStatsPanel,
   type KDSDestination,
   type KDSViewMode 
 } from '@/components/kds';
@@ -20,6 +21,7 @@ export default function KDS() {
   const { locations } = useApp();
   const [selectedDestination, setSelectedDestination] = useState<KDSDestination>('all');
   const [viewMode, setViewMode] = useState<KDSViewMode>('kitchen');
+  const [showStats, setShowStats] = useState(false);
   
   const location = locations.find(l => l.id === locationId);
   const { 
@@ -152,6 +154,7 @@ export default function KDS() {
         isConnected={isConnected}
         pendingCount={viewMode === 'kitchen' ? pendingCount : viewMode === 'expeditor' ? expeditorCount : 0}
         preparingCount={viewMode === 'kitchen' ? preparingCount : 0}
+        onShowStats={() => setShowStats(true)}
       />
       
       {/* View Mode Toggle + Destination Filter */}
@@ -188,6 +191,14 @@ export default function KDS() {
         <KDSHistoryBoard
           locationId={locationId}
           onRecoverOrder={handleRecoverOrder}
+        />
+      )}
+
+      {/* Stats Panel Overlay */}
+      {showStats && locationId && (
+        <KDSStatsPanel
+          locationId={locationId}
+          onClose={() => setShowStats(false)}
         />
       )}
     </div>
