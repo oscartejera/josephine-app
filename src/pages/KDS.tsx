@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useKDSData } from '@/hooks/useKDSData';
+import { useKDSAlerts } from '@/hooks/useKDSAlerts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -12,6 +13,7 @@ import {
   KDSExpeditorBoard,
   KDSHistoryBoard,
   KDSStatsPanel,
+  KDSAlertsPanel,
   type KDSDestination,
   type KDSViewMode 
 } from '@/components/kds';
@@ -32,6 +34,17 @@ export default function KDS() {
     completeOrder,
     refetch
   } = useKDSData(locationId || '');
+
+  // Use KDS alerts hook
+  const {
+    settings: alertSettings,
+    updateSettings: updateAlertSettings,
+    alerts,
+    alertCount,
+    dismissAlert,
+    dismissAllAlerts,
+    getItemOverdueInfo,
+  } = useKDSAlerts(orders);
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   
@@ -155,6 +168,9 @@ export default function KDS() {
         pendingCount={viewMode === 'kitchen' ? pendingCount : viewMode === 'expeditor' ? expeditorCount : 0}
         preparingCount={viewMode === 'kitchen' ? preparingCount : 0}
         onShowStats={() => setShowStats(true)}
+        alertSettings={alertSettings}
+        onUpdateAlertSettings={updateAlertSettings}
+        alertCount={alertCount}
       />
       
       {/* View Mode Toggle + Destination Filter */}
@@ -180,6 +196,7 @@ export default function KDS() {
           orders={filteredOrders}
           onItemStatusChange={handleItemStatusChange}
           onCompleteOrder={handleCompleteOrder}
+          getItemOverdueInfo={getItemOverdueInfo}
         />
       ) : viewMode === 'expeditor' ? (
         <KDSExpeditorBoard
@@ -199,6 +216,15 @@ export default function KDS() {
         <KDSStatsPanel
           locationId={locationId}
           onClose={() => setShowStats(false)}
+        />
+      )}
+
+      {/* Alerts Panel */}
+      {viewMode === 'kitchen' && (
+        <KDSAlertsPanel
+          alerts={alerts}
+          onDismiss={dismissAlert}
+          onDismissAll={dismissAllAlerts}
         />
       )}
     </div>

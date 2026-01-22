@@ -1,13 +1,14 @@
 import { KDSOrderCard } from './KDSOrderCard';
-import type { KDSOrder } from '@/hooks/useKDSData';
+import type { KDSOrder, KDSTicketLine } from '@/hooks/useKDSData';
 
 interface KDSBoardProps {
   orders: KDSOrder[];
   onItemStatusChange: (lineId: string, newStatus: 'pending' | 'preparing' | 'ready' | 'served') => void;
   onCompleteOrder: (ticketId: string) => void;
+  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; overdueMinutes: number };
 }
 
-export function KDSBoard({ orders, onItemStatusChange, onCompleteOrder }: KDSBoardProps) {
+export function KDSBoard({ orders, onItemStatusChange, onCompleteOrder, getItemOverdueInfo }: KDSBoardProps) {
   if (orders.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -30,6 +31,7 @@ export function KDSBoard({ orders, onItemStatusChange, onCompleteOrder }: KDSBoa
             onItemStatusChange={onItemStatusChange}
             onCompleteOrder={onCompleteOrder}
             isNew={index === 0}
+            getItemOverdueInfo={getItemOverdueInfo}
           />
         ))}
       </div>
