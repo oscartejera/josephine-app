@@ -6,51 +6,7 @@
  */
 
 import { format, subDays, addHours, startOfDay } from 'date-fns';
-
-// ============= SEEDED RANDOM =============
-
-class SeededRandom {
-  private seed: number;
-
-  constructor(seed: number) {
-    this.seed = seed;
-  }
-
-  next(): number {
-    this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff;
-    return this.seed / 0x7fffffff;
-  }
-
-  between(min: number, max: number): number {
-    return min + this.next() * (max - min);
-  }
-
-  intBetween(min: number, max: number): number {
-    return Math.floor(this.between(min, max + 1));
-  }
-
-  pick<T>(arr: T[]): T {
-    return arr[Math.floor(this.next() * arr.length)];
-  }
-
-  weightedPick<T>(items: T[], weights: number[]): T {
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    let random = this.next() * totalWeight;
-    for (let i = 0; i < items.length; i++) {
-      random -= weights[i];
-      if (random <= 0) return items[i];
-    }
-    return items[items.length - 1];
-  }
-}
-
-function hashString(str: string): number {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) + str.charCodeAt(i);
-  }
-  return Math.abs(hash);
-}
+import { SeededRandom, hashString } from './seededRandom';
 
 // ============= TYPES =============
 

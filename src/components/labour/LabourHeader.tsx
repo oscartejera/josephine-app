@@ -35,7 +35,7 @@ export function LabourHeader({
   locationId,
   locationName,
   onAskJosephine
-}: LabourHeaderNewProps) {
+}: LabourHeaderProps) {
   const { accessibleLocations, canShowAllLocations } = useApp();
   const navigate = useNavigate();
   const [dateMode, setDateMode] = useState<DateMode>('weekly');
