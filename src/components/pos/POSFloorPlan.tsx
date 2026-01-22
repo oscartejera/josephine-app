@@ -4,6 +4,7 @@ import { FloorMap, POSTable, POSProduct } from '@/hooks/usePOSData';
 import { POSOrderPanel } from './POSOrderPanel';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Plus, Settings, Calendar } from 'lucide-react';
 import { POSTableCard } from './POSTableCard';
 import { POSFloorEditor } from './POSFloorEditor';
@@ -24,7 +25,7 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
   const [selectedMapId, setSelectedMapId] = useState<string>(floorMaps[0]?.id || '');
   const [selectedTable, setSelectedTable] = useState<POSTable | null>(null);
   const [showEditor, setShowEditor] = useState(false);
-  const [showReservations, setShowReservations] = useState(true);
+  const [reservationsOpen, setReservationsOpen] = useState(false);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -137,19 +138,36 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
               <Plus className="h-4 w-4 mr-2" />
               Nueva Reserva
             </Button>
-            <Button 
-              variant={showReservations ? "secondary" : "ghost"}
-              size="sm" 
-              onClick={() => setShowReservations(!showReservations)}
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Reservas
-              {reservations.length > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                  {reservations.length}
-                </span>
-              )}
-            </Button>
+            <Popover open={reservationsOpen} onOpenChange={setReservationsOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant={reservationsOpen ? "secondary" : "outline"}
+                  size="sm"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Reservas
+                  {reservations.length > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                      {reservations.length}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-80 p-0 max-h-[70vh] overflow-hidden" 
+                align="end"
+                sideOffset={8}
+              >
+                <POSReservationsPanel
+                  reservations={reservations}
+                  onSeatGuests={handleSeatGuests}
+                  onCancel={handleCancelReservation}
+                  onAssignTable={handleAssignTable}
+                  selectedDate={selectedDate}
+                  onDateChange={setSelectedDate}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -185,20 +203,6 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
           </div>
         </div>
       </div>
-
-      {/* Reservations Panel */}
-      {showReservations && !selectedTable && (
-        <div className="w-80 shrink-0">
-          <POSReservationsPanel
-            reservations={reservations}
-            onSeatGuests={handleSeatGuests}
-            onCancel={handleCancelReservation}
-            onAssignTable={handleAssignTable}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
-        </div>
-      )}
 
       {/* Order Panel - slides in when table selected */}
       {selectedTable && (
