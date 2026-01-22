@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format, eachDayOfInterval, parseISO } from 'date-fns';
-import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -54,7 +53,7 @@ export interface WasteItem {
   percentOfSales: number;
 }
 
-const REASON_LABELS: Record<WasteReason, string> = {
+export const REASON_LABELS: Record<WasteReason, string> = {
   broken: 'Broken',
   end_of_day: 'End of day',
   expired: 'Expired',
@@ -90,7 +89,7 @@ function normalizeReason(rawReason: string | null | undefined): WasteReason {
 
 export function useWasteData(
   dateRange: DateRangeValue,
-  dateMode: DateMode,
+  _dateMode: DateMode, // Reserved for future use
   selectedLocations: string[]
 ) {
   const { locations, group } = useApp();
@@ -398,8 +397,6 @@ export function useWasteData(
         eventDate.setDate(eventDate.getDate() - daysAgo);
         
         const reason = reasonsWeighted[Math.floor(Math.random() * reasonsWeighted.length)];
-        const itemName = itemNames[Math.floor(Math.random() * itemNames.length)];
-        const category = categories[Math.floor(Math.random() * categories.length)];
         const quantity = 0.5 + Math.random() * 10;
         const unitCost = 2 + Math.random() * 40;
         const wasteValue = quantity * unitCost;

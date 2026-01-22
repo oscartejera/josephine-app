@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { startOfDay, endOfDay, format, differenceInDays, subDays } from 'date-fns';
+import { format, differenceInDays, subDays } from 'date-fns';
 import { DEMO_LOCATIONS } from '@/lib/demoDataGenerator';
 
 // ============= TYPES =============
@@ -209,7 +209,7 @@ function generateLocationPLData(
 
 export function useInstantPLData({
   dateRange,
-  viewMode,
+  viewMode: _viewMode, // Reserved for future use
   filterMode,
   activeChips
 }: UseInstantPLDataParams): InstantPLData {
