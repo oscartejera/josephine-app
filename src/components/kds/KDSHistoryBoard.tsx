@@ -198,7 +198,7 @@ export function KDSHistoryBoard({ locationId, onRecoverOrder }: KDSHistoryBoardP
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                className="w-full bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-white"
                 onClick={() => onRecoverOrder(order.ticketId)}
               >
                 <RotateCcw className="h-3.5 w-3.5 mr-2" />
