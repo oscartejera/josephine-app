@@ -6,7 +6,7 @@
  */
 
 import { format, subDays, addHours, startOfDay } from 'date-fns';
-import { SeededRandom, hashString } from './seededRandom';
+import { SeededRandom } from './seededRandom';
 
 // ============= TYPES =============
 
@@ -312,7 +312,7 @@ export class DemoDataGenerator {
     }
   }
 
-  private generateTickets(fromDate: Date, toDate: Date): void {
+  private generateTickets(_fromDate: Date, _toDate: Date): void {
     this.tickets = [];
     
     for (const location of this.locations) {
@@ -358,7 +358,7 @@ export class DemoDataGenerator {
     }
   }
 
-  private generateWasteEvents(fromDate: Date, toDate: Date): void {
+  private generateWasteEvents(_fromDate: Date, _toDate: Date): void {
     this.wasteEvents = [];
     
     for (const location of this.locations) {
@@ -419,7 +419,7 @@ export class DemoDataGenerator {
     }
   }
 
-  private generateStockCountData(fromDate: Date, toDate: Date): void {
+  private generateStockCountData(_fromDate: Date, _toDate: Date): void {
     this.stockCountData = new Map();
 
     for (const location of this.locations) {

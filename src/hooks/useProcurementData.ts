@@ -85,17 +85,10 @@ export interface CategorySettingsMap {
   };
 }
 
-// Default waste factors by category
-const CATEGORY_WASTE_FACTORS: Record<string, number> = {
-  'Produce': 0.06,
-  'Proteins': 0.05,
-  'Dairy': 0.03,
-  'Dry Goods': 0.01,
-  'Beverages': 0.01,
-  'Bakery': 0.04,
-  'Condiments': 0.02,
-  'food': 0.04,
-  'beverage': 0.02,
+// Default waste factors by category (extracted from DEFAULT_CATEGORY_SETTINGS)
+const getCategoryWasteFactor = (category: string): number => {
+  const settings = DEFAULT_CATEGORY_SETTINGS[category];
+  return settings?.wasteFactor ?? 0.03;
 };
 
 // Seed data - Suppliers
@@ -431,7 +424,7 @@ export function useProcurementData() {
         // Convert inventory items to IngredientSku format
         const skusFromDb: IngredientSku[] = inventoryData.map((item, index) => {
           const category = mapDbCategoryToProcurement(item.category);
-          const wasteFactor = CATEGORY_WASTE_FACTORS[category] || CATEGORY_WASTE_FACTORS[item.category || ''] || 0.03;
+          const wasteFactor = getCategoryWasteFactor(category) || getCategoryWasteFactor(item.category || '') || 0.03;
           // Assign to different suppliers for variety
           const supplierIndex = index % suppliers.length;
           const supplier = suppliers[supplierIndex];
@@ -495,7 +488,7 @@ export function useProcurementData() {
       const seedSkusWithForecast: IngredientSku[] = SEED_SKUS.map(sku => ({
         ...sku,
         forecastDailyUsage: generateForecastUsage(30),
-        wasteFactor: CATEGORY_WASTE_FACTORS[sku.category] || 0.02,
+        wasteFactor: getCategoryWasteFactor(sku.category),
         yieldFactor: 1.0,
         safetyStockPct: 0.15,
         isRealData: false,
@@ -510,7 +503,7 @@ export function useProcurementData() {
       ...sku,
       forecastDailyUsage: generateForecastUsage(30),
       paused: sku.id === 'sku-064',
-      wasteFactor: CATEGORY_WASTE_FACTORS[sku.category] || 0.02,
+      wasteFactor: getCategoryWasteFactor(sku.category),
       yieldFactor: 1.0,
       safetyStockPct: 0.15,
       isRealData: false,
