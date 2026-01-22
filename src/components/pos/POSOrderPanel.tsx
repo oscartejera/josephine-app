@@ -4,10 +4,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Plus, Minus, Trash2, Send, CreditCard, Printer } from 'lucide-react';
+import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSProductGrid } from './POSProductGrid';
 import { POSPaymentModal } from './POSPaymentModal';
+import { POSModifierDialog } from './POSModifierDialog';
+import { cn } from '@/lib/utils';
+
+interface OrderLineModifier {
+  modifier_name: string;
+  option_name: string;
+  price_delta: number;
+  type: 'add' | 'remove' | 'substitute';
+}
 
 interface OrderLine {
   id?: string;
@@ -17,9 +26,10 @@ interface OrderLine {
   unit_price: number;
   total: number;
   notes?: string;
-  modifiers?: { name: string; option: string; price: number }[];
+  modifiers: OrderLineModifier[];
   sent_to_kitchen: boolean;
   kds_destination?: 'kitchen' | 'bar' | 'prep';
+  is_rush?: boolean;
 }
 
 interface POSOrderPanelProps {
@@ -36,12 +46,22 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [loading, setLoading] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [notes, setNotes] = useState('');
+  
+  // Modifier dialog state
+  const [modifierDialogOpen, setModifierDialogOpen] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<POSProduct | null>(null);
+  const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
 
-  const subtotal = orderLines.reduce((sum, line) => sum + line.total, 0);
-  const tax = subtotal * 0.10; // 10% IVA
+  // Calculate totals including modifier price deltas
+  const calculateLineTotal = (line: OrderLine): number => {
+    const modifiersCost = line.modifiers.reduce((sum, m) => sum + m.price_delta, 0);
+    return (line.unit_price + modifiersCost) * line.quantity;
+  };
+
+  const subtotal = orderLines.reduce((sum, line) => sum + calculateLineTotal(line), 0);
+  const tax = subtotal * 0.10;
   const total = subtotal + tax;
 
-  // Load existing ticket lines if table has an open ticket
   useEffect(() => {
     if (table.current_ticket_id) {
       loadTicketLines(table.current_ticket_id);
@@ -49,54 +69,125 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   }, [table.current_ticket_id]);
 
   const loadTicketLines = async (ticketId: string) => {
-    const { data } = await supabase
+    // Load lines with modifiers
+    const { data: lines } = await supabase
       .from('ticket_lines')
       .select('*')
       .eq('ticket_id', ticketId);
 
-    if (data) {
-      setOrderLines(data.map(line => ({
-        id: line.id,
-        product_id: line.item_external_id || '',
-        name: line.item_name,
-        quantity: line.quantity,
-        unit_price: line.unit_price,
-        total: line.gross_line_total,
-        notes: (line as unknown as { notes?: string }).notes || undefined,
-        sent_to_kitchen: (line as unknown as { sent_to_kitchen?: boolean }).sent_to_kitchen || false,
-      })));
-    }
+    if (!lines) return;
+
+    // Load modifiers for each line
+    const lineIds = lines.map(l => l.id);
+    const { data: modifiers } = await supabase
+      .from('ticket_line_modifiers')
+      .select('*')
+      .in('ticket_line_id', lineIds);
+
+    const modifiersMap = new Map<string, OrderLineModifier[]>();
+    (modifiers || []).forEach(mod => {
+      if (!modifiersMap.has(mod.ticket_line_id)) {
+        modifiersMap.set(mod.ticket_line_id, []);
+      }
+      // Determine type from modifier/option names
+      const lower = (mod.modifier_name + mod.option_name).toLowerCase();
+      let type: 'add' | 'remove' | 'substitute' = 'add';
+      if (lower.includes('sin') || lower.includes('quitar')) type = 'remove';
+      else if (lower.includes('cambiar') || lower.includes('sustituir')) type = 'substitute';
+      
+      modifiersMap.get(mod.ticket_line_id)!.push({
+        modifier_name: mod.modifier_name,
+        option_name: mod.option_name || '',
+        price_delta: Number(mod.price_delta) || 0,
+        type,
+      });
+    });
+
+    setOrderLines(lines.map(line => ({
+      id: line.id,
+      product_id: line.item_external_id || '',
+      name: line.item_name,
+      quantity: line.quantity,
+      unit_price: line.unit_price,
+      total: line.gross_line_total,
+      notes: (line as any).notes || undefined,
+      modifiers: modifiersMap.get(line.id) || [],
+      sent_to_kitchen: (line as any).sent_to_kitchen || false,
+      is_rush: (line as any).is_rush || false,
+    })));
   };
 
-  const addProduct = (product: POSProduct) => {
+  const handleProductClick = (product: POSProduct) => {
+    // Check if product exists and is not sent yet
     const existingIndex = orderLines.findIndex(
-      line => line.product_id === product.id && !line.sent_to_kitchen
+      line => line.product_id === product.id && !line.sent_to_kitchen && line.modifiers.length === 0
     );
 
     if (existingIndex >= 0) {
-      // Increase quantity
+      // Increase quantity of existing line without modifiers
       const updated = [...orderLines];
       updated[existingIndex].quantity += 1;
-      updated[existingIndex].total = updated[existingIndex].quantity * updated[existingIndex].unit_price;
+      updated[existingIndex].total = calculateLineTotal(updated[existingIndex]);
       setOrderLines(updated);
     } else {
-      // Add new line with product's kds_destination
-      setOrderLines([...orderLines, {
-        product_id: product.id,
-        name: product.name,
-        quantity: 1,
-        unit_price: product.price,
-        total: product.price,
-        sent_to_kitchen: false,
-        kds_destination: product.kds_destination || 'kitchen',
-      }]);
+      // Open modifier dialog for new product
+      setPendingProduct(product);
+      setEditingLineIndex(null);
+      setModifierDialogOpen(true);
     }
+  };
+
+  const handleEditLine = (index: number) => {
+    const line = orderLines[index];
+    if (line.sent_to_kitchen) return;
+    
+    const product = products.find(p => p.id === line.product_id);
+    if (product) {
+      setPendingProduct(product);
+      setEditingLineIndex(index);
+      setModifierDialogOpen(true);
+    }
+  };
+
+  const handleModifierConfirm = (modifiers: OrderLineModifier[], itemNotes: string, isRush: boolean) => {
+    if (!pendingProduct) return;
+
+    if (editingLineIndex !== null) {
+      // Update existing line
+      const updated = [...orderLines];
+      updated[editingLineIndex] = {
+        ...updated[editingLineIndex],
+        modifiers,
+        notes: itemNotes || undefined,
+        is_rush: isRush,
+        total: calculateLineTotal({ ...updated[editingLineIndex], modifiers }),
+      };
+      setOrderLines(updated);
+    } else {
+      // Add new line
+      const newLine: OrderLine = {
+        product_id: pendingProduct.id,
+        name: pendingProduct.name,
+        quantity: 1,
+        unit_price: pendingProduct.price,
+        total: pendingProduct.price + modifiers.reduce((sum, m) => sum + m.price_delta, 0),
+        notes: itemNotes || undefined,
+        modifiers,
+        sent_to_kitchen: false,
+        kds_destination: pendingProduct.kds_destination || 'kitchen',
+        is_rush: isRush,
+      };
+      setOrderLines([...orderLines, newLine]);
+    }
+
+    setPendingProduct(null);
+    setEditingLineIndex(null);
   };
 
   const updateQuantity = (index: number, delta: number) => {
     const updated = [...orderLines];
     updated[index].quantity = Math.max(1, updated[index].quantity + delta);
-    updated[index].total = updated[index].quantity * updated[index].unit_price;
+    updated[index].total = calculateLineTotal(updated[index]);
     setOrderLines(updated);
   };
 
@@ -107,7 +198,6 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const createOrUpdateTicket = async (): Promise<string> => {
     if (ticketId) return ticketId;
 
-    // Create new ticket
     const { data, error } = await supabase
       .from('tickets')
       .insert({
@@ -126,7 +216,6 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
 
     if (error) throw error;
 
-    // Update table status
     await supabase
       .from('pos_tables')
       .update({ status: 'occupied', current_ticket_id: data.id })
@@ -141,7 +230,6 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     try {
       const currentTicketId = await createOrUpdateTicket();
       
-      // Get lines not yet sent to kitchen
       const newLines = orderLines.filter(line => !line.sent_to_kitchen && !line.id);
       
       if (newLines.length === 0) {
@@ -149,13 +237,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         return;
       }
 
-      // Use product's configured kds_destination
-      const getDestination = (line: typeof newLines[0]): 'kitchen' | 'bar' | 'prep' => {
-        return line.kds_destination || 'kitchen';
-      };
-
-      // Insert new lines with destination
-      const { error: linesError } = await supabase
+      // Insert lines
+      const { data: insertedLines, error: linesError } = await supabase
         .from('ticket_lines')
         .insert(newLines.map(line => ({
           ticket_id: currentTicketId,
@@ -163,21 +246,46 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           item_name: line.name,
           quantity: line.quantity,
           unit_price: line.unit_price,
-          line_total: line.total,
+          line_total: calculateLineTotal(line),
           notes: line.notes,
           sent_to_kitchen: true,
           sent_at: new Date().toISOString(),
-          destination: getDestination(line),
+          destination: line.kds_destination || 'kitchen',
           prep_status: 'pending',
-        })));
+          is_rush: line.is_rush || false,
+        })))
+        .select();
 
       if (linesError) throw linesError;
 
-      // Group lines by destination for print queue
+      // Insert modifiers for each line
+      if (insertedLines) {
+        const modifierInserts: any[] = [];
+        
+        newLines.forEach((line, idx) => {
+          const insertedLine = insertedLines[idx];
+          if (insertedLine && line.modifiers.length > 0) {
+            line.modifiers.forEach(mod => {
+              modifierInserts.push({
+                ticket_line_id: insertedLine.id,
+                modifier_name: mod.modifier_name,
+                option_name: mod.option_name,
+                price_delta: mod.price_delta,
+              });
+            });
+          }
+        });
+
+        if (modifierInserts.length > 0) {
+          await supabase.from('ticket_line_modifiers').insert(modifierInserts);
+        }
+      }
+
+      // Print queue
       const destinations = ['kitchen', 'bar', 'prep'] as const;
       const printQueueInserts = destinations
         .map(dest => {
-          const destLines = newLines.filter(l => getDestination(l) === dest);
+          const destLines = newLines.filter(l => (l.kds_destination || 'kitchen') === dest);
           if (destLines.length === 0) return null;
           return {
             location_id: locationId,
@@ -187,6 +295,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
               name: l.name,
               qty: l.quantity,
               notes: l.notes,
+              modifiers: l.modifiers.map(m => `${m.modifier_name}: ${m.option_name}`),
+              rush: l.is_rush,
             })),
             status: 'pending',
           };
@@ -219,14 +329,12 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
 
     setLoading(true);
     try {
-      // Create payment
       await supabase.from('payments').insert([{
         ticket_id: ticketId,
         amount,
         method: method as 'card' | 'cash' | 'other',
       }]);
 
-      // Close ticket
       await supabase
         .from('tickets')
         .update({
@@ -248,6 +356,14 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
   };
 
+  const getModifierBadgeColor = (type: 'add' | 'remove' | 'substitute') => {
+    switch (type) {
+      case 'remove': return 'bg-red-500/20 text-red-400';
+      case 'add': return 'bg-emerald-500/20 text-emerald-400';
+      case 'substitute': return 'bg-amber-500/20 text-amber-400';
+    }
+  };
+
   return (
     <>
       <div className="w-96 border-l border-border bg-card flex flex-col shrink-0">
@@ -264,7 +380,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
 
         {/* Product Grid */}
         <div className="h-48 border-b border-border shrink-0">
-          <POSProductGrid products={products} onProductClick={addProduct} />
+          <POSProductGrid products={products} onProductClick={handleProductClick} />
         </div>
 
         {/* Order Lines */}
@@ -279,54 +395,94 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                 <div 
                   key={index} 
                   className={cn(
-                    "flex items-center gap-2 p-2 rounded-lg",
-                    line.sent_to_kitchen ? "bg-green-500/10" : "bg-muted/50"
+                    "p-2 rounded-lg",
+                    line.sent_to_kitchen ? "bg-green-500/10" : "bg-muted/50",
+                    line.is_rush && !line.sent_to_kitchen && "ring-2 ring-amber-500"
                   )}
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{line.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      €{line.unit_price.toFixed(2)} × {line.quantity}
+                  {/* Main line */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {line.is_rush && <Flame className="h-4 w-4 text-amber-500 shrink-0" />}
+                        <p className="font-medium text-sm truncate">{line.name}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        €{line.unit_price.toFixed(2)} × {line.quantity}
+                      </p>
+                      {line.sent_to_kitchen && (
+                        <span className="text-xs text-green-600">✓ Enviado</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      {!line.sent_to_kitchen && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7"
+                          onClick={() => handleEditLine(index)}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7"
+                        onClick={() => updateQuantity(index, -1)}
+                        disabled={line.sent_to_kitchen}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-6 text-center text-sm">{line.quantity}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7"
+                        onClick={() => updateQuantity(index, 1)}
+                        disabled={line.sent_to_kitchen}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-destructive"
+                        onClick={() => removeLine(index)}
+                        disabled={line.sent_to_kitchen}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    <p className="w-16 text-right font-medium">
+                      €{calculateLineTotal(line).toFixed(2)}
                     </p>
-                    {line.sent_to_kitchen && (
-                      <span className="text-xs text-green-600">✓ Enviado</span>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7"
-                      onClick={() => updateQuantity(index, -1)}
-                      disabled={line.sent_to_kitchen}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="w-6 text-center text-sm">{line.quantity}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7"
-                      onClick={() => updateQuantity(index, 1)}
-                      disabled={line.sent_to_kitchen}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 text-destructive"
-                      onClick={() => removeLine(index)}
-                      disabled={line.sent_to_kitchen}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
                   </div>
 
-                  <p className="w-16 text-right font-medium">
-                    €{line.total.toFixed(2)}
-                  </p>
+                  {/* Modifiers */}
+                  {line.modifiers.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2 ml-1">
+                      {line.modifiers.map((mod, modIdx) => (
+                        <span 
+                          key={modIdx}
+                          className={cn(
+                            "text-xs px-1.5 py-0.5 rounded",
+                            getModifierBadgeColor(mod.type)
+                          )}
+                        >
+                          {mod.option_name}
+                          {mod.price_delta !== 0 && ` (+€${mod.price_delta.toFixed(2)})`}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {line.notes && (
+                    <p className="text-xs text-amber-500 mt-1 ml-1 italic">⚠️ {line.notes}</p>
+                  )}
                 </div>
               ))
             )}
@@ -371,6 +527,34 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         </div>
       </div>
 
+      {/* Modifier Dialog */}
+      {pendingProduct && (
+        <POSModifierDialog
+          open={modifierDialogOpen}
+          onClose={() => {
+            setModifierDialogOpen(false);
+            // If closing without confirming and it's a new product, add it without modifiers
+            if (editingLineIndex === null && pendingProduct) {
+              const newLine: OrderLine = {
+                product_id: pendingProduct.id,
+                name: pendingProduct.name,
+                quantity: 1,
+                unit_price: pendingProduct.price,
+                total: pendingProduct.price,
+                modifiers: [],
+                sent_to_kitchen: false,
+                kds_destination: pendingProduct.kds_destination || 'kitchen',
+              };
+              setOrderLines([...orderLines, newLine]);
+            }
+            setPendingProduct(null);
+            setEditingLineIndex(null);
+          }}
+          product={pendingProduct}
+          onConfirm={handleModifierConfirm}
+        />
+      )}
+
       {showPayment && (
         <POSPaymentModal
           total={total}
@@ -380,8 +564,4 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       )}
     </>
   );
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
 }
