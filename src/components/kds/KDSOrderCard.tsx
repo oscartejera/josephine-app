@@ -95,14 +95,19 @@ export function KDSOrderCard({
     return 'bg-zinc-900';
   };
 
+  // Only show fade-in animation for truly new orders (< 30 seconds old)
+  const isReallyNew = Date.now() - new Date(order.openedAt).getTime() < 30000;
+
   return (
     <div 
       className={cn(
         "rounded-lg border-2 overflow-hidden transition-all duration-300",
         getBorderClass(),
         getBackgroundClass(),
-        isNew && !isSelected && "animate-pulse",
-        hasOverdueItems && !isSelected && "animate-pulse"
+        // Only pulse for overdue items (red alert)
+        hasOverdueItems && !isSelected && "animate-pulse",
+        // Subtle fade-in for genuinely new orders
+        isReallyNew && !hasOverdueItems && "animate-fade-in"
       )}
     >
       {/* Header */}

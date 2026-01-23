@@ -193,6 +193,8 @@ export function useKDSAlerts(orders: KDSOrder[]) {
   }, [orders]);
 
   // Calculate overdue info per item
+  // IMPORTANT: Only items actively being prepared (prep_status = 'preparing') can be overdue
+  // Items waiting in queue (pending) do NOT count as overdue - timer starts when cooking begins
   const getItemOverdueInfo = useCallback((item: KDSTicketLine): { 
     isOverdue: boolean; 
     overdueMinutes: number; 
@@ -203,21 +205,24 @@ export function useKDSAlerts(orders: KDSOrder[]) {
       return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
     }
 
-    // Use prep_started_at if available (item is being prepared)
-    // Otherwise use sent_at (item is pending in queue)
-    const referenceTime = item.prep_started_at || item.sent_at;
-    
-    if (!referenceTime) {
+    // Items still pending (in queue, not started) are NOT overdue
+    // The overdue timer only starts when someone begins preparing the item
+    if (item.prep_status === 'pending') {
       return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
     }
 
-    const startTime = new Date(referenceTime).getTime();
+    // Only for items with prep_status === 'preparing' and a valid start time
+    if (!item.prep_started_at) {
+      return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
+    }
+
+    const startTime = new Date(item.prep_started_at).getTime();
     const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
     const threshold = item.target_prep_time ?? settings[item.destination];
     const overdueMinutes = elapsedMinutes - threshold;
 
     return {
-      isOverdue: overdueMinutes >= 0,
+      isOverdue: overdueMinutes > 0, // Strictly greater than threshold
       overdueMinutes: Math.max(0, overdueMinutes),
       threshold,
     };
