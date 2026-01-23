@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
 import { 
   CreditCard, Banknote, Smartphone, Check, Users, Receipt, 
-  FileText, Plus, Minus, Percent, Euro
+  FileText, Plus, Minus, Percent, Euro, ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { POSStripePayment } from './POSStripePayment';
+import { toast } from 'sonner';
 
 interface OrderLineItem {
   id?: string;
@@ -35,8 +36,10 @@ interface POSSplitPaymentModalProps {
   orderLines: OrderLineItem[];
   tableName?: string;
   covers: number;
+  ticketId: string;
+  locationId: string;
   onClose: () => void;
-  onPayment: (payments: { method: string; amount: number; tip: number }[]) => Promise<void>;
+  onPayment: (payments: { method: string; amount: number; tip: number; stripePaymentIntentId?: string }[]) => Promise<void>;
   onPrintReceipt: (data: ReceiptData) => void;
 }
 
@@ -70,6 +73,8 @@ export function POSSplitPaymentModal({
   orderLines,
   tableName = 'Mesa',
   covers,
+  ticketId,
+  locationId,
   onClose,
   onPayment,
   onPrintReceipt,
@@ -87,6 +92,8 @@ export function POSSplitPaymentModal({
   const [customTip, setCustomTip] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [showStripePayment, setShowStripePayment] = useState(false);
+  const [pendingStripePaymentId, setPendingStripePaymentId] = useState<string | null>(null);
 
   // Calculate tip amount
   const tipAmount = useMemo(() => {
@@ -221,14 +228,40 @@ export function POSSplitPaymentModal({
   const change = selectedMethod === 'cash' ? Math.max(0, cashAmount - currentAmount) : 0;
   const canPay = selectedMethod !== 'cash' || cashAmount >= currentAmount;
 
+  // Handle Stripe payment success
+  const handleStripeSuccess = async (paymentIntentId: string) => {
+    setPendingStripePaymentId(paymentIntentId);
+    setShowStripePayment(false);
+    
+    // Continue with payment processing
+    await processPaymentAfterStripe(paymentIntentId);
+  };
+
+  const handleStripeError = (error: string) => {
+    toast.error(error);
+    setShowStripePayment(false);
+  };
+
   // Process current payment
   const handleProcessPayment = async () => {
+    // If card payment, show Stripe form
+    if (selectedMethod === 'card') {
+      setShowStripePayment(true);
+      return;
+    }
+    
+    // For cash/other, process directly
+    await processPaymentAfterStripe(null);
+  };
+
+  const processPaymentAfterStripe = async (stripePaymentIntentId: string | null) => {
     setLoading(true);
     try {
       const paymentData = splitPayments.map((sp, idx) => ({
         method: idx === currentPaymentIndex ? selectedMethod : (sp.method || 'card'),
         amount: sp.amount,
         tip: idx === currentPaymentIndex ? (tipAmount / splitPayments.length) : 0,
+        stripePaymentIntentId: idx === currentPaymentIndex ? stripePaymentIntentId || undefined : undefined,
       }));
 
       // Mark current as paid
@@ -489,29 +522,57 @@ export function POSSplitPaymentModal({
           />
         )}
 
+        {/* Stripe Payment Overlay */}
+        {showStripePayment && (
+          <div className="absolute inset-0 bg-background z-10 flex flex-col p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowStripePayment(false)}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h3 className="text-lg font-semibold">Pago con tarjeta</h3>
+              <span className="ml-auto text-xl font-bold">€{currentAmount.toFixed(2)}</span>
+            </div>
+            
+            <POSStripePayment
+              amount={currentAmount}
+              ticketId={ticketId}
+              locationId={locationId}
+              onSuccess={handleStripeSuccess}
+              onError={handleStripeError}
+              onCancel={() => setShowStripePayment(false)}
+            />
+          </div>
+        )}
+
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-4 border-t shrink-0">
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            Cancelar
-          </Button>
-          <Button
-            className="flex-1 h-12 text-lg"
-            disabled={!canPay || loading || (splitMode === 'items' && remainingAmount > 0.01)}
-            onClick={handleProcessPayment}
-          >
-            {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-            ) : (
-              <>
-                <Check className="h-5 w-5 mr-2" />
-                {splitPayments.filter(p => p.paid).length > 0 
-                  ? `Cobrar (${splitPayments.filter(p => p.paid).length + 1}/${splitPayments.length})`
-                  : 'Confirmar pago'
-                }
-              </>
-            )}
-          </Button>
-        </div>
+        {!showStripePayment && (
+          <div className="flex gap-2 pt-4 border-t shrink-0">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancelar
+            </Button>
+            <Button
+              className="flex-1 h-12 text-lg"
+              disabled={!canPay || loading || (splitMode === 'items' && remainingAmount > 0.01)}
+              onClick={handleProcessPayment}
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+              ) : (
+                <>
+                  <Check className="h-5 w-5 mr-2" />
+                  {splitPayments.filter(p => p.paid).length > 0 
+                    ? `Cobrar (${splitPayments.filter(p => p.paid).length + 1}/${splitPayments.length})`
+                    : 'Confirmar pago'
+                  }
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

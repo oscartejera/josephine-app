@@ -608,7 +608,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         />
       )}
 
-      {showPayment && (
+      {showPayment && ticketId && (
         <POSSplitPaymentModal
           total={total}
           subtotal={subtotal}
@@ -622,6 +622,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           }))}
           tableName={table.table_number}
           covers={table.seats}
+          ticketId={ticketId}
+          locationId={locationId}
           onClose={() => setShowPayment(false)}
           onPayment={handlePayment}
           onPrintReceipt={handlePrintReceipt}
