@@ -359,7 +359,22 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         .filter(Boolean);
 
       if (printQueueInserts.length > 0) {
-        await supabase.from('pos_print_queue').insert(printQueueInserts);
+        const { data: insertedJobs } = await supabase
+          .from('pos_print_queue')
+          .insert(printQueueInserts)
+          .select('id');
+        
+        // Trigger automatic printing for each job
+        if (insertedJobs && insertedJobs.length > 0) {
+          // Fire and forget - don't block the UI
+          for (const job of insertedJobs) {
+            supabase.functions.invoke('print_kitchen_ticket', {
+              body: { printJobId: job.id }
+            }).catch(err => {
+              console.warn('Auto-print failed, job will remain in queue:', err);
+            });
+          }
+        }
       }
 
       // Update ticket totals

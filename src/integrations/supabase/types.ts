@@ -1634,8 +1634,11 @@ export type Database = {
           destination: string
           id: string
           items_json: Json
+          last_error: string | null
           location_id: string
+          print_attempts: number | null
           printed_at: string | null
+          printnode_job_id: string | null
           status: string
           ticket_id: string
         }
@@ -1645,8 +1648,11 @@ export type Database = {
           destination: string
           id?: string
           items_json?: Json
+          last_error?: string | null
           location_id: string
+          print_attempts?: number | null
           printed_at?: string | null
+          printnode_job_id?: string | null
           status?: string
           ticket_id: string
         }
@@ -1656,8 +1662,11 @@ export type Database = {
           destination?: string
           id?: string
           items_json?: Json
+          last_error?: string | null
           location_id?: string
+          print_attempts?: number | null
           printed_at?: string | null
+          printnode_job_id?: string | null
           status?: string
           ticket_id?: string
         }
@@ -1775,6 +1784,91 @@ export type Database = {
             columns: ["floor_map_id"]
             isOneToOne: false
             referencedRelation: "pos_floor_maps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      printer_config: {
+        Row: {
+          auto_print: boolean | null
+          created_at: string | null
+          destination: string
+          id: string
+          is_active: boolean | null
+          location_id: string
+          paper_width: number | null
+          printer_name: string
+          printnode_printer_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_print?: boolean | null
+          created_at?: string | null
+          destination: string
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          paper_width?: number | null
+          printer_name: string
+          printnode_printer_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_print?: boolean | null
+          created_at?: string | null
+          destination?: string
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          paper_width?: number | null
+          printer_name?: string
+          printnode_printer_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "printer_config_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      printnode_credentials: {
+        Row: {
+          api_key_encrypted: string
+          created_at: string | null
+          group_id: string
+          id: string
+          is_active: boolean | null
+          last_verified_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_key_encrypted: string
+          created_at?: string | null
+          group_id: string
+          id?: string
+          is_active?: boolean | null
+          last_verified_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          is_active?: boolean | null
+          last_verified_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "printnode_credentials_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
         ]

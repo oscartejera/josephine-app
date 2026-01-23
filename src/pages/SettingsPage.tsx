@@ -13,13 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield, RefreshCw, Database, AlertTriangle, Loader2 } from 'lucide-react';
+import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield, RefreshCw, Database, AlertTriangle, Loader2, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
 import { TeamManager } from '@/components/settings/TeamManager';
 import { DemoDataManager } from '@/components/settings/DemoDataManager';
 import { ProductKDSManager } from '@/components/settings/ProductKDSManager';
 import { PaymentHistoryManager } from '@/components/settings/PaymentHistoryManager';
+import { PrinterConfigManager } from '@/components/settings/PrinterConfigManager';
 import { Progress } from '@/components/ui/progress';
 import { Receipt } from 'lucide-react';
 
@@ -263,6 +264,7 @@ export default function SettingsPage() {
           {canManageUsers && <TabsTrigger value="users">Roles</TabsTrigger>}
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
           <TabsTrigger value="kds">Destinos KDS</TabsTrigger>
+          <TabsTrigger value="printers">Impresoras</TabsTrigger>
           {canManageBilling && <TabsTrigger value="payment">Payment</TabsTrigger>}
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           <TabsTrigger value="export">Exportar</TabsTrigger>
@@ -410,6 +412,10 @@ export default function SettingsPage() {
 
         <TabsContent value="kds">
           <ProductKDSManager />
+        </TabsContent>
+
+        <TabsContent value="printers">
+          <PrinterConfigManager />
         </TabsContent>
 
         <TabsContent value="transactions">

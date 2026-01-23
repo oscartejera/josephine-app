@@ -5,20 +5,25 @@ import {
   Printer, 
   Check, 
   CheckCheck, 
-  AlertCircle, 
   RefreshCw, 
   Trash2,
   ChefHat,
   Wine,
   Clock,
-  Receipt
+  Receipt,
+  Eye,
+  Flame
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePrintQueue, PrintJob } from '@/hooks/usePrintQueue';
+import { generateKitchenTicketText, KitchenTicketData } from '@/lib/kitchenTicketFormatter';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface PrintQueuePanelProps {
   locationId: string;
@@ -43,17 +48,22 @@ function PrintJobCard({
   onPrint, 
   onAcknowledge, 
   onRetry, 
-  onDelete 
+  onDelete,
+  onPreview,
+  printing
 }: { 
   job: PrintJob;
   onPrint: () => void;
   onAcknowledge: () => void;
   onRetry: () => void;
   onDelete: () => void;
+  onPreview: () => void;
+  printing?: boolean;
 }) {
   const dest = destinationConfig[job.destination];
   const status = statusConfig[job.status];
   const DestIcon = dest.icon;
+  const hasRush = job.items_json.some((item: any) => item.rush);
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-3">
@@ -233,6 +243,7 @@ export function PrintQueuePanel({ locationId }: PrintQueuePanelProps) {
                     onAcknowledge={() => markAsAcknowledged(job.id)}
                     onRetry={() => retryJob(job.id)}
                     onDelete={() => deleteJob(job.id)}
+                    onPreview={() => {}}
                   />
                 ))}
               </div>
