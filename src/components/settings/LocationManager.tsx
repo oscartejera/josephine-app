@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Plus, Trash2, Edit2, MapPin, Clock, Loader2, Check, AlertTriangle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Building2, Plus, Trash2, Edit2, MapPin, Clock, Loader2, Check, AlertTriangle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface LocationFormData {
@@ -19,6 +20,13 @@ interface LocationFormData {
   city: string;
   timezone: string;
   currency: string;
+}
+
+interface DuplicateOptions {
+  products: boolean;
+  employees: boolean;
+  floorMaps: boolean;
+  settings: boolean;
 }
 
 const TIMEZONES = [
@@ -45,12 +53,22 @@ const initialFormData: LocationFormData = {
   currency: 'EUR',
 };
 
+const initialDuplicateOptions: DuplicateOptions = {
+  products: true,
+  employees: true,
+  floorMaps: true,
+  settings: true,
+};
+
 export function LocationManager() {
   const { locations, group } = useApp();
   const { profile } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState<string | null>(null);
   const [formData, setFormData] = useState<LocationFormData>(initialFormData);
+  const [sourceLocationId, setSourceLocationId] = useState<string>('');
+  const [duplicateOptions, setDuplicateOptions] = useState<DuplicateOptions>(initialDuplicateOptions);
   const [loading, setLoading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -128,21 +146,298 @@ export function LocationManager() {
         await supabase.from('pos_tables').insert(defaultTables);
       }
 
-      // 6. Grant access to the owner/creator
-      if (profile?.id) {
-        // The owner should already have global access, but we ensure the location is accessible
-        // No need to add user_locations for owners with global scope
-      }
-
       toast.success(`Local "${formData.name}" creado correctamente`);
       setShowAddDialog(false);
       setFormData(initialFormData);
-      
-      // Refresh the page to show new location
       window.location.reload();
     } catch (error: any) {
       console.error('Error creating location:', error);
       toast.error(error.message || 'Error al crear el local');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDuplicateLocation = async () => {
+    if (!formData.name.trim()) {
+      toast.error('El nombre del local es obligatorio');
+      return;
+    }
+
+    if (!sourceLocationId) {
+      toast.error('Selecciona un local de origen');
+      return;
+    }
+
+    if (!group?.id) {
+      toast.error('No se encontró el grupo');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1. Create the new location
+      const { data: newLocation, error: locationError } = await supabase
+        .from('locations')
+        .insert({
+          group_id: group.id,
+          name: formData.name.trim(),
+          city: formData.city.trim() || null,
+          timezone: formData.timezone,
+          currency: formData.currency,
+          active: true,
+        })
+        .select()
+        .single();
+
+      if (locationError) throw locationError;
+
+      let copiedItems = {
+        settings: false,
+        products: 0,
+        employees: 0,
+        floorMaps: 0,
+        tables: 0,
+      };
+
+      // 2. Copy settings if selected
+      if (duplicateOptions.settings) {
+        // Copy location_settings
+        const { data: sourceSettings } = await supabase
+          .from('location_settings')
+          .select('*')
+          .eq('location_id', sourceLocationId)
+          .single();
+
+        if (sourceSettings) {
+          await supabase.from('location_settings').insert({
+            location_id: newLocation.id,
+            target_gp_percent: sourceSettings.target_gp_percent,
+            target_col_percent: sourceSettings.target_col_percent,
+            default_cogs_percent: sourceSettings.default_cogs_percent,
+            default_hourly_cost: sourceSettings.default_hourly_cost,
+          });
+        } else {
+          // Insert defaults if source has no settings
+          await supabase.from('location_settings').insert({
+            location_id: newLocation.id,
+            target_gp_percent: 70,
+            target_col_percent: 25,
+            default_cogs_percent: 30,
+            default_hourly_cost: 12.00,
+          });
+        }
+
+        // Copy payroll_location_settings
+        const { data: sourcePayrollSettings } = await supabase
+          .from('payroll_location_settings')
+          .select('*')
+          .eq('location_id', sourceLocationId)
+          .single();
+
+        if (sourcePayrollSettings) {
+          await supabase.from('payroll_location_settings').insert({
+            location_id: newLocation.id,
+            contingencias_comunes_employer: sourcePayrollSettings.contingencias_comunes_employer,
+            desempleo_employer_indefinido: sourcePayrollSettings.desempleo_employer_indefinido,
+            desempleo_employer_temporal: sourcePayrollSettings.desempleo_employer_temporal,
+            fogasa_employer: sourcePayrollSettings.fogasa_employer,
+            formacion_employer: sourcePayrollSettings.formacion_employer,
+            mei_employer: sourcePayrollSettings.mei_employer,
+            accident_rate_employer: sourcePayrollSettings.accident_rate_employer,
+          });
+        } else {
+          await supabase.from('payroll_location_settings').insert({
+            location_id: newLocation.id,
+            contingencias_comunes_employer: 0.2360,
+            desempleo_employer_indefinido: 0.0550,
+            desempleo_employer_temporal: 0.0670,
+            fogasa_employer: 0.0020,
+            formacion_employer: 0.0060,
+            mei_employer: 0.0067,
+            accident_rate_employer: 0.0150,
+          });
+        }
+        copiedItems.settings = true;
+      } else {
+        // Create defaults
+        await supabase.from('location_settings').insert({
+          location_id: newLocation.id,
+          target_gp_percent: 70,
+          target_col_percent: 25,
+          default_cogs_percent: 30,
+          default_hourly_cost: 12.00,
+        });
+        await supabase.from('payroll_location_settings').insert({
+          location_id: newLocation.id,
+          contingencias_comunes_employer: 0.2360,
+          desempleo_employer_indefinido: 0.0550,
+          desempleo_employer_temporal: 0.0670,
+          fogasa_employer: 0.0020,
+          formacion_employer: 0.0060,
+          mei_employer: 0.0067,
+          accident_rate_employer: 0.0150,
+        });
+      }
+
+      // 3. Copy products if selected
+      if (duplicateOptions.products) {
+        const { data: sourceProducts } = await supabase
+          .from('products')
+          .select('*')
+          .eq('location_id', sourceLocationId);
+
+        if (sourceProducts && sourceProducts.length > 0) {
+          const newProducts = sourceProducts.map(p => ({
+            name: p.name,
+            category: p.category,
+            location_id: newLocation.id,
+            group_id: group.id,
+            is_active: p.is_active,
+            kds_destination: p.kds_destination,
+            target_prep_time: p.target_prep_time,
+          }));
+          await supabase.from('products').insert(newProducts);
+          copiedItems.products = sourceProducts.length;
+        }
+      }
+
+      // 4. Copy employees if selected (without payroll data - clean slate)
+      if (duplicateOptions.employees) {
+        const { data: sourceEmployees } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('location_id', sourceLocationId)
+          .eq('active', true);
+
+        if (sourceEmployees && sourceEmployees.length > 0) {
+          // Filter out placeholder employees (OPEN - X)
+          const realEmployees = sourceEmployees.filter(e => !e.full_name.startsWith('OPEN - '));
+          
+          if (realEmployees.length > 0) {
+            const newEmployees = realEmployees.map(e => ({
+              full_name: e.full_name,
+              role_name: e.role_name,
+              location_id: newLocation.id,
+              hourly_cost: e.hourly_cost,
+              active: true,
+            }));
+            await supabase.from('employees').insert(newEmployees);
+            copiedItems.employees = realEmployees.length;
+          }
+        }
+      }
+
+      // 5. Copy floor maps and tables if selected
+      if (duplicateOptions.floorMaps) {
+        const { data: sourceFloorMaps } = await supabase
+          .from('pos_floor_maps')
+          .select('*')
+          .eq('location_id', sourceLocationId);
+
+        if (sourceFloorMaps && sourceFloorMaps.length > 0) {
+          for (const floorMap of sourceFloorMaps) {
+            const { data: newFloorMap } = await supabase
+              .from('pos_floor_maps')
+              .insert({
+                location_id: newLocation.id,
+                name: floorMap.name,
+                config_json: floorMap.config_json,
+                is_active: floorMap.is_active,
+              })
+              .select()
+              .single();
+
+            if (newFloorMap) {
+              copiedItems.floorMaps++;
+
+              // Copy tables for this floor map
+              const { data: sourceTables } = await supabase
+                .from('pos_tables')
+                .select('*')
+                .eq('floor_map_id', floorMap.id);
+
+              if (sourceTables && sourceTables.length > 0) {
+                const newTables = sourceTables.map(t => ({
+                  floor_map_id: newFloorMap.id,
+                  table_number: t.table_number,
+                  seats: t.seats,
+                  position_x: t.position_x,
+                  position_y: t.position_y,
+                  shape: t.shape,
+                  width: t.width,
+                  height: t.height,
+                  status: 'available',
+                }));
+                await supabase.from('pos_tables').insert(newTables);
+                copiedItems.tables += sourceTables.length;
+              }
+            }
+          }
+        } else {
+          // Create default floor map
+          const { data: floorMap } = await supabase
+            .from('pos_floor_maps')
+            .insert({
+              location_id: newLocation.id,
+              name: 'Sala Principal',
+              config_json: { width: 800, height: 600, background: null },
+              is_active: true,
+            })
+            .select()
+            .single();
+
+          if (floorMap) {
+            const defaultTables = [
+              { floor_map_id: floorMap.id, table_number: '1', seats: 4, position_x: 100, position_y: 100, shape: 'square', width: 80, height: 80, status: 'available' },
+              { floor_map_id: floorMap.id, table_number: '2', seats: 4, position_x: 220, position_y: 100, shape: 'square', width: 80, height: 80, status: 'available' },
+            ];
+            await supabase.from('pos_tables').insert(defaultTables);
+          }
+        }
+      } else {
+        // Create default floor map
+        const { data: floorMap } = await supabase
+          .from('pos_floor_maps')
+          .insert({
+            location_id: newLocation.id,
+            name: 'Sala Principal',
+            config_json: { width: 800, height: 600, background: null },
+            is_active: true,
+          })
+          .select()
+          .single();
+
+        if (floorMap) {
+          const defaultTables = [
+            { floor_map_id: floorMap.id, table_number: '1', seats: 4, position_x: 100, position_y: 100, shape: 'square', width: 80, height: 80, status: 'available' },
+            { floor_map_id: floorMap.id, table_number: '2', seats: 4, position_x: 220, position_y: 100, shape: 'square', width: 80, height: 80, status: 'available' },
+          ];
+          await supabase.from('pos_tables').insert(defaultTables);
+        }
+      }
+
+      // Build success message
+      const parts: string[] = [];
+      if (copiedItems.settings) parts.push('configuración');
+      if (copiedItems.products > 0) parts.push(`${copiedItems.products} productos`);
+      if (copiedItems.employees > 0) parts.push(`${copiedItems.employees} empleados`);
+      if (copiedItems.floorMaps > 0) parts.push(`${copiedItems.floorMaps} planos con ${copiedItems.tables} mesas`);
+
+      const sourceLocation = locations.find(l => l.id === sourceLocationId);
+      const message = parts.length > 0
+        ? `Local "${formData.name}" creado copiando ${parts.join(', ')} de "${sourceLocation?.name}"`
+        : `Local "${formData.name}" creado correctamente`;
+
+      toast.success(message);
+      setShowDuplicateDialog(false);
+      setFormData(initialFormData);
+      setSourceLocationId('');
+      setDuplicateOptions(initialDuplicateOptions);
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error duplicating location:', error);
+      toast.error(error.message || 'Error al duplicar el local');
     } finally {
       setLoading(false);
     }
@@ -183,7 +478,6 @@ export function LocationManager() {
   const handleDeleteLocation = async (locationId: string) => {
     const location = locations.find(l => l.id === locationId);
     
-    // Don't allow deleting the last location
     if (locations.length <= 1) {
       toast.error('No puedes eliminar el único local del grupo');
       return;
@@ -191,7 +485,6 @@ export function LocationManager() {
 
     setLoading(true);
     try {
-      // The CASCADE on foreign keys will handle related data
       const { error } = await supabase
         .from('locations')
         .delete()
@@ -218,6 +511,18 @@ export function LocationManager() {
       currency: 'EUR',
     });
     setEditingLocation(loc.id);
+  };
+
+  const openDuplicateDialog = (loc: { id: string; name: string; city: string | null }) => {
+    setSourceLocationId(loc.id);
+    setFormData({
+      name: `${loc.name} (Copia)`,
+      city: loc.city || '',
+      timezone: 'Europe/Madrid',
+      currency: 'EUR',
+    });
+    setDuplicateOptions(initialDuplicateOptions);
+    setShowDuplicateDialog(true);
   };
 
   return (
@@ -334,6 +639,129 @@ export function LocationManager() {
           </Dialog>
         </div>
       </CardHeader>
+
+      {/* Duplicate Location Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Copy className="h-5 w-5" />
+              Duplicar Local
+            </DialogTitle>
+            <DialogDescription>
+              Crea un nuevo local copiando la configuración de uno existente. No se copiarán datos históricos (ventas, tickets, turnos).
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Local de origen</Label>
+              <Select value={sourceLocationId} onValueChange={setSourceLocationId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el local a copiar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dup-name">Nombre del nuevo local *</Label>
+              <Input
+                id="dup-name"
+                placeholder="Ej: Restaurante Centro 2"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="dup-city">Ciudad</Label>
+              <Input
+                id="dup-city"
+                placeholder="Ej: Madrid"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label>¿Qué copiar?</Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="dup-products"
+                    checked={duplicateOptions.products}
+                    onCheckedChange={(checked) => 
+                      setDuplicateOptions({ ...duplicateOptions, products: checked === true })
+                    }
+                  />
+                  <label htmlFor="dup-products" className="text-sm cursor-pointer">
+                    Productos y categorías
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="dup-employees"
+                    checked={duplicateOptions.employees}
+                    onCheckedChange={(checked) => 
+                      setDuplicateOptions({ ...duplicateOptions, employees: checked === true })
+                    }
+                  />
+                  <label htmlFor="dup-employees" className="text-sm cursor-pointer">
+                    Empleados (sin datos de nómina)
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="dup-floormaps"
+                    checked={duplicateOptions.floorMaps}
+                    onCheckedChange={(checked) => 
+                      setDuplicateOptions({ ...duplicateOptions, floorMaps: checked === true })
+                    }
+                  />
+                  <label htmlFor="dup-floormaps" className="text-sm cursor-pointer">
+                    Planos de sala y mesas
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="dup-settings"
+                    checked={duplicateOptions.settings}
+                    onCheckedChange={(checked) => 
+                      setDuplicateOptions({ ...duplicateOptions, settings: checked === true })
+                    }
+                  />
+                  <label htmlFor="dup-settings" className="text-sm cursor-pointer">
+                    Configuración (objetivos GP, COL, nóminas)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-muted/50 border border-border rounded-lg p-3 text-sm">
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Nota:</strong> El nuevo local empezará sin datos históricos. Los datos de ventas, inventario y turnos se generarán desde cero.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleDuplicateLocation} disabled={loading || !sourceLocationId}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+              Duplicar Local
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <CardContent>
         <Table>
@@ -411,6 +839,14 @@ export function LocationManager() {
                       </>
                     ) : (
                       <>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => openDuplicateDialog(loc)}
+                          title="Duplicar local"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
                         <Button 
                           size="sm" 
                           variant="ghost"
