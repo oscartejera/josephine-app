@@ -230,6 +230,33 @@ export type Database = {
           },
         ]
       }
+      email_otp_codes: {
+        Row: {
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          verified: boolean | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          verified?: boolean | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       employee_legal: {
         Row: {
           created_at: string
@@ -3137,6 +3164,7 @@ export type Database = {
       can_access_location:
         | { Args: { _location_id: string }; Returns: boolean }
         | { Args: { _location_id: string; _user_id: string }; Returns: boolean }
+      cleanup_expired_otps: { Args: never; Returns: undefined }
       compute_hourly_cost: { Args: { p_employee_id: string }; Returns: number }
       forecast_needs_refresh: {
         Args: { p_location_id: string }
