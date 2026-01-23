@@ -6,14 +6,13 @@ import { kdsSoundManager, type KDSSoundSettings, DEFAULT_SOUND_SETTINGS } from '
 export interface KDSAlertSettings {
   kitchen: number; // minutes threshold
   bar: number;
-  prep: number;
 }
 
 export interface KDSAlert {
   id: string;
   itemId: string;
   itemName: string;
-  destination: 'kitchen' | 'bar' | 'prep';
+  destination: 'kitchen' | 'bar';
   overdueMinutes: number;
   ticketId: string;
   tableName: string | null;
@@ -22,9 +21,8 @@ export interface KDSAlert {
 }
 
 const DEFAULT_ALERT_SETTINGS: KDSAlertSettings = {
-  kitchen: 8,
-  bar: 3,
-  prep: 5,
+  kitchen: 10,
+  bar: 18,
 };
 
 const STORAGE_KEY = 'kds-alert-settings';
@@ -59,7 +57,7 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     setSoundSettings(kdsSoundManager.getSettings());
   }, []);
 
-  const playAlertSound = useCallback((destination: 'kitchen' | 'bar' | 'prep', isRush: boolean = false) => {
+  const playAlertSound = useCallback((destination: 'kitchen' | 'bar', isRush: boolean = false) => {
     if (isRush) {
       kdsSoundManager.playSound('rush');
     } else {
@@ -71,7 +69,7 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     kdsSoundManager.playSound('newOrder');
   }, []);
 
-  const testSound = useCallback((station: 'kitchen' | 'bar' | 'prep' | 'rush' | 'newOrder') => {
+  const testSound = useCallback((station: 'kitchen' | 'bar' | 'rush' | 'newOrder') => {
     kdsSoundManager.testSound(station);
   }, []);
 
@@ -129,7 +127,9 @@ export function useKDSAlerts(orders: KDSOrder[]) {
 
           const startTime = new Date(item.prep_started_at).getTime();
           const elapsedMinutes = Math.floor((now - startTime) / 60000);
-          const threshold = item.target_prep_time ?? settings[item.destination];
+          // Map 'prep' to 'kitchen' for threshold lookup (prep is deprecated)
+          const effectiveDestination = item.destination === 'prep' ? 'kitchen' : item.destination;
+          const threshold = item.target_prep_time ?? settings[effectiveDestination];
 
           if (elapsedMinutes >= threshold) {
             const alertId = `${item.id}-${Math.floor(elapsedMinutes / threshold)}`;
@@ -140,7 +140,7 @@ export function useKDSAlerts(orders: KDSOrder[]) {
               id: alertId,
               itemId: item.id,
               itemName: item.item_name,
-              destination: item.destination,
+              destination: effectiveDestination,
               overdueMinutes: elapsedMinutes - threshold,
               ticketId: order.ticketId,
               tableName: order.tableName || order.tableNumber || 'Sin mesa',
@@ -153,8 +153,8 @@ export function useKDSAlerts(orders: KDSOrder[]) {
             if (!notifiedItemsRef.current.has(notifKey)) {
               notifiedItemsRef.current.add(notifKey);
               
-              // Play station-specific sound
-              playAlertSound(item.destination, item.is_rush);
+              // Play station-specific sound (effectiveDestination already excludes 'prep')
+              playAlertSound(effectiveDestination, item.is_rush);
               
               addNotification({
                 type: 'alert',
@@ -231,7 +231,9 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     const startTime = new Date(item.prep_started_at).getTime();
     const elapsedMs = Date.now() - startTime;
     const elapsedMinutes = Math.floor(elapsedMs / 60000);
-    const threshold = item.target_prep_time ?? settings[item.destination];
+    // Map 'prep' to 'kitchen' for threshold lookup (prep is deprecated)
+    const effectiveDestination = item.destination === 'prep' ? 'kitchen' : item.destination;
+    const threshold = item.target_prep_time ?? settings[effectiveDestination];
     const overdueMinutes = elapsedMinutes - threshold;
     const progressPercent = threshold > 0 ? Math.round((elapsedMs / (threshold * 60000)) * 100) : 0;
 

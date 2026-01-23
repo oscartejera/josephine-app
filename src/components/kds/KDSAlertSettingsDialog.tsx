@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, ChefHat, Wine, Utensils, Volume2, VolumeX, Flame, Bell, Play } from 'lucide-react';
+import { Settings, ChefHat, Wine, Volume2, VolumeX, Flame, Bell, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,7 +23,7 @@ interface KDSAlertSettingsDialogProps {
   onUpdateSettings: (settings: Partial<KDSAlertSettings>) => void;
   soundSettings?: KDSSoundSettings;
   onUpdateSoundSettings?: (settings: Partial<KDSSoundSettings>) => void;
-  onTestSound?: (station: 'kitchen' | 'bar' | 'prep' | 'rush' | 'newOrder') => void;
+  onTestSound?: (station: 'kitchen' | 'bar' | 'rush' | 'newOrder') => void;
 }
 
 export function KDSAlertSettingsDialog({ 
@@ -48,13 +48,11 @@ export function KDSAlertSettingsDialog({
   const destinations = [
     { key: 'kitchen' as const, label: 'Cocina', icon: ChefHat, color: 'text-orange-400', soundKey: 'kitchenEnabled' as const },
     { key: 'bar' as const, label: 'Bar', icon: Wine, color: 'text-purple-400', soundKey: 'barEnabled' as const },
-    { key: 'prep' as const, label: 'Preparación', icon: Utensils, color: 'text-blue-400', soundKey: 'prepEnabled' as const },
   ];
 
   const soundTypes = [
     { key: 'kitchen' as const, label: 'Cocina', icon: ChefHat, color: 'bg-orange-500/20 text-orange-400 border-orange-500', settingKey: 'kitchenEnabled' as const },
     { key: 'bar' as const, label: 'Bar', icon: Wine, color: 'bg-purple-500/20 text-purple-400 border-purple-500', settingKey: 'barEnabled' as const },
-    { key: 'prep' as const, label: 'Prep', icon: Utensils, color: 'bg-blue-500/20 text-blue-400 border-blue-500', settingKey: 'prepEnabled' as const },
     { key: 'rush' as const, label: 'Rush', icon: Flame, color: 'bg-amber-500/20 text-amber-400 border-amber-500', settingKey: 'rushEnabled' as const },
     { key: 'newOrder' as const, label: 'Nueva', icon: Bell, color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500', settingKey: 'newOrderEnabled' as const },
   ];
