@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Building2, ChevronRight, ChevronLeft, Check, Loader2, 
-  Package, Users, LayoutGrid, Sparkles, Plus, X, Utensils
+  Package, Users, LayoutGrid, Sparkles, Plus, X, Utensils, Truck, GripVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface LocationWizardProps {
   open: boolean;
@@ -40,9 +40,19 @@ interface EmployeeEntry {
 }
 
 interface TableEntry {
+  id: string;
   number: string;
   seats: number;
   shape: 'square' | 'round' | 'rectangle';
+  position_x: number;
+  position_y: number;
+}
+
+interface SupplierEntry {
+  name: string;
+  email: string;
+  phone: string;
+  category: string;
 }
 
 const TIMEZONES = [
@@ -97,12 +107,37 @@ const ROLE_OPTIONS = [
   'Personal de preparación',
 ];
 
+const SUPPLIER_CATEGORIES = [
+  'Frutas y Verduras',
+  'Carnes',
+  'Pescados y Mariscos',
+  'Lácteos',
+  'Bebidas',
+  'Panadería',
+  'Congelados',
+  'Limpieza',
+  'General',
+];
+
 const STEPS = [
   { id: 'info', label: 'Información', icon: Building2 },
   { id: 'products', label: 'Productos', icon: Package },
   { id: 'employees', label: 'Empleados', icon: Users },
   { id: 'tables', label: 'Mesas', icon: LayoutGrid },
+  { id: 'suppliers', label: 'Proveedores', icon: Truck },
 ];
+
+// Canvas constants
+const CANVAS_WIDTH = 600;
+const CANVAS_HEIGHT = 350;
+const TABLE_BASE_SIZE = 50;
+
+// Shape colors
+const SHAPE_COLORS: Record<string, string> = {
+  square: 'bg-blue-500/80 border-blue-600',
+  round: 'bg-emerald-500/80 border-emerald-600',
+  rectangle: 'bg-violet-500/80 border-violet-600',
+};
 
 export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: LocationWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -126,15 +161,21 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
     { name: '', role: 'Camarero/a' },
   ]);
   
-  // Step 4: Tables
+  // Step 4: Tables with positions
   const [tables, setTables] = useState<TableEntry[]>([
-    { number: '1', seats: 4, shape: 'square' },
-    { number: '2', seats: 4, shape: 'square' },
-    { number: '3', seats: 2, shape: 'round' },
-    { number: '4', seats: 6, shape: 'rectangle' },
+    { id: crypto.randomUUID(), number: '1', seats: 4, shape: 'square', position_x: 50, position_y: 50 },
+    { id: crypto.randomUUID(), number: '2', seats: 4, shape: 'square', position_x: 180, position_y: 50 },
+    { id: crypto.randomUUID(), number: '3', seats: 2, shape: 'round', position_x: 310, position_y: 50 },
+    { id: crypto.randomUUID(), number: '4', seats: 6, shape: 'rectangle', position_x: 440, position_y: 50 },
   ]);
   const [newTableNumber, setNewTableNumber] = useState('');
   const [newTableSeats, setNewTableSeats] = useState(4);
+  const [newTableShape, setNewTableShape] = useState<'square' | 'round' | 'rectangle'>('square');
+  const [draggingTableId, setDraggingTableId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Step 5: Suppliers
+  const [suppliers, setSuppliers] = useState<SupplierEntry[]>([]);
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
@@ -169,18 +210,91 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
     ));
   };
 
+  // Table management with positions
   const addTable = () => {
     if (!newTableNumber.trim()) return;
+    // Find a good position for the new table
+    const existingPositions = tables.map(t => ({ x: t.position_x, y: t.position_y }));
+    let newX = 50;
+    let newY = 50;
+    // Simple grid placement
+    const cols = Math.floor(CANVAS_WIDTH / 130);
+    const idx = tables.length;
+    newX = 50 + (idx % cols) * 130;
+    newY = 50 + Math.floor(idx / cols) * 100;
+    
     setTables(prev => [...prev, { 
+      id: crypto.randomUUID(),
       number: newTableNumber.trim(), 
       seats: newTableSeats, 
-      shape: 'square' 
+      shape: newTableShape,
+      position_x: Math.min(newX, CANVAS_WIDTH - 80),
+      position_y: Math.min(newY, CANVAS_HEIGHT - 60),
     }]);
     setNewTableNumber('');
   };
 
-  const removeTable = (index: number) => {
-    setTables(prev => prev.filter((_, i) => i !== index));
+  const removeTable = (id: string) => {
+    setTables(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Drag & drop handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent, tableId: string) => {
+    e.preventDefault();
+    const table = tables.find(t => t.id === tableId);
+    if (!table) return;
+    
+    const canvas = e.currentTarget.closest('.floor-canvas');
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left - table.position_x,
+      y: e.clientY - rect.top - table.position_y,
+    });
+    setDraggingTableId(tableId);
+  }, [tables]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!draggingTableId) return;
+    
+    const canvas = e.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const table = tables.find(t => t.id === draggingTableId);
+    if (!table) return;
+    
+    const tableWidth = table.shape === 'rectangle' ? 90 : TABLE_BASE_SIZE;
+    const tableHeight = TABLE_BASE_SIZE;
+    
+    let newX = e.clientX - rect.left - dragOffset.x;
+    let newY = e.clientY - rect.top - dragOffset.y;
+    
+    // Constrain to canvas bounds
+    newX = Math.max(0, Math.min(newX, CANVAS_WIDTH - tableWidth));
+    newY = Math.max(0, Math.min(newY, CANVAS_HEIGHT - tableHeight));
+    
+    setTables(prev => prev.map(t => 
+      t.id === draggingTableId ? { ...t, position_x: newX, position_y: newY } : t
+    ));
+  }, [draggingTableId, dragOffset, tables]);
+
+  const handleMouseUp = useCallback(() => {
+    setDraggingTableId(null);
+  }, []);
+
+  // Supplier management
+  const addSupplier = () => {
+    setSuppliers(prev => [...prev, { name: '', email: '', phone: '', category: 'General' }]);
+  };
+
+  const removeSupplier = (index: number) => {
+    setSuppliers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateSupplier = (index: number, field: keyof SupplierEntry, value: string) => {
+    setSuppliers(prev => prev.map((s, i) => 
+      i === index ? { ...s, [field]: value } : s
+    ));
   };
 
   const canProceed = () => {
@@ -193,6 +307,8 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
         return true; // Employees optional
       case 3:
         return tables.length > 0;
+      case 4:
+        return true; // Suppliers optional
       default:
         return true;
     }
@@ -277,34 +393,48 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
         await supabase.from('employees').insert(employeeInserts);
       }
 
-      // 5. Create floor map and tables
+      // 5. Create floor map and tables with positions
       const { data: floorMap } = await supabase
         .from('pos_floor_maps')
         .insert({
           location_id: newLocation.id,
           name: 'Sala Principal',
-          config_json: { width: 800, height: 600, background: null },
+          config_json: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, background: null },
           is_active: true,
         })
         .select()
         .single();
 
       if (floorMap && tables.length > 0) {
-        const tableInserts = tables.map((t, i) => ({
+        const tableInserts = tables.map(t => ({
           floor_map_id: floorMap.id,
           table_number: t.number,
           seats: t.seats,
-          position_x: 100 + (i % 4) * 150,
-          position_y: 100 + Math.floor(i / 4) * 120,
+          position_x: t.position_x,
+          position_y: t.position_y,
           shape: t.shape,
-          width: t.shape === 'rectangle' ? 120 : t.shape === 'round' ? 70 : 80,
-          height: t.shape === 'round' ? 70 : 80,
+          width: t.shape === 'rectangle' ? 90 : TABLE_BASE_SIZE,
+          height: TABLE_BASE_SIZE,
           status: 'available',
         }));
         await supabase.from('pos_tables').insert(tableInserts);
       }
 
-      toast.success(`¡Local "${basicInfo.name}" creado con ${selectedProducts.length} productos y ${tables.length} mesas!`);
+      // 6. Create suppliers (filter valid ones)
+      const validSuppliers = suppliers.filter(s => s.name.trim());
+      if (validSuppliers.length > 0) {
+        // Get user's group_id for suppliers
+        const supplierInserts = validSuppliers.map(s => ({
+          name: s.name.trim(),
+          email: s.email.trim() || null,
+          phone: s.phone.trim() || null,
+          category: s.category,
+          group_id: groupId,
+        }));
+        await supabase.from('suppliers').insert(supplierInserts);
+      }
+
+      toast.success(`¡Local "${basicInfo.name}" creado con ${selectedProducts.length} productos, ${tables.length} mesas y ${validSuppliers.length} proveedores!`);
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
@@ -321,11 +451,12 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
     setProducts(PRODUCT_TEMPLATES);
     setEmployees([{ name: '', role: 'Camarero/a' }]);
     setTables([
-      { number: '1', seats: 4, shape: 'square' },
-      { number: '2', seats: 4, shape: 'square' },
-      { number: '3', seats: 2, shape: 'round' },
-      { number: '4', seats: 6, shape: 'rectangle' },
+      { id: crypto.randomUUID(), number: '1', seats: 4, shape: 'square', position_x: 50, position_y: 50 },
+      { id: crypto.randomUUID(), number: '2', seats: 4, shape: 'square', position_x: 180, position_y: 50 },
+      { id: crypto.randomUUID(), number: '3', seats: 2, shape: 'round', position_x: 310, position_y: 50 },
+      { id: crypto.randomUUID(), number: '4', seats: 6, shape: 'rectangle', position_x: 440, position_y: 50 },
     ]);
+    setSuppliers([]);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -339,7 +470,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -566,42 +697,104 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
             </div>
           )}
 
-          {/* Step 4: Tables */}
+          {/* Step 4: Tables with Visual Floor Plan */}
           {currentStep === 3 && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Configura las mesas de tu local. Podrás ajustar posiciones en el editor de plano.
+                Configura las mesas de tu local. Arrastra para posicionarlas en el plano.
               </p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {tables.map((table, index) => (
-                  <div 
-                    key={index}
-                    className="border rounded-lg p-3 relative group"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removeTable(index)}
+              {/* Floor Plan Canvas */}
+              <div 
+                className="floor-canvas relative border-2 border-dashed border-muted-foreground/30 rounded-lg bg-muted/20 overflow-hidden select-none"
+                style={{ width: '100%', height: CANVAS_HEIGHT }}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {/* Grid overlay */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+                  <defs>
+                    <pattern id="wizard-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-muted-foreground" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#wizard-grid)" />
+                </svg>
+
+                {/* Tables */}
+                {tables.map((table) => {
+                  const width = table.shape === 'rectangle' ? 90 : TABLE_BASE_SIZE;
+                  const isDragging = draggingTableId === table.id;
+                  
+                  return (
+                    <div
+                      key={table.id}
+                      className={cn(
+                        "absolute flex flex-col items-center justify-center transition-shadow",
+                        "border-2 text-white font-medium text-xs shadow-md cursor-grab",
+                        SHAPE_COLORS[table.shape],
+                        table.shape === 'round' && 'rounded-full',
+                        table.shape === 'square' && 'rounded-md',
+                        table.shape === 'rectangle' && 'rounded-md',
+                        isDragging && 'cursor-grabbing shadow-lg ring-2 ring-primary z-10'
+                      )}
+                      style={{
+                        left: table.position_x,
+                        top: table.position_y,
+                        width: width,
+                        height: TABLE_BASE_SIZE,
+                      }}
+                      onMouseDown={(e) => handleMouseDown(e, table.id)}
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Utensils className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Mesa {table.number}</span>
+                      <div className="flex items-center gap-1">
+                        <GripVertical className="w-3 h-3 opacity-60" />
+                        <span className="font-bold">M{table.number}</span>
+                      </div>
+                      <span className="text-[10px] opacity-80">{table.seats} pl</span>
+                      {/* Delete button */}
+                      <button
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeTable(table.id);
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
-                    <div className="flex gap-2">
-                      <Badge variant="outline">{table.seats} plazas</Badge>
-                      <Badge variant="secondary" className="capitalize">{table.shape}</Badge>
-                    </div>
+                  );
+                })}
+
+                {/* Empty state */}
+                {tables.length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                    Añade mesas para verlas en el plano
                   </div>
-                ))}
+                )}
+
+                {/* Legend */}
+                <div className="absolute bottom-2 right-2 flex gap-2 text-[10px] bg-background/80 backdrop-blur-sm rounded px-2 py-1">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm bg-blue-500" />
+                    <span>Cuadrada</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                    <span>Redonda</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-sm bg-violet-500" />
+                    <span>Rectangular</span>
+                  </div>
+                </div>
               </div>
 
+              {/* Add table form */}
               <div className="border-t pt-4">
                 <Label className="text-sm">Añadir mesa</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   <Input
                     placeholder="Número"
                     value={newTableNumber}
@@ -622,6 +815,19 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                       ))}
                     </SelectContent>
                   </Select>
+                  <Select 
+                    value={newTableShape} 
+                    onValueChange={(v) => setNewTableShape(v as 'square' | 'round' | 'rectangle')}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="square">⬜ Cuadrada</SelectItem>
+                      <SelectItem value="round">⚪ Redonda</SelectItem>
+                      <SelectItem value="rectangle">▭ Rectangular</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button onClick={addTable} disabled={!newTableNumber.trim()}>
                     <Plus className="h-4 w-4 mr-1" />
                     Añadir
@@ -631,6 +837,80 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
 
               <div className="text-sm text-muted-foreground">
                 {tables.length} mesas configuradas
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Suppliers */}
+          {currentStep === 4 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Añade tus proveedores (opcional). Podrás configurar más desde el módulo de Procurement.
+              </p>
+
+              <div className="space-y-3">
+                {suppliers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Truck className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                    <p>No hay proveedores configurados</p>
+                    <p className="text-sm">Puedes añadirlos ahora o hacerlo después</p>
+                  </div>
+                ) : (
+                  suppliers.map((supplier, index) => (
+                    <div key={index} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex gap-2 items-start">
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Nombre del proveedor *"
+                            value={supplier.name}
+                            onChange={(e) => updateSupplier(index, 'name', e.target.value)}
+                          />
+                          <Select 
+                            value={supplier.category} 
+                            onValueChange={(v) => updateSupplier(index, 'category', v)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SUPPLIER_CATEGORIES.map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            placeholder="Email"
+                            type="email"
+                            value={supplier.email}
+                            onChange={(e) => updateSupplier(index, 'email', e.target.value)}
+                          />
+                          <Input
+                            placeholder="Teléfono"
+                            value={supplier.phone}
+                            onChange={(e) => updateSupplier(index, 'phone', e.target.value)}
+                          />
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => removeSupplier(index)}
+                          className="text-muted-foreground hover:text-destructive shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <Button variant="outline" size="sm" onClick={addSupplier}>
+                <Plus className="h-4 w-4 mr-1" />
+                Añadir proveedor
+              </Button>
+
+              <div className="text-sm text-muted-foreground">
+                {suppliers.filter(s => s.name.trim()).length} proveedores configurados
               </div>
             </div>
           )}
