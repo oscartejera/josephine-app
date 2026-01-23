@@ -160,11 +160,11 @@ export function KDSOrderCard({
           const activeIndex = activeItems.findIndex(ai => ai.id === item.id);
           const isItemSelected = isSelected && selectedItemIndex === activeIndex && activeIndex !== -1;
           
-          // Determine item visual state for preparing items
+          // Determine item visual state for ALL active items (pending or preparing)
           // GREEN = on time, RED PULSING = overdue
-          const isPreparing = item.prep_status === 'preparing';
-          const isOnTime = isPreparing && !overdueInfo.isOverdue;
-          const isOverdueState = isPreparing && overdueInfo.isOverdue;
+          const isActive = item.prep_status === 'pending' || item.prep_status === 'preparing';
+          const isOnTime = isActive && !overdueInfo.isOverdue;
+          const isOverdueState = isActive && overdueInfo.isOverdue;
           
           return (
             <button
@@ -175,10 +175,9 @@ export function KDSOrderCard({
                 "w-full text-left px-3 py-2 rounded-md transition-all",
                 "flex flex-col gap-2",
                 isItemSelected && "ring-2 ring-yellow-400 bg-yellow-500/20",
-                !isItemSelected && item.prep_status === 'pending' && "bg-zinc-800 hover:bg-zinc-700 cursor-pointer",
-                // On time state - GREEN border (no pulse)
+                // On time state - GREEN border (no pulse) for ALL active items
                 !isItemSelected && isOnTime && "bg-emerald-900/30 hover:bg-emerald-800/30 cursor-pointer border border-emerald-500",
-                // Overdue state - RED pulsing border
+                // Overdue state - RED pulsing border for ALL active items
                 !isItemSelected && isOverdueState && "bg-red-900/50 hover:bg-red-800/50 cursor-pointer border-2 border-red-500 animate-pulse",
                 item.prep_status === 'ready' && "bg-emerald-900/30 opacity-60 cursor-default border border-emerald-600",
                 item.prep_status === 'served' && "bg-zinc-900 opacity-40 cursor-default",
