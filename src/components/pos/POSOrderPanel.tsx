@@ -328,7 +328,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
   };
 
-  const handlePayment = async (payments: { method: string; amount: number; tip: number }[]) => {
+  const handlePayment = async (payments: { method: string; amount: number; tip: number; stripePaymentIntentId?: string }[]) => {
     if (!ticketId) return;
 
     setLoading(true);
@@ -343,6 +343,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           amount: payment.amount,
           method: payment.method as 'card' | 'cash' | 'other',
           tip_amount: payment.tip,
+          stripe_payment_intent_id: payment.stripePaymentIntentId || null,
         }]);
       }
 
