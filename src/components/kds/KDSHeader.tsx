@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, ChevronDown, History, Maximize, Minimize, Keyboard } from 'lucide-react';
+import { ArrowLeft, Wifi, WifiOff, BarChart3, AlertTriangle, ChefHat, Monitor, ChevronDown, History, Maximize, Minimize, Keyboard, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { KDSAlertSettingsDialog } from './KDSAlertSettingsDialog';
@@ -24,6 +24,8 @@ interface KDSHeaderProps {
   pendingCount: number;
   preparingCount: number;
   onShowStats?: () => void;
+  onShowHistory?: () => void;
+  showingHistory?: boolean;
   alertSettings?: KDSAlertSettings;
   onUpdateAlertSettings?: (settings: Partial<KDSAlertSettings>) => void;
   soundSettings?: KDSSoundSettings;
@@ -44,6 +46,8 @@ export function KDSHeader({
   pendingCount, 
   preparingCount, 
   onShowStats,
+  onShowHistory,
+  showingHistory = false,
   alertSettings,
   onUpdateAlertSettings,
   soundSettings,
@@ -227,6 +231,24 @@ export function KDSHeader({
             >
               <BarChart3 className="h-4 w-4 mr-2" />
               Stats
+            </Button>
+          )}
+
+          {/* History toggle button */}
+          {onShowHistory && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onShowHistory}
+              className={cn(
+                "border-zinc-700 text-white",
+                showingHistory 
+                  ? "bg-zinc-600 hover:bg-zinc-500" 
+                  : "bg-zinc-800 hover:bg-zinc-700"
+              )}
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Historial
             </Button>
           )}
         </div>

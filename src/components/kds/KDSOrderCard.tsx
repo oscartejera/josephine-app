@@ -71,10 +71,9 @@ export function KDSOrderCard({
   // Check if any item has modifiers
   const hasModifiers = order.items.some(item => item.modifiers && item.modifiers.length > 0);
 
+  // Square-style: tap marks item directly as ready (skip preparing)
   const handleItemClick = (item: KDSTicketLine) => {
-    if (item.prep_status === 'pending') {
-      onItemStatusChange(item.id, 'preparing');
-    } else if (item.prep_status === 'preparing') {
+    if (item.prep_status === 'pending' || item.prep_status === 'preparing') {
       onItemStatusChange(item.id, 'ready');
     }
   };
