@@ -10,7 +10,7 @@ interface KDSOrderCardProps {
   onItemStatusChange: (lineId: string, newStatus: 'pending' | 'preparing' | 'ready' | 'served') => void;
   onCompleteOrder: (ticketId: string) => void;
   isNew?: boolean;
-  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; overdueMinutes: number; threshold: number };
+  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; isWarning: boolean; overdueMinutes: number; elapsedMinutes: number; threshold: number; progressPercent: number };
   isSelected?: boolean;
   selectedItemIndex?: number;
 }
@@ -147,11 +147,24 @@ export function KDSOrderCard({
       {/* Items */}
       <div className="p-2 space-y-1 max-h-96 overflow-y-auto">
         {order.items.map((item) => {
-          const overdueInfo = getItemOverdueInfo?.(item) || { isOverdue: false, overdueMinutes: 0, threshold: 0 };
+          const overdueInfo = getItemOverdueInfo?.(item) || { 
+            isOverdue: false, 
+            isWarning: false, 
+            overdueMinutes: 0, 
+            elapsedMinutes: 0,
+            threshold: 0,
+            progressPercent: 0 
+          };
           const isItemRush = item.is_rush;
           
           const activeIndex = activeItems.findIndex(ai => ai.id === item.id);
           const isItemSelected = isSelected && selectedItemIndex === activeIndex && activeIndex !== -1;
+          
+          // Determine item visual state for preparing items
+          const isPreparing = item.prep_status === 'preparing';
+          const isNormal = isPreparing && !overdueInfo.isWarning && !overdueInfo.isOverdue;
+          const isWarningState = isPreparing && overdueInfo.isWarning && !overdueInfo.isOverdue;
+          const isOverdueState = isPreparing && overdueInfo.isOverdue;
           
           return (
             <button
@@ -163,8 +176,12 @@ export function KDSOrderCard({
                 "flex flex-col gap-2",
                 isItemSelected && "ring-2 ring-yellow-400 bg-yellow-500/20",
                 !isItemSelected && item.prep_status === 'pending' && "bg-zinc-800 hover:bg-zinc-700 cursor-pointer",
-                !isItemSelected && item.prep_status === 'preparing' && !overdueInfo.isOverdue && "bg-blue-900/50 hover:bg-blue-800/50 cursor-pointer border border-blue-500",
-                !isItemSelected && item.prep_status === 'preparing' && overdueInfo.isOverdue && "bg-red-900/50 hover:bg-red-800/50 cursor-pointer border-2 border-red-500 animate-pulse",
+                // Normal preparing state (< 50% of time)
+                !isItemSelected && isNormal && "bg-blue-900/50 hover:bg-blue-800/50 cursor-pointer border border-blue-500",
+                // Warning state (50-100% of time) - amber pulsing border
+                !isItemSelected && isWarningState && "bg-amber-900/30 hover:bg-amber-800/30 cursor-pointer border-2 border-amber-500 animate-pulse",
+                // Overdue state (> 100% of time) - red pulsing
+                !isItemSelected && isOverdueState && "bg-red-900/50 hover:bg-red-800/50 cursor-pointer border-2 border-red-500 animate-pulse",
                 item.prep_status === 'ready' && "bg-emerald-900/30 opacity-60 cursor-default",
                 item.prep_status === 'served' && "bg-zinc-900 opacity-40 cursor-default",
                 isItemRush && item.prep_status !== 'ready' && item.prep_status !== 'served' && "border-l-4 border-l-amber-500"

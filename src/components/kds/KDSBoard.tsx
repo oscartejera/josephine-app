@@ -11,7 +11,7 @@ interface KDSBoardProps {
   orders: KDSOrder[];
   onItemStatusChange: (lineId: string, newStatus: 'pending' | 'preparing' | 'ready' | 'served') => void;
   onCompleteOrder: (ticketId: string) => void;
-  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; overdueMinutes: number; threshold: number };
+  getItemOverdueInfo?: (item: KDSTicketLine) => { isOverdue: boolean; isWarning: boolean; overdueMinutes: number; elapsedMinutes: number; threshold: number; progressPercent: number };
   selection?: KDSSelection;
   keyboardEnabled?: boolean;
 }
