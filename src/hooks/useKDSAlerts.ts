@@ -198,11 +198,20 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     overdueMinutes: number; 
     threshold: number 
   } => {
-    if (item.prep_status !== 'preparing' || !item.prep_started_at) {
+    // Items already completed are never overdue
+    if (item.prep_status === 'ready' || item.prep_status === 'served') {
       return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
     }
 
-    const startTime = new Date(item.prep_started_at).getTime();
+    // Use prep_started_at if available (item is being prepared)
+    // Otherwise use sent_at (item is pending in queue)
+    const referenceTime = item.prep_started_at || item.sent_at;
+    
+    if (!referenceTime) {
+      return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
+    }
+
+    const startTime = new Date(referenceTime).getTime();
     const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
     const threshold = item.target_prep_time ?? settings[item.destination];
     const overdueMinutes = elapsedMinutes - threshold;
