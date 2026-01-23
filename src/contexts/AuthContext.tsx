@@ -39,6 +39,7 @@ interface AuthContextType {
   hasRole: (roleName: string) => boolean;
   isAdminOrOps: () => boolean;
   refreshPermissions: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   // For action-level permission checks (not for hiding content)
   hasActionPermission: (permissionKey: string, locationId?: string | null) => boolean;
 }
@@ -126,6 +127,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshPermissions = useCallback(async () => {
     if (user?.id) {
+      await fetchUserData(user.id);
+    }
+  }, [user?.id, fetchUserData]);
+
+  const refreshProfile = useCallback(async () => {
+    if (user?.id) {
+      const profileData = await fetchProfile(user.id);
+      setProfile(profileData);
       await fetchUserData(user.id);
     }
   }, [user?.id, fetchUserData]);
@@ -255,6 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hasRole,
       isAdminOrOps,
       refreshPermissions,
+      refreshProfile,
       hasActionPermission
     }}>
       {children}

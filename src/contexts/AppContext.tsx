@@ -30,18 +30,30 @@ interface AppContextType {
   getDateRangeValues: () => { from: Date; to: Date };
   loading: boolean;
   canShowAllLocations: boolean;
+  needsOnboarding: boolean;
+  setOnboardingComplete: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { profile, isOwner, hasGlobalScope, accessibleLocationIds } = useAuth();
+  const { profile, isOwner, hasGlobalScope, accessibleLocationIds, refreshProfile } = useAuth();
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>('today');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+
+  // Detect if user needs onboarding (no group_id)
+  const needsOnboarding = !DEMO_MODE && !loading && profile !== null && profile.group_id === null && !onboardingCompleted;
+
+  const setOnboardingComplete = async () => {
+    setOnboardingCompleted(true);
+    // Refresh profile to get new group_id
+    await refreshProfile();
+  };
 
   // In DEMO_MODE, everyone can see all locations
   const canShowAllLocations = DEMO_MODE ? true : (isOwner || hasGlobalScope);
@@ -161,7 +173,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCustomDateRange,
       getDateRangeValues,
       loading,
-      canShowAllLocations
+      canShowAllLocations,
+      needsOnboarding,
+      setOnboardingComplete,
     }}>
       {children}
     </AppContext.Provider>
