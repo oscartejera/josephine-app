@@ -21,6 +21,7 @@ import { DemoDataManager } from '@/components/settings/DemoDataManager';
 import { ProductKDSManager } from '@/components/settings/ProductKDSManager';
 import { PaymentHistoryManager } from '@/components/settings/PaymentHistoryManager';
 import { PrinterConfigManager } from '@/components/settings/PrinterConfigManager';
+import { LocationManager } from '@/components/settings/LocationManager';
 import { Progress } from '@/components/ui/progress';
 import { Receipt } from 'lucide-react';
 
@@ -278,49 +279,7 @@ export default function SettingsPage() {
         )}
 
         <TabsContent value="locations">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Locales de {group?.name || 'Grupo'}</CardTitle>
-                  <CardDescription>Gestiona los locales de tu grupo</CardDescription>
-                </div>
-                {isAdmin && (
-                  <Button disabled>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Añadir Local
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Ciudad</TableHead>
-                    <TableHead>Timezone</TableHead>
-                    <TableHead>Moneda</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {locations.map((loc) => (
-                    <TableRow key={loc.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          {loc.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>{loc.city || '-'}</TableCell>
-                      <TableCell>Europe/Madrid</TableCell>
-                      <TableCell>EUR</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <LocationManager />
         </TabsContent>
 
         {canManageUsers && (
