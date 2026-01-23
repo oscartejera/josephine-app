@@ -87,6 +87,27 @@ export function LocationManager() {
 
     setLoading(true);
     try {
+      // Verificar sesión activa antes de insertar
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar que el group_id del usuario coincide
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('group_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (userProfile?.group_id !== group.id) {
+        toast.error('Error de permisos. Recarga la página e intenta de nuevo.');
+        setLoading(false);
+        return;
+      }
+
       // 1. Create the location
       const { data: newLocation, error: locationError } = await supabase
         .from('locations')
@@ -154,7 +175,11 @@ export function LocationManager() {
       window.location.reload();
     } catch (error: any) {
       console.error('Error creating location:', error);
-      toast.error(error.message || 'Error al crear el local');
+      if (error.code === '42501') {
+        toast.error('No tienes permisos para crear locales. Verifica que tienes rol de propietario.');
+      } else {
+        toast.error(error.message || 'Error al crear el local');
+      }
     } finally {
       setLoading(false);
     }
@@ -178,6 +203,27 @@ export function LocationManager() {
 
     setLoading(true);
     try {
+      // Verificar sesión activa antes de insertar
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar que el group_id del usuario coincide
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('group_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (userProfile?.group_id !== group.id) {
+        toast.error('Error de permisos. Recarga la página e intenta de nuevo.');
+        setLoading(false);
+        return;
+      }
+
       // 1. Create the new location
       const { data: newLocation, error: locationError } = await supabase
         .from('locations')
