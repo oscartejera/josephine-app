@@ -90,21 +90,21 @@ export function KDSHeader({
             className="w-48 bg-zinc-800 border-zinc-700 z-50"
           >
             <DropdownMenuItem 
-              onClick={() => navigate(-1)}
+              onSelect={() => navigate(-1)}
               className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
             >
               <History className="h-4 w-4 mr-2" />
               Página anterior
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => navigate('/insights/kds')}
+              onSelect={() => navigate('/insights/kds')}
               className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
             >
               <ChefHat className="h-4 w-4 mr-2" />
               Dashboard KDS
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => navigate('/pos')}
+              onSelect={() => navigate('/pos')}
               className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
             >
               <Monitor className="h-4 w-4 mr-2" />
