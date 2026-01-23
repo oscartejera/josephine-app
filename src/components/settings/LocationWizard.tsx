@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,20 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Building2, ChevronRight, ChevronLeft, Check, Loader2, 
-  Package, Users, LayoutGrid, Sparkles, Plus, X, Utensils, Truck, GripVertical
+  Package, Users, LayoutGrid, Sparkles, Plus, X, Utensils, Truck, GripVertical, Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { 
+  SUPPLIER_TEMPLATES, 
+  SUPPLIER_CATEGORY_LABELS, 
+  SUGGESTED_SUPPLIERS_BY_RESTAURANT_TYPE,
+  type SupplierTemplate,
+  type SupplierCategory 
+} from '@/lib/supplierTemplates';
 
 interface LocationWizardProps {
   open: boolean;
@@ -53,7 +61,11 @@ interface SupplierEntry {
   email: string;
   phone: string;
   category: string;
+  website?: string;
+  isTemplate?: boolean;
 }
+
+type SupplierMode = 'suggested' | 'custom' | 'skip';
 
 const TIMEZONES = [
   { value: 'Europe/Madrid', label: 'España (Madrid)' },
@@ -176,8 +188,16 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
 
   // Step 5: Suppliers
   const [suppliers, setSuppliers] = useState<SupplierEntry[]>([]);
+  const [supplierMode, setSupplierMode] = useState<SupplierMode>('suggested');
+  const [selectedTemplateSuppliers, setSelectedTemplateSuppliers] = useState<Set<string>>(new Set());
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
+
+  // Suggested suppliers based on restaurant type (could be derived from products or explicit selection)
+  const suggestedSupplierNames = useMemo(() => {
+    // For now, suggest a mix of common suppliers
+    return new Set(SUGGESTED_SUPPLIERS_BY_RESTAURANT_TYPE.spanish);
+  }, []);
 
   const toggleProduct = (index: number) => {
     setProducts(prev => prev.map((p, i) => 
@@ -284,7 +304,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
 
   // Supplier management
   const addSupplier = () => {
-    setSuppliers(prev => [...prev, { name: '', email: '', phone: '', category: 'General' }]);
+    setSuppliers(prev => [...prev, { name: '', email: '', phone: '', category: 'General', website: '' }]);
   };
 
   const removeSupplier = (index: number) => {
@@ -295,6 +315,51 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
     setSuppliers(prev => prev.map((s, i) => 
       i === index ? { ...s, [field]: value } : s
     ));
+  };
+
+  const toggleTemplateSupplier = (supplierName: string) => {
+    setSelectedTemplateSuppliers(prev => {
+      const next = new Set(prev);
+      if (next.has(supplierName)) {
+        next.delete(supplierName);
+      } else {
+        next.add(supplierName);
+      }
+      return next;
+    });
+  };
+
+  const addTemplateToCustom = (template: SupplierTemplate) => {
+    // Check if already added
+    if (suppliers.some(s => s.name === template.name)) {
+      toast.info(`${template.name} ya está en tu lista`);
+      return;
+    }
+    setSuppliers(prev => [...prev, {
+      name: template.name,
+      email: template.email || '',
+      phone: template.phone || '',
+      category: template.category,
+      website: template.website || '',
+      isTemplate: true,
+    }]);
+    toast.success(`${template.name} añadido`);
+  };
+
+  const getSelectedTemplateSuppliers = (): SupplierEntry[] => {
+    const allTemplates = Object.values(SUPPLIER_TEMPLATES).flat();
+    return Array.from(selectedTemplateSuppliers).map(name => {
+      const template = allTemplates.find(t => t.name === name);
+      if (!template) return null;
+      return {
+        name: template.name,
+        email: template.email || '',
+        phone: template.phone || '',
+        category: template.category,
+        website: template.website || '',
+        isTemplate: true,
+      };
+    }).filter(Boolean) as SupplierEntry[];
   };
 
   const canProceed = () => {
@@ -441,16 +506,28 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
         await supabase.from('pos_tables').insert(tableInserts);
       }
 
-      // 6. Create suppliers (filter valid ones)
-      const validSuppliers = suppliers.filter(s => s.name.trim());
+      // 6. Create suppliers based on mode
+      let finalSuppliers: SupplierEntry[] = [];
+      
+      if (supplierMode === 'suggested') {
+        finalSuppliers = getSelectedTemplateSuppliers();
+      } else if (supplierMode === 'custom') {
+        finalSuppliers = [...suppliers, ...getSelectedTemplateSuppliers()];
+      }
+      // If skip, finalSuppliers stays empty
+      
+      const validSuppliers = finalSuppliers.filter(s => s.name.trim());
       if (validSuppliers.length > 0) {
-        // Get user's group_id for suppliers
         const supplierInserts = validSuppliers.map(s => ({
           name: s.name.trim(),
-          email: s.email.trim() || null,
-          phone: s.phone.trim() || null,
+          email: s.email?.trim() || null,
+          phone: s.phone?.trim() || null,
           category: s.category,
+          website: s.website?.trim() || null,
           group_id: groupId,
+          integration_type: 'manual' as const,
+          coverage: 'national' as const,
+          is_template: s.isTemplate || false,
         }));
         await supabase.from('suppliers').insert(supplierInserts);
       }
@@ -482,6 +559,8 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
       { id: crypto.randomUUID(), number: '4', seats: 6, shape: 'rectangle', position_x: 440, position_y: 50 },
     ]);
     setSuppliers([]);
+    setSupplierMode('suggested');
+    setSelectedTemplateSuppliers(new Set());
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -870,73 +949,197 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
           {currentStep === 4 && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Añade tus proveedores (opcional). Podrás configurar más desde el módulo de Procurement.
+                ¿Cómo quieres configurar tus proveedores? Podrás modificarlos después desde Procurement.
               </p>
 
-              <div className="space-y-3">
-                {suppliers.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Truck className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                    <p>No hay proveedores configurados</p>
-                    <p className="text-sm">Puedes añadirlos ahora o hacerlo después</p>
-                  </div>
-                ) : (
-                  suppliers.map((supplier, index) => (
-                    <div key={index} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex gap-2 items-start">
-                        <div className="flex-1 grid grid-cols-2 gap-2">
-                          <Input
-                            placeholder="Nombre del proveedor *"
-                            value={supplier.name}
-                            onChange={(e) => updateSupplier(index, 'name', e.target.value)}
-                          />
-                          <Select 
-                            value={supplier.category} 
-                            onValueChange={(v) => updateSupplier(index, 'category', v)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SUPPLIER_CATEGORIES.map(cat => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            placeholder="Email"
-                            type="email"
-                            value={supplier.email}
-                            onChange={(e) => updateSupplier(index, 'email', e.target.value)}
-                          />
-                          <Input
-                            placeholder="Teléfono"
-                            value={supplier.phone}
-                            onChange={(e) => updateSupplier(index, 'phone', e.target.value)}
-                          />
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => removeSupplier(index)}
-                          className="text-muted-foreground hover:text-destructive shrink-0"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+              {/* Mode selection */}
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant={supplierMode === 'suggested' ? 'default' : 'outline'}
+                  className="h-auto py-3 flex-col gap-1"
+                  onClick={() => setSupplierMode('suggested')}
+                >
+                  <Truck className="h-5 w-5" />
+                  <span className="text-xs">Sugeridos</span>
+                </Button>
+                <Button
+                  variant={supplierMode === 'custom' ? 'default' : 'outline'}
+                  className="h-auto py-3 flex-col gap-1"
+                  onClick={() => setSupplierMode('custom')}
+                >
+                  <Plus className="h-5 w-5" />
+                  <span className="text-xs">Mis Proveedores</span>
+                </Button>
+                <Button
+                  variant={supplierMode === 'skip' ? 'default' : 'outline'}
+                  className="h-auto py-3 flex-col gap-1"
+                  onClick={() => setSupplierMode('skip')}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                  <span className="text-xs">Después</span>
+                </Button>
+              </div>
+
+              {/* Suggested suppliers */}
+              {supplierMode === 'suggested' && (
+                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    Proveedores con cobertura nacional
+                  </p>
+                  
+                  {(Object.keys(SUPPLIER_TEMPLATES) as SupplierCategory[]).map(category => (
+                    <div key={category} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{SUPPLIER_CATEGORY_LABELS[category].icon}</span>
+                        <span className="text-sm font-medium">{SUPPLIER_CATEGORY_LABELS[category].label}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {SUPPLIER_TEMPLATES[category].filter(s => s.coverage === 'national').map(supplier => {
+                          const isSelected = selectedTemplateSuppliers.has(supplier.name);
+                          const isSuggested = suggestedSupplierNames.has(supplier.name);
+                          return (
+                            <button
+                              key={supplier.name}
+                              onClick={() => toggleTemplateSupplier(supplier.name)}
+                              className={cn(
+                                "px-3 py-1.5 rounded-full text-sm transition-all flex items-center gap-1.5",
+                                "border hover:shadow-sm",
+                                isSelected 
+                                  ? "bg-primary text-primary-foreground border-primary" 
+                                  : "bg-card border-border hover:border-primary/50",
+                                isSuggested && !isSelected && "ring-1 ring-primary/30"
+                              )}
+                            >
+                              {isSelected && <Check className="h-3 w-3" />}
+                              {supplier.name}
+                              {supplier.integrationAvailable && (
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-success/10 text-success border-success/30">
+                                  API
+                                </Badge>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
 
-              <Button variant="outline" size="sm" onClick={addSupplier}>
-                <Plus className="h-4 w-4 mr-1" />
-                Añadir proveedor
-              </Button>
+                  <div className="pt-2 border-t text-sm text-muted-foreground">
+                    {selectedTemplateSuppliers.size} proveedores seleccionados
+                  </div>
+                </div>
+              )}
 
-              <div className="text-sm text-muted-foreground">
-                {suppliers.filter(s => s.name.trim()).length} proveedores configurados
-              </div>
+              {/* Custom suppliers */}
+              {supplierMode === 'custom' && (
+                <div className="space-y-3">
+                  {/* Quick add from templates */}
+                  <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                    <Label className="text-xs text-muted-foreground">Añadir rápido de sugeridos:</Label>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.values(SUPPLIER_TEMPLATES).flat().slice(0, 8).map(supplier => (
+                        <Button
+                          key={supplier.name}
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => addTemplateToCustom(supplier)}
+                          disabled={suppliers.some(s => s.name === supplier.name)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          {supplier.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {suppliers.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Truck className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">Añade tus proveedores actuales</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                      {suppliers.map((supplier, index) => (
+                        <div key={index} className="border rounded-lg p-3 space-y-2">
+                          <div className="flex gap-2 items-start">
+                            <div className="flex-1 grid grid-cols-2 gap-2">
+                              <Input
+                                placeholder="Nombre *"
+                                value={supplier.name}
+                                onChange={(e) => updateSupplier(index, 'name', e.target.value)}
+                                className="h-9"
+                                disabled={supplier.isTemplate}
+                              />
+                              <Select 
+                                value={supplier.category} 
+                                onValueChange={(v) => updateSupplier(index, 'category', v)}
+                              >
+                                <SelectTrigger className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SUPPLIER_CATEGORIES.map(cat => (
+                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                placeholder="Email"
+                                type="email"
+                                value={supplier.email}
+                                onChange={(e) => updateSupplier(index, 'email', e.target.value)}
+                                className="h-9"
+                              />
+                              <Input
+                                placeholder="Teléfono"
+                                value={supplier.phone}
+                                onChange={(e) => updateSupplier(index, 'phone', e.target.value)}
+                                className="h-9"
+                              />
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => removeSupplier(index)}
+                              className="text-muted-foreground hover:text-destructive shrink-0 h-9 w-9"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          {supplier.isTemplate && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Check className="h-3 w-3 mr-1" />
+                              Proveedor verificado
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <Button variant="outline" size="sm" onClick={addSupplier}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Añadir proveedor manual
+                  </Button>
+
+                  <div className="text-sm text-muted-foreground">
+                    {suppliers.filter(s => s.name.trim()).length} proveedores configurados
+                  </div>
+                </div>
+              )}
+
+              {/* Skip mode */}
+              {supplierMode === 'skip' && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Truck className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">Configurar después</p>
+                  <p className="text-sm mt-1">
+                    Podrás añadir proveedores desde el módulo de Procurement
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

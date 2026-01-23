@@ -2043,25 +2043,40 @@ export type Database = {
       purchase_orders: {
         Row: {
           created_at: string
+          external_order_id: string | null
           group_id: string
           id: string
           location_id: string | null
+          response_message: string | null
+          response_status: string | null
+          sent_at: string | null
+          sent_method: string | null
           status: Database["public"]["Enums"]["po_status"] | null
           supplier_id: string
         }
         Insert: {
           created_at?: string
+          external_order_id?: string | null
           group_id: string
           id?: string
           location_id?: string | null
+          response_message?: string | null
+          response_status?: string | null
+          sent_at?: string | null
+          sent_method?: string | null
           status?: Database["public"]["Enums"]["po_status"] | null
           supplier_id: string
         }
         Update: {
           created_at?: string
+          external_order_id?: string | null
           group_id?: string
           id?: string
           location_id?: string | null
+          response_message?: string | null
+          response_status?: string | null
+          sent_at?: string | null
+          sent_method?: string | null
           status?: Database["public"]["Enums"]["po_status"] | null
           supplier_id?: string
         }
@@ -2508,28 +2523,58 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          api_endpoint: string | null
+          api_format: string | null
+          coverage: string | null
           created_at: string
+          customer_id: string | null
           email: string | null
           group_id: string
           id: string
+          integration_type: string | null
+          is_template: boolean | null
           name: string
+          order_email: string | null
+          order_whatsapp: string | null
           phone: string | null
+          regions: string[] | null
+          website: string | null
         }
         Insert: {
+          api_endpoint?: string | null
+          api_format?: string | null
+          coverage?: string | null
           created_at?: string
+          customer_id?: string | null
           email?: string | null
           group_id: string
           id?: string
+          integration_type?: string | null
+          is_template?: boolean | null
           name: string
+          order_email?: string | null
+          order_whatsapp?: string | null
           phone?: string | null
+          regions?: string[] | null
+          website?: string | null
         }
         Update: {
+          api_endpoint?: string | null
+          api_format?: string | null
+          coverage?: string | null
           created_at?: string
+          customer_id?: string | null
           email?: string | null
           group_id?: string
           id?: string
+          integration_type?: string | null
+          is_template?: boolean | null
           name?: string
+          order_email?: string | null
+          order_whatsapp?: string | null
           phone?: string | null
+          regions?: string[] | null
+          website?: string | null
         }
         Relationships: [
           {
