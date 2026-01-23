@@ -7,6 +7,7 @@ import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { HourlySalesChart, HourlyLaborChart } from '@/components/dashboard/Charts';
 import { CategoryBreakdownChart } from '@/components/dashboard/CategoryBreakdownChart';
+import { OnboardingWizard } from '@/components/onboarding';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
 
 interface Metrics {
@@ -29,7 +30,7 @@ function calculateDelta(current: number, previous: number): { value: number; pos
 }
 
 export default function Dashboard() {
-  const { selectedLocationId, getDateRangeValues, customDateRange } = useApp();
+  const { selectedLocationId, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete } = useApp();
   const [metrics, setMetrics] = useState<ComparisonMetrics>({
     current: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 },
     previous: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 }
@@ -139,6 +140,11 @@ export default function Dashboard() {
   if (colDelta) colDelta.positive = !colDelta.positive;
   const coversDelta = calculateDelta(current.covers, previous.covers);
   const avgTicketDelta = calculateDelta(current.avgTicket, previous.avgTicket);
+
+  // Show onboarding wizard for new users
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={setOnboardingComplete} />;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
