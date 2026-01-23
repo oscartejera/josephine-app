@@ -37,6 +37,7 @@ import POS from "@/pages/POS";
 import POSTerminal from "@/pages/POSTerminal";
 import KDS from "@/pages/KDS";
 import KDSDashboard from "@/pages/KDSDashboard";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <Signup />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
       <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
