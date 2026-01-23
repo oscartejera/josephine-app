@@ -197,35 +197,44 @@ export function useKDSData(locationId: string) {
         }
       }
 
-      // Group by ticket
+      // Step 1: Group items by ticket
+      const itemsByTicket = new Map<string, typeof pendingLines>();
+      for (const line of pendingLines) {
+        if (!itemsByTicket.has(line.ticket_id)) {
+          itemsByTicket.set(line.ticket_id, []);
+        }
+        itemsByTicket.get(line.ticket_id)!.push(line);
+      }
+
+      // Step 2: Build orders with oldest sent_at as openedAt
       const ordersMap = new Map<string, KDSOrder>();
 
-      for (const line of pendingLines) {
-        const ticket = tickets.find(t => t.id === line.ticket_id);
+      for (const [ticketId, lines] of itemsByTicket) {
+        const ticket = tickets.find(t => t.id === ticketId);
         if (!ticket) continue;
 
-        if (!ordersMap.has(line.ticket_id)) {
-          let tableNumber: string | null = null;
-          if (ticket.pos_table_id) {
-            const { data: tableData } = await supabase
-              .from('pos_tables')
-              .select('table_number')
-              .eq('id', ticket.pos_table_id)
-              .single();
-            tableNumber = tableData?.table_number || null;
-          }
-
-          ordersMap.set(line.ticket_id, {
-            ticketId: line.ticket_id,
-            tableName: ticket.table_name,
-            tableNumber,
-            serverName: null,
-            openedAt: ticket.opened_at,
-            items: []
-          });
+        // Get table number if available
+        let tableNumber: string | null = null;
+        if (ticket.pos_table_id) {
+          const { data: tableData } = await supabase
+            .from('pos_tables')
+            .select('table_number')
+            .eq('id', ticket.pos_table_id)
+            .single();
+          tableNumber = tableData?.table_number || null;
         }
 
-        ordersMap.get(line.ticket_id)!.items.push({
+        // Find the oldest sent_at among active items (this is when the order was sent to kitchen)
+        const sentTimes = lines
+          .filter(l => l.sent_at)
+          .map(l => new Date(l.sent_at).getTime());
+        
+        const oldestSentAt = sentTimes.length > 0 
+          ? new Date(Math.min(...sentTimes)).toISOString()
+          : new Date().toISOString();
+
+        // Build items array
+        const orderItems: KDSTicketLine[] = lines.map(line => ({
           id: line.id,
           ticket_id: line.ticket_id,
           item_name: line.item_name || 'Item',
@@ -240,6 +249,15 @@ export function useKDSData(locationId: string) {
           target_prep_time: line.product_id ? productPrepTimes.get(line.product_id) ?? null : null,
           is_rush: line.is_rush ?? false,
           modifiers: modifiersMap.get(line.id) || [],
+        }));
+
+        ordersMap.set(ticketId, {
+          ticketId,
+          tableName: ticket.table_name,
+          tableNumber,
+          serverName: null,
+          openedAt: oldestSentAt, // Use oldest sent_at instead of ticket.opened_at
+          items: orderItems
         });
       }
 
