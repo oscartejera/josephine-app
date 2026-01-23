@@ -11,22 +11,19 @@ import {
   KDSHeader, 
   KDSBoard, 
   KDSDestinationFilter, 
-  KDSViewToggle,
-  KDSExpeditorBoard,
   KDSHistoryBoard,
   KDSStatsPanel,
   KDSAlertsPanel,
   KDSRecallPanel,
   type KDSDestination,
-  type KDSViewMode 
 } from '@/components/kds';
 
 export default function KDS() {
   const { locationId } = useParams<{ locationId: string }>();
   const { locations } = useApp();
   const [selectedDestination, setSelectedDestination] = useState<KDSDestination>('all');
-  const [viewMode, setViewMode] = useState<KDSViewMode>('kitchen');
   const [showStats, setShowStats] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [keyboardEnabled, setKeyboardEnabled] = useState(false);
   
   const location = locations.find(l => l.id === locationId);
@@ -59,11 +56,21 @@ export default function KDS() {
     toggleFullscreen,
   } = useKDSKiosk();
 
-  // Filter orders by destination (for kitchen view)
+  // Filter orders by destination - only show orders with active items
   const filteredOrders = useMemo(() => {
-    if (selectedDestination === 'all') return orders;
+    // First filter to only orders with pending/preparing items
+    const ordersWithActiveItems = orders
+      .map(order => ({
+        ...order,
+        items: order.items.filter(item => 
+          item.prep_status === 'pending' || item.prep_status === 'preparing'
+        )
+      }))
+      .filter(order => order.items.length > 0);
+
+    if (selectedDestination === 'all') return ordersWithActiveItems;
     
-    return orders
+    return ordersWithActiveItems
       .map(order => ({
         ...order,
         items: order.items.filter(item => item.destination === selectedDestination)
@@ -91,36 +98,24 @@ export default function KDS() {
     orders: filteredOrders,
     onItemStatusChange: handleKeyboardItemStatusChange,
     onCompleteOrder: handleKeyboardCompleteOrder,
-    enabled: keyboardEnabled && viewMode === 'kitchen',
+    enabled: keyboardEnabled && !showHistory,
   });
 
-  // Calculate destination counts
+  // Calculate destination counts (only pending/preparing items)
   const destinationCounts = useMemo(() => {
-    const counts = { all: 0, kitchen: 0, bar: 0, prep: 0 };
+    const counts = { all: 0, kitchen: 0, bar: 0 };
     
     orders.forEach(order => {
       order.items.forEach(item => {
         if (item.prep_status === 'pending' || item.prep_status === 'preparing') {
           counts.all++;
-          counts[item.destination]++;
+          if (item.destination === 'kitchen') counts.kitchen++;
+          if (item.destination === 'bar') counts.bar++;
         }
       });
     });
     
     return counts;
-  }, [orders]);
-
-  // Calculate view mode counts
-  const kitchenCount = useMemo(() => {
-    return orders.reduce((acc, order) => 
-      acc + order.items.filter(i => i.prep_status === 'pending' || i.prep_status === 'preparing').length, 
-    0);
-  }, [orders]);
-
-  const expeditorCount = useMemo(() => {
-    return orders.reduce((acc, order) => 
-      acc + order.items.filter(i => i.prep_status === 'ready').length, 
-    0);
   }, [orders]);
 
   // Calculate stats for filtered orders
@@ -133,23 +128,23 @@ export default function KDS() {
     0
   );
 
-  // Recover order handler - moves items back to 'ready' status
+  // Recover order handler - moves items back from served to pending
   const handleRecoverOrder = useCallback(async (ticketId: string) => {
     try {
       const { error } = await supabase
         .from('ticket_lines')
         .update({ 
-          prep_status: 'ready',
-          ready_at: new Date().toISOString()
+          prep_status: 'pending',
+          ready_at: null
         })
         .eq('ticket_id', ticketId)
         .eq('prep_status', 'served');
 
       if (error) throw error;
 
-      toast.success('Comanda recuperada al expedidor');
+      toast.success('Comanda recuperada');
       refetch();
-      setViewMode('expeditor');
+      setShowHistory(false);
     } catch (error) {
       console.error('Error recovering order:', error);
       toast.error('Error al recuperar comanda');
@@ -181,26 +176,16 @@ export default function KDS() {
     await completeOrder(ticketId);
   };
 
-  const handleServeItem = async (lineId: string) => {
-    await updateItemStatus(lineId, 'served');
-  };
-
-  const handleServeAll = async (ticketId: string) => {
-    const order = orders.find(o => o.ticketId === ticketId);
-    if (order) {
-      const readyItems = order.items.filter(i => i.prep_status === 'ready');
-      await Promise.all(readyItems.map(item => updateItemStatus(item.id, 'served')));
-    }
-  };
-
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <KDSHeader 
         locationName={location.name}
         isConnected={isConnected}
-        pendingCount={viewMode === 'kitchen' ? pendingCount : viewMode === 'expeditor' ? expeditorCount : 0}
-        preparingCount={viewMode === 'kitchen' ? preparingCount : 0}
+        pendingCount={pendingCount}
+        preparingCount={preparingCount}
         onShowStats={() => setShowStats(true)}
+        onShowHistory={() => setShowHistory(prev => !prev)}
+        showingHistory={showHistory}
         alertSettings={alertSettings}
         onUpdateAlertSettings={updateAlertSettings}
         soundSettings={soundSettings}
@@ -215,25 +200,23 @@ export default function KDS() {
         onRefetch={refetch}
       />
       
-      {/* View Mode Toggle + Destination Filter */}
-      <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-800 flex flex-wrap items-center gap-4">
-        <KDSViewToggle
-          mode={viewMode}
-          onChange={setViewMode}
-          kitchenCount={kitchenCount}
-          expeditorCount={expeditorCount}
-        />
-        
-        {viewMode === 'kitchen' && (
+      {/* Destination Filter - only show when not in history */}
+      {!showHistory && (
+        <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-800 flex items-center gap-4">
           <KDSDestinationFilter
             selected={selectedDestination}
             onChange={setSelectedDestination}
             counts={destinationCounts}
           />
-        )}
-      </div>
+        </div>
+      )}
       
-      {viewMode === 'kitchen' ? (
+      {showHistory ? (
+        <KDSHistoryBoard
+          locationId={locationId}
+          onRecoverOrder={handleRecoverOrder}
+        />
+      ) : (
         <KDSBoard 
           orders={filteredOrders}
           onItemStatusChange={handleItemStatusChange}
@@ -241,17 +224,6 @@ export default function KDS() {
           getItemOverdueInfo={getItemOverdueInfo}
           selection={keyboardEnabled ? selection : undefined}
           keyboardEnabled={keyboardEnabled}
-        />
-      ) : viewMode === 'expeditor' ? (
-        <KDSExpeditorBoard
-          orders={orders}
-          onServeItem={handleServeItem}
-          onServeAll={handleServeAll}
-        />
-      ) : (
-        <KDSHistoryBoard
-          locationId={locationId}
-          onRecoverOrder={handleRecoverOrder}
         />
       )}
 
@@ -264,7 +236,7 @@ export default function KDS() {
       )}
 
       {/* Alerts Panel */}
-      {viewMode === 'kitchen' && (
+      {!showHistory && (
         <KDSAlertsPanel
           alerts={alerts}
           onDismiss={dismissAlert}
@@ -273,7 +245,7 @@ export default function KDS() {
       )}
 
       {/* Recall Panel */}
-      {keyboardEnabled && viewMode === 'kitchen' && (
+      {keyboardEnabled && !showHistory && (
         <KDSRecallPanel
           recallStack={recallStack}
           onRecall={recall}
