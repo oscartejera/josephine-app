@@ -193,15 +193,15 @@ export function useKDSAlerts(orders: KDSOrder[]) {
   }, [orders]);
 
   // Calculate overdue info per item
-  // IMPORTANT: Only items actively being prepared (prep_status = 'preparing') can be overdue
-  // Items waiting in queue (pending) do NOT count as overdue - timer starts when cooking begins
+  // Timer starts from when the item was created (entered the queue), NOT when preparation starts
+  // This ensures items waiting too long in queue are also flagged
   const getItemOverdueInfo = useCallback((item: KDSTicketLine): { 
     isOverdue: boolean; 
-    isWarning: boolean; // New: true when > 50% of threshold elapsed
+    isWarning: boolean;
     overdueMinutes: number; 
     elapsedMinutes: number;
     threshold: number;
-    progressPercent: number; // 0-100+ percentage of time used
+    progressPercent: number;
   } => {
     const defaultResult = { 
       isOverdue: false, 
@@ -217,20 +217,15 @@ export function useKDSAlerts(orders: KDSOrder[]) {
       return defaultResult;
     }
 
-    // Items still pending (in queue, not started) are NOT overdue
-    // The overdue timer only starts when someone begins preparing the item
-    if (item.prep_status === 'pending') {
-      return defaultResult;
-    }
-
-    // Only for items with prep_status === 'preparing' and a valid start time
-    if (!item.prep_started_at) {
-      return defaultResult;
-    }
-
-    const startTime = new Date(item.prep_started_at).getTime();
+    // Use sent_at as the start time - timer starts when order is sent to kitchen
+    // This ensures items waiting in queue too long are also flagged
+    const startTime = item.sent_at 
+      ? new Date(item.sent_at).getTime() 
+      : Date.now();
+    
     const elapsedMs = Date.now() - startTime;
     const elapsedMinutes = Math.floor(elapsedMs / 60000);
+    
     // Map 'prep' to 'kitchen' for threshold lookup (prep is deprecated)
     const effectiveDestination = item.destination === 'prep' ? 'kitchen' : item.destination;
     const threshold = item.target_prep_time ?? settings[effectiveDestination];
@@ -238,8 +233,8 @@ export function useKDSAlerts(orders: KDSOrder[]) {
     const progressPercent = threshold > 0 ? Math.round((elapsedMs / (threshold * 60000)) * 100) : 0;
 
     return {
-      isOverdue: overdueMinutes > 0, // Strictly greater than threshold
-      isWarning: progressPercent >= 50 && progressPercent <= 100, // Between 50-100% of limit
+      isOverdue: overdueMinutes >= 0, // At or over threshold
+      isWarning: progressPercent >= 50 && progressPercent < 100,
       overdueMinutes: Math.max(0, overdueMinutes),
       elapsedMinutes,
       threshold,
