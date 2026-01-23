@@ -19,13 +19,15 @@ function getElapsedMinutes(dateString: string): number {
   return Math.floor((Date.now() - new Date(dateString).getTime()) / 60000);
 }
 
-function getUrgencyColor(minutes: number): { border: string; bg: string; text: string; pulse: boolean } {
+// Default visual style - no urgency pulsing by default
+// Only pulse when items are actually overdue (exceed target_prep_time)
+function getTimeDisplayColor(minutes: number): { text: string } {
   if (minutes < 5) {
-    return { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400', pulse: false };
+    return { text: 'text-zinc-400' };
   } else if (minutes < 10) {
-    return { border: 'border-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400', pulse: false };
+    return { text: 'text-zinc-300' };
   } else {
-    return { border: 'border-red-500', bg: 'bg-red-500/10', text: 'text-red-400', pulse: true };
+    return { text: 'text-zinc-200' };
   }
 }
 
@@ -49,7 +51,7 @@ export function KDSOrderCard({
     return () => clearInterval(interval);
   }, [order.openedAt]);
 
-  const urgency = getUrgencyColor(elapsedMinutes);
+  const timeDisplay = getTimeDisplayColor(elapsedMinutes);
   const displayName = order.tableNumber 
     ? (order.tableName?.includes('Mesa') ? order.tableName : `Mesa ${order.tableNumber}`)
     : order.tableName || 'Sin mesa';
@@ -63,8 +65,10 @@ export function KDSOrderCard({
 
   const hasRushItems = order.items.some(item => item.is_rush);
 
+  // Check if any active item is overdue (exceeds its target_prep_time)
   const hasOverdueItems = order.items.some(item => {
     if (!getItemOverdueInfo) return false;
+    if (item.prep_status === 'ready' || item.prep_status === 'served') return false;
     return getItemOverdueInfo(item).isOverdue;
   });
 
@@ -80,15 +84,15 @@ export function KDSOrderCard({
 
   const getBorderClass = () => {
     if (isSelected) return 'border-yellow-400 ring-2 ring-yellow-400/50';
-    if (hasRushItems) return 'border-amber-500 ring-2 ring-amber-500/50';
     if (hasOverdueItems) return 'border-red-500 ring-2 ring-red-500/50';
-    return urgency.border;
+    if (hasRushItems) return 'border-amber-500';
+    return 'border-zinc-700';
   };
 
   const getBackgroundClass = () => {
-    if (hasRushItems) return 'bg-amber-500/10';
     if (hasOverdueItems) return 'bg-red-500/10';
-    return urgency.bg;
+    if (hasRushItems) return 'bg-amber-500/5';
+    return 'bg-zinc-900';
   };
 
   return (
@@ -98,22 +102,22 @@ export function KDSOrderCard({
         getBorderClass(),
         getBackgroundClass(),
         isNew && !isSelected && "animate-pulse",
-        (urgency.pulse || hasOverdueItems) && !isSelected && "animate-pulse"
+        hasOverdueItems && !isSelected && "animate-pulse"
       )}
     >
       {/* Header */}
       <div className={cn(
         "px-4 py-3 border-b border-zinc-800",
-        hasRushItems ? "bg-amber-500/20" : hasOverdueItems ? "bg-red-500/20" : urgency.bg,
+        hasOverdueItems ? "bg-red-500/20" : hasRushItems ? "bg-amber-500/10" : "bg-zinc-800/50",
         isSelected && "bg-yellow-500/20"
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {hasRushItems && (
-              <Flame className="h-5 w-5 text-amber-400 animate-pulse" />
-            )}
-            {hasOverdueItems && !hasRushItems && (
+            {hasOverdueItems && (
               <AlertTriangle className="h-5 w-5 text-red-400 animate-pulse" />
+            )}
+            {hasRushItems && !hasOverdueItems && (
+              <Flame className="h-5 w-5 text-amber-400" />
             )}
             <h3 className="text-lg font-bold text-white">{displayName}</h3>
             {hasRushItems && (
@@ -124,7 +128,7 @@ export function KDSOrderCard({
           </div>
           <div className={cn(
             "flex items-center gap-1 font-mono text-sm",
-            hasOverdueItems ? "text-red-400" : hasRushItems ? "text-amber-400" : urgency.text
+            hasOverdueItems ? "text-red-400" : hasRushItems ? "text-amber-400" : timeDisplay.text
           )}>
             <Clock className="h-4 w-4" />
             <span>{elapsedMinutes} min</span>
