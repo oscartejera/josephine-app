@@ -161,9 +161,9 @@ export function KDSOrderCard({
           const isItemSelected = isSelected && selectedItemIndex === activeIndex && activeIndex !== -1;
           
           // Determine item visual state for preparing items
+          // GREEN = on time, RED PULSING = overdue
           const isPreparing = item.prep_status === 'preparing';
-          const isNormal = isPreparing && !overdueInfo.isWarning && !overdueInfo.isOverdue;
-          const isWarningState = isPreparing && overdueInfo.isWarning && !overdueInfo.isOverdue;
+          const isOnTime = isPreparing && !overdueInfo.isOverdue;
           const isOverdueState = isPreparing && overdueInfo.isOverdue;
           
           return (
@@ -176,13 +176,11 @@ export function KDSOrderCard({
                 "flex flex-col gap-2",
                 isItemSelected && "ring-2 ring-yellow-400 bg-yellow-500/20",
                 !isItemSelected && item.prep_status === 'pending' && "bg-zinc-800 hover:bg-zinc-700 cursor-pointer",
-                // Normal preparing state (< 50% of time)
-                !isItemSelected && isNormal && "bg-blue-900/50 hover:bg-blue-800/50 cursor-pointer border border-blue-500",
-                // Warning state (50-100% of time) - amber pulsing border
-                !isItemSelected && isWarningState && "bg-amber-900/30 hover:bg-amber-800/30 cursor-pointer border-2 border-amber-500 animate-pulse",
-                // Overdue state (> 100% of time) - red pulsing
+                // On time state - GREEN border (no pulse)
+                !isItemSelected && isOnTime && "bg-emerald-900/30 hover:bg-emerald-800/30 cursor-pointer border border-emerald-500",
+                // Overdue state - RED pulsing border
                 !isItemSelected && isOverdueState && "bg-red-900/50 hover:bg-red-800/50 cursor-pointer border-2 border-red-500 animate-pulse",
-                item.prep_status === 'ready' && "bg-emerald-900/30 opacity-60 cursor-default",
+                item.prep_status === 'ready' && "bg-emerald-900/30 opacity-60 cursor-default border border-emerald-600",
                 item.prep_status === 'served' && "bg-zinc-900 opacity-40 cursor-default",
                 isItemRush && item.prep_status !== 'ready' && item.prep_status !== 'served' && "border-l-4 border-l-amber-500"
               )}
@@ -193,8 +191,8 @@ export function KDSOrderCard({
                 <div className={cn(
                   "mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center",
                   item.prep_status === 'pending' && "bg-zinc-700",
-                  item.prep_status === 'preparing' && !overdueInfo.isOverdue && "bg-blue-500 animate-pulse",
-                  item.prep_status === 'preparing' && overdueInfo.isOverdue && "bg-red-500",
+                  item.prep_status === 'preparing' && !overdueInfo.isOverdue && "bg-emerald-500",
+                  item.prep_status === 'preparing' && overdueInfo.isOverdue && "bg-red-500 animate-pulse",
                   item.prep_status === 'ready' && "bg-emerald-500",
                   item.prep_status === 'served' && "bg-zinc-600"
                 )}>
