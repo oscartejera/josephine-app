@@ -197,34 +197,51 @@ export function useKDSAlerts(orders: KDSOrder[]) {
   // Items waiting in queue (pending) do NOT count as overdue - timer starts when cooking begins
   const getItemOverdueInfo = useCallback((item: KDSTicketLine): { 
     isOverdue: boolean; 
+    isWarning: boolean; // New: true when > 50% of threshold elapsed
     overdueMinutes: number; 
-    threshold: number 
+    elapsedMinutes: number;
+    threshold: number;
+    progressPercent: number; // 0-100+ percentage of time used
   } => {
+    const defaultResult = { 
+      isOverdue: false, 
+      isWarning: false, 
+      overdueMinutes: 0, 
+      elapsedMinutes: 0,
+      threshold: 0,
+      progressPercent: 0 
+    };
+
     // Items already completed are never overdue
     if (item.prep_status === 'ready' || item.prep_status === 'served') {
-      return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
+      return defaultResult;
     }
 
     // Items still pending (in queue, not started) are NOT overdue
     // The overdue timer only starts when someone begins preparing the item
     if (item.prep_status === 'pending') {
-      return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
+      return defaultResult;
     }
 
     // Only for items with prep_status === 'preparing' and a valid start time
     if (!item.prep_started_at) {
-      return { isOverdue: false, overdueMinutes: 0, threshold: 0 };
+      return defaultResult;
     }
 
     const startTime = new Date(item.prep_started_at).getTime();
-    const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
+    const elapsedMs = Date.now() - startTime;
+    const elapsedMinutes = Math.floor(elapsedMs / 60000);
     const threshold = item.target_prep_time ?? settings[item.destination];
     const overdueMinutes = elapsedMinutes - threshold;
+    const progressPercent = threshold > 0 ? Math.round((elapsedMs / (threshold * 60000)) * 100) : 0;
 
     return {
       isOverdue: overdueMinutes > 0, // Strictly greater than threshold
+      isWarning: progressPercent >= 50 && progressPercent <= 100, // Between 50-100% of limit
       overdueMinutes: Math.max(0, overdueMinutes),
+      elapsedMinutes,
       threshold,
+      progressPercent,
     };
   }, [settings]);
 
