@@ -45,13 +45,11 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Create Payment Intent
+    // Create Payment Intent with explicit payment method types
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount), // Ensure integer
       currency: currency.toLowerCase(),
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ["card"], // Explicitly specify card payments
       metadata: {
         ticket_id,
         location_id,
