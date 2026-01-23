@@ -1,16 +1,17 @@
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { FloorMap, POSTable, POSProduct } from '@/hooks/usePOSData';
+import { FloorMap, POSTable, POSProduct, POSTicket } from '@/hooks/usePOSData';
 import { POSOrderPanel } from './POSOrderPanel';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Settings, Calendar } from 'lucide-react';
+import { Plus, Settings, Calendar, ChefHat, Check, Clock } from 'lucide-react';
 import { POSTableCard } from './POSTableCard';
 import { POSFloorEditor } from './POSFloorEditor';
 import { POSReservationDialog, ReservationFormData } from './POSReservationDialog';
 import { POSReservationsPanel } from './POSReservationsPanel';
 import { useReservationsData } from '@/hooks/useReservationsData';
+import { useTableKDSStatus } from '@/hooks/useTableKDSStatus';
 import { toast } from 'sonner';
 
 interface POSFloorPlanProps {
@@ -18,10 +19,11 @@ interface POSFloorPlanProps {
   floorMaps: FloorMap[];
   tables: POSTable[];
   products: POSProduct[];
+  openTickets: POSTicket[];
   onRefresh: () => void;
 }
 
-export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefresh }: POSFloorPlanProps) {
+export function POSFloorPlan({ locationId, floorMaps, tables, products, openTickets, onRefresh }: POSFloorPlanProps) {
   const [selectedMapId, setSelectedMapId] = useState<string>(floorMaps[0]?.id || '');
   const [selectedTable, setSelectedTable] = useState<POSTable | null>(null);
   const [showEditor, setShowEditor] = useState(false);
@@ -35,6 +37,17 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
     updateReservation, 
     seatGuests 
   } = useReservationsData(locationId, selectedDate);
+
+  // Map open tickets to their tables for KDS status tracking
+  const ticketTableMappings = useMemo(() => 
+    openTickets.map(t => ({
+      ticketId: t.id,
+      tableId: t.pos_table_id,
+    })),
+    [openTickets]
+  );
+
+  const { getTableStatus, markTableAsServed } = useTableKDSStatus(locationId, ticketTableMappings);
 
   const currentMap = floorMaps.find(m => m.id === selectedMapId);
   const currentTables = tables.filter(t => t.floor_map_id === selectedMapId);
@@ -180,15 +193,20 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
               height: currentMap?.config_json?.height || 600
             }}
           >
-            {currentTables.map((table) => (
-              <POSTableCard
-                key={table.id}
-                table={table}
-                isSelected={selectedTable?.id === table.id}
-                onClick={() => setSelectedTable(table)}
-                reservation={tableReservationsMap.get(table.id)}
-              />
-            ))}
+            {currentTables.map((table) => {
+              const kdsInfo = getTableStatus(table.id);
+              return (
+                <POSTableCard
+                  key={table.id}
+                  table={table}
+                  isSelected={selectedTable?.id === table.id}
+                  onClick={() => setSelectedTable(table)}
+                  reservation={tableReservationsMap.get(table.id)}
+                  kdsInfo={kdsInfo}
+                  onServe={() => markTableAsServed(table.id)}
+                />
+              );
+            })}
 
             {currentTables.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -200,6 +218,22 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, onRefres
                 </div>
               </div>
             )}
+          </div>
+
+          {/* KDS Status Legend */}
+          <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground justify-center">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-orange-500 animate-pulse"></span>
+              <span>En cocina</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+              <span>Preparando</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+              <span>¡Listo!</span>
+            </div>
           </div>
         </div>
       </div>
