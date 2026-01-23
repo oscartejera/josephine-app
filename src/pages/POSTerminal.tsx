@@ -128,6 +128,7 @@ export default function POSTerminal() {
             floorMaps={floorMaps}
             tables={tables}
             products={products}
+            openTickets={openTickets}
             onRefresh={refetch}
           />
         </TabsContent>

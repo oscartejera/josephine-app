@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { POSTable, POSProduct } from '@/hooks/usePOSData';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2 } from 'lucide-react';
+import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2, ChefHat, Check, UtensilsCrossed } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSProductGrid } from './POSProductGrid';
 import { POSSplitPaymentModal, ReceiptData } from './POSSplitPaymentModal';
@@ -31,6 +31,7 @@ interface OrderLine {
   sent_to_kitchen: boolean;
   kds_destination?: 'kitchen' | 'bar' | 'prep';
   is_rush?: boolean;
+  prep_status?: 'pending' | 'preparing' | 'ready' | 'served';
 }
 
 interface POSOrderPanelProps {
@@ -70,6 +71,31 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       loadTicketLines(table.current_ticket_id);
     }
   }, [table.current_ticket_id]);
+
+  // Realtime subscription for KDS status updates
+  useEffect(() => {
+    if (!ticketId) return;
+
+    const channel = supabase
+      .channel(`pos-order-panel-${ticketId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'ticket_lines',
+          filter: `ticket_id=eq.${ticketId}`,
+        },
+        () => {
+          loadTicketLines(ticketId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [ticketId]);
 
   const loadTicketLines = async (ticketId: string) => {
     // Load lines with modifiers
@@ -115,9 +141,10 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       total: line.gross_line_total,
       notes: (line as any).notes || undefined,
       modifiers: modifiersMap.get(line.id) || [],
-      sent_to_kitchen: (line as any).sent_to_kitchen || false,
+      sent_to_kitchen: (line as any).sent_to_kitchen || !!line.sent_at,
       kds_destination: (line as any).destination || 'kitchen',
       is_rush: (line as any).is_rush || false,
+      prep_status: (line.prep_status as 'pending' | 'preparing' | 'ready' | 'served') || 'pending',
     })));
   };
 
@@ -442,6 +469,47 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
   };
 
+  const getPrepStatusDisplay = (status?: 'pending' | 'preparing' | 'ready' | 'served') => {
+    switch (status) {
+      case 'pending':
+        return { icon: ChefHat, text: 'En cocina', className: 'text-orange-500 bg-orange-500/10' };
+      case 'preparing':
+        return { icon: ChefHat, text: 'Preparando', className: 'text-blue-500 bg-blue-500/10 animate-pulse' };
+      case 'ready':
+        return { icon: Check, text: '¡Listo!', className: 'text-emerald-500 bg-emerald-500/10' };
+      case 'served':
+        return { icon: UtensilsCrossed, text: 'Servido', className: 'text-muted-foreground bg-muted' };
+      default:
+        return null;
+    }
+  };
+
+  // Check if all items are ready
+  const allItemsReady = orderLines.length > 0 && 
+    orderLines.filter(l => l.sent_to_kitchen).every(l => l.prep_status === 'ready' || l.prep_status === 'served');
+
+  const hasReadyItems = orderLines.some(l => l.prep_status === 'ready');
+
+  const markAllAsServed = async () => {
+    if (!ticketId) return;
+    setLoading(true);
+    try {
+      await supabase
+        .from('ticket_lines')
+        .update({ prep_status: 'served' })
+        .eq('ticket_id', ticketId)
+        .eq('prep_status', 'ready');
+      
+      toast.success('Items marcados como servidos');
+      await loadTicketLines(ticketId);
+    } catch (error) {
+      console.error('Error marking as served:', error);
+      toast.error('Error al marcar como servido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="w-96 border-l border-border bg-card flex flex-col shrink-0">
@@ -469,99 +537,116 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                 Selecciona productos para añadir
               </p>
             ) : (
-              orderLines.map((line, index) => (
-                <div 
-                  key={index} 
-                  className={cn(
-                    "p-2 rounded-lg",
-                    line.sent_to_kitchen ? "bg-green-500/10" : "bg-muted/50",
-                    line.is_rush && !line.sent_to_kitchen && "ring-2 ring-amber-500"
-                  )}
-                >
-                  {/* Main line */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {line.is_rush && <Flame className="h-4 w-4 text-amber-500 shrink-0" />}
-                        <p className="font-medium text-sm truncate">{line.name}</p>
+              orderLines.map((line, index) => {
+                const prepDisplay = line.sent_to_kitchen ? getPrepStatusDisplay(line.prep_status) : null;
+                const PrepIcon = prepDisplay?.icon;
+                
+                return (
+                  <div 
+                    key={index} 
+                    className={cn(
+                      "p-2 rounded-lg",
+                      !line.sent_to_kitchen && "bg-muted/50",
+                      line.sent_to_kitchen && line.prep_status === 'pending' && "bg-orange-500/10 border border-orange-500/30",
+                      line.sent_to_kitchen && line.prep_status === 'preparing' && "bg-blue-500/10 border border-blue-500/30",
+                      line.sent_to_kitchen && line.prep_status === 'ready' && "bg-emerald-500/10 border border-emerald-500/30",
+                      line.sent_to_kitchen && line.prep_status === 'served' && "bg-muted/30",
+                      line.is_rush && !line.sent_to_kitchen && "ring-2 ring-amber-500"
+                    )}
+                  >
+                    {/* Main line */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {line.is_rush && <Flame className="h-4 w-4 text-amber-500 shrink-0" />}
+                          <p className="font-medium text-sm truncate">{line.name}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          €{line.unit_price.toFixed(2)} × {line.quantity}
+                        </p>
+                        
+                        {/* KDS Status Badge */}
+                        {prepDisplay && PrepIcon && (
+                          <div className={cn(
+                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium mt-1",
+                            prepDisplay.className
+                          )}>
+                            <PrepIcon className="h-3 w-3" />
+                            <span>{prepDisplay.text}</span>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        €{line.unit_price.toFixed(2)} × {line.quantity}
-                      </p>
-                      {line.sent_to_kitchen && (
-                        <span className="text-xs text-green-600">✓ Enviado</span>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-1">
-                      {!line.sent_to_kitchen && (
+                      
+                      <div className="flex items-center gap-1">
+                        {!line.sent_to_kitchen && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7"
+                            onClick={() => handleEditLine(index)}
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        )}
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           className="h-7 w-7"
-                          onClick={() => handleEditLine(index)}
+                          onClick={() => updateQuantity(index, -1)}
+                          disabled={line.sent_to_kitchen}
                         >
-                          <Edit2 className="h-3 w-3" />
+                          <Minus className="h-3 w-3" />
                         </Button>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7"
-                        onClick={() => updateQuantity(index, -1)}
-                        disabled={line.sent_to_kitchen}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 text-center text-sm">{line.quantity}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7"
-                        onClick={() => updateQuantity(index, 1)}
-                        disabled={line.sent_to_kitchen}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7 text-destructive"
-                        onClick={() => removeLine(index)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-
-                    <p className="w-16 text-right font-medium">
-                      €{calculateLineTotal(line).toFixed(2)}
-                    </p>
-                  </div>
-
-                  {/* Modifiers */}
-                  {line.modifiers.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2 ml-1">
-                      {line.modifiers.map((mod, modIdx) => (
-                        <span 
-                          key={modIdx}
-                          className={cn(
-                            "text-xs px-1.5 py-0.5 rounded",
-                            getModifierBadgeColor(mod.type)
-                          )}
+                        <span className="w-6 text-center text-sm">{line.quantity}</span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7"
+                          onClick={() => updateQuantity(index, 1)}
+                          disabled={line.sent_to_kitchen}
                         >
-                          {mod.option_name}
-                          {mod.price_delta !== 0 && ` (+€${mod.price_delta.toFixed(2)})`}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-destructive"
+                          onClick={() => removeLine(index)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
 
-                  {/* Notes */}
-                  {line.notes && (
-                    <p className="text-xs text-amber-500 mt-1 ml-1 italic">⚠️ {line.notes}</p>
-                  )}
-                </div>
-              ))
+                      <p className="w-16 text-right font-medium">
+                        €{calculateLineTotal(line).toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Modifiers */}
+                    {line.modifiers.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2 ml-1">
+                        {line.modifiers.map((mod, modIdx) => (
+                          <span 
+                            key={modIdx}
+                            className={cn(
+                              "text-xs px-1.5 py-0.5 rounded",
+                              getModifierBadgeColor(mod.type)
+                            )}
+                          >
+                            {mod.option_name}
+                            {mod.price_delta !== 0 && ` (+€${mod.price_delta.toFixed(2)})`}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Notes */}
+                    {line.notes && (
+                      <p className="text-xs text-amber-500 mt-1 ml-1 italic">⚠️ {line.notes}</p>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </ScrollArea>
@@ -584,6 +669,19 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
 
         {/* Actions */}
         <div className="p-4 border-t border-border space-y-2 shrink-0">
+          {/* Serve button when items are ready */}
+          {hasReadyItems && (
+            <Button 
+              variant="default"
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              onClick={markAllAsServed}
+              disabled={loading}
+            >
+              <UtensilsCrossed className="h-4 w-4 mr-2" />
+              Servir Mesa
+            </Button>
+          )}
+          
           <div className="grid grid-cols-2 gap-2">
             <Button 
               variant="outline" 
