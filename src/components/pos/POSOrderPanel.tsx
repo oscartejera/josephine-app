@@ -571,7 +571,18 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
               Cocina
             </Button>
             <Button 
-              onClick={() => setShowPayment(true)}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await createOrUpdateTicket();
+                  setShowPayment(true);
+                } catch (error) {
+                  console.error('Error creating ticket:', error);
+                  toast.error('Error al preparar el cobro');
+                } finally {
+                  setLoading(false);
+                }
+              }}
               disabled={loading || orderLines.length === 0}
             >
               <CreditCard className="h-4 w-4 mr-2" />
