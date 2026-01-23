@@ -107,6 +107,7 @@ export const SIDEBAR_PERMISSIONS = {
 
 export function usePermissions() {
   const { 
+    user,
     isOwner, 
     hasGlobalScope, 
     hasPermission, 
@@ -117,45 +118,30 @@ export function usePermissions() {
     loading 
   } = useAuth();
 
-  // Check if user can view a sidebar item - always true in DEMO_MODE
+  // SIMPLIFIED: Any authenticated user can view all sidebar items
   const canViewSidebarItem = useCallback((item: keyof typeof SIDEBAR_PERMISSIONS): boolean => {
-    if (DEMO_MODE) return true;
-    if (isOwner) return true;
-    const requiredPermissions = [...SIDEBAR_PERMISSIONS[item]] as string[];
-    return hasAnyPermission(requiredPermissions);
-  }, [isOwner, hasAnyPermission]);
+    return user !== null;
+  }, [user]);
 
-  // Check if user can access a specific location - always true in DEMO_MODE
+  // SIMPLIFIED: Any authenticated user can access any location in their group
   const canAccessLocation = useCallback((locationId: string): boolean => {
-    if (DEMO_MODE) return true;
-    if (isOwner || hasGlobalScope) return true;
-    return accessibleLocationIds.includes(locationId);
-  }, [isOwner, hasGlobalScope, accessibleLocationIds]);
+    return user !== null;
+  }, [user]);
 
-  // Get filtered locations based on access - all locations in DEMO_MODE
+  // SIMPLIFIED: Return all locations for authenticated users
   const getAccessibleLocations = useCallback(<T extends { id: string }>(locations: T[]): T[] => {
-    if (DEMO_MODE) return locations;
-    if (isOwner || hasGlobalScope) return locations;
-    return locations.filter(l => accessibleLocationIds.includes(l.id));
-  }, [isOwner, hasGlobalScope, accessibleLocationIds]);
+    return locations;
+  }, []);
 
-  // Check if user can show "All locations" option - always true in DEMO_MODE
+  // SIMPLIFIED: Any authenticated user can see all locations
   const canShowAllLocations = useMemo(() => {
-    if (DEMO_MODE) return true;
-    return isOwner || hasGlobalScope;
-  }, [isOwner, hasGlobalScope]);
+    return user !== null;
+  }, [user]);
 
-  // Get user's primary role (highest privilege)
+  // SIMPLIFIED: All authenticated users are treated as owners
   const primaryRole = useMemo(() => {
-    if (isOwner) return 'owner';
-    const roleOrder = ['admin', 'ops_manager', 'store_manager', 'finance', 'hr_payroll', 'employee'];
-    for (const role of roleOrder) {
-      if (roles.some(r => r.role_name === role)) {
-        return role;
-      }
-    }
-    return null;
-  }, [isOwner, roles]);
+    return user !== null ? 'owner' : null;
+  }, [user]);
 
   return {
     // State

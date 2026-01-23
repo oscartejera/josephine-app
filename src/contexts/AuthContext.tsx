@@ -53,14 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [realIsOwner, setRealIsOwner] = useState(false);
-  const [realHasGlobalScope, setRealHasGlobalScope] = useState(false);
   const [realAccessibleLocationIds, setRealAccessibleLocationIds] = useState<string[]>([]);
 
-  // In DEMO_MODE, everyone acts as owner for viewing purposes
-  const isOwner = DEMO_MODE ? true : realIsOwner;
-  const hasGlobalScope = DEMO_MODE ? true : realHasGlobalScope;
-  const accessibleLocationIds = realAccessibleLocationIds; // Still tracked for reference
+  // SIMPLIFIED: Any authenticated user is now treated as owner with full access
+  const isOwner = user !== null;
+  const hasGlobalScope = user !== null;
+  const accessibleLocationIds = realAccessibleLocationIds;
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -84,17 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRoles([]);
       }
 
-      // Check if owner
-      const { data: isOwnerData } = await supabase.rpc('is_owner', {
-        _user_id: userId
-      });
-      setRealIsOwner(isOwnerData === true);
-
-      // Check global scope
-      const { data: globalScopeData } = await supabase.rpc('get_user_has_global_scope', {
-        _user_id: userId
-      });
-      setRealHasGlobalScope(globalScopeData === true);
+      // Note: is_owner and get_user_has_global_scope now always return true for authenticated users
+      // These calls are kept for backwards compatibility but their results are ignored
 
       // Get accessible locations
       const { data: locationsData } = await supabase.rpc('get_user_accessible_locations', {
@@ -119,8 +108,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error fetching user data:', error);
       setRoles([]);
       setPermissions([]);
-      setRealIsOwner(false);
-      setRealHasGlobalScope(false);
       setRealAccessibleLocationIds([]);
     }
   }, []);
@@ -157,8 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
           setRoles([]);
           setPermissions([]);
-          setRealIsOwner(false);
-          setRealHasGlobalScope(false);
           setRealAccessibleLocationIds([]);
         }
         setLoading(false);
@@ -206,44 +191,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  // Check if user has a specific permission - ALWAYS returns true in DEMO_MODE for viewing
+  // SIMPLIFIED: Any authenticated user has all permissions
   const hasPermission = useCallback((permissionKey: string, locationId?: string | null): boolean => {
-    // In DEMO_MODE, all view permissions are granted
-    if (DEMO_MODE) return true;
-    // Owner has all permissions
-    if (realIsOwner) return true;
-    // Check if permission exists in user's permissions
-    return permissions.some(p => p.permission_key === permissionKey);
-  }, [realIsOwner, permissions]);
+    return user !== null;
+  }, [user]);
 
-  // Real permission check for action buttons (can disable but not hide)
+  // SIMPLIFIED: Any authenticated user has all action permissions
   const hasActionPermission = useCallback((permissionKey: string, locationId?: string | null): boolean => {
-    // Owner has all permissions
-    if (realIsOwner) return true;
-    // Check if permission exists in user's permissions
-    return permissions.some(p => p.permission_key === permissionKey);
-  }, [realIsOwner, permissions]);
+    return user !== null;
+  }, [user]);
 
-  // Check if user has any of the given permissions
+  // SIMPLIFIED: Any authenticated user has all permissions
   const hasAnyPermission = useCallback((permissionKeys: string[]): boolean => {
-    if (DEMO_MODE) return true;
-    if (realIsOwner) return true;
-    return permissionKeys.some(key => permissions.some(p => p.permission_key === key));
-  }, [realIsOwner, permissions]);
+    return user !== null;
+  }, [user]);
 
-  // Check if user has a specific role
+  // SIMPLIFIED: Any authenticated user is treated as having all roles
   const hasRole = useCallback((roleName: string): boolean => {
-    if (DEMO_MODE && roleName === 'owner') return true;
-    if (realIsOwner && roleName === 'owner') return true;
-    return roles.some(r => r.role_name === roleName);
-  }, [realIsOwner, roles]);
+    return user !== null;
+  }, [user]);
 
-  // Check if user is admin or ops manager (legacy compatibility)
+  // SIMPLIFIED: Any authenticated user is admin/ops
   const isAdminOrOps = useCallback((): boolean => {
-    if (DEMO_MODE) return true;
-    if (realIsOwner) return true;
-    return roles.some(r => ['owner', 'admin', 'ops_manager'].includes(r.role_name));
-  }, [realIsOwner, roles]);
+    return user !== null;
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{

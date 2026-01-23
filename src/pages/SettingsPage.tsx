@@ -259,36 +259,22 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Configuración del grupo y locales</p>
       </div>
 
-      <Tabs defaultValue="team">
+      <Tabs defaultValue="locations">
         <TabsList className="flex-wrap h-auto gap-1">
-          {canManageUsers && <TabsTrigger value="team">Equipo</TabsTrigger>}
           <TabsTrigger value="locations">Locales</TabsTrigger>
-          {canManageUsers && <TabsTrigger value="users">Roles</TabsTrigger>}
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
           <TabsTrigger value="suppliers">Proveedores</TabsTrigger>
           <TabsTrigger value="kds">Destinos KDS</TabsTrigger>
           <TabsTrigger value="printers">Impresoras</TabsTrigger>
-          {canManageBilling && <TabsTrigger value="payment">Payment</TabsTrigger>}
+          <TabsTrigger value="payment">Payment</TabsTrigger>
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           <TabsTrigger value="export">Exportar</TabsTrigger>
-          {isOwner && <TabsTrigger value="demo">Demo</TabsTrigger>}
+          <TabsTrigger value="demo">Demo</TabsTrigger>
         </TabsList>
-
-        {canManageUsers && (
-          <TabsContent value="team">
-            <TeamManager />
-          </TabsContent>
-        )}
 
         <TabsContent value="locations">
           <LocationManager />
         </TabsContent>
-
-        {canManageUsers && (
-          <TabsContent value="users">
-            <UsersRolesManager />
-          </TabsContent>
-        )}
 
         <TabsContent value="suppliers">
           <SupplierIntegrationManager />

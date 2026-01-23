@@ -3134,7 +3134,9 @@ export type Database = {
       }
     }
     Functions: {
-      can_access_location: { Args: { _location_id: string }; Returns: boolean }
+      can_access_location:
+        | { Args: { _location_id: string }; Returns: boolean }
+        | { Args: { _location_id: string; _user_id: string }; Returns: boolean }
       compute_hourly_cost: { Args: { p_employee_id: string }; Returns: number }
       forecast_needs_refresh: {
         Args: { p_location_id: string }
@@ -3255,7 +3257,7 @@ export type Database = {
       }
       get_user_group_id: { Args: never; Returns: string }
       get_user_has_global_scope: {
-        Args: { _user_id?: string }
+        Args: { _user_id: string }
         Returns: boolean
       }
       get_user_permissions: {
@@ -3287,7 +3289,9 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
-      is_admin_or_ops: { Args: never; Returns: boolean }
+      is_admin_or_ops:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id?: string }; Returns: boolean }
       is_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_owner_or_admin: { Args: { _user_id?: string }; Returns: boolean }
       is_payroll_admin: { Args: never; Returns: boolean }
