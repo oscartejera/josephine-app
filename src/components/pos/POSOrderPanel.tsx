@@ -195,7 +195,31 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     setOrderLines(updated);
   };
 
-  const removeLine = (index: number) => {
+  const removeLine = async (index: number) => {
+    const line = orderLines[index];
+    
+    // If line was already sent to kitchen and has an ID, delete from database
+    if (line.id && line.sent_to_kitchen) {
+      try {
+        const { error } = await supabase
+          .from('ticket_lines')
+          .delete()
+          .eq('id', line.id);
+        
+        if (error) {
+          console.error('Error deleting line:', error);
+          toast.error('Error al eliminar el producto');
+          return;
+        }
+        
+        toast.success(`${line.name} eliminado`);
+      } catch (err) {
+        console.error('Error deleting line:', err);
+        toast.error('Error al eliminar el producto');
+        return;
+      }
+    }
+    
     setOrderLines(orderLines.filter((_, i) => i !== index));
   };
 
@@ -504,7 +528,6 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                         size="icon" 
                         className="h-7 w-7 text-destructive"
                         onClick={() => removeLine(index)}
-                        disabled={line.sent_to_kitchen}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
