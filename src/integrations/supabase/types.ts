@@ -869,6 +869,7 @@ export type Database = {
           id: string
           method: Database["public"]["Enums"]["payment_method"] | null
           paid_at: string
+          stripe_payment_intent_id: string | null
           ticket_id: string
           tip_amount: number | null
         }
@@ -878,6 +879,7 @@ export type Database = {
           id?: string
           method?: Database["public"]["Enums"]["payment_method"] | null
           paid_at?: string
+          stripe_payment_intent_id?: string | null
           ticket_id: string
           tip_amount?: number | null
         }
@@ -887,6 +889,7 @@ export type Database = {
           id?: string
           method?: Database["public"]["Enums"]["payment_method"] | null
           paid_at?: string
+          stripe_payment_intent_id?: string | null
           ticket_id?: string
           tip_amount?: number | null
         }
