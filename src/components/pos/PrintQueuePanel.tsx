@@ -95,12 +95,12 @@ function PrintJobCard({
         <div className="flex gap-1">
           {job.status === 'pending' && (
             <>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={onPrint}
-                className="h-7 px-2"
-              >
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={onPrint}
+              className="h-7 px-2 text-black"
+            >
                 <Printer className="h-3.5 w-3.5 mr-1" />
                 Imprimir
               </Button>
@@ -108,24 +108,24 @@ function PrintJobCard({
           )}
           
           {job.status === 'printed' && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onAcknowledge}
-              className="h-7 px-2"
-            >
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={onAcknowledge}
+            className="h-7 px-2 text-black"
+          >
               <CheckCheck className="h-3.5 w-3.5 mr-1" />
               Confirmar
             </Button>
           )}
           
           {job.status === 'failed' && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onRetry}
-              className="h-7 px-2"
-            >
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={onRetry}
+            className="h-7 px-2 text-black"
+          >
               <RefreshCw className="h-3.5 w-3.5 mr-1" />
               Reintentar
             </Button>
