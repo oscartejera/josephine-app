@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Plus, Trash2, Edit2, MapPin, Clock, Loader2, Check, AlertTriangle, Copy } from 'lucide-react';
+import { Building2, Plus, Trash2, Edit2, MapPin, Clock, Loader2, Check, AlertTriangle, Copy, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { LocationWizard } from './LocationWizard';
 
 interface LocationFormData {
   name: string;
@@ -64,6 +65,7 @@ export function LocationManager() {
   const { locations, group } = useApp();
   const { profile } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState<string | null>(null);
   const [formData, setFormData] = useState<LocationFormData>(initialFormData);
@@ -539,13 +541,18 @@ export function LocationManager() {
             </CardDescription>
           </div>
           
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setFormData(initialFormData)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Añadir Local
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowWizard(true)}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Wizard Guiado
+            </Button>
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setFormData(initialFormData)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Añadir Rápido
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Nuevo Local</DialogTitle>
@@ -637,6 +644,7 @@ export function LocationManager() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </CardHeader>
 
@@ -919,6 +927,16 @@ export function LocationManager() {
           </div>
         )}
       </CardContent>
+
+      {/* Location Wizard */}
+      {group?.id && (
+        <LocationWizard
+          open={showWizard}
+          onOpenChange={setShowWizard}
+          groupId={group.id}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </Card>
   );
 }
