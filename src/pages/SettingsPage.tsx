@@ -19,7 +19,9 @@ import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
 import { TeamManager } from '@/components/settings/TeamManager';
 import { DemoDataManager } from '@/components/settings/DemoDataManager';
 import { ProductKDSManager } from '@/components/settings/ProductKDSManager';
+import { PaymentHistoryManager } from '@/components/settings/PaymentHistoryManager';
 import { Progress } from '@/components/ui/progress';
+import { Receipt } from 'lucide-react';
 
 interface PaymentMethod {
   id: string;
@@ -262,6 +264,7 @@ export default function SettingsPage() {
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
           <TabsTrigger value="kds">Destinos KDS</TabsTrigger>
           {canManageBilling && <TabsTrigger value="payment">Payment</TabsTrigger>}
+          <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           <TabsTrigger value="export">Exportar</TabsTrigger>
           {isOwner && <TabsTrigger value="demo">Demo</TabsTrigger>}
         </TabsList>
@@ -407,6 +410,10 @@ export default function SettingsPage() {
 
         <TabsContent value="kds">
           <ProductKDSManager />
+        </TabsContent>
+
+        <TabsContent value="transactions">
+          <PaymentHistoryManager />
         </TabsContent>
 
         <TabsContent value="payment">
