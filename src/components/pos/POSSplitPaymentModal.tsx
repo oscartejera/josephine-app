@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { POSStripePayment } from './POSStripePayment';
+import { POSLoyaltyPanel, LoyaltyMember, LoyaltyReward } from './POSLoyaltyPanel';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrderLineItem {
   id?: string;
@@ -38,8 +40,13 @@ interface POSSplitPaymentModalProps {
   covers: number;
   ticketId: string;
   locationId: string;
+  groupId: string;
   onClose: () => void;
-  onPayment: (payments: { method: string; amount: number; tip: number; stripePaymentIntentId?: string }[]) => Promise<void>;
+  onPayment: (payments: { method: string; amount: number; tip: number; stripePaymentIntentId?: string }[], loyaltyData?: {
+    memberId: string;
+    pointsEarned: number;
+    rewardRedeemed?: { id: string; value: number; type: string };
+  }) => Promise<void>;
   onPrintReceipt: (data: ReceiptData) => void;
 }
 
@@ -55,6 +62,8 @@ export interface ReceiptData {
   paymentMethod: string;
   cashReceived?: number;
   change?: number;
+  loyaltyPointsEarned?: number;
+  loyaltyRewardRedeemed?: string;
 }
 
 const paymentMethods = [
@@ -75,6 +84,7 @@ export function POSSplitPaymentModal({
   covers,
   ticketId,
   locationId,
+  groupId,
   onClose,
   onPayment,
   onPrintReceipt,
@@ -95,13 +105,50 @@ export function POSSplitPaymentModal({
   const [showStripePayment, setShowStripePayment] = useState(false);
   const [pendingStripePaymentId, setPendingStripePaymentId] = useState<string | null>(null);
 
+  // Loyalty state
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
+  const [pointsPerEuro, setPointsPerEuro] = useState(1);
+  const [selectedMember, setSelectedMember] = useState<LoyaltyMember | null>(null);
+  const [selectedReward, setSelectedReward] = useState<LoyaltyReward | null>(null);
+
+  // Load loyalty settings
+  useEffect(() => {
+    const loadLoyaltySettings = async () => {
+      if (!groupId) return;
+      const { data } = await supabase
+        .from('loyalty_settings')
+        .select('is_enabled, points_per_euro')
+        .eq('group_id', groupId)
+        .single();
+      
+      if (data) {
+        setLoyaltyEnabled(data.is_enabled || false);
+        setPointsPerEuro(data.points_per_euro || 1);
+      }
+    };
+    loadLoyaltySettings();
+  }, [groupId]);
+
+  // Calculate reward discount
+  const rewardDiscount = useMemo(() => {
+    if (!selectedReward) return 0;
+    if (selectedReward.reward_type === 'discount') {
+      return selectedReward.value || 0;
+    }
+    if (selectedReward.reward_type === 'percentage') {
+      return total * ((selectedReward.value || 0) / 100);
+    }
+    return 0;
+  }, [selectedReward, total]);
+
   // Calculate tip amount
   const tipAmount = useMemo(() => {
     if (customTip) return parseFloat(customTip) || 0;
-    return total * (tipPercent / 100);
-  }, [total, tipPercent, customTip]);
+    return (total - rewardDiscount) * (tipPercent / 100);
+  }, [total, tipPercent, customTip, rewardDiscount]);
 
-  const grandTotal = total + tipAmount;
+  const grandTotal = total - rewardDiscount + tipAmount;
+  const pointsToEarn = Math.floor((total - rewardDiscount) * pointsPerEuro);
 
   // Initialize split payments when mode changes
   const initializeSplitPayments = (mode: 'full' | 'equal' | 'items', count: number = splitCount) => {
@@ -277,8 +324,19 @@ export function POSSplitPaymentModal({
       const allPaid = updatedPayments.every(p => p.paid);
       
       if (allPaid) {
-        // Process all payments
-        await onPayment(paymentData);
+        // Prepare loyalty data if member is selected
+        const loyaltyData = selectedMember ? {
+          memberId: selectedMember.id,
+          pointsEarned: pointsToEarn,
+          rewardRedeemed: selectedReward ? {
+            id: selectedReward.id,
+            value: rewardDiscount,
+            type: selectedReward.reward_type,
+          } : undefined,
+        } : undefined;
+
+        // Process all payments with loyalty data
+        await onPayment(paymentData, loyaltyData);
         setShowReceipt(true);
       } else {
         // Move to next unpaid
@@ -311,6 +369,8 @@ export function POSSplitPaymentModal({
     paymentMethod: splitPayments.map(p => p.method).join(', '),
     cashReceived: selectedMethod === 'cash' ? cashAmount : undefined,
     change: selectedMethod === 'cash' ? change : undefined,
+    loyaltyPointsEarned: selectedMember ? pointsToEarn : undefined,
+    loyaltyRewardRedeemed: selectedReward ? selectedReward.name : undefined,
   });
 
   // Remaining amount for items mode
@@ -323,9 +383,36 @@ export function POSSplitPaymentModal({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Cobrar - {tableName}</span>
-            <span className="text-2xl font-bold">€{grandTotal.toFixed(2)}</span>
+            <div className="text-right">
+              {rewardDiscount > 0 && (
+                <p className="text-sm text-muted-foreground line-through">€{total.toFixed(2)}</p>
+              )}
+              <span className="text-2xl font-bold">€{grandTotal.toFixed(2)}</span>
+            </div>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Loyalty Panel - Always visible at top when enabled */}
+        {loyaltyEnabled && (
+          <POSLoyaltyPanel
+            groupId={groupId}
+            locationId={locationId}
+            ticketTotal={total - rewardDiscount}
+            pointsPerEuro={pointsPerEuro}
+            selectedMember={selectedMember}
+            selectedReward={selectedReward}
+            onMemberSelect={setSelectedMember}
+            onRewardSelect={setSelectedReward}
+          />
+        )}
+
+        {/* Reward discount display */}
+        {selectedReward && rewardDiscount > 0 && (
+          <div className="flex items-center justify-between p-2 bg-primary/10 rounded-lg border border-primary/30">
+            <span className="text-sm font-medium">🎁 {selectedReward.name}</span>
+            <span className="font-bold text-primary">-€{rewardDiscount.toFixed(2)}</span>
+          </div>
+        )}
 
         <Tabs value={splitMode} onValueChange={(v) => handleSplitModeChange(v as any)} className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-3">
@@ -359,7 +446,7 @@ export function POSSplitPaymentModal({
               customTip={customTip}
               onTipPercentChange={(p) => { setTipPercent(p); setCustomTip(''); }}
               onCustomTipChange={setCustomTip}
-              total={total}
+              total={total - rewardDiscount}
               tipAmount={tipAmount}
             />
           </TabsContent>
