@@ -43,6 +43,7 @@ import StaffFloor from "@/pages/StaffFloor";
 import StaffClock from "@/pages/StaffClock";
 import StaffKDS from "@/pages/StaffKDS";
 import { StaffLayout } from "@/components/staff/StaffLayout";
+import BookingWidget from "@/pages/BookingWidget";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,7 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <Signup />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/book/:locationId" element={<BookingWidget />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
       <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
