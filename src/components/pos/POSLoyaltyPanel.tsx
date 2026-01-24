@@ -3,12 +3,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Search, Star, Gift, User, X, Check, Loader2, 
-  Crown, Award, Medal, Trophy, Sparkles
+  Crown, Award, Medal, Trophy, Sparkles, History,
+  TrendingUp, TrendingDown, Zap, Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export interface LoyaltyMember {
   id: string;
@@ -28,6 +32,15 @@ export interface LoyaltyReward {
   reward_type: 'discount' | 'free_item' | 'percentage' | 'experience';
   value: number | null;
   is_active: boolean;
+}
+
+export interface LoyaltyTransaction {
+  id: string;
+  member_id: string;
+  points: number;
+  type: 'earned' | 'redeemed' | 'bonus' | 'adjustment' | 'expired';
+  description: string | null;
+  created_at: string;
 }
 
 interface POSLoyaltyPanelProps {
@@ -61,11 +74,22 @@ export function POSLoyaltyPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<LoyaltyMember[]>([]);
   const [availableRewards, setAvailableRewards] = useState<LoyaltyReward[]>([]);
+  const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([]);
   const [searching, setSearching] = useState(false);
   const [loadingRewards, setLoadingRewards] = useState(false);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [activeTab, setActiveTab] = useState<'rewards' | 'history'>('rewards');
 
   // Calculate points to earn
   const pointsToEarn = Math.floor(ticketTotal * pointsPerEuro);
+
+  const TRANSACTION_CONFIG = {
+    earned: { icon: TrendingUp, color: 'text-emerald-600', sign: '+', label: 'Ganados' },
+    redeemed: { icon: Gift, color: 'text-primary', sign: '-', label: 'Canjeados' },
+    bonus: { icon: Zap, color: 'text-yellow-600', sign: '+', label: 'Bonus' },
+    adjustment: { icon: Settings, color: 'text-muted-foreground', sign: '', label: 'Ajuste' },
+    expired: { icon: TrendingDown, color: 'text-destructive', sign: '-', label: 'Expirados' },
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim() || searchQuery.length < 3) return;
@@ -92,22 +116,34 @@ export function POSLoyaltyPanel({
     setSearchResults([]);
     setSearchQuery('');
     
-    // Load available rewards for this member
+    // Load rewards and transactions in parallel
     setLoadingRewards(true);
+    setLoadingTransactions(true);
+    
     try {
-      const { data } = await supabase
-        .from('loyalty_rewards')
-        .select('*')
-        .eq('group_id', groupId)
-        .eq('is_active', true)
-        .lte('points_cost', member.points_balance)
-        .order('points_cost', { ascending: true });
+      const [rewardsResult, transactionsResult] = await Promise.all([
+        supabase
+          .from('loyalty_rewards')
+          .select('*')
+          .eq('group_id', groupId)
+          .eq('is_active', true)
+          .lte('points_cost', member.points_balance)
+          .order('points_cost', { ascending: true }),
+        supabase
+          .from('loyalty_transactions')
+          .select('*')
+          .eq('member_id', member.id)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      ]);
 
-      setAvailableRewards((data || []) as unknown as LoyaltyReward[]);
+      setAvailableRewards((rewardsResult.data || []) as unknown as LoyaltyReward[]);
+      setTransactions((transactionsResult.data || []) as unknown as LoyaltyTransaction[]);
     } catch (error) {
-      console.error('Error loading rewards:', error);
+      console.error('Error loading member data:', error);
     } finally {
       setLoadingRewards(false);
+      setLoadingTransactions(false);
     }
   };
 
@@ -115,6 +151,8 @@ export function POSLoyaltyPanel({
     onMemberSelect(null);
     onRewardSelect(null);
     setAvailableRewards([]);
+    setTransactions([]);
+    setActiveTab('rewards');
   };
 
   const TierIcon = selectedMember ? TIER_CONFIG[selectedMember.tier].icon : Star;
@@ -222,60 +260,113 @@ export function POSLoyaltyPanel({
             </div>
           </div>
 
-          {/* Available Rewards */}
-          {loadingRewards ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            </div>
-          ) : availableRewards.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs font-medium flex items-center gap-1">
+          {/* Tabs for Rewards and History */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'rewards' | 'history')} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 h-8">
+              <TabsTrigger value="rewards" className="text-xs gap-1">
                 <Gift className="h-3 w-3" />
-                Recompensas canjeables
-              </p>
-              <ScrollArea className="h-28">
-                <div className="space-y-1.5">
-                  {availableRewards.map((reward) => (
-                    <button
-                      key={reward.id}
-                      onClick={() => onRewardSelect(selectedReward?.id === reward.id ? null : reward)}
-                      className={cn(
-                        "w-full p-2 rounded-lg border text-left transition-all flex items-center gap-2",
-                        selectedReward?.id === reward.id
-                          ? "bg-primary/10 border-primary ring-1 ring-primary"
-                          : "bg-background hover:bg-muted"
-                      )}
-                    >
-                      <Gift className={cn(
-                        "h-4 w-4 shrink-0",
-                        selectedReward?.id === reward.id ? "text-primary" : "text-muted-foreground"
-                      )} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{reward.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {reward.reward_type === 'discount' && `€${reward.value} descuento`}
-                          {reward.reward_type === 'percentage' && `${reward.value}% descuento`}
-                          {reward.reward_type === 'free_item' && 'Producto gratis'}
-                          {reward.reward_type === 'experience' && 'Experiencia'}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-primary">{reward.points_cost}</p>
-                        <p className="text-xs text-muted-foreground">pts</p>
-                      </div>
-                      {selectedReward?.id === reward.id && (
-                        <Check className="h-4 w-4 text-primary shrink-0" />
-                      )}
-                    </button>
-                  ))}
+                Recompensas
+              </TabsTrigger>
+              <TabsTrigger value="history" className="text-xs gap-1">
+                <History className="h-3 w-3" />
+                Historial
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Rewards Tab */}
+            <TabsContent value="rewards" className="mt-2">
+              {loadingRewards ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 </div>
-              </ScrollArea>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground text-center py-2">
-              No hay recompensas disponibles con los puntos actuales
-            </p>
-          )}
+              ) : availableRewards.length > 0 ? (
+                <ScrollArea className="h-32">
+                  <div className="space-y-1.5">
+                    {availableRewards.map((reward) => (
+                      <button
+                        key={reward.id}
+                        onClick={() => onRewardSelect(selectedReward?.id === reward.id ? null : reward)}
+                        className={cn(
+                          "w-full p-2 rounded-lg border text-left transition-all flex items-center gap-2",
+                          selectedReward?.id === reward.id
+                            ? "bg-primary/10 border-primary ring-1 ring-primary"
+                            : "bg-background hover:bg-muted"
+                        )}
+                      >
+                        <Gift className={cn(
+                          "h-4 w-4 shrink-0",
+                          selectedReward?.id === reward.id ? "text-primary" : "text-muted-foreground"
+                        )} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{reward.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {reward.reward_type === 'discount' && `€${reward.value} descuento`}
+                            {reward.reward_type === 'percentage' && `${reward.value}% descuento`}
+                            {reward.reward_type === 'free_item' && 'Producto gratis'}
+                            {reward.reward_type === 'experience' && 'Experiencia'}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-primary">{reward.points_cost}</p>
+                          <p className="text-xs text-muted-foreground">pts</p>
+                        </div>
+                        {selectedReward?.id === reward.id && (
+                          <Check className="h-4 w-4 text-primary shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No hay recompensas disponibles con los puntos actuales
+                </p>
+              )}
+            </TabsContent>
+
+            {/* History Tab */}
+            <TabsContent value="history" className="mt-2">
+              {loadingTransactions ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : transactions.length > 0 ? (
+                <ScrollArea className="h-32">
+                  <div className="space-y-1">
+                    {transactions.map((tx) => {
+                      const config = TRANSACTION_CONFIG[tx.type];
+                      const TxIcon = config.icon;
+                      return (
+                        <div
+                          key={tx.id}
+                          className="flex items-center gap-2 p-1.5 rounded-md bg-background border"
+                        >
+                          <div className={cn("p-1 rounded-full bg-muted", config.color)}>
+                            <TxIcon className="h-3 w-3" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">
+                              {tx.description || config.label}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {format(new Date(tx.created_at), "d MMM, HH:mm", { locale: es })}
+                            </p>
+                          </div>
+                          <p className={cn("text-sm font-bold", config.color)}>
+                            {config.sign}{Math.abs(tx.points)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  Sin transacciones registradas
+                </p>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>
