@@ -51,6 +51,11 @@ export default function Login() {
 
   const handleDemoLogin = async (demoEmail: string) => {
     setDemoLoading(demoEmail);
+    console.log('[demo-login] clicked', { demoEmail });
+    toast({
+      title: 'Iniciando demo…',
+      description: `Entrando como ${demoEmail}`,
+    });
     
     try {
       // First, try to seed demo users if they don't exist
