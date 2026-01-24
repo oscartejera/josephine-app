@@ -5,14 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChefHat, Loader2, ArrowLeft } from 'lucide-react';
+import { ChefHat, Loader2, ArrowLeft, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+const DEMO_ACCOUNTS = [
+  { label: 'Owner', email: 'demo-owner@josephine.dev', description: 'Acceso completo' },
+  { label: 'Ops Manager', email: 'demo-ops@josephine.dev', description: 'Multi-local' },
+  { label: 'Manager Centro', email: 'demo-manager-centro@josephine.dev', description: 'Solo Centro' },
+  { label: 'Employee Centro', email: 'demo-employee-centro@josephine.dev', description: 'Vista limitada' },
+  { label: 'Manager Salamanca', email: 'demo-manager-salamanca@josephine.dev', description: 'Solo Salamanca' },
+];
+
+const DEMO_PASSWORD = 'Demo1234!';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const { signIn } = useAuth();
@@ -36,6 +47,48 @@ export default function Login() {
     }
     
     setLoading(false);
+  };
+
+  const handleDemoLogin = async (demoEmail: string) => {
+    setDemoLoading(demoEmail);
+    
+    try {
+      // First, try to seed demo users if they don't exist
+      const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
+      
+      if (seedError) {
+        console.warn('Could not seed demo users:', seedError);
+      }
+
+      // Wait a moment for data to propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Now try to login
+      const { error } = await signIn(demoEmail, DEMO_PASSWORD);
+      
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error al iniciar sesión demo",
+          description: error.message
+        });
+      } else {
+        toast({
+          title: "¡Bienvenido al modo demo!",
+          description: "Explora Josephine con datos de ejemplo"
+        });
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Demo login error:', err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo iniciar sesión en modo demo"
+      });
+    }
+    
+    setDemoLoading(null);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -200,6 +253,38 @@ export default function Login() {
                 Regístrate
               </Link>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Demo Mode Section */}
+        <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Modo Demo
+            </CardTitle>
+            <CardDescription>
+              Prueba Josephine con diferentes roles y permisos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {DEMO_ACCOUNTS.map((account) => (
+              <Button
+                key={account.email}
+                variant="outline"
+                className="w-full justify-between h-auto py-3"
+                onClick={() => handleDemoLogin(account.email)}
+                disabled={demoLoading !== null}
+              >
+                <div className="text-left">
+                  <div className="font-medium">{account.label}</div>
+                  <div className="text-xs text-muted-foreground">{account.description}</div>
+                </div>
+                {demoLoading === account.email && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+              </Button>
+            ))}
           </CardContent>
         </Card>
       </div>
