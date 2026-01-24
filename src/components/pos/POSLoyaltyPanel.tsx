@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { 
   Search, Star, Gift, User, X, Check, Loader2, 
   Crown, Award, Medal, Trophy, Sparkles, History,
-  TrendingUp, TrendingDown, Zap, Settings
+  TrendingUp, TrendingDown, Zap, Settings, UserPlus, Phone, Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export interface LoyaltyMember {
   id: string;
@@ -48,6 +50,7 @@ interface POSLoyaltyPanelProps {
   locationId: string;
   ticketTotal: number;
   pointsPerEuro: number;
+  welcomeBonus: number;
   selectedMember: LoyaltyMember | null;
   selectedReward: LoyaltyReward | null;
   onMemberSelect: (member: LoyaltyMember | null) => void;
@@ -66,6 +69,7 @@ export function POSLoyaltyPanel({
   locationId,
   ticketTotal,
   pointsPerEuro,
+  welcomeBonus,
   selectedMember,
   selectedReward,
   onMemberSelect,
@@ -79,6 +83,12 @@ export function POSLoyaltyPanel({
   const [loadingRewards, setLoadingRewards] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [activeTab, setActiveTab] = useState<'rewards' | 'history'>('rewards');
+  
+  // Quick registration state
+  const [showQuickRegister, setShowQuickRegister] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [registerForm, setRegisterForm] = useState({ name: '', email: '', phone: '' });
+  const [registering, setRegistering] = useState(false);
 
   // Calculate points to earn
   const pointsToEarn = Math.floor(ticketTotal * pointsPerEuro);
@@ -86,7 +96,7 @@ export function POSLoyaltyPanel({
   const TRANSACTION_CONFIG = {
     earned: { icon: TrendingUp, color: 'text-emerald-600', sign: '+', label: 'Ganados' },
     redeemed: { icon: Gift, color: 'text-primary', sign: '-', label: 'Canjeados' },
-    bonus: { icon: Zap, color: 'text-yellow-600', sign: '+', label: 'Bonus' },
+    bonus: { icon: Zap, color: 'text-amber-600', sign: '+', label: 'Bonus' },
     adjustment: { icon: Settings, color: 'text-muted-foreground', sign: '', label: 'Ajuste' },
     expired: { icon: TrendingDown, color: 'text-destructive', sign: '-', label: 'Expirados' },
   };
@@ -95,6 +105,9 @@ export function POSLoyaltyPanel({
     if (!searchQuery.trim() || searchQuery.length < 3) return;
     
     setSearching(true);
+    setHasSearched(true);
+    setShowQuickRegister(false);
+    
     try {
       const { data } = await supabase
         .from('loyalty_members')
@@ -103,11 +116,75 @@ export function POSLoyaltyPanel({
         .or(`email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,name.ilike.%${searchQuery}%`)
         .limit(5);
 
-      setSearchResults((data || []) as unknown as LoyaltyMember[]);
+      const results = (data || []) as unknown as LoyaltyMember[];
+      setSearchResults(results);
+      
+      // If no results, pre-fill register form with search query
+      if (results.length === 0) {
+        const isEmail = searchQuery.includes('@');
+        const isPhone = /^[+\d\s-]+$/.test(searchQuery);
+        setRegisterForm({
+          name: (!isEmail && !isPhone) ? searchQuery : '',
+          email: isEmail ? searchQuery : '',
+          phone: isPhone ? searchQuery : '',
+        });
+      }
     } catch (error) {
       console.error('Error searching members:', error);
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleQuickRegister = async () => {
+    if (!registerForm.name.trim()) {
+      toast.error('El nombre es obligatorio');
+      return;
+    }
+    if (!registerForm.email.trim() && !registerForm.phone.trim()) {
+      toast.error('Se requiere email o teléfono');
+      return;
+    }
+
+    setRegistering(true);
+    try {
+      const { data: newMember, error } = await supabase
+        .from('loyalty_members')
+        .insert({
+          group_id: groupId,
+          name: registerForm.name.trim(),
+          email: registerForm.email.trim() || null,
+          phone: registerForm.phone.trim() || null,
+          points_balance: welcomeBonus,
+          lifetime_points: welcomeBonus,
+        } as never)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create welcome bonus transaction if applicable
+      if (welcomeBonus > 0) {
+        await supabase.from('loyalty_transactions').insert({
+          member_id: newMember.id,
+          points: welcomeBonus,
+          type: 'bonus',
+          description: 'Bono de bienvenida',
+        } as never);
+      }
+
+      toast.success(`¡${registerForm.name} registrado con ${welcomeBonus} puntos de bienvenida!`);
+      
+      // Select the new member
+      handleMemberSelect(newMember as unknown as LoyaltyMember);
+      setShowQuickRegister(false);
+      setRegisterForm({ name: '', email: '', phone: '' });
+      setHasSearched(false);
+    } catch (error) {
+      console.error('Error registering member:', error);
+      toast.error('Error al registrar el cliente');
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -153,6 +230,8 @@ export function POSLoyaltyPanel({
     setAvailableRewards([]);
     setTransactions([]);
     setActiveTab('rewards');
+    setHasSearched(false);
+    setShowQuickRegister(false);
   };
 
   const TierIcon = selectedMember ? TIER_CONFIG[selectedMember.tier].icon : Star;
@@ -219,10 +298,104 @@ export function POSLoyaltyPanel({
             </div>
           )}
 
-          {searchResults.length === 0 && searchQuery.length >= 3 && !searching && (
-            <p className="text-xs text-muted-foreground text-center py-2">
-              No se encontraron clientes
-            </p>
+          {searchResults.length === 0 && hasSearched && !searching && !showQuickRegister && (
+            <div className="border rounded-lg bg-background p-3 space-y-2">
+              <p className="text-xs text-muted-foreground text-center">
+                No se encontraron clientes
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full gap-2"
+                onClick={() => setShowQuickRegister(true)}
+              >
+                <UserPlus className="h-4 w-4" />
+                Registrar nuevo cliente
+              </Button>
+            </div>
+          )}
+
+          {/* Quick Registration Form */}
+          {showQuickRegister && (
+            <div className="border rounded-lg bg-background p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Nuevo cliente</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  onClick={() => setShowQuickRegister(false)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                <div>
+                  <Label className="text-xs">Nombre *</Label>
+                  <div className="relative">
+                    <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Nombre completo"
+                      value={registerForm.name}
+                      onChange={(e) => setRegisterForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="h-8 pl-8 text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        type="email"
+                        placeholder="email@ejemplo.com"
+                        value={registerForm.email}
+                        onChange={(e) => setRegisterForm(prev => ({ ...prev, email: e.target.value }))}
+                        className="h-8 pl-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Teléfono</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        type="tel"
+                        placeholder="+34 600..."
+                        value={registerForm.phone}
+                        onChange={(e) => setRegisterForm(prev => ({ ...prev, phone: e.target.value }))}
+                        className="h-8 pl-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <p className="text-xs text-muted-foreground">
+                  Bono: <span className="font-medium text-primary">+{welcomeBonus} pts</span>
+                </p>
+                <Button 
+                  size="sm" 
+                  onClick={handleQuickRegister}
+                  disabled={registering}
+                  className="gap-1"
+                >
+                  {registering ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  Registrar
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       ) : (

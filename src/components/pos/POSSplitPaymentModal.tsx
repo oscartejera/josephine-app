@@ -108,6 +108,7 @@ export function POSSplitPaymentModal({
   // Loyalty state
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
   const [pointsPerEuro, setPointsPerEuro] = useState(1);
+  const [welcomeBonus, setWelcomeBonus] = useState(50);
   const [selectedMember, setSelectedMember] = useState<LoyaltyMember | null>(null);
   const [selectedReward, setSelectedReward] = useState<LoyaltyReward | null>(null);
 
@@ -117,13 +118,14 @@ export function POSSplitPaymentModal({
       if (!groupId) return;
       const { data } = await supabase
         .from('loyalty_settings')
-        .select('is_enabled, points_per_euro')
+        .select('is_enabled, points_per_euro, welcome_bonus')
         .eq('group_id', groupId)
         .single();
       
       if (data) {
         setLoyaltyEnabled(data.is_enabled || false);
         setPointsPerEuro(data.points_per_euro || 1);
+        setWelcomeBonus(data.welcome_bonus || 50);
       }
     };
     loadLoyaltySettings();
@@ -399,6 +401,7 @@ export function POSSplitPaymentModal({
             locationId={locationId}
             ticketTotal={total - rewardDiscount}
             pointsPerEuro={pointsPerEuro}
+            welcomeBonus={welcomeBonus}
             selectedMember={selectedMember}
             selectedReward={selectedReward}
             onMemberSelect={setSelectedMember}
