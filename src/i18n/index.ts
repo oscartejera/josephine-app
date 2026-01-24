@@ -9,11 +9,12 @@ import ca from './locales/ca.json';
 export const SUPPORTED_LANGUAGES = [
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'ca', name: 'Català', flag: '🏴󠁥󠁳󠁣󠁴󠁿' },
+  { code: 'ca', name: 'Català', flag: '🏴' },
 ] as const;
 
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number]['code'];
 
+// Initialize i18n synchronously before React renders
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -32,6 +33,9 @@ i18n
     },
     interpolation: {
       escapeValue: false,
+    },
+    react: {
+      useSuspense: false, // Prevent Suspense issues with SSR/hydration
     },
   });
 
