@@ -94,7 +94,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const [groupResult, locationsResult] = await Promise.all([
         supabase.from('groups').select('id, name').eq('id', groupId).single(),
-        supabase.from('locations').select('id, name, city').eq('group_id', groupId)
+        supabase.from('locations').select('id, name, city').eq('group_id', groupId).eq('active', true)
       ]);
 
       if (groupResult.data) {
