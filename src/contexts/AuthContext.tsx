@@ -55,9 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [realAccessibleLocationIds, setRealAccessibleLocationIds] = useState<string[]>([]);
 
-  // SIMPLIFIED: Any authenticated user is now treated as owner with full access
-  const isOwner = user !== null;
-  const hasGlobalScope = user !== null;
+  // Real RBAC: Check actual roles
+  const [realIsOwner, setRealIsOwner] = useState(false);
+  const [realHasGlobalScope, setRealHasGlobalScope] = useState(false);
+  const isOwner = realIsOwner;
+  const hasGlobalScope = realHasGlobalScope;
   const accessibleLocationIds = realAccessibleLocationIds;
 
   const fetchProfile = async (userId: string) => {
@@ -82,8 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRoles([]);
       }
 
-      // Note: is_owner and get_user_has_global_scope now always return true for authenticated users
-      // These calls are kept for backwards compatibility but their results are ignored
+      // Check if user is owner
+      const { data: ownerData } = await supabase.rpc('is_owner', { _user_id: userId });
+      setRealIsOwner(ownerData === true);
+
+      // Check global scope
+      const { data: globalData } = await supabase.rpc('get_user_has_global_scope', { _user_id: userId });
+      setRealHasGlobalScope(globalData === true);
 
       // Get accessible locations
       const { data: locationsData } = await supabase.rpc('get_user_accessible_locations', {
@@ -109,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRoles([]);
       setPermissions([]);
       setRealAccessibleLocationIds([]);
+      setRealIsOwner(false);
+      setRealHasGlobalScope(false);
     }
   }, []);
 
@@ -191,30 +200,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  // SIMPLIFIED: Any authenticated user has all permissions
+  // Real permission check using database roles
   const hasPermission = useCallback((permissionKey: string, locationId?: string | null): boolean => {
-    return user !== null;
-  }, [user]);
+    if (!user) return false;
+    if (isOwner) return true;
+    return permissions.some(p => p.permission_key === permissionKey);
+  }, [user, isOwner, permissions]);
 
-  // SIMPLIFIED: Any authenticated user has all action permissions
+  // Action permission check (same logic)
   const hasActionPermission = useCallback((permissionKey: string, locationId?: string | null): boolean => {
-    return user !== null;
-  }, [user]);
+    if (!user) return false;
+    if (isOwner) return true;
+    return permissions.some(p => p.permission_key === permissionKey);
+  }, [user, isOwner, permissions]);
 
-  // SIMPLIFIED: Any authenticated user has all permissions
+  // Check if user has any of the permissions
   const hasAnyPermission = useCallback((permissionKeys: string[]): boolean => {
-    return user !== null;
-  }, [user]);
+    if (!user) return false;
+    if (isOwner) return true;
+    return permissionKeys.some(key => permissions.some(p => p.permission_key === key));
+  }, [user, isOwner, permissions]);
 
-  // SIMPLIFIED: Any authenticated user is treated as having all roles
+  // Check role by name
   const hasRole = useCallback((roleName: string): boolean => {
-    return user !== null;
-  }, [user]);
+    if (!user) return false;
+    return roles.some(r => r.role_name === roleName);
+  }, [user, roles]);
 
-  // SIMPLIFIED: Any authenticated user is admin/ops
+  // Check if admin or ops
   const isAdminOrOps = useCallback((): boolean => {
-    return user !== null;
-  }, [user]);
+    if (!user) return false;
+    if (isOwner) return true;
+    return roles.some(r => ['admin', 'ops_manager'].includes(r.role_name));
+  }, [user, isOwner, roles]);
 
   return (
     <AuthContext.Provider value={{

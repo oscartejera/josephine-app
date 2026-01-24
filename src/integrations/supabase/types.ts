@@ -257,6 +257,69 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_clock_records: {
+        Row: {
+          clock_in: string
+          clock_in_lat: number | null
+          clock_in_lng: number | null
+          clock_out: string | null
+          clock_out_lat: number | null
+          clock_out_lng: number | null
+          created_at: string
+          employee_id: string
+          id: string
+          location_id: string
+          notes: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          clock_in?: string
+          clock_in_lat?: number | null
+          clock_in_lng?: number | null
+          clock_out?: string | null
+          clock_out_lat?: number | null
+          clock_out_lng?: number | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          location_id: string
+          notes?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          clock_in?: string
+          clock_in_lat?: number | null
+          clock_in_lng?: number | null
+          clock_out?: string | null
+          clock_out_lat?: number | null
+          clock_out_lng?: number | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_clock_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_clock_records_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_legal: {
         Row: {
           created_at: string
@@ -378,6 +441,7 @@ export type Database = {
           id: string
           location_id: string
           role_name: string | null
+          user_id: string | null
         }
         Insert: {
           active?: boolean | null
@@ -388,6 +452,7 @@ export type Database = {
           id?: string
           location_id: string
           role_name?: string | null
+          user_id?: string | null
         }
         Update: {
           active?: boolean | null
@@ -398,6 +463,7 @@ export type Database = {
           id?: string
           location_id?: string
           role_name?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -3295,6 +3361,7 @@ export type Database = {
           permission_key: string
         }[]
       }
+      get_user_primary_role: { Args: { _user_id: string }; Returns: string }
       get_user_roles_with_scope: {
         Args: { _user_id?: string }
         Returns: {

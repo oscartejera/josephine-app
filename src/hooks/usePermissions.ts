@@ -118,30 +118,41 @@ export function usePermissions() {
     loading 
   } = useAuth();
 
-  // SIMPLIFIED: Any authenticated user can view all sidebar items
+  // Check if user can view sidebar item based on permissions
   const canViewSidebarItem = useCallback((item: keyof typeof SIDEBAR_PERMISSIONS): boolean => {
-    return user !== null;
-  }, [user]);
+    if (!user) return false;
+    if (isOwner) return true;
+    const requiredPermissions = SIDEBAR_PERMISSIONS[item] as unknown as string[];
+    return hasAnyPermission(requiredPermissions);
+  }, [user, isOwner, hasAnyPermission]);
 
-  // SIMPLIFIED: Any authenticated user can access any location in their group
+  // Check location access
   const canAccessLocation = useCallback((locationId: string): boolean => {
-    return user !== null;
-  }, [user]);
+    if (!user) return false;
+    if (hasGlobalScope) return true;
+    return accessibleLocationIds.includes(locationId);
+  }, [user, hasGlobalScope, accessibleLocationIds]);
 
-  // SIMPLIFIED: Return all locations for authenticated users
+  // Filter locations by access
   const getAccessibleLocations = useCallback(<T extends { id: string }>(locations: T[]): T[] => {
-    return locations;
-  }, []);
+    if (hasGlobalScope) return locations;
+    return locations.filter(loc => accessibleLocationIds.includes(loc.id));
+  }, [hasGlobalScope, accessibleLocationIds]);
 
-  // SIMPLIFIED: Any authenticated user can see all locations
+  // Can show all locations dropdown
   const canShowAllLocations = useMemo(() => {
-    return user !== null;
-  }, [user]);
+    return hasGlobalScope;
+  }, [hasGlobalScope]);
 
-  // SIMPLIFIED: All authenticated users are treated as owners
+  // Get primary role from roles array
   const primaryRole = useMemo(() => {
-    return user !== null ? 'owner' : null;
-  }, [user]);
+    if (!roles || roles.length === 0) return null;
+    const roleOrder = ['owner', 'admin', 'ops_manager', 'finance', 'hr_payroll', 'store_manager', 'employee'];
+    for (const role of roleOrder) {
+      if (roles.some(r => r.role_name === role)) return role;
+    }
+    return roles[0]?.role_name || null;
+  }, [roles]);
 
   return {
     // State
