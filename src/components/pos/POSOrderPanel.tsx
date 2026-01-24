@@ -11,6 +11,7 @@ import { POSSplitPaymentModal, ReceiptData } from './POSSplitPaymentModal';
 import { POSReceiptDialog } from './POSReceiptDialog';
 import { POSModifierDialog } from './POSModifierDialog';
 import { cn } from '@/lib/utils';
+import { useApp } from '@/contexts/AppContext';
 
 interface OrderLineModifier {
   modifier_name: string;
@@ -43,6 +44,7 @@ interface POSOrderPanelProps {
 }
 
 export function POSOrderPanel({ table, products, locationId, onClose, onRefresh }: POSOrderPanelProps) {
+  const { group } = useApp();
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [ticketId, setTicketId] = useState<string | null>(table.current_ticket_id);
   const [loading, setLoading] = useState(false);
@@ -55,6 +57,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [modifierDialogOpen, setModifierDialogOpen] = useState(false);
   const [pendingProduct, setPendingProduct] = useState<POSProduct | null>(null);
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
+
+  const groupId = group?.id || '';
 
   // Calculate totals including modifier price deltas
   const calculateLineTotal = (line: OrderLine): number => {
@@ -394,7 +398,14 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
   };
 
-  const handlePayment = async (payments: { method: string; amount: number; tip: number; stripePaymentIntentId?: string }[]) => {
+  const handlePayment = async (
+    payments: { method: string; amount: number; tip: number; stripePaymentIntentId?: string }[],
+    loyaltyData?: {
+      memberId: string;
+      pointsEarned: number;
+      rewardRedeemed?: { id: string; value: number; type: string };
+    }
+  ) => {
     if (!ticketId) return;
 
     setLoading(true);
@@ -416,15 +427,57 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       // Determine primary payment method
       const primaryMethod = payments.length > 1 ? 'split' : payments[0]?.method || 'card';
 
+      // Update ticket with loyalty member if applicable
+      const ticketUpdate: Record<string, unknown> = {
+        status: 'closed', 
+        closed_at: new Date().toISOString(),
+        payment_method: primaryMethod,
+        tip_total: totalTip,
+      };
+
+      if (loyaltyData?.memberId) {
+        ticketUpdate.loyalty_member_id = loyaltyData.memberId;
+      }
+
       await supabase
         .from('tickets')
-        .update({
-          status: 'closed', 
-          closed_at: new Date().toISOString(),
-          payment_method: primaryMethod,
-          tip_total: totalTip,
-        })
+        .update(ticketUpdate)
         .eq('id', ticketId);
+
+      // Process loyalty rewards and points
+      if (loyaltyData) {
+        // Redeem reward first if selected
+        if (loyaltyData.rewardRedeemed) {
+          try {
+            await supabase.rpc('redeem_loyalty_reward', {
+              p_member_id: loyaltyData.memberId,
+              p_reward_id: loyaltyData.rewardRedeemed.id,
+              p_location_id: locationId,
+            });
+            toast.success('Recompensa canjeada');
+          } catch (error) {
+            console.error('Error redeeming reward:', error);
+            toast.error('Error al canjear recompensa');
+          }
+        }
+
+        // Add earned points
+        if (loyaltyData.pointsEarned > 0) {
+          try {
+            await supabase.rpc('add_loyalty_points', {
+              p_member_id: loyaltyData.memberId,
+              p_points: loyaltyData.pointsEarned,
+              p_type: 'earned',
+              p_description: `Compra en ${table.table_number}`,
+              p_location_id: locationId,
+              p_ticket_id: ticketId,
+            });
+            toast.success(`+${loyaltyData.pointsEarned} puntos acumulados`);
+          } catch (error) {
+            console.error('Error adding points:', error);
+          }
+        }
+      }
 
       // Generate receipt data
       const receipt: ReceiptData = {
@@ -440,7 +493,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         subtotal,
         tax,
         tip: totalTip,
-        total: total + totalTip,
+        total: total + totalTip - (loyaltyData?.rewardRedeemed?.value || 0),
         paymentMethod: payments.map(p => {
           switch(p.method) {
             case 'card': return 'Tarjeta';
@@ -449,6 +502,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
             default: return p.method;
           }
         }).join(', '),
+        loyaltyPointsEarned: loyaltyData?.pointsEarned,
+        loyaltyRewardRedeemed: loyaltyData?.rewardRedeemed ? `Descuento €${loyaltyData.rewardRedeemed.value.toFixed(2)}` : undefined,
       };
       
       setReceiptData(receipt);
@@ -772,6 +827,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           covers={table.seats}
           ticketId={ticketId}
           locationId={locationId}
+          groupId={groupId}
           onClose={() => setShowPayment(false)}
           onPayment={handlePayment}
           onPrintReceipt={handlePrintReceipt}

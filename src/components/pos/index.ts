@@ -14,3 +14,4 @@ export * from './PrintQueuePanel';
 export * from './POSModifierDialog';
 export * from './POSReservationDialog';
 export * from './POSReservationsPanel';
+export * from './POSLoyaltyPanel';
