@@ -10,11 +10,11 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const DEMO_ACCOUNTS = [
-  { label: 'Owner', email: 'demo-owner@josephine.dev', description: 'Acceso completo' },
-  { label: 'Ops Manager', email: 'demo-ops@josephine.dev', description: 'Multi-local' },
-  { label: 'Manager Centro', email: 'demo-manager-centro@josephine.dev', description: 'Solo Centro' },
-  { label: 'Employee Centro', email: 'demo-employee-centro@josephine.dev', description: 'Vista limitada' },
-  { label: 'Manager Salamanca', email: 'demo-manager-salamanca@josephine.dev', description: 'Solo Salamanca' },
+  { label: 'Owner', email: 'owner@demo.com', description: 'Acceso completo' },
+  { label: 'Ops Manager', email: 'ops@demo.com', description: 'Multi-local' },
+  { label: 'Manager Centro', email: 'manager.centro@demo.com', description: 'Solo Centro' },
+  { label: 'Employee Centro', email: 'employee.centro@demo.com', description: 'Vista limitada' },
+  { label: 'Manager Salamanca', email: 'manager.salamanca@demo.com', description: 'Solo Salamanca' },
 ];
 
 const DEMO_PASSWORD = 'Demo1234!';
