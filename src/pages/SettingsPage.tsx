@@ -24,8 +24,9 @@ import { PrinterConfigManager } from '@/components/settings/PrinterConfigManager
 import { LocationManager } from '@/components/settings/LocationManager';
 import { SupplierIntegrationManager } from '@/components/settings/SupplierIntegrationManager';
 import { BookingSettingsManager } from '@/components/settings/BookingSettingsManager';
+import { LoyaltyManager } from '@/components/settings/LoyaltyManager';
 import { Progress } from '@/components/ui/progress';
-import { Receipt, CalendarDays } from 'lucide-react';
+import { Receipt, CalendarDays, Gift } from 'lucide-react';
 
 interface PaymentMethod {
   id: string;
@@ -264,6 +265,7 @@ export default function SettingsPage() {
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="locations">Locales</TabsTrigger>
           <TabsTrigger value="booking">Reservas Online</TabsTrigger>
+          <TabsTrigger value="loyalty">Fidelización</TabsTrigger>
           <TabsTrigger value="objectives">Objetivos</TabsTrigger>
           <TabsTrigger value="suppliers">Proveedores</TabsTrigger>
           <TabsTrigger value="kds">Destinos KDS</TabsTrigger>
@@ -280,6 +282,10 @@ export default function SettingsPage() {
 
         <TabsContent value="booking">
           <BookingSettingsManager />
+        </TabsContent>
+
+        <TabsContent value="loyalty">
+          <LoyaltyManager />
         </TabsContent>
 
         <TabsContent value="suppliers">

@@ -898,6 +898,286 @@ export type Database = {
           },
         ]
       }
+      loyalty_members: {
+        Row: {
+          created_at: string
+          email: string | null
+          group_id: string
+          id: string
+          lifetime_points: number
+          name: string
+          notes: string | null
+          phone: string | null
+          points_balance: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          group_id: string
+          id?: string
+          lifetime_points?: number
+          name: string
+          notes?: string | null
+          phone?: string | null
+          points_balance?: number
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          group_id?: string
+          id?: string
+          lifetime_points?: number
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          points_balance?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_redemptions: {
+        Row: {
+          applied_at: string | null
+          code: string | null
+          id: string
+          location_id: string | null
+          member_id: string
+          points_used: number
+          redeemed_at: string
+          reward_id: string
+          status: string
+          ticket_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          code?: string | null
+          id?: string
+          location_id?: string | null
+          member_id: string
+          points_used: number
+          redeemed_at?: string
+          reward_id: string
+          status?: string
+          ticket_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          code?: string | null
+          id?: string
+          location_id?: string | null
+          member_id?: string
+          points_used?: number
+          redeemed_at?: string
+          reward_id?: string
+          status?: string
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_redemptions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_redemptions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_redemptions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_rewards: {
+        Row: {
+          created_at: string
+          current_redemptions: number
+          description: string | null
+          group_id: string
+          id: string
+          is_active: boolean
+          max_redemptions: number | null
+          name: string
+          points_cost: number
+          product_id: string | null
+          reward_type: string
+          valid_from: string | null
+          valid_until: string | null
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          current_redemptions?: number
+          description?: string | null
+          group_id: string
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          name: string
+          points_cost: number
+          product_id?: string | null
+          reward_type?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          current_redemptions?: number
+          description?: string | null
+          group_id?: string
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          name?: string
+          points_cost?: number
+          product_id?: string | null
+          reward_type?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_rewards_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_rewards_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_settings: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          is_enabled: boolean
+          points_per_euro: number
+          tier_rules: Json
+          updated_at: string
+          welcome_bonus: number
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          is_enabled?: boolean
+          points_per_euro?: number
+          tier_rules?: Json
+          updated_at?: string
+          welcome_bonus?: number
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_enabled?: boolean
+          points_per_euro?: number
+          tier_rules?: Json
+          updated_at?: string
+          welcome_bonus?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          location_id: string | null
+          member_id: string
+          points: number
+          ticket_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location_id?: string | null
+          member_id: string
+          points: number
+          ticket_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location_id?: string | null
+          member_id?: string
+          points?: number
+          ticket_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_engineering_actions: {
         Row: {
           action_type: string
@@ -3227,6 +3507,39 @@ export type Database = {
       }
     }
     Functions: {
+      add_loyalty_points: {
+        Args: {
+          p_description?: string
+          p_location_id?: string
+          p_member_id: string
+          p_points: number
+          p_ticket_id?: string
+          p_type: string
+        }
+        Returns: {
+          created_at: string
+          email: string | null
+          group_id: string
+          id: string
+          lifetime_points: number
+          name: string
+          notes: string | null
+          phone: string | null
+          points_balance: number
+          tier: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "loyalty_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      calculate_loyalty_tier: {
+        Args: { p_lifetime_points: number }
+        Returns: string
+      }
       can_access_location:
         | { Args: { _location_id: string }; Returns: boolean }
         | { Args: { _location_id: string; _user_id: string }; Returns: boolean }
@@ -3412,6 +3725,31 @@ export type Database = {
           total_units_period: number
           units: number
         }[]
+      }
+      redeem_loyalty_reward: {
+        Args: {
+          p_location_id?: string
+          p_member_id: string
+          p_reward_id: string
+        }
+        Returns: {
+          applied_at: string | null
+          code: string | null
+          id: string
+          location_id: string | null
+          member_id: string
+          points_used: number
+          redeemed_at: string
+          reward_id: string
+          status: string
+          ticket_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "loyalty_redemptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       seed_demo_labour_data: {
         Args: { p_days?: number; p_locations?: number }
