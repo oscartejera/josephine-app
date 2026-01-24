@@ -39,6 +39,10 @@ import KDS from "@/pages/KDS";
 import KDSDashboard from "@/pages/KDSDashboard";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
+import StaffFloor from "@/pages/StaffFloor";
+import StaffClock from "@/pages/StaffClock";
+import StaffKDS from "@/pages/StaffKDS";
+import { StaffLayout } from "@/components/staff/StaffLayout";
 
 const queryClient = new QueryClient();
 
@@ -143,6 +147,19 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
+      {/* Staff routes - simplified view for employees */}
+      <Route path="/staff/:locationId" element={
+        <ProtectedRoute>
+          <AppProvider>
+            <StaffLayout />
+          </AppProvider>
+        </ProtectedRoute>
+      }>
+        <Route index element={<StaffFloor />} />
+        <Route path="floor" element={<StaffFloor />} />
+        <Route path="clock" element={<StaffClock />} />
+        <Route path="kds" element={<StaffKDS />} />
+      </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
