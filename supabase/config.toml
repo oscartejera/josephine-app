@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.process_stripe_payment]
 verify_jwt = false
+
+[functions.send_daily_report]
+verify_jwt = false
+
+[functions.send_weekly_report]
+verify_jwt = false
+
+[functions.send_kpi_alerts]
+verify_jwt = false

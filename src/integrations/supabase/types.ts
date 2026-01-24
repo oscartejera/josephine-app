@@ -746,6 +746,57 @@ export type Database = {
           },
         ]
       }
+      kpi_alert_thresholds: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          is_enabled: boolean | null
+          kpi_name: string
+          location_id: string | null
+          max_threshold: number | null
+          min_threshold: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          is_enabled?: boolean | null
+          kpi_name: string
+          location_id?: string | null
+          max_threshold?: number | null
+          min_threshold?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          is_enabled?: boolean | null
+          kpi_name?: string
+          location_id?: string | null
+          max_threshold?: number | null
+          min_threshold?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_alert_thresholds_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_alert_thresholds_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_daily: {
         Row: {
           created_at: string
@@ -2545,6 +2596,108 @@ export type Database = {
           },
         ]
       }
+      report_logs: {
+        Row: {
+          error_message: string | null
+          group_id: string
+          id: string
+          location_id: string | null
+          recipient_email: string
+          report_data: Json | null
+          report_type: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          group_id: string
+          id?: string
+          location_id?: string | null
+          recipient_email: string
+          report_data?: Json | null
+          report_type: string
+          sent_at?: string | null
+          status: string
+        }
+        Update: {
+          error_message?: string | null
+          group_id?: string
+          id?: string
+          location_id?: string | null
+          recipient_email?: string
+          report_data?: Json | null
+          report_type?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_logs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_subscriptions: {
+        Row: {
+          created_at: string | null
+          email_override: string | null
+          group_id: string
+          id: string
+          is_enabled: boolean | null
+          location_id: string | null
+          report_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_override?: string | null
+          group_id: string
+          id?: string
+          is_enabled?: boolean | null
+          location_id?: string | null
+          report_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_override?: string | null
+          group_id?: string
+          id?: string
+          is_enabled?: boolean | null
+          location_id?: string | null
+          report_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_subscriptions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_subscriptions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           confirmation_sent_at: string | null
@@ -3543,6 +3696,10 @@ export type Database = {
       can_access_location:
         | { Args: { _location_id: string }; Returns: boolean }
         | { Args: { _location_id: string; _user_id: string }; Returns: boolean }
+      check_kpi_alerts: {
+        Args: { p_date?: string; p_group_id: string }
+        Returns: Json
+      }
       cleanup_expired_otps: { Args: never; Returns: undefined }
       compute_hourly_cost: { Args: { p_employee_id: string }; Returns: number }
       forecast_needs_refresh: {
@@ -3550,6 +3707,10 @@ export type Database = {
         Returns: boolean
       }
       get_accessible_location_ids: { Args: never; Returns: string[] }
+      get_daily_sales_summary: {
+        Args: { p_date?: string; p_group_id: string; p_location_id?: string }
+        Returns: Json
+      }
       get_labour_kpis: {
         Args: {
           date_from: string
@@ -3683,6 +3844,10 @@ export type Database = {
           role_id: string
           role_name: string
         }[]
+      }
+      get_weekly_sales_summary: {
+        Args: { p_group_id: string; p_week_start?: string }
+        Returns: Json
       }
       has_payroll_role: { Args: never; Returns: boolean }
       has_permission: {
