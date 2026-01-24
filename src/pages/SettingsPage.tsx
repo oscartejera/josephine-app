@@ -25,8 +25,10 @@ import { LocationManager } from '@/components/settings/LocationManager';
 import { SupplierIntegrationManager } from '@/components/settings/SupplierIntegrationManager';
 import { BookingSettingsManager } from '@/components/settings/BookingSettingsManager';
 import { LoyaltyManager } from '@/components/settings/LoyaltyManager';
+import { LanguageSelector } from '@/components/settings/LanguageSelector';
 import { Progress } from '@/components/ui/progress';
-import { Receipt, CalendarDays, Gift } from 'lucide-react';
+import { Receipt, CalendarDays, Gift, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PaymentMethod {
   id: string;
@@ -49,6 +51,7 @@ interface LocationSetting {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const { locations, group } = useApp();
   const { profile } = useAuth();
   const { isOwner, hasPermission } = usePermissions();
@@ -257,24 +260,31 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-display font-bold">Settings</h1>
-        <p className="text-muted-foreground">Configuración del grupo y locales</p>
+        <h1 className="text-2xl font-display font-bold">{t('settings.title')}</h1>
+        <p className="text-muted-foreground">{t('nav.settings')}</p>
       </div>
 
-      <Tabs defaultValue="locations">
+      <Tabs defaultValue="general">
         <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="locations">Locales</TabsTrigger>
-          <TabsTrigger value="booking">Reservas Online</TabsTrigger>
-          <TabsTrigger value="loyalty">Fidelización</TabsTrigger>
-          <TabsTrigger value="objectives">Objetivos</TabsTrigger>
-          <TabsTrigger value="suppliers">Proveedores</TabsTrigger>
-          <TabsTrigger value="kds">Destinos KDS</TabsTrigger>
-          <TabsTrigger value="printers">Impresoras</TabsTrigger>
-          <TabsTrigger value="payment">Payment</TabsTrigger>
+          <TabsTrigger value="general">{t('settings.general')}</TabsTrigger>
+          <TabsTrigger value="locations">{t('settings.locations')}</TabsTrigger>
+          <TabsTrigger value="booking">{t('settings.bookings')}</TabsTrigger>
+          <TabsTrigger value="loyalty">{t('settings.loyalty')}</TabsTrigger>
+          <TabsTrigger value="objectives">{t('settings.objectives')}</TabsTrigger>
+          <TabsTrigger value="suppliers">{t('settings.suppliers')}</TabsTrigger>
+          <TabsTrigger value="kds">{t('settings.kdsDestinations')}</TabsTrigger>
+          <TabsTrigger value="printers">{t('settings.printers')}</TabsTrigger>
+          <TabsTrigger value="payment">{t('settings.paymentMethods')}</TabsTrigger>
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
-          <TabsTrigger value="export">Exportar</TabsTrigger>
-          <TabsTrigger value="demo">Demo</TabsTrigger>
+          <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
+          <TabsTrigger value="demo">{t('settings.demoData')}</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="general">
+          <div className="space-y-6">
+            <LanguageSelector />
+          </div>
+        </TabsContent>
 
         <TabsContent value="locations">
           <LocationManager />
