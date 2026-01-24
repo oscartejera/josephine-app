@@ -3864,7 +3864,7 @@ export type Database = {
       }
       is_admin_or_ops:
         | { Args: never; Returns: boolean }
-        | { Args: { _user_id?: string }; Returns: boolean }
+        | { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_owner_or_admin: { Args: { _user_id?: string }; Returns: boolean }
       is_payroll_admin: { Args: never; Returns: boolean }
