@@ -3824,10 +3824,9 @@ export type Database = {
         Returns: string[]
       }
       get_user_group_id: { Args: never; Returns: string }
-      get_user_has_global_scope: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      get_user_has_global_scope:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id: string }; Returns: boolean }
       get_user_permissions: {
         Args: { _location_id?: string; _user_id?: string }
         Returns: {
