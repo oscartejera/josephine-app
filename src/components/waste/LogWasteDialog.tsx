@@ -81,7 +81,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
     },
   });
 
-  // Fetch inventory items
+  // Fetch inventory items from database (synced with POS products)
   useEffect(() => {
     async function fetchItems() {
       setIsLoadingItems(true);
@@ -92,24 +92,9 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
 
       if (error) {
         console.error('Error fetching inventory items:', error);
-        // Generate demo items if none exist
-        setInventoryItems([
-          { id: 'demo-1', name: 'Ensalada mixta', last_cost: 2.50, unit: 'kg' },
-          { id: 'demo-2', name: 'Tomate fresco', last_cost: 1.80, unit: 'kg' },
-          { id: 'demo-3', name: 'Lechuga romana', last_cost: 1.20, unit: 'kg' },
-          { id: 'demo-4', name: 'Pollo asado', last_cost: 8.50, unit: 'kg' },
-          { id: 'demo-5', name: 'Salmón', last_cost: 15.00, unit: 'kg' },
-          { id: 'demo-6', name: 'Queso manchego', last_cost: 12.00, unit: 'kg' },
-          { id: 'demo-7', name: 'Pan de barra', last_cost: 0.80, unit: 'unit' },
-          { id: 'demo-8', name: 'Leche entera', last_cost: 0.95, unit: 'L' },
-        ]);
+        setInventoryItems([]);
       } else {
-        setInventoryItems(data?.length ? data : [
-          { id: 'demo-1', name: 'Ensalada mixta', last_cost: 2.50, unit: 'kg' },
-          { id: 'demo-2', name: 'Tomate fresco', last_cost: 1.80, unit: 'kg' },
-          { id: 'demo-3', name: 'Lechuga romana', last_cost: 1.20, unit: 'kg' },
-          { id: 'demo-4', name: 'Pollo asado', last_cost: 8.50, unit: 'kg' },
-        ]);
+        setInventoryItems(data || []);
       }
       setIsLoadingItems(false);
     }
