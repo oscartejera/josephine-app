@@ -60,17 +60,17 @@ export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTabl
   if (isLoading || !data) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle>Channels</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold">Channels</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[200px] w-full" />
+          <Skeleton className="h-[180px] w-full" />
         </CardContent>
       </Card>
     );
   }
 
-  const projectedLabel = compareMode === 'forecast' ? 'Projected' : 'Previous';
+  const projectedLabel = compareMode === 'forecast' ? 'Forecast' : 'Previous';
 
   // Calculate totals
   const totalSales = data.channels.reduce((sum, c) => sum + c.sales, 0);
@@ -81,50 +81,53 @@ export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTabl
 
   return (
     <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden">
-      <CardHeader className="pb-0">
+      <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">Channels</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 pt-4">
+      <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow className="border-b-0 bg-muted/30">
-              <TableHead className="w-[140px]"></TableHead>
-              <TableHead colSpan={2} className="text-center border-l">Sales</TableHead>
-              <TableHead colSpan={2} className="text-center border-l">Avg check size</TableHead>
-            </TableRow>
-            <TableRow>
-              <TableHead className="font-medium">Channel</TableHead>
-              <TableHead className="text-right border-l">Actual</TableHead>
-              <TableHead className="text-right">{projectedLabel}</TableHead>
-              <TableHead className="text-right border-l">Actual</TableHead>
-              <TableHead className="text-right">{projectedLabel}</TableHead>
+            <TableRow className="border-b-0 bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-[100px] py-2 text-xs font-medium">Channel</TableHead>
+              <TableHead className="text-right py-2 text-xs font-medium border-l">Sales</TableHead>
+              <TableHead className="text-right py-2 text-xs font-medium">{projectedLabel}</TableHead>
+              <TableHead className="text-right py-2 text-xs font-medium text-muted-foreground">% total</TableHead>
+              <TableHead className="text-right py-2 text-xs font-medium border-l">ACS</TableHead>
+              <TableHead className="text-right py-2 text-xs font-medium">{projectedLabel}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.channels.map((channel) => (
-              <TableRow key={channel.channel}>
-                <TableCell className="font-medium">{channel.channel}</TableCell>
-                <TableCell className="border-l">
-                  <DeltaCell value={channel.sales} delta={channel.salesDelta} />
-                </TableCell>
-                <TableCell>
-                  <DeltaCell value={channel.projectedSales} delta={channel.projectedSalesDelta} />
-                </TableCell>
-                <TableCell className="border-l">
-                  <AcsDeltaCell value={channel.acs} delta={channel.acsDelta} />
-                </TableCell>
-                <TableCell>
-                  <AcsDeltaCell value={channel.projectedAcs} delta={channel.projectedAcsDelta} />
-                </TableCell>
-              </TableRow>
-            ))}
+            {data.channels.map((channel) => {
+              const percentOfTotal = totalSales > 0 ? (channel.sales / totalSales) * 100 : 0;
+              return (
+                <TableRow key={channel.channel} className="hover:bg-muted/20">
+                  <TableCell className="font-medium py-2.5 text-sm">{channel.channel}</TableCell>
+                  <TableCell className="border-l py-2.5">
+                    <DeltaCell value={channel.sales} delta={channel.salesDelta} />
+                  </TableCell>
+                  <TableCell className="py-2.5">
+                    <div className="text-right font-medium">{formatCurrency(channel.projectedSales)}</div>
+                  </TableCell>
+                  <TableCell className="py-2.5">
+                    <div className="text-right text-sm text-muted-foreground">{percentOfTotal.toFixed(0)}%</div>
+                  </TableCell>
+                  <TableCell className="border-l py-2.5">
+                    <AcsDeltaCell value={channel.acs} delta={channel.acsDelta} />
+                  </TableCell>
+                  <TableCell className="py-2.5">
+                    <div className="text-right font-medium">€{channel.projectedAcs.toFixed(2)}</div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {/* Total row */}
-            <TableRow className="bg-muted/30 font-semibold">
-              <TableCell>Total</TableCell>
-              <TableCell className="text-right border-l">{formatCurrency(totalSales)}</TableCell>
-              <TableCell className="text-right">{formatCurrency(totalProjected)}</TableCell>
-              <TableCell className="text-right border-l">€{avgAcs.toFixed(2)}</TableCell>
-              <TableCell className="text-right">€{avgProjectedAcs.toFixed(2)}</TableCell>
+            <TableRow className="bg-muted/40 font-semibold hover:bg-muted/40">
+              <TableCell className="py-2.5 text-sm">Total</TableCell>
+              <TableCell className="text-right border-l py-2.5">{formatCurrency(totalSales)}</TableCell>
+              <TableCell className="text-right py-2.5">{formatCurrency(totalProjected)}</TableCell>
+              <TableCell className="text-right py-2.5 text-muted-foreground">100%</TableCell>
+              <TableCell className="text-right border-l py-2.5">€{avgAcs.toFixed(2)}</TableCell>
+              <TableCell className="text-right py-2.5">€{avgProjectedAcs.toFixed(2)}</TableCell>
             </TableRow>
           </TableBody>
         </Table>

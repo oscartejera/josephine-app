@@ -58,10 +58,11 @@ export interface LocationSalesData {
 export interface ChartDataPoint {
   label: string;
   actual: number;
-  forecastLive: number;
   forecast: number;
   avgCheckSize: number;
   avgCheckForecast: number;
+  orders?: number;
+  forecastOrders?: number;
 }
 
 export interface BISalesData {
@@ -70,10 +71,16 @@ export interface BISalesData {
     salesToDateDelta: number;
     avgCheckSize: number;
     avgCheckSizeDelta: number;
+    totalOrders: number;
+    totalOrdersDelta: number;
+    forecastAccuracy: number;
     dwellTime: number | null;
     dwellTimeDelta: number | null;
     channelBreakdown: { channel: string; value: number; percentage: number }[];
     acsBreakdown: { channel: string; value: number }[];
+    salesSparkline: number[];
+    ordersSparkline: number[];
+    acsSparkline: number[];
   };
   chartData: ChartDataPoint[];
   channels: ChannelData[];
@@ -98,19 +105,32 @@ function generateDemoData(dateRange: BIDateRange, isSingleDay: boolean): BISales
   const chartData: ChartDataPoint[] = days.map((d, i) => {
     const base = 2000 + Math.random() * 3000;
     const forecastBase = base * (0.9 + Math.random() * 0.2);
+    const orders = Math.round(base / 25);
     return {
       label: isSingleDay ? format(d, 'HH:mm') : format(d, 'EEE, dd'),
       actual: Math.round(base),
-      forecastLive: Math.round(forecastBase * 1.05),
       forecast: Math.round(forecastBase),
       avgCheckSize: 18 + Math.random() * 8,
-      avgCheckForecast: 20 + Math.random() * 5
+      avgCheckForecast: 20 + Math.random() * 5,
+      orders,
+      forecastOrders: Math.round(orders * 0.95)
     };
   });
 
   const totalSales = chartData.reduce((sum, d) => sum + d.actual, 0);
   const totalForecast = chartData.reduce((sum, d) => sum + d.forecast, 0);
+  const totalOrders = chartData.reduce((sum, d) => sum + (d.orders || 0), 0);
   const avgAcs = chartData.reduce((sum, d) => sum + d.avgCheckSize, 0) / chartData.length;
+
+  // Generate sparkline data (last 7 days trend)
+  const salesSparkline = Array.from({ length: 7 }, () => 2000 + Math.random() * 1500);
+  const ordersSparkline = Array.from({ length: 7 }, () => 80 + Math.random() * 40);
+  const acsSparkline = Array.from({ length: 7 }, () => 18 + Math.random() * 8);
+
+  // Calculate forecast accuracy
+  const forecastAccuracy = totalForecast > 0 
+    ? Math.round((1 - Math.abs(totalSales - totalForecast) / totalForecast) * 100)
+    : 0;
 
   return {
     kpis: {
@@ -118,6 +138,9 @@ function generateDemoData(dateRange: BIDateRange, isSingleDay: boolean): BISales
       salesToDateDelta: ((totalSales - totalForecast) / totalForecast) * 100,
       avgCheckSize: avgAcs,
       avgCheckSizeDelta: 2.5,
+      totalOrders,
+      totalOrdersDelta: -1.3,
+      forecastAccuracy: Math.max(0, Math.min(100, forecastAccuracy)),
       dwellTime: 42,
       dwellTimeDelta: -3.2,
       channelBreakdown: [
@@ -129,7 +152,10 @@ function generateDemoData(dateRange: BIDateRange, isSingleDay: boolean): BISales
         { channel: 'Dine-in', value: avgAcs * 1.1 },
         { channel: 'Pick-up', value: avgAcs * 0.85 },
         { channel: 'Delivery', value: avgAcs * 0.95 }
-      ]
+      ],
+      salesSparkline,
+      ordersSparkline,
+      acsSparkline
     },
     chartData,
     channels: [
@@ -374,13 +400,15 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
           const hourForecast = getHourlyForecast(dailyForecastTotal, hourNum);
 
+          const hourOrders = hourTickets.length;
           chartData.push({
             label: format(hour, 'HH:mm'),
             actual: hourSales,
-            forecastLive: hourForecast * 1.05,
             forecast: hourForecast,
             avgCheckSize: hourCovers > 0 ? hourSales / hourCovers : avgCheckSize,
-            avgCheckForecast: forecastAvgCheckSize
+            avgCheckForecast: forecastAvgCheckSize,
+            orders: hourOrders,
+            forecastOrders: Math.round(hourOrders * (totalForecast / totalSales || 0.95))
           });
         });
       } else {
@@ -397,13 +425,15 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             .filter(f => f.date === dayStr)
             .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
 
+          const dayOrders = dayTickets.length;
           chartData.push({
             label: format(day, 'EEE, dd'),
             actual: daySales,
-            forecastLive: dayForecast * 1.05,
             forecast: dayForecast,
             avgCheckSize: dayCovers > 0 ? daySales / dayCovers : (dayForecast > 0 ? forecastAvgCheckSize : 0),
-            avgCheckForecast: forecastAvgCheckSize
+            avgCheckForecast: forecastAvgCheckSize,
+            orders: dayOrders,
+            forecastOrders: Math.round(dayOrders * (totalForecast / totalSales || 0.95))
           });
         });
       }
@@ -505,16 +535,43 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         };
       });
 
+      // Calculate forecast accuracy (based on MAPE)
+      const dataWithBoth = chartData.filter(d => d.actual > 0 && d.forecast > 0);
+      let forecastAccuracy = 0;
+      if (dataWithBoth.length > 0) {
+        const mape = dataWithBoth.reduce((sum, d) => {
+          return sum + Math.abs((d.actual - d.forecast) / d.forecast);
+        }, 0) / dataWithBoth.length;
+        forecastAccuracy = Math.max(0, Math.min(100, Math.round((1 - mape) * 100)));
+      }
+
+      // Generate sparklines from chart data
+      const salesSparkline = chartData.slice(-7).map(d => d.actual);
+      const ordersSparkline = chartData.slice(-7).map(d => d.orders || 0);
+      const acsSparkline = chartData.slice(-7).map(d => d.avgCheckSize);
+
+      // Calculate orders delta
+      const totalOrdersForecast = chartData.reduce((sum, d) => sum + (d.forecastOrders || 0), 0);
+      const totalOrdersDelta = totalOrdersForecast > 0 
+        ? ((totalOrders - totalOrdersForecast) / totalOrdersForecast) * 100 
+        : 0;
+
       return {
         kpis: {
           salesToDate: totalSales,
           salesToDateDelta,
           avgCheckSize,
           avgCheckSizeDelta,
+          totalOrders,
+          totalOrdersDelta,
+          forecastAccuracy,
           dwellTime,
           dwellTimeDelta: -3.2, // Placeholder for now
           channelBreakdown,
-          acsBreakdown
+          acsBreakdown,
+          salesSparkline,
+          ordersSparkline,
+          acsSparkline
         },
         chartData,
         channels: channelsData,
