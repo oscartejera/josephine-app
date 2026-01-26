@@ -3937,6 +3937,10 @@ export type Database = {
         Args: { p_group_id: string }
         Returns: undefined
       }
+      seed_waste_for_pos_products: {
+        Args: { p_group_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:

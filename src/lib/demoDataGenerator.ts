@@ -122,27 +122,31 @@ const STOCK_COUNT_ITEMS = [
   { name: 'Coffee beans', unit: 'kg' },
 ];
 
-// ============= WASTE ITEMS =============
-
+// WASTE_ITEMS now derived from POS products dynamically
+// These are fallback items that match the actual POS menu structure
 const WASTE_ITEMS: { name: string; category: string; unit: string; avgCost: number; type: 'ingredient' | 'product' }[] = [
-  { name: 'Tomatoes', category: 'Fresh', unit: 'kg', avgCost: 2.5, type: 'ingredient' },
-  { name: 'Lettuce', category: 'Fresh', unit: 'kg', avgCost: 1.8, type: 'ingredient' },
-  { name: 'Avocado', category: 'Fresh', unit: 'units', avgCost: 1.5, type: 'ingredient' },
-  { name: 'Onions', category: 'Fresh', unit: 'kg', avgCost: 1.2, type: 'ingredient' },
-  { name: 'Milk', category: 'Dairy', unit: 'L', avgCost: 1.1, type: 'ingredient' },
-  { name: 'Cheese', category: 'Dairy', unit: 'kg', avgCost: 8.5, type: 'ingredient' },
-  { name: 'Butter', category: 'Dairy', unit: 'kg', avgCost: 6.0, type: 'ingredient' },
-  { name: 'Chicken Breast', category: 'Protein', unit: 'kg', avgCost: 7.5, type: 'ingredient' },
-  { name: 'Beef Steak', category: 'Protein', unit: 'kg', avgCost: 18.0, type: 'ingredient' },
-  { name: 'Salmon Fillet', category: 'Protein', unit: 'kg', avgCost: 22.0, type: 'ingredient' },
-  { name: 'Frozen Fries', category: 'Frozen', unit: 'kg', avgCost: 2.0, type: 'ingredient' },
-  { name: 'Ice Cream', category: 'Frozen', unit: 'L', avgCost: 4.5, type: 'product' },
-  { name: 'House Dressing', category: 'Sauce', unit: 'L', avgCost: 3.0, type: 'ingredient' },
-  { name: 'BBQ Sauce', category: 'Sauce', unit: 'L', avgCost: 2.5, type: 'ingredient' },
-  { name: 'Bread Rolls', category: 'Dry Goods', unit: 'units', avgCost: 0.3, type: 'ingredient' },
-  { name: 'Pasta', category: 'Dry Goods', unit: 'kg', avgCost: 1.5, type: 'ingredient' },
-  { name: 'Burger', category: 'Product', unit: 'units', avgCost: 4.5, type: 'product' },
-  { name: 'Salad Bowl', category: 'Product', unit: 'units', avgCost: 3.0, type: 'product' },
+  // Bebidas
+  { name: 'Agua Mineral', category: 'Bebidas', unit: 'units', avgCost: 0.75, type: 'product' },
+  { name: 'Coca-Cola', category: 'Bebidas', unit: 'units', avgCost: 1.05, type: 'product' },
+  { name: 'Cerveza Estrella', category: 'Bebidas', unit: 'units', avgCost: 1.20, type: 'product' },
+  { name: 'Vino Tinto (copa)', category: 'Bebidas', unit: 'units', avgCost: 1.50, type: 'product' },
+  { name: 'Café con Leche', category: 'Bebidas', unit: 'units', avgCost: 0.60, type: 'product' },
+  // Entrantes
+  { name: 'Patatas Bravas', category: 'Entrantes', unit: 'units', avgCost: 2.10, type: 'product' },
+  { name: 'Croquetas Jamón', category: 'Entrantes', unit: 'units', avgCost: 2.70, type: 'product' },
+  { name: 'Gazpacho', category: 'Entrantes', unit: 'units', avgCost: 1.95, type: 'product' },
+  { name: 'Ensalada Mixta', category: 'Entrantes', unit: 'units', avgCost: 2.55, type: 'product' },
+  { name: 'Jamón Ibérico', category: 'Entrantes', unit: 'units', avgCost: 5.40, type: 'product' },
+  // Principales
+  { name: 'Paella Valenciana', category: 'Principales', unit: 'units', avgCost: 4.80, type: 'product' },
+  { name: 'Pulpo a la Gallega', category: 'Principales', unit: 'units', avgCost: 5.85, type: 'product' },
+  { name: 'Lubina al Horno', category: 'Principales', unit: 'units', avgCost: 5.70, type: 'product' },
+  { name: 'Secreto Ibérico', category: 'Principales', unit: 'units', avgCost: 5.40, type: 'product' },
+  { name: 'Entrecot a la Brasa', category: 'Principales', unit: 'units', avgCost: 6.60, type: 'product' },
+  // Postres
+  { name: 'Tarta de Queso', category: 'Postres', unit: 'units', avgCost: 2.10, type: 'product' },
+  { name: 'Crema Catalana', category: 'Postres', unit: 'units', avgCost: 1.80, type: 'product' },
+  { name: 'Helado Artesano', category: 'Postres', unit: 'units', avgCost: 1.65, type: 'product' },
 ];
 
 // ============= MAIN GENERATOR CLASS =============
