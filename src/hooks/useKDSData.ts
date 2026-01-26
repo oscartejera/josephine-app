@@ -24,6 +24,7 @@ export interface KDSTicketLine {
   target_prep_time: number | null;
   is_rush: boolean;
   modifiers: KDSModifier[];
+  course: number;
 }
 
 export interface KDSOrder {
@@ -249,6 +250,7 @@ export function useKDSData(locationId: string) {
           target_prep_time: line.product_id ? productPrepTimes.get(line.product_id) ?? null : null,
           is_rush: line.is_rush ?? false,
           modifiers: modifiersMap.get(line.id) || [],
+          course: line.course ?? 1,
         }));
 
         ordersMap.set(ticketId, {
