@@ -1,10 +1,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info } from 'lucide-react';
+import { Info, TrendingUp, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BISalesData, CompareMode } from '@/hooks/useBISalesData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { Badge } from '@/components/ui/badge';
 
 interface BIKpiCardsProps {
   data: BISalesData | undefined;
@@ -147,6 +148,21 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
     );
   }
 
+  // Empty state when no POS data available
+  if (data.isEmpty) {
+    return (
+      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
+        <CardContent className="p-8 text-center">
+          <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold">No sales data available</h3>
+          <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+            Select a date range with POS transactions or create sales via the POS terminal.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const compareLabel = compareMode === 'forecast' ? 'vs forecast' : compareMode === 'previous_period' ? 'vs prev.' : 'vs LY';
 
   return (
@@ -155,7 +171,14 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardContent className="p-5">
           <div className="flex justify-between items-start mb-1">
-            <span className="text-sm text-muted-foreground">Sales to date</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Sales to date</span>
+              {data.dataSource === 'pos' && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/30">
+                  Live
+                </Badge>
+              )}
+            </div>
             <DeltaBadge value={data.kpis.salesToDateDelta} />
           </div>
           <div className="text-3xl font-bold tracking-tight">
