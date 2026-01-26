@@ -686,9 +686,13 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                         </div>
                         {pendingInCourse > 0 && (
                           <Button
-                            variant="ghost"
+                            variant="default"
                             size="sm"
-                            className={cn("h-6 text-xs", courseConfig.textClass)}
+                            className={cn(
+                              "h-7 text-xs font-semibold gap-1.5 transition-all",
+                              courseConfig.bgClass,
+                              "text-white hover:opacity-90 shadow-sm"
+                            )}
                             onClick={async () => {
                               // Send only this course
                               const courseLines = orderLines
@@ -734,8 +738,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                             }}
                             disabled={loading}
                           >
-                            <Send className="h-3 w-3 mr-1" />
-                            Enviar
+                            <Send className="h-3.5 w-3.5" />
+                            Enviar {courseConfig.shortLabel} ➜
                           </Button>
                         )}
                       </div>
@@ -877,9 +881,9 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           </div>
         </div>
 
-        {/* Actions */}
+        {/* Actions - Simplified: only Serve (conditional) + Pay */}
         <div className="p-4 border-t border-border space-y-2 shrink-0">
-          {/* Serve button when items are ready */}
+          {/* Serve button - only when items are ready */}
           {hasReadyItems && (
             <Button 
               variant="default"
@@ -892,34 +896,26 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
             </Button>
           )}
           
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              variant="outline" 
-              onClick={sendToKitchen}
-              disabled={loading || orderLines.filter(l => !l.sent_to_kitchen).length === 0}
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Cocina
-            </Button>
-            <Button 
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  await createOrUpdateTicket();
-                  setShowPayment(true);
-                } catch (error) {
-                  console.error('Error creating ticket:', error);
-                  toast.error('Error al preparar el cobro');
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              disabled={loading || orderLines.length === 0}
-            >
-              <CreditCard className="h-4 w-4 mr-2" />
-              Cobrar
-            </Button>
-          </div>
+          {/* Pay button - always visible, full width */}
+          <Button 
+            className="w-full"
+            onClick={async () => {
+              setLoading(true);
+              try {
+                await createOrUpdateTicket();
+                setShowPayment(true);
+              } catch (error) {
+                console.error('Error creating ticket:', error);
+                toast.error('Error al preparar el cobro');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading || orderLines.length === 0}
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Cobrar €{total.toFixed(2)}
+          </Button>
         </div>
       </div>
 
