@@ -52,7 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('reservations')
       .select(`
         *,
-        locations:location_id (name, address),
+        locations:location_id (name, city),
         pos_tables:pos_table_id (table_number)
       `)
       .eq('id', reservationId)
