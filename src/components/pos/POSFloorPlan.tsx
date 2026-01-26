@@ -5,11 +5,11 @@ import { POSOrderPanel } from './POSOrderPanel';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Settings, Calendar, ChefHat, Check, Clock } from 'lucide-react';
+import { Plus, Settings, Calendar, Phone } from 'lucide-react';
 import { POSTableCard } from './POSTableCard';
 import { POSFloorEditor } from './POSFloorEditor';
-import { POSReservationDialog, ReservationFormData } from './POSReservationDialog';
 import { POSReservationsPanel } from './POSReservationsPanel';
+import { POSQuickReservation, QuickReservationData } from './POSQuickReservation';
 import { useReservationsData } from '@/hooks/useReservationsData';
 import { useTableKDSStatus } from '@/hooks/useTableKDSStatus';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
   const [selectedTable, setSelectedTable] = useState<POSTable | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [reservationsOpen, setReservationsOpen] = useState(false);
-  const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [showQuickReservation, setShowQuickReservation] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const { 
@@ -65,8 +65,21 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
     return map;
   }, [reservations]);
 
-  const handleCreateReservation = async (data: ReservationFormData) => {
-    await createReservation(data as any);
+  const handleQuickReservation = async (data: QuickReservationData) => {
+    await createReservation({
+      location_id: locationId,
+      pos_table_id: data.pos_table_id,
+      guest_name: data.guest_name,
+      guest_phone: data.guest_phone,
+      guest_email: null,
+      party_size: data.party_size,
+      reservation_date: data.reservation_date,
+      reservation_time: data.reservation_time,
+      duration_minutes: 90,
+      status: 'confirmed',
+      notes: null,
+      special_requests: null,
+    });
   };
 
   const handleSeatGuests = async (reservationId: string) => {
@@ -75,8 +88,6 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
   };
 
   const handleCancelReservation = async (reservationId: string) => {
-    await updateReservation(reservationId, { status: 'cancelled' });
-    toast.success('Reserva cancelada');
   };
 
   const handleAssignTable = (reservationId: string) => {
@@ -144,12 +155,12 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
 
           <div className="flex items-center gap-2">
             <Button 
-              variant="default" 
+              variant={showQuickReservation ? "secondary" : "default"} 
               size="sm" 
-              onClick={() => setShowReservationDialog(true)}
+              onClick={() => setShowQuickReservation(!showQuickReservation)}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Reserva
+              <Phone className="h-4 w-4 mr-2" />
+              Reserva Rápida
             </Button>
             <Popover open={reservationsOpen} onOpenChange={setReservationsOpen}>
               <PopoverTrigger asChild>
@@ -265,14 +276,13 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
         />
       )}
 
-      {/* Reservation Dialog */}
-      {showReservationDialog && (
-        <POSReservationDialog
-          open={showReservationDialog}
-          onClose={() => setShowReservationDialog(false)}
-          onSubmit={handleCreateReservation}
-          tables={tables}
+      {/* Quick Reservation Panel */}
+      {showQuickReservation && !selectedTable && (
+        <POSQuickReservation
           locationId={locationId}
+          tables={currentTables}
+          onClose={() => setShowQuickReservation(false)}
+          onConfirm={handleQuickReservation}
         />
       )}
     </div>
