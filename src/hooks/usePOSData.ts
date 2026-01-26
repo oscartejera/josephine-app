@@ -32,6 +32,7 @@ export interface POSProduct {
   name: string;
   category: string | null;
   price: number;
+  image_url: string | null;
   is_active: boolean;
   kds_destination: 'kitchen' | 'bar' | 'prep';
 }
@@ -96,19 +97,19 @@ export function usePOSData(locationId: string) {
         setTables([]);
       }
 
-      // Fetch products for this location (including kds_destination)
+      // Fetch products for this location (including kds_destination, price, image_url)
       const { data: productsData } = await supabase
         .from('products')
-        .select('id, name, category, is_active, kds_destination')
+        .select('id, name, category, is_active, kds_destination, price, image_url')
         .eq('location_id', locationId)
         .eq('is_active', true)
         .order('category')
         .order('name');
 
-      // Add default price since products table doesn't have price yet
       setProducts((productsData || []).map(p => ({
         ...p,
-        price: 10.00, // Default price, should come from menu pricing
+        price: Number(p.price) || 10.00,
+        image_url: p.image_url || null,
         kds_destination: (p.kds_destination || 'kitchen') as 'kitchen' | 'bar' | 'prep'
       })) as POSProduct[]);
 

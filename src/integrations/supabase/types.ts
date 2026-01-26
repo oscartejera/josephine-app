@@ -2349,34 +2349,43 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string | null
+          description: string | null
           group_id: string
           id: string
+          image_url: string | null
           is_active: boolean | null
           kds_destination: string | null
           location_id: string | null
           name: string
+          price: number | null
           target_prep_time: number | null
         }
         Insert: {
           category?: string | null
           created_at?: string | null
+          description?: string | null
           group_id: string
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           kds_destination?: string | null
           location_id?: string | null
           name: string
+          price?: number | null
           target_prep_time?: number | null
         }
         Update: {
           category?: string | null
           created_at?: string | null
+          description?: string | null
           group_id?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           kds_destination?: string | null
           location_id?: string | null
           name?: string
+          price?: number | null
           target_prep_time?: number | null
         }
         Relationships: [
