@@ -380,10 +380,17 @@ export function useInventoryData(
 
     (ticketLines || []).forEach(line => {
       const cat = line.category_name || 'Miscellaneous';
-      const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink') 
-        ? 'Beverage' 
-        : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
-        ? 'Food'
+      const catLower = cat.toLowerCase();
+      
+      // Support both Spanish (POS) and English category names
+      const mappedCat = 
+        catLower.includes('bebida') || catLower.includes('beverage') || 
+        catLower.includes('drink') || catLower.includes('vino') || catLower.includes('cerveza')
+          ? 'Beverage' 
+        : catLower.includes('entrante') || catLower.includes('principal') || 
+          catLower.includes('postre') || catLower.includes('comida') || 
+          catLower.includes('food') || catLower.includes('plato')
+          ? 'Food'
         : 'Miscellaneous';
       
       const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
@@ -411,7 +418,14 @@ export function useInventoryData(
 
     (wasteEvents || []).forEach((w: any) => {
       const cat = w.inventory_items?.category || 'food';
-      const mappedCat = cat === 'beverage' ? 'Beverage' : cat === 'food' ? 'Food' : 'Miscellaneous';
+      const catLower = cat.toLowerCase();
+      // Support both Spanish and English category names
+      const mappedCat = 
+        catLower.includes('bebida') || catLower === 'beverage'
+          ? 'Beverage' 
+        : catLower.includes('comida') || catLower === 'food'
+          ? 'Food' 
+        : 'Miscellaneous';
       const existing = wasteByCat.get(mappedCat) || { accounted: 0, unaccounted: 0 };
       existing.accounted += w.waste_value || 0;
       wasteByCat.set(mappedCat, existing);
@@ -463,26 +477,32 @@ export function useInventoryData(
       };
     }));
 
-    // Location performance
-    setLocationPerformance(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
-      const locSales = salesByLoc.get(loc.id) || 0;
-      const locTheoreticalCOGS = locSales * 0.28;
-      const locActualCOGS = locTheoreticalCOGS * 1.05;
-      const locVariance = locActualCOGS - locTheoreticalCOGS;
-      
-      return {
-        locationId: loc.id,
-        locationName: loc.name,
-        sales: locSales,
-        theoreticalValue: locTheoreticalCOGS,
-        theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
-        actualValue: locActualCOGS,
-        actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
-        variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
-        varianceAmount: locVariance,
-        hasStockCount: stockCountLocations.has(loc.id)
-      };
-    }));
+    // Location performance - filter out locations with no POS data
+    setLocationPerformance(locations
+      .filter(l => effectiveLocationIds.includes(l.id))
+      .filter(loc => {
+        const locSales = salesByLoc.get(loc.id) || 0;
+        return locSales > 0; // Only include locations with actual sales data
+      })
+      .map(loc => {
+        const locSales = salesByLoc.get(loc.id) || 0;
+        const locTheoreticalCOGS = locSales * 0.28;
+        const locActualCOGS = locTheoreticalCOGS * 1.05;
+        const locVariance = locActualCOGS - locTheoreticalCOGS;
+        
+        return {
+          locationId: loc.id,
+          locationName: loc.name,
+          sales: locSales,
+          theoreticalValue: locTheoreticalCOGS,
+          theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
+          actualValue: locActualCOGS,
+          actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
+          variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
+          varianceAmount: locVariance,
+          hasStockCount: stockCountLocations.has(loc.id)
+        };
+      }));
 
     setLastUpdated(new Date());
   };
