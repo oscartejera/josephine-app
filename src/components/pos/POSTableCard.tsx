@@ -1,9 +1,10 @@
 import { cn } from '@/lib/utils';
 import { POSTable } from '@/hooks/usePOSData';
-import { Users, Clock, ChefHat, Check, Flame } from 'lucide-react';
+import { Users, Clock, ChefHat, Check, Flame, Timer } from 'lucide-react';
 import { Reservation } from '@/hooks/useReservationsData';
 import { KDSTableStatus, TableKDSInfo } from '@/hooks/useTableKDSStatus';
 import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
 
 interface POSTableCardProps {
   table: POSTable;
@@ -12,7 +13,35 @@ interface POSTableCardProps {
   reservation?: Reservation | null;
   kdsInfo?: TableKDSInfo;
   onServe?: () => void;
+  ticketOpenedAt?: string | null;
 }
+
+// Time-based color thresholds (Square pattern)
+type OccupancyStatus = 'fresh' | 'warning' | 'overdue';
+
+const getOccupancyStatus = (openedAt: string | null | undefined): { status: OccupancyStatus; minutes: number } => {
+  if (!openedAt) return { status: 'fresh', minutes: 0 };
+  
+  const opened = new Date(openedAt);
+  const now = new Date();
+  const minutes = Math.floor((now.getTime() - opened.getTime()) / 60000);
+  
+  if (minutes >= 60) return { status: 'overdue', minutes };
+  if (minutes >= 30) return { status: 'warning', minutes };
+  return { status: 'fresh', minutes };
+};
+
+const occupancyColors: Record<OccupancyStatus, string> = {
+  fresh: 'bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-400',
+  warning: 'bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-400',
+  overdue: 'bg-red-500/20 border-red-500 text-red-700 dark:text-red-400',
+};
+
+const occupancyBadgeColors: Record<OccupancyStatus, string> = {
+  fresh: 'bg-emerald-500 text-white',
+  warning: 'bg-amber-500 text-white',
+  overdue: 'bg-red-500 text-white animate-pulse',
+};
 
 const statusColors = {
   available: 'bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-400',
@@ -42,7 +71,8 @@ export function POSTableCard({
   onClick, 
   reservation, 
   kdsInfo,
-  onServe 
+  onServe,
+  ticketOpenedAt
 }: POSTableCardProps) {
   const shapeStyles = {
     square: 'rounded-lg',
@@ -53,6 +83,20 @@ export function POSTableCard({
   // If there's a reservation for this table, show it as reserved
   const effectiveStatus = reservation ? 'reserved' : table.status;
   const reservationTime = reservation?.reservation_time?.substring(0, 5);
+
+  // Calculate occupancy time status (Square pattern)
+  const occupancy = useMemo(() => {
+    if (effectiveStatus !== 'occupied') return null;
+    return getOccupancyStatus(ticketOpenedAt);
+  }, [effectiveStatus, ticketOpenedAt]);
+
+  // Get table background color based on occupancy time or status
+  const tableColorClass = useMemo(() => {
+    if (effectiveStatus === 'occupied' && occupancy) {
+      return occupancyColors[occupancy.status];
+    }
+    return statusColors[effectiveStatus];
+  }, [effectiveStatus, occupancy]);
 
   // KDS status info
   const hasKDSActivity = kdsInfo && kdsInfo.status !== 'idle' && kdsInfo.totalItems > 0;
@@ -70,7 +114,7 @@ export function POSTableCard({
       className={cn(
         "absolute flex flex-col items-center justify-center border-2 transition-all cursor-pointer hover:scale-105 active:scale-95",
         shapeStyles[table.shape],
-        statusColors[effectiveStatus],
+        tableColorClass,
         isSelected && "ring-2 ring-ring ring-offset-2 ring-offset-background",
         // Ready state - glow effect
         isReady && "ring-2 ring-emerald-400 ring-offset-2 ring-offset-background shadow-lg shadow-emerald-500/30"
@@ -135,11 +179,22 @@ export function POSTableCard({
         </div>
       )}
 
-      {/* Time elapsed badge */}
+      {/* Occupancy time badge (Square pattern) - shows when occupied without KDS activity */}
+      {occupancy && occupancy.minutes > 0 && !hasKDSActivity && (
+        <div className={cn(
+          "absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold shadow-sm",
+          occupancyBadgeColors[occupancy.status]
+        )}>
+          <Timer className="h-2.5 w-2.5" />
+          <span>{occupancy.minutes}min</span>
+        </div>
+      )}
+
+      {/* KDS Time elapsed badge */}
       {hasKDSActivity && kdsInfo.elapsedMinutes > 0 && (
         <div className={cn(
           "absolute -bottom-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-medium",
-          kdsInfo.elapsedMinutes > 15 ? "bg-red-500 text-white" : "bg-zinc-700 text-zinc-200"
+          kdsInfo.elapsedMinutes > 15 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
         )}>
           {kdsInfo.elapsedMinutes}min
         </div>
