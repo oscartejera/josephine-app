@@ -76,6 +76,11 @@ export const PERMISSIONS = {
   SETTINGS_USERS_MANAGE: 'settings.users.manage',
   SETTINGS_ROLES_MANAGE: 'settings.roles.manage',
   SETTINGS_BILLING_MANAGE: 'settings.billing.manage',
+  
+  // Fiscal
+  FISCAL_VIEW: 'fiscal.view',
+  FISCAL_EDIT: 'fiscal.edit',
+  FISCAL_EXPORT: 'fiscal.export',
 } as const;
 
 export type PermissionKey = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -102,6 +107,7 @@ export const SIDEBAR_PERMISSIONS = {
   menu_engineering: [PERMISSIONS.MENU_ENGINEERING_VIEW],
   integrations: [PERMISSIONS.INTEGRATIONS_VIEW],
   payroll: [PERMISSIONS.PAYROLL_VIEW],
+  fiscal: [PERMISSIONS.FISCAL_VIEW],
   settings: [PERMISSIONS.SETTINGS_VIEW],
 } as const;
 
