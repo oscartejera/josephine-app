@@ -52,20 +52,21 @@ export function POSProductGrid({ products, onProductClick }: POSProductGridProps
 
       {/* Products Grid - Large touch-friendly cards with images */}
       <ScrollArea className="flex-1">
-        <div className="grid grid-cols-3 gap-2 p-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3">
           {filteredProducts.map((product) => (
             <button
               key={product.id}
               onClick={() => onProductClick(product)}
               className={cn(
-                "aspect-square p-2 rounded-xl border-2 border-border bg-card",
+                "p-3 rounded-xl border-2 border-border bg-card",
                 "hover:bg-accent hover:border-primary/50",
-                "transition-all duration-150 flex flex-col items-center justify-center gap-1",
-                "active:scale-95 active:bg-primary/10"
+                "transition-all duration-150 flex flex-col items-center gap-2",
+                "active:scale-95 active:bg-primary/10",
+                "min-h-[140px]"
               )}
             >
-              {/* Product Image */}
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0">
+              {/* Product Image - Much larger */}
+              <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-sm">
                 {product.image_url ? (
                   <img 
                     src={product.image_url} 
@@ -74,17 +75,17 @@ export function POSProductGrid({ products, onProductClick }: POSProductGridProps
                     loading="lazy"
                   />
                 ) : (
-                  <ShoppingBag className="w-5 h-5 text-muted-foreground" />
+                  <ShoppingBag className="w-8 h-8 text-muted-foreground" />
                 )}
               </div>
               
-              {/* Product Name */}
-              <span className="text-xs font-medium line-clamp-2 text-center leading-tight">
+              {/* Product Name - Larger and bolder */}
+              <span className="text-sm font-semibold line-clamp-2 text-center leading-tight">
                 {product.name}
               </span>
               
-              {/* Price */}
-              <span className="text-xs font-bold text-primary">
+              {/* Price - Larger and more prominent */}
+              <span className="text-base font-bold text-primary">
                 €{product.price.toFixed(2)}
               </span>
             </button>
