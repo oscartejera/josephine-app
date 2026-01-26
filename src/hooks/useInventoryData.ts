@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
-import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
@@ -150,18 +149,21 @@ export function useInventoryData(
       // Determine which location IDs to use
       let effectiveLocationIds = selectedLocations;
       
-      // If no selected locations, use all from context OR demo
+      // If no selected locations, use all from context
       if (effectiveLocationIds.length === 0) {
         if (locations.length > 0) {
           effectiveLocationIds = locations.map(l => l.id);
         } else {
-          // Use demo locations if no real locations
-          const generator = getDemoGenerator(fromDate, toDate);
-          effectiveLocationIds = generator.getLocations().map(l => l.id);
+          // No locations available - show empty state
+          if (isMountedRef.current) {
+            setEmptyState();
+            setIsLoading(false);
+          }
+          return;
         }
       }
 
-      // Try to fetch real data first (only if we have real locations)
+      // Try to fetch real data (only if we have real locations)
       let hasReal = false;
       if (locations.length > 0 && !appLoading) {
         let ticketsQuery = supabase
@@ -178,21 +180,25 @@ export function useInventoryData(
         const { data: tickets, error: ticketsError } = await ticketsQuery;
         
         if (ticketsError) {
-          console.warn('Error fetching tickets, using demo data:', ticketsError);
-        } else {
-          hasReal = tickets && tickets.length > 0;
-          if (hasReal && isMountedRef.current) {
-            setHasRealData(true);
-            await processRealData(tickets, fromDateStr, toDateStr, effectiveLocationIds);
-            return;
+          console.warn('Error fetching tickets:', ticketsError);
+          if (isMountedRef.current) {
+            setEmptyState();
+            setIsLoading(false);
           }
+          return;
+        }
+        
+        hasReal = tickets && tickets.length > 0;
+        if (hasReal && isMountedRef.current) {
+          setHasRealData(true);
+          await processRealData(tickets, fromDateStr, toDateStr, effectiveLocationIds);
+          return;
         }
       }
 
-      // Use demo generator for data
+      // No real data found - show empty state
       if (isMountedRef.current) {
-        setHasRealData(false);
-        useDemoData(fromDate, toDate, effectiveLocationIds);
+        setEmptyState();
       }
 
       if (isMountedRef.current) {
@@ -202,12 +208,7 @@ export function useInventoryData(
       console.error('Error fetching inventory data:', err);
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
-        // Still try demo data as fallback
-        try {
-          useDemoData(dateRange.from, dateRange.to, selectedLocations);
-        } catch {
-          // Ignore demo fallback errors
-        }
+        setEmptyState();
       }
     } finally {
       if (isMountedRef.current) {
@@ -486,42 +487,16 @@ export function useInventoryData(
     setLastUpdated(new Date());
   };
 
-  const useDemoData = (fromDate: Date, toDate: Date, effectiveLocationIds: string[]) => {
-    const generator = getDemoGenerator(fromDate, toDate);
-    
-    // Use demo location IDs if none provided
-    const demoLocationIds = generator.getLocations().map(l => l.id);
-    const finalLocationIds = effectiveLocationIds.length > 0 ? effectiveLocationIds : demoLocationIds;
-
-    // Get demo metrics
-    const demoMetrics = generator.getInventoryMetrics(fromDate, toDate, finalLocationIds);
-    
-    setMetrics({
-      totalSales: demoMetrics.totalSales,
-      assignedSales: demoMetrics.assignedSales,
-      unassignedSales: demoMetrics.unassignedSales,
-      theoreticalCOGS: demoMetrics.theoreticalCOGS,
-      theoreticalCOGSPercent: demoMetrics.theoreticalCOGSPercent,
-      actualCOGS: demoMetrics.actualCOGS,
-      actualCOGSPercent: demoMetrics.actualCOGSPercent,
-      theoreticalGP: demoMetrics.theoreticalGP,
-      theoreticalGPPercent: demoMetrics.theoreticalGPPercent,
-      actualGP: demoMetrics.actualGP,
-      actualGPPercent: demoMetrics.actualGPPercent,
-      gapCOGS: demoMetrics.gapCOGS,
-      gapCOGSPercent: demoMetrics.gapCOGSPercent,
-      gapGP: demoMetrics.gapGP,
-      gapGPPercent: demoMetrics.gapGPPercent,
-      accountedWaste: demoMetrics.accountedWaste,
-      unaccountedWaste: demoMetrics.unaccountedWaste,
-      surplus: demoMetrics.surplus
-    });
-
-    setCategoryBreakdown(generator.getCategoryBreakdown(fromDate, toDate, finalLocationIds));
-    setWasteByCategory(generator.getWasteByCategory(fromDate, toDate, finalLocationIds));
-    setWasteByLocation(generator.getWasteByLocation(fromDate, toDate, finalLocationIds));
-    setLocationPerformance(generator.getLocationPerformance(fromDate, toDate, finalLocationIds));
+  // Empty data state - no more demo fallback
+  const setEmptyState = () => {
+    setMetrics(defaultMetrics);
+    setCategoryBreakdown([]);
+    setWasteByCategory([]);
+    setWasteByLocation([]);
+    setLocationPerformance([]);
     setLastUpdated(new Date());
+    setHasRealData(false);
+    setError(new Error('NO_DATA'));
   };
 
   return {
