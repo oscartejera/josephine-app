@@ -717,13 +717,13 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           />
         </div>
 
-        {/* Product Grid */}
-        <div className="h-48 border-b border-border shrink-0">
+        {/* Product Grid - Large area for fast selection */}
+        <div className="flex-1 min-h-0 border-b border-border">
           <POSProductGrid products={products} onProductClick={handleProductClick} />
         </div>
 
-        {/* Order Lines grouped by course */}
-        <ScrollArea className="flex-1">
+        {/* Order Lines grouped by course - Compact scrollable area */}
+        <ScrollArea className="h-[35vh] shrink-0">
           <div className="p-4 space-y-4">
             {orderLines.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
