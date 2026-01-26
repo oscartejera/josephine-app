@@ -66,6 +66,8 @@ export interface ChartDataPoint {
 }
 
 export interface BISalesData {
+  isEmpty: boolean;
+  dataSource: 'pos' | 'empty';
   kpis: {
     salesToDate: number;
     salesToDateDelta: number;
@@ -96,94 +98,46 @@ interface UseBISalesDataParams {
   locationIds: string[];
 }
 
-// Generate demo data for when there's no real data
-function generateDemoData(dateRange: BIDateRange, isSingleDay: boolean): BISalesData {
+// Generate empty data structure when there's no real data
+function generateEmptyData(dateRange: BIDateRange, isSingleDay: boolean): BISalesData {
   const days = isSingleDay 
     ? eachHourOfInterval({ start: startOfDay(dateRange.from), end: endOfDay(dateRange.from) }).filter(h => h.getHours() >= 10 && h.getHours() <= 21)
     : eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
 
-  const chartData: ChartDataPoint[] = days.map((d, i) => {
-    const base = 2000 + Math.random() * 3000;
-    const forecastBase = base * (0.9 + Math.random() * 0.2);
-    const orders = Math.round(base / 25);
-    return {
-      label: isSingleDay ? format(d, 'HH:mm') : format(d, 'EEE, dd'),
-      actual: Math.round(base),
-      forecast: Math.round(forecastBase),
-      avgCheckSize: 18 + Math.random() * 8,
-      avgCheckForecast: 20 + Math.random() * 5,
-      orders,
-      forecastOrders: Math.round(orders * 0.95)
-    };
-  });
-
-  const totalSales = chartData.reduce((sum, d) => sum + d.actual, 0);
-  const totalForecast = chartData.reduce((sum, d) => sum + d.forecast, 0);
-  const totalOrders = chartData.reduce((sum, d) => sum + (d.orders || 0), 0);
-  const avgAcs = chartData.reduce((sum, d) => sum + d.avgCheckSize, 0) / chartData.length;
-
-  // Generate sparkline data (last 7 days trend)
-  const salesSparkline = Array.from({ length: 7 }, () => 2000 + Math.random() * 1500);
-  const ordersSparkline = Array.from({ length: 7 }, () => 80 + Math.random() * 40);
-  const acsSparkline = Array.from({ length: 7 }, () => 18 + Math.random() * 8);
-
-  // Calculate forecast accuracy
-  const forecastAccuracy = totalForecast > 0 
-    ? Math.round((1 - Math.abs(totalSales - totalForecast) / totalForecast) * 100)
-    : 0;
+  const chartData: ChartDataPoint[] = days.map((d) => ({
+    label: isSingleDay ? format(d, 'HH:mm') : format(d, 'EEE, dd'),
+    actual: 0,
+    forecast: 0,
+    avgCheckSize: 0,
+    avgCheckForecast: 0,
+    orders: 0,
+    forecastOrders: 0
+  }));
 
   return {
+    isEmpty: true,
+    dataSource: 'empty',
     kpis: {
-      salesToDate: totalSales,
-      salesToDateDelta: ((totalSales - totalForecast) / totalForecast) * 100,
-      avgCheckSize: avgAcs,
-      avgCheckSizeDelta: 2.5,
-      totalOrders,
-      totalOrdersDelta: -1.3,
-      forecastAccuracy: Math.max(0, Math.min(100, forecastAccuracy)),
-      dwellTime: 42,
-      dwellTimeDelta: -3.2,
-      channelBreakdown: [
-        { channel: 'Dine-in', value: totalSales * 0.55, percentage: 55 },
-        { channel: 'Pick-up', value: totalSales * 0.25, percentage: 25 },
-        { channel: 'Delivery', value: totalSales * 0.20, percentage: 20 }
-      ],
-      acsBreakdown: [
-        { channel: 'Dine-in', value: avgAcs * 1.1 },
-        { channel: 'Pick-up', value: avgAcs * 0.85 },
-        { channel: 'Delivery', value: avgAcs * 0.95 }
-      ],
-      salesSparkline,
-      ordersSparkline,
-      acsSparkline
+      salesToDate: 0,
+      salesToDateDelta: 0,
+      avgCheckSize: 0,
+      avgCheckSizeDelta: 0,
+      totalOrders: 0,
+      totalOrdersDelta: 0,
+      forecastAccuracy: 0,
+      dwellTime: null,
+      dwellTimeDelta: null,
+      channelBreakdown: [],
+      acsBreakdown: [],
+      salesSparkline: [],
+      ordersSparkline: [],
+      acsSparkline: []
     },
     chartData,
-    channels: [
-      { channel: 'Dine in', sales: totalSales * 0.55, salesDelta: 1.2, projectedSales: totalForecast * 0.55, projectedSalesDelta: 0.8, acs: avgAcs * 1.1, acsDelta: 2.1, projectedAcs: avgAcs * 1.05, projectedAcsDelta: 1.5, orders: 450 },
-      { channel: 'Pick-up', sales: totalSales * 0.25, salesDelta: -0.5, projectedSales: totalForecast * 0.25, projectedSalesDelta: 0.3, acs: avgAcs * 0.85, acsDelta: -1.2, projectedAcs: avgAcs * 0.88, projectedAcsDelta: -0.8, orders: 280 },
-      { channel: 'Delivery', sales: totalSales * 0.20, salesDelta: 3.5, projectedSales: totalForecast * 0.20, projectedSalesDelta: 2.1, acs: avgAcs * 0.95, acsDelta: 0.8, projectedAcs: avgAcs * 0.92, projectedAcsDelta: 0.5, orders: 190 }
-    ],
-    categories: [
-      { category: 'Food', amount: totalSales * 0.65, ratio: 65 },
-      { category: 'Beverage', amount: totalSales * 0.28, ratio: 28 },
-      { category: 'Other', amount: totalSales * 0.07, ratio: 7 }
-    ],
-    products: [
-      { name: 'Hamburguesa Clásica', value: totalSales * 0.12, percentage: 12 },
-      { name: 'Pizza Margarita', value: totalSales * 0.10, percentage: 10 },
-      { name: 'Ensalada César', value: totalSales * 0.08, percentage: 8 },
-      { name: 'Pollo a la Plancha', value: totalSales * 0.07, percentage: 7 },
-      { name: 'Pasta Carbonara', value: totalSales * 0.065, percentage: 6.5 },
-      { name: 'Cerveza Artesanal', value: totalSales * 0.06, percentage: 6 },
-      { name: 'Vino de la Casa', value: totalSales * 0.055, percentage: 5.5 },
-      { name: 'Postre del Día', value: totalSales * 0.05, percentage: 5 }
-    ],
-    locations: [
-      { id: '1', name: 'Centro Madrid', salesActual: totalSales * 0.35, salesForecast: totalForecast * 0.35, dineIn: 4500, dineInDelta: 2.1, delivery: 1800, deliveryDelta: 5.2, pickUp: 1200, pickUpDelta: -1.3, orders: 320, acs: avgAcs * 1.05, dwellTime: 38 },
-      { id: '2', name: 'Salamanca', salesActual: totalSales * 0.28, salesForecast: totalForecast * 0.28, dineIn: 3800, dineInDelta: 1.5, delivery: 1500, deliveryDelta: 3.8, pickUp: 980, pickUpDelta: 0.5, orders: 280, acs: avgAcs * 1.12, dwellTime: 45 },
-      { id: '3', name: 'Chamberí', salesActual: totalSales * 0.22, salesForecast: totalForecast * 0.22, dineIn: 2900, dineInDelta: -0.8, delivery: 1100, deliveryDelta: 2.1, pickUp: 750, pickUpDelta: 1.8, orders: 210, acs: avgAcs * 0.98, dwellTime: 40 },
-      { id: '4', name: 'Malasaña', salesActual: totalSales * 0.15, salesForecast: totalForecast * 0.15, dineIn: 2100, dineInDelta: 4.2, delivery: 850, deliveryDelta: 8.5, pickUp: 520, pickUpDelta: 3.2, orders: 150, acs: avgAcs * 0.92, dwellTime: null }
-    ]
+    channels: [],
+    categories: [],
+    products: [],
+    locations: []
   };
 }
 
@@ -241,7 +195,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
     queryKey: ['bi-sales', dateRange, granularity, compareMode, effectiveLocationIds],
     queryFn: async (): Promise<BISalesData> => {
       if (effectiveLocationIds.length === 0) {
-        return generateDemoData(dateRange, isSingleDay);
+        return generateEmptyData(dateRange, isSingleDay);
       }
 
       // Fetch tickets data
@@ -314,9 +268,9 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         return dailyForecast * (HOURLY_WEIGHTS[hour] || 0);
       };
 
-      // If no data, return demo data
+      // If no data, return empty state
       if (!tickets || tickets.length === 0) {
-        return generateDemoData(dateRange, isSingleDay);
+        return generateEmptyData(dateRange, isSingleDay);
       }
 
       // Calculate KPIs
@@ -438,12 +392,13 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         });
       }
 
-      // Build channels table data
+      // Build channels table data - CORRECTED: use covers for ACS, not orders
       const channelsData: ChannelData[] = ['dinein', 'takeaway', 'delivery'].map(ch => {
         const channelTickets = tickets.filter(t => t.channel === ch);
         const sales = channelTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
         const orders = channelTickets.length;
-        const acs = orders > 0 ? sales / orders : 0;
+        const channelCovers = channelTickets.reduce((sum, t) => sum + (t.covers || 1), 0);
+        const acs = channelCovers > 0 ? sales / channelCovers : 0; // Fixed: divide by covers, not orders
         const projectedSales = totalForecast * (sales / totalSales || 0.33);
         
         return {
@@ -557,6 +512,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         : 0;
 
       return {
+        isEmpty: false,
+        dataSource: 'pos',
         kpis: {
           salesToDate: totalSales,
           salesToDateDelta,
