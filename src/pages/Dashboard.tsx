@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { AlertsPanel, Alert } from '@/components/dashboard/AlertsPanel';
+import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { HourlyLaborChart } from '@/components/dashboard/Charts';
@@ -11,6 +11,8 @@ import { ForecastConfidencePanel } from '@/components/dashboard/ForecastConfiden
 import { CategoryBreakdownChart } from '@/components/dashboard/CategoryBreakdownChart';
 import { OnboardingWizard } from '@/components/onboarding';
 import { useHourlyForecast, useGenerateForecast } from '@/hooks/useHourlyForecast';
+import { useDashboardAlerts } from '@/hooks/useDashboardAlerts';
+import { useHourlyLaborData } from '@/hooks/useHourlyLaborData';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -40,21 +42,18 @@ export default function Dashboard() {
     previous: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 }
   });
   const [topItems, setTopItems] = useState<any[]>([]);
-  const [hourlyLabor, setHourlyLabor] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // AI Forecast hooks
-  const { from: dateFrom } = getDateRangeValues();
+  const { from: dateFrom, to: dateTo } = getDateRangeValues();
   const { data: hourlyForecasts, isLoading: forecastLoading } = useHourlyForecast(selectedLocationId, dateFrom);
   const generateForecast = useGenerateForecast();
-
-  const alerts: Alert[] = [
-    { id: '1', type: 'warning', title: 'Labor alto', description: 'COL% por encima del objetivo en La Taberna Centro', metric: '28%', trend: 'up' },
-    { id: '2', type: 'error', title: 'Margen bajo', description: 'GP% cayendo en los últimos 7 días', metric: '-3%', trend: 'down' },
-    { id: '3', type: 'warning', title: 'Waste elevado', description: '€120 de waste ayer en Malasaña', metric: '€120' },
-    { id: '4', type: 'info', title: 'Comps/Voids', description: '2.1% de líneas anuladas hoy', metric: '2.1%' },
-    { id: '5', type: 'warning', title: 'Forecast desviación', description: 'Ventas 15% por debajo del forecast', metric: '-15%', trend: 'down' },
-  ];
+  
+  // Dynamic alerts from real data
+  const { alerts, isLoading: alertsLoading } = useDashboardAlerts(dateFrom, dateTo);
+  
+  // Real hourly labor data from timesheets
+  const { data: hourlyLabor, isLoading: laborLoading } = useHourlyLaborData(dateFrom, dateTo);
 
   useEffect(() => {
     fetchData();
@@ -119,10 +118,6 @@ export default function Dashboard() {
     
     const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
     setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item, margin: Math.floor(55 + Math.random() * 20) })));
-
-    // Mock hourly labor data
-    const hours = Array.from({ length: 14 }, (_, i) => ({ hour: `${10 + i}:00`, real: Math.random() * 80 + 20, recommended: Math.random() * 60 + 30 }));
-    setHourlyLabor(hours);
 
     setLoading(false);
   };
@@ -239,8 +234,11 @@ export default function Dashboard() {
         <CategoryBreakdownChart />
       </div>
 
-      {/* Labor Chart */}
-      <HourlyLaborChart data={hourlyLabor} title="Labor por Hora (Real vs Recomendado)" />
+      {/* Labor Chart - Now with real data */}
+      <HourlyLaborChart 
+        data={hourlyLabor || []} 
+        title="Labor por Hora (Real vs Recomendado)" 
+      />
 
       {/* Top 10 Products - full width */}
       <TopProductsCard />
