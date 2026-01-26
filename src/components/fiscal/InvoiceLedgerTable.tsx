@@ -86,13 +86,13 @@ export function InvoiceLedgerTable({
             <TableBody>
               {invoices.map((invoice) => (
                 <TableRow key={invoice.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {invoice.type === 'issued' ? (
-                        <ArrowUpRight className="h-4 w-4 text-emerald-600" />
-                      ) : (
-                        <ArrowDownLeft className="h-4 w-4 text-amber-600" />
-                      )}
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {invoice.type === 'issued' ? (
+                      <ArrowUpRight className="h-4 w-4 text-primary" />
+                    ) : (
+                      <ArrowDownLeft className="h-4 w-4 text-muted-foreground" />
+                    )}
                       <span className="text-sm">
                         {invoice.type === 'issued' ? 'Emitida' : 'Recibida'}
                       </span>
