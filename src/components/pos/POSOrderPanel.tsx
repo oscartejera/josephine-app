@@ -431,7 +431,6 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       const ticketUpdate: Record<string, unknown> = {
         status: 'closed', 
         closed_at: new Date().toISOString(),
-        payment_method: primaryMethod,
         tip_total: totalTip,
       };
 
@@ -443,6 +442,17 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         .from('tickets')
         .update(ticketUpdate)
         .eq('id', ticketId);
+
+      // Release table (Square pattern - application-level logic)
+      if (table?.id) {
+        await supabase
+          .from('pos_tables')
+          .update({ 
+            status: 'available', 
+            current_ticket_id: null 
+          })
+          .eq('id', table.id);
+      }
 
       // Process loyalty rewards and points
       if (loyaltyData) {
