@@ -65,15 +65,22 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const startDateStr = body.start_date || "2023-01-01"; // Default 2 years back
     const endDateStr = body.end_date || "2025-11-21"; // Day before existing data
-    const batchSize = body.batch_size || 500;
+    const batchSize = body.batch_size || 100; // Smaller batches to avoid timeout
+    const locationId = body.location_id || null; // Optional: seed only one location
 
     console.log(`[SEED TICKETS] Generating history from ${startDateStr} to ${endDateStr}`);
 
-    // Get active locations
-    const { data: locations, error: locError } = await supabase
+    // Get active locations (optionally filter by location_id)
+    let locQuery = supabase
       .from("locations")
       .select("id, name")
       .eq("active", true);
+    
+    if (locationId) {
+      locQuery = locQuery.eq("id", locationId);
+    }
+    
+    const { data: locations, error: locError } = await locQuery;
 
     if (locError || !locations || locations.length === 0) {
       return new Response(
