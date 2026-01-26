@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.send_kpi_alerts]
 verify_jwt = false
+
+[functions.ai_forecast_hourly]
+verify_jwt = false
