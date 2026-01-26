@@ -445,84 +445,8 @@ export function useWasteData(
     fetchData();
   }, [group?.id, locations, fetchData]);
 
-  // Generate demo data fallback if empty (in-memory only)
-  useEffect(() => {
-    if (!isLoading && metrics.totalAccountedWaste === 0) {
-      generateDemoData();
-    }
-  }, [isLoading, metrics.totalAccountedWaste]);
-
-  const generateDemoData = () => {
-    const demoSales = 52000 + Math.random() * 8000;
-    const demoWaste = demoSales * (0.018 + Math.random() * 0.008); // 1.8-2.6% waste
-
-    setMetrics({
-      totalSales: demoSales,
-      totalAccountedWaste: demoWaste,
-      wastePercentOfSales: (demoWaste / demoSales) * 100
-    });
-
-    // Demo trend data
-    const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
-    const demoTrend: WasteTrendData[] = days.map(day => {
-      const dayFactor = Math.random() * 0.5 + 0.75;
-      const baseDaily = demoWaste / days.length * dayFactor;
-      return {
-        date: format(day, 'yyyy-MM-dd'),
-        broken: baseDaily * 0.08,
-        end_of_day: baseDaily * 0.55,
-        expired: baseDaily * 0.20,
-        theft: baseDaily * 0.05,
-        other: baseDaily * 0.12
-      };
-    });
-    setTrendData(demoTrend);
-
-    // Demo by reason
-    setByReason([
-      { reason: 'end_of_day', count: 156, value: demoWaste * 0.55 },
-      { reason: 'expired', count: 42, value: demoWaste * 0.20 },
-      { reason: 'broken', count: 28, value: demoWaste * 0.08 },
-      { reason: 'other', count: 18, value: demoWaste * 0.12 },
-      { reason: 'theft', count: 5, value: demoWaste * 0.05 }
-    ]);
-
-    // Demo by category
-    setByCategory([
-      { category: 'Fresh', value: demoWaste * 0.35, percentOfTotal: 35 },
-      { category: 'Dairy', value: demoWaste * 0.22, percentOfTotal: 22 },
-      { category: 'Frozen', value: demoWaste * 0.18, percentOfTotal: 18 },
-      { category: 'Sauce', value: demoWaste * 0.15, percentOfTotal: 15 },
-      { category: 'Other', value: demoWaste * 0.10, percentOfTotal: 10 }
-    ]);
-
-    // Demo leaderboard
-    setLeaderboard([
-      { employeeId: '1', employeeName: 'Carlos Martín', initials: 'CM', locationName: 'Madrid Centro', logsCount: 48, totalValue: demoWaste * 0.32 },
-      { employeeId: '2', employeeName: 'Ana López', initials: 'AL', locationName: 'Barcelona Gràcia', logsCount: 35, totalValue: demoWaste * 0.28 },
-      { employeeId: '3', employeeName: 'María García', initials: 'MG', locationName: 'Valencia Ruzafa', logsCount: 28, totalValue: demoWaste * 0.22 },
-      { employeeId: '4', employeeName: 'David Ruiz', initials: 'DR', locationName: 'Madrid Centro', logsCount: 15, totalValue: demoWaste * 0.12 },
-      { employeeId: '5', employeeName: 'Laura Sánchez', initials: 'LS', locationName: 'Barcelona Gràcia', logsCount: 8, totalValue: demoWaste * 0.06 }
-    ]);
-
-    // Demo items
-    const demoItems = [
-      'Ensalada mixta', 'Tomate fresco', 'Lechuga romana', 'Pollo asado',
-      'Salmón', 'Queso manchego', 'Pan de barra', 'Leche entera',
-      'Huevos', 'Patatas', 'Cebolla', 'Pimiento rojo'
-    ];
-    const reasons: WasteReason[] = ['end_of_day', 'expired', 'broken', 'other', 'theft'];
-    
-    setItems(demoItems.map((name, i) => ({
-      itemId: `demo-${i}`,
-      itemName: name,
-      quantity: Math.floor(5 + Math.random() * 20),
-      value: (demoWaste / demoItems.length) * (1.5 - i * 0.08),
-      type: Math.random() > 0.3 ? 'ingredient' : 'product',
-      topReason: reasons[i % reasons.length],
-      percentOfSales: ((demoWaste / demoItems.length) * (1.5 - i * 0.08)) / demoSales * 100
-    })));
-  };
+  // No demo data fallback - show empty state when no real data
+  // This ensures users see accurate information about their waste tracking
 
   return {
     isLoading,
