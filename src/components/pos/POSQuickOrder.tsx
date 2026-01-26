@@ -80,7 +80,6 @@ export function POSQuickOrder({ locationId, products, cashSession, onRefresh }: 
           service_type: 'takeaway',
           gross_total: total,
           net_total: subtotal,
-          payment_method: method,
           closed_at: new Date().toISOString(),
           cash_session_id: cashSession?.id,
         })
