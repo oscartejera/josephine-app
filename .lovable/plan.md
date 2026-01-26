@@ -1,216 +1,220 @@
 
 
-## Plan: Sistema de Reservas Ultra-Rápido para Llamadas Telefónicas
+# Plan: Módulo Fiscal para Josephine
 
-### Análisis del Problema
+## Resumen Ejecutivo
 
-El flujo actual de reservas requiere abrir un diálogo modal con **múltiples campos y selectores**, lo cual es lento cuando un cliente llama por teléfono. Los mejores sistemas de la industria (OpenTable, Resy, SevenRooms) priorizan:
-
-1. **Entrada mínima de datos** - Solo lo esencial
-2. **Recomendación automática de mesas** - Basada en disponibilidad y capacidad
-3. **Un solo flujo lineal** - Sin navegación innecesaria
+Crearemos un módulo fiscal completo que aprovechará los datos existentes del POS (ventas) y Procurement (compras) para calcular automáticamente el IVA, gestionar facturas y preparar las declaraciones trimestrales (Modelo 303).
 
 ---
 
-### Solución: Flujo de Reserva en 5 Segundos
+## Arquitectura del Módulo
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│  NUEVA RESERVA RÁPIDA (inline en header)                        │
-│                                                                 │
-│  📅 Hoy ▾    🕐 20:30 ▾    👥 4 ▾    📞 ___________             │
-│                                                                 │
-│  Nombre: [________________] Apellido: [________________]        │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  MESAS RECOMENDADAS (automático según 4 personas)       │   │
-│  │                                                         │   │
-│  │  ✅ Mesa 1 (4 pax) - Disponible                         │   │
-│  │  ✅ Mesa 2 (4 pax) - Disponible                         │   │
-│  │  ✅ Mesa 3 (6 pax) - Disponible                         │   │
-│  │  ⚠️ Mesa 7 (4 pax) - Ocupada, libre ~21:30              │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│           [ Cancelar ]    [ ✓ Confirmar Reserva ]               │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Características Clave
-
-| Característica | Descripción |
-|----------------|-------------|
-| **Formulario inline** | No abrir modal - todo visible en un panel lateral |
-| **Defaults inteligentes** | Fecha = Hoy, Hora = Próximo slot disponible, Personas = 2 |
-| **Solo 2 campos de texto** | Nombre + Apellido (el camarero escribe mientras escucha) |
-| **Teléfono opcional** | Un campo numérico simple |
-| **Recomendación automática** | Al cambiar "personas", filtra mesas compatibles |
-| **Click para asignar** | Un tap en la mesa recomendada = asignación instantánea |
-| **Validación mínima** | Solo nombre obligatorio |
-
----
-
-### Flujo de Usuario (5 segundos)
-
-1. **Click "Nueva Reserva"** → Se abre panel inline
-2. **Seleccionar fecha/hora/personas** → Valores por defecto ya puestos
-3. **Escribir nombre** → Mientras el cliente lo dice por teléfono
-4. **Teléfono (opcional)** → Solo si el cliente lo da
-5. **Click en mesa sugerida** → Auto-selecciona y confirma
-
----
-
-### Archivos a Modificar/Crear
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/pos/POSQuickReservation.tsx` | **NUEVO** - Panel inline de reserva rápida |
-| `src/components/pos/POSTableSuggestions.tsx` | **NUEVO** - Grid de mesas recomendadas |
-| `src/components/pos/POSFloorPlan.tsx` | Integrar panel de reserva rápida en sidebar |
-| `src/hooks/useReservationsData.ts` | Añadir función para obtener disponibilidad de mesas |
-
----
-
-### Diseño Visual del Panel Rápido
-
-```text
-┌─────────────────────────────────────────┐
-│ 📞 RESERVA RÁPIDA              [X]     │
-├─────────────────────────────────────────┤
-│                                         │
-│ Fecha          Hora         Personas   │
-│ [Hoy     ▾]   [20:30  ▾]   [2 ▾]      │
-│                                         │
-│ Nombre *                               │
-│ [____________________________]         │
-│                                         │
-│ Apellido                               │
-│ [____________________________]         │
-│                                         │
-│ Teléfono                               │
-│ [____________________________]         │
-│                                         │
-├─────────────────────────────────────────┤
-│ 🪑 MESAS DISPONIBLES (para 2 pax)      │
-│                                         │
-│ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
-│ │ Mesa 5  │ │ Mesa 6  │ │ Barra 1 │   │
-│ │  2 pax  │ │  2 pax  │ │  3 pax  │   │
-│ │   ✓     │ │   ✓     │ │   ✓     │   │
-│ └─────────┘ └─────────┘ └─────────┘   │
-│                                         │
-│ ┌─────────┐ ┌─────────┐               │
-│ │ Mesa 1  │ │ Mesa 2  │               │
-│ │  4 pax  │ │  4 pax  │               │
-│ │   ✓     │ │   ✓     │               │
-│ └─────────┘ └─────────┘               │
-│                                         │
-├─────────────────────────────────────────┤
-│  Mesa seleccionada: Mesa 5             │
-│                                         │
-│ [    ✓ Confirmar Reserva    ]          │
-└─────────────────────────────────────────┘
++---------------------+     +------------------+     +------------------+
+|    POS (Ventas)     |---->|                  |     |                  |
+|  - tickets          |     |   FISCAL MODULE  |---->|  Modelo 303      |
+|  - ticket_lines     |     |                  |     |  (Export AEAT)   |
++---------------------+     |  - IVA Dashboard |     +------------------+
+                            |  - Invoice Ledger|
++---------------------+     |  - Alerts        |     +------------------+
+|  Procurement        |---->|  - Calendar      |---->|  Gastos/Compras  |
+|  - purchase_orders  |     +------------------+     |  (IVA Soportado) |
+|  - purchase_lines   |                              +------------------+
++---------------------+
 ```
 
 ---
 
-### Algoritmo de Recomendación de Mesas
+## Funcionalidades Principales
 
-```text
-1. Filtrar mesas por capacidad:
-   - Mesas con seats >= party_size
-   - Ordenar por diferencia (mesas más ajustadas primero)
+### 1. Dashboard Fiscal Principal
+- **KPI Cards**: IVA Repercutido (ventas), IVA Soportado (compras), IVA a Pagar, Próximo Vencimiento
+- **Gráfico temporal**: Evolución mensual de IVA
+- **Alertas**: Fechas límite de declaración (20 de abril, julio, octubre, enero)
+- **Filtros**: Por trimestre, por local
 
-2. Verificar disponibilidad en fecha/hora:
-   - Consultar reservas existentes para esa franja
-   - Excluir mesas con reservas solapadas (±2 horas)
+### 2. Calculadora de IVA Automática
+- Agregación de IVA por tipo impositivo (21%, 10%, 4%)
+- Ventas desde `tickets` + `ticket_lines` (tax_rate)
+- Compras desde `purchase_orders` + `purchase_order_lines`
+- Desglose por categoría de producto
 
-3. Verificar estado actual:
-   - Si la mesa está "available" → ✅ Disponible
-   - Si la mesa está "occupied" → ⚠️ Estimar hora de liberación
+### 3. Libro de Facturas (Invoice Ledger)
+- Tabla con todas las facturas emitidas y recibidas
+- Subida de facturas de proveedor (PDF)
+- OCR opcional para extracción automática (fase 2)
+- Estado: Pendiente, Contabilizada, Pagada
 
-4. Ordenar por prioridad:
-   - Primero: Disponibles y ajustadas a capacidad
-   - Segundo: Disponibles con capacidad extra
-   - Tercero: Ocupadas que se liberarán a tiempo
+### 4. Generador Modelo 303
+- Cálculo automático de casillas principales
+- Vista previa del formulario
+- Exportación en formato compatible AEAT
+- Histórico de declaraciones
+
+### 5. Calendario Fiscal
+- Vista mensual con fechas límite
+- Recordatorios configurables
+- Integración con alertas del sistema
+
+---
+
+## Cambios en Base de Datos
+
+### Nuevas Tablas
+
+**fiscal_periods** - Control de trimestres fiscales
+```sql
+CREATE TABLE fiscal_periods (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID REFERENCES groups(id),
+  year INTEGER NOT NULL,
+  quarter INTEGER NOT NULL CHECK (quarter BETWEEN 1 AND 4),
+  status TEXT DEFAULT 'open' CHECK (status IN ('open', 'closed', 'submitted')),
+  submitted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**fiscal_invoices** - Registro de facturas (emitidas y recibidas)
+```sql
+CREATE TABLE fiscal_invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID REFERENCES groups(id),
+  location_id UUID REFERENCES locations(id),
+  invoice_number TEXT NOT NULL,
+  invoice_date DATE NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('issued', 'received')),
+  supplier_name TEXT,
+  customer_name TEXT,
+  base_amount NUMERIC(12,2) NOT NULL,
+  tax_rate NUMERIC(5,2) NOT NULL,
+  tax_amount NUMERIC(12,2) NOT NULL,
+  total_amount NUMERIC(12,2) NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accounted', 'paid')),
+  document_url TEXT,
+  ticket_id UUID REFERENCES tickets(id),
+  purchase_order_id UUID REFERENCES purchase_orders(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**fiscal_model303** - Histórico de declaraciones
+```sql
+CREATE TABLE fiscal_model303 (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID REFERENCES groups(id),
+  fiscal_period_id UUID REFERENCES fiscal_periods(id),
+  base_21 NUMERIC(12,2) DEFAULT 0,
+  iva_21 NUMERIC(12,2) DEFAULT 0,
+  base_10 NUMERIC(12,2) DEFAULT 0,
+  iva_10 NUMERIC(12,2) DEFAULT 0,
+  base_4 NUMERIC(12,2) DEFAULT 0,
+  iva_4 NUMERIC(12,2) DEFAULT 0,
+  total_repercutido NUMERIC(12,2) DEFAULT 0,
+  total_soportado NUMERIC(12,2) DEFAULT 0,
+  result NUMERIC(12,2) DEFAULT 0,
+  generated_at TIMESTAMPTZ DEFAULT now(),
+  submitted_at TIMESTAMPTZ,
+  confirmation_code TEXT
+);
 ```
 
 ---
 
-### Sección Técnica
+## Nuevos Archivos Frontend
 
-#### POSQuickReservation.tsx (Nuevo Componente)
+### Página Principal
+- `src/pages/Fiscal.tsx` - Dashboard fiscal principal
 
-```tsx
-interface POSQuickReservationProps {
-  locationId: string;
-  tables: POSTable[];
-  onClose: () => void;
-  onConfirm: (reservation: QuickReservationData) => Promise<void>;
-}
+### Componentes
+- `src/components/fiscal/FiscalHeader.tsx` - Header con filtros y acciones
+- `src/components/fiscal/FiscalKPICards.tsx` - Tarjetas de métricas de IVA
+- `src/components/fiscal/IVABreakdownChart.tsx` - Gráfico de desglose por tipo
+- `src/components/fiscal/IVATrendChart.tsx` - Evolución temporal
+- `src/components/fiscal/InvoiceLedgerTable.tsx` - Tabla de facturas
+- `src/components/fiscal/UploadInvoiceDialog.tsx` - Modal para subir facturas
+- `src/components/fiscal/Model303Preview.tsx` - Vista previa del modelo
+- `src/components/fiscal/FiscalCalendar.tsx` - Calendario con deadlines
+- `src/components/fiscal/FiscalAlertBanner.tsx` - Banner de alertas
+- `src/components/fiscal/index.ts` - Barrel export
 
-interface QuickReservationData {
-  guest_name: string;
-  guest_surname: string;
-  guest_phone: string | null;
-  party_size: number;
-  reservation_date: string;
-  reservation_time: string;
-  pos_table_id: string;
-}
+### Hook de Datos
+- `src/hooks/useFiscalData.ts` - Agregación de datos fiscales desde POS y Procurement
 
-// Componente con:
-// - Selectores compactos en fila (fecha/hora/personas)
-// - Inputs de nombre/apellido con autofocus
-// - Grid de mesas recomendadas abajo
-// - Botón de confirmar que solo se activa con nombre + mesa
+---
+
+## Navegación
+
+Se añadirá como nueva sección principal en el sidebar (fuera de Insights), dado que es un módulo operativo crítico:
+
+```typescript
+// En AppSidebar.tsx, después de Payroll
+{ icon: Receipt, label: 'Fiscal', path: '/fiscal', key: 'fiscal' }
 ```
 
-#### Hook useTableAvailability
-
-```tsx
-function useTableAvailability(
-  locationId: string,
-  date: string,
-  time: string,
-  partySize: number
-) {
-  // Retorna:
-  // - availableTables: mesas libres y compatibles
-  // - occupiedTables: mesas ocupadas con hora estimada
-  // - recommendedTable: la mejor opción auto-seleccionada
-}
-```
-
-#### Modificaciones en POSFloorPlan.tsx
-
-```tsx
-// Reemplazar el botón "Nueva Reserva" que abre modal
-// por un toggle que muestra el panel inline
-
-const [showQuickReservation, setShowQuickReservation] = useState(false);
-
-// En el render:
-{showQuickReservation && (
-  <POSQuickReservation
-    locationId={locationId}
-    tables={currentTables}
-    onClose={() => setShowQuickReservation(false)}
-    onConfirm={handleQuickReservation}
-  />
-)}
+**Ruta en App.tsx:**
+```typescript
+<Route path="/fiscal" element={<Fiscal />} />
 ```
 
 ---
 
-### Resultado Final
+## Fases de Implementación
 
-El camarero recibirá una llamada y podrá:
+### Fase 1: MVP (Esta implementación)
+1. Crear tablas de base de datos
+2. Página Fiscal con Dashboard de KPIs
+3. Cálculo automático de IVA desde tickets
+4. Tabla de facturas básica
+5. Vista previa del Modelo 303
 
-1. **1 click** → Abrir panel de reserva
-2. **Escribir nombre** mientras escucha al cliente
-3. **Ajustar personas** si no son 2 (default)
-4. **Tocar una mesa verde** → Se selecciona
-5. **Click Confirmar** → Reserva creada
+### Fase 2: Mejoras (Futuro)
+- OCR para facturas de proveedor
+- Exportación formato AEAT
+- Integración con el "Compliance Gateway" existente
+- Alertas por email de fechas límite
+- Modelo 347 (operaciones > 3.005€)
 
-**Tiempo total: ~5 segundos** vs. el flujo actual de ~15-20 segundos
+---
+
+## Sección Técnica
+
+### Cálculo de IVA desde Datos Existentes
+
+**IVA Repercutido (Ventas):**
+```sql
+SELECT 
+  COALESCE(tl.tax_rate, 10) as tax_rate,
+  SUM(tl.gross_line_total - tl.discount_line_total) as base,
+  SUM((tl.gross_line_total - tl.discount_line_total) * COALESCE(tl.tax_rate, 10) / 100) as iva
+FROM tickets t
+JOIN ticket_lines tl ON tl.ticket_id = t.id
+WHERE t.status = 'closed'
+  AND t.closed_at BETWEEN :start AND :end
+  AND t.location_id IN (:locations)
+GROUP BY COALESCE(tl.tax_rate, 10)
+```
+
+**IVA Soportado (Compras):**
+```sql
+SELECT 
+  COALESCE(pol.tax_rate, 10) as tax_rate,
+  SUM(pol.quantity * pol.unit_price) as base,
+  SUM(pol.quantity * pol.unit_price * COALESCE(pol.tax_rate, 10) / 100) as iva
+FROM purchase_orders po
+JOIN purchase_order_lines pol ON pol.purchase_order_id = po.id
+WHERE po.status IN ('received', 'sent')
+  AND po.created_at BETWEEN :start AND :end
+GROUP BY COALESCE(pol.tax_rate, 10)
+```
+
+### Permisos
+Se añadirá la clave `fiscal` al sistema de permisos existente, visible para roles: `owner`, `admin`, `finance`.
+
+### Integración con Sistema Existente
+- Reutilizará `DateRangePickerNoryLike` para filtros de fecha
+- Seguirá el patrón de `useBudgetsData` para el hook de datos
+- Usará los mismos componentes UI (Card, Table, Badge, etc.)
+- Se integrará con el banner de alertas de `NotificationCenter`
 
