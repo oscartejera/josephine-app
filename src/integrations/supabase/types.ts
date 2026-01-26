@@ -560,6 +560,202 @@ export type Database = {
           },
         ]
       }
+      fiscal_invoices: {
+        Row: {
+          base_amount: number
+          created_at: string | null
+          customer_name: string | null
+          document_url: string | null
+          group_id: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          location_id: string | null
+          purchase_order_id: string | null
+          status: string | null
+          supplier_name: string | null
+          tax_amount: number
+          tax_rate: number
+          ticket_id: string | null
+          total_amount: number
+          type: string
+        }
+        Insert: {
+          base_amount: number
+          created_at?: string | null
+          customer_name?: string | null
+          document_url?: string | null
+          group_id: string
+          id?: string
+          invoice_date: string
+          invoice_number: string
+          location_id?: string | null
+          purchase_order_id?: string | null
+          status?: string | null
+          supplier_name?: string | null
+          tax_amount: number
+          tax_rate?: number
+          ticket_id?: string | null
+          total_amount: number
+          type: string
+        }
+        Update: {
+          base_amount?: number
+          created_at?: string | null
+          customer_name?: string | null
+          document_url?: string | null
+          group_id?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          location_id?: string | null
+          purchase_order_id?: string | null
+          status?: string | null
+          supplier_name?: string | null
+          tax_amount?: number
+          tax_rate?: number
+          ticket_id?: string | null
+          total_amount?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_invoices_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_invoices_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_invoices_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_invoices_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_model303: {
+        Row: {
+          base_10: number | null
+          base_21: number | null
+          base_4: number | null
+          confirmation_code: string | null
+          fiscal_period_id: string | null
+          generated_at: string | null
+          group_id: string
+          id: string
+          iva_10: number | null
+          iva_21: number | null
+          iva_4: number | null
+          result: number | null
+          submitted_at: string | null
+          total_repercutido: number | null
+          total_soportado: number | null
+        }
+        Insert: {
+          base_10?: number | null
+          base_21?: number | null
+          base_4?: number | null
+          confirmation_code?: string | null
+          fiscal_period_id?: string | null
+          generated_at?: string | null
+          group_id: string
+          id?: string
+          iva_10?: number | null
+          iva_21?: number | null
+          iva_4?: number | null
+          result?: number | null
+          submitted_at?: string | null
+          total_repercutido?: number | null
+          total_soportado?: number | null
+        }
+        Update: {
+          base_10?: number | null
+          base_21?: number | null
+          base_4?: number | null
+          confirmation_code?: string | null
+          fiscal_period_id?: string | null
+          generated_at?: string | null
+          group_id?: string
+          id?: string
+          iva_10?: number | null
+          iva_21?: number | null
+          iva_4?: number | null
+          result?: number | null
+          submitted_at?: string | null
+          total_repercutido?: number | null
+          total_soportado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_model303_fiscal_period_id_fkey"
+            columns: ["fiscal_period_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_model303_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_periods: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          quarter: number
+          status: string | null
+          submitted_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          quarter: number
+          status?: string | null
+          submitted_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          quarter?: number
+          status?: string | null
+          submitted_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_periods_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecast_daily_metrics: {
         Row: {
           confidence: number | null
@@ -2440,6 +2636,7 @@ export type Database = {
           inventory_item_id: string
           purchase_order_id: string
           quantity: number
+          tax_rate: number | null
           unit_cost: number | null
         }
         Insert: {
@@ -2447,6 +2644,7 @@ export type Database = {
           inventory_item_id: string
           purchase_order_id: string
           quantity: number
+          tax_rate?: number | null
           unit_cost?: number | null
         }
         Update: {
@@ -2454,6 +2652,7 @@ export type Database = {
           inventory_item_id?: string
           purchase_order_id?: string
           quantity?: number
+          tax_rate?: number | null
           unit_cost?: number | null
         }
         Relationships: [

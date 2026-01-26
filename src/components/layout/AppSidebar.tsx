@@ -21,7 +21,8 @@ import {
   LineChart,
   Wallet,
   PiggyBank,
-  Monitor
+  Monitor,
+  Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,6 +57,7 @@ const navItems = [
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement', key: 'procurement' as const },
   { icon: Plug, label: 'Integrations', path: '/integrations', key: 'integrations' as const },
   { icon: Calculator, label: 'Payroll', path: '/payroll', key: 'payroll' as const },
+  { icon: Receipt, label: 'Fiscal', path: '/fiscal', key: 'fiscal' as const },
 ];
 
 const roleLabels: Record<string, string> = {

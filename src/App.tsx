@@ -33,6 +33,7 @@ import Budgets from "@/pages/Budgets";
 import Integrations from "@/pages/Integrations";
 import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
+import Fiscal from "@/pages/Fiscal";
 import POS from "@/pages/POS";
 import POSTerminal from "@/pages/POSTerminal";
 import KDS from "@/pages/KDS";
@@ -133,6 +134,7 @@ function AppRoutes() {
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/:step" element={<Payroll />} />
+        <Route path="/fiscal" element={<Fiscal />} />
         <Route path="/settings" element={<SettingsPage />} />
         
         {/* POS routes */}
