@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { POSTable, POSProduct } from '@/hooks/usePOSData';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2, ChefHat, Check, UtensilsCrossed } from 'lucide-react';
+import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2, ChefHat, Check, UtensilsCrossed, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSProductGrid } from './POSProductGrid';
 import { POSSplitPaymentModal, ReceiptData } from './POSSplitPaymentModal';
 import { POSReceiptDialog } from './POSReceiptDialog';
 import { POSModifierDialog } from './POSModifierDialog';
+import { POSCourseSelector, CourseBadge, getCourseConfig } from './POSCourseSelector';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
 
@@ -33,6 +34,7 @@ interface OrderLine {
   kds_destination?: 'kitchen' | 'bar' | 'prep';
   is_rush?: boolean;
   prep_status?: 'pending' | 'preparing' | 'ready' | 'served';
+  course: number;
 }
 
 interface POSOrderPanelProps {
@@ -57,6 +59,9 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [modifierDialogOpen, setModifierDialogOpen] = useState(false);
   const [pendingProduct, setPendingProduct] = useState<POSProduct | null>(null);
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
+  
+  // Course system state
+  const [selectedCourse, setSelectedCourse] = useState(1);
 
   const groupId = group?.id || '';
 
@@ -149,6 +154,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       kds_destination: (line as any).destination || 'kitchen',
       is_rush: (line as any).is_rush || false,
       prep_status: (line.prep_status as 'pending' | 'preparing' | 'ready' | 'served') || 'pending',
+      course: (line as any).course || 1,
     })));
   };
 
@@ -199,7 +205,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       };
       setOrderLines(updated);
     } else {
-      // Add new line
+      // Add new line with current course
       const newLine: OrderLine = {
         product_id: pendingProduct.id,
         name: pendingProduct.name,
@@ -211,6 +217,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         sent_to_kitchen: false,
         kds_destination: pendingProduct.kds_destination || 'kitchen',
         is_rush: isRush,
+        course: selectedCourse,
       };
       setOrderLines([...orderLines, newLine]);
     }
@@ -312,6 +319,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           destination: line.kds_destination || 'kitchen',
           prep_status: 'pending',
           is_rush: line.is_rush || false,
+          course: line.course,
         })))
         .select();
 
@@ -590,18 +598,48 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
   };
 
+  // Group lines by course for display
+  const linesByCourse = useMemo(() => {
+    const grouped = new Map<number, OrderLine[]>();
+    orderLines.forEach(line => {
+      const course = line.course || 1;
+      if (!grouped.has(course)) grouped.set(course, []);
+      grouped.get(course)!.push(line);
+    });
+    return grouped;
+  }, [orderLines]);
+
+  // Count items per course for selector badges
+  const courseCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    orderLines.filter(l => !l.sent_to_kitchen).forEach(line => {
+      const course = line.course || 1;
+      counts[course] = (counts[course] || 0) + 1;
+    });
+    return counts;
+  }, [orderLines]);
+
   return (
     <>
       <div className="w-96 border-l border-border bg-card flex flex-col shrink-0">
         {/* Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
-          <div>
-            <h3 className="font-semibold">{table.table_number}</h3>
-            <p className="text-sm text-muted-foreground">{table.seats} comensales</p>
+        <div className="p-4 border-b border-border shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-semibold">{table.table_number}</h3>
+              <p className="text-sm text-muted-foreground">{table.seats} comensales</p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          {/* Course Selector */}
+          <POSCourseSelector
+            selectedCourse={selectedCourse}
+            onCourseChange={setSelectedCourse}
+            courseCounts={courseCounts}
+            compact
+          />
         </div>
 
         {/* Product Grid */}
@@ -609,124 +647,216 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
           <POSProductGrid products={products} onProductClick={handleProductClick} />
         </div>
 
-        {/* Order Lines */}
+        {/* Order Lines grouped by course */}
         <ScrollArea className="flex-1">
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-4">
             {orderLines.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 Selecciona productos para añadir
               </p>
             ) : (
-              orderLines.map((line, index) => {
-                const prepDisplay = line.sent_to_kitchen ? getPrepStatusDisplay(line.prep_status) : null;
-                const PrepIcon = prepDisplay?.icon;
-                
-                return (
-                  <div 
-                    key={index} 
-                    className={cn(
-                      "p-2 rounded-lg",
-                      !line.sent_to_kitchen && "bg-muted/50",
-                      line.sent_to_kitchen && line.prep_status === 'pending' && "bg-orange-500/10 border border-orange-500/30",
-                      line.sent_to_kitchen && line.prep_status === 'preparing' && "bg-blue-500/10 border border-blue-500/30",
-                      line.sent_to_kitchen && line.prep_status === 'ready' && "bg-emerald-500/10 border border-emerald-500/30",
-                      line.sent_to_kitchen && line.prep_status === 'served' && "bg-muted/30",
-                      line.is_rush && !line.sent_to_kitchen && "ring-2 ring-amber-500"
-                    )}
-                  >
-                    {/* Main line */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
+              Array.from(linesByCourse.entries())
+                .sort(([a], [b]) => a - b)
+                .map(([course, lines]) => {
+                  const courseConfig = getCourseConfig(course);
+                  const CourseIcon = courseConfig.icon;
+                  const allCourseItemsSent = lines.every(l => l.sent_to_kitchen);
+                  const allCourseItemsReady = lines.every(l => l.prep_status === 'ready' || l.prep_status === 'served');
+                  const pendingInCourse = lines.filter(l => !l.sent_to_kitchen).length;
+                  
+                  return (
+                    <div key={course} className="space-y-2">
+                      {/* Course Header */}
+                      <div className={cn(
+                        "flex items-center justify-between px-2 py-1.5 rounded-md",
+                        courseConfig.bgClassLight,
+                        "border",
+                        courseConfig.borderClass
+                      )}>
                         <div className="flex items-center gap-2">
-                          {line.is_rush && <Flame className="h-4 w-4 text-amber-500 shrink-0" />}
-                          <p className="font-medium text-sm truncate">{line.name}</p>
+                          <CourseIcon className={cn("h-4 w-4", courseConfig.textClass)} />
+                          <span className={cn("font-medium text-sm", courseConfig.textClass)}>
+                            {courseConfig.label}
+                          </span>
+                          {allCourseItemsSent && allCourseItemsReady && (
+                            <span className="text-xs bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">
+                              ✓ Listo
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          €{line.unit_price.toFixed(2)} × {line.quantity}
-                        </p>
-                        
-                        {/* KDS Status Badge */}
-                        {prepDisplay && PrepIcon && (
-                          <div className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium mt-1",
-                            prepDisplay.className
-                          )}>
-                            <PrepIcon className="h-3 w-3" />
-                            <span>{prepDisplay.text}</span>
-                          </div>
+                        {pendingInCourse > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn("h-6 text-xs", courseConfig.textClass)}
+                            onClick={async () => {
+                              // Send only this course
+                              const courseLines = orderLines
+                                .map((line, idx) => ({ line, idx }))
+                                .filter(({ line }) => line.course === course && !line.sent_to_kitchen);
+                              
+                              if (courseLines.length === 0) return;
+                              
+                              setLoading(true);
+                              try {
+                                const currentTicketId = await createOrUpdateTicket();
+                                
+                                const { data: insertedLines, error: linesError } = await supabase
+                                  .from('ticket_lines')
+                                  .insert(courseLines.map(({ line }) => ({
+                                    ticket_id: currentTicketId,
+                                    product_id: line.product_id,
+                                    item_name: line.name,
+                                    quantity: line.quantity,
+                                    unit_price: line.unit_price,
+                                    gross_line_total: calculateLineTotal(line),
+                                    notes: line.notes,
+                                    sent_to_kitchen: true,
+                                    sent_at: new Date().toISOString(),
+                                    destination: line.kds_destination || 'kitchen',
+                                    prep_status: 'pending',
+                                    is_rush: line.is_rush || false,
+                                    course: line.course,
+                                  })))
+                                  .select();
+                                
+                                if (linesError) throw linesError;
+                                
+                                toast.success(`${courseConfig.label} enviado a cocina`);
+                                onRefresh();
+                                await loadTicketLines(currentTicketId);
+                              } catch (error) {
+                                console.error('Error sending course:', error);
+                                toast.error('Error al enviar curso');
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                            disabled={loading}
+                          >
+                            <Send className="h-3 w-3 mr-1" />
+                            Enviar
+                          </Button>
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-1">
-                        {!line.sent_to_kitchen && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => handleEditLine(index)}
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7"
-                          onClick={() => updateQuantity(index, -1)}
-                          disabled={line.sent_to_kitchen}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-6 text-center text-sm">{line.quantity}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7"
-                          onClick={() => updateQuantity(index, 1)}
-                          disabled={line.sent_to_kitchen}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7 text-destructive"
-                          onClick={() => removeLine(index)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
+                      {/* Course Items */}
+                      <div className="space-y-2 pl-2">
+                        {lines.map((line) => {
+                          const index = orderLines.indexOf(line);
+                          const prepDisplay = line.sent_to_kitchen ? getPrepStatusDisplay(line.prep_status) : null;
+                          const PrepIcon = prepDisplay?.icon;
+                          
+                          return (
+                            <div 
+                              key={index} 
+                              className={cn(
+                                "p-2 rounded-lg",
+                                !line.sent_to_kitchen && "bg-muted/50",
+                                line.sent_to_kitchen && line.prep_status === 'pending' && "bg-orange-500/10 border border-orange-500/30",
+                                line.sent_to_kitchen && line.prep_status === 'preparing' && "bg-blue-500/10 border border-blue-500/30",
+                                line.sent_to_kitchen && line.prep_status === 'ready' && "bg-emerald-500/10 border border-emerald-500/30",
+                                line.sent_to_kitchen && line.prep_status === 'served' && "bg-muted/30",
+                                line.is_rush && !line.sent_to_kitchen && "ring-2 ring-amber-500"
+                              )}
+                            >
+                              {/* Main line */}
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    {line.is_rush && <Flame className="h-4 w-4 text-amber-500 shrink-0" />}
+                                    <p className="font-medium text-sm truncate">{line.name}</p>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    €{line.unit_price.toFixed(2)} × {line.quantity}
+                                  </p>
+                                  
+                                  {/* KDS Status Badge */}
+                                  {prepDisplay && PrepIcon && (
+                                    <div className={cn(
+                                      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium mt-1",
+                                      prepDisplay.className
+                                    )}>
+                                      <PrepIcon className="h-3 w-3" />
+                                      <span>{prepDisplay.text}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="flex items-center gap-1">
+                                  {!line.sent_to_kitchen && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-7 w-7"
+                                      onClick={() => handleEditLine(index)}
+                                    >
+                                      <Edit2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-7 w-7"
+                                    onClick={() => updateQuantity(index, -1)}
+                                    disabled={line.sent_to_kitchen}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="w-6 text-center text-sm">{line.quantity}</span>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-7 w-7"
+                                    onClick={() => updateQuantity(index, 1)}
+                                    disabled={line.sent_to_kitchen}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-7 w-7 text-destructive"
+                                    onClick={() => removeLine(index)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
 
-                      <p className="w-16 text-right font-medium">
-                        €{calculateLineTotal(line).toFixed(2)}
-                      </p>
+                                <p className="w-16 text-right font-medium">
+                                  €{calculateLineTotal(line).toFixed(2)}
+                                </p>
+                              </div>
+
+                              {/* Modifiers */}
+                              {line.modifiers.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2 ml-1">
+                                  {line.modifiers.map((mod, modIdx) => (
+                                    <span 
+                                      key={modIdx}
+                                      className={cn(
+                                        "text-xs px-1.5 py-0.5 rounded",
+                                        getModifierBadgeColor(mod.type)
+                                      )}
+                                    >
+                                      {mod.option_name}
+                                      {mod.price_delta !== 0 && ` (+€${mod.price_delta.toFixed(2)})`}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Notes */}
+                              {line.notes && (
+                                <p className="text-xs text-amber-500 mt-1 ml-1 italic">⚠️ {line.notes}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-
-                    {/* Modifiers */}
-                    {line.modifiers.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2 ml-1">
-                        {line.modifiers.map((mod, modIdx) => (
-                          <span 
-                            key={modIdx}
-                            className={cn(
-                              "text-xs px-1.5 py-0.5 rounded",
-                              getModifierBadgeColor(mod.type)
-                            )}
-                          >
-                            {mod.option_name}
-                            {mod.price_delta !== 0 && ` (+€${mod.price_delta.toFixed(2)})`}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Notes */}
-                    {line.notes && (
-                      <p className="text-xs text-amber-500 mt-1 ml-1 italic">⚠️ {line.notes}</p>
-                    )}
-                  </div>
-                );
-              })
+                  );
+                })
             )}
           </div>
         </ScrollArea>
@@ -810,6 +940,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                 modifiers: [],
                 sent_to_kitchen: false,
                 kds_destination: pendingProduct.kds_destination || 'kitchen',
+                course: selectedCourse,
               };
               setOrderLines([...orderLines, newLine]);
             }
