@@ -1,190 +1,148 @@
 
-## Plan: Corregir Bug payment_method y Simplificar Gestión de Mesas (Patrón Square)
+## Plan: Sistema de Cursos (Courses) para POS - Estilo Fresh KDS
 
 ### Resumen Ejecutivo
-Corregir el error de esquema que impide cerrar tickets correctamente y adoptar el patrón de la industria (Square/Toast) para gestión de estado de mesas: toda la lógica en la capa de aplicación, sin triggers de base de datos.
+Implementar un sistema de cursos profesional que permita separar entrantes, principales y postres. El campo `course` ya existe en `ticket_lines` (integer, default 1). Los cambios afectan solo la capa de aplicación.
 
 ---
 
-### Problema 1: Bug payment_method
+### Componentes a Modificar
 
-**Diagnóstico:**
-El código intenta insertar/actualizar `payment_method` directamente en la tabla `tickets`, pero esta columna NO existe en el esquema actual. Los métodos de pago se almacenan correctamente en la tabla `payments` (soporta múltiples pagos por ticket).
+#### 1. POSOrderPanel.tsx - UI de selección de curso
+**Cambios:**
+- Añadir selector de curso actual en la cabecera del panel de orden
+- Mostrar indicador visual del curso asignado a cada línea
+- Al añadir producto, asignar automáticamente el curso seleccionado
+- Incluir `course` en el insert a `ticket_lines`
 
-**Archivos afectados:**
-- `src/components/pos/POSQuickOrder.tsx` (línea 83)
-- `src/components/pos/POSOrderPanel.tsx` (línea 434)
-
-**Solución:**
-Eliminar las referencias a `payment_method` en las inserciones/updates de tickets, ya que esta información ya se guarda en la tabla `payments`.
-
----
-
-### Problema 2: Gestión de Estado de Mesas
-
-**Situación actual:**
-- Al abrir mesa: Se actualiza manualmente `pos_tables.status = 'occupied'` (línea 278-281 de POSOrderPanel)
-- Al cerrar ticket: Se actualiza `tickets.status = 'closed'` pero NO se libera la mesa
-- No existe el trigger `sync_pos_table_status` mencionado en la documentación
-
-**Patrón de la industria (Square/Toast):**
-Los sistemas POS modernos manejan el estado de mesa en la capa de aplicación, no con triggers de BD. Esto permite:
-- Control explícito del flujo
-- Mejor manejo de errores
-- Transacciones atómicas simples
-- Código más mantenible y depurable
-
-**Solución:**
-Implementar función `releaseTable()` que se ejecuta después de cerrar el ticket exitosamente.
-
----
-
-### Cambios Propuestos
-
-#### 1. POSQuickOrder.tsx
-Eliminar `payment_method: method` del insert a tickets:
-
-```text
-ANTES (línea 77-88):
-.insert({
-  location_id: locationId,
-  status: 'closed',
-  service_type: 'takeaway',
-  gross_total: total,
-  net_total: subtotal,
-  payment_method: method,  // <-- ELIMINAR
-  closed_at: new Date().toISOString(),
-  cash_session_id: cashSession?.id,
-})
-
-DESPUÉS:
-.insert({
-  location_id: locationId,
-  status: 'closed',
-  service_type: 'takeaway',
-  gross_total: total,
-  net_total: subtotal,
-  closed_at: new Date().toISOString(),
-  cash_session_id: cashSession?.id,
-})
+**UI propuesta:**
+```
+┌─────────────────────────────────────────┐
+│  Mesa 4 • Curso: [1º] [2º] [🍰]         │
+├─────────────────────────────────────────┤
+│  🟢 1º Curso                            │
+│    • Ensalada César x1                  │
+│    • Croquetas x2                       │
+│  🔵 2º Curso                            │
+│    • Entrecot x1                        │
+│    • Lubina x1                          │
+│  🟣 Postre                              │
+│    • Tiramisú x2                        │
+└─────────────────────────────────────────┘
 ```
 
-#### 2. POSOrderPanel.tsx
-Eliminar `payment_method` del update y añadir liberación de mesa:
+#### 2. POSOrderPanel.tsx - Envío a cocina por curso
+**Lógica mejorada:**
+- Opción "Enviar curso" para enviar solo el curso actual
+- Opción "Enviar todo" para enviar todos los cursos pendientes
+- Visual feedback del estado de cada curso (pendiente/enviado)
 
-```text
-ANTES (línea 431-445):
-const ticketUpdate: Record<string, unknown> = {
-  status: 'closed', 
-  closed_at: new Date().toISOString(),
-  payment_method: primaryMethod,  // <-- ELIMINAR
-  tip_total: totalTip,
-};
-...
-await supabase
-  .from('tickets')
-  .update(ticketUpdate)
-  .eq('id', ticketId);
+#### 3. useKDSData.ts - Agrupación por curso
+**Cambios:**
+- Agrupar `KDSTicketLine` items por curso dentro de cada orden
+- Añadir campo `course` al tipo `KDSTicketLine`
+- Ordenar items primero por curso, luego por sent_at
 
-DESPUÉS:
-const ticketUpdate: Record<string, unknown> = {
-  status: 'closed', 
-  closed_at: new Date().toISOString(),
-  tip_total: totalTip,
-};
-...
-await supabase
-  .from('tickets')
-  .update(ticketUpdate)
-  .eq('id', ticketId);
+#### 4. KDSOrderCard.tsx - Visualización por cursos
+**Cambios:**
+- Renderizar secciones separadas por curso
+- Headers visuales: "1º Curso", "2º Curso", "Postre"
+- Colores distintivos por curso
+- Indicador de "curso completo" cuando todos los items del curso están ready
 
-// Liberar mesa (Patrón Square - lógica en aplicación)
-if (table?.id) {
-  await supabase
-    .from('pos_tables')
-    .update({ 
-      status: 'available', 
-      current_ticket_id: null 
-    })
-    .eq('id', table.id);
-}
-```
+#### 5. print_kitchen_ticket - Incluir curso en tickets físicos
+**Cambios:**
+- Añadir curso a `items_json`
+- Agrupar items por curso en el ticket impreso
 
 ---
 
-### Flujo Completo Corregido
+### Diseño Visual
 
-```text
+#### Colores de Curso (POS y KDS)
+| Curso | Label | Color | Badge |
+|-------|-------|-------|-------|
+| 1 | 1º Curso | Emerald | bg-emerald-500 |
+| 2 | 2º Curso | Blue | bg-blue-500 |
+| 3 | Postre | Purple | bg-purple-500 |
+| 4+ | Curso N | Amber | bg-amber-500 |
+
+#### Flujo de Trabajo
+```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    FLUJO POS CORREGIDO                          │
+│                    FLUJO DE CURSOS                              │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  1. ABRIR MESA                                                  │
-│     ├─ Crear ticket (status: 'open')                            │
-│     └─ Actualizar pos_tables (status: 'occupied')               │
+│  1. CAMARERO TOMA COMANDA                                       │
+│     ├─ Selecciona curso activo (1º por defecto)                 │
+│     ├─ Añade productos al curso                                 │
+│     └─ Cambia de curso para añadir más items                    │
 │                                                                 │
-│  2. AÑADIR PRODUCTOS                                            │
-│     └─ Insertar en ticket_lines                                 │
+│  2. ENVÍO A COCINA                                              │
+│     ├─ "Enviar 1º Curso" → Solo entrantes a KDS                 │
+│     ├─ "Enviar 2º Curso" → Solo principales a KDS               │
+│     └─ "Enviar Todo" → Todos los cursos a la vez                │
 │                                                                 │
-│  3. ENVIAR A COCINA                                             │
-│     ├─ Actualizar ticket_lines (sent_at, prep_status)           │
-│     └─ Insertar en pos_print_queue                              │
+│  3. KDS MUESTRA ORDEN                                           │
+│     ├─ Orden agrupada por cursos                                │
+│     ├─ Header visual por curso                                  │
+│     └─ Indicador "Curso Listo" al completar                     │
 │                                                                 │
-│  4. COBRAR                                                      │
-│     ├─ Insertar en payments (method, amount, tip)               │
-│     ├─ Actualizar ticket (status: 'closed')                     │
-│     └─ Actualizar pos_tables (status: 'available')  ← NUEVO     │
+│  4. SERVICIO                                                    │
+│     ├─ Camarero ve "1º Listo" → Sirve entrantes                 │
+│     ├─ Envía 2º curso cuando cliente termina                    │
+│     └─ Proceso se repite para postres                           │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Resumen de Cambios
+### Archivos a Crear/Modificar
 
-| Archivo | Cambio | Impacto |
-|---------|--------|---------|
-| `POSQuickOrder.tsx` | Eliminar `payment_method` del insert | Corrige error de esquema |
-| `POSOrderPanel.tsx` | Eliminar `payment_method` del update | Corrige error de esquema |
-| `POSOrderPanel.tsx` | Añadir liberación explícita de mesa | Mesa vuelve a "disponible" |
+| Archivo | Acción | Descripción |
+|---------|--------|-------------|
+| `src/components/pos/POSCourseSelector.tsx` | CREAR | Selector de curso reutilizable |
+| `src/components/pos/POSOrderPanel.tsx` | MODIFICAR | Integrar cursos en el flujo |
+| `src/components/kds/KDSOrderCard.tsx` | MODIFICAR | Agrupar items por curso |
+| `src/hooks/useKDSData.ts` | MODIFICAR | Incluir course en tipos y agrupación |
+| `supabase/functions/print_kitchen_ticket/index.ts` | MODIFICAR | Incluir curso en JSON |
 
 ---
 
-### Sección Técnica
+### Tipos Nuevos
 
-**Por qué NO usar triggers de BD:**
-1. Los triggers complican el debugging (fallan silenciosamente)
-2. No se pueden testear fácilmente en desarrollo
-3. Añaden latencia extra en cada operación
-4. Square, Toast, Lightspeed usan lógica de aplicación
-
-**Por qué NO añadir columna `payment_method` a tickets:**
-1. Un ticket puede tener múltiples pagos (split billing)
-2. La tabla `payments` ya almacena esta info correctamente
-3. Añadirla sería redundante y propenso a inconsistencias
-
-**Patrón recomendado para transacciones críticas:**
 ```typescript
-// Transacción atómica con rollback manual
-const closeTicketAndReleaseTable = async () => {
-  // 1. Cerrar ticket
-  const { error: ticketError } = await supabase
-    .from('tickets')
-    .update({ status: 'closed', closed_at: new Date().toISOString() })
-    .eq('id', ticketId);
-  
-  if (ticketError) throw ticketError;
-  
-  // 2. Liberar mesa
-  const { error: tableError } = await supabase
-    .from('pos_tables')
-    .update({ status: 'available', current_ticket_id: null })
-    .eq('id', tableId);
-  
-  if (tableError) {
-    // Rollback: reabrir ticket
-    await supabase.from('tickets').update({ status: 'open' }).eq('id', ticketId);
-    throw tableError;
-  }
-};
+// Constantes de curso
+export const COURSE_CONFIG = {
+  1: { label: '1º Curso', shortLabel: '1º', color: 'emerald', icon: '🥗' },
+  2: { label: '2º Curso', shortLabel: '2º', color: 'blue', icon: '🍽️' },
+  3: { label: 'Postre', shortLabel: '🍰', color: 'purple', icon: '🍰' },
+} as const;
+
+// Extensión de OrderLine existente
+interface OrderLine {
+  // ... campos existentes
+  course: number; // 1, 2, 3...
+}
 ```
+
+---
+
+### Patrón de Implementación
+
+El diseño sigue el patrón de Fresh KDS / Square Kitchen:
+1. **Selección explícita**: El camarero elige el curso antes de añadir productos
+2. **Agrupación visual**: Items del mismo curso siempre juntos
+3. **Envío granular**: Posibilidad de enviar curso por curso
+4. **Feedback de estado**: Indicador claro de qué cursos están listos
+
+---
+
+### Resumen de Implementación
+
+1. ✅ BD ya tiene campo `course` (integer, default 1)
+2. 🔧 Crear POSCourseSelector component
+3. 🔧 Modificar POSOrderPanel para cursos
+4. 🔧 Modificar KDSOrderCard para mostrar cursos
+5. 🔧 Actualizar useKDSData para agrupar por curso
