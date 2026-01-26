@@ -1,148 +1,151 @@
 
-## Plan: Sistema de Cursos (Courses) para POS - Estilo Fresh KDS
 
-### Resumen Ejecutivo
-Implementar un sistema de cursos profesional que permita separar entrantes, principales y postres. El campo `course` ya existe en `ticket_lines` (integer, default 1). Los cambios afectan solo la capa de aplicación.
+## Plan: Simplificar Sistema de Envío a Cocina (UX Profesional)
 
----
+### Problema Detectado
+Actualmente hay **redundancia confusa** en la UI:
+- Botón "Cocina" (parte inferior) → envía TODO
+- Botón "Enviar" en cada curso → envía solo ese curso
 
-### Componentes a Modificar
-
-#### 1. POSOrderPanel.tsx - UI de selección de curso
-**Cambios:**
-- Añadir selector de curso actual en la cabecera del panel de orden
-- Mostrar indicador visual del curso asignado a cada línea
-- Al añadir producto, asignar automáticamente el curso seleccionado
-- Incluir `course` en el insert a `ticket_lines`
-
-**UI propuesta:**
-```
-┌─────────────────────────────────────────┐
-│  Mesa 4 • Curso: [1º] [2º] [🍰]         │
-├─────────────────────────────────────────┤
-│  🟢 1º Curso                            │
-│    • Ensalada César x1                  │
-│    • Croquetas x2                       │
-│  🔵 2º Curso                            │
-│    • Entrecot x1                        │
-│    • Lubina x1                          │
-│  🟣 Postre                              │
-│    • Tiramisú x2                        │
-└─────────────────────────────────────────┘
-```
-
-#### 2. POSOrderPanel.tsx - Envío a cocina por curso
-**Lógica mejorada:**
-- Opción "Enviar curso" para enviar solo el curso actual
-- Opción "Enviar todo" para enviar todos los cursos pendientes
-- Visual feedback del estado de cada curso (pendiente/enviado)
-
-#### 3. useKDSData.ts - Agrupación por curso
-**Cambios:**
-- Agrupar `KDSTicketLine` items por curso dentro de cada orden
-- Añadir campo `course` al tipo `KDSTicketLine`
-- Ordenar items primero por curso, luego por sent_at
-
-#### 4. KDSOrderCard.tsx - Visualización por cursos
-**Cambios:**
-- Renderizar secciones separadas por curso
-- Headers visuales: "1º Curso", "2º Curso", "Postre"
-- Colores distintivos por curso
-- Indicador de "curso completo" cuando todos los items del curso están ready
-
-#### 5. print_kitchen_ticket - Incluir curso en tickets físicos
-**Cambios:**
-- Añadir curso a `items_json`
-- Agrupar items por curso en el ticket impreso
+Esto viola el principio de simplicidad que buscas para Josephine.
 
 ---
 
-### Diseño Visual
+### Propuesta: Un Solo Flujo Inteligente (Estilo Toast/Square)
 
-#### Colores de Curso (POS y KDS)
-| Curso | Label | Color | Badge |
-|-------|-------|-------|-------|
-| 1 | 1º Curso | Emerald | bg-emerald-500 |
-| 2 | 2º Curso | Blue | bg-blue-500 |
-| 3 | Postre | Purple | bg-purple-500 |
-| 4+ | Curso N | Amber | bg-amber-500 |
+**Eliminar el botón "Cocina" global** y mantener SOLO el envío por curso, porque:
+1. Es el flujo natural de un restaurante (entrantes primero, luego platos)
+2. Un solo punto de acción por curso = menos confusión
+3. El botón de curso cambia dinámicamente según el estado
 
-#### Flujo de Trabajo
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLUJO DE CURSOS                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  1. CAMARERO TOMA COMANDA                                       │
-│     ├─ Selecciona curso activo (1º por defecto)                 │
-│     ├─ Añade productos al curso                                 │
-│     └─ Cambia de curso para añadir más items                    │
-│                                                                 │
-│  2. ENVÍO A COCINA                                              │
-│     ├─ "Enviar 1º Curso" → Solo entrantes a KDS                 │
-│     ├─ "Enviar 2º Curso" → Solo principales a KDS               │
-│     └─ "Enviar Todo" → Todos los cursos a la vez                │
-│                                                                 │
-│  3. KDS MUESTRA ORDEN                                           │
-│     ├─ Orden agrupada por cursos                                │
-│     ├─ Header visual por curso                                  │
-│     └─ Indicador "Curso Listo" al completar                     │
-│                                                                 │
-│  4. SERVICIO                                                    │
-│     ├─ Camarero ve "1º Listo" → Sirve entrantes                 │
-│     ├─ Envía 2º curso cuando cliente termina                    │
-│     └─ Proceso se repite para postres                           │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+---
+
+### Diseño Visual Simplificado
+
+```text
+┌────────────────────────────────────────┐
+│  Mesa 4 • Curso: [1º] [2º] [🍰]        │
+├────────────────────────────────────────┤
+│                                        │
+│  🟢 1º Curso            [Enviar 1º ➜]  │  ← Si tiene items pendientes
+│    • Ensalada x1                       │
+│    • Croquetas x2                      │
+│                                        │
+│  🔵 2º Curso                           │  ← Sin botón (vacío o todo enviado)
+│    (Sin items)                         │
+│                                        │
+├────────────────────────────────────────┤
+│  Subtotal            €24.50            │
+│  IVA                  €2.45            │
+│  Total               €26.95            │
+├────────────────────────────────────────┤
+│                                        │
+│  [🍽️ Servir Mesa]      ← Solo si hay   │
+│                          items ready   │
+│                                        │
+│  [💳 Cobrar €26.95]                    │
+│                                        │
+└────────────────────────────────────────┘
 ```
 
 ---
 
-### Archivos a Crear/Modificar
+### Cambios Concretos
 
-| Archivo | Acción | Descripción |
-|---------|--------|-------------|
-| `src/components/pos/POSCourseSelector.tsx` | CREAR | Selector de curso reutilizable |
-| `src/components/pos/POSOrderPanel.tsx` | MODIFICAR | Integrar cursos en el flujo |
-| `src/components/kds/KDSOrderCard.tsx` | MODIFICAR | Agrupar items por curso |
-| `src/hooks/useKDSData.ts` | MODIFICAR | Incluir course en tipos y agrupación |
-| `supabase/functions/print_kitchen_ticket/index.ts` | MODIFICAR | Incluir curso en JSON |
+#### POSOrderPanel.tsx
 
----
-
-### Tipos Nuevos
-
-```typescript
-// Constantes de curso
-export const COURSE_CONFIG = {
-  1: { label: '1º Curso', shortLabel: '1º', color: 'emerald', icon: '🥗' },
-  2: { label: '2º Curso', shortLabel: '2º', color: 'blue', icon: '🍽️' },
-  3: { label: 'Postre', shortLabel: '🍰', color: 'purple', icon: '🍰' },
-} as const;
-
-// Extensión de OrderLine existente
-interface OrderLine {
-  // ... campos existentes
-  course: number; // 1, 2, 3...
-}
+**1. ELIMINAR** el botón "Cocina" de la sección de acciones (líneas 896-903):
+```tsx
+// ELIMINAR ESTO:
+<Button variant="outline" onClick={sendToKitchen} ...>
+  <Printer /> Cocina
+</Button>
 ```
 
+**2. MEJORAR** el botón de curso para que sea más visible:
+- Hacer el botón más grande y prominente dentro del header de curso
+- Cambiar texto de "Enviar" a "Enviar 1º ➜" (más claro)
+- Añadir animación sutil para llamar la atención
+
+**3. AJUSTAR** la zona de acciones inferior:
+- Solo mostrar "Servir Mesa" cuando hay items ready
+- Botón "Cobrar" siempre visible y destacado
+- Eliminar el grid de 2 columnas (ya no hay 2 botones)
+
 ---
 
-### Patrón de Implementación
+### Flujo Simplificado Final
 
-El diseño sigue el patrón de Fresh KDS / Square Kitchen:
-1. **Selección explícita**: El camarero elige el curso antes de añadir productos
-2. **Agrupación visual**: Items del mismo curso siempre juntos
-3. **Envío granular**: Posibilidad de enviar curso por curso
-4. **Feedback de estado**: Indicador claro de qué cursos están listos
+```text
+1. Camarero añade entrantes (curso 1)
+2. Toca "Enviar 1º ➜" en el header del curso
+3. Añade segundos (curso 2)  
+4. Cuando cliente termina entrantes → "Enviar 2º ➜"
+5. KDS marca todo como ready → aparece "Servir Mesa"
+6. Al terminar → "Cobrar"
+```
+
+**Solo 4 acciones posibles**, siempre visibles en contexto:
+- **Enviar curso X** (aparece solo si hay items pendientes en ese curso)
+- **Servir Mesa** (aparece solo cuando KDS dice "ready")
+- **Cobrar** (siempre visible)
+- **Cerrar panel** (X)
 
 ---
 
-### Resumen de Implementación
+### Comparativa
 
-1. ✅ BD ya tiene campo `course` (integer, default 1)
-2. 🔧 Crear POSCourseSelector component
-3. 🔧 Modificar POSOrderPanel para cursos
-4. 🔧 Modificar KDSOrderCard para mostrar cursos
-5. 🔧 Actualizar useKDSData para agrupar por curso
+| Antes (Confuso) | Después (Simple) |
+|-----------------|------------------|
+| Botón "Cocina" + botones por curso | Solo botones por curso |
+| ¿Cuál uso? | Obvio: el del curso actual |
+| 2 clics posibles para lo mismo | 1 clic, en contexto |
+
+---
+
+### Archivos a Modificar
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/pos/POSOrderPanel.tsx` | Eliminar botón "Cocina", ajustar layout inferior |
+
+---
+
+### Sección Técnica
+
+**Cambios específicos en POSOrderPanel.tsx:**
+
+1. **Líneas 895-903**: Eliminar el `<Button variant="outline" onClick={sendToKitchen}>` completamente
+
+2. **Líneas 881-922**: Simplificar la sección de acciones:
+```tsx
+<div className="p-4 border-t border-border space-y-2 shrink-0">
+  {/* Servir - solo si hay items ready */}
+  {hasReadyItems && (
+    <Button className="w-full bg-emerald-600 ...">
+      Servir Mesa
+    </Button>
+  )}
+  
+  {/* Cobrar - siempre visible, full width */}
+  <Button className="w-full" onClick={...}>
+    <CreditCard /> Cobrar €{total.toFixed(2)}
+  </Button>
+</div>
+```
+
+3. **Líneas 687-740**: Mejorar visibilidad del botón de envío por curso:
+```tsx
+<Button
+  variant="default"  // Más visible que "ghost"
+  size="sm"
+  className={cn("gap-1", courseConfig.bgClass, "text-white")}
+  onClick={...}
+>
+  <Send className="h-3.5 w-3.5" />
+  Enviar {courseConfig.shortLabel} ➜
+</Button>
+```
+
+**Nota:** La función `sendToKitchen()` se mantiene en el código por si se necesita en el futuro, pero no tendrá botón asociado.
+
