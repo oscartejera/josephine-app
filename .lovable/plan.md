@@ -1,188 +1,96 @@
 
 
-## Plan: Añadir Bebidas como Curso 0 con Envío Automático a Barra
+## Plan: Carta Italiana Profesional con Imágenes y Grid Optimizada
 
-### Objetivo
-Añadir **Bebidas** como el primer "curso" (Course 0) con envío automático a barra cuando se añade el producto, sin necesidad de pulsar ningún botón.
+### Resumen del Problema
+
+1. **Grid de productos muy pequeña**: Altura fija de `h-48` (192px) que hace imposible seleccionar rápidamente
+2. **Sin fotos de productos**: La tabla `products` no tiene campo de imagen
+3. **Sin precios reales**: Todos los productos tienen precio hardcodeado a €10.00
+4. **Carta actual no es italiana**: Los productos existentes son de cocina española
 
 ---
 
-### Diseño Visual
+### Solución Propuesta
+
+#### 1. Ampliar Base de Datos
+
+Añadir columnas a la tabla `products`:
+- `image_url` (TEXT) - URL de imagen del producto
+- `price` (NUMERIC) - Precio del producto
+- `description` (TEXT) - Descripción corta (opcional)
+
+#### 2. Insertar Carta Italiana Completa
+
+Crear productos con sentido para un restaurante italiano:
+
+| Categoría | Productos |
+|-----------|-----------|
+| **Bebidas** | Acqua naturale, Coca-Cola, Birra Moretti, Vino della casa, Caffè espresso |
+| **Antipasti** | Bruschetta al pomodoro, Carpaccio di manzo, Burrata con prosciutto, Caprese |
+| **Primi** | Spaghetti carbonara, Penne all'arrabbiata, Lasagna bolognese, Risotto ai funghi, Gnocchi al pesto |
+| **Secondi** | Saltimbocca alla romana, Ossobuco, Pollo alla parmigiana, Branzino al forno |
+| **Pizze** | Margherita, Quattro formaggi, Diavola, Capricciosa, Prosciutto e funghi |
+| **Dolci** | Tiramisù, Panna cotta, Cannoli siciliani, Gelato artigianale |
+
+Cada producto con:
+- Nombre en italiano auténtico
+- Precio realista (€3-25)
+- Imagen generada con AI
+- Destino KDS correcto (bebidas → bar, comida → kitchen)
+
+#### 3. Rediseñar Grid de Productos
+
+**Layout actual (problemático):**
+```text
+┌─────────────────────────────┐
+│ Mesa 4 • [Cursos]           │
+├─────────────────────────────┤
+│ [Grid pequeña h-48 = 192px] │ ← MUY PEQUEÑA
+│ [solo caben 6 productos]    │
+├─────────────────────────────┤
+│ [Lista de líneas - grande]  │
+├─────────────────────────────┤
+│ [Totales + Cobrar]          │
+└─────────────────────────────┘
+```
+
+**Nuevo layout (optimizado):**
+```text
+┌─────────────────────────────┐
+│ Mesa 4 • [Cursos]           │
+├─────────────────────────────┤
+│ [Grid GRANDE = flex-1]      │ ← MITAD DE PANTALLA
+│ Tarjetas con:               │
+│  - Foto circular/cuadrada   │
+│  - Nombre visible           │
+│  - Precio destacado         │
+├─────────────────────────────┤
+│ [Lista compacta de líneas]  │ ← Más compacta
+├─────────────────────────────┤
+│ [Cobrar €XX.XX]             │
+└─────────────────────────────┘
+```
+
+---
+
+### Diseño Visual de Tarjetas de Producto
 
 ```text
-Selector de Cursos:
-[🍺 Beb] [1º] [2º] [🍰]
-   ↑
- Ámbar/Naranja
-
-Flujo automático:
-1. Camarero selecciona "Bebidas"
-2. Añade cerveza → SE ENVÍA AUTOMÁTICAMENTE a barra
-3. No aparece en la lista de "pendientes", ya está en barra
+┌──────────────┐
+│   [FOTO]     │  ← Imagen 64x64 o 80x80
+│   circular   │
+├──────────────┤
+│ Margherita   │  ← Nombre (2 líneas max)
+│   €9.50      │  ← Precio destacado
+└──────────────┘
 ```
 
----
-
-### Configuración de Colores
-
-| Curso | Color | Icono | Destino | Comportamiento |
-|-------|-------|-------|---------|----------------|
-| 0 - Bebidas | Ámbar/Naranja | Beer/GlassWater | `bar` | Auto-envío |
-| 1 - 1º Curso | Esmeralda | Soup | `kitchen` | Manual |
-| 2 - 2º Curso | Azul | UtensilsCrossed | `kitchen` | Manual |
-| 3 - Postre | Púrpura | IceCream2 | `kitchen` | Manual |
-
----
-
-### Cambios Concretos
-
-#### 1. POSCourseSelector.tsx
-
-**Añadir Curso 0 a la configuración:**
-```tsx
-import { Wine } from 'lucide-react'; // o Beer/GlassWater
-
-export const COURSE_CONFIG = {
-  0: { 
-    label: 'Bebidas', 
-    shortLabel: '🍺', 
-    color: 'amber',
-    bgClass: 'bg-amber-500',
-    bgClassLight: 'bg-amber-500/20',
-    borderClass: 'border-amber-500',
-    textClass: 'text-amber-500',
-    icon: Wine,
-    autoSend: true,      // Nueva propiedad
-    destination: 'bar',  // Nueva propiedad
-  },
-  1: { /* ... sin cambios ... */ },
-  2: { /* ... sin cambios ... */ },
-  3: { /* ... sin cambios ... */ },
-}
-```
-
-**Actualizar el array de cursos:**
-```tsx
-const courses = [0, 1, 2, 3] as const;
-```
-
----
-
-#### 2. POSOrderPanel.tsx
-
-**Inicializar con Curso 0 (Bebidas) como default:**
-```tsx
-const [selectedCourse, setSelectedCourse] = useState(0);
-```
-
-**Añadir función de envío automático:**
-```tsx
-const sendLineToKitchen = async (line: OrderLine) => {
-  const currentTicketId = await createOrUpdateTicket();
-  
-  const { data: insertedLine, error } = await supabase
-    .from('ticket_lines')
-    .insert({
-      ticket_id: currentTicketId,
-      product_id: line.product_id,
-      item_name: line.name,
-      quantity: line.quantity,
-      unit_price: line.unit_price,
-      gross_line_total: calculateLineTotal(line),
-      notes: line.notes,
-      sent_to_kitchen: true,
-      sent_at: new Date().toISOString(),
-      destination: line.kds_destination || 'bar',
-      prep_status: 'pending',
-      is_rush: line.is_rush || false,
-      course: line.course,
-    })
-    .select()
-    .single();
-  
-  return insertedLine;
-};
-```
-
-**Modificar handleModifierConfirm para auto-envío:**
-```tsx
-const handleModifierConfirm = async (modifiers, itemNotes, isRush) => {
-  if (!pendingProduct) return;
-
-  const courseConfig = getCourseConfig(selectedCourse);
-  
-  const newLine: OrderLine = {
-    product_id: pendingProduct.id,
-    name: pendingProduct.name,
-    quantity: 1,
-    unit_price: pendingProduct.price,
-    total: pendingProduct.price + modifiers.reduce(...),
-    notes: itemNotes || undefined,
-    modifiers,
-    sent_to_kitchen: courseConfig.autoSend || false, // Auto-marcado
-    kds_destination: courseConfig.destination || pendingProduct.kds_destination || 'kitchen',
-    is_rush: isRush,
-    course: selectedCourse,
-  };
-
-  // Si el curso tiene auto-envío, enviar inmediatamente
-  if (courseConfig.autoSend) {
-    setLoading(true);
-    try {
-      const inserted = await sendLineToKitchen(newLine);
-      if (inserted) {
-        setOrderLines([...orderLines, { ...newLine, id: inserted.id }]);
-        toast.success(`${newLine.name} enviado a barra`);
-      }
-    } catch (error) {
-      toast.error('Error al enviar a barra');
-    } finally {
-      setLoading(false);
-    }
-  } else {
-    setOrderLines([...orderLines, newLine]);
-  }
-  
-  setPendingProduct(null);
-};
-```
-
----
-
-#### 3. KDSOrderCard.tsx
-
-**Añadir Course 0 a la configuración del KDS:**
-```tsx
-const KDS_COURSE_CONFIG = {
-  0: { label: 'Bebidas', color: 'amber', icon: Wine, bgClass: 'bg-amber-500/20', borderClass: 'border-amber-500', textClass: 'text-amber-400' },
-  1: { /* ... */ },
-  2: { /* ... */ },
-  3: { /* ... */ },
-}
-```
-
----
-
-### Comportamiento Final
-
-```text
-┌─────────────────────────────────────────┐
-│  Mesa 4 • Curso: [🍺] [1º] [2º] [🍰]    │
-│                   ↑ (seleccionado)       │
-├─────────────────────────────────────────┤
-│  + Toca "Cerveza"                        │
-│    → Se añade a la lista                 │
-│    → SE ENVÍA AUTOMÁTICAMENTE A BARRA   │
-│    → Aparece con badge "Enviado"        │
-│                                          │
-│  🟠 Bebidas                              │
-│    ✓ Cerveza x1        [En barra]       │
-│    ✓ Coca-Cola x2      [En barra]       │
-│                                          │
-│  🟢 1º Curso           [Enviar 1º ➜]    │
-│    • Ensalada x1       (pendiente)       │
-└─────────────────────────────────────────┘
-```
+- Tarjetas cuadradas tipo "aspect-square"
+- Foto del producto arriba
+- Nombre centrado
+- Precio en color primario
+- Animación de press feedback
 
 ---
 
@@ -190,47 +98,86 @@ const KDS_COURSE_CONFIG = {
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/pos/POSCourseSelector.tsx` | Añadir Course 0 con propiedades `autoSend` y `destination` |
-| `src/components/pos/POSOrderPanel.tsx` | Lógica de auto-envío cuando se añade bebida |
-| `src/components/kds/KDSOrderCard.tsx` | Añadir Course 0 a la configuración visual del KDS |
+| `supabase/migrations/` | Añadir columnas `image_url`, `price`, `description` a `products` |
+| `supabase/migrations/` | INSERT de ~30 productos italianos con URLs de imagen |
+| `src/hooks/usePOSData.ts` | Actualizar query para traer `price`, `image_url` |
+| `src/components/pos/POSProductGrid.tsx` | Rediseño completo con imágenes y layout grande |
+| `src/components/pos/POSOrderPanel.tsx` | Cambiar `h-48` por altura dinámica `flex-1` |
 
 ---
 
 ### Sección Técnica
 
-**Cambios en tipos (POSCourseSelector.tsx):**
+#### Migración SQL - Nuevas columnas
 
-```typescript
-// Extender la configuración del curso
-interface CourseConfigItem {
-  label: string;
-  shortLabel: string;
-  color: string;
-  bgClass: string;
-  bgClassLight: string;
-  borderClass: string;
-  textClass: string;
-  icon: LucideIcon;
-  autoSend?: boolean;
-  destination?: 'kitchen' | 'bar' | 'prep';
-}
-
-export const COURSE_CONFIG: Record<number, CourseConfigItem> = {
-  0: { /* Bebidas */ },
-  1: { /* 1º Curso */ },
-  2: { /* 2º Curso */ },
-  3: { /* Postre */ },
-};
+```sql
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS price NUMERIC(10,2) DEFAULT 10.00,
+  ADD COLUMN IF NOT EXISTS image_url TEXT,
+  ADD COLUMN IF NOT EXISTS description TEXT;
 ```
 
-**Flujo de auto-envío (POSOrderPanel.tsx):**
+#### Productos Italianos de Ejemplo (INSERT)
 
-1. `handleModifierConfirm` detecta si el curso actual tiene `autoSend: true`
-2. Si es así, llama a `sendLineToKitchen` inmediatamente
-3. La línea se añade a `orderLines` ya con `sent_to_kitchen: true` y el `id` del registro insertado
-4. Se muestra toast de confirmación: "Cerveza enviado a barra"
+```sql
+-- Bebidas (kds_destination = 'bar')
+INSERT INTO products (location_id, name, category, price, image_url, kds_destination, is_active)
+VALUES 
+  ('7b6f18b7-...', 'Acqua Naturale', 'Bevande', 2.50, 'https://...', 'bar', true),
+  ('7b6f18b7-...', 'Birra Moretti', 'Bevande', 4.50, 'https://...', 'bar', true),
+  -- ... más bebidas
 
-**Destino KDS:**
-- Course 0 (Bebidas): `destination: 'bar'` → Aparece en estación BARRA del KDS
-- Courses 1-3: `destination: 'kitchen'` → Aparece en estación COCINA del KDS
+-- Antipasti (kds_destination = 'kitchen')
+INSERT INTO products (...)
+VALUES 
+  ('7b6f18b7-...', 'Bruschetta al pomodoro', 'Antipasti', 7.50, 'https://...', 'kitchen', true),
+  -- ... más antipasti
+
+-- Pizze, Primi, Secondi, Dolci...
+```
+
+Las imágenes se generarán usando la API de generación de imágenes AI (google/gemini-2.5-flash-image) y se subirán al bucket de storage.
+
+#### POSProductGrid Rediseñado
+
+```tsx
+// Tarjeta con imagen
+<button className="aspect-square p-2 rounded-xl border-2 ...">
+  <div className="w-16 h-16 mx-auto rounded-full overflow-hidden bg-muted mb-2">
+    {product.image_url ? (
+      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+    ) : (
+      <ShoppingBag className="w-8 h-8 m-auto text-muted-foreground" />
+    )}
+  </div>
+  <span className="text-sm font-medium line-clamp-2 text-center">{product.name}</span>
+  <span className="text-sm font-bold text-primary">€{product.price.toFixed(2)}</span>
+</button>
+```
+
+#### POSOrderPanel - Layout Balance
+
+```tsx
+// Antes: <div className="h-48 border-b ...">
+// Después:
+<div className="flex-1 min-h-0 border-b border-border">
+  <POSProductGrid products={products} onProductClick={handleProductClick} />
+</div>
+
+// Lista de líneas más compacta:
+<ScrollArea className="h-[30vh] shrink-0">
+  ...
+</ScrollArea>
+```
+
+---
+
+### Resultado Final
+
+El camarero verá:
+1. **Grid grande** con productos visuales fáciles de tocar
+2. **Fotos de platos** que ayudan a identificar rápidamente
+3. **Precios reales** de un restaurante italiano
+4. **Categorías coherentes**: Bevande, Antipasti, Primi, Secondi, Pizze, Dolci
+5. **Lista de pedido compacta** pero funcional
 
