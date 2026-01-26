@@ -1,177 +1,318 @@
 
-# Plan: Fix Inventory Module Data Display Issues
 
-## Problems Identified
+# Plan: Eliminar TODO lo Ficticio - Paridad 100% con Nory
 
-### Problem 1: COGS Breakdown Chart Shows All Zeros
-**Root Cause:** The category mapping logic in `useInventoryData.ts` (lines 383-387) only recognizes English category names:
-```typescript
-const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink') 
-  ? 'Beverage' 
-  : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
-  ? 'Food'
-  : 'Miscellaneous';
-```
+## Módulos con Datos Demo/Mock Restantes
 
-But the actual database categories are **Spanish**:
-- `Bebidas` → needs to map to "Beverage" (€153,622)
-- `Entrantes` → needs to map to "Food" (€152,641)
-- `Principales` → needs to map to "Food" (€151,360)
-- `Postres` → needs to map to "Food" (€93,524)
-
-Everything falls through to "Miscellaneous" but the amounts are still 0 because of how the mapping accumulates.
-
-### Problem 2: "La Taberna Centro" Shows All Zeros
-**Root Cause:** This is a **data issue**, not a code issue. The location `7b6f18b7-068b-453e-a702-380bcd8ce538` has **zero tickets** in the database.
-
-**Database Reality:**
-| Location | Ticket Count (Jan 2026) |
-|----------|-------------------------|
-| Chamberí | 1,672 tickets |
-| Salamanca | 1,672 tickets |
-| Malasaña | 1,672 tickets |
-| **La Taberna Centro** | **0 tickets** |
-
-The code logic is correct - it shows €0 because there are no sales. The fix here is to either:
-1. Seed POS data for this location, OR
-2. Hide locations with no data from the table, OR
-3. Show a clear "No POS data" message
+| Módulo | Problema | Prioridad |
+|--------|----------|-----------|
+| **Dashboard** | `Math.random()` para margen de productos (línea 120) | 🔴 Alta |
+| **Waste** | `generateDemoData()` si no hay waste_events | 🔴 Alta |
+| **Reviews** | 100% mock - `generateMockReviews()` | 🔴 Alta |
+| **Instant P&L** | COGS estimado con `SeededRandom` (25-32%) | 🟡 Media |
+| **Reconciliation** | Items hardcodeados si no hay stock counts | 🟡 Media |
+| **Procurement** | `Math.random()` para forecast usage | 🟡 Media |
+| **Order History** | 100% mock - genera pedidos ficticios | 🟡 Media |
+| **Payroll** | KPIs mock (€45k gross, €35k net) | 🟡 Media |
+| **KDS Dashboard** | Valores default cuando no hay datos | 🟢 Baja |
 
 ---
 
-## Proposed Fixes
+## Cambios a Implementar
 
-### Fix 1: Update Category Mapping for Spanish Terms
+### FASE 1: Dashboard (Prioridad Alta)
 
-**File:** `src/hooks/useInventoryData.ts`
+**Archivo:** `src/pages/Dashboard.tsx`
 
-Update the category mapping to support Spanish categories used in the POS:
-
+1. **Eliminar margen aleatorio** (línea 120)
+   - Actualmente: `margin: Math.floor(55 + Math.random() * 20)`
+   - Solución: Calcular margen real desde `recipes.cost_ratio` o usar 0 si no existe
+   
 ```typescript
-// Current logic (broken for Spanish)
-const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink') 
-  ? 'Beverage' 
-  : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
-  ? 'Food'
-  : 'Miscellaneous';
+// ANTES
+setTopItems(sortedItems.map((item, i) => ({ 
+  rank: i + 1, 
+  ...item, 
+  margin: Math.floor(55 + Math.random() * 20)  // ❌ FICTICIO
+})));
 
-// Fixed logic (supports Spanish POS categories)
-const catLower = cat.toLowerCase();
-const mappedCat = 
-  catLower.includes('bebida') || catLower.includes('beverage') || catLower.includes('drink')
-    ? 'Beverage' 
-  : catLower.includes('entrante') || catLower.includes('principal') || catLower.includes('postre') ||
-    catLower.includes('comida') || catLower.includes('food') || catLower.includes('plato')
-    ? 'Food'
-  : 'Miscellaneous';
+// DESPUÉS
+// Fetch recipe costs from DB
+const { data: recipes } = await supabase
+  .from('recipes')
+  .select('name, cost_ratio');
+const costMap = new Map(recipes?.map(r => [r.name.toLowerCase(), r.cost_ratio]) || []);
+
+setTopItems(sortedItems.map((item, i) => {
+  const costRatio = costMap.get(item.name.toLowerCase()) || 0.30; // Default 30% COGS
+  const margin = Math.round((1 - costRatio) * 100);
+  return { rank: i + 1, ...item, margin };
+}));
 ```
 
-This will correctly map:
-- `Bebidas` → "Beverage"
-- `Entrantes`, `Principales`, `Postres` → "Food"
+### FASE 2: Waste Module (Prioridad Alta)
 
-### Fix 2: Handle Locations Without Data Gracefully
+**Archivo:** `src/hooks/useWasteData.ts`
 
-**File:** `src/hooks/useInventoryData.ts`
-
-In the location performance calculation, add logic to only include locations with actual ticket data, OR mark them clearly as having no data:
+1. **Eliminar `generateDemoData()`** (líneas 448-520)
+2. **Mostrar empty state** si no hay waste_events
 
 ```typescript
-// Option A: Filter out locations with no sales data
-setLocationPerformance(locations
-  .filter(l => effectiveLocationIds.includes(l.id))
-  .filter(loc => salesByLoc.has(loc.id) && (salesByLoc.get(loc.id) || 0) > 0)
-  .map(loc => { ... }));
+// Eliminar completamente esta función:
+const generateDemoData = () => { ... }
 
-// Option B: Include but mark with hasData: false for "No POS data" message
+// Y el useEffect que la llama:
+useEffect(() => {
+  if (!isLoading && metrics.totalAccountedWaste === 0) {
+    generateDemoData(); // ❌ ELIMINAR
+  }
+}, ...);
+
+// Reemplazar con:
+// Si no hay datos, simplemente mostrar métricas en 0
+// El UI ya maneja esto con empty states
 ```
 
-### Fix 3: Seed Ticket Data for "La Taberna Centro"
+### FASE 3: Reviews Module (Prioridad Alta)
 
-**Database Seeding (Optional):** If the location should have real data, call the `seed_tickets_history` edge function to generate historical POS data for this new location.
+**Archivo:** `src/hooks/useReviewsData.ts`
 
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/hooks/useInventoryData.ts` | Update category mapping for Spanish; optionally filter empty locations |
-
----
-
-## Technical Section
-
-### Updated Category Mapping Logic
+Este módulo es 100% ficticio. Opciones:
+1. **Opción A**: Conectar a tabla `reviews` real (requiere crear tabla + RLS)
+2. **Opción B**: Mostrar empty state con CTA para integrar Google/TripAdvisor
 
 ```typescript
-// Lines 381-396 in useInventoryData.ts
-(ticketLines || []).forEach(line => {
-  const cat = line.category_name || 'Miscellaneous';
-  const catLower = cat.toLowerCase();
+// Crear tabla reviews
+CREATE TABLE reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  location_id uuid REFERENCES locations(id),
+  platform text NOT NULL, -- 'google', 'tripadvisor', 'yelp'
+  external_id text,
+  rating int2 CHECK (rating >= 1 AND rating <= 5),
+  author_name text,
+  content text,
+  created_at timestamptz NOT NULL,
+  replied_at timestamptz,
+  reply_content text,
+  group_id uuid REFERENCES groups(id)
+);
+
+// RLS
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users see own group reviews" ON reviews
+  FOR SELECT USING (group_id IN (SELECT group_id FROM user_groups WHERE user_id = auth.uid()));
+```
+
+### FASE 4: Instant P&L (Prioridad Media)
+
+**Archivo:** `src/hooks/useInstantPLData.ts`
+
+1. **COGS**: Usar ratio real de `recipes.cost_ratio` en vez de random 25-32%
+2. **Labour**: Ya está conectado a `timesheets` - verificar que no usa fallback
+
+```typescript
+// ANTES (líneas 176-182)
+const cogsRatio = rng.between(0.25, 0.32); // ❌ FICTICIO
+
+// DESPUÉS
+// Calcular COGS real desde ticket_lines + recipes
+const { data: ticketLines } = await supabase
+  .from('ticket_lines')
+  .select('item_name, gross_line_total')
+  .eq('tickets.location_id', loc.id)
+  .gte('tickets.closed_at', from)
+  .lte('tickets.closed_at', to);
+
+const { data: recipes } = await supabase
+  .from('recipes')
+  .select('name, cost_ratio');
+
+const costMap = new Map(recipes?.map(r => [r.name.toLowerCase(), r.cost_ratio]) || []);
+
+const cogsActual = ticketLines?.reduce((sum, line) => {
+  const ratio = costMap.get(line.item_name?.toLowerCase()) || 0.30;
+  return sum + (line.gross_line_total || 0) * ratio;
+}, 0) || 0;
+```
+
+### FASE 5: Reconciliation (Prioridad Media)
+
+**Archivo:** `src/hooks/useReconciliationData.ts`
+
+1. **Eliminar `demoItems` hardcodeados** (líneas 217-229)
+2. **Usar `inventory_items` reales**
+3. **Empty state** si no hay stock counts
+
+```typescript
+// ELIMINAR líneas 217-229 (demoItems array)
+
+// Usar inventory_items reales
+const { data: items } = await supabase
+  .from('inventory_items')
+  .select('id, name, unit')
+  .eq('location_id', locationId);
+
+if (!items || items.length === 0) {
+  setError(new Error('NO_INVENTORY_ITEMS'));
+  return;
+}
+```
+
+### FASE 6: Procurement (Prioridad Media)
+
+**Archivo:** `src/hooks/useProcurementData.ts`
+
+1. **Eliminar `generateForecastUsage()`** con Math.random (líneas 66-72)
+2. **Calcular forecast usage real** desde histórico de ticket_lines
+
+```typescript
+// ELIMINAR
+function generateForecastUsage(days: number = 30): number[] {
+  const baseUsage = Math.floor(Math.random() * 6) + 2; // ❌ FICTICIO
+  ...
+}
+
+// REEMPLAZAR CON
+async function calculateRealForecastUsage(itemId: string, days: number = 30): Promise<number[]> {
+  // Query histórico de consumo desde ticket_lines + recipe_ingredients
+  const { data } = await supabase
+    .from('ticket_lines')
+    .select('quantity, tickets!inner(closed_at)')
+    .eq('item_name', itemName)
+    .gte('tickets.closed_at', subDays(new Date(), days).toISOString());
   
-  // Support both Spanish (POS) and English category names
-  const mappedCat = 
-    catLower.includes('bebida') || catLower.includes('beverage') || 
-    catLower.includes('drink') || catLower.includes('vino') || catLower.includes('cerveza')
-      ? 'Beverage' 
-    : catLower.includes('entrante') || catLower.includes('principal') || 
-      catLower.includes('postre') || catLower.includes('comida') || 
-      catLower.includes('food') || catLower.includes('plato')
-      ? 'Food'
-    : 'Miscellaneous';
+  // Agrupar por día
+  const dailyUsage = new Map<string, number>();
+  data?.forEach(line => {
+    const day = format(new Date(line.tickets.closed_at), 'yyyy-MM-dd');
+    dailyUsage.set(day, (dailyUsage.get(day) || 0) + line.quantity);
+  });
   
-  const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
-  const lineTotal = line.gross_line_total || 0;
-  const recipeCost = recipeCostMap.get(line.item_name?.toLowerCase() || '') || lineTotal * 0.28;
-  
-  existing.actual += recipeCost * 1.05;
-  existing.theoretical += recipeCost;
-  categoryMap.set(mappedCat, existing);
-});
+  return Array.from(dailyUsage.values());
+}
 ```
 
-### Waste Category Mapping Update
+### FASE 7: Order History (Prioridad Media)
 
-The same fix needs to be applied to the waste category mapping (lines 412-418):
+**Archivo:** `src/components/procurement/OrderHistoryPanel.tsx`
+
+1. **Eliminar generación mock** (líneas 53-85)
+2. **Crear tabla `purchase_orders`** para histórico real
+
+```sql
+CREATE TABLE purchase_orders (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  location_id uuid REFERENCES locations(id),
+  supplier_id uuid REFERENCES suppliers(id),
+  order_number text NOT NULL,
+  status text DEFAULT 'pending', -- pending, sent, delivered, cancelled
+  ordered_at timestamptz DEFAULT now(),
+  expected_delivery_at timestamptz,
+  delivered_at timestamptz,
+  subtotal numeric(12,2),
+  tax numeric(12,2),
+  delivery_fee numeric(12,2),
+  total numeric(12,2),
+  group_id uuid REFERENCES groups(id)
+);
+
+CREATE TABLE purchase_order_lines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid REFERENCES purchase_orders(id) ON DELETE CASCADE,
+  item_id uuid REFERENCES inventory_items(id),
+  item_name text,
+  quantity numeric(10,2),
+  unit_price numeric(10,2),
+  total numeric(12,2)
+);
+```
+
+### FASE 8: Payroll KPIs (Prioridad Media)
+
+**Archivo:** `src/components/payroll/PayrollHome.tsx`
+
+1. **Conectar KPIs a `payslips` reales** (líneas 42-49)
 
 ```typescript
-(wasteEvents || []).forEach((w: any) => {
-  const cat = w.inventory_items?.category || 'food';
-  const catLower = cat.toLowerCase();
-  const mappedCat = 
-    catLower.includes('bebida') || catLower === 'beverage'
-      ? 'Beverage' 
-    : catLower.includes('comida') || catLower === 'food'
-      ? 'Food' 
-    : 'Miscellaneous';
-  // ... rest of logic
-});
+// ANTES
+const kpis = {
+  totalGross: currentRun ? 45000 : 0, // ❌ HARDCODED
+  totalNet: currentRun ? 35000 : 0,   // ❌ HARDCODED
+  ...
+};
+
+// DESPUÉS
+const { data: payslips } = await supabase
+  .from('payslips')
+  .select('gross_pay, net_pay, employer_ss, irpf_withheld')
+  .eq('payroll_run_id', currentRun?.id);
+
+const kpis = {
+  totalGross: payslips?.reduce((sum, p) => sum + Number(p.gross_pay), 0) || 0,
+  totalNet: payslips?.reduce((sum, p) => sum + Number(p.net_pay), 0) || 0,
+  totalEmployerSS: payslips?.reduce((sum, p) => sum + Number(p.employer_ss), 0) || 0,
+  totalIRPF: payslips?.reduce((sum, p) => sum + Number(p.irpf_withheld), 0) || 0,
+  employeeCount: payslips?.length || 0,
+};
 ```
 
 ---
 
-## Expected Results After Fix
+## Archivos a Modificar
 
-### COGS Breakdown (with fix)
-| Category | Actual € | Theoretical € |
-|----------|----------|---------------|
-| **Food** | ~€139,000 (Entrantes + Principales + Postres) | ~€133,000 |
-| **Beverage** | ~€42,000 (Bebidas) | ~€40,000 |
-| **Miscellaneous** | €0 | €0 |
-
-### Location Performance (with fix)
-| Location | Sales | Shows Data? |
-|----------|-------|-------------|
-| Chamberí | €142,011 | ✅ Yes |
-| Salamanca | €140,306 | ✅ Yes |
-| Malasaña | €138,663 | ✅ Yes |
-| La Taberna Centro | €0 | ⚠️ "No POS data" OR hidden |
+| Archivo | Cambios |
+|---------|---------|
+| `src/pages/Dashboard.tsx` | Margen real desde recipes |
+| `src/hooks/useWasteData.ts` | Eliminar generateDemoData |
+| `src/hooks/useReviewsData.ts` | Conectar a tabla reviews o empty state |
+| `src/hooks/useInstantPLData.ts` | COGS real desde recipes |
+| `src/hooks/useReconciliationData.ts` | Eliminar demoItems |
+| `src/hooks/useProcurementData.ts` | Forecast usage real |
+| `src/components/procurement/OrderHistoryPanel.tsx` | Conectar a purchase_orders |
+| `src/components/payroll/PayrollHome.tsx` | KPIs desde payslips |
+| `src/components/payroll/PayrollCalculate.tsx` | Eliminar variation mock |
 
 ---
 
-## Implementation Notes
+## Tablas Nuevas Requeridas
 
-1. **Backward Compatible:** The new mapping includes both Spanish AND English terms, so it works for any future English POS integrations
-2. **Dynamic:** New locations will automatically show correct data once they have POS tickets
-3. **Data Seeding:** If "La Taberna Centro" should have demo data, we can run the `seed_tickets_history` edge function for that location
+| Tabla | Propósito |
+|-------|-----------|
+| `reviews` | Reviews de Google/TripAdvisor/Yelp |
+| `purchase_orders` | Histórico de pedidos a proveedores |
+| `purchase_order_lines` | Líneas de cada pedido |
+
+---
+
+## Orden de Implementación
+
+1. **Dashboard margen real** (cambio simple, alto impacto visual)
+2. **Waste sin demo data** (eliminar código ficticio)
+3. **Instant P&L COGS real** (usa datos existentes)
+4. **Reconciliation sin fallback** (empty state elegante)
+5. **Procurement forecast real** (requiere más lógica)
+6. **Payroll KPIs reales** (ya tiene tabla payslips)
+7. **Reviews tabla nueva** (requiere migración DB)
+8. **Order History tabla nueva** (requiere migración DB)
+
+---
+
+## Resultado Final
+
+Después de estos cambios, **CERO** datos ficticios:
+
+| Módulo | Estado |
+|--------|--------|
+| Dashboard | ✅ 100% POS real |
+| Sales | ✅ 100% POS real |
+| Labour | ✅ 100% timesheets |
+| Scheduling | ✅ 100% planned_shifts |
+| Waste | ✅ 100% waste_events |
+| Inventory | ✅ 100% tickets + stock_counts |
+| Instant P&L | ✅ 100% calculado real |
+| Menu Engineering | ✅ 100% ticket_lines |
+| Budgets | ✅ 100% forecast vs actual |
+| Reviews | ✅ Empty state / real cuando integrado |
+| Procurement | ✅ Real forecast + purchase_orders |
+| Payroll | ✅ 100% payslips |
+
