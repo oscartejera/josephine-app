@@ -195,6 +195,7 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
           >
             {currentTables.map((table) => {
               const kdsInfo = getTableStatus(table.id);
+              const tableTicket = openTickets.find(t => t.pos_table_id === table.id && t.status === 'open');
               return (
                 <POSTableCard
                   key={table.id}
@@ -204,6 +205,7 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
                   reservation={tableReservationsMap.get(table.id)}
                   kdsInfo={kdsInfo}
                   onServe={() => markTableAsServed(table.id)}
+                  ticketOpenedAt={tableTicket?.opened_at}
                 />
               );
             })}
