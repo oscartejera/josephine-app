@@ -108,6 +108,24 @@ export default function Dashboard() {
     let linesQuery = supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total');
     const { data: lines } = await linesQuery.limit(500);
     
+    // Fetch recipe costs for real margin calculation
+    const { data: recipes } = await supabase
+      .from('recipes')
+      .select('menu_item_name, selling_price');
+    
+    const { data: recipeIngredients } = await supabase
+      .from('recipe_ingredients')
+      .select('recipe_id, quantity, inventory_items(last_cost)');
+    
+    // Calculate recipe costs
+    const recipeCostMap = new Map<string, number>();
+    recipes?.forEach(recipe => {
+      const ingredientCosts = (recipeIngredients || [])
+        .filter((ri: any) => ri.recipe_id === recipe.menu_item_name)
+        .reduce((sum: number, ri: any) => sum + ((ri.inventory_items?.last_cost || 0) * (ri.quantity || 0)), 0);
+      recipeCostMap.set(recipe.menu_item_name.toLowerCase(), ingredientCosts || (recipe.selling_price * 0.30));
+    });
+    
     const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number }>();
     lines?.forEach(line => {
       const existing = itemMap.get(line.item_name) || { name: line.item_name, category: line.category_name || 'Sin categoría', quantity: 0, sales: 0 };
@@ -117,7 +135,12 @@ export default function Dashboard() {
     });
     
     const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
-    setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item, margin: Math.floor(55 + Math.random() * 20) })));
+    setTopItems(sortedItems.map((item, i) => {
+      const avgPrice = item.quantity > 0 ? item.sales / item.quantity : 0;
+      const recipeCost = recipeCostMap.get(item.name.toLowerCase()) || avgPrice * 0.30; // Default 30% COGS if no recipe
+      const margin = avgPrice > 0 ? Math.round((1 - recipeCost / avgPrice) * 100) : 70;
+      return { rank: i + 1, ...item, margin: Math.max(0, Math.min(100, margin)) };
+    }));
 
     setLoading(false);
   };

@@ -63,11 +63,23 @@ export type { Supplier, RecommendationSettings, RecommendationBreakdown, Procure
 
 // ============= Utility Functions =============
 
-function generateForecastUsage(days: number = 30): number[] {
-  const baseUsage = Math.floor(Math.random() * 6) + 2;
-  return Array.from({ length: days }, () => {
-    const variance = (Math.random() - 0.5) * 4;
-    return Math.max(1, Math.round(baseUsage + variance));
+// Generate seeded forecast usage based on item characteristics for consistency
+function generateForecastUsage(itemId: string, parLevel: number, days: number = 30): number[] {
+  // Use item ID hash for consistent results per item
+  let hash = 0;
+  for (let i = 0; i < itemId.length; i++) {
+    hash = ((hash << 5) - hash) + itemId.charCodeAt(i);
+    hash = hash & hash;
+  }
+  
+  // Base daily usage derived from par level (par typically covers 3-5 days)
+  const baseUsage = Math.max(1, Math.round(parLevel / 4));
+  
+  return Array.from({ length: days }, (_, dayIndex) => {
+    // Seeded variance based on hash + day for reproducibility
+    const seed = Math.abs(hash + dayIndex * 1000);
+    const variance = ((seed % 100) / 100 - 0.5) * 2; // -1 to 1
+    return Math.max(1, Math.round(baseUsage + variance * (baseUsage * 0.3)));
   });
 }
 
@@ -296,7 +308,7 @@ export function useProcurementData() {
             onHandUnits: item.current_stock || 0,
             parLevelUnits: item.par_level || packSizeUnits * 5,
             onOrderUnits: onOrderMap.get(item.id) || 0,
-            forecastDailyUsage: generateForecastUsage(30),
+            forecastDailyUsage: generateForecastUsage(item.id, item.par_level || packSizeUnits * 5, 30),
             paused: false,
             wasteFactor,
             yieldFactor: 1.0,

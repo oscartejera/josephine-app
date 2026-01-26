@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Package, Truck, CheckCircle2, Clock, AlertCircle, RotateCcw, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,7 +18,7 @@ export interface OrderHistoryItem {
   supplierName: string;
   orderDate: Date;
   deliveryDate: Date;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'draft' | 'sent' | 'delivered' | 'cancelled';
   items: {
     skuId: string;
     name: string;
@@ -30,99 +32,88 @@ export interface OrderHistoryItem {
   total: number;
 }
 
-// Generate mock order history
-function generateMockOrders(): OrderHistoryItem[] {
-  const statuses: OrderHistoryItem['status'][] = ['delivered', 'delivered', 'delivered', 'shipped', 'confirmed', 'pending'];
-  const suppliers = [
-    { id: 'macro', name: 'Macro' },
-    { id: 'sysco', name: 'Sysco' },
-    { id: 'bidfood', name: 'Bidfood' },
-  ];
-
-  const sampleItems = [
-    { skuId: 'sku-001', name: 'Chicken Breast', packSize: '1×5kg', unitPrice: 42.50 },
-    { skuId: 'sku-010', name: 'Whole Milk', packSize: '12×1L', unitPrice: 14.40 },
-    { skuId: 'sku-020', name: 'Onions Brown', packSize: '1×10kg', unitPrice: 8.50 },
-    { skuId: 'sku-021', name: 'Tomatoes Vine', packSize: '1×5kg', unitPrice: 12.00 },
-    { skuId: 'sku-030', name: 'Pasta Penne', packSize: '1×5kg', unitPrice: 8.00 },
-    { skuId: 'sku-040', name: 'Coca-Cola Classic', packSize: '24×330ml', unitPrice: 16.80 },
-    { skuId: 'sku-050', name: 'Burger Buns', packSize: '48 units', unitPrice: 12.00 },
-    { skuId: 'sku-060', name: 'Mayonnaise', packSize: '1×5L', unitPrice: 12.00 },
-  ];
-
-  const orders: OrderHistoryItem[] = [];
-  const now = new Date();
-
-  for (let i = 0; i < 12; i++) {
-    const orderDate = new Date(now);
-    orderDate.setDate(orderDate.getDate() - (i * 3 + Math.floor(Math.random() * 2)));
-    
-    const deliveryDate = new Date(orderDate);
-    deliveryDate.setDate(deliveryDate.getDate() + 1 + Math.floor(Math.random() * 2));
-
-    const supplier = suppliers[i % suppliers.length];
-    const status = statuses[Math.min(i, statuses.length - 1)];
-    
-    // Random 3-6 items per order
-    const numItems = 3 + Math.floor(Math.random() * 4);
-    const orderItems = [];
-    const usedIndices = new Set<number>();
-    
-    for (let j = 0; j < numItems; j++) {
-      let idx: number;
-      do {
-        idx = Math.floor(Math.random() * sampleItems.length);
-      } while (usedIndices.has(idx));
-      usedIndices.add(idx);
-      
-      const item = sampleItems[idx];
-      const packs = 1 + Math.floor(Math.random() * 5);
-      orderItems.push({ ...item, packs });
-    }
-
-    const subtotal = orderItems.reduce((sum, item) => sum + item.packs * item.unitPrice, 0);
-    const deliveryFee = subtotal >= 50 ? 0 : 15;
-    const tax = subtotal * 0.21;
-
-    orders.push({
-      id: `order-${i + 1}`,
-      orderNumber: `PO-${2025}${String(i + 100).padStart(4, '0')}`,
-      supplierId: supplier.id,
-      supplierName: supplier.name,
-      orderDate,
-      deliveryDate,
-      status,
-      items: orderItems,
-      subtotal,
-      deliveryFee,
-      tax,
-      total: subtotal + deliveryFee + tax,
-    });
-  }
-
-  return orders;
-}
-
-const MOCK_ORDERS = generateMockOrders();
-
 interface OrderHistoryPanelProps {
   onReorder?: (items: { skuId: string; packs: number }[]) => void;
 }
 
 export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
-  const [orders] = useState<OrderHistoryItem[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    async function fetchOrders() {
+      setIsLoading(true);
+      
+      const { data: ordersData, error } = await supabase
+        .from('purchase_orders')
+        .select(`
+          id,
+          order_number,
+          supplier_id,
+          suppliers(name),
+          status,
+          ordered_at,
+          expected_delivery_at,
+          delivered_at,
+          subtotal,
+          tax,
+          delivery_fee,
+          total,
+          purchase_order_lines(
+            id,
+            inventory_item_id,
+            item_name,
+            quantity,
+            unit_price,
+            total
+          )
+        `)
+        .order('ordered_at', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error('Error fetching orders:', error);
+        setIsLoading(false);
+        return;
+      }
+      
+      const transformedOrders: OrderHistoryItem[] = (ordersData || []).map((order: any) => ({
+        id: order.id,
+        orderNumber: order.order_number || `PO-${order.id.slice(0, 8)}`,
+        supplierId: order.supplier_id,
+        supplierName: order.suppliers?.name || 'Unknown Supplier',
+        orderDate: new Date(order.ordered_at),
+        deliveryDate: new Date(order.expected_delivery_at || order.delivered_at || order.ordered_at),
+        status: order.status || 'draft',
+        items: (order.purchase_order_lines || []).map((line: any) => ({
+          skuId: line.inventory_item_id || line.id,
+          name: line.item_name || 'Unknown Item',
+          packSize: '1×unit',
+          packs: line.quantity || 0,
+          unitPrice: Number(line.unit_price) || 0,
+        })),
+        subtotal: Number(order.subtotal) || 0,
+        deliveryFee: Number(order.delivery_fee) || 0,
+        tax: Number(order.tax) || 0,
+        total: Number(order.total) || 0,
+      }));
+      
+      setOrders(transformedOrders);
+      setIsLoading(false);
+    }
+    
+    fetchOrders();
+  }, []);
+
   const getStatusBadge = (status: OrderHistoryItem['status']) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Pending</Badge>;
-      case 'confirmed':
-        return <Badge variant="outline" className="gap-1 border-blue-500 text-blue-600"><CheckCircle2 className="h-3 w-3" /> Confirmed</Badge>;
-      case 'shipped':
-        return <Badge variant="outline" className="gap-1 border-orange-500 text-orange-600"><Truck className="h-3 w-3" /> Shipped</Badge>;
+      case 'draft':
+        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Draft</Badge>;
+      case 'sent':
+        return <Badge variant="outline" className="gap-1 border-orange-500 text-orange-600"><Truck className="h-3 w-3" /> Sent</Badge>;
       case 'delivered':
         return <Badge className="gap-1 bg-emerald-500"><CheckCircle2 className="h-3 w-3" /> Delivered</Badge>;
       case 'cancelled':
@@ -150,6 +141,24 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Order History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-20 w-full" />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -168,7 +177,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
           <div className="text-center py-12 text-muted-foreground">
             <Package className="h-12 w-12 mx-auto mb-4 opacity-40" />
             <p className="font-medium">No orders yet</p>
-            <p className="text-sm mt-1">Your order history will appear here</p>
+            <p className="text-sm mt-1">Your order history will appear here once you place orders</p>
           </div>
         ) : (
           <div className="space-y-3">
