@@ -95,12 +95,13 @@ export function useTopProducts() {
     localStorage.removeItem('topProductsDemoSeeded');
     
     setSeeding(true);
-    toast.loading('Generando datos demo...', { id: 'seeding' });
+    toast.loading('Generando datos de ventas...', { id: 'seeding' });
     
     try {
-      console.log('Calling seed_demo_products_and_sales with group_id:', group.id);
+      console.log('Calling seed_sales_for_existing_products with group_id:', group.id);
       
-      const { data, error } = await supabase.rpc('seed_demo_products_and_sales', {
+      // Use the new function that seeds sales for EXISTING POS products
+      const { data, error } = await supabase.rpc('seed_sales_for_existing_products', {
         p_group_id: group.id
       });
 
@@ -114,7 +115,7 @@ export function useTopProducts() {
       // Mark as seeded
       localStorage.setItem('topProductsDemoSeeded', 'true');
       
-      toast.success('Datos demo generados correctamente', { id: 'seeding' });
+      toast.success('Datos de ventas generados para productos del POS', { id: 'seeding' });
       
       // Refetch products
       await fetchTopProducts();

@@ -3933,6 +3933,10 @@ export type Database = {
         Returns: undefined
       }
       seed_roles_and_permissions: { Args: never; Returns: undefined }
+      seed_sales_for_existing_products: {
+        Args: { p_group_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
