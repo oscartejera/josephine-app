@@ -61,7 +61,8 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
   
   // Course system state
-  const [selectedCourse, setSelectedCourse] = useState(1);
+  // Default to Course 0 (Beverages) for quick drink orders
+  const [selectedCourse, setSelectedCourse] = useState(0);
 
   const groupId = group?.id || '';
 
@@ -190,8 +191,56 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
   };
 
-  const handleModifierConfirm = (modifiers: OrderLineModifier[], itemNotes: string, isRush: boolean) => {
+  // Auto-send a single line to kitchen/bar (used for beverages)
+  const sendSingleLineToKitchen = async (line: OrderLine): Promise<string | null> => {
+    try {
+      const currentTicketId = await createOrUpdateTicket();
+      
+      const { data: insertedLine, error } = await supabase
+        .from('ticket_lines')
+        .insert({
+          ticket_id: currentTicketId,
+          product_id: line.product_id,
+          item_name: line.name,
+          quantity: line.quantity,
+          unit_price: line.unit_price,
+          gross_line_total: calculateLineTotal(line),
+          notes: line.notes,
+          sent_to_kitchen: true,
+          sent_at: new Date().toISOString(),
+          destination: line.kds_destination || 'bar',
+          prep_status: 'pending',
+          is_rush: line.is_rush || false,
+          course: line.course,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Insert modifiers if any
+      if (insertedLine && line.modifiers.length > 0) {
+        await supabase.from('ticket_line_modifiers').insert(
+          line.modifiers.map(mod => ({
+            ticket_line_id: insertedLine.id,
+            modifier_name: mod.modifier_name,
+            option_name: mod.option_name,
+            price_delta: mod.price_delta,
+          }))
+        );
+      }
+      
+      return insertedLine?.id || null;
+    } catch (error) {
+      console.error('Error auto-sending line:', error);
+      return null;
+    }
+  };
+
+  const handleModifierConfirm = async (modifiers: OrderLineModifier[], itemNotes: string, isRush: boolean) => {
     if (!pendingProduct) return;
+
+    const courseConfig = getCourseConfig(selectedCourse);
 
     if (editingLineIndex !== null) {
       // Update existing line
@@ -214,12 +263,38 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
         total: pendingProduct.price + modifiers.reduce((sum, m) => sum + m.price_delta, 0),
         notes: itemNotes || undefined,
         modifiers,
-        sent_to_kitchen: false,
-        kds_destination: pendingProduct.kds_destination || 'kitchen',
+        sent_to_kitchen: courseConfig.autoSend || false,
+        kds_destination: courseConfig.destination || pendingProduct.kds_destination || 'kitchen',
         is_rush: isRush,
         course: selectedCourse,
       };
-      setOrderLines([...orderLines, newLine]);
+
+      // If course has auto-send enabled (e.g., Beverages), send immediately
+      if (courseConfig.autoSend) {
+        setLoading(true);
+        try {
+          const insertedId = await sendSingleLineToKitchen(newLine);
+          if (insertedId) {
+            setOrderLines([...orderLines, { 
+              ...newLine, 
+              id: insertedId, 
+              sent_to_kitchen: true,
+              prep_status: 'pending',
+            }]);
+            const destLabel = courseConfig.destination === 'bar' ? 'barra' : 'cocina';
+            toast.success(`${newLine.name} enviado a ${destLabel}`);
+            onRefresh();
+          } else {
+            // Fallback: add as pending if auto-send fails
+            setOrderLines([...orderLines, newLine]);
+            toast.error('Error al enviar automáticamente');
+          }
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setOrderLines([...orderLines, newLine]);
+      }
     }
 
     setPendingProduct(null);

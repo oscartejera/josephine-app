@@ -1,8 +1,34 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { UtensilsCrossed, Soup, IceCream2 } from 'lucide-react';
+import { UtensilsCrossed, Soup, IceCream2, Wine, LucideIcon } from 'lucide-react';
 
-export const COURSE_CONFIG = {
+// Extended course configuration with auto-send and destination properties
+interface CourseConfigItem {
+  label: string;
+  shortLabel: string;
+  color: string;
+  bgClass: string;
+  bgClassLight: string;
+  borderClass: string;
+  textClass: string;
+  icon: LucideIcon;
+  autoSend?: boolean;
+  destination?: 'kitchen' | 'bar' | 'prep';
+}
+
+export const COURSE_CONFIG: Record<number, CourseConfigItem> = {
+  0: { 
+    label: 'Bebidas', 
+    shortLabel: '🍺', 
+    color: 'amber',
+    bgClass: 'bg-amber-500',
+    bgClassLight: 'bg-amber-500/20',
+    borderClass: 'border-amber-500',
+    textClass: 'text-amber-500',
+    icon: Wine,
+    autoSend: true,
+    destination: 'bar',
+  },
   1: { 
     label: '1º Curso', 
     shortLabel: '1º', 
@@ -12,6 +38,8 @@ export const COURSE_CONFIG = {
     borderClass: 'border-emerald-500',
     textClass: 'text-emerald-500',
     icon: Soup,
+    autoSend: false,
+    destination: 'kitchen',
   },
   2: { 
     label: '2º Curso', 
@@ -22,6 +50,8 @@ export const COURSE_CONFIG = {
     borderClass: 'border-blue-500',
     textClass: 'text-blue-500',
     icon: UtensilsCrossed,
+    autoSend: false,
+    destination: 'kitchen',
   },
   3: { 
     label: 'Postre', 
@@ -32,13 +62,15 @@ export const COURSE_CONFIG = {
     borderClass: 'border-purple-500',
     textClass: 'text-purple-500',
     icon: IceCream2,
+    autoSend: false,
+    destination: 'kitchen',
   },
-} as const;
+};
 
 export type CourseNumber = keyof typeof COURSE_CONFIG;
 
-export function getCourseConfig(course: number) {
-  return COURSE_CONFIG[course as CourseNumber] || COURSE_CONFIG[1];
+export function getCourseConfig(course: number): CourseConfigItem {
+  return COURSE_CONFIG[course] || COURSE_CONFIG[1];
 }
 
 interface POSCourseSelectorProps {
@@ -54,7 +86,7 @@ export function POSCourseSelector({
   courseCounts = {},
   compact = false 
 }: POSCourseSelectorProps) {
-  const courses = [1, 2, 3] as const;
+  const courses = [0, 1, 2, 3] as const;
 
   return (
     <div className={cn("flex gap-1", compact ? "gap-0.5" : "gap-1")}>
