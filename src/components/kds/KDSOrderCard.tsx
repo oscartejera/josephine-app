@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Check, Clock, ChefHat, AlertTriangle, Flame, Soup, UtensilsCrossed, IceCream2 } from 'lucide-react';
+import { Check, Clock, ChefHat, AlertTriangle, Flame, Soup, UtensilsCrossed, IceCream2, Wine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { KDSModifiersList } from './KDSModifierBadge';
@@ -7,6 +7,7 @@ import type { KDSOrder, KDSTicketLine } from '@/hooks/useKDSData';
 
 // Course configuration for KDS display
 const KDS_COURSE_CONFIG = {
+  0: { label: 'Bebidas', color: 'amber', icon: Wine, bgClass: 'bg-amber-500/20', borderClass: 'border-amber-500', textClass: 'text-amber-400' },
   1: { label: '1º Curso', color: 'emerald', icon: Soup, bgClass: 'bg-emerald-500/20', borderClass: 'border-emerald-500', textClass: 'text-emerald-400' },
   2: { label: '2º Curso', color: 'blue', icon: UtensilsCrossed, bgClass: 'bg-blue-500/20', borderClass: 'border-blue-500', textClass: 'text-blue-400' },
   3: { label: 'Postre', color: 'purple', icon: IceCream2, bgClass: 'bg-purple-500/20', borderClass: 'border-purple-500', textClass: 'text-purple-400' },
