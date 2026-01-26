@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileDown, CheckCircle, AlertCircle } from 'lucide-react';
 import type { FiscalMetrics } from '@/hooks/useFiscalData';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface Model303PreviewProps {
   metrics: FiscalMetrics;
@@ -25,6 +27,7 @@ export function Model303Preview({
   quarter,
   isLoading 
 }: Model303PreviewProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const { ventasByRate, comprasByRate, ivaRepercutido, ivaSoportado, ivaAPagar } = metrics;
 
   // Group by standard Spanish IVA rates
@@ -53,138 +56,153 @@ export function Model303Preview({
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Card className="cursor-pointer transition-shadow hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Modelo 303</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Autoliquidación T{quarter} {year}
-              </p>
-            </div>
-            <Badge variant={ivaAPagar >= 0 ? 'destructive' : 'default'}>
-              {ivaAPagar >= 0 ? 'A ingresar' : 'A compensar'}
-            </Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Total IVA devengado</span>
-                <span className="font-medium">{formatCurrency(ivaRepercutido)}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Total IVA deducible</span>
-                <span className="font-medium">{formatCurrency(ivaSoportado)}</span>
-              </div>
-              <div className="flex justify-between pt-2">
-                <span className="font-semibold">Resultado</span>
-                <span className={`text-xl font-bold ${ivaAPagar >= 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                  {formatCurrency(Math.abs(ivaAPagar))}
-                </span>
-              </div>
-            </div>
-            <Button className="mt-6 w-full" variant="outline">
-              Ver detalle completo
-            </Button>
-          </CardContent>
-        </Card>
-      </DialogTrigger>
-
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Modelo 303 - Autoliquidación IVA
-            <Badge variant="outline">T{quarter} {year}</Badge>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* IVA Devengado (Repercutido) */}
+    <>
+      <Card 
+        className="cursor-pointer transition-shadow hover:shadow-md"
+        onClick={() => setIsOpen(true)}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <h3 className="mb-3 flex items-center gap-2 font-semibold">
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
-              IVA Devengado (Ventas)
-            </h3>
-            <div className="space-y-2 rounded-lg border p-4">
-              <div className="grid grid-cols-3 gap-4 text-sm font-medium text-muted-foreground">
-                <span>Tipo</span>
-                <span className="text-right">Base Imponible</span>
-                <span className="text-right">Cuota</span>
-              </div>
-              {[ventas21, ventas10, ventas4].filter(v => v.base > 0).map(v => (
-                <div key={`ventas-${v.rate}`} className="grid grid-cols-3 gap-4">
-                  <span>IVA {v.rate}%</span>
-                  <span className="text-right">{formatCurrency(v.base)}</span>
-                  <span className="text-right font-medium">{formatCurrency(v.iva)}</span>
-                </div>
-              ))}
-              <div className="mt-2 grid grid-cols-3 gap-4 border-t pt-2 font-semibold">
-                <span>Total Devengado</span>
-                <span></span>
-                <span className="text-right">{formatCurrency(ivaRepercutido)}</span>
-              </div>
-            </div>
+            <CardTitle className="text-lg">Modelo 303</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Autoliquidación T{quarter} {year}
+            </p>
           </div>
-
-          {/* IVA Deducible (Soportado) */}
-          <div>
-            <h3 className="mb-3 flex items-center gap-2 font-semibold">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              IVA Deducible (Compras)
-            </h3>
-            <div className="space-y-2 rounded-lg border p-4">
-              <div className="grid grid-cols-3 gap-4 text-sm font-medium text-muted-foreground">
-                <span>Tipo</span>
-                <span className="text-right">Base Imponible</span>
-                <span className="text-right">Cuota</span>
-              </div>
-              {[compras21, compras10, compras4].filter(c => c.base > 0).map(c => (
-                <div key={`compras-${c.rate}`} className="grid grid-cols-3 gap-4">
-                  <span>IVA {c.rate}%</span>
-                  <span className="text-right">{formatCurrency(c.base)}</span>
-                  <span className="text-right font-medium">{formatCurrency(c.iva)}</span>
-                </div>
-              ))}
-              <div className="mt-2 grid grid-cols-3 gap-4 border-t pt-2 font-semibold">
-                <span>Total Deducible</span>
-                <span></span>
-                <span className="text-right">{formatCurrency(ivaSoportado)}</span>
-              </div>
+          <Badge variant={ivaAPagar >= 0 ? 'destructive' : 'default'}>
+            {ivaAPagar >= 0 ? 'A ingresar' : 'A compensar'}
+          </Badge>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Total IVA devengado</span>
+              <span className="font-medium">{formatCurrency(ivaRepercutido)}</span>
             </div>
-          </div>
-
-          {/* Resultado */}
-          <div className="rounded-lg bg-muted p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold">
-                Resultado de la Autoliquidación
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Total IVA deducible</span>
+              <span className="font-medium">{formatCurrency(ivaSoportado)}</span>
+            </div>
+            <div className="flex justify-between pt-2">
+              <span className="font-semibold">Resultado</span>
+              <span className={cn(
+                "text-xl font-bold",
+                ivaAPagar >= 0 ? "text-destructive" : "text-primary"
+              )}>
+                {formatCurrency(Math.abs(ivaAPagar))}
               </span>
-              <div className="text-right">
-                <p className={`text-2xl font-bold ${ivaAPagar >= 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                  {formatCurrency(Math.abs(ivaAPagar))}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {ivaAPagar >= 0 ? 'A ingresar en Hacienda' : 'A compensar en próximas declaraciones'}
-                </p>
-              </div>
             </div>
           </div>
+          <Button className="mt-6 w-full" variant="outline">
+            Ver detalle completo
+          </Button>
+        </CardContent>
+      </Card>
 
-          <div className="flex justify-end gap-3">
-            <Button variant="outline">
-              <FileDown className="mr-2 h-4 w-4" />
-              Exportar PDF
-            </Button>
-            <Button disabled>
-              Presentar en AEAT
-              <Badge variant="secondary" className="ml-2">
-                Próximamente
-              </Badge>
-            </Button>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Modelo 303 - Autoliquidación IVA
+              <Badge variant="outline">T{quarter} {year}</Badge>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* IVA Devengado (Repercutido) */}
+            <div>
+              <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                IVA Devengado (Ventas)
+              </h3>
+              <div className="space-y-2 rounded-lg border p-4">
+                <div className="grid grid-cols-3 gap-4 text-sm font-medium text-muted-foreground">
+                  <span>Tipo</span>
+                  <span className="text-right">Base Imponible</span>
+                  <span className="text-right">Cuota</span>
+                </div>
+                {[ventas21, ventas10, ventas4].filter(v => v.base > 0).map(v => (
+                  <div key={`ventas-${v.rate}`} className="grid grid-cols-3 gap-4">
+                    <span>IVA {v.rate}%</span>
+                    <span className="text-right">{formatCurrency(v.base)}</span>
+                    <span className="text-right font-medium">{formatCurrency(v.iva)}</span>
+                  </div>
+                ))}
+                {[ventas21, ventas10, ventas4].filter(v => v.base > 0).length === 0 && (
+                  <p className="text-sm text-muted-foreground py-2">Sin datos de ventas en este período</p>
+                )}
+                <div className="mt-2 grid grid-cols-3 gap-4 border-t pt-2 font-semibold">
+                  <span>Total Devengado</span>
+                  <span></span>
+                  <span className="text-right">{formatCurrency(ivaRepercutido)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* IVA Deducible (Soportado) */}
+            <div>
+              <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                IVA Deducible (Compras)
+              </h3>
+              <div className="space-y-2 rounded-lg border p-4">
+                <div className="grid grid-cols-3 gap-4 text-sm font-medium text-muted-foreground">
+                  <span>Tipo</span>
+                  <span className="text-right">Base Imponible</span>
+                  <span className="text-right">Cuota</span>
+                </div>
+                {[compras21, compras10, compras4].filter(c => c.base > 0).map(c => (
+                  <div key={`compras-${c.rate}`} className="grid grid-cols-3 gap-4">
+                    <span>IVA {c.rate}%</span>
+                    <span className="text-right">{formatCurrency(c.base)}</span>
+                    <span className="text-right font-medium">{formatCurrency(c.iva)}</span>
+                  </div>
+                ))}
+                {[compras21, compras10, compras4].filter(c => c.base > 0).length === 0 && (
+                  <p className="text-sm text-muted-foreground py-2">Sin datos de compras en este período</p>
+                )}
+                <div className="mt-2 grid grid-cols-3 gap-4 border-t pt-2 font-semibold">
+                  <span>Total Deducible</span>
+                  <span></span>
+                  <span className="text-right">{formatCurrency(ivaSoportado)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Resultado */}
+            <div className="rounded-lg bg-muted p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold">
+                  Resultado de la Autoliquidación
+                </span>
+                <div className="text-right">
+                  <p className={cn(
+                    "text-2xl font-bold",
+                    ivaAPagar >= 0 ? "text-destructive" : "text-primary"
+                  )}>
+                    {formatCurrency(Math.abs(ivaAPagar))}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {ivaAPagar >= 0 ? 'A ingresar en Hacienda' : 'A compensar en próximas declaraciones'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline">
+                <FileDown className="mr-2 h-4 w-4" />
+                Exportar PDF
+              </Button>
+              <Button disabled>
+                Presentar en AEAT
+                <span className="ml-2 text-xs opacity-70">
+                  (Próximamente)
+                </span>
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
