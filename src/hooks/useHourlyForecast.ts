@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfDay, addDays } from 'date-fns';
 
@@ -23,10 +24,12 @@ export interface HourlyForecastWithActual extends HourlyForecast {
   actual_orders?: number;
 }
 
-export function useHourlyForecast(locationId: string | null, date: Date) {
+export function useHourlyForecast(locationId: string | null, date: Date, autoGenerate = true) {
   const dateStr = format(date, 'yyyy-MM-dd');
+  const queryClient = useQueryClient();
+  const generatingRef = useRef(false);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['hourly-forecast', locationId, dateStr],
     queryFn: async (): Promise<HourlyForecastWithActual[]> => {
       if (!locationId || locationId === 'all') {
@@ -46,12 +49,12 @@ export function useHourlyForecast(locationId: string | null, date: Date) {
         throw error;
       }
 
-      // Check if this is today or past - fetch actuals
+      // Check if this is today or past - fetch actuals from POS
       const today = startOfDay(new Date());
       const targetDate = startOfDay(date);
       
       if (targetDate <= today) {
-        // Fetch actual sales for comparison
+        // Fetch actual sales from tickets (POS data)
         const dayStart = new Date(dateStr);
         const dayEnd = addDays(dayStart, 1);
 
@@ -76,7 +79,28 @@ export function useHourlyForecast(locationId: string | null, date: Date) {
           actualsByHour[hour].orders += 1;
         }
 
-        // Merge actuals with forecasts, casting factors to correct type
+        // If we have actuals but no forecasts, create synthetic display data
+        if ((!forecasts || forecasts.length === 0) && Object.keys(actualsByHour).length > 0) {
+          // Return actuals without forecast for display
+          return Object.entries(actualsByHour).map(([hour, data]) => ({
+            id: `actual-${hour}`,
+            location_id: locationId,
+            date: dateStr,
+            hour: parseInt(hour),
+            forecast_sales: 0,
+            forecast_covers: 0,
+            forecast_orders: 0,
+            confidence: 0,
+            factors: null,
+            model_version: null,
+            generated_at: null,
+            actual_sales: data.sales,
+            actual_covers: data.covers,
+            actual_orders: data.orders,
+          })).sort((a, b) => a.hour - b.hour);
+        }
+
+        // Merge actuals with forecasts
         return (forecasts || []).map(f => ({
           ...f,
           factors: f.factors as Record<string, number> | null,
@@ -86,7 +110,7 @@ export function useHourlyForecast(locationId: string | null, date: Date) {
         }));
       }
 
-      // Cast factors for future dates too
+      // Future dates - just return forecasts
       return (forecasts || []).map(f => ({
         ...f,
         factors: f.factors as Record<string, number> | null,
@@ -95,6 +119,42 @@ export function useHourlyForecast(locationId: string | null, date: Date) {
     enabled: !!locationId && locationId !== 'all',
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Auto-generate forecast if missing and autoGenerate is true
+  useEffect(() => {
+    const shouldGenerate = 
+      autoGenerate && 
+      locationId && 
+      locationId !== 'all' &&
+      query.data !== undefined && 
+      query.data.length === 0 &&
+      !query.isLoading &&
+      !generatingRef.current;
+
+    if (shouldGenerate) {
+      generatingRef.current = true;
+      console.log('Auto-generating forecast for location:', locationId);
+      
+      supabase.functions.invoke('ai_forecast_hourly', {
+        body: { location_id: locationId, forecast_days: 14 },
+      }).then((response) => {
+        if (!response.error) {
+          console.log('Forecast generated:', response.data);
+          queryClient.invalidateQueries({
+            queryKey: ['hourly-forecast', locationId],
+          });
+        } else {
+          console.error('Error generating forecast:', response.error);
+        }
+        generatingRef.current = false;
+      }).catch((err) => {
+        console.error('Forecast generation failed:', err);
+        generatingRef.current = false;
+      });
+    }
+  }, [autoGenerate, locationId, query.data, query.isLoading, queryClient]);
+
+  return query;
 }
 
 export function useGenerateForecast() {

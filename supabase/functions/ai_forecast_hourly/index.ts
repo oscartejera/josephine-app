@@ -106,61 +106,15 @@ serve(async (req) => {
       model_version: string;
     }> = [];
 
-    // Try AI-enhanced forecasting first
-    if (lovableApiKey && patterns.length > 0) {
-      try {
-        const aiForecasts = await generateAIForecasts(
-          lovableApiKey,
-          patterns,
-          trend28d,
-          trend7d,
-          forecast_days,
-          dailyForecasts || []
-        );
-        
-        // Map AI results to DB format
-        for (let d = 0; d < forecast_days; d++) {
-          const targetDate = new Date();
-          targetDate.setDate(targetDate.getDate() + d);
-          const dateStr = targetDate.toISOString().split("T")[0];
-          const dayOfWeek = targetDate.getDay();
-
-          const dayForecasts = aiForecasts.filter(f => f.dayOfWeek === dayOfWeek);
-          
-          for (const forecast of dayForecasts) {
-            hourlyForecasts.push({
-              location_id,
-              date: dateStr,
-              hour: forecast.hour,
-              forecast_sales: forecast.forecast_sales,
-              forecast_covers: forecast.forecast_covers,
-              forecast_orders: forecast.forecast_orders,
-              confidence: forecast.confidence,
-              factors: forecast.factors,
-              model_version: "AI_HOURLY_v1",
-            });
-          }
-        }
-      } catch (aiError) {
-        console.error("AI forecasting failed, using fallback:", aiError);
-        hourlyForecasts = generateFallbackForecasts(
-          location_id,
-          patterns,
-          dailyForecasts || [],
-          forecast_days,
-          trend28d
-        );
-      }
-    } else {
-      // Fallback to statistical method
-      hourlyForecasts = generateFallbackForecasts(
-        location_id,
-        patterns,
-        dailyForecasts || [],
-        forecast_days,
-        trend28d
-      );
-    }
+    // Use fallback statistical method (faster, reliable)
+    // AI enhancement can be added as optional flag later
+    hourlyForecasts = generateFallbackForecasts(
+      location_id,
+      patterns,
+      dailyForecasts || [],
+      forecast_days,
+      trend28d
+    );
 
     // 6. Upsert forecasts to database
     if (hourlyForecasts.length > 0) {

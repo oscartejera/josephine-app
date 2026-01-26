@@ -41,29 +41,40 @@ export function HourlyForecastChart({
   const accuracy = useForecastAccuracy(data);
 
   const chartData = useMemo(() => {
+    // Generate full hourly range (10:00 - 23:00)
+    const hours = Array.from({ length: 14 }, (_, i) => 10 + i);
+    
     if (!data || data.length === 0) {
       // Generate placeholder data for empty state
-      return Array.from({ length: 14 }, (_, i) => ({
-        hour: `${10 + i}:00`,
+      return hours.map(h => ({
+        hour: `${h}:00`,
         forecast: 0,
         actual: undefined,
         confidence: 0,
       }));
     }
 
-    return data.map((d) => ({
-      hour: `${d.hour}:00`,
-      forecast: d.forecast_sales,
-      actual: d.actual_sales,
-      confidence: d.confidence,
-      covers: d.forecast_covers,
-      actualCovers: d.actual_covers,
-    }));
+    // Map data to full hour range
+    const dataMap = new Map(data.map(d => [d.hour, d]));
+    
+    return hours.map(h => {
+      const d = dataMap.get(h);
+      return {
+        hour: `${h}:00`,
+        forecast: d?.forecast_sales || 0,
+        actual: d?.actual_sales,
+        confidence: d?.confidence || 0,
+        covers: d?.forecast_covers || 0,
+        actualCovers: d?.actual_covers,
+      };
+    });
   }, [data]);
 
-  const hasActuals = chartData.some((d) => d.actual !== undefined);
-  const modelVersion = data[0]?.model_version || 'N/A';
+  const hasActuals = chartData.some((d) => d.actual !== undefined && d.actual > 0);
+  const hasForecast = chartData.some((d) => d.forecast > 0);
+  const modelVersion = data[0]?.model_version || (hasActuals ? 'POS Data' : 'N/A');
   const isAI = modelVersion.startsWith('AI');
+  const isGenerating = isRefreshing;
 
   const getConfidenceBadgeVariant = (confidence: number) => {
     if (confidence >= 70) return 'default';
@@ -122,10 +133,16 @@ export function HourlyForecastChart({
             )}
           </div>
         </div>
-        {data.length === 0 && (
+        {!hasForecast && !hasActuals && !isGenerating && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
             <AlertCircle className="h-4 w-4" />
-            <span>Sin forecast disponible. Pulsa refrescar para generar.</span>
+            <span>Sin datos. Pulsa refrescar para generar forecast.</span>
+          </div>
+        )}
+        {isGenerating && (
+          <div className="flex items-center gap-2 text-sm text-primary mt-2">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span>Generando forecast con IA...</span>
           </div>
         )}
       </CardHeader>
