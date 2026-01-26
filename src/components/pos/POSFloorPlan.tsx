@@ -129,8 +129,8 @@ export function POSFloorPlan({ locationId, floorMaps, tables, products, openTick
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      {/* Floor Plan Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Floor Plan Area - hidden when table selected for full-screen order panel */}
+      <div className={cn("flex-1 flex flex-col overflow-hidden", selectedTable && "hidden")}>
         {/* Floor Map Selector */}
         <div className="p-3 border-b border-border flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">

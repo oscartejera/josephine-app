@@ -60,9 +60,9 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [pendingProduct, setPendingProduct] = useState<POSProduct | null>(null);
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null);
   
-  // Course system state
-  // Default to Course 0 (Beverages) for quick drink orders
-  const [selectedCourse, setSelectedCourse] = useState(0);
+  // Course system state - Default to Course 1 (1º Curso) for main dishes
+  // Beverages (course 0) auto-send but the default should be for food
+  const [selectedCourse, setSelectedCourse] = useState(1);
 
   const groupId = group?.id || '';
 
@@ -155,7 +155,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       kds_destination: (line as any).destination || 'kitchen',
       is_rush: (line as any).is_rush || false,
       prep_status: (line.prep_status as 'pending' | 'preparing' | 'ready' | 'served') || 'pending',
-      course: (line as any).course || 1,
+      course: typeof (line as any).course === 'number' ? (line as any).course : 1,
     })));
   };
 
@@ -677,7 +677,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const linesByCourse = useMemo(() => {
     const grouped = new Map<number, OrderLine[]>();
     orderLines.forEach(line => {
-      const course = line.course || 1;
+      const course = typeof line.course === 'number' ? line.course : 1;
       if (!grouped.has(course)) grouped.set(course, []);
       grouped.get(course)!.push(line);
     });
@@ -688,7 +688,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const courseCounts = useMemo(() => {
     const counts: Record<number, number> = {};
     orderLines.filter(l => !l.sent_to_kitchen).forEach(line => {
-      const course = line.course || 1;
+      const course = typeof line.course === 'number' ? line.course : 1;
       counts[course] = (counts[course] || 0) + 1;
     });
     return counts;
@@ -696,7 +696,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
 
   return (
     <>
-      <div className="w-96 border-l border-border bg-card flex flex-col shrink-0">
+      <div className="flex-1 border-l border-border bg-card flex flex-col min-w-0">
         {/* Header */}
         <div className="p-4 border-b border-border shrink-0">
           <div className="flex items-center justify-between mb-3">
