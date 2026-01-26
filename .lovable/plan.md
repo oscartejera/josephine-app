@@ -1,300 +1,301 @@
 
-
-# Plan: Motor de AI Sales Forecasting con Gemini
+# Plan: Sales Module - Copia Exacta de Nory
 
 ## Resumen
 
-Potenciaremos el sistema de forecasting existente (LR_SI_MONTH_v3) con inteligencia artificial de Gemini para generar predicciones por hora más precisas y explicables. El sistema usará el histórico de tickets, patrones de día de semana, tendencias y factores contextuales para predecir ventas con mayor granularidad.
+Transformaremos el módulo de ventas `/insights/sales` para que sea una réplica pixel-perfect del dashboard de Nory. Esto incluye cambios visuales, de estructura y funcionales para alinear completamente la experiencia con la de Nory.
 
 ---
 
-## Arquitectura Propuesta
+## Análisis Comparativo: Estado Actual vs Nory
 
-```text
-+---------------------+     +------------------------+     +----------------------+
-|   tickets (history) |---->|                        |     |                      |
-|   - opened_at       |     |   AI FORECAST ENGINE   |---->| forecast_hourly_     |
-|   - net_total       |     |   (Edge Function +     |     | metrics (NEW)        |
-|   - covers          |     |    Gemini AI)          |     +----------------------+
-+---------------------+     |                        |              |
-                            |   1. Aggregate history |              v
-+---------------------+     |   2. Detect patterns   |     +----------------------+
-|   forecast_daily_   |---->|   3. AI enhancement    |     |   Dashboard          |
-|   metrics (existing)|     |   4. Hourly breakdown  |---->|   - Hourly chart     |
-+---------------------+     +------------------------+     |   - AI confidence    |
-                                                           +----------------------+
-                                                                    |
-                                                                    v
-                                                           +----------------------+
-                                                           |   Scheduling         |
-                                                           |   - Demand preview   |
-                                                           |   - Staff suggestion |
-                                                           +----------------------+
-```
+### Ya Implementado (Similares a Nory)
 
----
+| Componente | Estado Actual |
+|------------|---------------|
+| Date Picker con navegación ←/→ | ✅ `DateRangePickerNoryLike.tsx` |
+| KPI Cards (Sales, ACS, Dwell) | ✅ `BIKpiCards.tsx` |
+| Gráfico Sales vs Forecast | ✅ `BISalesChart.tsx` |
+| Tabla de Canales | ✅ `BIChannelsTable.tsx` |
+| Tabla de Localizaciones | ✅ `BILocationTable.tsx` |
+| Panel Ask Josephine (AI) | ✅ `AskJosephinePanel.tsx` |
+| Tokens de color BI específicos | ✅ `--bi-actual`, `--bi-forecast`, etc. |
+| Indicador "Live" en tiempo real | ✅ Badge con animación ping |
 
-## Componentes a Crear/Modificar
+### Diferencias Visuales a Corregir
 
-### 1. Nueva Tabla: `forecast_hourly_metrics`
+| Elemento | Actual | Nory Target |
+|----------|--------|-------------|
+| **Esquema de colores** | Púrpura (#6366F1) | Mismo púrpura pero más saturado en barras |
+| **Gráfico principal** | 3 barras (Actual, Live, Forecast) | Solo 2 barras (Actual púrpura, Forecast gris) + línea ACS |
+| **Leyenda del gráfico** | Debajo del chart | Integrada en el header del chart |
+| **Título de KPIs** | "Sales to date" | Mantener pero añadir sparkline mini |
+| **Channel Bar en KPI** | Barra horizontal dividida | Idéntico a Nory ✓ |
+| **Tabla Channels** | Headers dobles | Nory usa headers más compactos |
+| **Orden de secciones** | KPIs → Chart → Channels → Categories → Locations | Igual pero Channels antes de Chart |
 
-Almacenará las predicciones por hora generadas por IA:
+### Funcionalidades Faltantes para Paridad Exacta
 
-```sql
-CREATE TABLE forecast_hourly_metrics (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  location_id UUID REFERENCES locations(id) NOT NULL,
-  date DATE NOT NULL,
-  hour INTEGER NOT NULL CHECK (hour >= 0 AND hour <= 23),
-  forecast_sales NUMERIC(12,2) NOT NULL DEFAULT 0,
-  forecast_covers INTEGER NOT NULL DEFAULT 0,
-  forecast_orders INTEGER NOT NULL DEFAULT 0,
-  confidence INTEGER NOT NULL DEFAULT 50,
-  factors JSONB,  -- {"day_of_week": 0.15, "trend": 0.08, "seasonality": -0.05}
-  model_version TEXT DEFAULT 'AI_HOURLY_v1',
-  generated_at TIMESTAMPTZ DEFAULT now(),
-  
-  UNIQUE(location_id, date, hour)
-);
-```
-
-### 2. Edge Function: `ai_forecast_hourly`
-
-Nueva función que usa Gemini para analizar patrones y generar predicciones horarias inteligentes:
-
-**Flujo:**
-1. Consultar histórico de ventas por hora (últimos 56 días)
-2. Agrupar por día de semana y hora
-3. Calcular patrones base (media, percentiles)
-4. Enviar contexto a Gemini para:
-   - Detectar tendencias no lineales
-   - Sugerir ajustes por factores externos
-   - Explicar la predicción
-5. Generar predicciones horarias para los próximos 14 días
-6. Guardar en `forecast_hourly_metrics`
-
-**Endpoint:** `POST /functions/v1/ai_forecast_hourly`
-```json
-{
-  "location_id": "uuid",
-  "forecast_days": 14
-}
-```
-
-### 3. Componente: `HourlyForecastChart`
-
-Nuevo gráfico para el Dashboard que muestre:
-- Barras: Ventas reales por hora (si es hoy o histórico)
-- Línea: Forecast por hora (de AI)
-- Badge: Confianza del modelo (%)
-- Tooltip: Factores que influyen en cada hora
-
-### 4. Componente: `ForecastConfidencePanel`
-
-Panel que explica la predicción de IA:
-- Confianza general del modelo
-- Factores principales detectados
-- Comparación vs semana anterior
-- Alertas si hay anomalías
-
-### 5. Integración en Dashboard
-
-- Reemplazar datos mock de `hourlySales` con datos reales de `forecast_hourly_metrics`
-- Añadir badge de confianza al título del gráfico
-- Mostrar tooltip con factores de IA
-
-### 6. Integración en Scheduling
-
-- Mostrar preview de demanda horaria al crear turnos
-- Sugerir horas pico para asignar más personal
-- Calcular staffing recomendado por hora
+| Feature | Descripción | Prioridad |
+|---------|-------------|-----------|
+| **Forecast Accuracy KPI** | 4º KPI card mostrando % precisión del modelo | Alta |
+| **Total Orders KPI** | Mostrar # de pedidos totales en un KPI | Media |
+| **Mini sparklines en KPIs** | Tendencia de 7 días en cada KPI card | Media |
+| **Chart hover tooltip mejorado** | Mostrar delta % en tooltip | Baja |
+| **Export button** | Botón para exportar datos a CSV | Baja |
 
 ---
 
-## Archivos a Crear
+## Cambios a Implementar
 
-| Archivo | Descripción |
-|---------|-------------|
-| `supabase/functions/ai_forecast_hourly/index.ts` | Edge Function con Gemini |
-| `src/hooks/useHourlyForecast.ts` | Hook para consultar predicciones |
-| `src/components/dashboard/HourlyForecastChart.tsx` | Gráfico mejorado |
-| `src/components/dashboard/ForecastConfidencePanel.tsx` | Panel de confianza |
-| `src/components/scheduling/DemandPreviewPanel.tsx` | Preview de demanda |
+### 1. Reordenar Layout de Página
+
+**Archivo:** `src/pages/Sales.tsx`
+
+Nuevo orden de secciones:
+1. Header (breadcrumbs + date picker + compare + Live badge)
+2. KPI Cards (4 cards en fila)
+3. Channels Table (movido arriba)
+4. Sales vs Forecast Chart
+5. Categories + Products (lado a lado)
+6. Locations Table
+
+### 2. Añadir 4º KPI Card: Forecast Accuracy
+
+**Archivo:** `src/components/bi/BIKpiCards.tsx`
+
+Cambiar de 3 a 4 columnas:
+- **Sales to date** (actual)
+- **Average check size** (actual)
+- **Orders** (nuevo - total de pedidos)
+- **Forecast accuracy** (nuevo - % de precisión)
+
+### 3. Simplificar Gráfico Principal
+
+**Archivo:** `src/components/bi/BISalesChart.tsx`
+
+Cambios:
+- Eliminar barra "Forecast Live" (redundante)
+- Mantener solo: Actual (púrpura sólido) + Forecast (gris/outline)
+- Línea ACS con formato Nory (sin dots intermedios)
+- Mover leyenda al header de la card
+- Añadir "View: Sales | Orders" tabs en el header
+
+### 4. Compactar Tabla de Canales
+
+**Archivo:** `src/components/bi/BIChannelsTable.tsx`
+
+Cambios:
+- Reducir padding
+- Headers más compactos sin "Actual/Projected" en sub-headers
+- Añadir fila de "% del total" para cada canal
+
+### 5. Añadir Mini Sparklines a KPIs
+
+**Archivo:** `src/components/bi/BIKpiCards.tsx`
+
+Para cada KPI card:
+- Añadir sparkline de 7 días debajo del valor principal
+- Usar `recharts` AreaChart miniatura sin ejes
+
+### 6. Mejorar Export Button
+
+**Archivo:** `src/components/bi/BISalesHeader.tsx`
+
+Añadir:
+- Botón "Export" junto a "Ask Josephine"
+- Dropdown con opciones: CSV, PDF
+
+### 7. Actualizar Tokens de Color
+
+**Archivo:** `src/index.css`
+
+Ajustar saturación:
+```css
+--bi-actual: 263 75% 55%; /* más saturado */
+--bi-forecast: 220 10% 75%; /* más gris/neutral */
+```
+
+---
 
 ## Archivos a Modificar
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/pages/Dashboard.tsx` | Integrar nuevo gráfico y panel |
-| `src/pages/Scheduling.tsx` | Añadir preview de demanda |
-| `src/components/scheduling/CreateShiftDialog.tsx` | Mostrar demanda esperada |
-| `supabase/config.toml` | Registrar nueva función |
+| `src/pages/Sales.tsx` | Reordenar componentes, añadir tabs |
+| `src/components/bi/BIKpiCards.tsx` | 4 KPIs, añadir Orders + Accuracy, sparklines |
+| `src/components/bi/BISalesChart.tsx` | Simplificar a 2 barras, mover leyenda, añadir tabs |
+| `src/components/bi/BIChannelsTable.tsx` | Compactar headers, añadir % total |
+| `src/components/bi/BISalesHeader.tsx` | Añadir Export button |
+| `src/hooks/useBISalesData.ts` | Añadir `totalOrders` y `forecastAccuracy` a KPIs |
+| `src/index.css` | Ajustar tokens BI |
 
 ---
 
 ## Sección Técnica
 
-### Estructura del Edge Function
+### Nueva Estructura de KPIs
 
 ```typescript
-// ai_forecast_hourly/index.ts
-// 1. Fetch 56 days of hourly sales data
-// 2. Aggregate by day_of_week + hour
-// 3. Calculate statistical baselines (P25, P50, P75)
-// 4. Build prompt for Gemini with context
-// 5. Parse AI response for adjustments
-// 6. Generate hourly forecasts with factors
-// 7. Upsert to forecast_hourly_metrics
-```
-
-### Prompt de Gemini (ejemplo)
-
-```text
-Eres un analista de restaurantes. Analiza estos datos de ventas por hora:
-
-PATRONES HISTÓRICOS (últimos 56 días):
-- Lunes 12:00: Media €320, P75 €380, P25 €260
-- Lunes 13:00: Media €450, P75 €520, P25 €390
-...
-
-CONTEXTO:
-- Fecha objetivo: 2026-01-27 (Lunes)
-- Tendencia 28d: +5% vs periodo anterior
-- Última semana: -2% vs forecast
-
-TAREA:
-Genera predicciones horarias para cada hora del servicio (10:00-23:00).
-Para cada hora, indica:
-1. forecast_sales: ventas esperadas en €
-2. confidence: 0-100
-3. factors: {"trend": X, "day_pattern": Y, "recent_performance": Z}
-
-Responde en JSON válido.
-```
-
-### Llamada a Lovable AI Gateway
-
-```typescript
-const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    model: "google/gemini-2.5-flash",
-    messages: [
-      { role: "system", content: FORECAST_SYSTEM_PROMPT },
-      { role: "user", content: buildForecastPrompt(historicalData, targetDate) }
-    ],
-    tools: [{
-      type: "function",
-      function: {
-        name: "generate_hourly_forecast",
-        parameters: {
-          type: "object",
-          properties: {
-            forecasts: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  hour: { type: "integer" },
-                  forecast_sales: { type: "number" },
-                  forecast_covers: { type: "integer" },
-                  confidence: { type: "integer" },
-                  factors: { type: "object" }
-                },
-                required: ["hour", "forecast_sales", "confidence"]
-              }
-            }
-          },
-          required: ["forecasts"]
-        }
-      }
-    }],
-    tool_choice: { type: "function", function: { name: "generate_hourly_forecast" } }
-  }),
-});
-```
-
-### Hook useHourlyForecast
-
-```typescript
-export function useHourlyForecast(locationId: string, date: Date) {
-  return useQuery({
-    queryKey: ['hourly-forecast', locationId, format(date, 'yyyy-MM-dd')],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('forecast_hourly_metrics')
-        .select('*')
-        .eq('location_id', locationId)
-        .eq('date', format(date, 'yyyy-MM-dd'))
-        .order('hour');
-      
-      return data || [];
-    }
-  });
+interface BIKpis {
+  salesToDate: number;
+  salesToDateDelta: number;
+  avgCheckSize: number;
+  avgCheckSizeDelta: number;
+  totalOrders: number;           // NUEVO
+  totalOrdersDelta: number;       // NUEVO
+  forecastAccuracy: number;       // NUEVO (0-100%)
+  dwellTime: number | null;       // Se mantiene pero en tooltip
+  // ... resto igual
 }
+```
+
+### Cálculo de Forecast Accuracy
+
+```typescript
+// En useBISalesData.ts
+const forecastAccuracy = useMemo(() => {
+  if (!chartData || chartData.length === 0) return 0;
+  
+  const withBoth = chartData.filter(d => d.actual > 0 && d.forecast > 0);
+  if (withBoth.length === 0) return 0;
+  
+  const mape = withBoth.reduce((sum, d) => {
+    return sum + Math.abs((d.actual - d.forecast) / d.forecast);
+  }, 0) / withBoth.length;
+  
+  return Math.round((1 - mape) * 100);
+}, [chartData]);
+```
+
+### Sparkline Component
+
+```tsx
+// Mini sparkline para KPI cards
+function KpiSparkline({ data }: { data: number[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={24}>
+      <AreaChart data={data.map((v, i) => ({ v }))}>
+        <Area 
+          type="monotone" 
+          dataKey="v" 
+          fill="hsl(var(--bi-actual) / 0.2)" 
+          stroke="hsl(var(--bi-actual))"
+          strokeWidth={1.5}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+```
+
+### Chart Header con Tabs y Leyenda
+
+```tsx
+<CardHeader className="flex flex-row items-center justify-between pb-2">
+  <div className="flex items-center gap-4">
+    <CardTitle className="text-lg font-semibold">Sales v Forecast</CardTitle>
+    <Tabs value={view} onValueChange={setView}>
+      <TabsList className="h-7">
+        <TabsTrigger value="sales" className="text-xs px-3 h-6">Sales</TabsTrigger>
+        <TabsTrigger value="orders" className="text-xs px-3 h-6">Orders</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  </div>
+  <div className="flex items-center gap-4 text-xs">
+    <LegendItem color="bi-actual" label="Actual" type="bar" />
+    <LegendItem color="bi-forecast" label="Forecast" type="bar" />
+    <LegendItem color="bi-acs" label="Avg Check" type="line" />
+  </div>
+</CardHeader>
 ```
 
 ---
 
-## Integración Visual
+## Mockup de Layout Final
 
-### Dashboard - Gráfico Horario Mejorado
-
-El nuevo `HourlyForecastChart` mostrará:
-- Eje X: Horas (10:00 - 23:00)
-- Eje Y: Ventas en €
-- Barras azules: Ventas reales (si disponibles)
-- Línea punteada: Forecast de IA
-- Área sombreada: Rango de confianza (P25-P75)
-- Badge superior: "AI Forecast • 78% confidence"
-
-### Dashboard - Panel de Confianza
-
-Sidebar o card adicional con:
-- Confianza del modelo: 78%
-- Principales factores detectados:
-  - "Lunes típicamente +12% vs media"
-  - "Tendencia semanal: +5%"
-  - "Clima favorable (si se integra API)"
-- Comparación: "Forecast vs Real ayer: -3%"
-
-### Scheduling - Preview de Demanda
-
-Al crear un turno o al ver la semana:
-- Mini-gráfico de barras por hora mostrando demanda esperada
-- Colores: Verde (baja), Amarillo (media), Rojo (alta)
-- Sugerencia: "Peak 13:00-14:00: considera +1 FOH"
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Insights / Sales           ◀ 20 Jan ▶    Compare: Forecast   🟢 Live  │
+│  ☐ All locations ▼                                    [Export] [✨ Ask] │
+├─────────────────────────────────────────────────────────────────────────┤
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐        │
+│ │ Sales       │ │ Avg Check   │ │ Orders      │ │ Accuracy    │        │
+│ │ €12,450     │ │ €23.50      │ │ 530         │ │ 94%         │        │
+│ │ +5.2%▲      │ │ +2.1%▲      │ │ -1.3%▼      │ │ —           │        │
+│ │ ▄▄▆▇█▅▄▃   │ │ ▁▂▄▅▅▆▇▆   │ │ ▅▆▅▄▅▆▇▆   │ │             │        │
+│ │ ░░░░░░░░░░░│ │             │ │             │ │             │        │
+│ │ Din 55% Pk 25% Del 20%     │ │ Din Pk Del  │ │             │        │
+│ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘        │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Channels                                                                │
+│ ┌───────────┬──────────────────────┬──────────────────────┐            │
+│ │ Channel   │      Sales           │   Avg Check Size     │            │
+│ │           │ Actual    Forecast   │ Actual    Forecast   │            │
+│ ├───────────┼──────────────────────┼──────────────────────┤            │
+│ │ Dine in   │ €6,800    €6,500     │ €28.50    €27.00     │            │
+│ │           │ +4.6%                │ +5.5%                │            │
+│ │ Pick-up   │ €3,100    €3,200     │ €18.20    €19.00     │            │
+│ │ Delivery  │ €2,550    €2,400     │ €21.30    €20.50     │            │
+│ │ TOTAL     │ €12,450   €12,100    │ €23.50    €22.80     │            │
+│ └───────────┴──────────────────────┴──────────────────────┘            │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Sales v Forecast    [Sales | Orders]       ■ Actual ■ Forecast — ACS  │
+│ ┌───────────────────────────────────────────────────────────────────┐  │
+│ │                                                        ━━━━━━━━   │  │
+│ │   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   │  │
+│ │   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   │  │
+│ │   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   ██  ░░   │  │
+│ │  Mon      Tue      Wed      Thu      Fri      Sat      Sun       │  │
+│ └───────────────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────┐ ┌─────────────────────────────────────┐│
+│ │ Sales per Product Categories│ │ Products                   Sort: ▼ ││
+│ │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ Food 65%   │ │ Hamburguesa      €1,500   ▓▓▓ 12% ││
+│ │ ▓▓▓▓▓▓▓▓░░░░░░░ Bev  28%   │ │ Pizza            €1,240   ▓▓░ 10% ││
+│ │ ▓▓░░░░░░░░░░░░░ Other 7%   │ │ Ensalada         €980     ▓░░  8% ││
+│ └─────────────────────────────┘ └─────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────────────┤
+│ Sales by location                                    🔍 Search...      │
+│ ┌──────────────┬─────────────────────┬─────────────────────┬─────────┐ │
+│ │ Location     │     Sales           │      Channels        │ Other  │ │
+│ │              │ Actual   Forecast   │ Din   Del   Pk       │ ACS    │ │
+│ ├──────────────┼─────────────────────┼─────────────────────┼─────────┤ │
+│ │ Centro       │ €4,360   €4,200     │ €2.4k €1.1k €860    │ €26.50 │ │
+│ │ Salamanca    │ €3,480   €3,350     │ €1.9k €940  €640    │ €28.20 │ │
+│ │ ...          │ ...      ...        │ ...   ...   ...     │ ...    │ │
+│ │ SUM / AVG    │ €12,450  €12,100    │ —     —     —       │ €23.50 │ │
+│ └──────────────┴─────────────────────┴─────────────────────┴─────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Fases de Implementación
 
-### Fase 1: Infraestructura (Este PR)
-1. Crear tabla `forecast_hourly_metrics`
-2. Crear Edge Function `ai_forecast_hourly` con Gemini
-3. Crear hook `useHourlyForecast`
-4. Integrar gráfico básico en Dashboard
+### Fase 1: Estructura y KPIs (Este PR)
+1. Añadir Orders y Forecast Accuracy a KPIs
+2. Cambiar grid de 3 a 4 columnas
+3. Implementar mini sparklines
+4. Reordenar layout (Channels antes de Chart)
 
-### Fase 2: Mejoras Visuales
-5. Crear `ForecastConfidencePanel` en Dashboard
-6. Añadir `DemandPreviewPanel` en Scheduling
-7. Integrar sugerencias de staffing
+### Fase 2: Chart y Canales
+5. Simplificar chart a 2 barras
+6. Añadir tabs Sales/Orders en header
+7. Mover leyenda al header
+8. Compactar tabla Channels
 
-### Fase 3: Automatización
-8. Trigger automático cada madrugada para regenerar forecasts
-9. Alertas si forecast diverge significativamente de realidad
-10. Histórico de precisión del modelo
+### Fase 3: Polish Visual
+9. Ajustar tokens de color
+10. Añadir botón Export
+11. Mejorar tooltips
+12. Responsive tweaks
 
 ---
 
 ## Consideraciones
 
-- **Rate Limits**: La función usará Gemini Flash (más económico) y se ejecutará máximo 1x/día por location
-- **Fallback**: Si Gemini falla, usar distribución de `HOURLY_WEIGHTS` sobre `forecast_daily_metrics`
-- **Caching**: Los forecasts se almacenan en DB, no se regeneran en cada request
-- **Permisos**: Solo usuarios con `insights.view` pueden ver el panel de confianza
-
+- **Compatibilidad móvil**: Los 4 KPIs se apilarán en 2x2 en móvil
+- **Performance**: Los sparklines usan datos ya cargados, sin queries adicionales
+- **Datos vacíos**: Forecast Accuracy mostrará "—" si no hay suficientes datos
+- **Internacionalización**: Nuevos textos añadidos a los archivos i18n
