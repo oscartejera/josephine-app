@@ -812,6 +812,59 @@ export type Database = {
           },
         ]
       }
+      forecast_hourly_metrics: {
+        Row: {
+          confidence: number
+          created_at: string | null
+          date: string
+          factors: Json | null
+          forecast_covers: number
+          forecast_orders: number
+          forecast_sales: number
+          generated_at: string | null
+          hour: number
+          id: string
+          location_id: string
+          model_version: string | null
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string | null
+          date: string
+          factors?: Json | null
+          forecast_covers?: number
+          forecast_orders?: number
+          forecast_sales?: number
+          generated_at?: string | null
+          hour: number
+          id?: string
+          location_id: string
+          model_version?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string | null
+          date?: string
+          factors?: Json | null
+          forecast_covers?: number
+          forecast_orders?: number
+          forecast_sales?: number
+          generated_at?: string | null
+          hour?: number
+          id?: string
+          location_id?: string
+          model_version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_hourly_metrics_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecast_model_runs: {
         Row: {
           algorithm: string
