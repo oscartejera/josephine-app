@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChefHat, Loader2, ArrowLeft, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { BackendHealthIndicator } from '@/components/auth/BackendHealthIndicator';
 
 const DEMO_ACCOUNTS = [
   { label: 'Owner', email: 'owner@demo.com', description: 'Acceso completo' },
@@ -272,6 +273,9 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
+        {/* Backend Health Indicator */}
+        <BackendHealthIndicator />
+        
         <Card>
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
