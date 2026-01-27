@@ -197,6 +197,10 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         return generateEmptyData(dateRange, isSingleDay);
       }
 
+      // Normalize date range to include full boundary days (prevents empty results when `to` is midnight)
+      const fromISO = startOfDay(dateRange.from).toISOString();
+      const toISO = endOfDay(dateRange.to).toISOString();
+
       // Fetch tickets data
       const { data: tickets, error: ticketsError } = await supabase
         .from('tickets')
@@ -213,8 +217,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           status
         `)
         .in('location_id', effectiveLocationIds)
-        .gte('closed_at', dateRange.from.toISOString())
-        .lte('closed_at', dateRange.to.toISOString())
+        .gte('closed_at', fromISO)
+        .lte('closed_at', toISO)
         .eq('status', 'closed');
 
       // Fetch ticket lines for categories and products
