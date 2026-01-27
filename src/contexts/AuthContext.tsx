@@ -3,39 +3,6 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { DEMO_MODE } from './DemoModeContext';
 
-function isTransientAuthError(err: unknown): boolean {
-  const anyErr = err as any;
-  const msg = String(anyErr?.message ?? '');
-  const status = anyErr?.status;
-  // Observed in logs: 504 timeouts + "Database error querying schema" (platform transient)
-  return (
-    status === 504 ||
-    status === 503 ||
-    msg.toLowerCase().includes('database error querying schema') ||
-    msg.toLowerCase().includes('context deadline exceeded')
-  );
-}
-
-async function sleep(ms: number) {
-  await new Promise((r) => setTimeout(r, ms));
-}
-
-async function withRetry<T>(fn: () => Promise<T>, retries = 3, initialDelayMs = 400): Promise<T> {
-  let lastErr: unknown;
-  let delay = initialDelayMs;
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      lastErr = e;
-      if (!isTransientAuthError(e) || i === retries) break;
-      await sleep(delay);
-      delay *= 2;
-    }
-  }
-  throw lastErr;
-}
-
 interface Profile {
   id: string;
   group_id: string | null;
@@ -213,19 +180,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUserData]);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await withRetry(
-        async () => {
-          const res = await supabase.auth.signInWithPassword({ email, password });
-          if (res.error) throw res.error;
-          return res;
-        },
-        3
-      );
-      return { error: error ?? null };
-    } catch (e) {
-      return { error: e as Error };
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -241,23 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    try {
-      // Try server sign-out first
-      await withRetry(async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        return true;
-      }, 2);
-    } catch (e) {
-      // Fallback: clear local session so user can always leave the app UI
-      try {
-        await supabase.auth.signOut({ scope: 'local' });
-      } catch {
-        // ignore
-      }
-      // Don't rethrow: UX should allow logout even during transient backend outages
-      console.warn('[auth] signOut server failed, used local fallback', e);
-    }
+    await supabase.auth.signOut();
   };
 
   // Real permission check using database roles

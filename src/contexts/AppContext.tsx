@@ -3,39 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { DEMO_MODE } from './DemoModeContext';
 
-function isTransientDataError(err: unknown): boolean {
-  const anyErr = err as any;
-  const code = anyErr?.code;
-  const status = anyErr?.status;
-  const msg = String(anyErr?.message ?? '');
-  return (
-    code === 'PGRST002' ||
-    status === 503 ||
-    status === 504 ||
-    msg.toLowerCase().includes('schema cache')
-  );
-}
-
-async function sleep(ms: number) {
-  await new Promise((r) => setTimeout(r, ms));
-}
-
-async function withRetry<T>(fn: () => Promise<T>, retries = 5, initialDelayMs = 350): Promise<T> {
-  let lastErr: unknown;
-  let delay = initialDelayMs;
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      lastErr = e;
-      if (!isTransientDataError(e) || i === retries) break;
-      await sleep(delay);
-      delay = Math.min(2500, delay * 2);
-    }
-  }
-  throw lastErr;
-}
-
 export interface Location {
   id: string;
   name: string;
@@ -103,45 +70,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [locations, isOwner, hasGlobalScope, accessibleLocationIds]);
 
   useEffect(() => {
-    // In demo mode we want the app to be usable even if the user profile/RBAC calls are temporarily failing.
-    // So we fall back to loading the "Demo Group" by name.
-    if (DEMO_MODE) {
-      fetchDemoGroupAndLocations();
-      return;
-    }
-
     if (profile?.group_id) {
       fetchGroupAndLocations(profile.group_id);
     } else {
       setLoading(false);
     }
   }, [profile?.group_id]);
-
-  const fetchDemoGroupAndLocations = async () => {
-    setLoading(true);
-    try {
-      const demoGroupRes = await withRetry(async () => {
-        const res = await supabase
-          .from('groups')
-          .select('id, name')
-          .eq('name', 'Demo Group')
-          .maybeSingle();
-        if ((res as any).error) throw (res as any).error;
-        return res;
-      });
-
-      if (!demoGroupRes.data?.id) {
-        console.warn('[AppContext] Demo Group not found');
-        return;
-      }
-
-      await fetchGroupAndLocations(demoGroupRes.data.id);
-    } catch (e) {
-      console.warn('[AppContext] fetchDemoGroupAndLocations failed', e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Set default location when accessible locations change
   useEffect(() => {
@@ -158,18 +92,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const fetchGroupAndLocations = async (groupId: string) => {
     setLoading(true);
     try {
-      const [groupResult, locationsResult] = await withRetry(async () => {
-        const res = await Promise.all([
-          // Use maybeSingle to avoid throwing when group not found.
-          supabase.from('groups').select('id, name').eq('id', groupId).maybeSingle(),
-          supabase.from('locations').select('id, name, city').eq('group_id', groupId).eq('active', true)
-        ]);
-
-        // surface transient errors for retry
-        if ((res[0] as any)?.error) throw (res[0] as any).error;
-        if ((res[1] as any)?.error) throw (res[1] as any).error;
-        return res;
-      });
+      const [groupResult, locationsResult] = await Promise.all([
+        supabase.from('groups').select('id, name').eq('id', groupId).single(),
+        supabase.from('locations').select('id, name, city').eq('group_id', groupId).eq('active', true)
+      ]);
 
       if (groupResult.data) {
         setGroup(groupResult.data);
@@ -177,9 +103,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (locationsResult.data) {
         setLocations(locationsResult.data);
       }
-    } catch (e) {
-      // Keep previous state instead of blanking the UI during transient outages
-      console.warn('[AppContext] fetchGroupAndLocations failed', e);
+    } catch {
+      // Silently handle errors - empty state is acceptable
     } finally {
       setLoading(false);
     }
