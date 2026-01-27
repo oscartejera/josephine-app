@@ -58,12 +58,35 @@ export default function Login() {
     });
     
     try {
-      // First, try to seed demo users if they don't exist
-      const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
-      
-      if (seedError) {
-        console.warn('Could not seed demo users:', seedError);
-      }
+      const invokeSeedWithRetry = async () => {
+        const maxAttempts = 6;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
+          if (!seedError) return;
+
+          const msg = String((seedError as any)?.message ?? seedError);
+          const isSchemaCache = msg.includes('schema cache') || msg.includes('Retrying') || msg.includes('PGRST002');
+          console.warn('Could not seed demo users:', seedError);
+
+          if (!isSchemaCache) {
+            throw seedError;
+          }
+
+          if (attempt < maxAttempts) {
+            const waitMs = 1200 * attempt;
+            toast({
+              title: 'Preparando demo…',
+              description: `Backend calentando (intento ${attempt}/${maxAttempts}). Reintentando…`,
+            });
+            await new Promise(resolve => setTimeout(resolve, waitMs));
+          } else {
+            throw seedError;
+          }
+        }
+      };
+
+      // First, seed demo users (retry on transient schema-cache issues)
+      await invokeSeedWithRetry();
 
       // Wait a moment for data to propagate
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -89,7 +112,7 @@ export default function Login() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo iniciar sesión en modo demo"
+        description: "No se pudo iniciar sesión en modo demo (el backend todavía está calentando). Inténtalo de nuevo en 30s."
       });
     }
     
