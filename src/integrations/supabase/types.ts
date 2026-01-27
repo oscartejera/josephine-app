@@ -230,6 +230,127 @@ export type Database = {
           },
         ]
       }
+      customer_profile_tags: {
+        Row: {
+          created_at: string
+          customer_profile_id: string | null
+          id: string
+          tag_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_profile_id?: string | null
+          id?: string
+          tag_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_profile_id?: string | null
+          id?: string
+          tag_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profile_tags_customer_profile_id_fkey"
+            columns: ["customer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_profile_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "customer_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          group_id: string | null
+          id: string
+          last_visit_at: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          total_spent: number | null
+          total_visits: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          group_id?: string | null
+          id?: string
+          last_visit_at?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          total_spent?: number | null
+          total_visits?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          group_id?: string | null
+          id?: string
+          last_visit_at?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          total_spent?: number | null
+          total_visits?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_tags: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          group_id: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_tags_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_otp_codes: {
         Row: {
           code: string
@@ -3001,12 +3122,284 @@ export type Database = {
           },
         ]
       }
+      reservation_deposits: {
+        Row: {
+          amount: number
+          applied_to_ticket_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_method: string
+          refunded_at: string | null
+          reservation_id: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+        }
+        Insert: {
+          amount: number
+          applied_to_ticket_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method: string
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+        }
+        Update: {
+          amount?: number
+          applied_to_ticket_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_deposits_applied_to_ticket_id_fkey"
+            columns: ["applied_to_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_deposits_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_settings: {
+        Row: {
+          auto_confirm: boolean | null
+          cancellation_deadline_hours: number | null
+          cancellation_policy_text: string | null
+          confirmation_message: string | null
+          created_at: string
+          default_reservation_duration: number | null
+          deposit_amount_per_person: number | null
+          deposit_policy_text: string | null
+          enable_table_doubling: boolean | null
+          google_place_id: string | null
+          google_reserve_enabled: boolean | null
+          id: string
+          location_id: string | null
+          max_covers_per_slot: number | null
+          max_turns_per_table: number | null
+          reminder_hours_before: number | null
+          reminder_message: string | null
+          require_deposit: boolean | null
+          send_confirmation_email: boolean | null
+          send_confirmation_sms: boolean | null
+          send_reminder: boolean | null
+          slot_duration_minutes: number | null
+          turn_buffer_minutes: number | null
+          updated_at: string
+        }
+        Insert: {
+          auto_confirm?: boolean | null
+          cancellation_deadline_hours?: number | null
+          cancellation_policy_text?: string | null
+          confirmation_message?: string | null
+          created_at?: string
+          default_reservation_duration?: number | null
+          deposit_amount_per_person?: number | null
+          deposit_policy_text?: string | null
+          enable_table_doubling?: boolean | null
+          google_place_id?: string | null
+          google_reserve_enabled?: boolean | null
+          id?: string
+          location_id?: string | null
+          max_covers_per_slot?: number | null
+          max_turns_per_table?: number | null
+          reminder_hours_before?: number | null
+          reminder_message?: string | null
+          require_deposit?: boolean | null
+          send_confirmation_email?: boolean | null
+          send_confirmation_sms?: boolean | null
+          send_reminder?: boolean | null
+          slot_duration_minutes?: number | null
+          turn_buffer_minutes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          auto_confirm?: boolean | null
+          cancellation_deadline_hours?: number | null
+          cancellation_policy_text?: string | null
+          confirmation_message?: string | null
+          created_at?: string
+          default_reservation_duration?: number | null
+          deposit_amount_per_person?: number | null
+          deposit_policy_text?: string | null
+          enable_table_doubling?: boolean | null
+          google_place_id?: string | null
+          google_reserve_enabled?: boolean | null
+          id?: string
+          location_id?: string | null
+          max_covers_per_slot?: number | null
+          max_turns_per_table?: number | null
+          reminder_hours_before?: number | null
+          reminder_message?: string | null
+          require_deposit?: boolean | null
+          send_confirmation_email?: boolean | null
+          send_confirmation_sms?: boolean | null
+          send_reminder?: boolean | null
+          slot_duration_minutes?: number | null
+          turn_buffer_minutes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_turns: {
+        Row: {
+          created_at: string
+          day_of_week: number[] | null
+          end_time: string
+          id: string
+          is_active: boolean | null
+          location_id: string | null
+          max_covers: number | null
+          name: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week?: number[] | null
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          max_covers?: number | null
+          name: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number[] | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          max_covers?: number | null
+          name?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_turns_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_waitlist: {
+        Row: {
+          converted_reservation_id: string | null
+          created_at: string
+          customer_profile_id: string | null
+          guest_email: string | null
+          guest_name: string
+          guest_phone: string | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          notified_at: string | null
+          party_size: number
+          preferred_date: string
+          preferred_time_end: string | null
+          preferred_time_start: string | null
+          status: string
+        }
+        Insert: {
+          converted_reservation_id?: string | null
+          created_at?: string
+          customer_profile_id?: string | null
+          guest_email?: string | null
+          guest_name: string
+          guest_phone?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          notified_at?: string | null
+          party_size: number
+          preferred_date: string
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          status?: string
+        }
+        Update: {
+          converted_reservation_id?: string | null
+          created_at?: string
+          customer_profile_id?: string | null
+          guest_email?: string | null
+          guest_name?: string
+          guest_phone?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          notified_at?: string | null
+          party_size?: number
+          preferred_date?: string
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_waitlist_converted_reservation_id_fkey"
+            columns: ["converted_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_waitlist_customer_profile_id_fkey"
+            columns: ["customer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_waitlist_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
+          assigned_server_id: string | null
           confirmation_sent_at: string | null
           created_at: string
           created_by: string | null
+          customer_profile_id: string | null
+          deposit_amount: number | null
+          deposit_paid: boolean | null
+          deposit_required: boolean | null
           duration_minutes: number | null
+          group_id: string | null
           guest_email: string | null
           guest_name: string
           guest_phone: string | null
@@ -3015,18 +3408,28 @@ export type Database = {
           notes: string | null
           party_size: number
           pos_table_id: string | null
+          reconfirmed_at: string | null
           reminder_sent_at: string | null
           reservation_date: string
           reservation_time: string
+          satisfaction_sent_at: string | null
+          source: string | null
           special_requests: string | null
           status: string
+          turn_id: string | null
           updated_at: string
         }
         Insert: {
+          assigned_server_id?: string | null
           confirmation_sent_at?: string | null
           created_at?: string
           created_by?: string | null
+          customer_profile_id?: string | null
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
+          deposit_required?: boolean | null
           duration_minutes?: number | null
+          group_id?: string | null
           guest_email?: string | null
           guest_name: string
           guest_phone?: string | null
@@ -3035,18 +3438,28 @@ export type Database = {
           notes?: string | null
           party_size?: number
           pos_table_id?: string | null
+          reconfirmed_at?: string | null
           reminder_sent_at?: string | null
           reservation_date: string
           reservation_time: string
+          satisfaction_sent_at?: string | null
+          source?: string | null
           special_requests?: string | null
           status?: string
+          turn_id?: string | null
           updated_at?: string
         }
         Update: {
+          assigned_server_id?: string | null
           confirmation_sent_at?: string | null
           created_at?: string
           created_by?: string | null
+          customer_profile_id?: string | null
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
+          deposit_required?: boolean | null
           duration_minutes?: number | null
+          group_id?: string | null
           guest_email?: string | null
           guest_name?: string
           guest_phone?: string | null
@@ -3055,14 +3468,39 @@ export type Database = {
           notes?: string | null
           party_size?: number
           pos_table_id?: string | null
+          reconfirmed_at?: string | null
           reminder_sent_at?: string | null
           reservation_date?: string
           reservation_time?: string
+          satisfaction_sent_at?: string | null
+          source?: string | null
           special_requests?: string | null
           status?: string
+          turn_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservations_assigned_server_id_fkey"
+            columns: ["assigned_server_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_customer_profile_id_fkey"
+            columns: ["customer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_location_id_fkey"
             columns: ["location_id"]
@@ -3075,6 +3513,13 @@ export type Database = {
             columns: ["pos_table_id"]
             isOneToOne: false
             referencedRelation: "pos_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_turn_id_fkey"
+            columns: ["turn_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_turns"
             referencedColumns: ["id"]
           },
         ]
