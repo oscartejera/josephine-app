@@ -11,6 +11,49 @@ const DEMO_USERS = [
   { email: 'manager.salamanca@demo.com', full_name: 'Manager Salamanca', role: 'store_manager', location: 'Salamanca' },
 ];
 
+type RetryablePostgrestError = {
+  code?: string;
+  message?: string;
+  details?: unknown;
+  hint?: unknown;
+};
+
+function isRetryableDbError(err: unknown): boolean {
+  const e = err as RetryablePostgrestError | undefined;
+  // PGRST002: schema cache unavailable / db temporarily unreachable
+  return e?.code === 'PGRST002' || (typeof e?.message === 'string' && e.message.includes('schema cache'));
+}
+
+async function sleep(ms: number) {
+  await new Promise((r) => setTimeout(r, ms));
+}
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  {
+    retries = 8,
+    initialDelayMs = 400,
+    maxDelayMs = 4000,
+  }: { retries?: number; initialDelayMs?: number; maxDelayMs?: number } = {}
+): Promise<T> {
+  let delay = initialDelayMs;
+  let lastErr: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryableDbError(err) || attempt === retries) break;
+      console.log(`[seed_demo_users] retry ${attempt + 1}/${retries} in ${delay}ms`);
+      await sleep(delay);
+      delay = Math.min(maxDelayMs, delay * 2);
+    }
+  }
+
+  throw lastErr;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -29,54 +72,67 @@ Deno.serve(async (req) => {
     );
 
     // 1. Get Demo Group (should already exist)
-    const { data: demoGroup, error: groupError } = await supabaseAdmin
-      .from('groups')
-      .select('id')
-      .eq('name', 'Demo Group')
-      .maybeSingle();
+    const demoGroupRes = await withRetry(async () => {
+      const res = await supabaseAdmin
+        .from('groups')
+        .select('id')
+        .eq('name', 'Demo Group')
+        .maybeSingle();
 
-    if (groupError) {
-      console.error('Error fetching demo group:', groupError);
-      throw new Error(`Database error: ${groupError.message}`);
-    }
+      if (res.error) throw res.error;
+      return res;
+    });
+
+    const demoGroup = demoGroupRes.data;
 
     let groupId: string;
     
     if (!demoGroup) {
       // Create group if it doesn't exist
-      const { data: newGroup, error: createError } = await supabaseAdmin
-        .from('groups')
-        .insert({ name: 'Demo Group' })
-        .select('id')
-        .single();
+      const newGroupRes = await withRetry(async () => {
+        const res = await supabaseAdmin
+          .from('groups')
+          .insert({ name: 'Demo Group' })
+          .select('id')
+          .single();
+        if (res.error) throw res.error;
+        return res;
+      });
       
-      if (createError) throw new Error(`Failed to create group: ${createError.message}`);
-      groupId = newGroup.id;
+      groupId = newGroupRes.data.id;
     } else {
       groupId = demoGroup.id;
     }
 
     // 2. Get locations
-    const { data: locations } = await supabaseAdmin
-      .from('locations')
-      .select('id, name')
-      .eq('group_id', groupId);
+    const locationsRes = await withRetry(async () => {
+      const res = await supabaseAdmin
+        .from('locations')
+        .select('id, name')
+        .eq('group_id', groupId);
+      if (res.error) throw res.error;
+      return res;
+    });
 
     const locationMap: Record<string, string> = {};
-    if (locations) {
-      for (const loc of locations) {
+    if (locationsRes.data) {
+      for (const loc of locationsRes.data) {
         locationMap[loc.name] = loc.id;
       }
     }
 
     // 3. Get roles
-    const { data: roles } = await supabaseAdmin
-      .from('roles')
-      .select('id, name');
+    const rolesRes = await withRetry(async () => {
+      const res = await supabaseAdmin
+        .from('roles')
+        .select('id, name');
+      if (res.error) throw res.error;
+      return res;
+    });
 
     const roleMap: Record<string, string> = {};
-    if (roles) {
-      for (const role of roles) {
+    if (rolesRes.data) {
+      for (const role of rolesRes.data) {
         roleMap[role.name] = role.id;
       }
     }
@@ -84,11 +140,14 @@ Deno.serve(async (req) => {
     // 4. Create demo users if they don't exist
     const results: { email: string; status: string }[] = [];
 
+    // List users once (cheap) instead of once per demo user
+    const existingUsersRes = await supabaseAdmin.auth.admin.listUsers();
+    const existingUsers = existingUsersRes.data?.users ?? [];
+
     for (const demoUser of DEMO_USERS) {
       try {
         // Check if user already exists
-        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-        const existingUser = existingUsers?.users.find(u => u.email === demoUser.email);
+        const existingUser = existingUsers.find((u) => u.email === demoUser.email);
 
         let userId: string;
 
@@ -113,34 +172,49 @@ Deno.serve(async (req) => {
         }
 
         // Ensure profile exists
-        await supabaseAdmin
-          .from('profiles')
-          .upsert({
-            id: userId,
-            full_name: demoUser.full_name,
-            group_id: groupId
-          }, { onConflict: 'id' });
+        await withRetry(async () => {
+          const res = await supabaseAdmin
+            .from('profiles')
+            .upsert(
+              {
+                id: userId,
+                full_name: demoUser.full_name,
+                group_id: groupId,
+              },
+              { onConflict: 'id' }
+            );
+          if (res.error) throw res.error;
+          return res;
+        });
 
         // Check and assign role
         const roleId = roleMap[demoUser.role];
         if (roleId) {
           const locationId = demoUser.location ? locationMap[demoUser.location] : null;
           
-          const { data: existingRole } = await supabaseAdmin
-            .from('user_roles')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('role_id', roleId)
-            .maybeSingle();
-
-          if (!existingRole) {
-            await supabaseAdmin
+          const existingRoleRes = await withRetry(async () => {
+            const res = await supabaseAdmin
               .from('user_roles')
-              .insert({
-                user_id: userId,
-                role_id: roleId,
-                location_id: locationId
-              });
+              .select('id')
+              .eq('user_id', userId)
+              .eq('role_id', roleId)
+              .maybeSingle();
+            if (res.error) throw res.error;
+            return res;
+          });
+
+          if (!existingRoleRes.data) {
+            await withRetry(async () => {
+              const res = await supabaseAdmin
+                .from('user_roles')
+                .insert({
+                  user_id: userId,
+                  role_id: roleId,
+                  location_id: locationId,
+                });
+              if (res.error) throw res.error;
+              return res;
+            });
           }
         }
       } catch (userErr) {
@@ -155,15 +229,24 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
+    // If the DB is temporarily unavailable (PGRST002), don't hard-fail the demo login.
+    // Return 200 with a retryable payload so the frontend doesn't treat it as an exception.
+    const retryable = isRetryableDbError(error);
     console.error('Error seeding demo data:', error);
+
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      JSON.stringify({
+        success: false,
+        retryable,
+        error: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: retryable ? 200 : 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          ...(retryable ? { 'Retry-After': '3' } : {}),
+        },
       }
     );
   }
