@@ -123,14 +123,15 @@ export function useInstantPLData({
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
       
-      // Fetch actual sales from tickets
+      // Fetch actual sales from tickets - limit for performance
       const { data: tickets } = await supabase
         .from('tickets')
         .select('location_id, net_total, gross_total, closed_at')
         .in('location_id', locationIds)
         .gte('closed_at', dateRange.from.toISOString())
         .lte('closed_at', dateRange.to.toISOString())
-        .eq('status', 'closed');
+        .eq('status', 'closed')
+        .limit(3000);
       
       // Fetch forecasts from LR+SI v3 model
       const { data: forecasts } = await supabase
@@ -252,7 +253,8 @@ export function useInstantPLData({
       
       return locationMetrics;
     },
-    staleTime: 60000 // 1 minute
+    staleTime: 120000, // Cache for 2 minutes
+    gcTime: 300000 // Keep in memory for 5 minutes
   });
   
   // Compute chip counts and filter locations

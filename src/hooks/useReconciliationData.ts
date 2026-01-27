@@ -171,8 +171,7 @@ export function useReconciliationData(
         setLines(realLines);
         setLastUpdated(realLines.length > 0 ? new Date() : null);
       }
-    } catch (error) {
-      console.error('Error fetching reconciliation data:', error);
+    } catch {
       if (isMountedRef.current) {
         setLines([]);
         setLastUpdated(null);

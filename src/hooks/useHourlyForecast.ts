@@ -45,7 +45,6 @@ export function useHourlyForecast(locationId: string | null, date: Date, autoGen
         .order('hour');
 
       if (error) {
-        console.error('Error fetching hourly forecast:', error);
         throw error;
       }
 
@@ -133,22 +132,17 @@ export function useHourlyForecast(locationId: string | null, date: Date, autoGen
 
     if (shouldGenerate) {
       generatingRef.current = true;
-      console.log('Auto-generating forecast for location:', locationId);
       
       supabase.functions.invoke('ai_forecast_hourly', {
-        body: { location_id: locationId, forecast_days: 14 },
+        body: { location_id: locationId, forecast_days: 7 }, // Reduced from 14 for speed
       }).then((response) => {
         if (!response.error) {
-          console.log('Forecast generated:', response.data);
           queryClient.invalidateQueries({
             queryKey: ['hourly-forecast', locationId],
           });
-        } else {
-          console.error('Error generating forecast:', response.error);
         }
         generatingRef.current = false;
-      }).catch((err) => {
-        console.error('Forecast generation failed:', err);
+      }).catch(() => {
         generatingRef.current = false;
       });
     }

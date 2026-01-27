@@ -120,13 +120,14 @@ export function useWasteData(
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Fetch tickets for sales data
+      // Fetch tickets for sales data - limit for performance
       let ticketsQuery = supabase
         .from('tickets')
         .select('id, location_id, net_total, gross_total')
         .gte('closed_at', `${fromDate}T00:00:00`)
         .lte('closed_at', `${toDate}T23:59:59`)
-        .eq('status', 'closed');
+        .eq('status', 'closed')
+        .limit(2000);
 
       if (locationIds.length > 0 && locationIds.length < locations.length) {
         ticketsQuery = ticketsQuery.in('location_id', locationIds);
@@ -140,7 +141,8 @@ export function useWasteData(
         .from('waste_events')
         .select('id, location_id, waste_value, reason, quantity, created_at, inventory_item_id, inventory_items(name, category)')
         .gte('created_at', `${fromDate}T00:00:00`)
-        .lte('created_at', `${toDate}T23:59:59`);
+        .lte('created_at', `${toDate}T23:59:59`)
+        .limit(1000);
 
       if (locationIds.length > 0 && locationIds.length < locations.length) {
         wasteQuery = wasteQuery.in('location_id', locationIds);
@@ -334,7 +336,6 @@ export function useWasteData(
           table: 'waste_events'
         },
         (payload) => {
-          console.log('Waste event realtime update:', payload);
           fetchData();
           
           if (payload.eventType === 'INSERT') {
