@@ -3,6 +3,39 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { DEMO_MODE } from './DemoModeContext';
 
+function isTransientDataError(err: unknown): boolean {
+  const anyErr = err as any;
+  const code = anyErr?.code;
+  const status = anyErr?.status;
+  const msg = String(anyErr?.message ?? '');
+  return (
+    code === 'PGRST002' ||
+    status === 503 ||
+    status === 504 ||
+    msg.toLowerCase().includes('schema cache')
+  );
+}
+
+async function sleep(ms: number) {
+  await new Promise((r) => setTimeout(r, ms));
+}
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 5, initialDelayMs = 350): Promise<T> {
+  let lastErr: unknown;
+  let delay = initialDelayMs;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      if (!isTransientDataError(e) || i === retries) break;
+      await sleep(delay);
+      delay = Math.min(2500, delay * 2);
+    }
+  }
+  throw lastErr;
+}
+
 export interface Location {
   id: string;
   name: string;
@@ -92,10 +125,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const fetchGroupAndLocations = async (groupId: string) => {
     setLoading(true);
     try {
-      const [groupResult, locationsResult] = await Promise.all([
-        supabase.from('groups').select('id, name').eq('id', groupId).single(),
-        supabase.from('locations').select('id, name, city').eq('group_id', groupId).eq('active', true)
-      ]);
+      const [groupResult, locationsResult] = await withRetry(async () => {
+        const res = await Promise.all([
+          // Use maybeSingle to avoid throwing when group not found.
+          supabase.from('groups').select('id, name').eq('id', groupId).maybeSingle(),
+          supabase.from('locations').select('id, name, city').eq('group_id', groupId).eq('active', true)
+        ]);
+
+        // surface transient errors for retry
+        if ((res[0] as any)?.error) throw (res[0] as any).error;
+        if ((res[1] as any)?.error) throw (res[1] as any).error;
+        return res;
+      });
 
       if (groupResult.data) {
         setGroup(groupResult.data);
@@ -103,8 +144,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (locationsResult.data) {
         setLocations(locationsResult.data);
       }
-    } catch {
-      // Silently handle errors - empty state is acceptable
+    } catch (e) {
+      // Keep previous state instead of blanking the UI during transient outages
+      console.warn('[AppContext] fetchGroupAndLocations failed', e);
     } finally {
       setLoading(false);
     }
