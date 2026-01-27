@@ -18,8 +18,6 @@ interface Reservation {
   reservation_date: string;
   reservation_time: string;
   status: string;
-  source: string;
-  deposit_paid: boolean;
   guest_phone: string | null;
   guest_email: string | null;
   special_requests: string | null;
@@ -45,7 +43,7 @@ export function ReservationCalendar({ locationId }: ReservationCalendarProps) {
 
     const { data } = await supabase
       .from('reservations')
-      .select('*')
+      .select('id, guest_name, party_size, reservation_date, reservation_time, status, guest_phone, guest_email, special_requests')
       .eq('location_id', locationId)
       .gte('reservation_date', format(start, 'yyyy-MM-dd'))
       .lte('reservation_date', format(end, 'yyyy-MM-dd'))
@@ -70,15 +68,6 @@ export function ReservationCalendar({ locationId }: ReservationCalendarProps) {
   };
 
   const selectedDayReservations = getReservationsForDay(selectedDate);
-
-  const getSourceIcon = (source: string) => {
-    switch (source) {
-      case 'phone': return <Phone className="h-3 w-3" />;
-      case 'widget': return <Globe className="h-3 w-3" />;
-      case 'walk_in': return <MapPin className="h-3 w-3" />;
-      default: return null;
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -217,10 +206,6 @@ export function ReservationCalendar({ locationId }: ReservationCalendarProps) {
                         <Users className="h-3 w-3" />
                         {res.party_size}
                       </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                      {getSourceIcon(res.source)}
-                      {res.deposit_paid && <Badge variant="outline" className="text-[10px]">Señal pagada</Badge>}
                     </div>
                   </button>
                 ))
