@@ -30,11 +30,46 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const isRetryableAuthError = (err: unknown) => {
+    const msg = String((err as any)?.message ?? err ?? '').toLowerCase();
+    return (
+      msg.includes('504') ||
+      msg.includes('timeout') ||
+      msg.includes('upstream request timeout') ||
+      msg.includes('failed to fetch')
+    );
+  };
+
+  const signInWithRetry = async (emailToUse: string, passwordToUse: string) => {
+    const maxAttempts = 4;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const { error } = await signIn(emailToUse, passwordToUse);
+      if (!error) return { error: null };
+
+      lastError = error;
+
+      if (!isRetryableAuthError(error) || attempt === maxAttempts) {
+        return { error };
+      }
+
+      const waitMs = 800 * attempt;
+      toast({
+        title: 'Reintentando…',
+        description: `Problema temporal del backend (intento ${attempt}/${maxAttempts}).`,
+      });
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+
+    return { error: lastError };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signInWithRetry(email, password);
     
     if (error) {
       toast({
@@ -59,40 +94,50 @@ export default function Login() {
     
     try {
       const invokeSeedWithRetry = async () => {
-        const maxAttempts = 6;
+        // Seeding puede fallar temporalmente por "schema cache"; si pasa, no bloqueamos el login.
+        const maxAttempts = 12;
+        let lastSeedError: unknown = null;
+
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
-          if (!seedError) return;
+          if (!seedError) return { ok: true as const };
 
-          const msg = String((seedError as any)?.message ?? seedError);
-          const isSchemaCache = msg.includes('schema cache') || msg.includes('Retrying') || msg.includes('PGRST002');
+          lastSeedError = seedError;
+          const msg = String((seedError as any)?.message ?? seedError).toLowerCase();
+          const isSchemaCache = msg.includes('schema cache') || msg.includes('retrying') || msg.includes('pgrst002');
           console.warn('Could not seed demo users:', seedError);
 
           if (!isSchemaCache) {
+            // Errores no transitorios sí deben mostrarse
             throw seedError;
           }
 
-          if (attempt < maxAttempts) {
-            const waitMs = 1200 * attempt;
-            toast({
-              title: 'Preparando demo…',
-              description: `Backend calentando (intento ${attempt}/${maxAttempts}). Reintentando…`,
-            });
-            await new Promise(resolve => setTimeout(resolve, waitMs));
-          } else {
-            throw seedError;
-          }
+          // Exponential-ish backoff, capped
+          const waitMs = Math.min(1500 * attempt, 15000);
+          toast({
+            title: 'Preparando demo…',
+            description: `Backend calentando (intento ${attempt}/${maxAttempts}).`,
+          });
+          await new Promise((resolve) => setTimeout(resolve, waitMs));
         }
+
+        return { ok: false as const, error: lastSeedError };
       };
 
-      // First, seed demo users (retry on transient schema-cache issues)
-      await invokeSeedWithRetry();
+      // Primero intentamos seedear, pero si solo falla por schema-cache, seguimos igualmente.
+      const seedResult = await invokeSeedWithRetry();
+      if (seedResult && 'ok' in seedResult && seedResult.ok === false) {
+        toast({
+          title: 'Demo lista para entrar',
+          description: 'El backend está lento; entrando igual y los datos terminarán de aparecer al refrescar.',
+        });
+      }
 
-      // Wait a moment for data to propagate
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait a moment for data to propagate (best-effort)
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
       // Now try to login
-      const { error } = await signIn(demoEmail, DEMO_PASSWORD);
+      const { error } = await signInWithRetry(demoEmail, DEMO_PASSWORD);
       
       if (error) {
         toast({
