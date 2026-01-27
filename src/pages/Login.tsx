@@ -9,6 +9,7 @@ import { ChefHat, Loader2, ArrowLeft, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { BackendHealthIndicator } from '@/components/auth/BackendHealthIndicator';
+import { useBackendHealth } from '@/hooks/useBackendHealth';
 
 const DEMO_ACCOUNTS = [
   { label: 'Owner', email: 'owner@demo.com', description: 'Acceso completo' },
@@ -30,6 +31,7 @@ export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { health } = useBackendHealth();
 
   const isRetryableAuthError = (err: unknown) => {
     const msg = String((err as any)?.message ?? err ?? '').toLowerCase();
@@ -41,8 +43,12 @@ export default function Login() {
     );
   };
 
-  const signInWithRetry = async (emailToUse: string, passwordToUse: string) => {
-    const maxAttempts = 4;
+  const isUserNotFoundError = (err: unknown) => {
+    const msg = String((err as any)?.message ?? err ?? '').toLowerCase();
+    return msg.includes('invalid login credentials') || msg.includes('user not found');
+  };
+
+  const signInWithRetry = async (emailToUse: string, passwordToUse: string, maxAttempts = 3) => {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -55,11 +61,7 @@ export default function Login() {
         return { error };
       }
 
-      const waitMs = 800 * attempt;
-      toast({
-        title: 'Reintentando…',
-        description: `Problema temporal del backend (intento ${attempt}/${maxAttempts}).`,
-      });
+      const waitMs = 600 * attempt;
       await new Promise((r) => setTimeout(r, waitMs));
     }
 
@@ -87,78 +89,99 @@ export default function Login() {
 
   const handleDemoLogin = async (demoEmail: string) => {
     setDemoLoading(demoEmail);
-    console.log('[demo-login] clicked', { demoEmail });
+    console.log('[demo-login] started', { demoEmail, backendStatus: health.status });
+
+    // Check backend health first
+    if (health.status === 'offline') {
+      toast({
+        variant: "destructive",
+        title: "Backend no disponible",
+        description: "El servidor no responde. Inténtalo en 30 segundos."
+      });
+      setDemoLoading(null);
+      return;
+    }
+
     toast({
-      title: 'Iniciando demo…',
+      title: 'Iniciando sesión…',
       description: `Entrando como ${demoEmail}`,
     });
-    
+
     try {
-      const invokeSeedWithRetry = async () => {
-        // Seeding puede fallar temporalmente por "schema cache"; si pasa, no bloqueamos el login.
-        const maxAttempts = 12;
-        let lastSeedError: unknown = null;
+      // STEP 1: Try login FIRST (users already exist in production)
+      const { error: loginError } = await signInWithRetry(demoEmail, DEMO_PASSWORD, 3);
 
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
-          if (!seedError) return { ok: true as const };
-
-          lastSeedError = seedError;
-          const msg = String((seedError as any)?.message ?? seedError).toLowerCase();
-          const isSchemaCache = msg.includes('schema cache') || msg.includes('retrying') || msg.includes('pgrst002');
-          console.warn('Could not seed demo users:', seedError);
-
-          if (!isSchemaCache) {
-            // Errores no transitorios sí deben mostrarse
-            throw seedError;
-          }
-
-          // Exponential-ish backoff, capped
-          const waitMs = Math.min(1500 * attempt, 15000);
-          toast({
-            title: 'Preparando demo…',
-            description: `Backend calentando (intento ${attempt}/${maxAttempts}).`,
-          });
-          await new Promise((resolve) => setTimeout(resolve, waitMs));
-        }
-
-        return { ok: false as const, error: lastSeedError };
-      };
-
-      // Primero intentamos seedear, pero si solo falla por schema-cache, seguimos igualmente.
-      const seedResult = await invokeSeedWithRetry();
-      if (seedResult && 'ok' in seedResult && seedResult.ok === false) {
-        toast({
-          title: 'Demo lista para entrar',
-          description: 'El backend está lento; entrando igual y los datos terminarán de aparecer al refrescar.',
-        });
-      }
-
-      // Wait a moment for data to propagate (best-effort)
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      // Now try to login
-      const { error } = await signInWithRetry(demoEmail, DEMO_PASSWORD);
-      
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error al iniciar sesión demo",
-          description: error.message
-        });
-      } else {
+      if (!loginError) {
+        // Login succeeded! Fire-and-forget seed to refresh demo data
+        console.log('[demo-login] login succeeded, seeding in background');
+        supabase.functions.invoke('seed_demo_users').catch(() => {});
+        
         toast({
           title: "¡Bienvenido al modo demo!",
           description: "Explora Josephine con datos de ejemplo"
         });
         navigate('/dashboard');
+        setDemoLoading(null);
+        return;
+      }
+
+      console.log('[demo-login] login failed, checking error type', loginError.message);
+
+      // STEP 2: If "user not found", try seeding (max 3 attempts, 5s each)
+      if (isUserNotFoundError(loginError)) {
+        toast({
+          title: 'Preparando demo…',
+          description: 'Creando usuarios demo por primera vez.',
+        });
+
+        let seedSuccess = false;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
+          if (!seedError) {
+            seedSuccess = true;
+            break;
+          }
+          console.warn(`[demo-login] seed attempt ${attempt} failed`, seedError);
+          if (attempt < 3) await new Promise((r) => setTimeout(r, 1500));
+        }
+
+        if (seedSuccess) {
+          // Wait briefly for propagation, then retry login
+          await new Promise((r) => setTimeout(r, 500));
+          const { error: retryError } = await signInWithRetry(demoEmail, DEMO_PASSWORD, 2);
+          
+          if (!retryError) {
+            toast({
+              title: "¡Bienvenido al modo demo!",
+              description: "Explora Josephine con datos de ejemplo"
+            });
+            navigate('/dashboard');
+            setDemoLoading(null);
+            return;
+          }
+        }
+      }
+
+      // STEP 3: Handle persistent errors with clear feedback
+      if (isRetryableAuthError(loginError) || health.status === 'degraded') {
+        toast({
+          variant: "destructive",
+          title: "Backend lento",
+          description: "El servidor está tardando. Inténtalo en 30 segundos."
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error al iniciar sesión demo",
+          description: loginError.message
+        });
       }
     } catch (err) {
-      console.error('Demo login error:', err);
+      console.error('[demo-login] unexpected error:', err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo iniciar sesión en modo demo (el backend todavía está calentando). Inténtalo de nuevo en 30s."
+        description: "No se pudo iniciar sesión. Inténtalo de nuevo."
       });
     }
     
