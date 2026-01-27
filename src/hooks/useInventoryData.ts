@@ -171,7 +171,8 @@ export function useInventoryData(
           .select('id, location_id, net_total, gross_total, closed_at')
           .gte('closed_at', `${fromDateStr}T00:00:00`)
           .lte('closed_at', `${toDateStr}T23:59:59`)
-          .eq('status', 'closed');
+          .eq('status', 'closed')
+          .limit(2000);
 
         if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
           ticketsQuery = ticketsQuery.in('location_id', effectiveLocationIds);
@@ -180,7 +181,6 @@ export function useInventoryData(
         const { data: tickets, error: ticketsError } = await ticketsQuery;
         
         if (ticketsError) {
-          console.warn('Error fetching tickets:', ticketsError);
           if (isMountedRef.current) {
             setEmptyState();
             setIsLoading(false);
@@ -205,7 +205,6 @@ export function useInventoryData(
         setLastUpdated(new Date());
       }
     } catch (err) {
-      console.error('Error fetching inventory data:', err);
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
         setEmptyState();
@@ -228,7 +227,11 @@ export function useInventoryData(
   }, [fetchData, appLoading]);
 
   // Subscribe to realtime inventory updates
+  // Realtime subscription with throttling
   useEffect(() => {
+    let lastRefreshTime = 0;
+    const THROTTLE_MS = 10000; // Throttle inventory updates to every 10s
+    
     const channel = supabase
       .channel('inventory-items-realtime')
       .on(
@@ -239,28 +242,18 @@ export function useInventoryData(
           table: 'inventory_items'
         },
         (payload) => {
-          console.log('Inventory realtime update:', payload);
+          const now = Date.now();
+          if (now - lastRefreshTime < THROTTLE_MS) return;
+          lastRefreshTime = now;
           
-          // Reset cache key to force refetch
           fetchedRef.current = '';
           fetchData();
           
           const eventType = payload.eventType;
           if (eventType === 'UPDATE') {
-            toast.info('Stock updated', {
-              description: 'Inventory data has been refreshed.',
-              duration: 3000,
-            });
+            toast.info('Stock updated', { duration: 3000 });
           } else if (eventType === 'INSERT') {
-            toast.success('New item added', {
-              description: 'A new inventory item was added.',
-              duration: 3000,
-            });
-          } else if (eventType === 'DELETE') {
-            toast.info('Item removed', {
-              description: 'An inventory item was deleted.',
-              duration: 3000,
-            });
+            toast.success('New item added', { duration: 3000 });
           }
         }
       )

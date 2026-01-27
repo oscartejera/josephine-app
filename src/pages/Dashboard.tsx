@@ -71,7 +71,7 @@ export default function Dashboard() {
     if (locationId && locationId !== 'all') {
       query = query.eq('location_id', locationId);
     }
-    query = query.gte('closed_at', from.toISOString()).lte('closed_at', to.toISOString());
+    query = query.gte('closed_at', from.toISOString()).lte('closed_at', to.toISOString()).limit(2000);
     
     const { data: tickets } = await query;
     
@@ -84,7 +84,7 @@ export default function Dashboard() {
     if (locationId && locationId !== 'all') {
       laborQuery = laborQuery.eq('location_id', locationId);
     }
-    laborQuery = laborQuery.gte('clock_in', from.toISOString()).lte('clock_in', to.toISOString());
+    laborQuery = laborQuery.gte('clock_in', from.toISOString()).lte('clock_in', to.toISOString()).limit(500);
     const { data: timesheets } = await laborQuery;
     const laborCost = timesheets?.reduce((sum, t) => sum + (Number(t.labor_cost) || 0), 0) || 0;
 
@@ -104,18 +104,19 @@ export default function Dashboard() {
 
     setMetrics({ current: currentMetrics, previous: previousMetrics });
 
-    // Get top items
-    let linesQuery = supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total');
-    const { data: lines } = await linesQuery.limit(500);
+    // Get top items - limit to recent data only
+    let linesQuery = supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total').limit(300);
     
-    // Fetch recipe costs for real margin calculation
-    const { data: recipes } = await supabase
-      .from('recipes')
-      .select('menu_item_name, selling_price');
+    // Fetch recipe costs for real margin calculation (cache these separately)
+    const [linesResult, recipesResult, ingredientsResult] = await Promise.all([
+      linesQuery,
+      supabase.from('recipes').select('menu_item_name, selling_price').limit(100),
+      supabase.from('recipe_ingredients').select('recipe_id, quantity, inventory_items(last_cost)').limit(500)
+    ]);
     
-    const { data: recipeIngredients } = await supabase
-      .from('recipe_ingredients')
-      .select('recipe_id, quantity, inventory_items(last_cost)');
+    const lines = linesResult.data;
+    const recipes = recipesResult.data;
+    const recipeIngredients = ingredientsResult.data;
     
     // Calculate recipe costs
     const recipeCostMap = new Map<string, number>();

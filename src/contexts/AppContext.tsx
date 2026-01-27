@@ -103,8 +103,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (locationsResult.data) {
         setLocations(locationsResult.data);
       }
-    } catch (error) {
-      console.error('Error fetching group/locations:', error);
+    } catch {
+      // Silently handle errors - empty state is acceptable
     } finally {
       setLoading(false);
     }
@@ -120,14 +120,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Production mode - validate access
     if (id === 'all' && !canShowAllLocations) {
-      console.warn('User tried to select all locations without permission');
       return;
     }
 
     if (id && id !== 'all' && !isOwner && !hasGlobalScope) {
       const hasAccess = accessibleLocationIds.includes(id);
       if (!hasAccess) {
-        console.warn('User tried to access unauthorized location');
         return;
       }
     }

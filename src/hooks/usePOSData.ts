@@ -132,8 +132,8 @@ export function usePOSData(locationId: string) {
         .single();
 
       setCashSession(sessionData as CashSession | null);
-    } catch (error) {
-      console.error('Error fetching POS data:', error);
+    } catch {
+      // Silently handle errors
     } finally {
       setLoading(false);
     }

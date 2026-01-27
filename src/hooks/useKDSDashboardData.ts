@@ -57,13 +57,15 @@ export function useKDSDashboardData(options: UseKDSDashboardDataOptions = {}) {
       // Fetch locations
       const { data: locations, error: locError } = await supabase
         .from('locations')
-        .select('id, name');
+        .select('id, name')
+        .eq('active', true);
 
       if (locError) throw locError;
 
-      // Build location filter
-      const locationFilter = options.locationIds?.length 
-        ? options.locationIds 
+      // Build location filter - skip if 'all' is in the list
+      const validLocationIds = options.locationIds?.filter(id => id !== 'all') || [];
+      const locationFilter = validLocationIds.length > 0
+        ? validLocationIds 
         : locations?.map(l => l.id) || [];
 
       if (locationFilter.length === 0) {
@@ -82,13 +84,14 @@ export function useKDSDashboardData(options: UseKDSDashboardDataOptions = {}) {
         return;
       }
 
-      // Fetch tickets for the day
+      // Fetch tickets for the day - limit for performance
       const { data: tickets, error: ticketsError } = await supabase
         .from('tickets')
         .select('id, location_id, opened_at')
         .in('location_id', locationFilter)
         .gte('opened_at', dayStart)
-        .lte('opened_at', dayEnd);
+        .lte('opened_at', dayEnd)
+        .limit(1000);
 
       if (ticketsError) throw ticketsError;
 
@@ -281,8 +284,7 @@ export function useKDSDashboardData(options: UseKDSDashboardDataOptions = {}) {
         topSlowProducts,
         fastestProducts,
       });
-    } catch (err) {
-      console.error('Error fetching KDS dashboard data:', err);
+    } catch {
       setError('Error al cargar datos del KDS');
     } finally {
       setLoading(false);

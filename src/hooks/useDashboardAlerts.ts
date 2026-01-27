@@ -87,8 +87,8 @@ export function useDashboardAlerts(
             });
           }
         }
-      } catch (err) {
-        console.error('Error fetching labour KPIs for alerts:', err);
+      } catch {
+        // Silently handle - alerts are non-critical
       }
 
       // 2. Check Waste levels
@@ -117,8 +117,8 @@ export function useDashboardAlerts(
             metric: `€${totalWaste.toFixed(0)}`
           });
         }
-      } catch (err) {
-        console.error('Error fetching waste for alerts:', err);
+      } catch {
+        // Silently handle - alerts are non-critical
       }
 
       // 3. Check Low Stock Levels
@@ -143,8 +143,8 @@ export function useDashboardAlerts(
               metric: `${criticalItems.length}`
             });
           }
-        } catch (err) {
-          console.error('Error fetching low stock for alerts:', err);
+        } catch {
+          // Silently handle - alerts are non-critical
         }
       }
 

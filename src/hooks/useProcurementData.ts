@@ -238,7 +238,6 @@ export function useProcurementData() {
           .order('name');
 
         if (inventoryError || !inventoryData || inventoryData.length === 0) {
-          console.log('No inventory data found, using demo data');
           setHasRealData(false);
           setIsLoading(false);
           return;
@@ -319,9 +318,7 @@ export function useProcurementData() {
 
         setRealInventoryItems(skusFromDb);
         setHasRealData(true);
-        console.log(`Loaded ${skusFromDb.length} inventory items from database`);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch {
         setHasRealData(false);
         setSuppliers(FALLBACK_SUPPLIERS);
         setSelectedSupplierId(FALLBACK_SUPPLIERS[0].id);

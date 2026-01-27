@@ -98,17 +98,11 @@ export function useTopProducts() {
     toast.loading('Generando datos de ventas...', { id: 'seeding' });
     
     try {
-      console.log('Calling seed_sales_for_existing_products with group_id:', group.id);
-      
-      // Use the new function that seeds sales for EXISTING POS products
-      const { data, error } = await supabase.rpc('seed_sales_for_existing_products', {
+      const { error } = await supabase.rpc('seed_sales_for_existing_products', {
         p_group_id: group.id
       });
 
-      console.log('Seed RPC response:', { data, error });
-
       if (error) {
-        console.error('Seed RPC error:', error);
         throw error;
       }
       

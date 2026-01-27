@@ -150,35 +150,34 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
   
   const isSingleDay = isSameDay(dateRange.from, dateRange.to) || differenceInDays(dateRange.to, dateRange.from) === 0;
 
-  // Subscribe to realtime ticket updates
+  // Subscribe to realtime ticket updates - throttled to prevent excessive re-renders
   useEffect(() => {
+    let lastRefreshTime = 0;
+    const THROTTLE_MS = 5000; // Only refresh every 5 seconds max
+    
     const channel = supabase
       .channel('sales-tickets-realtime')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'tickets'
         },
         (payload) => {
-          console.log('Sales realtime update:', payload);
+          const now = Date.now();
+          if (now - lastRefreshTime < THROTTLE_MS) return;
+          lastRefreshTime = now;
           
-          // Mark last update time
           setLastUpdate(new Date());
-          
-          // Invalidate and refetch the query
           queryClient.invalidateQueries({ queryKey: ['bi-sales'] });
           
-          if (payload.eventType === 'INSERT') {
-            const newTicket = payload.new as any;
-            const amount = newTicket.net_total || newTicket.gross_total || 0;
-            
-            toast.success('New transaction!', {
-              description: `€${amount.toFixed(2)} sale recorded`,
-              duration: 3000,
-            });
-          }
+          const newTicket = payload.new as any;
+          const amount = newTicket.net_total || newTicket.gross_total || 0;
+          toast.success('New transaction!', {
+            description: `€${amount.toFixed(2)} sale recorded`,
+            duration: 3000,
+          });
         }
       )
       .subscribe((status) => {
@@ -537,7 +536,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         locations: locationSalesData
       };
     },
-    staleTime: 30000
+    staleTime: 60000, // Cache for 1 minute
+    gcTime: 300000 // Keep in memory for 5 minutes
   });
 
   return {
