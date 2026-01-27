@@ -2546,6 +2546,48 @@ export type Database = {
           },
         ]
       }
+      product_locations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          location_id: string
+          price_override: number | null
+          product_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          price_override?: number | null
+          product_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          price_override?: number | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_locations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_sales_daily: {
         Row: {
           cogs: number

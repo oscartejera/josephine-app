@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,16 +8,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Plus, Search, Package, Edit2, Trash2, Save, X, Loader2, 
-  ChefHat, Wine, Timer, ImagePlus, GripVertical, Eye, EyeOff,
-  LayoutGrid, List, ArrowUpDown, Filter
+  Plus, Search, Package, Edit2, Trash2, Save, Loader2, 
+  ChefHat, Wine, Timer, ImagePlus, Eye, EyeOff,
+  LayoutGrid, List, Filter, MapPin, Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -32,8 +31,8 @@ interface Product {
   is_active: boolean;
   kds_destination: 'kitchen' | 'bar' | 'prep';
   target_prep_time: number | null;
-  location_id: string;
   group_id: string;
+  assigned_locations: string[]; // IDs of assigned locations
 }
 
 interface ProductFormData {
@@ -45,6 +44,7 @@ interface ProductFormData {
   is_active: boolean;
   kds_destination: 'kitchen' | 'bar' | 'prep';
   target_prep_time: string;
+  assigned_locations: string[];
 }
 
 const emptyFormData: ProductFormData = {
@@ -56,6 +56,7 @@ const emptyFormData: ProductFormData = {
   is_active: true,
   kds_destination: 'kitchen',
   target_prep_time: '',
+  assigned_locations: [],
 };
 
 const destinationConfig = {
@@ -67,7 +68,7 @@ const destinationConfig = {
 const defaultCategories = ['Bebidas', 'Entrantes', 'Principales', 'Postres', 'Otros'];
 
 export function ProductCatalogManager() {
-  const { selectedLocationId, locations, group } = useApp();
+  const { locations, group } = useApp();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -111,41 +112,62 @@ export function ProductCatalogManager() {
     }))
   }), [products, categories]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [selectedLocationId]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
+    if (!group?.id) return;
+    
     setLoading(true);
     try {
-      let query = supabase
+      // Fetch all products for this group (centralized catalog)
+      const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, category, price, image_url, description, is_active, kds_destination, target_prep_time, location_id, group_id')
+        .select('id, name, category, price, image_url, description, is_active, kds_destination, target_prep_time, group_id')
+        .eq('group_id', group.id)
         .order('category')
         .order('name');
 
-      if (selectedLocationId) {
-        query = query.eq('location_id', selectedLocationId);
-      }
+      if (productsError) throw productsError;
 
-      const { data, error } = await query;
-      if (error) throw error;
+      // Fetch product-location assignments
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('product_locations')
+        .select('product_id, location_id, is_active')
+        .in('product_id', productsData?.map(p => p.id) || []);
 
-      setProducts((data || []).map(p => ({
+      if (assignmentsError) throw assignmentsError;
+
+      // Create map of product assignments
+      const assignmentsMap = new Map<string, string[]>();
+      assignmentsData?.forEach(a => {
+        if (a.is_active) {
+          const existing = assignmentsMap.get(a.product_id) || [];
+          existing.push(a.location_id);
+          assignmentsMap.set(a.product_id, existing);
+        }
+      });
+
+      setProducts((productsData || []).map(p => ({
         ...p,
         price: Number(p.price) || 0,
         kds_destination: (p.kds_destination || 'kitchen') as 'kitchen' | 'bar' | 'prep',
+        assigned_locations: assignmentsMap.get(p.id) || [],
       })));
-    } catch (error) {
+    } catch {
       toast.error('Error al cargar productos');
     } finally {
       setLoading(false);
     }
-  };
+  }, [group?.id]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleOpenCreate = () => {
     setEditingProduct(null);
-    setFormData(emptyFormData);
+    setFormData({
+      ...emptyFormData,
+      assigned_locations: locations.map(l => l.id), // Default: all locations
+    });
     setEditDialogOpen(true);
   };
 
@@ -160,6 +182,7 @@ export function ProductCatalogManager() {
       is_active: product.is_active,
       kds_destination: product.kds_destination,
       target_prep_time: product.target_prep_time?.toString() || '',
+      assigned_locations: product.assigned_locations,
     });
     setEditDialogOpen(true);
   };
@@ -178,13 +201,17 @@ export function ProductCatalogManager() {
       toast.error('El precio debe ser mayor que 0');
       return false;
     }
+    if (formData.assigned_locations.length === 0) {
+      toast.error('Selecciona al menos un local');
+      return false;
+    }
     return true;
   };
 
   const handleSave = async () => {
     if (!validateForm()) return;
-    if (!selectedLocationId || !group?.id) {
-      toast.error('Selecciona un local primero');
+    if (!group?.id) {
+      toast.error('Error de configuración');
       return;
     }
 
@@ -201,6 +228,8 @@ export function ProductCatalogManager() {
         target_prep_time: formData.target_prep_time ? parseInt(formData.target_prep_time) : null,
       };
 
+      let productId = editingProduct?.id;
+
       if (editingProduct) {
         // Update existing product
         const { error } = await supabase
@@ -209,24 +238,48 @@ export function ProductCatalogManager() {
           .eq('id', editingProduct.id);
 
         if (error) throw error;
-        toast.success('Producto actualizado');
       } else {
         // Create new product
-        const { error } = await supabase
+        const { data: newProduct, error } = await supabase
           .from('products')
           .insert({
             ...productData,
-            location_id: selectedLocationId,
             group_id: group.id,
-          });
+            location_id: formData.assigned_locations[0], // Keep legacy field
+          })
+          .select('id')
+          .single();
 
         if (error) throw error;
-        toast.success('Producto creado');
+        productId = newProduct.id;
       }
 
+      if (productId) {
+        // Update location assignments
+        // First, delete all existing assignments for this product
+        await supabase
+          .from('product_locations')
+          .delete()
+          .eq('product_id', productId);
+
+        // Then insert new assignments
+        const assignments = formData.assigned_locations.map(locationId => ({
+          product_id: productId,
+          location_id: locationId,
+          is_active: true,
+        }));
+
+        const { error: assignError } = await supabase
+          .from('product_locations')
+          .insert(assignments);
+
+        if (assignError) throw assignError;
+      }
+
+      toast.success(editingProduct ? 'Producto actualizado' : 'Producto creado');
       setEditDialogOpen(false);
       fetchProducts();
-    } catch (error) {
+    } catch {
       toast.error('Error al guardar producto');
     } finally {
       setSaving(false);
@@ -248,7 +301,7 @@ export function ProductCatalogManager() {
       setDeleteDialogOpen(false);
       setProductToDelete(null);
       fetchProducts();
-    } catch (error) {
+    } catch {
       toast.error('Error al eliminar producto');
     }
   };
@@ -267,9 +320,35 @@ export function ProductCatalogManager() {
       ));
 
       toast.success(product.is_active ? 'Producto desactivado' : 'Producto activado');
-    } catch (error) {
+    } catch {
       toast.error('Error al actualizar producto');
     }
+  };
+
+  const toggleLocationAssignment = (locationId: string) => {
+    setFormData(prev => {
+      const isAssigned = prev.assigned_locations.includes(locationId);
+      return {
+        ...prev,
+        assigned_locations: isAssigned
+          ? prev.assigned_locations.filter(id => id !== locationId)
+          : [...prev.assigned_locations, locationId],
+      };
+    });
+  };
+
+  const selectAllLocations = () => {
+    setFormData(prev => ({
+      ...prev,
+      assigned_locations: locations.map(l => l.id),
+    }));
+  };
+
+  const deselectAllLocations = () => {
+    setFormData(prev => ({
+      ...prev,
+      assigned_locations: [],
+    }));
   };
 
   const getLocationName = (locationId: string) => {
@@ -295,10 +374,10 @@ export function ProductCatalogManager() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Catálogo de Productos
+                Catálogo Centralizado de Productos
               </CardTitle>
               <CardDescription>
-                Gestiona los productos, precios y configuración KDS para {selectedLocationId ? getLocationName(selectedLocationId) : 'todos los locales'}
+                Gestiona productos una vez, asígnalos a múltiples locales. Los cambios se aplican a todos los locales asignados.
               </CardDescription>
             </div>
             <Button onClick={handleOpenCreate} className="gap-2">
@@ -322,9 +401,9 @@ export function ProductCatalogManager() {
               <p className="text-sm text-muted-foreground">Inactivos</p>
               <p className="text-2xl font-bold">{stats.inactive}</p>
             </div>
-            <div className="bg-muted/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground">Categorías</p>
-              <p className="text-2xl font-bold">{categories.length}</p>
+            <div className="bg-primary/10 rounded-lg p-4">
+              <p className="text-sm text-primary">Locales</p>
+              <p className="text-2xl font-bold text-primary">{locations.length}</p>
             </div>
           </div>
 
@@ -399,6 +478,7 @@ export function ProductCatalogManager() {
                     <TableHead>Categoría</TableHead>
                     <TableHead className="text-right">Precio</TableHead>
                     <TableHead>Destino KDS</TableHead>
+                    <TableHead>Locales</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
                     <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
@@ -447,6 +527,16 @@ export function ProductCatalogManager() {
                             <DestIcon className="h-3 w-3" />
                             {dest.label}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">
+                              {product.assigned_locations.length === locations.length 
+                                ? 'Todos' 
+                                : `${product.assigned_locations.length}/${locations.length}`}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="text-center">
                           <Button
@@ -519,6 +609,10 @@ export function ProductCatalogManager() {
                       <Badge className={cn('absolute top-2 right-2 gap-1', dest.color)}>
                         <DestIcon className="h-3 w-3" />
                       </Badge>
+                      <Badge variant="secondary" className="absolute top-2 left-2 gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {product.assigned_locations.length}
+                      </Badge>
                       {!product.is_active && (
                         <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
                           <Badge variant="secondary">Inactivo</Badge>
@@ -548,20 +642,20 @@ export function ProductCatalogManager() {
 
       {/* Edit/Create Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
             </DialogTitle>
             <DialogDescription>
               {editingProduct 
-                ? 'Modifica los detalles del producto'
-                : 'Añade un nuevo producto al catálogo'
+                ? 'Modifica los detalles del producto. Los cambios se aplicarán a todos los locales asignados.'
+                : 'Añade un nuevo producto al catálogo centralizado'
               }
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
             {/* Image Preview */}
             <div className="flex gap-4">
               <div className="w-24 h-24 rounded-lg bg-muted overflow-hidden shrink-0">
@@ -670,6 +764,62 @@ export function ProductCatalogManager() {
               </div>
             </div>
 
+            {/* Location Assignment */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Asignar a Locales *
+                </Label>
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={selectAllLocations}
+                  >
+                    Todos
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={deselectAllLocations}
+                  >
+                    Ninguno
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/30">
+                {locations.map(location => (
+                  <div 
+                    key={location.id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                      formData.assigned_locations.includes(location.id)
+                        ? "border-primary bg-primary/5"
+                        : "border-transparent bg-background hover:bg-muted"
+                    )}
+                    onClick={() => toggleLocationAssignment(location.id)}
+                  >
+                    <Checkbox
+                      checked={formData.assigned_locations.includes(location.id)}
+                      onCheckedChange={() => toggleLocationAssignment(location.id)}
+                    />
+                    <div>
+                      <p className="font-medium">{location.name}</p>
+                      {location.city && (
+                        <p className="text-xs text-muted-foreground">{location.city}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {formData.assigned_locations.length} de {locations.length} locales seleccionados
+              </p>
+            </div>
+
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Descripción</Label>
@@ -719,8 +869,8 @@ export function ProductCatalogManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de eliminar "{productToDelete?.name}". Esta acción no se puede deshacer.
-              Los registros históricos de ventas se mantendrán.
+              Estás a punto de eliminar "{productToDelete?.name}" de todos los locales. 
+              Esta acción no se puede deshacer. Los registros históricos de ventas se mantendrán.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

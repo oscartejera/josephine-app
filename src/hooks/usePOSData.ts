@@ -97,21 +97,37 @@ export function usePOSData(locationId: string) {
         setTables([]);
       }
 
-      // Fetch products for this location (including kds_destination, price, image_url)
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, name, category, is_active, kds_destination, price, image_url')
+      // Fetch products assigned to this location via product_locations table
+      const { data: assignedProducts } = await supabase
+        .from('product_locations')
+        .select(`
+          is_active,
+          price_override,
+          products:product_id (
+            id, name, category, is_active, kds_destination, price, image_url
+          )
+        `)
         .eq('location_id', locationId)
-        .eq('is_active', true)
-        .order('category')
-        .order('name');
+        .eq('is_active', true);
 
-      setProducts((productsData || []).map(p => ({
-        ...p,
-        price: Number(p.price) || 10.00,
-        image_url: p.image_url || null,
-        kds_destination: (p.kds_destination || 'kitchen') as 'kitchen' | 'bar' | 'prep'
-      })) as POSProduct[]);
+      // Transform and filter active products
+      const productsData = (assignedProducts || [])
+        .filter(ap => ap.products && ap.products.is_active)
+        .map(ap => ({
+          id: ap.products.id,
+          name: ap.products.name,
+          category: ap.products.category,
+          is_active: ap.products.is_active,
+          kds_destination: (ap.products.kds_destination || 'kitchen') as 'kitchen' | 'bar' | 'prep',
+          price: ap.price_override ? Number(ap.price_override) : Number(ap.products.price) || 10.00,
+          image_url: ap.products.image_url || null,
+        }))
+        .sort((a, b) => {
+          const catCompare = (a.category || '').localeCompare(b.category || '');
+          return catCompare !== 0 ? catCompare : a.name.localeCompare(b.name);
+        });
+
+      setProducts(productsData as POSProduct[]);
 
       // Fetch open tickets
       const { data: ticketsData } = await supabase
