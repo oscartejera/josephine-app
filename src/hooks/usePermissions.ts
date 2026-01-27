@@ -126,6 +126,8 @@ export function usePermissions() {
 
   // Check if user can view sidebar item based on permissions
   const canViewSidebarItem = useCallback((item: keyof typeof SIDEBAR_PERMISSIONS): boolean => {
+    // Demo mode: never hide navigation/content (actions remain protected elsewhere)
+    if (DEMO_MODE) return true;
     if (!user) return false;
     if (isOwner) return true;
     const requiredPermissions = SIDEBAR_PERMISSIONS[item] as unknown as string[];
@@ -134,6 +136,7 @@ export function usePermissions() {
 
   // Check location access
   const canAccessLocation = useCallback((locationId: string): boolean => {
+    if (DEMO_MODE) return true;
     if (!user) return false;
     if (hasGlobalScope) return true;
     return accessibleLocationIds.includes(locationId);
@@ -141,12 +144,14 @@ export function usePermissions() {
 
   // Filter locations by access
   const getAccessibleLocations = useCallback(<T extends { id: string }>(locations: T[]): T[] => {
+    if (DEMO_MODE) return locations;
     if (hasGlobalScope) return locations;
     return locations.filter(loc => accessibleLocationIds.includes(loc.id));
   }, [hasGlobalScope, accessibleLocationIds]);
 
   // Can show all locations dropdown
   const canShowAllLocations = useMemo(() => {
+    if (DEMO_MODE) return true;
     return hasGlobalScope;
   }, [hasGlobalScope]);
 
