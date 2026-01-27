@@ -25,6 +25,16 @@ function getErrMessage(err: unknown): string {
   return String(err);
 }
 
+function isSchemaCacheError(err: unknown): boolean {
+  const message = getErrMessage(err).toLowerCase();
+  // PostgREST schema cache warm-up / retry signals
+  return (
+    message.includes('schema cache') ||
+    message.includes('retrying') ||
+    message.includes('pgrst002')
+  );
+}
+
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries = 10,
@@ -36,10 +46,9 @@ async function withRetry<T>(
       return await fn();
     } catch (err) {
       lastError = err;
-      const message = getErrMessage(err);
       // Retry on schema cache errors
-      if (message.includes('schema cache') || message.includes('Retrying')) {
-        const delay = baseDelayMs * Math.max(1, attempt + 1);
+      if (isSchemaCacheError(err)) {
+        const delay = Math.min(baseDelayMs * Math.max(1, attempt + 1), 15000);
         console.log(`Retry attempt ${attempt + 1}/${maxRetries} after schema cache error (waiting ${delay}ms)`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
@@ -725,6 +734,25 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error seeding demo data:', error);
+
+    // IMPORTANT: when the DB schema cache is warming up, returning 500 makes the client treat
+    // this as a hard failure. Return 200 so the UI can proceed (login can still work) and the
+    // user can retry seeding later.
+    if (isSchemaCacheError(error)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          warming_up: true,
+          error: getErrMessage(error),
+          retry_after_ms: 15000,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
     return new Response(
       JSON.stringify({ 
         success: false, 
