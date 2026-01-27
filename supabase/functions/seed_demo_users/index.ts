@@ -18,6 +18,26 @@ const DEMO_USERS = [
   { email: 'manager.salamanca@demo.com', full_name: 'Manager Salamanca', role: 'store_manager', location: 'Salamanca' },
 ];
 
+// Helper function for retrying database operations
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  delay = 500
+): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 2; // Exponential backoff
+    }
+  }
+  throw lastError;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -33,31 +53,44 @@ Deno.serve(async (req) => {
         auth: {
           autoRefreshToken: false,
           persistSession: false
+        },
+        db: {
+          schema: 'public'
         }
       }
     );
 
     const results: { step: string; status: string; details?: unknown }[] = [];
 
-    // 1. Get or create demo group
+    // 1. Get or create demo group with retry logic
     let groupId: string;
-    const { data: existingGroup } = await supabaseAdmin
-      .from('groups')
-      .select('id')
-      .eq('name', 'Demo Group')
-      .single();
+    
+    const groupResult = await withRetry(async () => {
+      const { data: existingGroup, error } = await supabaseAdmin
+        .from('groups')
+        .select('id')
+        .eq('name', 'Demo Group')
+        .maybeSingle();
+      
+      if (error) throw error;
+      return existingGroup;
+    });
 
-    if (existingGroup) {
-      groupId = existingGroup.id;
+    if (groupResult) {
+      groupId = groupResult.id;
       results.push({ step: 'group', status: 'exists', details: { id: groupId } });
     } else {
-      const { data: newGroup, error: groupError } = await supabaseAdmin
-        .from('groups')
-        .insert({ name: 'Demo Group' })
-        .select('id')
-        .single();
+      const newGroup = await withRetry(async () => {
+        const { data, error } = await supabaseAdmin
+          .from('groups')
+          .insert({ name: 'Demo Group' })
+          .select('id')
+          .single();
+        
+        if (error) throw error;
+        return data;
+      });
 
-      if (groupError) throw new Error(`Failed to create group: ${groupError.message}`);
       groupId = newGroup.id;
       results.push({ step: 'group', status: 'created', details: { id: groupId } });
     }
