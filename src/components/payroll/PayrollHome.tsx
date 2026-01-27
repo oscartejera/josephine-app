@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -39,43 +39,14 @@ export default function PayrollHome({
   const [newEntity, setNewEntity] = useState({ razon_social: '', nif: '', domicilio_fiscal: '', cnae: '' });
   const [loading, setLoading] = useState(false);
 
-  // Fetch real KPIs from payslips when we have a current run
-  const [kpis, setKpis] = useState({
-    totalGross: 0,
-    totalNet: 0,
-    totalEmployerSS: 0,
-    totalIRPF: 0,
-    employeeCount: 0,
-  });
-
-  useEffect(() => {
-    async function fetchPayrollKPIs() {
-      if (!currentRun) {
-        setKpis({ totalGross: 0, totalNet: 0, totalEmployerSS: 0, totalIRPF: 0, employeeCount: 0 });
-        return;
-      }
-
-      const { data: payslips } = await supabase
-        .from('payslips')
-        .select('gross_pay, net_pay, employer_ss, irpf_withheld')
-        .eq('payroll_run_id', currentRun.id);
-
-      if (payslips && payslips.length > 0) {
-        setKpis({
-          totalGross: payslips.reduce((sum, p) => sum + Number(p.gross_pay || 0), 0),
-          totalNet: payslips.reduce((sum, p) => sum + Number(p.net_pay || 0), 0),
-          totalEmployerSS: payslips.reduce((sum, p) => sum + Number(p.employer_ss || 0), 0),
-          totalIRPF: payslips.reduce((sum, p) => sum + Number(p.irpf_withheld || 0), 0),
-          employeeCount: payslips.length,
-        });
-      } else {
-        // No payslips yet - show zeros
-        setKpis({ totalGross: 0, totalNet: 0, totalEmployerSS: 0, totalIRPF: 0, employeeCount: 0 });
-      }
-    }
-
-    fetchPayrollKPIs();
-  }, [currentRun]);
+  // Mock KPIs - in real app these come from payslips
+  const kpis = {
+    totalGross: currentRun ? 45000 : 0,
+    totalNet: currentRun ? 35000 : 0,
+    totalEmployerSS: currentRun ? 12000 : 0,
+    totalIRPF: currentRun ? 6000 : 0,
+    employeeCount: 15,
+  };
 
   // Mock issues
   const issues = [

@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays, differenceInHours, parseISO } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
 
 // Types
-export type Platform = 'all' | 'google' | 'tripadvisor' | 'deliveroo' | 'justeat' | 'ubereats' | 'glovo';
-export type ReplyStatus = 'draft' | 'published' | 'pending';
+export type Platform = 'all' | 'google' | 'tripadvisor' | 'deliveroo' | 'justeat';
+export type ReplyStatus = 'draft' | 'published';
 
 export interface OwnerReply {
   text: string;
@@ -25,7 +24,6 @@ export interface Review {
   text: string;
   owner_reply?: OwnerReply;
   source_label: string;
-  sentiment?: string;
 }
 
 export interface StarBreakdown {
@@ -76,14 +74,8 @@ interface UseReviewsDataParams {
   locationId: string;
 }
 
-const PLATFORM_LABELS: Record<string, string> = {
-  google: 'From Google',
-  tripadvisor: 'From TripAdvisor',
-  deliveroo: 'From Deliveroo',
-  justeat: 'From Just Eat',
-  ubereats: 'From Uber Eats',
-  glovo: 'From Glovo',
-};
+// Use centralized SeededRandom
+import { SeededRandom, hashString } from '@/lib/seededRandom';
 
 const LOCATIONS = [
   { id: 'cpu', name: 'CPU' },
@@ -94,143 +86,189 @@ const LOCATIONS = [
   { id: 'hq', name: 'HQ' },
 ];
 
-const PLATFORMS: Exclude<Platform, 'all'>[] = ['google', 'tripadvisor', 'deliveroo', 'justeat', 'ubereats', 'glovo'];
+const PLATFORMS: Exclude<Platform, 'all'>[] = ['google', 'tripadvisor', 'deliveroo', 'justeat'];
 
-async function fetchRealReviews(params: UseReviewsDataParams): Promise<{ summary: ReviewsSummary; reviews: Review[] }> {
+const PLATFORM_LABELS: Record<Exclude<Platform, 'all'>, string> = {
+  google: 'From Google',
+  tripadvisor: 'From TripAdvisor',
+  deliveroo: 'From Deliveroo',
+  justeat: 'From Just Eat',
+};
+
+const REVIEWER_NAMES = [
+  'Cian Bailey', 'Emma Thompson', 'James Wilson', 'Sophie Chen', 'Michael Brown',
+  'Olivia Davis', 'William Jones', 'Isabella Martinez', 'Alexander Garcia', 'Mia Robinson',
+  'Daniel Lee', 'Charlotte White', 'Matthew Harris', 'Amelia Clark', 'Ethan Lewis',
+  'Ava Walker', 'Benjamin Hall', 'Harper Allen', 'Lucas Young', 'Evelyn King',
+];
+
+const REVIEW_TEXTS_POSITIVE = [
+  'Amazing food and excellent service! Will definitely come back.',
+  'Best dining experience in the city. The staff was incredibly attentive.',
+  'The food was delicious and the atmosphere was perfect for our celebration.',
+  'Outstanding quality. Every dish was cooked to perfection.',
+  'Wonderful experience from start to finish. Highly recommend!',
+  'Great value for money. The portions were generous and tasty.',
+  'The chef really knows how to bring out the flavours. Loved it!',
+  'Perfect spot for a date night. Romantic ambiance and great food.',
+];
+
+const REVIEW_TEXTS_NEUTRAL = [
+  'Food was good, but the wait time was a bit long.',
+  'Decent meal overall. Nothing spectacular but solid.',
+  'Nice place, though it was quite crowded on a Saturday.',
+  'The main course was great, but dessert was average.',
+];
+
+const REVIEW_TEXTS_NEGATIVE = [
+  'Disappointed with the service. Had to wait 30 minutes for our order.',
+  'Food was cold when it arrived. Not what I expected.',
+  'Too expensive for what you get. Won\'t be returning.',
+];
+
+const DRAFT_REPLIES = [
+  'Thank you so much for your wonderful feedback! We\'re thrilled that you enjoyed your experience with us.',
+  'We really appreciate you taking the time to share your thoughts. Your feedback helps us improve!',
+  'Thank you for visiting us! We\'re glad you had a positive experience and hope to see you again soon.',
+  'We appreciate your honest feedback and will take your comments on board to improve our service.',
+];
+
+function generateMockReviews(params: UseReviewsDataParams): { summary: ReviewsSummary; reviews: Review[] } {
   const { startDate, endDate, platform, locationId } = params;
+  const seedStr = `${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${platform}-${locationId}`;
+  const rng = new SeededRandom(hashString(seedStr));
   
-  const fromDate = format(startDate, 'yyyy-MM-dd');
-  const toDate = format(endDate, 'yyyy-MM-dd');
+  const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const reviewCount = rng.intBetween(Math.min(10, days * 2), Math.min(120, days * 8));
   
-  // Fetch reviews from database
-  let query = supabase
-    .from('reviews')
-    .select('*, locations(name)')
-    .gte('review_date', `${fromDate}T00:00:00`)
-    .lte('review_date', `${toDate}T23:59:59`)
-    .order('review_date', { ascending: false });
+  // Filter locations
+  const filteredLocations = locationId === 'all' 
+    ? LOCATIONS 
+    : LOCATIONS.filter(l => l.id === locationId);
   
-  if (platform !== 'all') {
-    query = query.eq('platform', platform);
-  }
+  // Filter platforms
+  const filteredPlatforms = platform === 'all' 
+    ? PLATFORMS 
+    : [platform as Exclude<Platform, 'all'>];
   
-  if (locationId !== 'all') {
-    query = query.eq('location_id', locationId);
-  }
+  // Generate reviews
+  const reviews: Review[] = [];
+  let totalRating = 0;
+  let repliedCount = 0;
+  let totalResponseTimeHours = 0;
   
-  const { data: reviewsData, error } = await query.limit(500);
+  const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   
-  if (error) {
-    console.error('Error fetching reviews:', error);
-    throw error;
-  }
-  
-  // Transform to Review format
-  const reviews: Review[] = (reviewsData || []).map((r: any) => ({
-    id: r.id,
-    platform: r.platform as Exclude<Platform, 'all'>,
-    location_id: r.location_id,
-    location_name: r.locations?.name || 'Unknown',
-    author_name: r.author_name || 'Anonymous',
-    author_avatar_letter: (r.author_name || 'A').charAt(0).toUpperCase(),
-    rating: Math.min(5, Math.max(1, r.rating)) as 1 | 2 | 3 | 4 | 5,
-    created_at: r.review_date,
-    text: r.review_text || '',
-    owner_reply: r.response_text ? {
-      text: r.response_text,
-      created_at: r.response_date || r.updated_at,
-      status: (r.response_status || 'draft') as ReplyStatus,
-    } : undefined,
-    source_label: PLATFORM_LABELS[r.platform] || `From ${r.platform}`,
-    sentiment: r.sentiment,
-  }));
-  
-  // Calculate statistics
-  const totalReviews = reviews.length;
-  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-  const rating_avg = totalReviews > 0 ? totalRating / totalReviews : 0;
-  
-  const repliedCount = reviews.filter(r => r.owner_reply && r.owner_reply.status === 'published').length;
-  const response_rate = totalReviews > 0 ? (repliedCount / totalReviews) * 100 : 0;
-  
-  // Avg response time
-  let totalResponseHours = 0;
-  let responseCount = 0;
-  reviews.forEach(r => {
-    if (r.owner_reply?.created_at) {
-      const reviewDate = parseISO(r.created_at);
-      const replyDate = parseISO(r.owner_reply.created_at);
-      const hours = differenceInHours(replyDate, reviewDate);
-      if (hours > 0 && hours < 720) { // Less than 30 days
-        totalResponseHours += hours;
-        responseCount++;
-      }
+  for (let i = 0; i < reviewCount; i++) {
+    const location = rng.pick(filteredLocations);
+    const platformChoice = rng.pick(filteredPlatforms);
+    const authorName = rng.pick(REVIEWER_NAMES);
+    
+    // Weighted rating generation (skewed towards positive)
+    const ratingRoll = rng.next();
+    let rating: 1 | 2 | 3 | 4 | 5;
+    if (ratingRoll < 0.55) rating = 5;
+    else if (ratingRoll < 0.75) rating = 4;
+    else if (ratingRoll < 0.85) rating = 3;
+    else if (ratingRoll < 0.92) rating = 2;
+    else rating = 1;
+    
+    starCounts[rating]++;
+    totalRating += rating;
+    
+    // Review text based on rating
+    let text: string;
+    if (rating >= 4) text = rng.pick(REVIEW_TEXTS_POSITIVE);
+    else if (rating === 3) text = rng.pick(REVIEW_TEXTS_NEUTRAL);
+    else text = rng.pick(REVIEW_TEXTS_NEGATIVE);
+    
+    // Random date within range
+    const daysAgo = rng.intBetween(0, days - 1);
+    const hoursAgo = rng.intBetween(1, 23);
+    const reviewDate = subDays(endDate, daysAgo);
+    reviewDate.setHours(hoursAgo);
+    
+    // Owner reply (55-75% response rate)
+    let owner_reply: OwnerReply | undefined;
+    const hasReply = rng.next() < rng.between(0.55, 0.75);
+    if (hasReply) {
+      repliedCount++;
+      const replyHoursLater = rng.intBetween(1, 48);
+      totalResponseTimeHours += replyHoursLater;
+      const replyDate = new Date(reviewDate.getTime() + replyHoursLater * 60 * 60 * 1000);
+      owner_reply = {
+        text: rng.pick(DRAFT_REPLIES),
+        created_at: replyDate.toISOString(),
+        status: rng.next() > 0.3 ? 'published' : 'draft',
+      };
     }
-  });
-  const avg_response_time_hours = responseCount > 0 ? totalResponseHours / responseCount : 0;
+    
+    reviews.push({
+      id: `review-${i}-${hashString(authorName + location.id)}`,
+      platform: platformChoice,
+      location_id: location.id,
+      location_name: location.name,
+      author_name: authorName,
+      author_avatar_letter: authorName.charAt(0).toUpperCase(),
+      rating,
+      created_at: reviewDate.toISOString(),
+      text,
+      owner_reply,
+      source_label: PLATFORM_LABELS[platformChoice],
+    });
+  }
+  
+  // Sort reviews by date (newest first)
+  reviews.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  
+  // Calculate summary
+  const rating_avg = reviewCount > 0 ? totalRating / reviewCount : 0;
+  const response_rate = reviewCount > 0 ? (repliedCount / reviewCount) * 100 : 0;
+  const avg_response_time_hours = repliedCount > 0 ? totalResponseTimeHours / repliedCount : 0;
   
   // Star breakdown
-  const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-  reviews.forEach(r => {
-    starCounts[r.rating as keyof typeof starCounts]++;
-  });
-  
   const star_breakdown: StarBreakdown[] = ([5, 4, 3, 2, 1] as const).map(stars => ({
     stars,
     count: starCounts[stars],
-    pct: totalReviews > 0 ? (starCounts[stars] / totalReviews) * 100 : 0,
+    pct: reviewCount > 0 ? (starCounts[stars] / reviewCount) * 100 : 0,
   }));
   
-  // Rating over time (group by day)
-  const ratingByDay = new Map<string, { total: number; count: number }>();
-  reviews.forEach(r => {
-    const day = format(parseISO(r.created_at), 'yyyy-MM-dd');
-    const existing = ratingByDay.get(day) || { total: 0, count: 0 };
-    existing.total += r.rating;
-    existing.count++;
-    ratingByDay.set(day, existing);
-  });
-  
-  const rating_over_time: RatingOverTimePoint[] = Array.from(ratingByDay.entries())
-    .map(([date, data]) => ({
-      date,
-      rating_avg: data.count > 0 ? data.total / data.count : 0,
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  // Rating over time
+  const rating_over_time: RatingOverTimePoint[] = [];
+  for (let d = 0; d < Math.min(days, 14); d++) {
+    const date = subDays(endDate, days - 1 - d);
+    const dayRng = new SeededRandom(hashString(format(date, 'yyyy-MM-dd') + seedStr));
+    rating_over_time.push({
+      date: format(date, 'yyyy-MM-dd'),
+      rating_avg: dayRng.between(4.2, 4.9),
+    });
+  }
   
   // Rating by location
-  const locationStats = new Map<string, { total: number; count: number; replied: number; name: string; pos: number; neutral: number; neg: number }>();
-  reviews.forEach(r => {
-    const existing = locationStats.get(r.location_id) || { 
-      total: 0, count: 0, replied: 0, name: r.location_name,
-      pos: 0, neutral: 0, neg: 0
+  const rating_by_location: LocationRatingData[] = LOCATIONS.map(loc => {
+    const locRng = new SeededRandom(hashString(loc.id + seedStr));
+    const locReviews = reviews.filter(r => r.id.includes(loc.id) || locRng.next() > 0.5);
+    const locTotalRatings = locRng.intBetween(5, 35);
+    const locReplied = locRng.intBetween(2, locTotalRatings);
+    
+    return {
+      location_id: loc.id,
+      location_name: loc.name,
+      rating_avg: locRng.between(4.0, 4.95),
+      total_ratings: locTotalRatings,
+      response_rate: (locReplied / locTotalRatings) * 100,
+      distribution: {
+        pos: locRng.between(60, 90),
+        neutral: locRng.between(5, 20),
+        neg: locRng.between(2, 15),
+      },
     };
-    existing.total += r.rating;
-    existing.count++;
-    if (r.owner_reply?.status === 'published') existing.replied++;
-    if (r.rating >= 4) existing.pos++;
-    else if (r.rating === 3) existing.neutral++;
-    else existing.neg++;
-    locationStats.set(r.location_id, existing);
   });
-  
-  const rating_by_location: LocationRatingData[] = Array.from(locationStats.entries()).map(([loc_id, data]) => ({
-    location_id: loc_id,
-    location_name: data.name,
-    rating_avg: data.count > 0 ? data.total / data.count : 0,
-    total_ratings: data.count,
-    response_rate: data.count > 0 ? (data.replied / data.count) * 100 : 0,
-    distribution: {
-      pos: data.count > 0 ? (data.pos / data.count) * 100 : 0,
-      neutral: data.count > 0 ? (data.neutral / data.count) * 100 : 0,
-      neg: data.count > 0 ? (data.neg / data.count) * 100 : 0,
-    },
-  }));
   
   return {
     summary: {
       rating_avg,
-      ratings_in_period: totalReviews,
+      ratings_in_period: reviewCount,
       response_rate,
       avg_response_time_hours,
       rating_over_time,
@@ -247,7 +285,9 @@ export function useReviewsData(params: UseReviewsDataParams): ReviewsData {
   const { data, isLoading, error } = useQuery({
     queryKey: ['reviews', format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'), platform, locationId],
     queryFn: async () => {
-      return fetchRealReviews(params);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 400));
+      return generateMockReviews(params);
     },
     staleTime: 5 * 60 * 1000,
   });

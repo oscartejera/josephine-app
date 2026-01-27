@@ -2,19 +2,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
+import { AlertsPanel, Alert } from '@/components/dashboard/AlertsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
-import { HourlyLaborChart } from '@/components/dashboard/Charts';
-import { HourlyForecastChart } from '@/components/dashboard/HourlyForecastChart';
-import { ForecastConfidencePanel } from '@/components/dashboard/ForecastConfidencePanel';
+import { HourlySalesChart, HourlyLaborChart } from '@/components/dashboard/Charts';
 import { CategoryBreakdownChart } from '@/components/dashboard/CategoryBreakdownChart';
 import { OnboardingWizard } from '@/components/onboarding';
-import { useHourlyForecast, useGenerateForecast } from '@/hooks/useHourlyForecast';
-import { useDashboardAlerts } from '@/hooks/useDashboardAlerts';
-import { useHourlyLaborData } from '@/hooks/useHourlyLaborData';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface Metrics {
   sales: number;
@@ -42,18 +36,17 @@ export default function Dashboard() {
     previous: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 }
   });
   const [topItems, setTopItems] = useState<any[]>([]);
+  const [hourlySales, setHourlySales] = useState<any[]>([]);
+  const [hourlyLabor, setHourlyLabor] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // AI Forecast hooks
-  const { from: dateFrom, to: dateTo } = getDateRangeValues();
-  const { data: hourlyForecasts, isLoading: forecastLoading } = useHourlyForecast(selectedLocationId, dateFrom);
-  const generateForecast = useGenerateForecast();
-  
-  // Dynamic alerts from real data
-  const { alerts, isLoading: alertsLoading } = useDashboardAlerts(dateFrom, dateTo);
-  
-  // Real hourly labor data from timesheets
-  const { data: hourlyLabor, isLoading: laborLoading } = useHourlyLaborData(dateFrom, dateTo);
+  const alerts: Alert[] = [
+    { id: '1', type: 'warning', title: 'Labor alto', description: 'COL% por encima del objetivo en La Taberna Centro', metric: '28%', trend: 'up' },
+    { id: '2', type: 'error', title: 'Margen bajo', description: 'GP% cayendo en los últimos 7 días', metric: '-3%', trend: 'down' },
+    { id: '3', type: 'warning', title: 'Waste elevado', description: '€120 de waste ayer en Malasaña', metric: '€120' },
+    { id: '4', type: 'info', title: 'Comps/Voids', description: '2.1% de líneas anuladas hoy', metric: '2.1%' },
+    { id: '5', type: 'warning', title: 'Forecast desviación', description: 'Ventas 15% por debajo del forecast', metric: '-15%', trend: 'down' },
+  ];
 
   useEffect(() => {
     fetchData();
@@ -71,7 +64,7 @@ export default function Dashboard() {
     if (locationId && locationId !== 'all') {
       query = query.eq('location_id', locationId);
     }
-    query = query.gte('closed_at', from.toISOString()).lte('closed_at', to.toISOString()).limit(2000);
+    query = query.gte('closed_at', from.toISOString()).lte('closed_at', to.toISOString());
     
     const { data: tickets } = await query;
     
@@ -84,7 +77,7 @@ export default function Dashboard() {
     if (locationId && locationId !== 'all') {
       laborQuery = laborQuery.eq('location_id', locationId);
     }
-    laborQuery = laborQuery.gte('clock_in', from.toISOString()).lte('clock_in', to.toISOString()).limit(500);
+    laborQuery = laborQuery.gte('clock_in', from.toISOString()).lte('clock_in', to.toISOString());
     const { data: timesheets } = await laborQuery;
     const laborCost = timesheets?.reduce((sum, t) => sum + (Number(t.labor_cost) || 0), 0) || 0;
 
@@ -104,28 +97,9 @@ export default function Dashboard() {
 
     setMetrics({ current: currentMetrics, previous: previousMetrics });
 
-    // Get top items - limit to recent data only
-    let linesQuery = supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total').limit(300);
-    
-    // Fetch recipe costs for real margin calculation (cache these separately)
-    const [linesResult, recipesResult, ingredientsResult] = await Promise.all([
-      linesQuery,
-      supabase.from('recipes').select('menu_item_name, selling_price').limit(100),
-      supabase.from('recipe_ingredients').select('recipe_id, quantity, inventory_items(last_cost)').limit(500)
-    ]);
-    
-    const lines = linesResult.data;
-    const recipes = recipesResult.data;
-    const recipeIngredients = ingredientsResult.data;
-    
-    // Calculate recipe costs
-    const recipeCostMap = new Map<string, number>();
-    recipes?.forEach(recipe => {
-      const ingredientCosts = (recipeIngredients || [])
-        .filter((ri: any) => ri.recipe_id === recipe.menu_item_name)
-        .reduce((sum: number, ri: any) => sum + ((ri.inventory_items?.last_cost || 0) * (ri.quantity || 0)), 0);
-      recipeCostMap.set(recipe.menu_item_name.toLowerCase(), ingredientCosts || (recipe.selling_price * 0.30));
-    });
+    // Get top items
+    let linesQuery = supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total');
+    const { data: lines } = await linesQuery.limit(500);
     
     const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number }>();
     lines?.forEach(line => {
@@ -136,28 +110,14 @@ export default function Dashboard() {
     });
     
     const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
-    setTopItems(sortedItems.map((item, i) => {
-      const avgPrice = item.quantity > 0 ? item.sales / item.quantity : 0;
-      const recipeCost = recipeCostMap.get(item.name.toLowerCase()) || avgPrice * 0.30; // Default 30% COGS if no recipe
-      const margin = avgPrice > 0 ? Math.round((1 - recipeCost / avgPrice) * 100) : 70;
-      return { rank: i + 1, ...item, margin: Math.max(0, Math.min(100, margin)) };
-    }));
+    setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item, margin: Math.floor(55 + Math.random() * 20) })));
+
+    // Mock hourly data
+    const hours = Array.from({ length: 14 }, (_, i) => ({ hour: `${10 + i}:00`, real: Math.random() * 300 + 50, forecast: Math.random() * 300 + 100 }));
+    setHourlySales(hours);
+    setHourlyLabor(hours.map(h => ({ hour: h.hour, real: Math.random() * 80 + 20, recommended: Math.random() * 60 + 30 })));
 
     setLoading(false);
-  };
-
-  const handleRefreshForecast = async () => {
-    if (!selectedLocationId || selectedLocationId === 'all') {
-      toast.error('Selecciona una ubicación específica');
-      return;
-    }
-    try {
-      await generateForecast.mutateAsync({ locationId: selectedLocationId });
-      toast.success('Forecast generado correctamente');
-    } catch (error) {
-      toast.error('Error generando forecast');
-      console.error(error);
-    }
   };
 
   const current = metrics.current;
@@ -243,26 +203,13 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid lg:grid-cols-4 gap-6">
-        <HourlyForecastChart 
-          data={hourlyForecasts || []} 
-          isLoading={forecastLoading}
-          onRefresh={handleRefreshForecast}
-          isRefreshing={generateForecast.isPending}
-          className="lg:col-span-2" 
-        />
-        <ForecastConfidencePanel 
-          forecasts={hourlyForecasts || []} 
-          className="lg:col-span-1"
-        />
+      <div className="grid lg:grid-cols-3 gap-6">
+        <HourlySalesChart data={hourlySales} title="Ventas por Hora (Real vs Forecast)" className="lg:col-span-2" />
         <CategoryBreakdownChart />
       </div>
 
-      {/* Labor Chart - Now with real data */}
-      <HourlyLaborChart 
-        data={hourlyLabor || []} 
-        title="Labor por Hora (Real vs Recomendado)" 
-      />
+      {/* Labor Chart */}
+      <HourlyLaborChart data={hourlyLabor} title="Labor por Hora (Real vs Recomendado)" />
 
       {/* Top 10 Products - full width */}
       <TopProductsCard />

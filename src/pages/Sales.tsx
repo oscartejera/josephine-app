@@ -7,6 +7,7 @@ import { BICategoriesProducts } from '@/components/bi/BICategoriesProducts';
 import { BILocationTable } from '@/components/bi/BILocationTable';
 import { AskJosephinePanel } from '@/components/bi/AskJosephinePanel';
 import { useBISalesData } from '@/hooks/useBISalesData';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export type CompareMode = 'forecast' | 'previous_period' | 'previous_year';
 export type GranularityMode = 'daily' | 'weekly' | 'monthly';
@@ -27,7 +28,7 @@ export default function BISales() {
   const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [askPanelOpen, setAskPanelOpen] = useState(false);
-  const [chartView, setChartView] = useState<'sales' | 'orders'>('sales');
+  const [activeTab, setActiveTab] = useState<'sales' | 'orders'>('sales');
 
   const { data, isLoading, isConnected, lastUpdate } = useBISalesData({
     dateRange,
@@ -53,21 +54,20 @@ export default function BISales() {
         lastUpdate={lastUpdate}
       />
 
-      {/* KPI Cards - 4 columns */}
+      {/* KPI Cards */}
       <BIKpiCards data={data} isLoading={isLoading} compareMode={compareMode} />
 
-      {/* Channels Table - moved before chart per Nory */}
-      <BIChannelsTable data={data} isLoading={isLoading} compareMode={compareMode} />
 
-      {/* Main Chart with tabs */}
+      {/* Main Chart */}
       <BISalesChart 
         data={data} 
         isLoading={isLoading} 
         granularity={granularity}
         dateRange={dateRange}
-        view={chartView}
-        onViewChange={setChartView}
       />
+
+      {/* Channels Table */}
+      <BIChannelsTable data={data} isLoading={isLoading} compareMode={compareMode} />
 
       {/* Categories + Products Row */}
       <BICategoriesProducts data={data} isLoading={isLoading} />

@@ -1,12 +1,11 @@
-import { ChevronDown, Sparkles, MoreHorizontal, WifiOff, Download } from 'lucide-react';
+import { ChevronDown, Sparkles, MoreHorizontal, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import {
   Popover,
@@ -25,7 +24,6 @@ import type { CompareMode, GranularityMode, BIDateRange } from '@/pages/Sales';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from './DateRangePickerNoryLike';
 import { formatDistanceToNow } from 'date-fns';
-import { toast } from 'sonner';
 
 interface BISalesHeaderProps {
   dateRange: BIDateRange;
@@ -157,8 +155,8 @@ export function BISalesHeader({
           </DropdownMenu>
         </div>
 
-        {/* Live Status + Export + Ask Josephine button */}
-        <div className="flex items-center gap-2">
+        {/* Live Status + Ask Josephine button */}
+        <div className="flex items-center gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
               <Badge 
@@ -194,25 +192,6 @@ export function BISalesHeader({
               )}
             </TooltipContent>
           </Tooltip>
-
-          {/* Export dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => toast.info('CSV export coming soon')}>
-                Export as CSV
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => toast.info('PDF export coming soon')}>
-                Export as PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           
           <Button 
             onClick={onAskJosephine}

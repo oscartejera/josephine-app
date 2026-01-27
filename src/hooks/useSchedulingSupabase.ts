@@ -325,6 +325,7 @@ async function fetchActualSales(
     .lte('date', weekEndISO);
   
   if (error) {
+    console.warn('Error fetching actual sales:', error);
     return {};
   }
   
@@ -354,6 +355,7 @@ async function checkForecastExists(locationId: string): Promise<boolean> {
     .lte('date', futureDate);
   
   if (error) {
+    console.warn('Error checking forecast:', error);
     return false;
   }
   
@@ -363,20 +365,25 @@ async function checkForecastExists(locationId: string): Promise<boolean> {
 
 // Generate forecast for 365 days
 async function generateForecast(locationId: string): Promise<boolean> {
+  console.log('[useSchedulingSupabase] Generating forecast for location:', locationId);
+  
   try {
-    const { error } = await supabase.functions.invoke('generate_forecast', {
+    const { data, error } = await supabase.functions.invoke('generate_forecast', {
       body: { 
         location_id: locationId, 
-        horizon_days: 90 // Reduced from 365 for faster generation
+        horizon_days: 365 
       }
     });
     
     if (error) {
+      console.error('[useSchedulingSupabase] Forecast generation error:', error);
       return false;
     }
     
+    console.log('[useSchedulingSupabase] Forecast generated:', data);
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[useSchedulingSupabase] Forecast generation exception:', err);
     return false;
   }
 }
@@ -735,10 +742,13 @@ export function useSchedulingSupabase(
       );
       
       if (result.warnings?.length > 0) {
+        console.warn('[createSchedule] Warnings:', result.warnings);
+        // Show first warning as toast
         toast.warning(result.warnings[0], { duration: 4000 });
       }
       
-    } catch {
+    } catch (err) {
+      console.error('[createSchedule] Exception:', err);
       toast.error('Error al generar el horario');
     }
   }, [locationId, weekStartISO, refetchShifts, refetchForecast]);

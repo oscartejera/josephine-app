@@ -18,56 +18,6 @@ const DEMO_USERS = [
   { email: 'manager.salamanca@demo.com', full_name: 'Manager Salamanca', role: 'store_manager', location: 'Salamanca' },
 ];
 
-// Retry helper for transient database errors
-function getErrMessage(err: unknown): string {
-  if (err instanceof Error) return err.message;
-  if (typeof err === 'object' && err && 'message' in err) return String((err as any).message);
-  return String(err);
-}
-
-function isSchemaCacheError(err: unknown): boolean {
-  const message = getErrMessage(err).toLowerCase();
-  // PostgREST schema cache warm-up / retry signals
-  return (
-    message.includes('schema cache') ||
-    message.includes('retrying') ||
-    message.includes('pgrst002')
-  );
-}
-
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries = 10,
-  baseDelayMs = 1500
-): Promise<T> {
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
-      // Retry on schema cache errors
-      if (isSchemaCacheError(err)) {
-        const delay = Math.min(baseDelayMs * Math.max(1, attempt + 1), 15000);
-        console.log(`Retry attempt ${attempt + 1}/${maxRetries} after schema cache error (waiting ${delay}ms)`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastError;
-}
-
-// Use loose typing here because esm.sh Supabase client generics don't match Deno's TS checker well
-async function ensureSchemaReady(supabaseAdmin: any) {
-  await withRetry(async () => {
-    const { error } = await supabaseAdmin.from('groups').select('id').limit(1);
-    if (error) throw error;
-    return true;
-  });
-}
-
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -89,27 +39,18 @@ Deno.serve(async (req) => {
 
     const results: { step: string; status: string; details?: unknown }[] = [];
 
-    // Ensure database schema cache is ready (after migrations it can take a bit)
-    await ensureSchemaReady(supabaseAdmin);
-
-    // 1. Get or create demo group (with retry for schema cache issues)
+    // 1. Get or create demo group
     let groupId: string;
-    
-    const groupResult = await withRetry(async () => {
-      const { data: existingGroup, error: selectError } = await supabaseAdmin
-        .from('groups')
-        .select('id')
-        .eq('name', 'Demo Group')
-        .maybeSingle();
-      
-      if (selectError && selectError.message.includes('schema cache')) {
-        throw selectError;
-      }
+    const { data: existingGroup } = await supabaseAdmin
+      .from('groups')
+      .select('id')
+      .eq('name', 'Demo Group')
+      .single();
 
-      if (existingGroup) {
-        return { id: existingGroup.id, created: false };
-      }
-      
+    if (existingGroup) {
+      groupId = existingGroup.id;
+      results.push({ step: 'group', status: 'exists', details: { id: groupId } });
+    } else {
       const { data: newGroup, error: groupError } = await supabaseAdmin
         .from('groups')
         .insert({ name: 'Demo Group' })
@@ -117,15 +58,9 @@ Deno.serve(async (req) => {
         .single();
 
       if (groupError) throw new Error(`Failed to create group: ${groupError.message}`);
-      return { id: newGroup.id, created: true };
-    });
-    
-    groupId = groupResult.id;
-    results.push({ 
-      step: 'group', 
-      status: groupResult.created ? 'created' : 'exists', 
-      details: { id: groupId } 
-    });
+      groupId = newGroup.id;
+      results.push({ step: 'group', status: 'created', details: { id: groupId } });
+    }
 
     // 2. Create or get demo locations
     const locationMap: Record<string, string> = {};
@@ -734,29 +669,10 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error seeding demo data:', error);
-
-    // IMPORTANT: when the DB schema cache is warming up, returning 500 makes the client treat
-    // this as a hard failure. Return 200 so the UI can proceed (login can still work) and the
-    // user can retry seeding later.
-    if (isSchemaCacheError(error)) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          warming_up: true,
-          error: getErrMessage(error),
-          retry_after_ms: 15000,
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      );
-    }
-
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: getErrMessage(error)
+        error: error instanceof Error ? error.message : 'Unknown error' 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

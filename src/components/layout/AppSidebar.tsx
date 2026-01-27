@@ -21,9 +21,7 @@ import {
   LineChart,
   Wallet,
   PiggyBank,
-  Monitor,
-  Receipt,
-  CalendarCheck
+  Monitor
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,13 +51,11 @@ const insightsChildren = [
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', key: 'dashboard' as const },
   { icon: Monitor, label: 'POS', path: '/pos', key: 'dashboard' as const, highlight: true },
-  { icon: CalendarCheck, label: 'Reservas', path: '/reservations', key: 'scheduling' as const },
   { icon: CalendarDays, label: 'Scheduling', path: '/scheduling', key: 'scheduling' as const },
   { icon: Clock, label: 'Availability', path: '/availability', key: 'availability' as const },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement', key: 'procurement' as const },
   { icon: Plug, label: 'Integrations', path: '/integrations', key: 'integrations' as const },
   { icon: Calculator, label: 'Payroll', path: '/payroll', key: 'payroll' as const },
-  { icon: Receipt, label: 'Fiscal', path: '/fiscal', key: 'fiscal' as const },
 ];
 
 const roleLabels: Record<string, string> = {

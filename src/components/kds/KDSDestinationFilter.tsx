@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export type KDSDestination = 'all' | 'kitchen' | 'bar' | 'prep';
+export type KDSDestination = 'all' | 'kitchen' | 'bar';
 
 interface KDSDestinationFilterProps {
   selected: KDSDestination;
@@ -9,7 +9,6 @@ interface KDSDestinationFilterProps {
     all: number;
     kitchen: number;
     bar: number;
-    prep: number;
   };
 }
 
@@ -17,7 +16,6 @@ const destinations: { value: KDSDestination; label: string; icon: string }[] = [
   { value: 'all', label: 'Todo', icon: '📋' },
   { value: 'kitchen', label: 'Cocina', icon: '👨‍🍳' },
   { value: 'bar', label: 'Bar', icon: '🍺' },
-  { value: 'prep', label: 'Prep', icon: '🔪' },
 ];
 
 export function KDSDestinationFilter({ selected, onChange, counts }: KDSDestinationFilterProps) {

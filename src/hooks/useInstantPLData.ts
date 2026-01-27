@@ -123,15 +123,14 @@ export function useInstantPLData({
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
       
-      // Fetch actual sales from tickets - limit for performance
+      // Fetch actual sales from tickets
       const { data: tickets } = await supabase
         .from('tickets')
         .select('location_id, net_total, gross_total, closed_at')
         .in('location_id', locationIds)
         .gte('closed_at', dateRange.from.toISOString())
         .lte('closed_at', dateRange.to.toISOString())
-        .eq('status', 'closed')
-        .limit(3000);
+        .eq('status', 'closed');
       
       // Fetch forecasts from LR+SI v3 model
       const { data: forecasts } = await supabase
@@ -174,11 +173,13 @@ export function useInstantPLData({
           labourHoursActual = Math.round(labourActual / 20); // ~€20/hour
         }
         
-        // COGS calculation - use 28% default ratio (industry standard for restaurants)
-        // In a full implementation, this would calculate from recipe_ingredients costs
-        const cogsRatio = 0.28; // Fixed ratio instead of random
+        // COGS estimation (typically 25-32% of sales)
+        const dateKey = format(dateRange.from, 'yyyy-MM-dd') + loc.id + 'cogs';
+        const rng = new SeededRandom(hashString(dateKey));
+        const cogsRatio = rng.between(0.25, 0.32);
         const cogsActual = Math.round(salesActual * cogsRatio);
-        const cogsForecast = Math.round(salesForecast * cogsRatio);
+        const cogsForecastRatio = rng.between(0.26, 0.30);
+        const cogsForecast = Math.round(salesForecast * cogsForecastRatio);
         
         // Calculate percentages
         const cogsActualPct = salesActual > 0 ? (cogsActual / salesActual) * 100 : 0;
@@ -253,8 +254,7 @@ export function useInstantPLData({
       
       return locationMetrics;
     },
-    staleTime: 120000, // Cache for 2 minutes
-    gcTime: 300000 // Keep in memory for 5 minutes
+    staleTime: 60000 // 1 minute
   });
   
   // Compute chip counts and filter locations

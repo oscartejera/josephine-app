@@ -103,7 +103,7 @@ export default function KDS() {
 
   // Calculate destination counts (only pending/preparing items)
   const destinationCounts = useMemo(() => {
-    const counts = { all: 0, kitchen: 0, bar: 0, prep: 0 };
+    const counts = { all: 0, kitchen: 0, bar: 0 };
     
     orders.forEach(order => {
       order.items.forEach(item => {
@@ -111,7 +111,6 @@ export default function KDS() {
           counts.all++;
           if (item.destination === 'kitchen') counts.kitchen++;
           if (item.destination === 'bar') counts.bar++;
-          if (item.destination === 'prep') counts.prep++;
         }
       });
     });

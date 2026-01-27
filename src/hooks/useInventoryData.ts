@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
+import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
@@ -149,21 +150,18 @@ export function useInventoryData(
       // Determine which location IDs to use
       let effectiveLocationIds = selectedLocations;
       
-      // If no selected locations, use all from context
+      // If no selected locations, use all from context OR demo
       if (effectiveLocationIds.length === 0) {
         if (locations.length > 0) {
           effectiveLocationIds = locations.map(l => l.id);
         } else {
-          // No locations available - show empty state
-          if (isMountedRef.current) {
-            setEmptyState();
-            setIsLoading(false);
-          }
-          return;
+          // Use demo locations if no real locations
+          const generator = getDemoGenerator(fromDate, toDate);
+          effectiveLocationIds = generator.getLocations().map(l => l.id);
         }
       }
 
-      // Try to fetch real data (only if we have real locations)
+      // Try to fetch real data first (only if we have real locations)
       let hasReal = false;
       if (locations.length > 0 && !appLoading) {
         let ticketsQuery = supabase
@@ -171,8 +169,7 @@ export function useInventoryData(
           .select('id, location_id, net_total, gross_total, closed_at')
           .gte('closed_at', `${fromDateStr}T00:00:00`)
           .lte('closed_at', `${toDateStr}T23:59:59`)
-          .eq('status', 'closed')
-          .limit(2000);
+          .eq('status', 'closed');
 
         if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
           ticketsQuery = ticketsQuery.in('location_id', effectiveLocationIds);
@@ -181,33 +178,36 @@ export function useInventoryData(
         const { data: tickets, error: ticketsError } = await ticketsQuery;
         
         if (ticketsError) {
-          if (isMountedRef.current) {
-            setEmptyState();
-            setIsLoading(false);
+          console.warn('Error fetching tickets, using demo data:', ticketsError);
+        } else {
+          hasReal = tickets && tickets.length > 0;
+          if (hasReal && isMountedRef.current) {
+            setHasRealData(true);
+            await processRealData(tickets, fromDateStr, toDateStr, effectiveLocationIds);
+            return;
           }
-          return;
-        }
-        
-        hasReal = tickets && tickets.length > 0;
-        if (hasReal && isMountedRef.current) {
-          setHasRealData(true);
-          await processRealData(tickets, fromDateStr, toDateStr, effectiveLocationIds);
-          return;
         }
       }
 
-      // No real data found - show empty state
+      // Use demo generator for data
       if (isMountedRef.current) {
-        setEmptyState();
+        setHasRealData(false);
+        useDemoData(fromDate, toDate, effectiveLocationIds);
       }
 
       if (isMountedRef.current) {
         setLastUpdated(new Date());
       }
     } catch (err) {
+      console.error('Error fetching inventory data:', err);
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
-        setEmptyState();
+        // Still try demo data as fallback
+        try {
+          useDemoData(dateRange.from, dateRange.to, selectedLocations);
+        } catch {
+          // Ignore demo fallback errors
+        }
       }
     } finally {
       if (isMountedRef.current) {
@@ -227,11 +227,7 @@ export function useInventoryData(
   }, [fetchData, appLoading]);
 
   // Subscribe to realtime inventory updates
-  // Realtime subscription with throttling
   useEffect(() => {
-    let lastRefreshTime = 0;
-    const THROTTLE_MS = 10000; // Throttle inventory updates to every 10s
-    
     const channel = supabase
       .channel('inventory-items-realtime')
       .on(
@@ -242,18 +238,28 @@ export function useInventoryData(
           table: 'inventory_items'
         },
         (payload) => {
-          const now = Date.now();
-          if (now - lastRefreshTime < THROTTLE_MS) return;
-          lastRefreshTime = now;
+          console.log('Inventory realtime update:', payload);
           
+          // Reset cache key to force refetch
           fetchedRef.current = '';
           fetchData();
           
           const eventType = payload.eventType;
           if (eventType === 'UPDATE') {
-            toast.info('Stock updated', { duration: 3000 });
+            toast.info('Stock updated', {
+              description: 'Inventory data has been refreshed.',
+              duration: 3000,
+            });
           } else if (eventType === 'INSERT') {
-            toast.success('New item added', { duration: 3000 });
+            toast.success('New item added', {
+              description: 'A new inventory item was added.',
+              duration: 3000,
+            });
+          } else if (eventType === 'DELETE') {
+            toast.info('Item removed', {
+              description: 'An inventory item was deleted.',
+              duration: 3000,
+            });
           }
         }
       )
@@ -373,17 +379,10 @@ export function useInventoryData(
 
     (ticketLines || []).forEach(line => {
       const cat = line.category_name || 'Miscellaneous';
-      const catLower = cat.toLowerCase();
-      
-      // Support both Spanish (POS) and English category names
-      const mappedCat = 
-        catLower.includes('bebida') || catLower.includes('beverage') || 
-        catLower.includes('drink') || catLower.includes('vino') || catLower.includes('cerveza')
-          ? 'Beverage' 
-        : catLower.includes('entrante') || catLower.includes('principal') || 
-          catLower.includes('postre') || catLower.includes('comida') || 
-          catLower.includes('food') || catLower.includes('plato')
-          ? 'Food'
+      const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink') 
+        ? 'Beverage' 
+        : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
+        ? 'Food'
         : 'Miscellaneous';
       
       const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
@@ -411,14 +410,7 @@ export function useInventoryData(
 
     (wasteEvents || []).forEach((w: any) => {
       const cat = w.inventory_items?.category || 'food';
-      const catLower = cat.toLowerCase();
-      // Support both Spanish and English category names
-      const mappedCat = 
-        catLower.includes('bebida') || catLower === 'beverage'
-          ? 'Beverage' 
-        : catLower.includes('comida') || catLower === 'food'
-          ? 'Food' 
-        : 'Miscellaneous';
+      const mappedCat = cat === 'beverage' ? 'Beverage' : cat === 'food' ? 'Food' : 'Miscellaneous';
       const existing = wasteByCat.get(mappedCat) || { accounted: 0, unaccounted: 0 };
       existing.accounted += w.waste_value || 0;
       wasteByCat.set(mappedCat, existing);
@@ -470,46 +462,66 @@ export function useInventoryData(
       };
     }));
 
-    // Location performance - filter out locations with no POS data
-    setLocationPerformance(locations
-      .filter(l => effectiveLocationIds.includes(l.id))
-      .filter(loc => {
-        const locSales = salesByLoc.get(loc.id) || 0;
-        return locSales > 0; // Only include locations with actual sales data
-      })
-      .map(loc => {
-        const locSales = salesByLoc.get(loc.id) || 0;
-        const locTheoreticalCOGS = locSales * 0.28;
-        const locActualCOGS = locTheoreticalCOGS * 1.05;
-        const locVariance = locActualCOGS - locTheoreticalCOGS;
-        
-        return {
-          locationId: loc.id,
-          locationName: loc.name,
-          sales: locSales,
-          theoreticalValue: locTheoreticalCOGS,
-          theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
-          actualValue: locActualCOGS,
-          actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
-          variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
-          varianceAmount: locVariance,
-          hasStockCount: stockCountLocations.has(loc.id)
-        };
-      }));
+    // Location performance
+    setLocationPerformance(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
+      const locSales = salesByLoc.get(loc.id) || 0;
+      const locTheoreticalCOGS = locSales * 0.28;
+      const locActualCOGS = locTheoreticalCOGS * 1.05;
+      const locVariance = locActualCOGS - locTheoreticalCOGS;
+      
+      return {
+        locationId: loc.id,
+        locationName: loc.name,
+        sales: locSales,
+        theoreticalValue: locTheoreticalCOGS,
+        theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
+        actualValue: locActualCOGS,
+        actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
+        variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
+        varianceAmount: locVariance,
+        hasStockCount: stockCountLocations.has(loc.id)
+      };
+    }));
 
     setLastUpdated(new Date());
   };
 
-  // Empty data state - no more demo fallback
-  const setEmptyState = () => {
-    setMetrics(defaultMetrics);
-    setCategoryBreakdown([]);
-    setWasteByCategory([]);
-    setWasteByLocation([]);
-    setLocationPerformance([]);
+  const useDemoData = (fromDate: Date, toDate: Date, effectiveLocationIds: string[]) => {
+    const generator = getDemoGenerator(fromDate, toDate);
+    
+    // Use demo location IDs if none provided
+    const demoLocationIds = generator.getLocations().map(l => l.id);
+    const finalLocationIds = effectiveLocationIds.length > 0 ? effectiveLocationIds : demoLocationIds;
+
+    // Get demo metrics
+    const demoMetrics = generator.getInventoryMetrics(fromDate, toDate, finalLocationIds);
+    
+    setMetrics({
+      totalSales: demoMetrics.totalSales,
+      assignedSales: demoMetrics.assignedSales,
+      unassignedSales: demoMetrics.unassignedSales,
+      theoreticalCOGS: demoMetrics.theoreticalCOGS,
+      theoreticalCOGSPercent: demoMetrics.theoreticalCOGSPercent,
+      actualCOGS: demoMetrics.actualCOGS,
+      actualCOGSPercent: demoMetrics.actualCOGSPercent,
+      theoreticalGP: demoMetrics.theoreticalGP,
+      theoreticalGPPercent: demoMetrics.theoreticalGPPercent,
+      actualGP: demoMetrics.actualGP,
+      actualGPPercent: demoMetrics.actualGPPercent,
+      gapCOGS: demoMetrics.gapCOGS,
+      gapCOGSPercent: demoMetrics.gapCOGSPercent,
+      gapGP: demoMetrics.gapGP,
+      gapGPPercent: demoMetrics.gapGPPercent,
+      accountedWaste: demoMetrics.accountedWaste,
+      unaccountedWaste: demoMetrics.unaccountedWaste,
+      surplus: demoMetrics.surplus
+    });
+
+    setCategoryBreakdown(generator.getCategoryBreakdown(fromDate, toDate, finalLocationIds));
+    setWasteByCategory(generator.getWasteByCategory(fromDate, toDate, finalLocationIds));
+    setWasteByLocation(generator.getWasteByLocation(fromDate, toDate, finalLocationIds));
+    setLocationPerformance(generator.getLocationPerformance(fromDate, toDate, finalLocationIds));
     setLastUpdated(new Date());
-    setHasRealData(false);
-    setError(new Error('NO_DATA'));
   };
 
   return {

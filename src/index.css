@@ -72,9 +72,10 @@
     --chart-4: 199 89% 48%;
     --chart-5: 0 84% 60%;
 
-    /* BI Sales specific tokens - Nory style */
-    --bi-actual: 263 75% 55%;
-    --bi-forecast: 220 10% 75%;
+    /* BI Sales specific tokens */
+    --bi-actual: 263 70% 50%;
+    --bi-forecast-live: 263 50% 65%;
+    --bi-forecast: 263 30% 85%;
     --bi-acs: 30 90% 55%;
     --bi-acs-forecast: 30 70% 75%;
     --bi-border: 40 15% 90%;

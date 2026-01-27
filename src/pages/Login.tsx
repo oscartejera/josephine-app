@@ -8,8 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChefHat, Loader2, ArrowLeft, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { BackendHealthIndicator } from '@/components/auth/BackendHealthIndicator';
-import { useBackendHealth } from '@/hooks/useBackendHealth';
 
 const DEMO_ACCOUNTS = [
   { label: 'Owner', email: 'owner@demo.com', description: 'Acceso completo' },
@@ -31,48 +29,12 @@ export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { health } = useBackendHealth();
-
-  const isRetryableAuthError = (err: unknown) => {
-    const msg = String((err as any)?.message ?? err ?? '').toLowerCase();
-    return (
-      msg.includes('504') ||
-      msg.includes('timeout') ||
-      msg.includes('upstream request timeout') ||
-      msg.includes('failed to fetch')
-    );
-  };
-
-  const isUserNotFoundError = (err: unknown) => {
-    const msg = String((err as any)?.message ?? err ?? '').toLowerCase();
-    return msg.includes('invalid login credentials') || msg.includes('user not found');
-  };
-
-  const signInWithRetry = async (emailToUse: string, passwordToUse: string, maxAttempts = 3) => {
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const { error } = await signIn(emailToUse, passwordToUse);
-      if (!error) return { error: null };
-
-      lastError = error;
-
-      if (!isRetryableAuthError(error) || attempt === maxAttempts) {
-        return { error };
-      }
-
-      const waitMs = 600 * attempt;
-      await new Promise((r) => setTimeout(r, waitMs));
-    }
-
-    return { error: lastError };
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signInWithRetry(email, password);
+    const { error } = await signIn(email, password);
     
     if (error) {
       toast({
@@ -89,99 +51,45 @@ export default function Login() {
 
   const handleDemoLogin = async (demoEmail: string) => {
     setDemoLoading(demoEmail);
-    console.log('[demo-login] started', { demoEmail, backendStatus: health.status });
-
-    // Check backend health first
-    if (health.status === 'offline') {
-      toast({
-        variant: "destructive",
-        title: "Backend no disponible",
-        description: "El servidor no responde. Inténtalo en 30 segundos."
-      });
-      setDemoLoading(null);
-      return;
-    }
-
+    console.log('[demo-login] clicked', { demoEmail });
     toast({
-      title: 'Iniciando sesión…',
+      title: 'Iniciando demo…',
       description: `Entrando como ${demoEmail}`,
     });
-
+    
     try {
-      // STEP 1: Try login FIRST (users already exist in production)
-      const { error: loginError } = await signInWithRetry(demoEmail, DEMO_PASSWORD, 3);
+      // First, try to seed demo users if they don't exist
+      const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
+      
+      if (seedError) {
+        console.warn('Could not seed demo users:', seedError);
+      }
 
-      if (!loginError) {
-        // Login succeeded! Fire-and-forget seed to refresh demo data
-        console.log('[demo-login] login succeeded, seeding in background');
-        supabase.functions.invoke('seed_demo_users').catch(() => {});
-        
+      // Wait a moment for data to propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Now try to login
+      const { error } = await signIn(demoEmail, DEMO_PASSWORD);
+      
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error al iniciar sesión demo",
+          description: error.message
+        });
+      } else {
         toast({
           title: "¡Bienvenido al modo demo!",
           description: "Explora Josephine con datos de ejemplo"
         });
         navigate('/dashboard');
-        setDemoLoading(null);
-        return;
-      }
-
-      console.log('[demo-login] login failed, checking error type', loginError.message);
-
-      // STEP 2: If "user not found", try seeding (max 3 attempts, 5s each)
-      if (isUserNotFoundError(loginError)) {
-        toast({
-          title: 'Preparando demo…',
-          description: 'Creando usuarios demo por primera vez.',
-        });
-
-        let seedSuccess = false;
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
-          if (!seedError) {
-            seedSuccess = true;
-            break;
-          }
-          console.warn(`[demo-login] seed attempt ${attempt} failed`, seedError);
-          if (attempt < 3) await new Promise((r) => setTimeout(r, 1500));
-        }
-
-        if (seedSuccess) {
-          // Wait briefly for propagation, then retry login
-          await new Promise((r) => setTimeout(r, 500));
-          const { error: retryError } = await signInWithRetry(demoEmail, DEMO_PASSWORD, 2);
-          
-          if (!retryError) {
-            toast({
-              title: "¡Bienvenido al modo demo!",
-              description: "Explora Josephine con datos de ejemplo"
-            });
-            navigate('/dashboard');
-            setDemoLoading(null);
-            return;
-          }
-        }
-      }
-
-      // STEP 3: Handle persistent errors with clear feedback
-      if (isRetryableAuthError(loginError) || health.status === 'degraded') {
-        toast({
-          variant: "destructive",
-          title: "Backend lento",
-          description: "El servidor está tardando. Inténtalo en 30 segundos."
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error al iniciar sesión demo",
-          description: loginError.message
-        });
       }
     } catch (err) {
-      console.error('[demo-login] unexpected error:', err);
+      console.error('Demo login error:', err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo iniciar sesión. Inténtalo de nuevo."
+        description: "No se pudo iniciar sesión en modo demo"
       });
     }
     
@@ -296,9 +204,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Backend Health Indicator */}
-        <BackendHealthIndicator />
-        
         <Card>
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
