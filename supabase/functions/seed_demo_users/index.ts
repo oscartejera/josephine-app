@@ -18,6 +18,31 @@ const DEMO_USERS = [
   { email: 'manager.salamanca@demo.com', full_name: 'Manager Salamanca', role: 'store_manager', location: 'Salamanca' },
 ];
 
+// Retry helper for transient database errors
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  delayMs = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err as Error;
+      const message = lastError.message || '';
+      // Retry on schema cache errors
+      if (message.includes('schema cache') || message.includes('Retrying')) {
+        console.log(`Retry attempt ${attempt + 1}/${maxRetries} after schema cache error`);
+        await new Promise(resolve => setTimeout(resolve, delayMs * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -39,18 +64,24 @@ Deno.serve(async (req) => {
 
     const results: { step: string; status: string; details?: unknown }[] = [];
 
-    // 1. Get or create demo group
+    // 1. Get or create demo group (with retry for schema cache issues)
     let groupId: string;
-    const { data: existingGroup } = await supabaseAdmin
-      .from('groups')
-      .select('id')
-      .eq('name', 'Demo Group')
-      .single();
+    
+    const groupResult = await withRetry(async () => {
+      const { data: existingGroup, error: selectError } = await supabaseAdmin
+        .from('groups')
+        .select('id')
+        .eq('name', 'Demo Group')
+        .maybeSingle();
+      
+      if (selectError && selectError.message.includes('schema cache')) {
+        throw selectError;
+      }
 
-    if (existingGroup) {
-      groupId = existingGroup.id;
-      results.push({ step: 'group', status: 'exists', details: { id: groupId } });
-    } else {
+      if (existingGroup) {
+        return { id: existingGroup.id, created: false };
+      }
+      
       const { data: newGroup, error: groupError } = await supabaseAdmin
         .from('groups')
         .insert({ name: 'Demo Group' })
@@ -58,9 +89,15 @@ Deno.serve(async (req) => {
         .single();
 
       if (groupError) throw new Error(`Failed to create group: ${groupError.message}`);
-      groupId = newGroup.id;
-      results.push({ step: 'group', status: 'created', details: { id: groupId } });
-    }
+      return { id: newGroup.id, created: true };
+    });
+    
+    groupId = groupResult.id;
+    results.push({ 
+      step: 'group', 
+      status: groupResult.created ? 'created' : 'exists', 
+      details: { id: groupId } 
+    });
 
     // 2. Create or get demo locations
     const locationMap: Record<string, string> = {};
