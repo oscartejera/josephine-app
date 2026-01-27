@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Settings, CreditCard, Bell, Calendar, Users, Globe } from 'lucide-react';
+import { CreditCard, Bell, Calendar, Users, Globe } from 'lucide-react';
 
 interface ReservationSettings {
   max_covers_per_slot: number;
@@ -49,14 +49,14 @@ export function ReservationSettingsPanel({ locationId }: ReservationSettingsPane
   const fetchSettings = async () => {
     if (!locationId) return;
 
-    const { data, error } = await supabase
-      .from('reservation_settings')
+    const { data } = await supabase
+      .from('reservation_settings' as any)
       .select('*')
       .eq('location_id', locationId)
-      .single();
+      .maybeSingle();
 
     if (data) {
-      setSettings(data as ReservationSettings);
+      setSettings(data as unknown as ReservationSettings);
     } else {
       // Create default settings
       setSettings({
@@ -91,7 +91,7 @@ export function ReservationSettingsPanel({ locationId }: ReservationSettingsPane
     setSaving(true);
     try {
       const { error } = await supabase
-        .from('reservation_settings')
+        .from('reservation_settings' as any)
         .upsert({
           location_id: locationId,
           ...settings,

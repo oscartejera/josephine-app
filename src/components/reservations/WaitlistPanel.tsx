@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Clock, Users, Phone, Mail, Calendar, ArrowRight } from 'lucide-react';
+import { Plus, Clock, Users, Phone, Calendar, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface WaitlistEntry {
@@ -54,14 +54,14 @@ export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
     if (!locationId) return;
 
     const { data } = await supabase
-      .from('reservation_waitlist')
+      .from('reservation_waitlist' as any)
       .select('*')
       .eq('location_id', locationId)
       .eq('status', 'waiting')
       .order('preferred_date')
       .order('created_at');
 
-    setEntries((data || []) as WaitlistEntry[]);
+    setEntries((data as unknown as WaitlistEntry[]) || []);
     setLoading(false);
   };
 
@@ -69,7 +69,7 @@ export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
     if (!locationId || !newEntry.guest_name) return;
 
     try {
-      const { error } = await supabase.from('reservation_waitlist').insert({
+      const { error } = await supabase.from('reservation_waitlist' as any).insert({
         location_id: locationId,
         guest_name: newEntry.guest_name,
         guest_phone: newEntry.guest_phone || null,
@@ -110,7 +110,7 @@ export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
   const removeFromWaitlist = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('reservation_waitlist')
+        .from('reservation_waitlist' as any)
         .update({ status: 'expired' })
         .eq('id', id);
 

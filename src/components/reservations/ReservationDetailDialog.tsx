@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Phone, Mail, Users, Calendar, Clock, CreditCard, MessageSquare, UserCheck, X, Edit } from 'lucide-react';
+import { Phone, Mail, Users, Calendar, Clock, MessageSquare, UserCheck, X } from 'lucide-react';
 
 interface ReservationDetailDialogProps {
   reservation: {
@@ -17,8 +17,6 @@ interface ReservationDetailDialogProps {
     reservation_date: string;
     reservation_time: string;
     status: string;
-    source: string;
-    deposit_paid: boolean;
     guest_phone: string | null;
     guest_email: string | null;
     special_requests: string | null;
@@ -81,17 +79,6 @@ export function ReservationDetailDialog({
     }
   };
 
-  const getSourceLabel = (source: string) => {
-    switch (source) {
-      case 'manual': return 'Manual';
-      case 'phone': return 'Teléfono';
-      case 'widget': return 'Web';
-      case 'walk_in': return 'De paso';
-      case 'google': return 'Google';
-      default: return source;
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -140,10 +127,6 @@ export function ReservationDetailDialog({
               <Users className="h-4 w-4 text-muted-foreground" />
               <span>{reservation.party_size} {reservation.party_size === 1 ? 'persona' : 'personas'}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <span>{reservation.deposit_paid ? 'Señal pagada' : 'Sin señal'}</span>
-            </div>
           </div>
 
           {reservation.special_requests && (
@@ -162,11 +145,6 @@ export function ReservationDetailDialog({
           )}
 
           <Separator />
-
-          {/* Source */}
-          <div className="text-xs text-muted-foreground">
-            Origen: {getSourceLabel(reservation.source)}
-          </div>
 
           {/* Actions */}
           {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (

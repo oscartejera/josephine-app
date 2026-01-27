@@ -21,7 +21,7 @@ interface CustomerProfile {
   total_visits: number;
   total_spent: number;
   last_visit_at: string | null;
-  tags?: { id: string; name: string; color: string }[];
+  tags?: CustomerTag[];
 }
 
 interface CustomerTag {
@@ -32,7 +32,8 @@ interface CustomerTag {
 }
 
 export function CustomerCRMPanel() {
-  const { groupId } = useApp();
+  const { group } = useApp();
+  const groupId = group?.id;
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [tags, setTags] = useState<CustomerTag[]>([]);
   const [search, setSearch] = useState('');
@@ -42,7 +43,9 @@ export function CustomerCRMPanel() {
   const [newCustomer, setNewCustomer] = useState({ name: '', email: '', phone: '', notes: '' });
 
   useEffect(() => {
-    fetchData();
+    if (groupId) {
+      fetchData();
+    }
   }, [groupId]);
 
   const fetchData = async () => {
@@ -50,26 +53,30 @@ export function CustomerCRMPanel() {
 
     const [customersRes, tagsRes] = await Promise.all([
       supabase
-        .from('customer_profiles')
+        .from('customer_profiles' as any)
         .select('*')
         .eq('group_id', groupId)
         .order('total_visits', { ascending: false }),
       supabase
-        .from('customer_tags')
+        .from('customer_tags' as any)
         .select('*')
         .eq('group_id', groupId)
     ]);
 
+    const customersData = (customersRes.data as unknown as CustomerProfile[]) || [];
+    const tagsData = (tagsRes.data as unknown as CustomerTag[]) || [];
+
     // Fetch tags for each customer
     const customersWithTags = await Promise.all(
-      (customersRes.data || []).map(async (customer) => {
+      customersData.map(async (customer) => {
         const { data: profileTags } = await supabase
-          .from('customer_profile_tags')
+          .from('customer_profile_tags' as any)
           .select('tag_id')
           .eq('customer_profile_id', customer.id);
         
-        const customerTags = (profileTags || [])
-          .map(pt => (tagsRes.data || []).find(t => t.id === pt.tag_id))
+        const tagData = (profileTags as unknown as { tag_id: string }[]) || [];
+        const customerTags = tagData
+          .map(pt => tagsData.find(t => t.id === pt.tag_id))
           .filter(Boolean) as CustomerTag[];
 
         return { ...customer, tags: customerTags };
@@ -77,7 +84,7 @@ export function CustomerCRMPanel() {
     );
 
     setCustomers(customersWithTags);
-    setTags((tagsRes.data || []) as CustomerTag[]);
+    setTags(tagsData);
     setLoading(false);
   };
 
@@ -85,7 +92,7 @@ export function CustomerCRMPanel() {
     if (!groupId || !newCustomer.name) return;
 
     try {
-      const { error } = await supabase.from('customer_profiles').insert({
+      const { error } = await supabase.from('customer_profiles' as any).insert({
         group_id: groupId,
         name: newCustomer.name,
         email: newCustomer.email || null,
@@ -109,13 +116,13 @@ export function CustomerCRMPanel() {
     try {
       if (hasTag) {
         await supabase
-          .from('customer_profile_tags')
+          .from('customer_profile_tags' as any)
           .delete()
           .eq('customer_profile_id', customerId)
           .eq('tag_id', tagId);
       } else {
         await supabase
-          .from('customer_profile_tags')
+          .from('customer_profile_tags' as any)
           .insert({ customer_profile_id: customerId, tag_id: tagId });
       }
       fetchData();
