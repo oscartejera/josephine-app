@@ -19,28 +19,44 @@ const DEMO_USERS = [
 ];
 
 // Retry helper for transient database errors
+function getErrMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'object' && err && 'message' in err) return String((err as any).message);
+  return String(err);
+}
+
 async function withRetry<T>(
   fn: () => Promise<T>,
-  maxRetries = 3,
-  delayMs = 1000
+  maxRetries = 10,
+  baseDelayMs = 1500
 ): Promise<T> {
-  let lastError: Error | null = null;
+  let lastError: unknown = null;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
     } catch (err) {
-      lastError = err as Error;
-      const message = lastError.message || '';
+      lastError = err;
+      const message = getErrMessage(err);
       // Retry on schema cache errors
       if (message.includes('schema cache') || message.includes('Retrying')) {
-        console.log(`Retry attempt ${attempt + 1}/${maxRetries} after schema cache error`);
-        await new Promise(resolve => setTimeout(resolve, delayMs * (attempt + 1)));
+        const delay = baseDelayMs * Math.max(1, attempt + 1);
+        console.log(`Retry attempt ${attempt + 1}/${maxRetries} after schema cache error (waiting ${delay}ms)`);
+        await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
       throw err;
     }
   }
   throw lastError;
+}
+
+// Use loose typing here because esm.sh Supabase client generics don't match Deno's TS checker well
+async function ensureSchemaReady(supabaseAdmin: any) {
+  await withRetry(async () => {
+    const { error } = await supabaseAdmin.from('groups').select('id').limit(1);
+    if (error) throw error;
+    return true;
+  });
 }
 
 Deno.serve(async (req) => {
@@ -63,6 +79,9 @@ Deno.serve(async (req) => {
     );
 
     const results: { step: string; status: string; details?: unknown }[] = [];
+
+    // Ensure database schema cache is ready (after migrations it can take a bit)
+    await ensureSchemaReady(supabaseAdmin);
 
     // 1. Get or create demo group (with retry for schema cache issues)
     let groupId: string;
@@ -709,7 +728,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: getErrMessage(error)
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
