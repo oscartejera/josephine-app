@@ -103,12 +103,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [locations, isOwner, hasGlobalScope, accessibleLocationIds]);
 
   useEffect(() => {
+    // In demo mode we want the app to be usable even if the user profile/RBAC calls are temporarily failing.
+    // So we fall back to loading the "Demo Group" by name.
+    if (DEMO_MODE) {
+      fetchDemoGroupAndLocations();
+      return;
+    }
+
     if (profile?.group_id) {
       fetchGroupAndLocations(profile.group_id);
     } else {
       setLoading(false);
     }
   }, [profile?.group_id]);
+
+  const fetchDemoGroupAndLocations = async () => {
+    setLoading(true);
+    try {
+      const demoGroupRes = await withRetry(async () => {
+        const res = await supabase
+          .from('groups')
+          .select('id, name')
+          .eq('name', 'Demo Group')
+          .maybeSingle();
+        if ((res as any).error) throw (res as any).error;
+        return res;
+      });
+
+      if (!demoGroupRes.data?.id) {
+        console.warn('[AppContext] Demo Group not found');
+        return;
+      }
+
+      await fetchGroupAndLocations(demoGroupRes.data.id);
+    } catch (e) {
+      console.warn('[AppContext] fetchDemoGroupAndLocations failed', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Set default location when accessible locations change
   useEffect(() => {
