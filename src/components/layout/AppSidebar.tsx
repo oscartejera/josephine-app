@@ -16,6 +16,7 @@ import {
   BarChart3,
   Star,
   CalendarDays,
+  CalendarCheck,
   Clock,
   LineChart,
   Wallet,
@@ -50,10 +51,11 @@ const insightsChildren = [
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', key: 'dashboard' as const },
   { icon: Monitor, label: 'POS', path: '/pos', key: 'dashboard' as const, highlight: true },
-  { icon: CalendarDays, label: 'Scheduling', path: '/scheduling', key: 'scheduling' as const },
-  { icon: Clock, label: 'Availability', path: '/availability', key: 'availability' as const },
-  { icon: ShoppingCart, label: 'Procurement', path: '/procurement', key: 'procurement' as const },
-  { icon: Calculator, label: 'Payroll', path: '/payroll', key: 'payroll' as const },
+  { icon: CalendarCheck, label: 'Reservas', path: '/reservations', key: 'scheduling' as const },
+  { icon: CalendarDays, label: 'Turnos', path: '/scheduling', key: 'scheduling' as const },
+  { icon: Clock, label: 'Disponibilidad', path: '/availability', key: 'availability' as const },
+  { icon: ShoppingCart, label: 'Compras', path: '/procurement', key: 'procurement' as const },
+  { icon: Calculator, label: 'Nóminas', path: '/payroll', key: 'payroll' as const },
 ];
 
 const roleLabels: Record<string, string> = {
