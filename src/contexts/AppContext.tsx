@@ -70,9 +70,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [locations, isOwner, hasGlobalScope, accessibleLocationIds]);
 
   useEffect(() => {
+    console.log('[AppContext] profile changed:', profile?.id, 'group_id:', profile?.group_id);
     if (profile?.group_id) {
       fetchGroupAndLocations(profile.group_id);
     } else {
+      console.log('[AppContext] No group_id, setting loading false');
       setLoading(false);
     }
   }, [profile?.group_id]);
@@ -90,6 +92,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [accessibleLocations, selectedLocationId, canShowAllLocations]);
 
   const fetchGroupAndLocations = async (groupId: string) => {
+    console.log('[AppContext] fetchGroupAndLocations called with:', groupId);
     setLoading(true);
     try {
       const [groupResult, locationsResult] = await Promise.all([
@@ -97,14 +100,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         supabase.from('locations').select('id, name, city').eq('group_id', groupId).eq('active', true)
       ]);
 
+      console.log('[AppContext] groupResult:', groupResult.data, groupResult.error);
+      console.log('[AppContext] locationsResult:', locationsResult.data, locationsResult.error);
+
       if (groupResult.data) {
         setGroup(groupResult.data);
       }
       if (locationsResult.data) {
         setLocations(locationsResult.data);
       }
-    } catch {
-      // Silently handle errors - empty state is acceptable
+    } catch (err) {
+      console.error('[AppContext] Error fetching group/locations:', err);
     } finally {
       setLoading(false);
     }
