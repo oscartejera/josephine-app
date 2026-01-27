@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ interface CustomerProfile {
   total_visits: number;
   total_spent: number;
   last_visit_at: string | null;
-  tags?: CustomerTag[];
+  tags?: { id: string; name: string; color: string }[];
 }
 
 interface CustomerTag {
@@ -30,40 +31,8 @@ interface CustomerTag {
   description: string | null;
 }
 
-// Direct fetch helper to bypass type issues with new tables
-async function fetchFromTable<T>(table: string, query: Record<string, unknown>): Promise<T[]> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
-  let url = `${supabaseUrl}/rest/v1/${table}?`;
-  const params = new URLSearchParams();
-  
-  Object.entries(query).forEach(([key, value]) => {
-    if (key === 'eq') {
-      Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
-        params.append(k, `eq.${v}`);
-      });
-    } else if (key === 'order') {
-      params.append('order', value as string);
-    }
-  });
-  
-  url += params.toString();
-  
-  const response = await fetch(url, {
-    headers: {
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`,
-    },
-  });
-  
-  if (!response.ok) return [];
-  return response.json();
-}
-
 export function CustomerCRMPanel() {
-  const { group } = useApp();
-  const groupId = group?.id;
+  const { groupId } = useApp();
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [tags, setTags] = useState<CustomerTag[]>([]);
   const [search, setSearch] = useState('');
@@ -73,75 +42,58 @@ export function CustomerCRMPanel() {
   const [newCustomer, setNewCustomer] = useState({ name: '', email: '', phone: '', notes: '' });
 
   useEffect(() => {
-    if (groupId) {
-      fetchData();
-    } else {
-      setLoading(false);
-    }
+    fetchData();
   }, [groupId]);
 
   const fetchData = async () => {
     if (!groupId) return;
 
-    try {
-      const [customersData, tagsData] = await Promise.all([
-        fetchFromTable<CustomerProfile>('customer_profiles', { 
-          eq: { group_id: groupId },
-          order: 'total_visits.desc'
-        }),
-        fetchFromTable<CustomerTag>('customer_tags', { 
-          eq: { group_id: groupId }
-        }),
-      ]);
+    const [customersRes, tagsRes] = await Promise.all([
+      supabase
+        .from('customer_profiles')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('total_visits', { ascending: false }),
+      supabase
+        .from('customer_tags')
+        .select('*')
+        .eq('group_id', groupId)
+    ]);
 
-      // Fetch tags for each customer
-      const profileTagsData = await fetchFromTable<{ customer_profile_id: string; tag_id: string }>(
-        'customer_profile_tags',
-        {}
-      );
+    // Fetch tags for each customer
+    const customersWithTags = await Promise.all(
+      (customersRes.data || []).map(async (customer) => {
+        const { data: profileTags } = await supabase
+          .from('customer_profile_tags')
+          .select('tag_id')
+          .eq('customer_profile_id', customer.id);
+        
+        const customerTags = (profileTags || [])
+          .map(pt => (tagsRes.data || []).find(t => t.id === pt.tag_id))
+          .filter(Boolean) as CustomerTag[];
 
-      const customersWithTags = customersData.map(customer => {
-        const customerTagIds = profileTagsData
-          .filter(pt => pt.customer_profile_id === customer.id)
-          .map(pt => pt.tag_id);
-        const customerTags = tagsData.filter(t => customerTagIds.includes(t.id));
         return { ...customer, tags: customerTags };
-      });
+      })
+    );
 
-      setCustomers(customersWithTags);
-      setTags(tagsData);
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-    } finally {
-      setLoading(false);
-    }
+    setCustomers(customersWithTags);
+    setTags((tagsRes.data || []) as CustomerTag[]);
+    setLoading(false);
   };
 
   const createCustomer = async () => {
     if (!groupId || !newCustomer.name) return;
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      
-      const response = await fetch(`${supabaseUrl}/rest/v1/customer_profiles`, {
-        method: 'POST',
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal',
-        },
-        body: JSON.stringify({
-          group_id: groupId,
-          name: newCustomer.name,
-          email: newCustomer.email || null,
-          phone: newCustomer.phone || null,
-          notes: newCustomer.notes || null,
-        }),
+      const { error } = await supabase.from('customer_profiles').insert({
+        group_id: groupId,
+        name: newCustomer.name,
+        email: newCustomer.email || null,
+        phone: newCustomer.phone || null,
+        notes: newCustomer.notes || null,
       });
 
-      if (!response.ok) throw new Error('Failed to create customer');
+      if (error) throw error;
 
       toast.success('Cliente creado correctamente');
       setShowCreateDialog(false);
@@ -155,28 +107,16 @@ export function CustomerCRMPanel() {
 
   const toggleTag = async (customerId: string, tagId: string, hasTag: boolean) => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      
       if (hasTag) {
-        await fetch(`${supabaseUrl}/rest/v1/customer_profile_tags?customer_profile_id=eq.${customerId}&tag_id=eq.${tagId}`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-          },
-        });
+        await supabase
+          .from('customer_profile_tags')
+          .delete()
+          .eq('customer_profile_id', customerId)
+          .eq('tag_id', tagId);
       } else {
-        await fetch(`${supabaseUrl}/rest/v1/customer_profile_tags`, {
-          method: 'POST',
-          headers: {
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal',
-          },
-          body: JSON.stringify({ customer_profile_id: customerId, tag_id: tagId }),
-        });
+        await supabase
+          .from('customer_profile_tags')
+          .insert({ customer_profile_id: customerId, tag_id: tagId });
       }
       fetchData();
     } catch (error) {
@@ -189,16 +129,6 @@ export function CustomerCRMPanel() {
     c.email?.toLowerCase().includes(search.toLowerCase()) ||
     c.phone?.includes(search)
   );
-
-  if (!groupId) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          No hay grupo configurado
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -258,7 +188,7 @@ export function CustomerCRMPanel() {
                       </div>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Euro className="h-3 w-3" />
-                        {(customer.total_spent || 0).toFixed(2)}
+                        {customer.total_spent.toFixed(2)}
                       </div>
                     </div>
                   </div>
@@ -279,7 +209,7 @@ export function CustomerCRMPanel() {
                 </div>
               ))}
 
-              {filteredCustomers.length === 0 && !loading && (
+              {filteredCustomers.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   {search ? 'No se encontraron clientes' : 'No hay clientes registrados'}
                 </div>

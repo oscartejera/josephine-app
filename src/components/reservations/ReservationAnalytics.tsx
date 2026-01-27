@@ -3,7 +3,8 @@ import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date
 import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, TrendingUp, XCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Users, TrendingUp, Clock, XCircle, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 interface ReservationAnalyticsProps {
@@ -29,23 +30,24 @@ export function ReservationAnalytics({ locationId }: ReservationAnalyticsProps) 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (locationId && locationId !== 'all') {
-      fetchAnalytics();
-    }
+    fetchAnalytics();
   }, [locationId]);
 
   const fetchAnalytics = async () => {
-    if (!locationId || locationId === 'all') return;
+    if (!locationId) return;
 
     const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
 
-    const { data } = await supabase
+    const { data: reservations } = await supabase
       .from('reservations')
-      .select('id, party_size, reservation_date, reservation_time, status')
+      .select('*')
       .eq('location_id', locationId)
       .gte('reservation_date', thirtyDaysAgo);
 
-    const reservations = data || [];
+    if (!reservations) {
+      setLoading(false);
+      return;
+    }
 
     // Calculate stats
     const total = reservations.length;
@@ -53,10 +55,14 @@ export function ReservationAnalytics({ locationId }: ReservationAnalyticsProps) 
     const noShows = reservations.filter(r => r.status === 'no_show').length;
     const avgParty = total > 0 ? covers / total : 0;
 
-    // By source - default to manual since column may not be in types
-    const sourceCount: Record<string, number> = { 'Manual': total };
+    // By source
+    const sourceCount: Record<string, number> = {};
+    reservations.forEach(r => {
+      const src = r.source || 'manual';
+      sourceCount[src] = (sourceCount[src] || 0) + 1;
+    });
     const bySource = Object.entries(sourceCount).map(([name, value]) => ({
-      name,
+      name: getSourceLabel(name),
       value,
     }));
 
@@ -96,17 +102,18 @@ export function ReservationAnalytics({ locationId }: ReservationAnalyticsProps) 
     setLoading(false);
   };
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+  const getSourceLabel = (source: string) => {
+    switch (source) {
+      case 'manual': return 'Manual';
+      case 'phone': return 'Teléfono';
+      case 'widget': return 'Web';
+      case 'walk_in': return 'De paso';
+      case 'google': return 'Google';
+      default: return source;
+    }
+  };
 
-  if (!locationId || locationId === 'all') {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          Selecciona un local específico para ver la analítica
-        </CardContent>
-      </Card>
-    );
-  }
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   return (
     <div className="space-y-6">
@@ -129,8 +136,8 @@ export function ReservationAnalytics({ locationId }: ReservationAnalyticsProps) 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-chart-2/10">
-                <Users className="h-5 w-5 text-chart-2" />
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <Users className="h-5 w-5 text-emerald-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalCovers}</p>
@@ -143,8 +150,8 @@ export function ReservationAnalytics({ locationId }: ReservationAnalyticsProps) 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-chart-3/10">
-                <TrendingUp className="h-5 w-5 text-chart-3" />
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <TrendingUp className="h-5 w-5 text-amber-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.avgPartySize.toFixed(1)}</p>

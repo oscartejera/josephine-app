@@ -26,7 +26,7 @@ export function CreateReservationDialog({
   defaultDate,
   onSuccess,
 }: CreateReservationDialogProps) {
-  const { group } = useApp();
+  const { groupId } = useApp();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     guest_name: '',
@@ -58,6 +58,7 @@ export function CreateReservationDialog({
     try {
       const { error } = await supabase.from('reservations').insert({
         location_id: locationId,
+        group_id: groupId,
         guest_name: formData.guest_name,
         guest_phone: formData.guest_phone || null,
         guest_email: formData.guest_email || null,
@@ -65,7 +66,10 @@ export function CreateReservationDialog({
         reservation_date: formData.reservation_date,
         reservation_time: formData.reservation_time,
         duration_minutes: formData.duration_minutes,
+        source: formData.source,
         special_requests: formData.special_requests || null,
+        deposit_required: formData.require_deposit,
+        deposit_amount: formData.require_deposit ? formData.deposit_amount : null,
         status: 'confirmed',
       });
 

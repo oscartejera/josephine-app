@@ -22,8 +22,7 @@ import {
   Wallet,
   PiggyBank,
   Monitor,
-  Receipt,
-  BookOpen
+  Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,7 +52,6 @@ const insightsChildren = [
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', key: 'dashboard' as const },
   { icon: Monitor, label: 'POS', path: '/pos', key: 'dashboard' as const, highlight: true },
-  { icon: BookOpen, label: 'Reservas', path: '/reservations', key: 'dashboard' as const },
   { icon: CalendarDays, label: 'Scheduling', path: '/scheduling', key: 'scheduling' as const },
   { icon: Clock, label: 'Availability', path: '/availability', key: 'availability' as const },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement', key: 'procurement' as const },
