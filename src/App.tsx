@@ -30,7 +30,6 @@ import ProcurementOrders from "@/pages/ProcurementOrders";
 import MenuEngineering from "@/pages/MenuEngineering";
 import CashManagement from "@/pages/CashManagement";
 import Budgets from "@/pages/Budgets";
-import Integrations from "@/pages/Integrations";
 import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
 import POS from "@/pages/POS";
@@ -130,7 +129,6 @@ function AppRoutes() {
         
         <Route path="/scheduling" element={<Scheduling />} />
         <Route path="/availability" element={<Availability />} />
-        <Route path="/integrations" element={<Integrations />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/:step" element={<Payroll />} />
         <Route path="/settings" element={<SettingsPage />} />

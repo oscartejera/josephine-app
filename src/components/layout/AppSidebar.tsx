@@ -8,7 +8,6 @@ import {
   Trash2,
   ShoppingCart,
   ChefHat,
-  Plug,
   Settings,
   LogOut,
   ChevronLeft,
@@ -54,7 +53,6 @@ const navItems = [
   { icon: CalendarDays, label: 'Scheduling', path: '/scheduling', key: 'scheduling' as const },
   { icon: Clock, label: 'Availability', path: '/availability', key: 'availability' as const },
   { icon: ShoppingCart, label: 'Procurement', path: '/procurement', key: 'procurement' as const },
-  { icon: Plug, label: 'Integrations', path: '/integrations', key: 'integrations' as const },
   { icon: Calculator, label: 'Payroll', path: '/payroll', key: 'payroll' as const },
 ];
 
