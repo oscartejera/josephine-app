@@ -43,6 +43,7 @@ import StaffClock from "@/pages/StaffClock";
 import StaffKDS from "@/pages/StaffKDS";
 import { StaffLayout } from "@/components/staff/StaffLayout";
 import BookingWidget from "@/pages/BookingWidget";
+import Reservations from "@/pages/Reservations";
 
 const queryClient = new QueryClient();
 
@@ -129,6 +130,7 @@ function AppRoutes() {
         
         <Route path="/scheduling" element={<Scheduling />} />
         <Route path="/availability" element={<Availability />} />
+        <Route path="/reservations" element={<Reservations />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/:step" element={<Payroll />} />
         <Route path="/settings" element={<SettingsPage />} />
