@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Settings, CreditCard, Bell, Calendar, Users, Globe } from 'lucide-react';
+import { CreditCard, Bell, Calendar, Users, Globe } from 'lucide-react';
 
 interface ReservationSettings {
   max_covers_per_slot: number;
@@ -37,67 +36,102 @@ interface ReservationSettingsPanelProps {
   locationId: string | null;
 }
 
+const defaultSettings: ReservationSettings = {
+  max_covers_per_slot: 50,
+  slot_duration_minutes: 15,
+  default_reservation_duration: 90,
+  require_deposit: false,
+  deposit_amount_per_person: 10,
+  deposit_policy_text: null,
+  enable_table_doubling: true,
+  turn_buffer_minutes: 15,
+  max_turns_per_table: 3,
+  auto_confirm: true,
+  send_confirmation_email: true,
+  send_confirmation_sms: false,
+  confirmation_message: null,
+  send_reminder: true,
+  reminder_hours_before: 24,
+  reminder_message: null,
+  cancellation_deadline_hours: 24,
+  cancellation_policy_text: null,
+  google_reserve_enabled: false,
+  google_place_id: null,
+};
+
+// Direct fetch helper
+async function fetchSettings(locationId: string): Promise<ReservationSettings | null> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/reservation_settings?location_id=eq.${locationId}&limit=1`,
+    {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+    }
+  );
+  
+  if (!response.ok) return null;
+  const data = await response.json();
+  return data[0] || null;
+}
+
+async function upsertSettings(locationId: string, settings: ReservationSettings): Promise<boolean> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const response = await fetch(`${supabaseUrl}/rest/v1/reservation_settings`, {
+    method: 'POST',
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates',
+    },
+    body: JSON.stringify({ location_id: locationId, ...settings }),
+  });
+  
+  return response.ok;
+}
+
 export function ReservationSettingsPanel({ locationId }: ReservationSettingsPanelProps) {
-  const [settings, setSettings] = useState<ReservationSettings | null>(null);
+  const [settings, setSettings] = useState<ReservationSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchSettings();
+    if (locationId && locationId !== 'all') {
+      loadSettings();
+    } else {
+      setLoading(false);
+    }
   }, [locationId]);
 
-  const fetchSettings = async () => {
-    if (!locationId) return;
+  const loadSettings = async () => {
+    if (!locationId || locationId === 'all') return;
 
-    const { data, error } = await supabase
-      .from('reservation_settings')
-      .select('*')
-      .eq('location_id', locationId)
-      .single();
-
-    if (data) {
-      setSettings(data as ReservationSettings);
-    } else {
-      // Create default settings
-      setSettings({
-        max_covers_per_slot: 50,
-        slot_duration_minutes: 15,
-        default_reservation_duration: 90,
-        require_deposit: false,
-        deposit_amount_per_person: 10,
-        deposit_policy_text: null,
-        enable_table_doubling: true,
-        turn_buffer_minutes: 15,
-        max_turns_per_table: 3,
-        auto_confirm: true,
-        send_confirmation_email: true,
-        send_confirmation_sms: false,
-        confirmation_message: null,
-        send_reminder: true,
-        reminder_hours_before: 24,
-        reminder_message: null,
-        cancellation_deadline_hours: 24,
-        cancellation_policy_text: null,
-        google_reserve_enabled: false,
-        google_place_id: null,
-      });
+    try {
+      const data = await fetchSettings(locationId);
+      if (data) {
+        setSettings(data);
+      }
+    } catch (error) {
+      console.log('Using default settings');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const saveSettings = async () => {
-    if (!locationId || !settings) return;
+    if (!locationId || locationId === 'all') return;
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('reservation_settings')
-        .upsert({
-          location_id: locationId,
-          ...settings,
-        });
-
-      if (error) throw error;
+      const success = await upsertSettings(locationId, settings);
+      if (!success) throw new Error('Failed to save');
       toast.success('Configuración guardada');
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -107,7 +141,17 @@ export function ReservationSettingsPanel({ locationId }: ReservationSettingsPane
     }
   };
 
-  if (loading || !settings) {
+  if (!locationId || locationId === 'all') {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Selecciona un local específico para configurar las reservas
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (loading) {
     return <div className="text-center py-8">Cargando...</div>;
   }
 
