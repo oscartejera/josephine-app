@@ -60,12 +60,6 @@ export const PERMISSIONS = {
   MENU_ENGINEERING_VIEW: 'menu_engineering.view',
   MENU_ENGINEERING_EDIT: 'menu_engineering.edit',
   
-  // Integrations
-  INTEGRATIONS_VIEW: 'integrations.view',
-  INTEGRATIONS_CONNECT: 'integrations.connect',
-  INTEGRATIONS_DISCONNECT: 'integrations.disconnect',
-  INTEGRATIONS_HEALTH_VIEW: 'integrations.health.view',
-  
   // Payroll
   PAYROLL_VIEW: 'payroll.view',
   PAYROLL_EXPORT: 'payroll.export',
@@ -100,7 +94,6 @@ export const SIDEBAR_PERMISSIONS = {
   waste: [PERMISSIONS.WASTE_VIEW],
   procurement: [PERMISSIONS.PROCUREMENT_VIEW],
   menu_engineering: [PERMISSIONS.MENU_ENGINEERING_VIEW],
-  integrations: [PERMISSIONS.INTEGRATIONS_VIEW],
   payroll: [PERMISSIONS.PAYROLL_VIEW],
   settings: [PERMISSIONS.SETTINGS_VIEW],
 } as const;
