@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Clock, Users, Phone, Mail, Calendar, ArrowRight } from 'lucide-react';
+import { Plus, Clock, Users, Phone, Calendar, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface WaitlistEntry {
@@ -31,6 +30,25 @@ interface WaitlistPanelProps {
   locationId: string | null;
 }
 
+// Direct fetch helper to bypass type issues with new tables
+async function fetchWaitlistEntries(locationId: string): Promise<WaitlistEntry[]> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/reservation_waitlist?location_id=eq.${locationId}&status=eq.waiting&order=preferred_date,created_at`,
+    {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+    }
+  );
+  
+  if (!response.ok) return [];
+  return response.json();
+}
+
 export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,41 +65,55 @@ export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
   });
 
   useEffect(() => {
-    fetchWaitlist();
+    if (locationId && locationId !== 'all') {
+      fetchWaitlist();
+    } else {
+      setLoading(false);
+    }
   }, [locationId]);
 
   const fetchWaitlist = async () => {
-    if (!locationId) return;
+    if (!locationId || locationId === 'all') return;
 
-    const { data } = await supabase
-      .from('reservation_waitlist')
-      .select('*')
-      .eq('location_id', locationId)
-      .eq('status', 'waiting')
-      .order('preferred_date')
-      .order('created_at');
-
-    setEntries((data || []) as WaitlistEntry[]);
-    setLoading(false);
+    try {
+      const data = await fetchWaitlistEntries(locationId);
+      setEntries(data);
+    } catch (error) {
+      console.error('Error fetching waitlist:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addToWaitlist = async () => {
-    if (!locationId || !newEntry.guest_name) return;
+    if (!locationId || locationId === 'all' || !newEntry.guest_name) return;
 
     try {
-      const { error } = await supabase.from('reservation_waitlist').insert({
-        location_id: locationId,
-        guest_name: newEntry.guest_name,
-        guest_phone: newEntry.guest_phone || null,
-        guest_email: newEntry.guest_email || null,
-        party_size: newEntry.party_size,
-        preferred_date: newEntry.preferred_date,
-        preferred_time_start: newEntry.preferred_time_start,
-        preferred_time_end: newEntry.preferred_time_end,
-        notes: newEntry.notes || null,
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      const response = await fetch(`${supabaseUrl}/rest/v1/reservation_waitlist`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
+          location_id: locationId,
+          guest_name: newEntry.guest_name,
+          guest_phone: newEntry.guest_phone || null,
+          guest_email: newEntry.guest_email || null,
+          party_size: newEntry.party_size,
+          preferred_date: newEntry.preferred_date,
+          preferred_time_start: newEntry.preferred_time_start,
+          preferred_time_end: newEntry.preferred_time_end,
+          notes: newEntry.notes || null,
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to add to waitlist');
 
       toast.success('Añadido a lista de espera');
       setShowAddDialog(false);
@@ -103,18 +135,26 @@ export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
   };
 
   const convertToReservation = async (entry: WaitlistEntry) => {
-    // This would open the create reservation dialog pre-filled
     toast.info('Funcionalidad en desarrollo: convertir a reserva');
   };
 
   const removeFromWaitlist = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('reservation_waitlist')
-        .update({ status: 'expired' })
-        .eq('id', id);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      const response = await fetch(`${supabaseUrl}/rest/v1/reservation_waitlist?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ status: 'expired' }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to remove');
       toast.success('Eliminado de la lista');
       fetchWaitlist();
     } catch (error) {
@@ -131,6 +171,16 @@ export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
     }
   };
 
+  if (!locationId || locationId === 'all') {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Selecciona un local específico para ver la lista de espera
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -146,7 +196,7 @@ export function WaitlistPanel({ locationId }: WaitlistPanelProps) {
       <CardContent>
         <ScrollArea className="h-[500px]">
           <div className="space-y-3">
-            {entries.length === 0 ? (
+            {entries.length === 0 && !loading ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Clock className="h-12 w-12 mx-auto mb-4 opacity-30" />
                 <p>No hay clientes en lista de espera</p>

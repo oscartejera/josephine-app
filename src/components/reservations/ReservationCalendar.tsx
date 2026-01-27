@@ -18,8 +18,8 @@ interface Reservation {
   reservation_date: string;
   reservation_time: string;
   status: string;
-  source: string;
-  deposit_paid: boolean;
+  source: string | null;
+  deposit_paid: boolean | null;
   guest_phone: string | null;
   guest_email: string | null;
   special_requests: string | null;
@@ -38,7 +38,7 @@ export function ReservationCalendar({ locationId }: ReservationCalendarProps) {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
   const fetchReservations = useCallback(async () => {
-    if (!locationId) return;
+    if (!locationId || locationId === 'all') return;
 
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
@@ -51,7 +51,14 @@ export function ReservationCalendar({ locationId }: ReservationCalendarProps) {
       .lte('reservation_date', format(end, 'yyyy-MM-dd'))
       .order('reservation_time');
 
-    setReservations((data || []) as Reservation[]);
+    // Map data with defaults for new columns
+    const mapped = (data || []).map(r => ({
+      ...r,
+      source: (r as Record<string, unknown>).source as string | null ?? 'manual',
+      deposit_paid: (r as Record<string, unknown>).deposit_paid as boolean | null ?? false,
+    })) as Reservation[];
+
+    setReservations(mapped);
     setLoading(false);
   }, [locationId, currentMonth]);
 
@@ -71,7 +78,7 @@ export function ReservationCalendar({ locationId }: ReservationCalendarProps) {
 
   const selectedDayReservations = getReservationsForDay(selectedDate);
 
-  const getSourceIcon = (source: string) => {
+  const getSourceIcon = (source: string | null) => {
     switch (source) {
       case 'phone': return <Phone className="h-3 w-3" />;
       case 'widget': return <Globe className="h-3 w-3" />;
@@ -91,6 +98,16 @@ export function ReservationCalendar({ locationId }: ReservationCalendarProps) {
       default: return 'bg-muted';
     }
   };
+
+  if (!locationId || locationId === 'all') {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Selecciona un local específico para ver las reservas
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

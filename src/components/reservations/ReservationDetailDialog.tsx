@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Phone, Mail, Users, Calendar, Clock, CreditCard, MessageSquare, UserCheck, X, Edit } from 'lucide-react';
+import { Phone, Mail, Users, Calendar, Clock, CreditCard, MessageSquare, UserCheck, X } from 'lucide-react';
 
 interface ReservationDetailDialogProps {
   reservation: {
@@ -17,8 +17,8 @@ interface ReservationDetailDialogProps {
     reservation_date: string;
     reservation_time: string;
     status: string;
-    source: string;
-    deposit_paid: boolean;
+    source: string | null;
+    deposit_paid: boolean | null;
     guest_phone: string | null;
     guest_email: string | null;
     special_requests: string | null;
@@ -81,14 +81,14 @@ export function ReservationDetailDialog({
     }
   };
 
-  const getSourceLabel = (source: string) => {
+  const getSourceLabel = (source: string | null) => {
     switch (source) {
       case 'manual': return 'Manual';
       case 'phone': return 'Teléfono';
       case 'widget': return 'Web';
       case 'walk_in': return 'De paso';
       case 'google': return 'Google';
-      default: return source;
+      default: return 'Manual';
     }
   };
 
