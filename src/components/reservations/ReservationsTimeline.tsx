@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Clock, Users, Phone, Mail, MoreHorizontal, CheckCircle, XCircle, UserCheck } from 'lucide-react';
+import { Clock, Users, Phone, Mail, MoreHorizontal, CheckCircle, XCircle, UserCheck, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -132,11 +132,22 @@ export function ReservationsTimeline({
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-medium truncate">{res.guest_name}</span>
                                     <Badge variant="outline" className={cn('text-xs', status.color)}>
                                       {status.label}
                                     </Badge>
+                                    {res.reconfirmation_required && !res.reconfirmed_at && (
+                                      <Badge variant="destructive" className="text-xs gap-1">
+                                        <AlertCircle className="h-3 w-3" />
+                                        Reconfirmar
+                                      </Badge>
+                                    )}
+                                    {res.reconfirmed_at && (
+                                      <Badge variant="secondary" className="text-xs text-green-600">
+                                        ✓ Reconfirmada
+                                      </Badge>
+                                    )}
                                   </div>
 
                                   <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
