@@ -608,7 +608,7 @@ class InMemoryServicesRepository implements ServicesRepository {
 }
 
 // Implementaciones simplificadas para los demás repositorios
-class SimpleInMemoryRepository<T extends { id: string; created_at: string }> {
+class SimpleInMemoryRepository<T extends { id: string }> {
   protected store = new InMemoryStore<T>();
 
   async findById(id: string) {
@@ -623,7 +623,6 @@ class SimpleInMemoryRepository<T extends { id: string; created_at: string }> {
     const item = {
       ...data,
       id: generateId(),
-      created_at: now(),
     } as T;
     return this.store.create(item);
   }
