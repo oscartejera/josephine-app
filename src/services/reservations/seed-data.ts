@@ -467,8 +467,135 @@ export const demoClosureDays: ClosureDay[] = [
   },
 ];
 
-// ============= Sample Reservations (para hoy) =============
+// ============= Sample Reservations (para el mes) =============
+export function generateMonthReservations(locationId: string): Reservation[] {
+  const reservations: Reservation[] = [];
+  const startDate = new Date();
+  
+  // Generar reservas para los próximos 30 días
+  for (let day = 0; day < 30; day++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + day);
+    const dateStr = date.toISOString().split('T')[0];
+    
+    // Reservas de almuerzo (variando cantidad por día)
+    const lunchCount = 2 + Math.floor(Math.random() * 3); // 2-4 reservas
+    for (let i = 0; i < lunchCount; i++) {
+      const hour = 13 + Math.floor(Math.random() * 2); // 13:00-14:30
+      const minute = Math.random() > 0.5 ? '00' : '30';
+      const time = `${hour}:${minute}`;
+      
+      reservations.push({
+        id: `res-${dateStr}-lunch-${i}`,
+        location_id: locationId,
+        pos_table_id: null,
+        guest_name: getRandomName(),
+        guest_phone: getRandomPhone(),
+        guest_email: Math.random() > 0.3 ? getRandomEmail() : null,
+        party_size: 2 + Math.floor(Math.random() * 4), // 2-5 personas
+        reservation_date: dateStr,
+        reservation_time: time,
+        duration_minutes: 90,
+        status: getRandomStatus(day),
+        confirmation_sent_at: Math.random() > 0.2 ? new Date(date.getTime() - 3600000).toISOString() : null,
+        reconfirmation_required: false,
+        reconfirmed_at: null,
+        notes: null,
+        special_requests: null,
+        created_at: new Date(date.getTime() - 86400000).toISOString(),
+        updated_at: new Date(date.getTime() - 3600000).toISOString(),
+        customer_profile_id: Math.random() > 0.5 ? `customer-${Math.floor(Math.random() * 4) + 1}` : null,
+        source: ['manual', 'online', 'google'][Math.floor(Math.random() * 3)] as any,
+        zone_id: ['zone-1', 'zone-2'][Math.floor(Math.random() * 2)],
+        service_id: 'service-lunch',
+        deposit_id: null,
+        promo_code_id: null,
+        auto_assigned: false,
+      });
+    }
+    
+    // Reservas de cena (más cantidad)
+    const dinnerCount = 3 + Math.floor(Math.random() * 4); // 3-6 reservas
+    for (let i = 0; i < dinnerCount; i++) {
+      const hour = 20 + Math.floor(Math.random() * 2); // 20:00-21:30
+      const minute = ['00', '15', '30', '45'][Math.floor(Math.random() * 4)];
+      const time = `${hour}:${minute}`;
+      
+      reservations.push({
+        id: `res-${dateStr}-dinner-${i}`,
+        location_id: locationId,
+        pos_table_id: null,
+        guest_name: getRandomName(),
+        guest_phone: getRandomPhone(),
+        guest_email: Math.random() > 0.3 ? getRandomEmail() : null,
+        party_size: 2 + Math.floor(Math.random() * 6), // 2-7 personas
+        reservation_date: dateStr,
+        reservation_time: time,
+        duration_minutes: 120,
+        status: getRandomStatus(day),
+        confirmation_sent_at: Math.random() > 0.2 ? new Date(date.getTime() - 3600000).toISOString() : null,
+        reconfirmation_required: Math.random() > 0.7,
+        reconfirmed_at: Math.random() > 0.8 ? new Date(date.getTime() - 1800000).toISOString() : null,
+        notes: null,
+        special_requests: Math.random() > 0.8 ? 'Mesa junto a ventana' : null,
+        created_at: new Date(date.getTime() - 172800000).toISOString(),
+        updated_at: new Date(date.getTime() - 3600000).toISOString(),
+        customer_profile_id: Math.random() > 0.5 ? `customer-${Math.floor(Math.random() * 4) + 1}` : null,
+        source: ['manual', 'online', 'google', 'walk_in'][Math.floor(Math.random() * 4)] as any,
+        zone_id: ['zone-1', 'zone-2', 'zone-3'][Math.floor(Math.random() * 3)],
+        service_id: 'service-dinner',
+        deposit_id: Math.random() > 0.7 ? `deposit-${Math.random()}` : null,
+        promo_code_id: Math.random() > 0.9 ? 'promo-1' : null,
+        auto_assigned: false,
+      });
+    }
+  }
+  
+  return reservations;
+}
+
+// Helper functions para datos aleatorios
+const nombres = ['María García', 'Carlos Martínez', 'Ana Rodríguez', 'Pedro Sánchez', 'Laura López', 'Javier Fernández', 'Carmen Ruiz', 'Miguel Díaz', 'Isabel Torres', 'Antonio Moreno'];
+const apellidos = ['López', 'García', 'Martínez', 'Sánchez', 'Rodríguez', 'Pérez', 'Fernández', 'González'];
+
+function getRandomName(): string {
+  return nombres[Math.floor(Math.random() * nombres.length)];
+}
+
+function getRandomPhone(): string {
+  return `+346${Math.floor(Math.random() * 90000000) + 10000000}`;
+}
+
+function getRandomEmail(): string {
+  const nombre = getRandomName().toLowerCase().replace(' ', '.');
+  return `${nombre}@example.com`;
+}
+
+function getRandomStatus(dayOffset: number): Reservation['status'] {
+  // Días pasados: completadas o no-shows
+  if (dayOffset < 0) {
+    return Math.random() > 0.1 ? 'completed' : 'no_show';
+  }
+  // Hoy: mix de estados
+  if (dayOffset === 0) {
+    const rand = Math.random();
+    if (rand > 0.8) return 'pending';
+    if (rand > 0.6) return 'seated';
+    return 'confirmed';
+  }
+  // Futuro: confirmadas o pendientes
+  return Math.random() > 0.3 ? 'confirmed' : 'pending';
+}
+
+// Legacy function para compatibilidad
 export function generateTodayReservations(locationId: string): Reservation[] {
+  const today = new Date().toISOString().split('T')[0];
+  const allReservations = generateMonthReservations(locationId);
+  return allReservations.filter(r => r.reservation_date === today);
+}
+
+// Función original para referencia (comentada)
+function _generateOriginalTodayReservations(locationId: string): Reservation[] {
   const today = new Date().toISOString().split('T')[0];
   
   return [
@@ -622,6 +749,6 @@ export function getAllSeedData(locationId: string) {
     messageTemplates: demoMessageTemplates.map(t => ({ ...t, location_id: locationId })),
     promoCodes: demoPromoCodes.map(p => p.location_id ? { ...p, location_id: locationId } : p),
     closureDays: demoClosureDays.map(c => ({ ...c, location_id: locationId })),
-    reservations: generateTodayReservations(locationId),
+    reservations: generateMonthReservations(locationId), // Generar para todo el mes
   };
 }

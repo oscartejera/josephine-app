@@ -32,6 +32,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Badge } from '@/components/ui/badge';
 
 const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
+const RESERVATIONS_EXPANDED_KEY = 'sidebar.reservations.expanded';
 
 // Insights children with permission keys
 const insightsChildren = [
@@ -46,11 +47,16 @@ const insightsChildren = [
   { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets', key: 'settings' as const },
 ];
 
+// Reservations children
+const reservationsChildren = [
+  { icon: CalendarCheck, label: 'Calendario', path: '/reservations', key: 'scheduling' as const },
+  { icon: BarChart3, label: 'Analítica', path: '/reservations/analytics', key: 'scheduling' as const },
+];
+
 // Nav items with permission keys
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', key: 'dashboard' as const },
   { icon: Monitor, label: 'POS', path: '/pos', key: 'dashboard' as const, highlight: true },
-  { icon: CalendarCheck, label: 'Reservas', path: '/reservations', key: 'scheduling' as const },
   { icon: CalendarDays, label: 'Turnos', path: '/scheduling', key: 'scheduling' as const },
   { icon: Clock, label: 'Disponibilidad', path: '/availability', key: 'availability' as const },
   { icon: ShoppingCart, label: 'Compras', path: '/procurement', key: 'procurement' as const },
@@ -100,6 +106,14 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     return stored === 'true';
   });
 
+  // Reservations section state
+  const isReservationsRoute = location.pathname.startsWith('/reservations');
+  const [reservationsExpanded, setReservationsExpanded] = useState(() => {
+    if (isReservationsRoute) return true;
+    const stored = localStorage.getItem(RESERVATIONS_EXPANDED_KEY);
+    return stored === 'true';
+  });
+
   useEffect(() => {
     if (isInsightsRoute) {
       setInsightsExpanded(true);
@@ -107,8 +121,18 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   }, [isInsightsRoute]);
 
   useEffect(() => {
+    if (isReservationsRoute) {
+      setReservationsExpanded(true);
+    }
+  }, [isReservationsRoute]);
+
+  useEffect(() => {
     localStorage.setItem(INSIGHTS_EXPANDED_KEY, String(insightsExpanded));
   }, [insightsExpanded]);
+
+  useEffect(() => {
+    localStorage.setItem(RESERVATIONS_EXPANDED_KEY, String(reservationsExpanded));
+  }, [reservationsExpanded]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -117,6 +141,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
   const handleInsightsToggle = () => {
     setInsightsExpanded(prev => !prev);
+  };
+
+  const handleReservationsToggle = () => {
+    setReservationsExpanded(prev => !prev);
   };
 
   return (
@@ -207,6 +235,56 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       <span>{item.label}</span>
+                    </Button>
+                  );
+                })}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
+          {/* Reservations Collapsible */}
+          {canViewSidebarItem('scheduling') && (
+            <Collapsible open={reservationsExpanded && !collapsed} onOpenChange={() => setReservationsExpanded(prev => !prev)}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant={isReservationsRoute ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10",
+                    isReservationsRoute && "bg-accent/50 text-accent-foreground font-medium",
+                    collapsed && "justify-center px-2"
+                  )}
+                  aria-expanded={reservationsExpanded}
+                  aria-controls="reservations-content"
+                >
+                  <CalendarCheck className="h-4 w-4 shrink-0" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">Reservas</span>
+                      <ChevronDown className={cn(
+                        "h-4 w-4 shrink-0 transition-transform duration-200",
+                        reservationsExpanded && "rotate-180"
+                      )} />
+                    </>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent id="reservations-content" className="space-y-1 mt-1">
+                {reservationsChildren.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Button
+                      key={item.path}
+                      variant={isActive ? "secondary" : "ghost"}
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start gap-3 pl-8",
+                        isActive && "bg-accent text-accent-foreground font-medium",
+                        collapsed && "hidden"
+                      )}
+                      onClick={() => navigate(item.path)}
+                    >
+                      <item.icon className="h-3 w-3 shrink-0" />
+                      <span className="text-sm">{item.label}</span>
                     </Button>
                   );
                 })}
