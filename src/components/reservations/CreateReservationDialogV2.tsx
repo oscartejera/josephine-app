@@ -89,25 +89,35 @@ export function CreateReservationDialogV2({
   // Load zones and services
   useEffect(() => {
     async function loadData() {
-      if (!locationId) return;
+      if (!locationId || !dataLayer) {
+        console.warn('[CreateReservationDialog] Missing locationId or dataLayer');
+        return;
+      }
       
       try {
+        console.log('[CreateReservationDialog] Loading zones and services for location:', locationId);
         const zonesData = await dataLayer.zones.findActive(locationId);
+        console.log('[CreateReservationDialog] Loaded zones:', zonesData.length);
         setZones(zonesData);
         
         const servicesData = await dataLayer.services.findActive(locationId);
+        console.log('[CreateReservationDialog] Loaded services:', servicesData.length);
         setServices(servicesData);
         
         // Auto-select first service
         if (servicesData.length > 0 && !selectedService) {
           setSelectedService(servicesData[0].id);
+          console.log('[CreateReservationDialog] Auto-selected service:', servicesData[0].id);
         }
       } catch (error) {
         console.error('Error loading zones/services:', error);
       }
     }
-    loadData();
-  }, [locationId, dataLayer, selectedService]);
+    
+    if (open) { // Solo cargar cuando el dialog está abierto
+      loadData();
+    }
+  }, [locationId, dataLayer, selectedService, open]);
 
   // Check availability when parameters change
   useEffect(() => {
@@ -259,14 +269,20 @@ export function CreateReservationDialogV2({
                     <SelectValue placeholder="Selecciona servicio" />
                   </SelectTrigger>
                   <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.id} value={service.id}>
-                        <div className="flex items-center gap-2">
-                          <Utensils className="h-4 w-4" />
-                          {service.name} ({service.start_time} - {service.end_time})
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {services.length > 0 ? (
+                      services.map((service) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          <div className="flex items-center gap-2">
+                            <Utensils className="h-4 w-4" />
+                            {service.name} ({service.start_time} - {service.end_time})
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        No hay servicios configurados
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
