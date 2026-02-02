@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import type { Reservation } from '@/hooks/useReservationsModule';
+import type { Reservation } from '@/types/reservations';
 
 interface ReservationsTimelineProps {
   reservations: Reservation[];
@@ -26,12 +26,13 @@ interface ReservationsTimelineProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  pending: { label: 'Pendiente', color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
-  confirmed: { label: 'Confirmada', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  seated: { label: 'Sentados', color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/30' },
-  completed: { label: 'Completada', color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-900/30' },
-  cancelled: { label: 'Cancelada', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' },
-  no_show: { label: 'No-show', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' },
+  pending: { label: 'Pendiente', color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200' },
+  confirmed: { label: 'Confirmada', color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200' },
+  reconfirmed: { label: 'Reconfirmada', color: 'text-blue-700', bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-300' },
+  seated: { label: 'Sentados', color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-900/20 border-green-200' },
+  completed: { label: 'Completada', color: 'text-gray-600', bgColor: 'bg-gray-50 dark:bg-gray-900/20 border-gray-200' },
+  cancelled: { label: 'Cancelada', color: 'text-red-600', bgColor: 'bg-red-50 dark:bg-red-900/20 border-red-200' },
+  no_show: { label: 'No-show', color: 'text-red-700', bgColor: 'bg-red-100 dark:bg-red-900/30 border-red-300' },
 };
 
 export function ReservationsTimeline({
@@ -106,10 +107,15 @@ export function ReservationsTimeline({
                     {slot}
                   </div>
 
-                  {/* Reservations */}
-                  <div className="flex-1 min-h-[60px] border-l border-border pl-4">
+                  {/* Reservations - Stacked layout for multiple */}
+                  <div className="flex-1 min-h-[60px] border-l-2 border-border pl-4">
                     {hasReservations ? (
                       <div className="space-y-2">
+                        {slotReservations.length > 1 && (
+                          <Badge variant="secondary" className="text-xs mb-1">
+                            {slotReservations.length} reservas
+                          </Badge>
+                        )}
                         {slotReservations.map((res) => {
                           const status = statusConfig[res.status] || statusConfig.pending;
                           const isSelected = selectedReservation?.id === res.id;
