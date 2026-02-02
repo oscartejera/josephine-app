@@ -4,7 +4,7 @@ Sistema completo de gestión de reservas con control de aforo, depósitos, mensa
 
 ## 📋 Características Implementadas
 
-### ✅ Core Features
+### ✅ Core Features (Base)
 
 - **Libro Único de Reservas**: Todas las reservas (telefónicas, walk-in, online, Google) en un solo calendario
 - **Control de Aforo Avanzado**:
@@ -75,6 +75,109 @@ Sistema completo de gestión de reservas con control de aforo, depósitos, mensa
   - Gestión de cierres por fecha
   - Cierres recurrentes (Navidad, etc.)
   - Eventos privados
+
+### ✅ Advanced Features (Ágora-Complete)
+
+#### A) Reconfirmación Automática
+- **ReconfirmationService** con flujo completo
+- Envío automático de solicitud de reconfirmación X horas antes
+- Tracking de estado: pending → sent → reconfirmed
+- Auto-cancelación si no reconfirma antes del deadline
+- UI con badges "Reconfirmar" y "✓ Reconfirmada"
+- Analytics de tasa de reconfirmación
+
+#### B) Política de Cancelación con Tarjeta
+- **CancellationPolicyService** con cargos inteligentes
+- Card guarantee sin cargo inmediato (solo guardar método)
+- Cálculo automático de cargo según timing:
+  - > X horas: cancelación gratis
+  - < X horas: cargo parcial (configurable %)
+  - < 4 horas: cargo completo
+  - No-show: cargo 100%
+- Preview de política para clientes
+- Trazabilidad completa de cargos
+
+#### C) Encuestas + Redirección Inteligente
+- **SurveyService** con routing basado en score
+- Envío automático post-visita (T+X horas configurable)
+- Routing inteligente:
+  - Score ≥8 → Google Reviews / TripAdvisor
+  - Score <8 → Feedback interno / Alert
+- Estadísticas de respuesta y NPS
+- Prevención de reseñas negativas públicas
+
+#### D) Reporte Mensual Automático
+- **MonthlyReportService** con generación completa
+- Email HTML formateado con tablas y gráficos
+- Métricas incluidas:
+  - Reservas, cubiertos, ingresos
+  - No-shows, cancelaciones, tasas
+  - Top días y top clientes
+  - Comparativa mes anterior
+- Scheduler para envío automático día 1 de cada mes
+- Multi-destinatario (managers, owners)
+
+#### E) Pacing por Tramo Horario
+- **PacingService** para control fino de capacidad
+- Límites por ventana de tiempo (15/30/60 min)
+- Validación por slot específico (no solo servicio completo)
+- Status visual: available / almost_full / full
+- Sugerencias optimizadas basadas en pacing real
+- Previene saturación en horas pico
+
+#### F) Ofertas Avanzadas
+- **OffersService** más allá de códigos promo
+- Ofertas por:
+  - Rango de fechas/horas
+  - Día de semana
+  - Zona específica
+  - Tamaño de grupo
+  - Canal (online/teléfono)
+- Auto-aplicación de mejor oferta elegible
+- Tipos: descuento, depósito gratis, upgrade, perks
+- CRUD completo de ofertas
+
+#### G) Asistente Telefónico
+- **PhoneAssistantAdapter** tipo Bookline
+- Procesa intenciones de llamadas:
+  - Crear reserva por voz
+  - Consultar disponibilidad
+  - Modificar/cancelar existente
+- Interfaz unificada para múltiples proveedores
+- Logs de conversaciones
+- Creación de reservas sin tocar UI manual
+
+#### H) Cross-Sell Multi-Local
+- **CrossSellService** para maximizar ocupación
+- Cuando location A está lleno → sugiere locations B, C
+- Búsqueda inteligente en ubicaciones cercanas
+- Muestra horarios alternativos en otros locales
+- Filtrado por distancia (cuando esté configurado)
+- Aumenta conversión global
+
+#### I) Google Analytics Events
+- **AnalyticsEventsService** para tracking de embudo
+- Eventos trackeados:
+  - `reservation_search`
+  - `slot_selected`
+  - `reservation_created`
+  - `reservation_cancelled`
+  - `no_show_marked`
+  - `deposit_payment`
+- Adapter para GA4 (mock + real)
+- SSR-safe, no rompe build
+- Métricas de conversión
+
+#### J) Turnos por Zona + Staff KPIs
+- **StaffAssignmentService** con gestión completa
+- Turnos específicos por zona (pueden solaparse)
+- Asignación de camarero/staff a reserva
+- KPIs por personal:
+  - Total reservas atendidas
+  - Cubiertos totales
+  - Tasa de no-shows
+  - Puntualidad promedio
+- Analytics por staff member en dashboard
 
 ### 🔄 Integraciones
 
