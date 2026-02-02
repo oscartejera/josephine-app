@@ -51,6 +51,7 @@ const insightsChildren = [
 const reservationsChildren = [
   { icon: CalendarCheck, label: 'Calendario', path: '/reservations', key: 'scheduling' as const },
   { icon: BarChart3, label: 'Analítica', path: '/reservations/analytics', key: 'scheduling' as const },
+  { icon: Settings, label: 'Configuración', path: '/reservations/settings', key: 'settings' as const },
 ];
 
 // Nav items with permission keys
