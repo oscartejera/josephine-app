@@ -7,7 +7,7 @@ import { ReservationsKPICards } from '@/components/reservations/ReservationsKPIC
 import { ReservationsTimeline } from '@/components/reservations/ReservationsTimeline';
 import { ReservationFloorPlan } from '@/components/reservations/ReservationFloorPlan';
 import { WaitlistPanel } from '@/components/reservations/WaitlistPanel';
-import { CreateReservationDialog } from '@/components/reservations/CreateReservationDialog';
+import { CreateReservationDialogV2 } from '@/components/reservations/CreateReservationDialogV2';
 import { EditReservationDialog } from '@/components/reservations/EditReservationDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -110,12 +110,13 @@ function ReservationsContent() {
       </div>
 
       {/* Create Dialog */}
-      <CreateReservationDialog
+      <CreateReservationDialogV2
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSubmit={module.createReservation}
         settings={module.settings}
         selectedDate={module.selectedDate}
+        locationId={module.locationId}
       />
 
       {/* Edit Dialog */}
