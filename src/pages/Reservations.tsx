@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useReservationsModule } from '@/hooks/useReservationsModule';
+import { useReservationsModuleV2 } from '@/hooks/useReservationsModuleV2';
+import { ReservationsProvider } from '@/contexts/ReservationsContext';
 import { ReservationsHeader } from '@/components/reservations/ReservationsHeader';
 import { ReservationsKPICards } from '@/components/reservations/ReservationsKPICards';
 import { ReservationsTimeline } from '@/components/reservations/ReservationsTimeline';
@@ -8,10 +9,10 @@ import { WaitlistPanel } from '@/components/reservations/WaitlistPanel';
 import { CreateReservationDialog } from '@/components/reservations/CreateReservationDialog';
 import { EditReservationDialog } from '@/components/reservations/EditReservationDialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Reservation } from '@/hooks/useReservationsModule';
+import type { Reservation } from '@/types/reservations';
 
-export default function Reservations() {
-  const module = useReservationsModule();
+function ReservationsContent() {
+  const module = useReservationsModuleV2();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
@@ -114,5 +115,13 @@ export default function Reservations() {
         onNoShow={module.markNoShow}
       />
     </div>
+  );
+}
+
+export default function Reservations() {
+  return (
+    <ReservationsProvider>
+      <ReservationsContent />
+    </ReservationsProvider>
   );
 }
