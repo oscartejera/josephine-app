@@ -98,7 +98,12 @@ export function ReservationsProvider({ children }: { children: ReactNode }) {
   }, [locations, isInitialized]);
 
   if (!services) {
-    return <>{children}</>;
+    // Show loading state while initializing - don't render children yet
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
