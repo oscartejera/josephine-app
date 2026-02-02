@@ -37,6 +37,7 @@ export interface BaseRepository<T> {
   create(data: Partial<T>): Promise<T>;
   update(id: string, data: Partial<T>): Promise<T>;
   delete(id: string): Promise<void>;
+  seed?(data: T[]): void;
 }
 
 // ============= Reservations Repository =============
@@ -168,6 +169,7 @@ export interface SettingsRepository {
   findByLocation(locationId: string): Promise<ReservationSettings | null>;
   update(locationId: string, settings: Partial<ReservationSettings>): Promise<ReservationSettings>;
   getOrCreate(locationId: string): Promise<ReservationSettings>;
+  seed?(data: ReservationSettings[]): void;
 }
 
 // ============= Tags Repository =============
