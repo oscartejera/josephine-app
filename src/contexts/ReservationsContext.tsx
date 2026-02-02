@@ -40,8 +40,12 @@ export function ReservationsProvider({ children }: { children: ReactNode }) {
       // Create data layer
       const dataLayer = createInMemoryDataLayer();
 
-      // Load seed data for all locations
-      for (const location of locations) {
+      // Load seed data for all locations (or use default if none)
+      const locationsToSeed = locations.length > 0 
+        ? locations 
+        : [{ id: 'demo-location-1', name: 'Demo Location' }];
+
+      for (const location of locationsToSeed) {
         const seedData = getAllSeedData(location.id);
         
         // Seed all data
@@ -88,7 +92,7 @@ export function ReservationsProvider({ children }: { children: ReactNode }) {
       console.log('[Reservations] Module initialized successfully');
     }
 
-    if (locations.length > 0 && !isInitialized) {
+    if (!isInitialized) {
       initializeReservations();
     }
   }, [locations, isInitialized]);
