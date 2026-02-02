@@ -44,6 +44,7 @@ import { StaffLayout } from "@/components/staff/StaffLayout";
 import BookingWidget from "@/pages/BookingWidget";
 import Reservations from "@/pages/Reservations";
 import ReservationsAnalytics from "@/pages/ReservationsAnalytics";
+import ReservationsSettings from "@/pages/ReservationsSettings";
 
 const queryClient = new QueryClient();
 
@@ -131,6 +132,7 @@ function AppRoutes() {
         <Route path="/availability" element={<Availability />} />
         <Route path="/reservations" element={<Reservations />} />
         <Route path="/reservations/analytics" element={<ReservationsAnalytics />} />
+        <Route path="/reservations/settings" element={<ReservationsSettings />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/:step" element={<Payroll />} />
         <Route path="/settings" element={<SettingsPage />} />
