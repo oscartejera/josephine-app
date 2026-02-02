@@ -230,7 +230,7 @@ async function sendViaApi(
 }
 
 /**
- * Send order via email (using Resend or similar)
+ * Send order via email (using Resend)
  */
 async function sendViaEmail(
   order: PurchaseOrder
@@ -241,31 +241,54 @@ async function sendViaEmail(
     return { success: false, error: 'No order email configured' };
   }
   
-  // For now, we'll log the email that would be sent
-  // In production, integrate with Resend, SendGrid, etc.
-  console.log(`[EMAIL] Would send order ${order.id} to ${supplier.order_email}`);
-  console.log(`[EMAIL] Subject: Nuevo Pedido - ${order.id}`);
-  console.log(`[EMAIL] Body:`, formatOrderForEmail(order));
+  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
   
-  // TODO: Integrate with email provider
-  // const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-  // if (RESEND_API_KEY) {
-  //   const res = await fetch('https://api.resend.com/emails', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Authorization': `Bearer ${RESEND_API_KEY}`,
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({
-  //       from: 'pedidos@josephine.app',
-  //       to: supplier.order_email,
-  //       subject: `Nuevo Pedido - ${order.id}`,
-  //       html: formatOrderForEmail(order),
-  //     }),
-  //   });
-  // }
+  if (!RESEND_API_KEY) {
+    // Log for testing purposes, but still indicate success for manual handling
+    console.log(`[EMAIL] No RESEND_API_KEY configured. Would send order ${order.id} to ${supplier.order_email}`);
+    console.log(`[EMAIL] Subject: Nuevo Pedido - ${order.id}`);
+    console.log(`[EMAIL] Body:`, formatOrderForEmail(order));
+    return { 
+      success: true,
+      error: 'No RESEND_API_KEY configured - email logged only'
+    };
+  }
   
-  return { success: true };
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'pedidos@josephine.app',
+        to: supplier.order_email,
+        subject: `Nuevo Pedido - ${order.id}`,
+        html: formatOrderForEmail(order),
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[EMAIL] Failed to send order ${order.id}:`, errorText);
+      return { 
+        success: false, 
+        error: `Email service error: ${response.status} - ${errorText}` 
+      };
+    }
+    
+    const result = await response.json();
+    console.log(`[EMAIL] Successfully sent order ${order.id} to ${supplier.order_email}. Email ID: ${result.id}`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error(`[EMAIL] Exception sending order ${order.id}:`, error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown email error' 
+    };
+  }
 }
 
 Deno.serve(async (req) => {

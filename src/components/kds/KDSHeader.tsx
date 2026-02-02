@@ -97,13 +97,6 @@ export function KDSHeader({
               Página anterior
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onSelect={() => navigate('/insights/kds')}
-              className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
-            >
-              <ChefHat className="h-4 w-4 mr-2" />
-              Dashboard KDS
-            </DropdownMenuItem>
-            <DropdownMenuItem 
               onSelect={() => navigate('/pos')}
               className="text-zinc-200 focus:bg-zinc-700 focus:text-white cursor-pointer"
             >

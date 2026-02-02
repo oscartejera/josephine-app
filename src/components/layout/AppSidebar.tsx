@@ -44,7 +44,6 @@ const insightsChildren = [
   { icon: ChefHat, label: 'Menu Engineering', path: '/insights/menu-engineering', key: 'menu_engineering' as const },
   { icon: Wallet, label: 'Cash Management', path: '/insights/cash-management', key: 'settings' as const },
   { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets', key: 'settings' as const },
-  { icon: ChefHat, label: 'KDS Dashboard', path: '/insights/kds', key: 'dashboard' as const },
 ];
 
 // Nav items with permission keys
