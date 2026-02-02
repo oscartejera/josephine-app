@@ -45,6 +45,8 @@ import BookingWidget from "@/pages/BookingWidget";
 import Reservations from "@/pages/Reservations";
 import ReservationsAnalytics from "@/pages/ReservationsAnalytics";
 import ReservationsSettings from "@/pages/ReservationsSettings";
+import ScanPayAdmin from "@/pages/scanpay/ScanPayAdmin";
+import ScanPayPublic from "@/pages/scanpay/ScanPayPublic";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +93,7 @@ function AppRoutes() {
       <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <Signup />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/book/:locationId" element={<BookingWidget />} />
+      <Route path="/scan-pay/:token" element={<ScanPayPublic />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
       <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
@@ -140,6 +143,9 @@ function AppRoutes() {
         {/* POS routes */}
         <Route path="/pos" element={<POS />} />
         <Route path="/pos/:locationId" element={<POSTerminal />} />
+        
+        {/* Scan&Pay admin route */}
+        <Route path="/scanpay" element={<ScanPayAdmin />} />
       </Route>
       
       {/* KDS route - outside protected layout for fullscreen */}
