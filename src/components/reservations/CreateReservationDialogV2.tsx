@@ -73,7 +73,9 @@ export function CreateReservationDialogV2({
   const [specialRequests, setSpecialRequests] = useState('');
   
   // New fields
-  const [selectedZone, setSelectedZone] = useState<string>('');
+  // Radix Select forbids empty-string values on <SelectItem />.
+  // Use a sentinel value for "any zone".
+  const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedService, setSelectedService] = useState<string>('');
   const [promoCode, setPromoCode] = useState('');
   
@@ -153,7 +155,7 @@ export function CreateReservationDialogV2({
         reservation_time: time,
         notes: notes || undefined,
         special_requests: specialRequests || undefined,
-        zone_id: selectedZone || undefined,
+        zone_id: selectedZone === 'all' ? undefined : selectedZone,
         service_id: selectedService || undefined,
         promo_code: promoCode || undefined,
       };
@@ -167,7 +169,7 @@ export function CreateReservationDialogV2({
       setPartySize(2);
       setNotes('');
       setSpecialRequests('');
-      setSelectedZone('');
+      setSelectedZone('all');
       setPromoCode('');
       onOpenChange(false);
     } catch (error: any) {
@@ -277,7 +279,7 @@ export function CreateReservationDialogV2({
                     <SelectValue placeholder="Cualquier zona" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Cualquier zona</SelectItem>
+                    <SelectItem value="all">Cualquier zona</SelectItem>
                     {zones.map((zone) => (
                       <SelectItem key={zone.id} value={zone.id}>
                         <div className="flex items-center gap-2">

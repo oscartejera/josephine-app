@@ -513,14 +513,16 @@ esta configurada correctamente.
                         )}
                         
                         <Select
-                          value={config?.printnode_printer_id || ''}
-                          onValueChange={(value) => assignPrinter(dest.value, value || null)}
+                          // Radix Select forbids empty-string values on <SelectItem />.
+                          // Use a sentinel value for "unassigned".
+                          value={config?.printnode_printer_id ? String(config.printnode_printer_id) : 'none'}
+                          onValueChange={(value) => assignPrinter(dest.value, value === 'none' ? null : value)}
                         >
                           <SelectTrigger className="w-[200px]">
                             <SelectValue placeholder="Seleccionar impresora" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">
+                            <SelectItem value="none">
                               <span className="text-muted-foreground">Sin asignar</span>
                             </SelectItem>
                             {availablePrinters.map(printer => {
