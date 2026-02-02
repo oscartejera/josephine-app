@@ -14,7 +14,7 @@ export interface Reservation {
   reservation_date: string;
   reservation_time: string;
   duration_minutes: number;
-  status: 'pending' | 'confirmed' | 'seated' | 'completed' | 'cancelled' | 'no_show';
+  status: 'pending' | 'confirmed' | 'reconfirmed' | 'seated' | 'completed' | 'cancelled' | 'no_show';
   confirmation_sent_at: string | null;
   notes: string | null;
   special_requests: string | null;
