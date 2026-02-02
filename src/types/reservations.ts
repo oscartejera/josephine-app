@@ -173,6 +173,7 @@ export interface TimeSlot {
 // ============= Availability & Capacity =============
 
 export interface AvailabilityCheck {
+  locationId?: string;
   date: string;
   time: string;
   party_size: number;
