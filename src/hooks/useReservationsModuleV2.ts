@@ -28,6 +28,13 @@ export interface DayStats {
 
 export function useReservationsModuleV2() {
   const { selectedLocationId } = useApp();
+  const context = useReservations();
+  
+  // Defensive check
+  if (!context) {
+    console.error('[useReservationsModuleV2] Context not available');
+  }
+  
   const {
     dataLayer,
     availabilityService,
@@ -35,7 +42,7 @@ export function useReservationsModuleV2() {
     messagingService,
     depositService,
     posIntegration,
-  } = useReservations();
+  } = context || {};
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -48,14 +55,16 @@ export function useReservationsModuleV2() {
 
   // Fetch reservations for selected date and location
   const fetchReservations = useCallback(async () => {
-    if (!locationId) {
+    if (!locationId || !dataLayer) {
       setReservations([]);
       return;
     }
 
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      console.log(`[useReservationsModuleV2] Fetching reservations for ${locationId} on ${dateStr}`);
       const data = await dataLayer.reservations.findByDate(locationId, dateStr);
+      console.log(`[useReservationsModuleV2] Found ${data.length} reservations`);
       setReservations(data);
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -64,7 +73,7 @@ export function useReservationsModuleV2() {
 
   // Fetch waitlist
   const fetchWaitlist = useCallback(async () => {
-    if (!locationId) {
+    if (!locationId || !dataLayer) {
       setWaitlist([]);
       return;
     }
@@ -79,7 +88,7 @@ export function useReservationsModuleV2() {
 
   // Fetch settings
   const fetchSettings = useCallback(async () => {
-    if (!locationId) {
+    if (!locationId || !dataLayer) {
       setSettings(null);
       return;
     }
