@@ -1,6 +1,7 @@
 /**
  * Prophet API Client
  * Calls Prophet model deployed on Modal Labs or similar
+ * Note: This is for browser context - use environment variables
  */
 
 export interface ProphetForecastRequest {
@@ -29,9 +30,9 @@ export class ProphetClient {
   private apiKey: string | null;
 
   constructor(apiUrl?: string, apiKey?: string | null) {
-    // Default to Modal Labs endpoint (would be configured in env)
-    this.apiUrl = apiUrl || Deno.env.get('PROPHET_API_URL') || 'https://your-modal-app.modal.run/forecast';
-    this.apiKey = apiKey || Deno.env.get('PROPHET_API_KEY') || null;
+    // Use environment variables for browser context
+    this.apiUrl = apiUrl || import.meta.env.VITE_PROPHET_API_URL || 'https://your-modal-app.modal.run/forecast';
+    this.apiKey = apiKey || import.meta.env.VITE_PROPHET_API_KEY || null;
   }
 
   async forecast(request: ProphetForecastRequest): Promise<ProphetForecastResponse> {
