@@ -22,7 +22,8 @@ import {
   Wallet,
   PiggyBank,
   Monitor,
-  QrCode
+  QrCode,
+  Plug2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -64,6 +65,7 @@ const navItems = [
   { icon: Clock, label: 'Disponibilidad', path: '/availability', key: 'availability' as const },
   { icon: ShoppingCart, label: 'Compras', path: '/procurement', key: 'procurement' as const },
   { icon: Calculator, label: 'Nóminas', path: '/payroll', key: 'payroll' as const },
+  { icon: Plug2, label: 'Integraciones', path: '/integrations', key: 'settings' as const },
 ];
 
 const roleLabels: Record<string, string> = {

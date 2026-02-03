@@ -51,6 +51,8 @@ import ScanPayPublic from "@/pages/scanpay/ScanPayPublic";
 import KDSSettings from "@/pages/KDSSettings";
 import POSStaffLogin from "@/pages/pos/POSStaffLogin";
 import POSFloorMap from "@/pages/pos/POSFloorMap";
+import Integrations from "@/pages/Integrations";
+import SquareIntegration from "@/pages/integrations/SquareIntegration";
 
 const queryClient = new QueryClient();
 
@@ -155,6 +157,10 @@ function AppRoutes() {
         
         {/* KDS settings route */}
         <Route path="/kds/settings" element={<KDSSettings />} />
+        
+        {/* Integrations routes */}
+        <Route path="/integrations" element={<Integrations />} />
+        <Route path="/integrations/square" element={<SquareIntegration />} />
       </Route>
       
       {/* KDS route - outside protected layout for fullscreen */}
