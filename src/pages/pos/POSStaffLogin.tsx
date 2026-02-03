@@ -33,6 +33,7 @@ export default function POSStaffLogin() {
   const loadStaff = async () => {
     if (!locationId) return;
 
+    // Try Supabase first
     const { data, error } = await supabase
       .from('pos_staff_profiles')
       .select('*')
@@ -40,8 +41,11 @@ export default function POSStaffLogin() {
       .eq('is_active', true)
       .order('name');
 
-    if (error) {
-      console.error('Error loading staff:', error);
+    if (error || !data || data.length === 0) {
+      // Fallback to InMemory seed
+      console.log('[POS] Using InMemory staff seed');
+      const { getStaffProfiles } = await import('@/data/pos-staff-seed');
+      setStaff(getStaffProfiles(locationId) as any);
       return;
     }
 
