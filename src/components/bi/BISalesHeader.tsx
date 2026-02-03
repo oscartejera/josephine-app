@@ -20,7 +20,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import type { CompareMode, GranularityMode, BIDateRange } from '@/pages/Sales';
+import type { CompareMode, GranularityMode, BIDateRange } from '@/types/sales';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from './DateRangePickerNoryLike';
 import { formatDistanceToNow } from 'date-fns';
