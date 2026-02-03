@@ -50,35 +50,30 @@ const COLORS = {
   danger: '#f43f5e', // Rose
 };
 
+import { useSalesData } from '@/hooks/useSalesData';
+import type { DateRangeType } from '@/hooks/useSalesData';
+
 export default function Sales() {
   const { selectedLocationId } = useApp();
-  const [dateRange, setDateRange] = useState('week');
+  const [dateRange, setDateRange] = useState<DateRangeType>('week');
   const [compareMode, setCompareMode] = useState('forecast');
 
-  // Mock data - realistic
-  const salesData = {
-    toDate: 36066,
-    variance: 0.94,
-    varDirection: 'up' as const,
-    channels: {
-      dineIn: { amount: 22330, pct: 62, avgCheck: 24.84 },
-      pickUp: { amount: 2862, pct: 8, avgCheck: 15.81 },
-      delivery: { amount: 10874, pct: 30, avgCheck: 24.60 },
-    },
-    avgCheckSize: 23.70,
-    avgCheckVariance: 1.26,
-    dwellTime: '42mins',
-  };
+  const { data: salesData, loading } = useSalesData(selectedLocationId, dateRange);
 
-  const weeklyData = [
-    { day: 'Monday, 29', actual: 12500, forecast: 12200, avgCheck: 24.20 },
-    { day: 'Tuesday, 30', actual: 13800, forecast: 13200, avgCheck: 24.50 },
-    { day: 'Wednesday, 1', actual: 10421, forecast: 10194, avgCheck: 24.41 },
-    { day: 'Thursday, 2', actual: 0, forecast: 15200, avgCheck: 24.80 },
-    { day: 'Friday, 3', actual: 0, forecast: 18500, avgCheck: 25.20 },
-    { day: 'Saturday, 4', actual: 0, forecast: 22300, avgCheck: 26.50 },
-    { day: 'Sunday, 5', actual: 0, forecast: 16800, avgCheck: 25.00 },
-  ];
+  if (loading || !salesData) {
+    return (
+      <div className="p-6 flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  const weeklyData = salesData.dailyData.map((d: any) => ({
+    day: format(new Date(d.day), 'EEEE, d'),
+    actual: Math.round(d.actual),
+    forecast: Math.round(d.forecast),
+    avgCheck: d.avgCheck,
+  }));
 
   const productsData = [
     { name: 'Paella Valenciana', value: 4440.24, pct: 12.31 },
@@ -162,8 +157,8 @@ export default function Sales() {
             </div>
             
             <div>
-              <div className="text-3xl font-bold">€{salesData.toDate.toLocaleString()}</div>
-              <VarianceIndicator value={salesData.variance} />
+              <div className="text-3xl font-bold">€{Math.round(salesData.totals.sales).toLocaleString()}</div>
+              <VarianceIndicator value={salesData.totals.variance} />
             </div>
 
             {/* Channel breakdown bars */}
@@ -173,7 +168,7 @@ export default function Sales() {
                   <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
                   Dine-in
                 </span>
-                <span className="font-medium">{salesData.channels.dineIn.pct}%</span>
+                <span className="font-medium">{salesData.totals.channels.dineIn.pct.toFixed(0)}%</span>
               </div>
               <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
@@ -222,8 +217,8 @@ export default function Sales() {
             </div>
             
             <div>
-              <div className="text-3xl font-bold">€{salesData.avgCheckSize.toFixed(2)}</div>
-              <VarianceIndicator value={salesData.avgCheckVariance} />
+              <div className="text-3xl font-bold">€{salesData.totals.avgCheck.toFixed(2)}</div>
+              <VarianceIndicator value={1.26} />
             </div>
 
             {/* Channel avg check */}
