@@ -174,4 +174,4 @@ export function generateYearData(locationId: string, orgId: string = 'demo-org')
   return data;
 }
 
-export { generateYearData };
+
