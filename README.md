@@ -1,73 +1,178 @@
-# Welcome to your Lovable project
+# Josephine - AI Operations Platform for Restaurants
 
-## Project info
+Josephine es una plataforma de operaciones potenciada por IA para restaurantes, estilo Nory. **No es un POS** - se integra con sistemas POS existentes y proporciona inteligencia operativa.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🎯 Qué es Josephine
 
-## How can I edit this code?
+Josephine conecta con tu POS actual (Square, Lightspeed, Oracle Simphony, etc.) y proporciona:
 
-There are several ways of editing your application.
+- **Forecast automático** de ventas, covers y demanda
+- **Recomendaciones AI** accionables (staff, compras, menú)
+- **Insights unificados** de múltiples fuentes
+- **Optimización automática** de turnos, inventario y menú
 
-**Use Lovable**
+## 🏗️ Arquitectura
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+External POS (Square, etc.)
+    ↓
+OAuth + Webhooks
+    ↓
+Josephine Integrations Layer
+    ↓
+Canonical Data Model (CDM)
+    ↓
+Feature Store (facts tables)
+    ↓
+AI/Forecast Engine (Prophet + LLM)
+    ↓
+Recommendations + Actions
+    ↓
+UI Dashboard
 ```
 
-**Edit a file directly in GitHub**
+## 📦 Módulos
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 🔌 Integrations
+- **Square POS**: OAuth, webhooks, sync incremental
+- **Próximamente**: Lightspeed, Oracle Simphony, Toast, Clover
+- **CDM**: Modelo canónico de datos (locations, items, orders, payments)
+- **Idempotent**: Deduplicación automática de eventos
 
-**Use GitHub Codespaces**
+### 📊 Insights
+- **Sales**: Análisis de ventas con trends
+- **Labour**: Costos laborales y eficiencia
+- **Instant P&L**: P&L en tiempo real con alertas
+- **Reviews**: Agregación de reseñas
+- **Inventory**: Niveles de stock y rotación
+- **Waste**: Estimación y tracking de merma
+- **Menu Engineering**: Mix, márgenes, recomendaciones
+- **Cash Management**: Control de efectivo
+- **Budgets**: Planificación y seguimiento
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 🤖 AI Operations
+- **Feature Store**: Agregaciones 15min, daily, item mix
+- **Forecast Engine**: Prophet API + statistical fallback
+- **Recommendations**: AI-generated con rationale
+- **Actions**: Approve/Auto con guardrails
+- **Impact Measurement**: Before/after tracking
 
-## What technologies are used for this project?
+### 👥 Workforce
+- **Scheduling**: Generación optimizada de turnos
+- **Availability**: Gestión de disponibilidad
+- **Payroll**: Timesheets + export (no cálculo legal)
 
-This project is built with:
+### 🛒 Procurement
+- **Auto-ordering**: Sugerencias basadas en forecast
+- **Vendor management**: Macro, proveedores locales
+- **Safety stock**: Niveles óptimos
+- **Lead times**: Optimización de pedidos
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🚀 Quick Start
 
-## How can I deploy this project?
+### 1. Conectar Square
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```bash
+# Ir a /integrations
+# Click "Square POS"
+# Click "Conectar con Square"
+# Autorizar → Listo
+```
 
-## Can I connect a custom domain to my Lovable project?
+### 2. Primera Sincronización
 
-Yes, you can!
+```bash
+# En /integrations/square
+# Click "Sincronizar Ahora"
+# Esperar ~30s
+# Ver stats: X ubicaciones, Y productos, Z pedidos
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### 3. Ver Recommendations
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```bash
+# Dashboard muestra cards AI:
+# "Ajuste de Personal: +2 staff sábado"
+# "Pedido Sugerido: Salmón + Vino"
+# Click Aprobar → Ejecuta acción
+```
+
+## 🔧 Tech Stack
+
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI/ML**: Prophet (Modal Labs) + Claude API
+- **UI**: shadcn/ui + Tailwind CSS
+- **Auth**: Supabase Auth
+- **Realtime**: Supabase Realtime
+
+## 📊 Data Flow
+
+```
+1. Square → webhook → raw_events (idempotent)
+2. square-sync → CDM tables (normalized)
+3. Triggers → facts tables (aggregated)
+4. Prophet API → forecasts (time series)
+5. AI engine → recommendations (actionable)
+6. User approves → actions (executed)
+7. Results measured → feedback loop
+```
+
+## 🎯 Value Proposition
+
+**Josephine vs Traditional POS:**
+- ❌ No hardware dependencies
+- ✅ Works with any POS
+- ✅ AI-powered insights
+- ✅ Automated decision-making
+- ✅ Unified data from multiple sources
+
+**Josephine vs Spreadsheets:**
+- ❌ No manual data entry
+- ✅ Real-time sync
+- ✅ Automatic forecasting
+- ✅ Predictive recommendations
+- ✅ Impact measurement
+
+## 🔐 Security
+
+- **Secrets**: Stored only in Supabase Secrets
+- **RLS**: Row-level security on all tables
+- **OAuth**: Secure token management
+- **Encryption**: Tokens encrypted at rest
+- **Audit**: Complete event log
+
+## 📈 Roadmap
+
+**Q1 2026:**
+- ✅ Square integration
+- ✅ CDM + Feature Store
+- ✅ Prophet forecasting
+- ✅ AI recommendations MVP
+
+**Q2 2026:**
+- [ ] Lightspeed + Toast integrations
+- [ ] Advanced ML models (fine-tuned)
+- [ ] Autopilot mode (auto-execute safe actions)
+- [ ] Mobile app
+
+**Q3 2026:**
+- [ ] Multi-location rollups
+- [ ] Benchmarking vs industry
+- [ ] Custom AI models per restaurant
+
+## 💡 Key Features
+
+✅ **No Hardware**: Cloud-based, acceso desde cualquier dispositivo
+✅ **Universal**: Funciona con Square, Toast, Lightspeed, Oracle, etc.
+✅ **AI-First**: Prophet forecasts + LLM insights
+✅ **Actionable**: Recommendations con approve/reject
+✅ **Measurable**: Impact tracking automático
+✅ **Scalable**: De 1 a 100+ locations
+✅ **Real-time**: Sync continuo con POS
+
+---
+
+**Built with ❤️ for restaurant operators**
+
+*Josephine: Your AI co-pilot for restaurant operations*
