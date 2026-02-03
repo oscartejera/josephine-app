@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2, ChefHat, Check, UtensilsCrossed, Send } from 'lucide-react';
+import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2, ChefHat, Check, UtensilsCrossed, Send, Flag } from 'lucide-react';
+import { KDSMarchService } from '@/services/kds/march-service';
 import { toast } from 'sonner';
 import { POSProductGrid } from './POSProductGrid';
 import { POSSplitPaymentModal, ReceiptData } from './POSSplitPaymentModal';
@@ -63,6 +64,9 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   // Course system state - Default to Course 1 (1º Curso) for main dishes
   // Beverages (course 0) auto-send but the default should be for food
   const [selectedCourse, setSelectedCourse] = useState(1);
+
+  // KDS March service
+  const marchServiceRef = useMemo(() => new KDSMarchService(), []);
 
   const groupId = group?.id || '';
 
@@ -364,6 +368,22 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
 
     setTicketId(data.id);
     return data.id;
+  };
+
+  // Marchar curso
+  const handleMarchCourse = async (course: number) => {
+    if (!ticketId) {
+      toast.error('Primero envía items a cocina');
+      return;
+    }
+
+    try {
+      await marchServiceRef.marchOrder(ticketId, course);
+      toast.success(`🔥 Marchado ${course === 1 ? '1º' : course === 2 ? '2º' : course === 3 ? 'Postre' : `Curso ${course}`}`);
+    } catch (error) {
+      console.error('Error marching:', error);
+      toast.error('Error al marchar');
+    }
   };
 
   const sendToKitchen = async () => {
