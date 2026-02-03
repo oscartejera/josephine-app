@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2, ChefHat, Check, UtensilsCrossed, Send } from 'lucide-react';
+import { X, Plus, Minus, Trash2, CreditCard, Printer, Flame, Edit2, ChefHat, Check, UtensilsCrossed, Send, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { POSProductGrid } from './POSProductGrid';
 import { POSSplitPaymentModal, ReceiptData } from './POSSplitPaymentModal';
@@ -13,6 +13,7 @@ import { POSModifierDialog } from './POSModifierDialog';
 import { POSCourseSelector, CourseBadge, getCourseConfig } from './POSCourseSelector';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
+import { KDSMarchService } from '@/services/kds/march-service';
 
 interface OrderLineModifier {
   modifier_name: string;
@@ -54,6 +55,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [notes, setNotes] = useState('');
+  const [marchedCourses, setMarchedCourses] = useState<Set<number>>(new Set());
   
   // Modifier dialog state
   const [modifierDialogOpen, setModifierDialogOpen] = useState(false);
@@ -65,6 +67,7 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
   const [selectedCourse, setSelectedCourse] = useState(1);
 
   const groupId = group?.id || '';
+  const marchService = useMemo(() => new KDSMarchService(), []);
 
   // Calculate totals including modifier price deltas
   const calculateLineTotal = (line: OrderLine): number => {
@@ -115,6 +118,17 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
       .eq('ticket_id', ticketId);
 
     if (!lines) return;
+
+    // Load march status for courses
+    const { data: orderFlags } = await supabase
+      .from('ticket_order_flags')
+      .select('*')
+      .eq('ticket_id', ticketId)
+      .eq('is_marched', true);
+
+    const marched = new Set<number>();
+    (orderFlags || []).forEach(flag => marched.add(flag.course));
+    setMarchedCourses(marched);
 
     // Load modifiers for each line
     const lineIds = lines.map(l => l.id);
@@ -334,6 +348,32 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
     }
     
     setOrderLines(orderLines.filter((_, i) => i !== index));
+  };
+
+  const toggleMarchCourse = async (course: number) => {
+    if (!ticketId) return;
+
+    try {
+      const isCurrentlyMarched = marchedCourses.has(course);
+      
+      if (isCurrentlyMarched) {
+        await marchService.unmarchOrder(ticketId, course);
+        setMarchedCourses(prev => {
+          const next = new Set(prev);
+          next.delete(course);
+          return next;
+        });
+        toast.success(`Curso desmarchado`);
+      } else {
+        await marchService.marchOrder(ticketId, course);
+        setMarchedCourses(prev => new Set(prev).add(course));
+        const courseConfig = getCourseConfig(course);
+        toast.success(`${courseConfig.label} marchado! 🚀`);
+      }
+    } catch (error) {
+      console.error('Error toggling march:', error);
+      toast.error('Error al marchar');
+    }
   };
 
   const createOrUpdateTicket = async (): Promise<string> => {
@@ -758,17 +798,39 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                               ✓ Listo
                             </span>
                           )}
+                          {marchedCourses.has(course) && (
+                            <span className="text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                              <Flag className="h-3 w-3" />
+                              Marchado
+                            </span>
+                          )}
                         </div>
-                        {pendingInCourse > 0 && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className={cn(
-                              "h-7 text-xs font-semibold gap-1.5 transition-all",
-                              courseConfig.bgClass,
-                              "text-white hover:opacity-90 shadow-sm"
-                            )}
-                            onClick={async () => {
+                        <div className="flex items-center gap-2">
+                          {allCourseItemsSent && ticketId && (
+                            <Button
+                              variant={marchedCourses.has(course) ? "destructive" : "outline"}
+                              size="sm"
+                              className={cn(
+                                "h-7 text-xs font-semibold gap-1.5",
+                                marchedCourses.has(course) && "bg-orange-600 hover:bg-orange-700"
+                              )}
+                              onClick={() => toggleMarchCourse(course)}
+                            >
+                              <Flag className="h-3.5 w-3.5" />
+                              {marchedCourses.has(course) ? 'Desmarchar' : 'Marchar'}
+                            </Button>
+                          )}
+                        </div>
+                          {pendingInCourse > 0 && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className={cn(
+                                "h-7 text-xs font-semibold gap-1.5 transition-all",
+                                courseConfig.bgClass,
+                                "text-white hover:opacity-90 shadow-sm"
+                              )}
+                              onClick={async () => {
                               // Send only this course
                               const courseLines = orderLines
                                 .map((line, idx) => ({ line, idx }))
@@ -811,12 +873,13 @@ export function POSOrderPanel({ table, products, locationId, onClose, onRefresh 
                                 setLoading(false);
                               }
                             }}
-                            disabled={loading}
-                          >
-                            <Send className="h-3.5 w-3.5" />
-                            Enviar {courseConfig.shortLabel} ➜
-                          </Button>
-                        )}
+                              disabled={loading}
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              Enviar {courseConfig.shortLabel} ➜
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       
                       {/* Course Items */}
