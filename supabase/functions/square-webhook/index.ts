@@ -1,0 +1,98 @@
+/**
+ * Square Webhook Receiver
+ * Receives and processes Square webhook events
+ */
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
+import { corsHeaders } from '../_shared/cors.ts';
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    const webhookSignature = req.headers.get('x-square-hmacsha256-signature');
+    const body = await req.text();
+    const event = JSON.parse(body);
+
+    // TODO: Verify webhook signature with signing key from Supabase Secrets
+    // For MVP, accept all webhooks (add verification in production)
+
+    console.log('[Square Webhook] Received:', event.type);
+
+    // Extract event details
+    const eventType = event.type; // e.g., 'order.created', 'payment.updated'
+    const merchantId = event.merchant_id;
+    const eventId = event.event_id;
+    const createdAt = event.created_at;
+    const data = event.data?.object || {};
+
+    // Find integration account
+    const { data: account } = await supabase
+      .from('integration_accounts')
+      .select('id')
+      .eq('external_account_id', merchantId)
+      .eq('provider', 'square')
+      .single();
+
+    if (!account) {
+      console.warn('[Square Webhook] No account found for merchant:', merchantId);
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Generate payload hash for deduplication
+    const encoder = new TextEncoder();
+    const payloadBytes = encoder.encode(JSON.stringify(data));
+    const hashBuffer = await crypto.subtle.digest('SHA-256', payloadBytes);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const payloadHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Insert raw_event (idempotent via UNIQUE constraint)
+    const { error: insertError } = await supabase
+      .from('raw_events')
+      .insert({
+        provider: 'square',
+        integration_account_id: account.id,
+        event_type: eventType,
+        external_id: data.id || eventId,
+        event_ts: createdAt,
+        payload: event,
+        payload_hash: payloadHash,
+        processed_status: 'pending',
+      });
+
+    if (insertError) {
+      // If UNIQUE constraint violation, it's a duplicate - that's OK
+      if (insertError.code === '23505') {
+        console.log('[Square Webhook] Duplicate event, skipping:', eventId);
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw insertError;
+    }
+
+    console.log('[Square Webhook] Stored event:', eventType, eventId);
+
+    // Acknowledge receipt
+    return new Response(
+      JSON.stringify({ received: true }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('[Square Webhook] Error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
