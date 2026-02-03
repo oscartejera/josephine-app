@@ -34,7 +34,7 @@ export default function POS() {
             <Card 
               key={location.id}
               className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => navigate(`/pos/${location.id}`)}
+              onClick={() => navigate(`/pos/${location.id}/login`)}
             >
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">

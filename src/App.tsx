@@ -49,6 +49,8 @@ import ReservationsSettings from "@/pages/ReservationsSettings";
 import ScanPayAdmin from "@/pages/scanpay/ScanPayAdmin";
 import ScanPayPublic from "@/pages/scanpay/ScanPayPublic";
 import KDSSettings from "@/pages/KDSSettings";
+import POSStaffLogin from "@/pages/pos/POSStaffLogin";
+import POSFloorMap from "@/pages/pos/POSFloorMap";
 
 const queryClient = new QueryClient();
 
@@ -142,8 +144,10 @@ function AppRoutes() {
         <Route path="/payroll/:step" element={<Payroll />} />
         <Route path="/settings" element={<SettingsPage />} />
         
-        {/* POS routes */}
+        {/* POS routes - New Ágora flow */}
         <Route path="/pos" element={<POS />} />
+        <Route path="/pos/:locationId/login" element={<POSStaffLogin />} />
+        <Route path="/pos/:locationId/floor" element={<POSFloorMap />} />
         <Route path="/pos/:locationId" element={<POSTerminal />} />
         
         {/* Scan&Pay admin route */}
