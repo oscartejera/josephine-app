@@ -47,6 +47,7 @@ import ReservationsAnalytics from "@/pages/ReservationsAnalytics";
 import ReservationsSettings from "@/pages/ReservationsSettings";
 import ScanPayAdmin from "@/pages/scanpay/ScanPayAdmin";
 import ScanPayPublic from "@/pages/scanpay/ScanPayPublic";
+import KDSSettings from "@/pages/KDSSettings";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +147,9 @@ function AppRoutes() {
         
         {/* Scan&Pay admin route */}
         <Route path="/scanpay" element={<ScanPayAdmin />} />
+        
+        {/* KDS settings route */}
+        <Route path="/kds/settings" element={<KDSSettings />} />
       </Route>
       
       {/* KDS route - outside protected layout for fullscreen */}
