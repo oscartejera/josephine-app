@@ -49,23 +49,14 @@ const insightsChildren = [
   { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets', key: 'settings' as const },
 ];
 
-// Reservations children
-const reservationsChildren = [
-  { icon: CalendarCheck, label: 'Calendario', path: '/reservations', key: 'scheduling' as const },
-  { icon: BarChart3, label: 'Analítica', path: '/reservations/analytics', key: 'scheduling' as const },
-  { icon: Settings, label: 'Configuración', path: '/reservations/settings', key: 'settings' as const },
-];
-
-// Nav items with permission keys
+// Nav items - Nory-style AI Ops only
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', key: 'dashboard' as const },
-  { icon: Monitor, label: 'POS', path: '/pos', key: 'dashboard' as const, highlight: true },
-  { icon: QrCode, label: 'Scan & Pay', path: '/scanpay', key: 'dashboard' as const },
+  { icon: Plug2, label: 'Integraciones', path: '/integrations', key: 'settings' as const },
   { icon: CalendarDays, label: 'Turnos', path: '/scheduling', key: 'scheduling' as const },
   { icon: Clock, label: 'Disponibilidad', path: '/availability', key: 'availability' as const },
   { icon: ShoppingCart, label: 'Compras', path: '/procurement', key: 'procurement' as const },
   { icon: Calculator, label: 'Nóminas', path: '/payroll', key: 'payroll' as const },
-  { icon: Plug2, label: 'Integraciones', path: '/integrations', key: 'settings' as const },
 ];
 
 const roleLabels: Record<string, string> = {
