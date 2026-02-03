@@ -21,9 +21,11 @@ interface POSFloorPlanProps {
   products: POSProduct[];
   openTickets: POSTicket[];
   onRefresh: () => void;
+  onTableClick?: (table: POSTable) => void;
+  hideReservationButtons?: boolean;
 }
 
-export function POSFloorPlan({ locationId, floorMaps, tables, products, openTickets, onRefresh }: POSFloorPlanProps) {
+export function POSFloorPlan({ locationId, floorMaps, tables, products, openTickets, onRefresh, onTableClick, hideReservationButtons }: POSFloorPlanProps) {
   const [selectedMapId, setSelectedMapId] = useState<string>(floorMaps[0]?.id || '');
   const [selectedTable, setSelectedTable] = useState<POSTable | null>(null);
   const [showEditor, setShowEditor] = useState(false);
