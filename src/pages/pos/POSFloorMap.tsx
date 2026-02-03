@@ -121,6 +121,7 @@ export default function POSFloorMap() {
           openTickets={[]}
           onRefresh={refetch}
           onTableClick={handleTableClick}
+          hideReservationButtons={true}
         />
       </div>
 

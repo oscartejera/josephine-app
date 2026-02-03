@@ -76,11 +76,23 @@ export function usePOSData(locationId: string) {
     setLoading(true);
     try {
       // Fetch floor maps
-      const { data: mapsData } = await supabase
+      const { data: mapsData, error: mapsError } = await supabase
         .from('pos_floor_maps')
         .select('*')
         .eq('location_id', locationId)
         .eq('is_active', true);
+      
+      // Fallback to InMemory seed if no data
+      if (mapsError || !mapsData || mapsData.length === 0) {
+        console.log('[POS] Using InMemory floor maps seed');
+        const { getFloorMaps, getTables } = await import('@/data/pos-floor-seed');
+        const seedMaps = getFloorMaps(locationId);
+        const seedTables = getTables(locationId);
+        setFloorMaps(seedMaps as any);
+        setTables(seedTables as any);
+        setLoading(false);
+        return;
+      }
       
       setFloorMaps((mapsData || []) as unknown as FloorMap[]);
 
