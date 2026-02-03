@@ -34,6 +34,7 @@ import { Badge } from '@/components/ui/badge';
 
 const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
 const RESERVATIONS_EXPANDED_KEY = 'sidebar.reservations.expanded';
+const KDS_EXPANDED_KEY = 'sidebar.kds.expanded';
 
 // Insights children with permission keys
 const insightsChildren = [
@@ -53,6 +54,12 @@ const reservationsChildren = [
   { icon: CalendarCheck, label: 'Calendario', path: '/reservations', key: 'scheduling' as const },
   { icon: BarChart3, label: 'Analítica', path: '/reservations/analytics', key: 'scheduling' as const },
   { icon: Settings, label: 'Configuración', path: '/reservations/settings', key: 'settings' as const },
+];
+
+// KDS children
+const kdsChildren = [
+  { icon: Monitor, label: 'Monitores', path: '/kds/monitor', key: 'dashboard' as const },
+  { icon: Settings, label: 'Configuración', path: '/kds/settings', key: 'settings' as const },
 ];
 
 // Nav items with permission keys
@@ -117,6 +124,14 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     return stored === 'true';
   });
 
+  // KDS section state
+  const isKDSRoute = location.pathname.startsWith('/kds');
+  const [kdsExpanded, setKdsExpanded] = useState(() => {
+    if (isKDSRoute) return true;
+    const stored = localStorage.getItem(KDS_EXPANDED_KEY);
+    return stored === 'true';
+  });
+
   useEffect(() => {
     if (isInsightsRoute) {
       setInsightsExpanded(true);
@@ -130,12 +145,22 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   }, [isReservationsRoute]);
 
   useEffect(() => {
+    if (isKDSRoute) {
+      setKdsExpanded(true);
+    }
+  }, [isKDSRoute]);
+
+  useEffect(() => {
     localStorage.setItem(INSIGHTS_EXPANDED_KEY, String(insightsExpanded));
   }, [insightsExpanded]);
 
   useEffect(() => {
     localStorage.setItem(RESERVATIONS_EXPANDED_KEY, String(reservationsExpanded));
   }, [reservationsExpanded]);
+
+  useEffect(() => {
+    localStorage.setItem(KDS_EXPANDED_KEY, String(kdsExpanded));
+  }, [kdsExpanded]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -148,6 +173,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
   const handleReservationsToggle = () => {
     setReservationsExpanded(prev => !prev);
+  };
+
+  const handleKdsToggle = () => {
+    setKdsExpanded(prev => !prev);
   };
 
   return (
@@ -194,6 +223,66 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               <LayoutDashboard className="h-4 w-4 shrink-0" />
               {!collapsed && <span>Dashboard</span>}
             </Button>
+          )}
+
+          {/* KDS Collapsible */}
+          {canViewSidebarItem('dashboard') && (
+            <Collapsible open={kdsExpanded && !collapsed} onOpenChange={handleKdsToggle}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant={isKDSRoute ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10",
+                    isKDSRoute && "bg-accent/50 text-accent-foreground font-medium",
+                    collapsed && "justify-center px-2"
+                  )}
+                  aria-expanded={kdsExpanded}
+                  aria-controls="kds-content"
+                >
+                  <Monitor className="h-4 w-4 shrink-0" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">KDS</span>
+                      <ChevronDown className={cn(
+                        "h-4 w-4 shrink-0 transition-transform duration-200",
+                        kdsExpanded && "rotate-180"
+                      )} />
+                    </>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent id="kds-content" className="space-y-1 mt-1">
+                {kdsChildren.map((item) => {
+                  const isActive = location.pathname === item.path || 
+                    (item.path === '/kds/monitor' && location.pathname.startsWith('/kds/monitor/'));
+                  return (
+                    <Button
+                      key={item.path}
+                      variant={isActive ? "secondary" : "ghost"}
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start gap-3 pl-8",
+                        isActive && "bg-accent text-accent-foreground font-medium",
+                        collapsed && "hidden"
+                      )}
+                      onClick={() => {
+                        // For monitors, need to select a location - redirect to first available
+                        if (item.path === '/kds/monitor') {
+                          // This will be handled by clicking on a specific location monitor
+                          // For now just go to settings
+                          navigate('/kds/settings');
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
+                    >
+                      <item.icon className="h-3 w-3 shrink-0" />
+                      <span className="text-sm">{item.label}</span>
+                    </Button>
+                  );
+                })}
+              </CollapsibleContent>
+            </Collapsible>
           )}
 
           {/* Insights Collapsible - only show if has permission */}

@@ -35,6 +35,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import POS from "@/pages/POS";
 import POSTerminal from "@/pages/POSTerminal";
 import KDS from "@/pages/KDS";
+import KDSMonitor from "@/pages/KDSMonitor";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 import StaffFloor from "@/pages/StaffFloor";
@@ -152,11 +153,18 @@ function AppRoutes() {
         <Route path="/kds/settings" element={<KDSSettings />} />
       </Route>
       
-      {/* KDS route - outside protected layout for fullscreen */}
+      {/* KDS routes - outside protected layout for fullscreen */}
       <Route path="/kds/:locationId" element={
         <ProtectedRoute>
           <AppProvider>
             <KDS />
+          </AppProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/kds/monitor/:locationId" element={
+        <ProtectedRoute>
+          <AppProvider>
+            <KDSMonitor />
           </AppProvider>
         </ProtectedRoute>
       } />
