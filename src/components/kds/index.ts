@@ -1,6 +1,7 @@
 export { KDSHeader } from './KDSHeader';
 export { KDSBoard } from './KDSBoard';
 export { KDSOrderCard } from './KDSOrderCard';
+export { KDSCourseOrderCard } from './KDSCourseOrderCard';
 export { KDSDestinationFilter } from './KDSDestinationFilter';
 export type { KDSDestination } from './KDSDestinationFilter';
 export { KDSHistoryBoard } from './KDSHistoryBoard';
@@ -10,3 +11,8 @@ export { KDSAlertsPanel } from './KDSAlertsPanel';
 export { KDSRecallPanel } from './KDSRecallPanel';
 export { KDSKeyboardHints } from './KDSKeyboardHints';
 export { KDSModifierBadge, KDSModifiersList } from './KDSModifierBadge';
+export { KDSMonitorSelector } from './KDSMonitorSelector';
+export { KDSFilterPanel } from './KDSFilterPanel';
+export { KDSClassicView } from './views/KDSClassicView';
+export { KDSMixedView } from './views/KDSMixedView';
+export { KDSRowsInteractiveView } from './views/KDSRowsInteractiveView';
