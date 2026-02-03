@@ -8,7 +8,7 @@ import { DemoModeProvider } from "@/contexts/DemoModeContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
-// Pages
+// Pages - Nory-style AI Ops only
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
@@ -32,27 +32,10 @@ import CashManagement from "@/pages/CashManagement";
 import Budgets from "@/pages/Budgets";
 import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
-import POS from "@/pages/POS";
-import POSTerminal from "@/pages/POSTerminal";
-import KDS from "@/pages/KDS";
-import KDSMonitor from "@/pages/KDSMonitor";
-import ResetPassword from "@/pages/ResetPassword";
-import NotFound from "@/pages/NotFound";
-import StaffFloor from "@/pages/StaffFloor";
-import StaffClock from "@/pages/StaffClock";
-import StaffKDS from "@/pages/StaffKDS";
-import { StaffLayout } from "@/components/staff/StaffLayout";
-import BookingWidget from "@/pages/BookingWidget";
-import Reservations from "@/pages/Reservations";
-import ReservationsAnalytics from "@/pages/ReservationsAnalytics";
-import ReservationsSettings from "@/pages/ReservationsSettings";
-import ScanPayAdmin from "@/pages/scanpay/ScanPayAdmin";
-import ScanPayPublic from "@/pages/scanpay/ScanPayPublic";
-import KDSSettings from "@/pages/KDSSettings";
-import POSStaffLogin from "@/pages/pos/POSStaffLogin";
-import POSFloorMap from "@/pages/pos/POSFloorMap";
 import Integrations from "@/pages/Integrations";
 import SquareIntegration from "@/pages/integrations/SquareIntegration";
+import ResetPassword from "@/pages/ResetPassword";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -98,8 +81,6 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <Signup />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/book/:locationId" element={<BookingWidget />} />
-      <Route path="/scan-pay/:token" element={<ScanPayPublic />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
       <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
@@ -121,70 +102,23 @@ function AppRoutes() {
         <Route path="/insights/cash-management" element={<CashManagement />} />
         <Route path="/insights/budgets" element={<Budgets />} />
         
-        {/* Redirects from old routes */}
-        <Route path="/sales" element={<Navigate to="/insights/sales" replace />} />
-        <Route path="/labour" element={<Navigate to="/insights/labour" replace />} />
-        <Route path="/labour/:locationId" element={<Navigate to="/insights/labour" replace />} />
-        <Route path="/labor" element={<Navigate to="/insights/labour" replace />} />
-        <Route path="/instant-pl" element={<Navigate to="/insights/instant-pl" replace />} />
-        <Route path="/inventory" element={<Navigate to="/insights/inventory" replace />} />
-        <Route path="/inventory/*" element={<Navigate to="/insights/inventory" replace />} />
-        <Route path="/waste" element={<Navigate to="/insights/waste" replace />} />
-        <Route path="/menu-engineering" element={<Navigate to="/insights/menu-engineering" replace />} />
-        
-        {/* Procurement routes */}
+        {/* Workforce & Operations */}
+        <Route path="/scheduling" element={<Scheduling />} />
+        <Route path="/availability" element={<Availability />} />
         <Route path="/procurement" element={<Procurement />} />
         <Route path="/procurement/cart" element={<ProcurementCart />} />
         <Route path="/procurement/orders" element={<ProcurementOrders />} />
-        
-        <Route path="/scheduling" element={<Scheduling />} />
-        <Route path="/availability" element={<Availability />} />
-        <Route path="/reservations" element={<Reservations />} />
-        <Route path="/reservations/analytics" element={<ReservationsAnalytics />} />
-        <Route path="/reservations/settings" element={<ReservationsSettings />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/:step" element={<Payroll />} />
-        <Route path="/settings" element={<SettingsPage />} />
         
-        {/* POS routes - New Ágora flow */}
-        <Route path="/pos" element={<POS />} />
-        <Route path="/pos/:locationId/login" element={<POSStaffLogin />} />
-        <Route path="/pos/:locationId/floor" element={<POSFloorMap />} />
-        <Route path="/pos/:locationId" element={<POSTerminal />} />
-        
-        {/* Scan&Pay admin route */}
-        <Route path="/scanpay" element={<ScanPayAdmin />} />
-        
-        {/* KDS settings route */}
-        <Route path="/kds/settings" element={<KDSSettings />} />
-        
-        {/* Integrations routes */}
+        {/* Integrations */}
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/integrations/square" element={<SquareIntegration />} />
+        
+        {/* Settings */}
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
-      
-      {/* KDS route - outside protected layout for fullscreen */}
-      <Route path="/kds/:locationId" element={
-        <ProtectedRoute>
-          <AppProvider>
-            <KDSMonitor />
-          </AppProvider>
-        </ProtectedRoute>
-      } />
-      
-      {/* Staff routes - simplified view for employees */}
-      <Route path="/staff/:locationId" element={
-        <ProtectedRoute>
-          <AppProvider>
-            <StaffLayout />
-          </AppProvider>
-        </ProtectedRoute>
-      }>
-        <Route index element={<StaffFloor />} />
-        <Route path="floor" element={<StaffFloor />} />
-        <Route path="clock" element={<StaffClock />} />
-        <Route path="kds" element={<StaffKDS />} />
-      </Route>
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -198,11 +132,11 @@ function App() {
           <AuthProvider>
             <BrowserRouter>
               <AppRoutes />
+              <Toaster />
+              <Sonner />
             </BrowserRouter>
           </AuthProvider>
         </DemoModeProvider>
-        <Toaster />
-        <Sonner />
       </TooltipProvider>
     </QueryClientProvider>
   );
