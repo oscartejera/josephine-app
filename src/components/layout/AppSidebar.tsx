@@ -103,12 +103,22 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     return stored === 'true';
   });
 
+  const [workforceExpanded, setWorkforceExpanded] = useState(false);
+  const isWorkforceRoute = location.pathname.startsWith('/scheduling') || 
+                           location.pathname.startsWith('/availability') ||
+                           location.pathname.startsWith('/payroll');
 
   useEffect(() => {
     if (isInsightsRoute) {
       setInsightsExpanded(true);
     }
   }, [isInsightsRoute]);
+
+  useEffect(() => {
+    if (isWorkforceRoute) {
+      setWorkforceExpanded(true);
+    }
+  }, [isWorkforceRoute]);
 
   useEffect(() => {
     localStorage.setItem(INSIGHTS_EXPANDED_KEY, String(insightsExpanded));
@@ -165,7 +175,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               onClick={() => navigate('/dashboard')}
             >
               <LayoutDashboard className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Dashboard</span>}
+              {!collapsed && <span>Control Tower</span>}
             </Button>
           )}
 
@@ -217,6 +227,78 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               </CollapsibleContent>
             </Collapsible>
           )}
+
+          {/* Workforce Collapsible */}
+          <Collapsible open={workforceExpanded && !collapsed} onOpenChange={() => setWorkforceExpanded(prev => !prev)}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant={isWorkforceRoute ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start gap-3 h-10",
+                  isWorkforceRoute && "bg-accent/50 text-accent-foreground font-medium",
+                  collapsed && "justify-center px-2"
+                )}
+              >
+                <Users className="h-4 w-4 shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left">Workforce</span>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 shrink-0 transition-transform duration-200",
+                      workforceExpanded && "rotate-180"
+                    )} />
+                  </>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1 mt-1">
+              {workforceChildren.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Button
+                    key={item.path}
+                    variant={isActive ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10 pl-9",
+                      isActive && "bg-accent text-accent-foreground font-medium"
+                    )}
+                    onClick={() => navigate(item.path)}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </Button>
+                );
+              })}
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Purchases */}
+          <Button
+            variant={location.pathname === '/procurement' ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname === '/procurement' && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/procurement')}
+          >
+            <ShoppingCart className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Purchases</span>}
+          </Button>
+
+          {/* Integrations */}
+          <Button
+            variant={location.pathname.startsWith('/integrations') ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname.startsWith('/integrations') && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/integrations')}
+          >
+            <Plug2 className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Integrations</span>}
+          </Button>
 
           {/* Other nav items - filtered by permission */}
           {visibleNavItems.filter(item => item.path !== '/dashboard').map((item) => {
