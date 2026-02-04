@@ -116,13 +116,13 @@ export default function Sales() {
         },
       },
       weeklyChartData: [
-        { day: 'Mon', actual: 12500, forecastLive: 12350, forecast: 12200, avgCheck: 24.20, avgCheckForecast: 24.00 },
-        { day: 'Tue', actual: 13800, forecastLive: 13500, forecast: 13200, avgCheck: 24.50, avgCheckForecast: 24.30 },
-        { day: 'Wed', actual: 10421, forecastLive: 10300, forecast: 10194, avgCheck: 24.41, avgCheckForecast: 24.20 },
-        { day: 'Thu', actual: 0, forecastLive: 15350, forecast: 15200, avgCheck: 24.80, avgCheckForecast: 24.60 },
-        { day: 'Fri', actual: 0, forecastLive: 18650, forecast: 18500, avgCheck: 25.20, avgCheckForecast: 25.00 },
-        { day: 'Sat', actual: 0, forecastLive: 22450, forecast: 22300, avgCheck: 26.50, avgCheckForecast: 26.30 },
-        { day: 'Sun', actual: 0, forecastLive: 16950, forecast: 16800, avgCheck: 25.00, avgCheckForecast: 24.80 },
+        { day: 'Monday, 29', actual: 12500, forecastLive: 12350, forecast: 12200, avgCheck: 24.20, avgCheckForecast: 24.00 },
+        { day: 'Tuesday, 30', actual: 13800, forecastLive: 13500, forecast: 13200, avgCheck: 24.50, avgCheckForecast: 24.30 },
+        { day: 'Wednesday, 1', actual: 10421, forecastLive: 10300, forecast: 10194, avgCheck: 24.41, avgCheckForecast: 24.20 },
+        { day: 'Thursday, 2', actual: 0, forecastLive: 15350, forecast: 15200, avgCheck: 24.80, avgCheckForecast: 24.60 },
+        { day: 'Friday, 3', actual: 0, forecastLive: 18650, forecast: 18500, avgCheck: 25.20, avgCheckForecast: 25.00 },
+        { day: 'Saturday, 4', actual: 0, forecastLive: 22450, forecast: 22300, avgCheck: 26.50, avgCheckForecast: 26.30 },
+        { day: 'Sunday, 5', actual: 0, forecastLive: 16950, forecast: 16800, avgCheck: 25.00, avgCheckForecast: 24.80 },
       ],
       channelTableData: [
         { 
@@ -183,13 +183,13 @@ export default function Sales() {
         },
       },
       weeklyChartData: [
-        { day: 'Mon', actual: 4200, forecastLive: 4150, forecast: 4100, avgCheck: 26.80, avgCheckForecast: 26.60 },
-        { day: 'Tue', actual: 4650, forecastLive: 4525, forecast: 4400, avgCheck: 27.20, avgCheckForecast: 27.00 },
-        { day: 'Wed', actual: 3730, forecastLive: 3665, forecast: 3600, avgCheck: 26.10, avgCheckForecast: 25.90 },
-        { day: 'Thu', actual: 0, forecastLive: 5150, forecast: 5100, avgCheck: 27.50, avgCheckForecast: 27.30 },
-        { day: 'Fri', actual: 0, forecastLive: 6250, forecast: 6200, avgCheck: 28.00, avgCheckForecast: 27.80 },
-        { day: 'Sat', actual: 0, forecastLive: 7550, forecast: 7500, avgCheck: 29.00, avgCheckForecast: 28.80 },
-        { day: 'Sun', actual: 0, forecastLive: 5650, forecast: 5600, avgCheck: 27.80, avgCheckForecast: 27.60 },
+        { day: 'Monday, 29', actual: 4200, forecastLive: 4150, forecast: 4100, avgCheck: 26.80, avgCheckForecast: 26.60 },
+        { day: 'Tuesday, 30', actual: 4650, forecastLive: 4525, forecast: 4400, avgCheck: 27.20, avgCheckForecast: 27.00 },
+        { day: 'Wednesday, 1', actual: 3730, forecastLive: 3665, forecast: 3600, avgCheck: 26.10, avgCheckForecast: 25.90 },
+        { day: 'Thursday, 2', actual: 0, forecastLive: 5150, forecast: 5100, avgCheck: 27.50, avgCheckForecast: 27.30 },
+        { day: 'Friday, 3', actual: 0, forecastLive: 6250, forecast: 6200, avgCheck: 28.00, avgCheckForecast: 27.80 },
+        { day: 'Saturday, 4', actual: 0, forecastLive: 7550, forecast: 7500, avgCheck: 29.00, avgCheckForecast: 28.80 },
+        { day: 'Sunday, 5', actual: 0, forecastLive: 5650, forecast: 5600, avgCheck: 27.80, avgCheckForecast: 27.60 },
       ],
       channelTableData: [
         { 
@@ -240,13 +240,13 @@ export default function Sales() {
         },
       },
       weeklyChartData: [
-        { day: 'Mon', actual: 4050, forecastLive: 4025, forecast: 4000, avgCheck: 23.10, avgCheckForecast: 22.90 },
-        { day: 'Tue', actual: 4480, forecastLive: 4390, forecast: 4300, avgCheck: 23.50, avgCheckForecast: 23.30 },
-        { day: 'Wed', actual: 3190, forecastLive: 3155, forecast: 3120, avgCheck: 22.20, avgCheckForecast: 22.00 },
-        { day: 'Thu', actual: 0, forecastLive: 5000, forecast: 4950, avgCheck: 23.80, avgCheckForecast: 23.60 },
-        { day: 'Fri', actual: 0, forecastLive: 6100, forecast: 6050, avgCheck: 24.50, avgCheckForecast: 24.30 },
-        { day: 'Sat', actual: 0, forecastLive: 7350, forecast: 7300, avgCheck: 25.20, avgCheckForecast: 25.00 },
-        { day: 'Sun', actual: 0, forecastLive: 5530, forecast: 5480, avgCheck: 24.00, avgCheckForecast: 23.80 },
+        { day: 'Monday, 29', actual: 4050, forecastLive: 4025, forecast: 4000, avgCheck: 23.10, avgCheckForecast: 22.90 },
+        { day: 'Tuesday, 30', actual: 4480, forecastLive: 4390, forecast: 4300, avgCheck: 23.50, avgCheckForecast: 23.30 },
+        { day: 'Wednesday, 1', actual: 3190, forecastLive: 3155, forecast: 3120, avgCheck: 22.20, avgCheckForecast: 22.00 },
+        { day: 'Thursday, 2', actual: 0, forecastLive: 5000, forecast: 4950, avgCheck: 23.80, avgCheckForecast: 23.60 },
+        { day: 'Friday, 3', actual: 0, forecastLive: 6100, forecast: 6050, avgCheck: 24.50, avgCheckForecast: 24.30 },
+        { day: 'Saturday, 4', actual: 0, forecastLive: 7350, forecast: 7300, avgCheck: 25.20, avgCheckForecast: 25.00 },
+        { day: 'Sunday, 5', actual: 0, forecastLive: 5530, forecast: 5480, avgCheck: 24.00, avgCheckForecast: 23.80 },
       ],
       channelTableData: [
         { 
@@ -297,13 +297,13 @@ export default function Sales() {
         },
       },
       weeklyChartData: [
-        { day: 'Mon', actual: 4250, forecastLive: 4175, forecast: 4100, avgCheck: 22.50, avgCheckForecast: 22.30 },
-        { day: 'Tue', actual: 4670, forecastLive: 4585, forecast: 4500, avgCheck: 22.80, avgCheckForecast: 22.60 },
-        { day: 'Wed', actual: 2501, forecastLive: 2487, forecast: 2474, avgCheck: 20.50, avgCheckForecast: 20.30 },
-        { day: 'Thu', actual: 0, forecastLive: 5200, forecast: 5150, avgCheck: 22.30, avgCheckForecast: 22.10 },
-        { day: 'Fri', actual: 0, forecastLive: 6300, forecast: 6250, avgCheck: 23.70, avgCheckForecast: 23.50 },
-        { day: 'Sat', actual: 0, forecastLive: 7550, forecast: 7500, avgCheck: 24.80, avgCheckForecast: 24.60 },
-        { day: 'Sun', actual: 0, forecastLive: 5770, forecast: 5720, avgCheck: 23.20, avgCheckForecast: 23.00 },
+        { day: 'Monday, 29', actual: 4250, forecastLive: 4175, forecast: 4100, avgCheck: 22.50, avgCheckForecast: 22.30 },
+        { day: 'Tuesday, 30', actual: 4670, forecastLive: 4585, forecast: 4500, avgCheck: 22.80, avgCheckForecast: 22.60 },
+        { day: 'Wednesday, 1', actual: 2501, forecastLive: 2487, forecast: 2474, avgCheck: 20.50, avgCheckForecast: 20.30 },
+        { day: 'Thursday, 2', actual: 0, forecastLive: 5200, forecast: 5150, avgCheck: 22.30, avgCheckForecast: 22.10 },
+        { day: 'Friday, 3', actual: 0, forecastLive: 6300, forecast: 6250, avgCheck: 23.70, avgCheckForecast: 23.50 },
+        { day: 'Saturday, 4', actual: 0, forecastLive: 7550, forecast: 7500, avgCheck: 24.80, avgCheckForecast: 24.60 },
+        { day: 'Sunday, 5', actual: 0, forecastLive: 5770, forecast: 5720, avgCheck: 23.20, avgCheckForecast: 23.00 },
       ],
       channelTableData: [
         { 
@@ -606,14 +606,37 @@ export default function Sales() {
           </TabsList>
 
           <TabsContent value="sales" className="mt-6">
-            <h3 className="text-lg font-semibold mb-4">Sales v Forecast</h3>
-            <div className="h-[400px]">
+            <h3 className="text-base font-semibold mb-4">Sales v Forecast</h3>
+            <div className="h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={weeklyChartData} onClick={handleBarClick}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="day" />
-                  <YAxis yAxisId="left" tickFormatter={(v) => `€${(v/1000).toFixed(0)}K`} />
-                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `€${v}`} />
+                <ComposedChart 
+                  data={weeklyChartData} 
+                  onClick={handleBarClick}
+                  barGap={2}
+                  barCategoryGap="15%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                  <XAxis 
+                    dataKey="day" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    yAxisId="left" 
+                    tickFormatter={(v) => `€${(v/1000).toFixed(0)}K`}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    tickFormatter={(v) => `€${v}`}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <Tooltip 
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
@@ -626,8 +649,12 @@ export default function Sales() {
                                 <span className="font-semibold">€{payload[0].value?.toLocaleString()}</span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
+                                <span>Forecast (Live):</span>
+                                <span className="font-semibold">€{payload[1]?.value?.toLocaleString()}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-4">
                                 <span>Forecast:</span>
-                                <span className="font-semibold">€{payload[1].value?.toLocaleString()}</span>
+                                <span className="font-semibold">€{payload[2]?.value?.toLocaleString()}</span>
                               </div>
                               <div className="text-xs text-muted-foreground mt-2 border-t pt-1">
                                 Click para ver detalles por hora
@@ -639,31 +666,40 @@ export default function Sales() {
                       return null;
                     }}
                   />
-                  <Legend />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    iconType="rect"
+                    iconSize={10}
+                    wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}
+                  />
                   {/* 3 Barras - Nory Style */}
                   <Bar 
                     yAxisId="left" 
                     dataKey="actual" 
                     fill={COLORS.actual} 
                     name="Actual" 
-                    radius={[4,4,0,0]}
+                    radius={[3,3,0,0]}
                     cursor="pointer"
+                    maxBarSize={40}
                   />
                   <Bar 
                     yAxisId="left" 
                     dataKey="forecastLive" 
                     fill={COLORS.forecastLive} 
                     name="Forecast (Live)" 
-                    radius={[4,4,0,0]}
+                    radius={[3,3,0,0]}
                     cursor="pointer"
+                    maxBarSize={40}
                   />
                   <Bar 
                     yAxisId="left" 
                     dataKey="forecast" 
                     fill={COLORS.forecast} 
                     name="Forecast" 
-                    radius={[4,4,0,0]}
+                    radius={[3,3,0,0]}
                     cursor="pointer"
+                    maxBarSize={40}
                   />
                   {/* 2 Líneas de Avg Check - Nory Style */}
                   <Line 
@@ -671,19 +707,18 @@ export default function Sales() {
                     type="monotone" 
                     dataKey="avgCheck" 
                     stroke={COLORS.avgCheck} 
-                    strokeWidth={2} 
+                    strokeWidth={2.5} 
                     name="Avg Check Size"
-                    dot={{ r: 3 }}
+                    dot={{ r: 4, fill: COLORS.avgCheck, strokeWidth: 0 }}
                   />
                   <Line 
                     yAxisId="right" 
                     type="monotone" 
                     dataKey="avgCheckForecast" 
                     stroke={COLORS.avgCheckForecast} 
-                    strokeWidth={2} 
+                    strokeWidth={2.5} 
                     name="Avg Check Forecast"
-                    strokeDasharray="5 5"
-                    dot={{ r: 3 }}
+                    dot={{ r: 4, fill: COLORS.avgCheckForecast, strokeWidth: 0 }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
