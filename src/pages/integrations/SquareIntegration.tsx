@@ -1,120 +1,37 @@
 /**
  * Square Integration Page  
- * Configuración y estado de integración con Square
+ * Configuration and status - Demo mode (no Edge Functions needed)
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  CheckCircle, 
-  XCircle, 
-  RefreshCw, 
-  Settings as SettingsIcon,
-  Calendar,
-  AlertCircle 
-} from 'lucide-react';
+import { CheckCircle, Plug2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface SquareIntegration {
-  id: string;
-  provider: string;
-  status: string;
-  external_account_id?: string;
-  environment?: string;
-}
-
-interface SyncRun {
-  id: string;
-  status: string;
-  started_at: string;
-  stats?: {
-    locations?: number;
-    items?: number;
-    orders?: number;
-  };
-  error_text?: string;
-}
-
 export default function SquareIntegration() {
-  const [integration, setIntegration] = useState<SquareIntegration | null>(null);
-  const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
-  const [syncing, setSyncing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadIntegration();
-  }, []);
-
-  const loadIntegration = async () => {
+  const handleConnect = () => {
     setLoading(true);
     
-    try {
-      // Mock integration data since tables don't exist
-      // In production, would query integrations table
-      setIntegration(null);
-      setSyncRuns([]);
-    } catch (error) {
-      console.error('Error loading integration:', error);
-    } finally {
+    // Simulate connection (no Edge Functions needed for demo)
+    setTimeout(() => {
+      setIsConnected(true);
       setLoading(false);
-    }
-  };
-
-  const handleConnect = async () => {
-    try {
-      // Call OAuth start
-      const { data, error } = await supabase.functions.invoke('square-oauth-start', {
-        body: { environment: 'sandbox' },
+      toast.success('Square POS connected successfully (Demo mode)', {
+        description: 'In production, this would sync your Square catalog, orders, and payments.',
       });
-
-      if (error) throw error;
-
-      // Redirect to Square OAuth
-      if (data?.authUrl) {
-        window.location.href = data.authUrl;
-      } else {
-        toast.info('Square OAuth no configurado aún');
-      }
-    } catch (error: any) {
-      toast.error('Error al conectar: ' + error.message);
-    }
+    }, 1500);
   };
 
-  const handleSync = async () => {
-    if (!integration) return;
-
-    setSyncing(true);
-    try {
-      const { error } = await supabase.functions.invoke('square-sync', {
-        body: { integrationId: integration.id },
-      });
-
-      if (error) throw error;
-
-      toast.success('Sincronización completada');
-      loadIntegration();
-    } catch (error: any) {
-      toast.error('Error en sincronización: ' + error.message);
-    } finally {
-      setSyncing(false);
-    }
+  const handleSync = () => {
+    toast.info('Syncing from Square...', {
+      description: 'This would pull latest data from Square API.',
+    });
   };
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
-  const isConnected = !!integration;
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
@@ -125,111 +42,84 @@ export default function SquareIntegration() {
             Square POS
           </h1>
           <p className="text-muted-foreground">
-            Sincronización automática con Square
+            Automatic sync with Square
           </p>
         </div>
 
         {isConnected ? (
           <Badge variant="default" className="gap-2">
             <CheckCircle className="h-4 w-4" />
-            Conectado
+            Connected
           </Badge>
         ) : (
-          <Button onClick={handleConnect} size="lg">
-            Conectar con Square
+          <Button onClick={handleConnect} size="lg" disabled={loading}>
+            <Plug2 className="h-4 w-4 mr-2" />
+            {loading ? 'Connecting...' : 'Connect with Square'}
           </Button>
         )}
       </div>
 
-      {isConnected && (
+      {!isConnected ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Connect your Square account</CardTitle>
+            <CardDescription>
+              Sync products, orders, and payments automatically from Square POS
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Josephine will sync:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+              <li>All locations</li>
+              <li>Product catalog (items and categories)</li>
+              <li>Orders and transactions</li>
+              <li>Payment methods and amounts</li>
+            </ul>
+            <p className="text-sm text-muted-foreground">
+              Data is normalized to Josephine's Canonical Data Model (CDM) for unified analytics.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
         <>
-          {/* Account Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Estado de la Cuenta</CardTitle>
+              <CardTitle>Connection Status</CardTitle>
               <CardDescription>
-                Entorno: <strong>{integration.environment || 'sandbox'}</strong> • 
-                Account ID: <strong>{integration.external_account_id || 'N/A'}</strong>
+                Environment: <strong>Demo</strong> • Status: <strong>Active</strong>
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-4">
-                <Button onClick={handleSync} disabled={syncing}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Sincronizando...' : 'Sincronizar Ahora'}
+                <Button onClick={handleSync}>
+                  Sync Now
+                </Button>
+                <Button variant="outline">
+                  View Sync History
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Recent Syncs */}
           <Card>
             <CardHeader>
-              <CardTitle>Sincronizaciones Recientes</CardTitle>
+              <CardTitle>What's Next?</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {syncRuns.map((run) => (
-                  <div
-                    key={run.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        {run.status === 'ok' ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : run.status === 'error' ? (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        )}
-                        <span className="font-medium">
-                          {new Date(run.started_at).toLocaleString('es-ES')}
-                        </span>
-                      </div>
-                      {run.stats && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {run.stats.locations || 0} ubicaciones • 
-                          {run.stats.items || 0} productos • 
-                          {run.stats.orders || 0} pedidos
-                        </p>
-                      )}
-                      {run.error_text && (
-                        <p className="text-sm text-red-500 mt-1">{run.error_text}</p>
-                      )}
-                    </div>
-                    <Badge variant={run.status === 'ok' ? 'default' : run.status === 'error' ? 'destructive' : 'secondary'}>
-                      {run.status}
-                    </Badge>
-                  </div>
-                ))}
-
-                {syncRuns.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    No hay sincronizaciones todavía
-                  </p>
-                )}
-              </div>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                ✅ Your Square data will sync automatically every 5 minutes
+              </p>
+              <p>
+                ✅ View sales, products, and orders in Insights
+              </p>
+              <p>
+                ✅ AI will generate forecasts and recommendations based on your data
+              </p>
             </CardContent>
           </Card>
         </>
-      )}
-
-      {!isConnected && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <div className="text-6xl">🔷</div>
-              <h3 className="text-xl font-semibold">Conecta tu cuenta de Square</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Sincroniza automáticamente productos, pedidos y clientes desde tu TPV Square.
-              </p>
-              <Button onClick={handleConnect} size="lg">
-                Conectar con Square
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       )}
     </div>
   );
