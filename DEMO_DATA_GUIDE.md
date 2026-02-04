@@ -1,6 +1,20 @@
-# 📊 Guía de Datos Demo - Josephine
+# 📊 Guía de Datos Demo - Josephine (18 meses)
 
-Esta guía explica cómo generar datos demo coherentes para demos/inversores y cómo switchear a datos reales de POS.
+Esta guía explica cómo generar **18 meses de datos demo** coherentes para demos/inversores y cómo switchear a datos reales de POS.
+
+## 📅 **Periodo: 2025-01-01 a 2026-06-30**
+
+**Estrategia temporal:**
+- **2025 completo (12 meses):** Datos históricos con actuals - para análisis YoY
+- **2026 Ene-Feb (2 meses):** Datos actuales con actuals - presente
+- **2026 Mar-Jun (4 meses):** Solo forecast/planned - futuro proyectado
+
+**Por qué 18 meses:**
+- ✅ Comparaciones Year-over-Year (Ene 2026 vs Ene 2025)
+- ✅ Crecimiento demostrable (+15% YoY)
+- ✅ Estacionalidad visible (verano alto, invierno bajo)
+- ✅ Historia suficiente para Prophet ML
+- ✅ Forecasting creíble basado en tendencias reales
 
 ## 🎯 Arquitectura de Datos
 
@@ -32,14 +46,18 @@ KPIs & Analytics ┘
 - `facts_labor_daily` - Labour metrics por día (30-60 días)
 - `facts_item_mix_daily` - Productos vendidos por día (30-60 días)
 
-## 🚀 Opción 1: Datos Demo Generados (para demos)
+## 🚀 Opción 1: Datos Demo Generados (18 meses para demos/inversores)
 
 ### **Características:**
-- ✅ **60 días de historia** con patrones realistas
-- ✅ **Coherencia total**: Sales ↔ Labour ↔ Products alineados
+- ✅ **18 meses de historia** (2025 completo + H1 2026)
+- ✅ **Coherencia total**: Sales ↔ Labour ↔ Products alineados matemáticamente
 - ✅ **Patrones semanales**: Weekends +50%, mid-week -15%
+- ✅ **Estacionalidad**: Verano +20%, Invierno -10%
+- ✅ **Crecimiento YoY**: +15% en 2026 vs 2025
 - ✅ **3 locations** con características únicas
-- ✅ **Variación realista**: Random ±10% por realismo
+- ✅ **70 empleados** con roles y salarios realistas
+- ✅ **Variación realista**: Random ±10% en actuals, forecast sin variación
+- ✅ **~60,000 registros** generados en 3-5 minutos
 
 ### **Cómo generar:**
 

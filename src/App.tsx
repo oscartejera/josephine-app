@@ -15,6 +15,7 @@ import Dashboard from "@/pages/Dashboard";
 import Insights from "@/pages/Insights";
 import Sales from "@/pages/Sales";
 import Labour from "@/pages/Labour";
+import AdminTools from "@/pages/AdminTools";
 import InstantPL from "@/pages/InstantPL";
 import Reviews from "@/pages/Reviews";
 import ReviewsAll from "@/pages/ReviewsAll";
@@ -123,6 +124,7 @@ function AppRoutes() {
         
         {/* Settings */}
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/admin/tools" element={<AdminTools />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
