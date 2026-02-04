@@ -554,106 +554,132 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Top KPI Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        {/* Sales to Date */}
-        <Card className="p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">Sales to Date</h3>
-              <span className="text-xs text-muted-foreground">{kpiData.salesToDate.dateRange}</span>
+      {/* Top KPI Cards - Nory Style */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Sales to date */}
+        <Card className="p-5 bg-white">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <h3 className="text-sm font-normal text-gray-700">Sales to date</h3>
+              <span className="text-xs text-gray-500">{kpiData.salesToDate.dateRange}</span>
             </div>
             
-            <div>
-              <div className="text-3xl font-bold">€{kpiData.salesToDate.value.toLocaleString()}</div>
-              <VarianceIndicator value={kpiData.salesToDate.variance} />
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-gray-900">€{Math.round(kpiData.salesToDate.value).toLocaleString()}</div>
+              <div className="flex items-center gap-2">
+                <VarianceIndicator value={kpiData.salesToDate.variance} />
+                <span className="text-xs text-gray-500">vs forecast</span>
+              </div>
             </div>
 
-            {/* Channel bars */}
-            <div className="space-y-2">
+            {/* Channel breakdown with bars */}
+            <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.dineIn}}></div>
-                  Dine-in
-                </span>
-                <span className="font-medium">{kpiData.channels.dineIn.pct}%</span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full" style={{backgroundColor: COLORS.dineIn, width: `${kpiData.channels.dineIn.pct}%`}}></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS.dineIn}}></div>
+                  <span className="text-gray-700">Dine-in</span>
+                </div>
+                <span className="font-medium text-gray-900">{kpiData.channels.dineIn.pct}%</span>
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.pickUp}}></div>
-                  Pick-up
-                </span>
-                <span className="font-medium">{kpiData.channels.pickUp.pct}%</span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full" style={{backgroundColor: COLORS.pickUp, width: `${kpiData.channels.pickUp.pct}%`}}></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS.pickUp}}></div>
+                  <span className="text-gray-700">Pick-up</span>
+                </div>
+                <span className="font-medium text-gray-900">{kpiData.channels.pickUp.pct}%</span>
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.delivery}}></div>
-                  Delivery
-                </span>
-                <span className="font-medium">{kpiData.channels.delivery.pct}%</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS.delivery}}></div>
+                  <span className="text-gray-700">Delivery</span>
+                </div>
+                <span className="font-medium text-gray-900">{kpiData.channels.delivery.pct}%</span>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full" style={{backgroundColor: COLORS.delivery, width: `${kpiData.channels.delivery.pct}%`}}></div>
+
+              {/* Stacked bar - Nory style */}
+              <div className="w-full h-2.5 flex rounded-sm overflow-hidden">
+                <div 
+                  className="h-full" 
+                  style={{
+                    backgroundColor: COLORS.dineIn, 
+                    width: `${kpiData.channels.dineIn.pct}%`
+                  }}
+                ></div>
+                <div 
+                  className="h-full" 
+                  style={{
+                    backgroundColor: COLORS.pickUp, 
+                    width: `${kpiData.channels.pickUp.pct}%`
+                  }}
+                ></div>
+                <div 
+                  className="h-full" 
+                  style={{
+                    backgroundColor: COLORS.delivery, 
+                    width: `${kpiData.channels.delivery.pct}%`
+                  }}
+                ></div>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Avg Check */}
-        <Card className="p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">Avg Check</h3>
-              <span className="text-xs text-muted-foreground">{kpiData.avgCheck.dateRange}</span>
+        {/* Average check size */}
+        <Card className="p-5 bg-white">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <h3 className="text-sm font-normal text-gray-700">Average check size</h3>
+              <span className="text-xs text-gray-500">{kpiData.avgCheck.dateRange}</span>
             </div>
             
-            <div>
-              <div className="text-3xl font-bold">€{kpiData.avgCheck.value.toFixed(2)}</div>
-              <VarianceIndicator value={kpiData.avgCheck.variance} />
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-gray-900">€{kpiData.avgCheck.value.toFixed(2)}</div>
+              <div className="flex items-center gap-2">
+                <VarianceIndicator value={kpiData.avgCheck.variance} />
+                <span className="text-xs text-gray-500">vs forecast</span>
+              </div>
             </div>
 
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                  Dine-in
-                </span>
-                <span className="font-semibold">€{kpiData.channels.dineIn.avgCheck.toFixed(2)}</span>
+            {/* Channel avg check - only dots and values, no bars */}
+            <div className="space-y-2.5 pt-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div>
+                  <span className="text-gray-700">Dine-in</span>
+                </div>
+                <span className="font-medium text-gray-900">€{kpiData.channels.dineIn.avgCheck.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                  Pick-up
-                </span>
-                <span className="font-semibold">€{kpiData.channels.pickUp.avgCheck.toFixed(2)}</span>
+
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div>
+                  <span className="text-gray-700">Pick-up</span>
+                </div>
+                <span className="font-medium text-gray-900">€{kpiData.channels.pickUp.avgCheck.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                  Delivery
-                </span>
-                <span className="font-semibold">€{kpiData.channels.delivery.avgCheck.toFixed(2)}</span>
+
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                  <span className="text-gray-700">Delivery</span>
+                </div>
+                <span className="font-medium text-gray-900">€{kpiData.channels.delivery.avgCheck.toFixed(2)}</span>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Dwell Time */}
-        <Card className="p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">Dwell Time</h3>
-              <span className="text-xs text-muted-foreground">{kpiData.dwellTime.dateRange}</span>
+        {/* Dwell time */}
+        <Card className="p-5 bg-white">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <h3 className="text-sm font-normal text-gray-700">Dwell time</h3>
+              <span className="text-xs text-gray-500">{kpiData.dwellTime.dateRange}</span>
             </div>
-            <div className="text-3xl font-bold">{kpiData.dwellTime.value}</div>
+            
+            <div className="text-3xl font-bold text-gray-900">{kpiData.dwellTime.value}</div>
           </div>
         </Card>
       </div>
