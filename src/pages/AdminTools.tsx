@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { generateDemoData18Months } from '@/lib/seed/generateDemoData';
 
 export default function AdminTools() {
   const [isSeeding, setIsSeeding] = useState(false);
@@ -16,40 +15,24 @@ export default function AdminTools() {
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingForecast, setIsGeneratingForecast] = useState(false);
   const [forecastResult, setForecastResult] = useState<any>(null);
-  const [seedProgress, setSeedProgress] = useState<{ step: string; progress: number; total: number; message: string } | null>(null);
 
   const handleSeed18Months = async () => {
     setIsSeeding(true);
     setError(null);
     setSeedResult(null);
-    setSeedProgress(null);
 
     try {
-      console.log('🌱 Starting frontend seed (30 días)...');
+      console.log('🌱 Starting 18-month seed...');
       
-      // Usar función de frontend en lugar de Edge Function
-      const result = await generateDemoData18Months((progress) => {
-        setSeedProgress(progress);
-        console.log(`Progress: ${progress.message}`);
+      const { data, error } = await supabase.functions.invoke('seed_josephine_18m', {
+        body: {}
       });
 
-      console.log('✅ Seed result:', result);
-      setSeedResult({
-        success: true,
-        locations: result.locations,
-        employees: result.employees,
-        salesRecords: result.salesRecords,
-        labourRecords: result.labourRecords,
-        message: result.message,
-        period: 'Últimos 30 días con actuals'
-      });
-      
-      toast.success('¡Datos generados exitosamente!');
-      
-      // Auto-refresh después de 2 segundos
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      if (error) throw error;
+
+      console.log('✅ Seed result:', data);
+      setSeedResult(data);
+      toast.success('18 meses de datos generados exitosamente!');
 
     } catch (err) {
       console.error('❌ Seed error:', err);
@@ -58,7 +41,6 @@ export default function AdminTools() {
       toast.error(`Error: ${errorMsg}`);
     } finally {
       setIsSeeding(false);
-      setSeedProgress(null);
     }
   };
 
@@ -118,55 +100,6 @@ export default function AdminTools() {
         <h1 className="text-3xl font-bold text-gray-900">Admin Tools</h1>
         <p className="text-gray-600 mt-2">Herramientas para generar datos demo y gestión del sistema</p>
       </div>
-
-      {/* Banner de instrucciones SQL directas */}
-      <Card className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-            <Database className="h-6 w-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold mb-2">⚡ Usa SQL Directo (más rápido)</h3>
-            <p className="text-indigo-100 mb-4">
-              Los botones de abajo pueden dar error porque las Edge Functions están desplegándose.
-              Mientras tanto, usa este método SQL directo (funciona 100%):
-            </p>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-4 space-y-2">
-              <p className="font-semibold text-sm">Pasos:</p>
-              <ol className="list-decimal list-inside space-y-1.5 text-sm text-indigo-100">
-                <li>Ir a <strong className="text-white">Supabase Dashboard → SQL Editor</strong></li>
-                <li>Abrir archivo del proyecto: <code className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">SEED_DIRECT_SQL.sql</code></li>
-                <li>Copiar <strong className="text-white">TODO</strong> el contenido</li>
-                <li>Pegar en SQL Editor y click <strong className="text-white">"Run"</strong></li>
-                <li>Esperar 2-3 minutos (verás progress en logs)</li>
-                <li>Verás: <span className="text-emerald-300 font-semibold">"✅ COMPLETADO! 📊 ~60,000 registros"</span></li>
-              </ol>
-            </div>
-            <div className="flex gap-3 mt-4">
-              <Button 
-                variant="secondary"
-                size="sm"
-                onClick={() => window.open('https://supabase.com/dashboard', '_blank')}
-              >
-                Abrir Supabase Dashboard
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/30"
-                onClick={() => {
-                  // Copy SQL content to clipboard
-                  const sqlContent = `-- Ver SEED_DIRECT_SQL.sql en el proyecto para el código completo\n-- O ejecuta esto rápido (30 días):\n\nINSERT INTO locations (group_id, name, city) VALUES ((SELECT id FROM groups LIMIT 1), 'La Taberna Centro', 'Salamanca');\n-- Ver archivo completo para más...`;
-                  navigator.clipboard.writeText(sqlContent);
-                  toast.success('Link copiado - ve a supabase.com/dashboard');
-                }}
-              >
-                Copiar link Supabase
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Card>
 
       {/* Forecast Section */}
       <div className="space-y-4">
@@ -284,21 +217,6 @@ export default function AdminTools() {
                 </div>
               </div>
 
-              {seedProgress && (
-                <div className="bg-white rounded-lg p-3 mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-900">{seedProgress.message}</span>
-                    <span className="text-xs text-gray-500">{seedProgress.progress}/{seedProgress.total}</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-300"
-                      style={{ width: `${(seedProgress.progress / seedProgress.total) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
               <Button 
                 onClick={handleSeed18Months}
                 disabled={isSeeding}
@@ -307,19 +225,15 @@ export default function AdminTools() {
                 {isSeeding ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Generando... {seedProgress ? `(${seedProgress.step})` : ''}
+                    Generando... (3-5 min)
                   </>
                 ) : (
                   <>
                     <Database className="h-4 w-4 mr-2" />
-                    Generar Datos (30 días)
+                    Generar 18 Meses
                   </>
                 )}
               </Button>
-              
-              <p className="text-xs text-center text-gray-600 mt-2">
-                ✨ Genera desde el navegador sin Edge Functions
-              </p>
             </div>
           </Card>
 
@@ -534,31 +448,12 @@ export default function AdminTools() {
               <p className="text-sm text-gray-700 mb-3">{error}</p>
               
               <div className="bg-white rounded-lg p-3 text-xs">
-                <p className="font-medium mb-2">Solución directa (USA ESTO):</p>
-                <ol className="list-decimal list-inside space-y-2 text-gray-600">
-                  <li className="font-semibold text-indigo-600">
-                    Ir a Supabase Dashboard → SQL Editor
-                  </li>
-                  <li>
-                    Abrir archivo: <code className="bg-indigo-50 px-2 py-1 rounded font-mono text-indigo-700">SEED_DIRECT_SQL.sql</code>
-                  </li>
-                  <li>
-                    Copiar TODO el contenido y pegarlo en SQL Editor
-                  </li>
-                  <li>
-                    Click "Run" → Esperar 2-3 minutos
-                  </li>
-                  <li>
-                    Verás: "✅ COMPLETADO! 📊 Sales records: ~60000"
-                  </li>
-                  <li className="font-semibold text-emerald-600">
-                    Refresh esta página y ve a /sales
-                  </li>
+                <p className="font-medium mb-2">Alternativas:</p>
+                <ol className="list-decimal list-inside space-y-1 text-gray-600">
+                  <li>Ir a Supabase Dashboard → SQL Editor</li>
+                  <li>Ejecutar: <code className="bg-gray-100 px-1 rounded">SELECT * FROM seed_josephine_demo_data();</code></li>
+                  <li>O usar el botón "30 Días Rápido" arriba</li>
                 </ol>
-                <p className="mt-2 text-amber-600 font-medium">
-                  ⚠️ Las Edge Functions se desplegarán en próximo push de Lovable.
-                  Mientras tanto, usa el SQL directo.
-                </p>
               </div>
             </div>
           </div>
