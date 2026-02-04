@@ -46,10 +46,9 @@ import { startOfWeek, endOfWeek, format, eachDayOfInterval } from 'date-fns';
 // Josephine colors - Nory style
 const COLORS = {
   actual: '#6366f1', // Dark indigo/purple for Actual
-  forecastLive: '#a5b4fc', // Medium indigo/purple for Forecast (Live)
-  forecast: '#e0e7ff', // Light indigo/purple for Forecast
-  avgCheck: '#fb923c', // Dark orange for Avg Check Size
-  avgCheckForecast: '#fdba74', // Light orange for Avg Check Forecast
+  forecast: '#c7d2fe', // Light indigo/purple for Forecast
+  avgCheck: '#f97316', // Orange for Avg Check Size
+  avgCheckForecast: '#fed7aa', // Light orange for Avg Check Forecast
   success: '#10b981',
   danger: '#f43f5e',
   dineIn: '#8b5cf6', // Purple
@@ -116,13 +115,13 @@ export default function Sales() {
         },
       },
       weeklyChartData: [
-        { day: 'Monday, 29', actual: 12500, forecastLive: 12350, forecast: 12200, avgCheck: 24.20, avgCheckForecast: 24.00 },
-        { day: 'Tuesday, 30', actual: 13800, forecastLive: 13500, forecast: 13200, avgCheck: 24.50, avgCheckForecast: 24.30 },
-        { day: 'Wednesday, 1', actual: 10421, forecastLive: 10300, forecast: 10194, avgCheck: 24.41, avgCheckForecast: 24.20 },
-        { day: 'Thursday, 2', actual: 0, forecastLive: 15350, forecast: 15200, avgCheck: 24.80, avgCheckForecast: 24.60 },
-        { day: 'Friday, 3', actual: 0, forecastLive: 18650, forecast: 18500, avgCheck: 25.20, avgCheckForecast: 25.00 },
-        { day: 'Saturday, 4', actual: 0, forecastLive: 22450, forecast: 22300, avgCheck: 26.50, avgCheckForecast: 26.30 },
-        { day: 'Sunday, 5', actual: 0, forecastLive: 16950, forecast: 16800, avgCheck: 25.00, avgCheckForecast: 24.80 },
+        { day: 'Monday, 29', actual: 12500, forecast: 12200, avgCheck: 24.20, avgCheckForecast: 24.00 },
+        { day: 'Tuesday, 30', actual: 13800, forecast: 13200, avgCheck: 24.50, avgCheckForecast: 24.30 },
+        { day: 'Wednesday, 1', actual: 10421, forecast: 10194, avgCheck: 24.41, avgCheckForecast: 24.20 },
+        { day: 'Thursday, 2', actual: 0, forecast: 15200, avgCheck: 24.80, avgCheckForecast: 24.60 },
+        { day: 'Friday, 3', actual: 0, forecast: 18500, avgCheck: 25.20, avgCheckForecast: 25.00 },
+        { day: 'Saturday, 4', actual: 0, forecast: 22300, avgCheck: 26.50, avgCheckForecast: 26.30 },
+        { day: 'Sunday, 5', actual: 0, forecast: 16800, avgCheck: 25.00, avgCheckForecast: 24.80 },
       ],
       channelTableData: [
         { 
@@ -183,13 +182,13 @@ export default function Sales() {
         },
       },
       weeklyChartData: [
-        { day: 'Monday, 29', actual: 4200, forecastLive: 4150, forecast: 4100, avgCheck: 26.80, avgCheckForecast: 26.60 },
-        { day: 'Tuesday, 30', actual: 4650, forecastLive: 4525, forecast: 4400, avgCheck: 27.20, avgCheckForecast: 27.00 },
-        { day: 'Wednesday, 1', actual: 3730, forecastLive: 3665, forecast: 3600, avgCheck: 26.10, avgCheckForecast: 25.90 },
-        { day: 'Thursday, 2', actual: 0, forecastLive: 5150, forecast: 5100, avgCheck: 27.50, avgCheckForecast: 27.30 },
-        { day: 'Friday, 3', actual: 0, forecastLive: 6250, forecast: 6200, avgCheck: 28.00, avgCheckForecast: 27.80 },
-        { day: 'Saturday, 4', actual: 0, forecastLive: 7550, forecast: 7500, avgCheck: 29.00, avgCheckForecast: 28.80 },
-        { day: 'Sunday, 5', actual: 0, forecastLive: 5650, forecast: 5600, avgCheck: 27.80, avgCheckForecast: 27.60 },
+        { day: 'Monday, 29', actual: 4200, forecast: 4100, avgCheck: 26.80, avgCheckForecast: 26.60 },
+        { day: 'Tuesday, 30', actual: 4650, forecast: 4400, avgCheck: 27.20, avgCheckForecast: 27.00 },
+        { day: 'Wednesday, 1', actual: 3730, forecast: 3600, avgCheck: 26.10, avgCheckForecast: 25.90 },
+        { day: 'Thursday, 2', actual: 0, forecast: 5100, avgCheck: 27.50, avgCheckForecast: 27.30 },
+        { day: 'Friday, 3', actual: 0, forecast: 6200, avgCheck: 28.00, avgCheckForecast: 27.80 },
+        { day: 'Saturday, 4', actual: 0, forecast: 7500, avgCheck: 29.00, avgCheckForecast: 28.80 },
+        { day: 'Sunday, 5', actual: 0, forecast: 5600, avgCheck: 27.80, avgCheckForecast: 27.60 },
       ],
       channelTableData: [
         { 
@@ -240,13 +239,13 @@ export default function Sales() {
         },
       },
       weeklyChartData: [
-        { day: 'Monday, 29', actual: 4050, forecastLive: 4025, forecast: 4000, avgCheck: 23.10, avgCheckForecast: 22.90 },
-        { day: 'Tuesday, 30', actual: 4480, forecastLive: 4390, forecast: 4300, avgCheck: 23.50, avgCheckForecast: 23.30 },
-        { day: 'Wednesday, 1', actual: 3190, forecastLive: 3155, forecast: 3120, avgCheck: 22.20, avgCheckForecast: 22.00 },
-        { day: 'Thursday, 2', actual: 0, forecastLive: 5000, forecast: 4950, avgCheck: 23.80, avgCheckForecast: 23.60 },
-        { day: 'Friday, 3', actual: 0, forecastLive: 6100, forecast: 6050, avgCheck: 24.50, avgCheckForecast: 24.30 },
-        { day: 'Saturday, 4', actual: 0, forecastLive: 7350, forecast: 7300, avgCheck: 25.20, avgCheckForecast: 25.00 },
-        { day: 'Sunday, 5', actual: 0, forecastLive: 5530, forecast: 5480, avgCheck: 24.00, avgCheckForecast: 23.80 },
+        { day: 'Monday, 29', actual: 4050, forecast: 4000, avgCheck: 23.10, avgCheckForecast: 22.90 },
+        { day: 'Tuesday, 30', actual: 4480, forecast: 4300, avgCheck: 23.50, avgCheckForecast: 23.30 },
+        { day: 'Wednesday, 1', actual: 3190, forecast: 3120, avgCheck: 22.20, avgCheckForecast: 22.00 },
+        { day: 'Thursday, 2', actual: 0, forecast: 4950, avgCheck: 23.80, avgCheckForecast: 23.60 },
+        { day: 'Friday, 3', actual: 0, forecast: 6050, avgCheck: 24.50, avgCheckForecast: 24.30 },
+        { day: 'Saturday, 4', actual: 0, forecast: 7300, avgCheck: 25.20, avgCheckForecast: 25.00 },
+        { day: 'Sunday, 5', actual: 0, forecast: 5480, avgCheck: 24.00, avgCheckForecast: 23.80 },
       ],
       channelTableData: [
         { 
@@ -367,15 +366,15 @@ export default function Sales() {
       
       const baseActual = 12000 * weekendMultiplier * midWeekMultiplier * locationMultiplier * (0.95 + Math.random() * 0.1);
       const actual = Math.round(baseActual);
-      const forecastLive = Math.round(baseActual * 0.99);
-      const forecast = Math.round(baseActual * 0.98);
+      // Forecast dinámico (Prophet-style con variables)
+      // En producción este vendría de Prophet con regresores (clima, eventos, reservas, etc.)
+      const forecast = Math.round(baseActual * 0.97); // Slightly below actual to simulate realistic variance
       const avgCheck = 22 + (dayOfWeek >= 5 ? 2 : 0) + Math.random() * 2;
       const avgCheckForecast = avgCheck * 0.98;
       
       return {
         day: dayName,
         actual,
-        forecastLive,
         forecast,
         avgCheck: Math.round(avgCheck * 100) / 100,
         avgCheckForecast: Math.round(avgCheckForecast * 100) / 100,
@@ -748,8 +747,8 @@ export default function Sales() {
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
-                        const salesVariance = ((data.actual - data.forecast) / data.forecast) * 100;
-                        const avgCheckVariance = ((data.avgCheck - data.avgCheckForecast) / data.avgCheckForecast) * 100;
+                        const salesVariance = data.forecast > 0 ? ((data.actual - data.forecast) / data.forecast) * 100 : 0;
+                        const avgCheckVariance = data.avgCheckForecast > 0 ? ((data.avgCheck - data.avgCheckForecast) / data.avgCheckForecast) * 100 : 0;
                         
                         return (
                           <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[280px]">
@@ -767,11 +766,6 @@ export default function Sales() {
                                   <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.actual}}></div>
                                   <span className="text-gray-600">Actual</span>
                                   <span className="ml-auto font-semibold text-gray-900">€{data.actual.toLocaleString()}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.forecastLive}}></div>
-                                  <span className="text-gray-600">Forecast (Live)</span>
-                                  <span className="ml-auto font-semibold text-gray-900">€{data.forecastLive.toLocaleString()}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.forecast}}></div>
@@ -816,7 +810,7 @@ export default function Sales() {
                     iconSize={10}
                     wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}
                   />
-                  {/* 3 Barras - Nory Style */}
+                  {/* 2 Barras - Simplificado como Nory real */}
                   <Bar 
                     yAxisId="left" 
                     dataKey="actual" 
@@ -824,16 +818,7 @@ export default function Sales() {
                     name="Actual" 
                     radius={[3,3,0,0]}
                     cursor="pointer"
-                    maxBarSize={40}
-                  />
-                  <Bar 
-                    yAxisId="left" 
-                    dataKey="forecastLive" 
-                    fill={COLORS.forecastLive} 
-                    name="Forecast (Live)" 
-                    radius={[3,3,0,0]}
-                    cursor="pointer"
-                    maxBarSize={40}
+                    maxBarSize={50}
                   />
                   <Bar 
                     yAxisId="left" 
@@ -842,7 +827,7 @@ export default function Sales() {
                     name="Forecast" 
                     radius={[3,3,0,0]}
                     cursor="pointer"
-                    maxBarSize={40}
+                    maxBarSize={50}
                   />
                   {/* 2 Líneas de Avg Check - Nory Style */}
                   <Line 
