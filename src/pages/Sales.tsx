@@ -3,7 +3,7 @@
  * All sections: KPIs, Chart, Channel Table, Products, Locations
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { AskJosephineSalesDrawer } from '@/components/sales';
 
 // Josephine colors
 const COLORS = {
@@ -68,72 +69,308 @@ const VarianceIndicator = ({ value }: { value: number }) => {
   );
 };
 
+// Types for location data
+type LocationId = 'all' | 'salamanca' | 'chamberi' | 'malasana';
+
+interface LocationData {
+  id: LocationId;
+  name: string;
+  kpiData: any;
+  weeklyChartData: any[];
+  channelTableData: any[];
+  productsData: Array<{ name: string; value: number; pct: number; qty: number; qtyPct: number }>;
+  categoryData: any[];
+}
+
 export default function Sales() {
   const [dateRange, setDateRange] = useState('week');
   const [compareMode, setCompareMode] = useState('forecast');
+  const [selectedLocation, setSelectedLocation] = useState<LocationId>('all');
+  const [productViewMode, setProductViewMode] = useState<'sales' | 'qty'>('sales');
+  const [productsDisplayCount, setProductsDisplayCount] = useState(10);
+  const [askJosephineOpen, setAskJosephineOpen] = useState(false);
 
-  // Realistic data matching Nory structure
-  const kpiData = {
-    salesToDate: { value: 36066, variance: 0.94, dateRange: '29 Sep - 1 Oct' },
-    avgCheck: { value: 23.70, variance: 1.26, dateRange: '29 Sep - 1 Oct' },
-    dwellTime: { value: '42mins', dateRange: '29 Sep - 1 Oct' },
-    channels: {
-      dineIn: { pct: 62, avgCheck: 24.84 },
-      pickUp: { pct: 8, avgCheck: 15.81 },
-      delivery: { pct: 30, avgCheck: 24.60 },
+  // Location-specific data
+  const locationsData: Record<LocationId, Omit<LocationData, 'id'>> = {
+    all: {
+      name: 'All Locations',
+      kpiData: {
+        salesToDate: { value: 36066, variance: 0.94, dateRange: '29 Sep - 1 Oct' },
+        avgCheck: { value: 23.70, variance: 1.26, dateRange: '29 Sep - 1 Oct' },
+        dwellTime: { value: '42mins', dateRange: '29 Sep - 1 Oct' },
+        channels: {
+          dineIn: { pct: 62, avgCheck: 24.84 },
+          pickUp: { pct: 8, avgCheck: 15.81 },
+          delivery: { pct: 30, avgCheck: 24.60 },
+        },
+      },
+      weeklyChartData: [
+        { day: 'Mon', actual: 12500, forecast: 12200, avgCheck: 24.20 },
+        { day: 'Tue', actual: 13800, forecast: 13200, avgCheck: 24.50 },
+        { day: 'Wed', actual: 10421, forecast: 10194, avgCheck: 24.41 },
+        { day: 'Thu', actual: 0, forecast: 15200, avgCheck: 24.80 },
+        { day: 'Fri', actual: 0, forecast: 18500, avgCheck: 25.20 },
+        { day: 'Sat', actual: 0, forecast: 22300, avgCheck: 26.50 },
+        { day: 'Sun', actual: 0, forecast: 16800, avgCheck: 25.00 },
+      ],
+      channelTableData: [
+        { 
+          channel: 'Dine-in', 
+          actual: 22330, actualVar: 0.9, 
+          projected: 71845, projVar: 0.28,
+          avgCheckActual: 24.84, avgCheckActualVar: 8.35,
+          avgCheckProj: 26.85, avgCheckProjVar: 2.77,
+        },
+        { 
+          channel: 'Pick-up', 
+          actual: 2862, actualVar: 133.5, 
+          projected: 7113, projVar: 29.88,
+          avgCheckActual: 15.81, avgCheckActualVar: -26.93,
+          avgCheckProj: 19.54, avgCheckProjVar: -14.49,
+        },
+        { 
+          channel: 'Delivery', 
+          actual: 10967, actualVar: -11.52, 
+          projected: 39965, projVar: -3.45,
+          avgCheckActual: 24.59, avgCheckActualVar: 0.55,
+          avgCheckProj: 26.15, avgCheckProjVar: 0.4,
+        },
+      ],
+      productsData: [
+        { name: 'Paella Valenciana', value: 4440.24, pct: 12.31, qty: 240, qtyPct: 15.2 },
+        { name: 'Jamón Ibérico', value: 2202.06, pct: 6.11, qty: 180, qtyPct: 11.4 },
+        { name: 'Chuletón de Buey', value: 2159.16, pct: 5.99, qty: 85, qtyPct: 5.4 },
+        { name: 'Pulpo a la Gallega', value: 1752.68, pct: 4.86, qty: 120, qtyPct: 7.6 },
+        { name: 'Croquetas Premium', value: 1704.20, pct: 4.73, qty: 220, qtyPct: 13.9 },
+        { name: 'Bacalao Pil-Pil', value: 1515.05, pct: 4.20, qty: 95, qtyPct: 6.0 },
+        { name: 'Cochinillo Asado', value: 1249.02, pct: 3.46, qty: 48, qtyPct: 3.0 },
+        { name: 'Tortilla Española', value: 1032.55, pct: 2.86, qty: 165, qtyPct: 10.4 },
+        { name: 'Gazpacho Andaluz', value: 892.40, pct: 2.47, qty: 145, qtyPct: 9.2 },
+        { name: 'Rabo de Toro', value: 825.60, pct: 2.29, qty: 52, qtyPct: 3.3 },
+        { name: 'Calamares Romana', value: 768.90, pct: 2.13, qty: 98, qtyPct: 6.2 },
+        { name: 'Solomillo Wellington', value: 715.20, pct: 1.98, qty: 28, qtyPct: 1.8 },
+        { name: 'Merluza Vasca', value: 682.50, pct: 1.89, qty: 65, qtyPct: 4.1 },
+        { name: 'Ensalada Mixta', value: 445.80, pct: 1.24, qty: 112, qtyPct: 7.1 },
+        { name: 'Carrilleras Ibéricas', value: 398.40, pct: 1.10, qty: 35, qtyPct: 2.2 },
+      ],
+      categoryData: [
+        { name: 'Food', value: 94.76, amount: 32740 },
+        { name: 'Beverage', value: 5.24, amount: 1811 },
+        { name: 'Other', value: 0, amount: 0 },
+      ],
+    },
+    salamanca: {
+      name: 'La Taberna Centro (Salamanca)',
+      kpiData: {
+        salesToDate: { value: 12580, variance: 2.1, dateRange: '29 Sep - 1 Oct' },
+        avgCheck: { value: 26.50, variance: 3.2, dateRange: '29 Sep - 1 Oct' },
+        dwellTime: { value: '48mins', dateRange: '29 Sep - 1 Oct' },
+        channels: {
+          dineIn: { pct: 75, avgCheck: 28.20 },
+          pickUp: { pct: 5, avgCheck: 18.50 },
+          delivery: { pct: 20, avgCheck: 22.80 },
+        },
+      },
+      weeklyChartData: [
+        { day: 'Mon', actual: 4200, forecast: 4100, avgCheck: 26.80 },
+        { day: 'Tue', actual: 4650, forecast: 4400, avgCheck: 27.20 },
+        { day: 'Wed', actual: 3730, forecast: 3600, avgCheck: 26.10 },
+        { day: 'Thu', actual: 0, forecast: 5100, avgCheck: 27.50 },
+        { day: 'Fri', actual: 0, forecast: 6200, avgCheck: 28.00 },
+        { day: 'Sat', actual: 0, forecast: 7500, avgCheck: 29.00 },
+        { day: 'Sun', actual: 0, forecast: 5600, avgCheck: 27.80 },
+      ],
+      channelTableData: [
+        { 
+          channel: 'Dine-in', 
+          actual: 9435, actualVar: 2.5, 
+          projected: 30120, projVar: 1.8,
+          avgCheckActual: 28.20, avgCheckActualVar: 9.2,
+          avgCheckProj: 29.50, avgCheckProjVar: 3.5,
+        },
+        { 
+          channel: 'Pick-up', 
+          actual: 629, actualVar: 150.0, 
+          projected: 1890, projVar: 35.0,
+          avgCheckActual: 18.50, avgCheckActualVar: -20.0,
+          avgCheckProj: 21.00, avgCheckProjVar: -10.0,
+        },
+        { 
+          channel: 'Delivery', 
+          actual: 2516, actualVar: -8.0, 
+          projected: 10080, projVar: -2.5,
+          avgCheckActual: 22.80, avgCheckActualVar: 1.2,
+          avgCheckProj: 24.00, avgCheckProjVar: 0.8,
+        },
+      ],
+      productsData: [
+        { name: 'Chuletón de Buey', value: 1850.50, pct: 14.71, qty: 72, qtyPct: 16.8 },
+        { name: 'Jamón Ibérico', value: 1520.80, pct: 12.09, qty: 125, qtyPct: 29.2 },
+        { name: 'Paella Valenciana', value: 1380.25, pct: 10.97, qty: 75, qtyPct: 17.5 },
+        { name: 'Solomillo Wellington', value: 980.60, pct: 7.80, qty: 38, qtyPct: 8.9 },
+        { name: 'Bacalao Pil-Pil', value: 850.40, pct: 6.76, qty: 53, qtyPct: 12.4 },
+      ],
+      categoryData: [
+        { name: 'Food', value: 96.2, amount: 12102 },
+        { name: 'Beverage', value: 3.8, amount: 478 },
+        { name: 'Other', value: 0, amount: 0 },
+      ],
+    },
+    chamberi: {
+      name: 'Chamberí (Madrid)',
+      kpiData: {
+        salesToDate: { value: 11720, variance: 1.2, dateRange: '29 Sep - 1 Oct' },
+        avgCheck: { value: 22.80, variance: 0.8, dateRange: '29 Sep - 1 Oct' },
+        dwellTime: { value: '40mins', dateRange: '29 Sep - 1 Oct' },
+        channels: {
+          dineIn: { pct: 58, avgCheck: 23.50 },
+          pickUp: { pct: 10, avgCheck: 16.20 },
+          delivery: { pct: 32, avgCheck: 25.10 },
+        },
+      },
+      weeklyChartData: [
+        { day: 'Mon', actual: 4050, forecast: 4000, avgCheck: 23.10 },
+        { day: 'Tue', actual: 4480, forecast: 4300, avgCheck: 23.50 },
+        { day: 'Wed', actual: 3190, forecast: 3120, avgCheck: 22.20 },
+        { day: 'Thu', actual: 0, forecast: 4950, avgCheck: 23.80 },
+        { day: 'Fri', actual: 0, forecast: 6050, avgCheck: 24.50 },
+        { day: 'Sat', actual: 0, forecast: 7300, avgCheck: 25.20 },
+        { day: 'Sun', actual: 0, forecast: 5480, avgCheck: 24.00 },
+      ],
+      channelTableData: [
+        { 
+          channel: 'Dine-in', 
+          actual: 6798, actualVar: 1.5, 
+          projected: 22050, projVar: 0.8,
+          avgCheckActual: 23.50, avgCheckActualVar: 7.8,
+          avgCheckProj: 25.20, avgCheckProjVar: 2.5,
+        },
+        { 
+          channel: 'Pick-up', 
+          actual: 1172, actualVar: 120.0, 
+          projected: 2890, projVar: 28.0,
+          avgCheckActual: 16.20, avgCheckActualVar: -28.0,
+          avgCheckProj: 18.80, avgCheckProjVar: -16.0,
+        },
+        { 
+          channel: 'Delivery', 
+          actual: 3750, actualVar: -10.0, 
+          projected: 13680, projVar: -3.2,
+          avgCheckActual: 25.10, avgCheckActualVar: 0.8,
+          avgCheckProj: 26.50, avgCheckProjVar: 0.5,
+        },
+      ],
+      productsData: [
+        { name: 'Paella Valenciana', value: 1680.50, pct: 14.33, qty: 91, qtyPct: 18.5 },
+        { name: 'Croquetas Premium', value: 980.30, pct: 8.36, qty: 126, qtyPct: 25.6 },
+        { name: 'Pulpo a la Gallega', value: 850.20, pct: 7.25, qty: 58, qtyPct: 11.8 },
+        { name: 'Tortilla Española', value: 620.80, pct: 5.30, qty: 99, qtyPct: 20.1 },
+        { name: 'Gazpacho Andaluz', value: 550.40, pct: 4.70, qty: 89, qtyPct: 18.1 },
+      ],
+      categoryData: [
+        { name: 'Food', value: 93.8, amount: 10993 },
+        { name: 'Beverage', value: 6.2, amount: 727 },
+        { name: 'Other', value: 0, amount: 0 },
+      ],
+    },
+    malasana: {
+      name: 'Malasaña (Madrid)',
+      kpiData: {
+        salesToDate: { value: 11766, variance: -0.5, dateRange: '29 Sep - 1 Oct' },
+        avgCheck: { value: 21.90, variance: 0.2, dateRange: '29 Sep - 1 Oct' },
+        dwellTime: { value: '38mins', dateRange: '29 Sep - 1 Oct' },
+        channels: {
+          dineIn: { pct: 55, avgCheck: 22.80 },
+          pickUp: { pct: 12, avgCheck: 14.50 },
+          delivery: { pct: 33, avgCheck: 24.20 },
+        },
+      },
+      weeklyChartData: [
+        { day: 'Mon', actual: 4250, forecast: 4100, avgCheck: 22.50 },
+        { day: 'Tue', actual: 4670, forecast: 4500, avgCheck: 22.80 },
+        { day: 'Wed', actual: 2501, forecast: 2474, avgCheck: 20.50 },
+        { day: 'Thu', actual: 0, forecast: 5150, avgCheck: 22.30 },
+        { day: 'Fri', actual: 0, forecast: 6250, avgCheck: 23.70 },
+        { day: 'Sat', actual: 0, forecast: 7500, avgCheck: 24.80 },
+        { day: 'Sun', actual: 0, forecast: 5720, avgCheck: 23.20 },
+      ],
+      channelTableData: [
+        { 
+          channel: 'Dine-in', 
+          actual: 6471, actualVar: -0.8, 
+          projected: 19675, projVar: -0.5,
+          avgCheckActual: 22.80, avgCheckActualVar: 8.1,
+          avgCheckProj: 24.80, avgCheckProjVar: 2.2,
+        },
+        { 
+          channel: 'Pick-up', 
+          actual: 1412, actualVar: 128.0, 
+          projected: 2333, projVar: 24.5,
+          avgCheckActual: 14.50, avgCheckActualVar: -32.0,
+          avgCheckProj: 17.20, avgCheckProjVar: -18.0,
+        },
+        { 
+          channel: 'Delivery', 
+          actual: 3883, actualVar: -14.2, 
+          projected: 16205, projVar: -4.8,
+          avgCheckActual: 24.20, avgCheckActualVar: -0.2,
+          avgCheckProj: 25.80, avgCheckProjVar: 0.1,
+        },
+      ],
+      productsData: [
+        { name: 'Paella Valenciana', value: 1379.49, pct: 11.73, qty: 74, qtyPct: 14.2 },
+        { name: 'Jamón Ibérico', value: 681.26, pct: 5.79, qty: 55, qtyPct: 10.5 },
+        { name: 'Croquetas Premium', value: 723.90, pct: 6.15, qty: 94, qtyPct: 18.0 },
+        { name: 'Pulpo a la Gallega', value: 902.48, pct: 7.67, qty: 62, qtyPct: 11.9 },
+        { name: 'Calamares Romana', value: 530.20, pct: 4.51, qty: 68, qtyPct: 13.0 },
+      ],
+      categoryData: [
+        { name: 'Food', value: 94.1, amount: 11072 },
+        { name: 'Beverage', value: 5.9, amount: 694 },
+        { name: 'Other', value: 0, amount: 0 },
+      ],
     },
   };
 
-  const weeklyChartData = [
-    { day: 'Mon', actual: 12500, forecast: 12200, avgCheck: 24.20 },
-    { day: 'Tue', actual: 13800, forecast: 13200, avgCheck: 24.50 },
-    { day: 'Wed', actual: 10421, forecast: 10194, avgCheck: 24.41 },
-    { day: 'Thu', actual: 0, forecast: 15200, avgCheck: 24.80 },
-    { day: 'Fri', actual: 0, forecast: 18500, avgCheck: 25.20 },
-    { day: 'Sat', actual: 0, forecast: 22300, avgCheck: 26.50 },
-    { day: 'Sun', actual: 0, forecast: 16800, avgCheck: 25.00 },
-  ];
+  // Get current location data
+  const currentLocationData = useMemo(() => {
+    return locationsData[selectedLocation];
+  }, [selectedLocation]);
 
-  const channelTableData = [
-    { 
-      channel: 'Dine-in', 
-      actual: 22330, actualVar: 0.9, 
-      projected: 71845, projVar: 0.28,
-      avgCheckActual: 24.84, avgCheckActualVar: 8.35,
-      avgCheckProj: 26.85, avgCheckProjVar: 2.77,
-    },
-    { 
-      channel: 'Pick-up', 
-      actual: 2862, actualVar: 133.5, 
-      projected: 7113, projVar: 29.88,
-      avgCheckActual: 15.81, avgCheckActualVar: -26.93,
-      avgCheckProj: 19.54, avgCheckProjVar: -14.49,
-    },
-    { 
-      channel: 'Delivery', 
-      actual: 10967, actualVar: -11.52, 
-      projected: 39965, projVar: -3.45,
-      avgCheckActual: 24.59, avgCheckActualVar: 0.55,
-      avgCheckProj: 26.15, avgCheckProjVar: 0.4,
-    },
-  ];
+  const kpiData = currentLocationData.kpiData;
 
-  const productsData = [
-    { name: 'Paella Valenciana', value: 4440.24, pct: 12.31 },
-    { name: 'Jamón Ibérico', value: 2202.06, pct: 6.11 },
-    { name: 'Chuletón de Buey', value: 2159.16, pct: 5.99 },
-    { name: 'Pulpo a la Gallega', value: 1752.68, pct: 4.86 },
-    { name: 'Croquetas Premium', value: 1704.20, pct: 4.73 },
-    { name: 'Bacalao Pil-Pil', value: 1515.05, pct: 4.20 },
-    { name: 'Cochinillo Asado', value: 1249.02, pct: 3.46 },
-    { name: 'Tortilla Española', value: 1032.55, pct: 2.86 },
-  ];
+  const weeklyChartData = currentLocationData.weeklyChartData;
+  const channelTableData = currentLocationData.channelTableData;
+  const productsData = currentLocationData.productsData;
+  const categoryData = currentLocationData.categoryData;
 
-  const categoryData = [
-    { name: 'Food', value: 94.76, amount: 32740 },
-    { name: 'Beverage', value: 5.24, amount: 1811 },
-    { name: 'Other', value: 0, amount: 0 },
-  ];
+  // Products to display based on pagination
+  const displayedProducts = productsData.slice(0, productsDisplayCount);
+  const hasMoreProducts = productsDisplayCount < productsData.length;
+
+  // Sales data for AI assistant
+  const salesDataForAI = useMemo(() => ({
+    salesToDate: kpiData.salesToDate.value,
+    salesToDateDelta: kpiData.salesToDate.variance,
+    avgCheckSize: kpiData.avgCheck.value,
+    avgCheckSizeDelta: kpiData.avgCheck.variance,
+    dwellTime: kpiData.dwellTime.value === '42mins' ? 42 : (kpiData.dwellTime.value === '48mins' ? 48 : (kpiData.dwellTime.value === '40mins' ? 40 : 38)),
+    channels: channelTableData.map(ch => ({
+      channel: ch.channel,
+      sales: ch.actual,
+      salesDelta: ch.actualVar
+    })),
+    categories: categoryData.map(cat => ({
+      category: cat.name,
+      amount: cat.amount,
+      ratio: cat.value
+    })),
+    topProducts: productsData.slice(0, 5).map(p => ({
+      name: p.name,
+      value: p.value,
+      percentage: p.pct
+    }))
+  }), [kpiData, channelTableData, categoryData, productsData]);
 
   return (
     <div className="p-6 space-y-6 max-w-[1800px]">
@@ -141,6 +378,19 @@ export default function Sales() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Sales</h1>
         <div className="flex items-center gap-3">
+          {/* Location Selector */}
+          <Select value={selectedLocation} onValueChange={(value) => setSelectedLocation(value as LocationId)}>
+            <SelectTrigger className="w-[240px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">✓ All Locations</SelectItem>
+              <SelectItem value="salamanca">La Taberna Centro (Salamanca)</SelectItem>
+              <SelectItem value="chamberi">Chamberí (Madrid)</SelectItem>
+              <SelectItem value="malasana">Malasaña (Madrid)</SelectItem>
+            </SelectContent>
+          </Select>
+
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <ChevronLeft className="h-4 w-4" />
@@ -166,7 +416,7 @@ export default function Sales() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setAskJosephineOpen(true)}>
             ✨ Ask Josephine
           </Button>
         </div>
@@ -419,7 +669,7 @@ export default function Sales() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Products</h3>
-            <Select defaultValue="sales">
+            <Select value={productViewMode} onValueChange={(value: 'sales' | 'qty') => setProductViewMode(value)}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
@@ -431,31 +681,52 @@ export default function Sales() {
           </div>
 
           <div className="space-y-3">
-            {productsData.map((product) => (
-              <div key={product.name}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">{product.name}</span>
-                  <span className="text-sm font-semibold">€{product.value.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400"
-                      style={{ width: `${Math.min(product.pct * 8, 100)}%` }}
-                    ></div>
+            {displayedProducts.map((product) => {
+              const displayValue = productViewMode === 'sales' ? product.value : product.qty;
+              const displayPct = productViewMode === 'sales' ? product.pct : product.qtyPct;
+              const formattedValue = productViewMode === 'sales' 
+                ? `€${product.value.toLocaleString()}` 
+                : `${product.qty} units`;
+              
+              return (
+                <div key={product.name}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{product.name}</span>
+                    <span className="text-sm font-semibold">{formattedValue}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground w-14 text-right">
-                    {product.pct.toFixed(2)}%
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400"
+                        style={{ width: `${Math.min(displayPct * 5, 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-muted-foreground w-14 text-right">
+                      {displayPct.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-            <Button variant="link" className="w-full text-sm">
-              Scroll to See More ↓
-            </Button>
+              );
+            })}
+            {hasMoreProducts && (
+              <Button 
+                variant="link" 
+                className="w-full text-sm"
+                onClick={() => setProductsDisplayCount(prev => Math.min(prev + 10, productsData.length))}
+              >
+                Scroll to See More ↓
+              </Button>
+            )}
           </div>
         </Card>
       </div>
+
+      {/* Ask Josephine Drawer */}
+      <AskJosephineSalesDrawer 
+        open={askJosephineOpen}
+        onOpenChange={setAskJosephineOpen}
+        salesData={salesDataForAI}
+      />
     </div>
   );
 }
