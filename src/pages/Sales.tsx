@@ -41,7 +41,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { AskJosephineSalesDrawer, HourlyDrillDownDrawer, DateRangePicker, DateRangePreset } from '@/components/sales';
-import { startOfWeek, endOfWeek, format } from 'date-fns';
+import { startOfWeek, endOfWeek, format, eachDayOfInterval } from 'date-fns';
 
 // Josephine colors - Nory style
 const COLORS = {
@@ -348,9 +348,70 @@ export default function Sales() {
     return locationsData[selectedLocation];
   }, [selectedLocation]);
 
-  const kpiData = currentLocationData.kpiData;
+  // Generate dynamic chart data based on selected date range
+  const weeklyChartData = useMemo(() => {
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    return days.map((day, index) => {
+      const dayOfWeek = day.getDay();
+      const dayName = format(day, 'EEEE, d');
+      
+      // Weekend boost & mid-week dip
+      const weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) ? 1.5 : 1.0;
+      const midWeekMultiplier = (dayOfWeek === 2 || dayOfWeek === 3) ? 0.85 : 1.0;
+      
+      // Base values with location multiplier
+      const locationMultiplier = selectedLocation === 'salamanca' ? 0.35 : 
+                                   selectedLocation === 'chamberi' ? 0.32 : 
+                                   selectedLocation === 'malasana' ? 0.33 : 1.0;
+      
+      const baseActual = 12000 * weekendMultiplier * midWeekMultiplier * locationMultiplier * (0.95 + Math.random() * 0.1);
+      const actual = Math.round(baseActual);
+      const forecastLive = Math.round(baseActual * 0.99);
+      const forecast = Math.round(baseActual * 0.98);
+      const avgCheck = 22 + (dayOfWeek >= 5 ? 2 : 0) + Math.random() * 2;
+      const avgCheckForecast = avgCheck * 0.98;
+      
+      return {
+        day: dayName,
+        actual,
+        forecastLive,
+        forecast,
+        avgCheck: Math.round(avgCheck * 100) / 100,
+        avgCheckForecast: Math.round(avgCheckForecast * 100) / 100,
+      };
+    });
+  }, [startDate, endDate, selectedLocation]);
 
-  const weeklyChartData = currentLocationData.weeklyChartData;
+  // Calculate KPIs from dynamic chart data
+  const calculatedKPIs = useMemo(() => {
+    const totalSales = weeklyChartData.reduce((sum, day) => sum + day.actual, 0);
+    const totalForecast = weeklyChartData.reduce((sum, day) => sum + day.forecast, 0);
+    const variance = totalForecast > 0 ? ((totalSales - totalForecast) / totalForecast) * 100 : 0;
+    const avgCheck = weeklyChartData.reduce((sum, day) => sum + day.avgCheck, 0) / (weeklyChartData.length || 1);
+    const avgCheckForecast = weeklyChartData.reduce((sum, day) => sum + day.avgCheckForecast, 0) / (weeklyChartData.length || 1);
+    const avgCheckVariance = avgCheckForecast > 0 ? ((avgCheck - avgCheckForecast) / avgCheckForecast) * 100 : 0;
+    
+    return {
+      salesToDate: { 
+        value: totalSales, 
+        variance, 
+        dateRange: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}` 
+      },
+      avgCheck: { 
+        value: avgCheck, 
+        variance: avgCheckVariance, 
+        dateRange: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}` 
+      },
+      dwellTime: { 
+        value: '42mins', 
+        dateRange: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}` 
+      },
+      channels: currentLocationData.kpiData.channels,
+    };
+  }, [weeklyChartData, startDate, endDate, currentLocationData.kpiData.channels]);
+
+  const kpiData = calculatedKPIs;
   const channelTableData = currentLocationData.channelTableData;
   const productsData = currentLocationData.productsData;
   const categoryData = currentLocationData.categoryData;
@@ -640,24 +701,60 @@ export default function Sales() {
                   <Tooltip 
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const salesVariance = ((data.actual - data.forecast) / data.forecast) * 100;
+                        const avgCheckVariance = ((data.avgCheck - data.avgCheckForecast) / data.avgCheckForecast) * 100;
+                        
                         return (
-                          <div className="bg-white border rounded-lg shadow-lg p-3">
-                            <p className="font-semibold mb-2">{payload[0].payload.day}</p>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex items-center justify-between gap-4">
-                                <span>Actual:</span>
-                                <span className="font-semibold">€{payload[0].value?.toLocaleString()}</span>
+                          <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[280px]">
+                            {/* Sales Section */}
+                            <div className="mb-3 pb-3 border-b border-gray-100">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-semibold text-gray-900">Sales ({data.day})</span>
+                                <span className={cn('flex items-center gap-1 text-sm font-medium', salesVariance >= 0 ? 'text-emerald-600' : 'text-rose-600')}>
+                                  {salesVariance >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                                  {salesVariance >= 0 ? '+' : ''}{salesVariance.toFixed(2)}%
+                                </span>
                               </div>
-                              <div className="flex items-center justify-between gap-4">
-                                <span>Forecast (Live):</span>
-                                <span className="font-semibold">€{payload[1]?.value?.toLocaleString()}</span>
+                              <div className="space-y-1.5 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.actual}}></div>
+                                  <span className="text-gray-600">Actual</span>
+                                  <span className="ml-auto font-semibold text-gray-900">€{data.actual.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.forecastLive}}></div>
+                                  <span className="text-gray-600">Forecast (Live)</span>
+                                  <span className="ml-auto font-semibold text-gray-900">€{data.forecastLive.toLocaleString()}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.forecast}}></div>
+                                  <span className="text-gray-600">Forecast</span>
+                                  <span className="ml-auto font-semibold text-gray-900">€{data.forecast.toLocaleString()}</span>
+                                </div>
                               </div>
-                              <div className="flex items-center justify-between gap-4">
-                                <span>Forecast:</span>
-                                <span className="font-semibold">€{payload[2]?.value?.toLocaleString()}</span>
+                            </div>
+                            
+                            {/* Avg Check Section */}
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-semibold text-gray-900">Avg Check Size</span>
+                                <span className={cn('flex items-center gap-1 text-sm font-medium', avgCheckVariance >= 0 ? 'text-emerald-600' : 'text-rose-600')}>
+                                  {avgCheckVariance >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                                  {avgCheckVariance >= 0 ? '+' : ''}{avgCheckVariance.toFixed(2)}%
+                                </span>
                               </div>
-                              <div className="text-xs text-muted-foreground mt-2 border-t pt-1">
-                                Click para ver detalles por hora
+                              <div className="space-y-1.5 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.avgCheck}}></div>
+                                  <span className="text-gray-600">Avg Check Size</span>
+                                  <span className="ml-auto font-semibold text-gray-900">€{data.avgCheck.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.avgCheckForecast}}></div>
+                                  <span className="text-gray-600">Avg Check Forecast</span>
+                                  <span className="ml-auto font-semibold text-gray-900">€{data.avgCheckForecast.toFixed(2)}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
