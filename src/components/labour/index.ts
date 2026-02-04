@@ -8,3 +8,4 @@ export { LabourChart } from './LabourChart';
 export { LabourLocationsTable } from './LabourLocationsTable';
 export { LabourEmptyState } from './LabourEmptyState';
 export { AskJosephineLabourPanel } from './AskJosephineLabourPanel';
+export { LabourHourlyDrillDown } from './LabourHourlyDrillDown';

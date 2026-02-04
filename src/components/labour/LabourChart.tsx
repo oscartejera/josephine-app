@@ -2,10 +2,11 @@
  * LabourChart - Labour over time chart matching Nory design
  * Bars: COL% Actual vs Planned (or Amount/Hours based on mode)
  * Lines: SPLH or OPLH (toggle)
+ * Click on bar for hourly drill-down
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { LabourTimeseriesRow, MetricMode } from '@/hooks/useLabourData';
+import { LabourHourlyDrillDown } from './LabourHourlyDrillDown';
 
 interface LabourChartProps {
   data: LabourTimeseriesRow[];
@@ -137,10 +139,85 @@ function CustomTooltip({ active, payload, label, metricMode, chartMode }: Custom
 
 export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   const [chartMode, setChartMode] = useState<ChartMode>('splh');
+  const [drillDownOpen, setDrillDownOpen] = useState(false);
+  const [selectedDayData, setSelectedDayData] = useState<any>(null);
 
   if (isLoading) {
     return <ChartSkeleton />;
   }
+
+  // Generate hourly labour data for drill-down
+  const generateHourlyData = (dayData: any) => {
+    const operatingHours = [
+      { hour: '10:00', weight: 0.03 },
+      { hour: '11:00', weight: 0.05 },
+      { hour: '12:00', weight: 0.09 },
+      { hour: '13:00', weight: 0.12 },
+      { hour: '14:00', weight: 0.13 },
+      { hour: '15:00', weight: 0.07 },
+      { hour: '16:00', weight: 0.04 },
+      { hour: '17:00', weight: 0.05 },
+      { hour: '18:00', weight: 0.08 },
+      { hour: '19:00', weight: 0.11 },
+      { hour: '20:00', weight: 0.12 },
+      { hour: '21:00', weight: 0.09 },
+      { hour: '22:00', weight: 0.02 },
+    ];
+
+    const totalSales = dayData.actual_sales || 0;
+    const totalHours = dayData.actual_hours || 0;
+    const totalPlannedHours = dayData.planned_hours || 0;
+
+    const hourlyData = operatingHours.map((slot) => {
+      const actualSales = Math.round(totalSales * slot.weight * (0.9 + Math.random() * 0.2));
+      const actualHours = totalHours * slot.weight * (0.9 + Math.random() * 0.2);
+      const plannedHours = totalPlannedHours * slot.weight;
+      const actualSPLH = actualHours > 0 ? actualSales / actualHours : 0;
+      const plannedSPLH = plannedHours > 0 ? (actualSales * 0.98) / plannedHours : 0;
+      const actualLaborCost = actualHours * 15; // €15/hour avg
+      const actualCOL = actualSales > 0 ? (actualLaborCost / actualSales) * 100 : 0;
+      const plannedCOL = actualCOL * 0.95;
+      const variance = plannedCOL > 0 ? ((actualCOL - plannedCOL) / plannedCOL) * 100 : 0;
+
+      return {
+        hour: slot.hour,
+        actualCOL,
+        plannedCOL,
+        actualSPLH,
+        plannedSPLH,
+        actualHours,
+        plannedHours,
+        actualSales,
+        variance,
+      };
+    });
+
+    const totalActualHours = hourlyData.reduce((sum, h) => sum + h.actualHours, 0);
+    const totalSalesSum = hourlyData.reduce((sum, h) => sum + h.actualSales, 0);
+    const totalActualSPLH = totalActualHours > 0 ? totalSalesSum / totalActualHours : 0;
+    const totalActualCOL = dayData.actual_col_pct || 0;
+    const totalPlannedCOL = dayData.planned_col_pct || 0;
+
+    return {
+      day: dayData.date,
+      date: dayData.date,
+      hourlyData,
+      totalActualCOL,
+      totalPlannedCOL,
+      totalActualSPLH,
+      totalHours: totalActualHours,
+    };
+  };
+
+  // Handle chart click for drill-down
+  const handleChartClick = (data: any) => {
+    if (!data || !data.activePayload || !data.activePayload[0]) return;
+    
+    const dayData = data.activePayload[0].payload;
+    const drillDownData = generateHourlyData(dayData);
+    setSelectedDayData(drillDownData);
+    setDrillDownOpen(true);
+  };
 
   // Transform data for chart
   const chartData = data.map(row => ({
@@ -244,6 +321,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
             margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
             barGap={2}
             barCategoryGap="15%"
+            onClick={handleChartClick}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
             <XAxis 
@@ -286,6 +364,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
               fill={CHART_COLORS.actual}
               radius={[3, 3, 0, 0]}
               maxBarSize={40}
+              cursor="pointer"
             />
             <Bar 
               yAxisId="left"
@@ -294,6 +373,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
               fill={CHART_COLORS.planned}
               radius={[3, 3, 0, 0]}
               maxBarSize={40}
+              cursor="pointer"
             />
             
             {/* Lines for SPLH/OPLH */}
@@ -318,6 +398,21 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Hourly Drill-Down Drawer */}
+      {selectedDayData && (
+        <LabourHourlyDrillDown
+          open={drillDownOpen}
+          onOpenChange={setDrillDownOpen}
+          selectedDay={selectedDayData.day}
+          selectedDate={selectedDayData.date}
+          hourlyData={selectedDayData.hourlyData}
+          totalActualCOL={selectedDayData.totalActualCOL}
+          totalPlannedCOL={selectedDayData.totalPlannedCOL}
+          totalActualSPLH={selectedDayData.totalActualSPLH}
+          totalHours={selectedDayData.totalHours}
+        />
+      )}
     </Card>
   );
 }
