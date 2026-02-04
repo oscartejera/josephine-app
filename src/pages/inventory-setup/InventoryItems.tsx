@@ -36,97 +36,76 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, MoreVertical, ArrowUpDown } from 'lucide-react';
 
-// Mock data - realistic inventory items
-const mockItems = [
-  {
-    id: '1',
-    name: 'Salmón Fresco',
-    type: 'Food',
-    category: 'Pescados y Mariscos',
-    supplier: 'Pescaderías del Norte',
-    orderUnit: 'kg',
-    orderQty: 1,
-    price: 24.50,
-    vatRate: 10,
-  },
-  {
-    id: '2',
-    name: 'Jamón Ibérico de Bellota',
-    type: 'Food',
-    category: 'Charcutería',
-    supplier: 'Ibéricos Salamanca',
-    orderUnit: 'kg',
-    orderQty: 1,
-    price: 89.00,
-    vatRate: 10,
-  },
-  {
-    id: '3',
-    name: 'Arroz Bomba',
-    type: 'Food',
-    category: 'Secos',
-    supplier: 'Arroces Valencia',
-    orderUnit: 'Pack',
-    orderQty: 5,
-    price: 15.50,
-    vatRate: 10,
-  },
-  {
-    id: '4',
-    name: 'Aceite de Oliva Virgen Extra',
-    type: 'Food',
-    category: 'Aceites',
-    supplier: 'Aceites Jaén',
-    orderUnit: 'L',
-    orderQty: 5,
-    price: 42.00,
-    vatRate: 10,
-  },
-  {
-    id: '5',
-    name: 'Cerveza Estrella Galicia',
-    type: 'Beverage',
-    category: 'Cervezas',
-    supplier: 'Distribuidora Bebidas',
-    orderUnit: 'Case',
-    orderQty: 24,
-    price: 18.00,
-    vatRate: 21,
-  },
-  {
-    id: '6',
-    name: 'Vino Rioja Reserva',
-    type: 'Beverage',
-    category: 'Vinos',
-    supplier: 'Bodegas Rioja',
-    orderUnit: 'Case',
-    orderQty: 12,
-    price: 96.00,
-    vatRate: 21,
-  },
-  {
-    id: '7',
-    name: 'Bolsas Basura 100L',
-    type: 'Misc',
-    category: 'Limpieza',
-    supplier: 'Suministros Hostelería',
-    orderUnit: 'Pack',
-    orderQty: 50,
-    price: 22.00,
-    vatRate: 21,
-  },
-  {
-    id: '8',
-    name: 'Papel Térmico 80mm',
-    type: 'Misc',
-    category: 'Papelería',
-    supplier: 'Suministros Oficina',
-    orderUnit: 'Case',
-    orderQty: 20,
-    price: 31.50,
-    vatRate: 21,
-  },
-];
+// Generate 400+ realistic items
+const generateMockItems = () => {
+  const items: any[] = [];
+  const baseNames = [
+    // Food items (200+)
+    'Salmón Fresco', 'Atún Rojo', 'Lubina', 'Dorada', 'Merluza', 'Gambas', 'Langostinos', 'Pulpo',
+    'Jamón Ibérico', 'Jamón Serrano', 'Chorizo', 'Salchichón', 'Lomo Embuchado', 'Morcilla',
+    'Chuletón Buey', 'Solomillo Ternera', 'Entrecot', 'Cordero Lechal', 'Cochinillo', 'Pollo',
+    'Arroz Bomba', 'Arroz Integral', 'Pasta Spaghetti', 'Pasta Penne', 'Garbanzos', 'Lentejas',
+    'Aceite Oliva VE', 'Aceite Girasol', 'Vinagre Jerez', 'Sal Marina', 'Pimienta Negra',
+    'Tomate Natural', 'Pimiento Rojo', 'Cebolla', 'Ajo', 'Patata', 'Zanahoria', 'Lechuga',
+    'Huevos Camperos', 'Leche Entera', 'Nata Cocinar', 'Queso Manchego', 'Queso Cabra',
+    'Pan Barra', 'Pan Molde', 'Harina', 'Levadura', 'Azúcar', 'Sal',
+    'Tomate Triturado', 'Pimientos Padrón', 'Alcachofas', 'Espárragos', 'Champiñones',
+    // Beverages (100+)
+    'Cerveza Estrella', 'Cerveza Mahou', 'Cerveza Alhambra', 'Cerveza Cruzcampo',
+    'Vino Rioja', 'Vino Ribera', 'Vino Albariño', 'Vino Verdejo', 'Cava',
+    'Coca-Cola', 'Fanta', 'Sprite', 'Agua Mineral', 'Agua con Gas',
+    'Zumo Naranja', 'Zumo Tomate', 'Café Grano', 'Té Verde', 'Té Negro',
+    // Misc/Packaging (100+)
+    'Bolsa Basura 100L', 'Bolsa Basura 50L', 'Papel Térmico 80mm', 'Papel Térmico 57mm',
+    'Servilletas', 'Manteles Papel', 'Guantes Latex', 'Guantes Nitrilo',
+    'Detergente Industrial', 'Lavavajillas', 'Desinfectante', 'Limpiador Suelos',
+    'Papel Aluminio', 'Film Transparente', 'Bolsas Vacío', 'Recipientes Plástico',
+  ];
+
+  const categories = {
+    'Food': ['Pescados y Mariscos', 'Carnes', 'Charcutería', 'Verduras', 'Secos', 'Aceites', 'Lácteos', 'Pan'],
+    'Beverage': ['Cervezas', 'Vinos', 'Refrescos', 'Zumos', 'Café y Té'],
+    'Misc': ['Limpieza', 'Papelería', 'Desechables', 'Utensilios'],
+  };
+
+  const suppliers = [
+    'Pescaderías del Norte', 'Carnicerías Premium', 'Ibéricos Salamanca',
+    'Verduras Frescas SL', 'Arroces Valencia', 'Aceites Jaén',
+    'Distribuidora Bebidas', 'Bodegas Rioja', 'Refrescos Levante',
+    'Suministros Hostelería', 'Suministros Oficina', 'Limpieza Pro',
+  ];
+
+  // Generate 400+ items by varying base names
+  let id = 1;
+  for (let i = 0; i < 400; i++) {
+    const baseName = baseNames[i % baseNames.length];
+    const variation = i < baseNames.length ? '' : ` ${Math.floor(i / baseNames.length) + 1}`;
+    const type = i < 200 ? 'Food' : i < 300 ? 'Beverage' : 'Misc';
+    const categoryList = categories[type];
+    const category = categoryList[i % categoryList.length];
+    const supplier = suppliers[i % suppliers.length];
+    
+    const basePrice = type === 'Food' ? 15 + Math.random() * 40 :
+                      type === 'Beverage' ? 8 + Math.random() * 30 :
+                      5 + Math.random() * 25;
+
+    items.push({
+      id: String(id++),
+      name: baseName + variation,
+      type,
+      category,
+      supplier,
+      orderUnit: type === 'Beverage' ? 'Case' : type === 'Food' && Math.random() > 0.5 ? 'kg' : 'Pack',
+      orderQty: type === 'Beverage' ? 12 + Math.floor(Math.random() * 12) : Math.ceil(Math.random() * 10),
+      price: Math.round(basePrice * 100) / 100,
+      vatRate: type === 'Food' ? 10 : 21,
+    });
+  }
+
+  return items;
+};
+
+const mockItems = generateMockItems();
 
 const ITEMS_PER_PAGE = 50;
 
