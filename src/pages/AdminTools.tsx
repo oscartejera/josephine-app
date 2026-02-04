@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { generateDemoData18Months } from '@/lib/seed/generateDemoData';
 
 export default function AdminTools() {
   const [isSeeding, setIsSeeding] = useState(false);
@@ -15,24 +16,40 @@ export default function AdminTools() {
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingForecast, setIsGeneratingForecast] = useState(false);
   const [forecastResult, setForecastResult] = useState<any>(null);
+  const [seedProgress, setSeedProgress] = useState<{ step: string; progress: number; total: number; message: string } | null>(null);
 
   const handleSeed18Months = async () => {
     setIsSeeding(true);
     setError(null);
     setSeedResult(null);
+    setSeedProgress(null);
 
     try {
-      console.log('🌱 Starting 18-month seed...');
+      console.log('🌱 Starting frontend seed (30 días)...');
       
-      const { data, error } = await supabase.functions.invoke('seed_josephine_18m', {
-        body: {}
+      // Usar función de frontend en lugar de Edge Function
+      const result = await generateDemoData18Months((progress) => {
+        setSeedProgress(progress);
+        console.log(`Progress: ${progress.message}`);
       });
 
-      if (error) throw error;
-
-      console.log('✅ Seed result:', data);
-      setSeedResult(data);
-      toast.success('18 meses de datos generados exitosamente!');
+      console.log('✅ Seed result:', result);
+      setSeedResult({
+        success: true,
+        locations: result.locations,
+        employees: result.employees,
+        salesRecords: result.salesRecords,
+        labourRecords: result.labourRecords,
+        message: result.message,
+        period: 'Últimos 30 días con actuals'
+      });
+      
+      toast.success('¡Datos generados exitosamente!');
+      
+      // Auto-refresh después de 2 segundos
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
 
     } catch (err) {
       console.error('❌ Seed error:', err);
@@ -41,6 +58,7 @@ export default function AdminTools() {
       toast.error(`Error: ${errorMsg}`);
     } finally {
       setIsSeeding(false);
+      setSeedProgress(null);
     }
   };
 
@@ -266,6 +284,21 @@ export default function AdminTools() {
                 </div>
               </div>
 
+              {seedProgress && (
+                <div className="bg-white rounded-lg p-3 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-900">{seedProgress.message}</span>
+                    <span className="text-xs text-gray-500">{seedProgress.progress}/{seedProgress.total}</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-300"
+                      style={{ width: `${(seedProgress.progress / seedProgress.total) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
               <Button 
                 onClick={handleSeed18Months}
                 disabled={isSeeding}
@@ -274,15 +307,19 @@ export default function AdminTools() {
                 {isSeeding ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Generando... (3-5 min)
+                    Generando... {seedProgress ? `(${seedProgress.step})` : ''}
                   </>
                 ) : (
                   <>
                     <Database className="h-4 w-4 mr-2" />
-                    Generar 18 Meses
+                    Generar Datos (30 días)
                   </>
                 )}
               </Button>
+              
+              <p className="text-xs text-center text-gray-600 mt-2">
+                ✨ Genera desde el navegador sin Edge Functions
+              </p>
             </div>
           </Card>
 
