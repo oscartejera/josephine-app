@@ -1,5 +1,6 @@
 /**
- * Sales Module - SIMPLIFIED with hardcoded data
+ * Sales Module - Josephine AI Ops
+ * Version: 2.0 - Nory-style with Josephine colors
  */
 
 import { useState } from 'react';
