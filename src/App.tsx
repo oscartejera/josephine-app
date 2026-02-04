@@ -34,6 +34,7 @@ import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
 import Integrations from "@/pages/Integrations";
 import SquareIntegration from "@/pages/integrations/SquareIntegration";
+import InventoryItems from "@/pages/inventory-setup/InventoryItems";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
@@ -114,6 +115,9 @@ function AppRoutes() {
         {/* Integrations */}
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/integrations/square" element={<SquareIntegration />} />
+        
+        {/* Inventory Setup */}
+        <Route path="/inventory-setup/items" element={<InventoryItems />} />
         
         {/* Settings */}
         <Route path="/settings" element={<SettingsPage />} />
