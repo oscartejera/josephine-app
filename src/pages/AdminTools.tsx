@@ -128,21 +128,22 @@ export default function AdminTools() {
               <Button 
                 variant="secondary"
                 size="sm"
-                onClick={() => window.open('https://supabase.com/dashboard/project/gbddbubzvhmgnwyowucd/sql/new', '_blank')}
+                onClick={() => window.open('https://supabase.com/dashboard', '_blank')}
               >
-                Abrir Supabase SQL Editor
+                Abrir Supabase Dashboard
               </Button>
               <Button 
                 variant="outline"
                 size="sm"
                 className="bg-white/10 hover:bg-white/20 text-white border-white/30"
                 onClick={() => {
-                  // Copy instructions to clipboard
-                  navigator.clipboard.writeText('1. Ve a Supabase Dashboard\n2. SQL Editor\n3. Abre SEED_DIRECT_SQL.sql del proyecto\n4. Copia todo y pega\n5. Run');
-                  toast.success('Instrucciones copiadas al portapapeles');
+                  // Copy SQL content to clipboard
+                  const sqlContent = `-- Ver SEED_DIRECT_SQL.sql en el proyecto para el código completo\n-- O ejecuta esto rápido (30 días):\n\nINSERT INTO locations (group_id, name, city) VALUES ((SELECT id FROM groups LIMIT 1), 'La Taberna Centro', 'Salamanca');\n-- Ver archivo completo para más...`;
+                  navigator.clipboard.writeText(sqlContent);
+                  toast.success('Link copiado - ve a supabase.com/dashboard');
                 }}
               >
-                Copiar instrucciones
+                Copiar link Supabase
               </Button>
             </div>
           </div>
