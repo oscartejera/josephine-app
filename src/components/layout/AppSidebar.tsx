@@ -286,6 +286,20 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             {!collapsed && <span>Purchases</span>}
           </Button>
 
+          {/* Inventory Setup */}
+          <Button
+            variant={location.pathname.startsWith('/inventory-setup') ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname.startsWith('/inventory-setup') && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/inventory-setup/items')}
+          >
+            <Package className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Inventory Setup</span>}
+          </Button>
+
           {/* Integrations */}
           <Button
             variant={location.pathname.startsWith('/integrations') ? "secondary" : "ghost"}
