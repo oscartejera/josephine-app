@@ -10,9 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, 
   TrendingDown,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -43,7 +40,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AskJosephineSalesDrawer } from '@/components/sales';
+import { AskJosephineSalesDrawer, HourlyDrillDownDrawer, DateRangePicker, DateRangePreset } from '@/components/sales';
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 // Josephine colors
 const COLORS = {
@@ -83,12 +81,23 @@ interface LocationData {
 }
 
 export default function Sales() {
-  const [dateRange, setDateRange] = useState('week');
+  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>('week');
+  const [startDate, setStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [endDate, setEndDate] = useState(endOfWeek(new Date(), { weekStartsOn: 1 }));
   const [compareMode, setCompareMode] = useState('forecast');
   const [selectedLocation, setSelectedLocation] = useState<LocationId>('all');
   const [productViewMode, setProductViewMode] = useState<'sales' | 'qty'>('sales');
   const [productsDisplayCount, setProductsDisplayCount] = useState(10);
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
+  const [hourlyDrillDownOpen, setHourlyDrillDownOpen] = useState(false);
+  const [selectedDayData, setSelectedDayData] = useState<{
+    day: string;
+    date: string;
+    hourlyData: any[];
+    totalSales: number;
+    totalForecast: number;
+    totalOrders: number;
+  } | null>(null);
 
   // Location-specific data
   const locationsData: Record<LocationId, Omit<LocationData, 'id'>> = {
@@ -348,6 +357,68 @@ export default function Sales() {
   const displayedProducts = productsData.slice(0, productsDisplayCount);
   const hasMoreProducts = productsDisplayCount < productsData.length;
 
+  // Generate hourly data for a specific day
+  const generateHourlyData = (dayData: any, dayName: string, dayDate: string) => {
+    const operatingHours = [
+      { hour: '10:00', weight: 0.02 },
+      { hour: '11:00', weight: 0.04 },
+      { hour: '12:00', weight: 0.08 },
+      { hour: '13:00', weight: 0.12 },
+      { hour: '14:00', weight: 0.14 },
+      { hour: '15:00', weight: 0.08 },
+      { hour: '16:00', weight: 0.04 },
+      { hour: '17:00', weight: 0.05 },
+      { hour: '18:00', weight: 0.07 },
+      { hour: '19:00', weight: 0.10 },
+      { hour: '20:00', weight: 0.12 },
+      { hour: '21:00', weight: 0.10 },
+      { hour: '22:00', weight: 0.04 },
+    ];
+
+    const totalActual = dayData.actual || 0;
+    const totalForecast = dayData.forecast || 0;
+    let totalOrders = 0;
+
+    const hourlyData = operatingHours.map((slot, index) => {
+      const actual = Math.round(totalActual * slot.weight * (0.9 + Math.random() * 0.2));
+      const forecast = Math.round(totalForecast * slot.weight * (0.95 + Math.random() * 0.1));
+      const orders = Math.round(actual / (dayData.avgCheck || 24));
+      totalOrders += orders;
+      const variance = forecast > 0 ? ((actual - forecast) / forecast) * 100 : 0;
+
+      return {
+        hour: slot.hour,
+        actual,
+        forecast,
+        avgCheck: orders > 0 ? actual / orders : dayData.avgCheck || 24,
+        orders,
+        variance,
+      };
+    });
+
+    return {
+      day: dayName,
+      date: dayDate,
+      hourlyData,
+      totalSales: totalActual,
+      totalForecast: totalForecast,
+      totalOrders,
+    };
+  };
+
+  // Handle chart bar click
+  const handleBarClick = (data: any) => {
+    if (!data || !data.activePayload || !data.activePayload[0]) return;
+    
+    const dayData = data.activePayload[0].payload;
+    const dayName = dayData.day;
+    const dayDate = '1 Oct 2024'; // You could calculate this based on the actual date
+    
+    const drillDownData = generateHourlyData(dayData, dayName, dayDate);
+    setSelectedDayData(drillDownData);
+    setHourlyDrillDownOpen(true);
+  };
+
   // Sales data for AI assistant
   const salesDataForAI = useMemo(() => ({
     salesToDate: kpiData.salesToDate.value,
@@ -391,18 +462,16 @@ export default function Sales() {
             </SelectContent>
           </Select>
 
-          <div className="flex items-center gap-1 border rounded-lg p-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" className="h-8 px-3">
-              <Calendar className="h-4 w-4 mr-2" />
-              This Week
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <DateRangePicker
+            selectedPreset={dateRangePreset}
+            onPresetChange={setDateRangePreset}
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+            }}
+          />
           
           <Select value={compareMode} onValueChange={setCompareMode}>
             <SelectTrigger className="w-[160px]">
@@ -538,15 +607,54 @@ export default function Sales() {
             <h3 className="text-lg font-semibold mb-4">Sales v Forecast</h3>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={weeklyChartData}>
+                <ComposedChart data={weeklyChartData} onClick={handleBarClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" />
                   <YAxis yAxisId="left" tickFormatter={(v) => `€${(v/1000).toFixed(0)}K`} />
                   <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `€${v}`} />
-                  <Tooltip />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white border rounded-lg shadow-lg p-3">
+                            <p className="font-semibold mb-2">{payload[0].payload.day}</p>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex items-center justify-between gap-4">
+                                <span>Actual:</span>
+                                <span className="font-semibold">€{payload[0].value?.toLocaleString()}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-4">
+                                <span>Forecast:</span>
+                                <span className="font-semibold">€{payload[1].value?.toLocaleString()}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-2 border-t pt-1">
+                                Click para ver detalles por hora
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Legend />
-                  <Bar yAxisId="left" dataKey="actual" fill={COLORS.actual} name="Actual" radius={[8,8,0,0]} />
-                  <Bar yAxisId="left" dataKey="forecast" fill={COLORS.forecast} name="Forecast" radius={[8,8,0,0]} opacity={0.6} />
+                  <Bar 
+                    yAxisId="left" 
+                    dataKey="actual" 
+                    fill={COLORS.actual} 
+                    name="Actual" 
+                    radius={[8,8,0,0]}
+                    cursor="pointer"
+                  />
+                  <Bar 
+                    yAxisId="left" 
+                    dataKey="forecast" 
+                    fill={COLORS.forecast} 
+                    name="Forecast" 
+                    radius={[8,8,0,0]} 
+                    opacity={0.6}
+                    cursor="pointer"
+                  />
                   <Line yAxisId="right" type="monotone" dataKey="avgCheck" stroke={COLORS.avgCheck} strokeWidth={2} name="Avg Check" />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -727,6 +835,20 @@ export default function Sales() {
         onOpenChange={setAskJosephineOpen}
         salesData={salesDataForAI}
       />
+
+      {/* Hourly Drill-Down Drawer */}
+      {selectedDayData && (
+        <HourlyDrillDownDrawer
+          open={hourlyDrillDownOpen}
+          onOpenChange={setHourlyDrillDownOpen}
+          selectedDay={selectedDayData.day}
+          selectedDate={selectedDayData.date}
+          hourlyData={selectedDayData.hourlyData}
+          totalSales={selectedDayData.totalSales}
+          totalForecast={selectedDayData.totalForecast}
+          totalOrders={selectedDayData.totalOrders}
+        />
+      )}
     </div>
   );
 }
