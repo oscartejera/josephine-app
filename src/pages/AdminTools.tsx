@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar } from 'lucide-react';
+import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,6 +13,8 @@ export default function AdminTools() {
   const [isSeeding, setIsSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingForecast, setIsGeneratingForecast] = useState(false);
+  const [forecastResult, setForecastResult] = useState<any>(null);
 
   const handleSeed18Months = async () => {
     setIsSeeding(true);
@@ -64,11 +66,94 @@ export default function AdminTools() {
     }
   };
 
+  const handleGenerateForecast = async () => {
+    setIsGeneratingForecast(true);
+    setForecastResult(null);
+    setError(null);
+
+    try {
+      console.log('🔮 Generating Prophet forecast with regressors...');
+
+      const { data, error } = await supabase.functions.invoke('generate_forecast_v4', {
+        body: { horizon_days: 90 } // 3 months
+      });
+
+      if (error) throw error;
+
+      console.log('✅ Forecast generated:', data);
+      setForecastResult(data);
+      toast.success(`Forecast generado: ${data.results?.length} locations`);
+
+    } catch (err) {
+      console.error('❌ Forecast error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
+      setError(errorMsg);
+      toast.error(`Error: ${errorMsg}`);
+    } finally {
+      setIsGeneratingForecast(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-[1200px] mx-auto">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Admin Tools</h1>
         <p className="text-gray-600 mt-2">Herramientas para generar datos demo y gestión del sistema</p>
+      </div>
+
+      {/* Forecast Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-gray-900">Generate Prophet Forecast</h2>
+        
+        <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-100">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+              <Sparkles className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Forecast con Regresores Externos</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Genera forecast de 90 días (3 meses) usando Prophet mejorado con clima, eventos y festivos españoles
+                </p>
+              </div>
+
+              <div className="bg-white rounded-lg p-3 space-y-2 text-sm">
+                <p className="font-medium text-gray-900">Incluye:</p>
+                <ul className="space-y-1 text-gray-700 ml-4">
+                  <li>✓ Trend + Seasonality (13 meses de historia)</li>
+                  <li>✓ Clima: Temperatura y lluvia (impacto -25% en lluvia)</li>
+                  <li>✓ Eventos: Partidos Real Madrid, festivales (+30%)</li>
+                  <li>✓ Festivos españoles: 20+ días marcados (-20%)</li>
+                  <li>✓ Días de pago: Fin de mes (+5%)</li>
+                  <li>✓ Confidence intervals al 95%</li>
+                </ul>
+              </div>
+
+              <Button 
+                onClick={handleGenerateForecast}
+                disabled={isGeneratingForecast}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              >
+                {isGeneratingForecast ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Generando forecast... (~60 seg)
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generar Forecast (3 meses)
+                  </>
+                )}
+              </Button>
+
+              <p className="text-xs text-gray-500">
+                ⚠️ Requiere datos históricos en facts_sales_15m. Ejecuta "Generar 18 Meses" primero si no tienes datos.
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Seed Data Section */}
@@ -275,6 +360,76 @@ export default function AdminTools() {
                 >
                   Ver Labour Module
                 </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Forecast Result Display */}
+      {forecastResult && (
+        <Card className="p-6 bg-purple-50 border-purple-200">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-6 w-6 text-purple-600 shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                🔮 Forecast generado con Prophet v4
+              </h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Locations procesadas:</span>
+                    <span className="font-semibold ml-2">{forecastResult.locations_processed}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Horizon:</span>
+                    <span className="font-semibold ml-2">{forecastResult.horizon_days} días</span>
+                  </div>
+                </div>
+
+                {forecastResult.results && forecastResult.results.length > 0 && (
+                  <div className="bg-white rounded-lg p-3 space-y-2">
+                    <p className="font-medium text-gray-900 text-sm">Resultados por location:</p>
+                    {forecastResult.results.map((r: any, i: number) => (
+                      <div key={i} className="text-xs space-y-1 border-b border-gray-100 pb-2 last:border-0">
+                        <p className="font-semibold text-gray-900">{r.location_name}</p>
+                        <div className="grid grid-cols-2 gap-2 text-gray-700">
+                          <span>Modelo: {r.model}</span>
+                          <span>R²: {r.trend_r_squared}</span>
+                          <span>Confidence: {r.confidence}%</span>
+                          <span>Forecasts: {r.forecasts_generated}</span>
+                        </div>
+                        {r.sample_forecast && r.sample_forecast.length > 0 && (
+                          <div className="mt-2 bg-gray-50 p-2 rounded">
+                            <p className="font-medium mb-1">Próximos 7 días:</p>
+                            {r.sample_forecast.slice(0, 3).map((f: any, j: number) => (
+                              <div key={j} className="text-[10px] text-gray-600">
+                                {f.date}: €{f.forecast.toFixed(0)} - {f.explanation}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.location.href = '/sales'}
+                  >
+                    Ver en Sales
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.location.href = '/insights/labour'}
+                  >
+                    Ver en Labour
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
