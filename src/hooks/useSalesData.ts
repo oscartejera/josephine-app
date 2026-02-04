@@ -20,18 +20,21 @@ export function useSalesData(locationId: string | null, rangeType: DateRangeType
       return;
     }
 
-    // Generate data async to not block UI (90 days for performance)
+    // Generate data async to not block UI (30 days for fast load)
     setTimeout(() => {
       try {
-        const yearData = generateYearData(locationId, 'demo-org', 90);
+        console.log('[Sales] Starting data generation...');
+        const yearData = generateYearData(locationId, 'demo-org', 30); // Only 30 days
+        console.log('[Sales] Data generated, rows:', yearData.sales15m?.length);
         setAllData(yearData);
-        console.log('[Sales] Data generated successfully');
       } catch (error) {
-        console.error('Error generating data:', error);
+        console.error('[Sales] Error generating data:', error);
+        setAllData({ sales15m: [], laborDaily: [] }); // Empty fallback
       } finally {
+        console.log('[Sales] Setting loading to false');
         setLoading(false);
       }
-    }, 100);
+    }, 50);
   }, [locationId]);
 
   // Filter data based on selected range
