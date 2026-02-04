@@ -20,11 +20,12 @@ export function useSalesData(locationId: string | null, rangeType: DateRangeType
       return;
     }
 
-    // Generate data async to not block UI
+    // Generate data async to not block UI (90 days for performance)
     setTimeout(() => {
       try {
-        const yearData = generateYearData(locationId);
+        const yearData = generateYearData(locationId, 'demo-org', 90);
         setAllData(yearData);
+        console.log('[Sales] Data generated successfully');
       } catch (error) {
         console.error('Error generating data:', error);
       } finally {

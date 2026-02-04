@@ -3,8 +3,8 @@
  * Genera 365 días de datos realistas para todos los módulos
  */
 
-export function generateYearData(locationId: string, orgId: string = 'demo-org') {
-  console.log('[Data Generator] Generating 365 days of data...');
+export function generateYearData(locationId: string, orgId: string = 'demo-org', daysToGenerate: number = 90) {
+  console.log(`[Data Generator] Generating ${daysToGenerate} days of data...`);
   
   const today = new Date();
   const data: any = {
@@ -36,7 +36,7 @@ export function generateYearData(locationId: string, orgId: string = 'demo-org')
     { name: 'Crema Catalana', price: 6.00, category: 'Postres', margin: 0.55 },
   ];
 
-  for (let dayOffset = 364; dayOffset >= 0; dayOffset--) {
+  for (let dayOffset = daysToGenerate - 1; dayOffset >= 0; dayOffset--) {
     const date = new Date(today);
     date.setDate(date.getDate() - dayOffset);
     date.setHours(0, 0, 0, 0);
