@@ -572,34 +572,33 @@ export default function Sales() {
               </div>
             </div>
 
-            {/* Channel breakdown with bars */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS.dineIn}}></div>
+            {/* Channel breakdown - Nory layout */}
+            <div className="space-y-2.5 pt-2">
+              {/* Row 1: Dine-in | Pick-up | Delivery labels */}
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.dineIn}}></div>
                   <span className="text-gray-700">Dine-in</span>
                 </div>
-                <span className="font-medium text-gray-900">{kpiData.channels.dineIn.pct}%</span>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS.pickUp}}></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.pickUp}}></div>
                   <span className="text-gray-700">Pick-up</span>
                 </div>
-                <span className="font-medium text-gray-900">{kpiData.channels.pickUp.pct}%</span>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: COLORS.delivery}}></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.delivery}}></div>
                   <span className="text-gray-700">Delivery</span>
                 </div>
-                <span className="font-medium text-gray-900">{kpiData.channels.delivery.pct}%</span>
+              </div>
+
+              {/* Row 2: Percentages */}
+              <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-900">
+                <div>{kpiData.channels.dineIn.pct}%</div>
+                <div>{kpiData.channels.pickUp.pct}%</div>
+                <div>{kpiData.channels.delivery.pct}%</div>
               </div>
 
               {/* Stacked bar - Nory style */}
-              <div className="w-full h-2.5 flex rounded-sm overflow-hidden">
+              <div className="w-full h-3 flex rounded-sm overflow-hidden">
                 <div 
                   className="h-full" 
                   style={{
@@ -642,30 +641,51 @@ export default function Sales() {
               </div>
             </div>
 
-            {/* Channel avg check - only dots and values, no bars */}
+            {/* Channel avg check - Nory horizontal layout */}
             <div className="space-y-2.5 pt-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div>
+              {/* Row 1: Dine-in | Pick-up | Delivery labels */}
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-orange-600"></div>
                   <span className="text-gray-700">Dine-in</span>
                 </div>
-                <span className="font-medium text-gray-900">€{kpiData.channels.dineIn.avgCheck.toFixed(2)}</span>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
                   <span className="text-gray-700">Pick-up</span>
                 </div>
-                <span className="font-medium text-gray-900">€{kpiData.channels.pickUp.avgCheck.toFixed(2)}</span>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-orange-200"></div>
                   <span className="text-gray-700">Delivery</span>
                 </div>
-                <span className="font-medium text-gray-900">€{kpiData.channels.delivery.avgCheck.toFixed(2)}</span>
+              </div>
+
+              {/* Row 2: Values */}
+              <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-900">
+                <div>€{kpiData.channels.dineIn.avgCheck.toFixed(2)}</div>
+                <div>€{kpiData.channels.pickUp.avgCheck.toFixed(2)}</div>
+                <div>€{kpiData.channels.delivery.avgCheck.toFixed(2)}</div>
+              </div>
+
+              {/* Stacked bar - Nory style (weighted by value proportionally) */}
+              <div className="w-full h-3 flex rounded-sm overflow-hidden">
+                <div 
+                  className="h-full bg-orange-600" 
+                  style={{
+                    width: `${(kpiData.channels.dineIn.avgCheck / (kpiData.channels.dineIn.avgCheck + kpiData.channels.pickUp.avgCheck + kpiData.channels.delivery.avgCheck)) * 100}%`
+                  }}
+                ></div>
+                <div 
+                  className="h-full bg-orange-400" 
+                  style={{
+                    width: `${(kpiData.channels.pickUp.avgCheck / (kpiData.channels.dineIn.avgCheck + kpiData.channels.pickUp.avgCheck + kpiData.channels.delivery.avgCheck)) * 100}%`
+                  }}
+                ></div>
+                <div 
+                  className="h-full bg-orange-200" 
+                  style={{
+                    width: `${(kpiData.channels.delivery.avgCheck / (kpiData.channels.dineIn.avgCheck + kpiData.channels.pickUp.avgCheck + kpiData.channels.delivery.avgCheck)) * 100}%`
+                  }}
+                ></div>
               </div>
             </div>
           </div>
