@@ -75,7 +75,7 @@ function KpiCardSkeleton() {
 export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
   if (isLoading || !kpis) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCardSkeleton />
         <KpiCardSkeleton />
         <KpiCardSkeleton />
@@ -101,14 +101,14 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
 
   const getActualLabel = () => {
     if (metricMode === 'percentage') return 'Actual COL';
-    if (metricMode === 'amount') return 'Actual Labour Cost';
-    return 'Actual Hours';
+    if (metricMode === 'amount') return 'Actual labour cost';
+    return 'Actual hours';
   };
 
   const getPlannedLabel = () => {
     if (metricMode === 'percentage') return 'Projected COL';
-    if (metricMode === 'amount') return 'Projected Labour Cost';
-    return 'Projected Hours';
+    if (metricMode === 'amount') return 'Projected labour cost';
+    return 'Projected hours';
   };
 
   const getColDelta = () => {
@@ -116,60 +116,163 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
     return kpis.col_delta_pct;
   };
 
+  // Colors for bars (Josephine style)
+  const COLORS = {
+    actual: '#6366f1',
+    forecast: '#c7d2fe',
+    splh: '#10b981',
+    oplh: '#f59e0b',
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Sales */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Sales</span>
-            <DeltaBadge value={kpis.sales_delta_pct} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Sales - with visual bar */}
+      <Card className="p-5 bg-white">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <h3 className="text-sm font-normal text-gray-700">Sales</h3>
+            <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          <div className="text-3xl font-bold tracking-tight mb-1">
-            {formatCurrency(kpis.actual_sales)}
+          
+          <div className="space-y-1">
+            <div className="text-3xl font-bold text-gray-900">{formatCurrency(kpis.actual_sales)}</div>
+            <div className="flex items-center gap-2">
+              <DeltaBadge value={kpis.sales_delta_pct} />
+              <span className="text-xs text-gray-500">vs forecast</span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">{dateLabel}</p>
-        </CardContent>
+
+          {/* Visual comparison bar */}
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Actual vs Forecast</span>
+            </div>
+            <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
+              <div 
+                className="h-full absolute left-0 top-0 bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all"
+                style={{ width: `${Math.min((kpis.actual_sales / kpis.forecast_sales) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Actual: {formatCurrency(kpis.actual_sales)}</span>
+              <span>Forecast: {formatCurrency(kpis.forecast_sales)}</span>
+            </div>
+          </div>
+        </div>
       </Card>
 
-      {/* Projected Sales */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Projected Sales</span>
+      {/* Actual COL / Labour Cost / Hours - with target bar */}
+      <Card className="p-5 bg-white">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <h3 className="text-sm font-normal text-gray-700">{getActualLabel()}</h3>
+            <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          <div className="text-3xl font-bold tracking-tight mb-1">
-            {formatCurrency(kpis.forecast_sales)}
+          
+          <div className="space-y-1">
+            <div className="text-3xl font-bold text-gray-900">{getActualColValue()}</div>
+            <div className="flex items-center gap-2">
+              <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label="vs planned" />
+              <span className="text-xs text-gray-500">vs planned</span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">{dateLabel}</p>
-        </CardContent>
+
+          {/* Visual comparison bar for COL% */}
+          {metricMode === 'percentage' && (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-600">COL% Target: 28%</span>
+              </div>
+              <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
+                <div 
+                  className="h-full absolute left-0 top-0 transition-all"
+                  style={{ 
+                    width: `${Math.min((kpis.actual_col_pct / 35) * 100, 100)}%`,
+                    background: kpis.actual_col_pct <= 28 ? 'linear-gradient(to right, #10b981, #059669)' : 'linear-gradient(to right, #f59e0b, #d97706)'
+                  }}
+                ></div>
+                <div 
+                  className="h-full absolute border-l-2 border-gray-400"
+                  style={{ left: '80%' }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Actual: {formatPercent(kpis.actual_col_pct)}</span>
+                <span>Planned: {formatPercent(kpis.planned_col_pct)}</span>
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
 
-      {/* Actual COL / Labour Cost / Hours */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-sm font-medium text-muted-foreground">{getActualLabel()}</span>
-            <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label="vs planned" />
+      {/* SPLH - with performance bar */}
+      <Card className="p-5 bg-white">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <h3 className="text-sm font-normal text-gray-700">SPLH</h3>
+            <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          <div className="text-3xl font-bold tracking-tight mb-1">
-            {getActualColValue()}
+          
+          <div className="space-y-1">
+            <div className="text-3xl font-bold text-gray-900">€{kpis.actual_splh.toFixed(0)}</div>
+            <div className="flex items-center gap-2">
+              <DeltaBadge value={kpis.splh_delta_pct} />
+              <span className="text-xs text-gray-500">vs planned</span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">{dateLabel}</p>
-        </CardContent>
+
+          {/* Visual comparison bar */}
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Productivity</span>
+            </div>
+            <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
+              <div 
+                className="h-full absolute left-0 top-0 bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all"
+                style={{ width: `${Math.min((kpis.actual_splh / (kpis.planned_splh * 1.2)) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Actual: €{kpis.actual_splh.toFixed(0)}</span>
+              <span>Planned: €{kpis.planned_splh.toFixed(0)}</span>
+            </div>
+          </div>
+        </div>
       </Card>
 
-      {/* Projected COL / Labour Cost / Hours */}
-      <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm bg-card">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-sm font-medium text-muted-foreground">{getPlannedLabel()}</span>
+      {/* OPLH */}
+      <Card className="p-5 bg-white">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <h3 className="text-sm font-normal text-gray-700">OPLH</h3>
+            <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          <div className="text-3xl font-bold tracking-tight mb-1">
-            {getPlannedColValue()}
+          
+          <div className="space-y-1">
+            <div className="text-3xl font-bold text-gray-900">{kpis.actual_oplh.toFixed(1)}</div>
+            <div className="flex items-center gap-2">
+              <DeltaBadge value={kpis.oplh_delta_pct} />
+              <span className="text-xs text-gray-500">vs planned</span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">{dateLabel}</p>
-        </CardContent>
+
+          {/* Visual comparison bar */}
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Orders efficiency</span>
+            </div>
+            <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
+              <div 
+                className="h-full absolute left-0 top-0 bg-gradient-to-r from-amber-500 to-amber-600 transition-all"
+                style={{ width: `${Math.min((kpis.actual_oplh / (kpis.planned_oplh * 1.2)) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Actual: {kpis.actual_oplh.toFixed(1)}</span>
+              <span>Planned: {kpis.planned_oplh.toFixed(1)}</span>
+            </div>
+          </div>
+        </div>
       </Card>
     </div>
   );

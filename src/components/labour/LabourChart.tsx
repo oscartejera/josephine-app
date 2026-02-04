@@ -31,18 +31,24 @@ interface LabourChartProps {
 
 type ChartMode = 'splh' | 'oplh';
 
+// Josephine colors - matching Sales module
+const CHART_COLORS = {
+  actual: '#6366f1', // Indigo for Actual
+  planned: '#c7d2fe', // Light indigo for Planned
+  splh: '#f97316', // Orange for SPLH
+  splhPlanned: '#fed7aa', // Light orange for SPLH Planned
+  oplh: '#10b981', // Green for OPLH
+  oplhPlanned: '#86efac', // Light green for OPLH Planned
+};
+
 function ChartSkeleton() {
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-8 w-32" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-[350px] w-full" />
-      </CardContent>
+    <Card className="p-6 bg-white">
+      <div className="flex justify-between items-center mb-4">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-8 w-32" />
+      </div>
+      <Skeleton className="h-[350px] w-full" />
     </Card>
   );
 }
@@ -71,19 +77,60 @@ function CustomTooltip({ active, payload, label, metricMode, chartMode }: Custom
     return value.toFixed(2);
   };
 
+  // Get actual data from payload
+  const data = payload[0]?.payload;
+  if (!data) return null;
+
+  // Calculate variances
+  const colVariance = data.planned_col_pct > 0 ? ((data.actual_col_pct - data.planned_col_pct) / data.planned_col_pct) * 100 : 0;
+  const splhVariance = data.planned_splh > 0 ? ((data.actual_splh - data.planned_splh) / data.planned_splh) * 100 : 0;
+  const oplhVariance = data.planned_oplh > 0 ? ((data.actual_oplh - data.planned_oplh) / data.planned_oplh) * 100 : 0;
+  const relevantVariance = chartMode === 'splh' ? splhVariance : oplhVariance;
+
+  const TrendIcon = relevantVariance >= 0 ? '↗' : '↘';
+  const varianceColor = relevantVariance >= 0 ? '#10b981' : '#f43f5e';
+
   return (
-    <div className="bg-card border border-border rounded-lg shadow-lg p-3 text-sm">
-      <p className="font-medium mb-2">{label}</p>
-      {payload.map((entry, index) => (
-        <div key={index} className="flex items-center gap-2 py-0.5">
-          <span 
-            className="w-3 h-3 rounded-sm" 
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-muted-foreground">{entry.name}:</span>
-          <span className="font-medium">{formatValue(entry.dataKey, entry.value)}</span>
+    <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[280px]">
+      {/* COL / Hours / Cost Section */}
+      <div className="mb-3 pb-3 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-semibold text-gray-900">
+            {metricMode === 'percentage' ? 'COL %' : metricMode === 'amount' ? 'Labour Cost' : 'Hours'} ({label})
+          </span>
+          <span className="flex items-center gap-1 text-sm font-medium" style={{ color: colVariance <= 0 ? '#10b981' : '#f43f5e' }}>
+            {colVariance <= 0 ? '↗' : '↘'} {Math.abs(colVariance).toFixed(2)}%
+          </span>
         </div>
-      ))}
+        <div className="space-y-1.5 text-sm">
+          {payload.slice(0, 2).map((entry, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }}></div>
+              <span className="text-gray-600">{entry.name}:</span>
+              <span className="ml-auto font-semibold text-gray-900">{formatValue(entry.dataKey, entry.value)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* SPLH/OPLH Section */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-semibold text-gray-900">{chartMode === 'splh' ? 'SPLH' : 'OPLH'}</span>
+          <span className="flex items-center gap-1 text-sm font-medium" style={{ color: varianceColor }}>
+            {TrendIcon} {Math.abs(relevantVariance).toFixed(2)}%
+          </span>
+        </div>
+        <div className="space-y-1.5 text-sm">
+          {payload.slice(2, 4).map((entry, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
+              <span className="text-gray-600">{entry.name}:</span>
+              <span className="ml-auto font-semibold text-gray-900">{formatValue(entry.dataKey, entry.value)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -150,119 +197,127 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   const barConfig = getBarConfig();
   const lineConfig = getLineConfig();
 
+  // Determine colors for lines based on chart mode
+  const lineColor = chartMode === 'splh' ? CHART_COLORS.splh : CHART_COLORS.oplh;
+  const lineColorPlanned = chartMode === 'splh' ? CHART_COLORS.splhPlanned : CHART_COLORS.oplhPlanned;
+
   return (
-    <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold">Labour over time</CardTitle>
-          
-          {/* SPLH / OPLH Toggle */}
-          <div className="flex items-center bg-muted rounded-lg p-0.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                chartMode === 'splh' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => setChartMode('splh')}
-            >
-              SPLH
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                chartMode === 'oplh' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => setChartMode('oplh')}
-            >
-              OPLH
-            </Button>
-          </div>
+    <Card className="p-6 bg-white">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-base font-semibold text-gray-900">Labour over time</h3>
+        
+        {/* SPLH / OPLH Toggle */}
+        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-7 px-3 rounded-md text-xs font-medium transition-all",
+              chartMode === 'splh' 
+                ? "bg-white shadow-sm text-gray-900" 
+                : "text-gray-600 hover:text-gray-900"
+            )}
+            onClick={() => setChartMode('splh')}
+          >
+            SPLH
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-7 px-3 rounded-md text-xs font-medium transition-all",
+              chartMode === 'oplh' 
+                ? "bg-white shadow-sm text-gray-900" 
+                : "text-gray-600 hover:text-gray-900"
+            )}
+            onClick={() => setChartMode('oplh')}
+          >
+            OPLH
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis 
-                dataKey="date" 
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={{ stroke: 'hsl(var(--border))' }}
-                tickLine={false}
-              />
-              <YAxis 
-                yAxisId="left"
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(value) => `${value}${barConfig.unit === '€' ? '€' : barConfig.unit}`}
-              />
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
-                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(value) => `€${value}`}
-              />
-              <Tooltip 
-                content={<CustomTooltip metricMode={metricMode} chartMode={chartMode} />}
-              />
-              <Legend 
-                wrapperStyle={{ paddingTop: '20px' }}
-                formatter={(value) => <span className="text-sm text-muted-foreground">{value}</span>}
-              />
-              
-              {/* Bars for COL/Cost/Hours */}
-              <Bar 
-                yAxisId="left"
-                dataKey={barConfig.actualKey} 
-                name={barConfig.actualName}
-                fill="hsl(var(--bi-actual))"
-                radius={[4, 4, 0, 0]}
-                barSize={20}
-              />
-              <Bar 
-                yAxisId="left"
-                dataKey={barConfig.plannedKey} 
-                name={barConfig.plannedName}
-                fill="hsl(var(--bi-forecast))"
-                radius={[4, 4, 0, 0]}
-                barSize={20}
-              />
-              
-              {/* Lines for SPLH/OPLH */}
-              <Line 
-                yAxisId="right"
-                type="monotone"
-                dataKey={lineConfig.actualKey}
-                name={lineConfig.actualName}
-                stroke="hsl(var(--bi-acs))"
-                strokeWidth={2}
-                dot={{ r: 4, fill: 'hsl(var(--bi-acs))' }}
-              />
-              <Line 
-                yAxisId="right"
-                type="monotone"
-                dataKey={lineConfig.plannedKey}
-                name={lineConfig.plannedName}
-                stroke="hsl(var(--bi-acs-forecast))"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={{ r: 4, fill: 'hsl(var(--bi-acs-forecast))' }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
+      </div>
+
+      <div className="h-[360px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart 
+            data={chartData} 
+            margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+            barGap={2}
+            barCategoryGap="15%"
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+            <XAxis 
+              dataKey="date" 
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+              axisLine={{ stroke: '#e5e7eb' }}
+              tickLine={false}
+            />
+            <YAxis 
+              yAxisId="left"
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) => `${value}${barConfig.unit === '€' ? '€' : barConfig.unit}`}
+            />
+            <YAxis 
+              yAxisId="right"
+              orientation="right"
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) => `€${value}`}
+            />
+            <Tooltip 
+              content={<CustomTooltip metricMode={metricMode} chartMode={chartMode} />}
+            />
+            <Legend 
+              verticalAlign="bottom"
+              height={36}
+              iconType="rect"
+              iconSize={10}
+              wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}
+            />
+            
+            {/* Bars for COL/Cost/Hours */}
+            <Bar 
+              yAxisId="left"
+              dataKey={barConfig.actualKey} 
+              name={barConfig.actualName}
+              fill={CHART_COLORS.actual}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={40}
+            />
+            <Bar 
+              yAxisId="left"
+              dataKey={barConfig.plannedKey} 
+              name={barConfig.plannedName}
+              fill={CHART_COLORS.planned}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={40}
+            />
+            
+            {/* Lines for SPLH/OPLH */}
+            <Line 
+              yAxisId="right"
+              type="monotone"
+              dataKey={lineConfig.actualKey}
+              name={lineConfig.actualName}
+              stroke={lineColor}
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
+            />
+            <Line 
+              yAxisId="right"
+              type="monotone"
+              dataKey={lineConfig.plannedKey}
+              name={lineConfig.plannedName}
+              stroke={lineColorPlanned}
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: lineColorPlanned, strokeWidth: 0 }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 }
