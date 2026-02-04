@@ -20,10 +20,17 @@ export function useSalesData(locationId: string | null, rangeType: DateRangeType
       return;
     }
 
-    // Generate year data (in production, would load from Supabase)
-    const yearData = generateYearData(locationId);
-    setAllData(yearData);
-    setLoading(false);
+    // Generate data async to not block UI
+    setTimeout(() => {
+      try {
+        const yearData = generateYearData(locationId);
+        setAllData(yearData);
+      } catch (error) {
+        console.error('Error generating data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, 100);
   }, [locationId]);
 
   // Filter data based on selected range
