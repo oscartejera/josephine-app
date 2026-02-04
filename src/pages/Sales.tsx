@@ -201,61 +201,66 @@ export default function Sales() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-[1800px]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Sales - {selectedLocation === 'all' ? 'All Locations' : selectedLocation}</h1>
-        <div className="flex items-center gap-3">
-          {/* Location Selector */}
-          <Select value={selectedLocation} onValueChange={(value) => setSelectedLocation(value as LocationId)}>
-            <SelectTrigger className="w-[240px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">✓ All Locations</SelectItem>
-              <SelectItem value="salamanca">La Taberna Centro (Salamanca)</SelectItem>
-              <SelectItem value="chamberi">Chamberí (Madrid)</SelectItem>
-              <SelectItem value="malasana">Malasaña (Madrid)</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="p-6 space-y-6 max-w-[1800px] mx-auto">
+      {/* Header - Nory Style */}
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">Sales</h1>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Location Selector */}
+            <Select value={selectedLocation} onValueChange={(value) => setSelectedLocation(value as LocationId)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="salamanca">La Taberna Centro</SelectItem>
+                <SelectItem value="chamberi">Chamberí</SelectItem>
+                <SelectItem value="malasana">Malasaña</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <DateRangePicker
-            selectedPreset={dateRangePreset}
-            onPresetChange={setDateRangePreset}
-            startDate={startDate}
-            endDate={endDate}
-            onDateRangeChange={(start, end) => {
-              setStartDate(start);
-              setEndDate(end);
-            }}
-          />
-          
-          <Select value={compareMode} onValueChange={setCompareMode}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="forecast">vs Forecast</SelectItem>
-              <SelectItem value="last_week">vs Last Week</SelectItem>
-              <SelectItem value="last_month">vs Last Month</SelectItem>
-              <SelectItem value="last_year">vs Last Year</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <DateRangePicker
+              selectedPreset={dateRangePreset}
+              onPresetChange={setDateRangePreset}
+              startDate={startDate}
+              endDate={endDate}
+              onDateRangeChange={(start, end) => {
+                setStartDate(start);
+                setEndDate(end);
+              }}
+            />
+            
+            <Select value={compareMode} onValueChange={setCompareMode}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="forecast">vs Forecast</SelectItem>
+                <SelectItem value="last_week">vs Last Week</SelectItem>
+                <SelectItem value="last_month">vs Last Month</SelectItem>
+                <SelectItem value="last_year">vs Last Year</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Button variant="outline" onClick={() => setAskJosephineOpen(true)}>
-            ✨ Ask Josephine
-          </Button>
+            <Button variant="outline" onClick={() => setAskJosephineOpen(true)}>
+              ✨ Ask Josephine
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Top KPI Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-6">
         {/* Sales to Date */}
-        <Card className="p-6">
-          <div className="space-y-3">
+        <Card className="p-6 bg-white">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">Sales to Date</h3>
-              <span className="text-xs text-muted-foreground">
+              <h3 className="text-sm font-medium text-gray-600">Sales to date</h3>
+              <span className="text-xs text-gray-500">
                 {format(startDate, 'd MMM')} - {format(endDate, 'd MMM')}
               </span>
             </div>
@@ -304,11 +309,11 @@ export default function Sales() {
         </Card>
 
         {/* Avg Check */}
-        <Card className="p-6">
-          <div className="space-y-3">
+        <Card className="p-6 bg-white">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">Average check size</h3>
-              <span className="text-xs text-muted-foreground">
+              <h3 className="text-sm font-medium text-gray-600">Avg check</h3>
+              <span className="text-xs text-gray-500">
                 {format(startDate, 'd MMM')} - {format(endDate, 'd MMM')}
               </span>
             </div>
@@ -345,36 +350,51 @@ export default function Sales() {
         </Card>
 
         {/* Dwell Time */}
-        <Card className="p-6">
-          <div className="space-y-3">
+        <Card className="p-6 bg-white">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">Dwell time</h3>
-              <span className="text-xs text-muted-foreground">
+              <h3 className="text-sm font-medium text-gray-600">Dwell time</h3>
+              <span className="text-xs text-gray-500">
                 {format(startDate, 'd MMM')} - {format(endDate, 'd MMM')}
               </span>
             </div>
-            <div className="text-3xl font-bold">42mins</div>
+            <div className="text-3xl font-bold text-gray-900">42mins</div>
           </div>
         </Card>
       </div>
 
       {/* Chart Section - Nory Style */}
-      <Card className="p-6">
+      <Card className="p-6 bg-white">
         <Tabs defaultValue="sales">
-          <TabsList>
+          <TabsList className="bg-gray-100">
             <TabsTrigger value="sales">Sales</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
           </TabsList>
 
           <TabsContent value="sales" className="mt-6">
-            <h3 className="text-lg font-semibold mb-4">Sales v Forecast</h3>
-            <div className="h-[400px]">
+            <h3 className="text-base font-semibold mb-4 text-gray-900">Sales v Forecast</h3>
+            <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData} onClick={handleBarClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="dayShort" />
-                  <YAxis yAxisId="left" tickFormatter={(v) => `£${(v/1000).toFixed(0)}K`} />
-                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `£${v}`} />
+                  <XAxis 
+                    dataKey="dayShort" 
+                    tick={{ fontSize: 12 }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis 
+                    yAxisId="left" 
+                    tickFormatter={(v) => `€${(v/1000).toFixed(0)}K`}
+                    tick={{ fontSize: 12 }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    tickFormatter={(v) => `€${v}`}
+                    tick={{ fontSize: 12 }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
                   <Tooltip 
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
@@ -457,8 +477,8 @@ export default function Sales() {
       </Card>
 
       {/* Channel Breakdown Table */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Channel Breakdown</h3>
+      <Card className="p-6 bg-white">
+        <h3 className="text-base font-semibold mb-6 text-gray-900">Channel</h3>
         <Table>
           <TableHeader>
             <TableRow>
