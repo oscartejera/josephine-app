@@ -8,10 +8,11 @@ import { useParams } from 'react-router-dom';
 import { startOfWeek, endOfWeek } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { useLabourData, type MetricMode, type LabourDateRange } from '@/hooks/useLabourData';
-import { LabourHeader } from '@/components/labour/LabourHeader';
+import { LabourHeader, type CompareMode } from '@/components/labour/LabourHeader';
 import { LabourKPICards } from '@/components/labour/LabourKPICards';
 import { LabourChart } from '@/components/labour/LabourChart';
 import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
+import { LabourByRole } from '@/components/labour/LabourByRole';
 import { LabourEmptyState } from '@/components/labour/LabourEmptyState';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,6 +36,7 @@ export default function Labour() {
 
   const [dateRange, setDateRange] = useState<LabourDateRange>(initialDateRange);
   const [metricMode, setMetricMode] = useState<MetricMode>('percentage');
+  const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
   const [showJosephine, setShowJosephine] = useState(false);
 
   // Validate location ID
@@ -106,6 +108,8 @@ export default function Labour() {
           setDateRange={setDateRange}
           metricMode={metricMode}
           setMetricMode={setMetricMode}
+          compareMode={compareMode}
+          setCompareMode={setCompareMode}
           locationId={validLocationId}
           locationName={locationInfo?.name}
           onAskJosephine={() => setShowJosephine(true)}
@@ -135,6 +139,12 @@ export default function Labour() {
           {/* Chart */}
           <LabourChart
             data={timeseries}
+            isLoading={isLoading}
+            metricMode={metricMode}
+          />
+
+          {/* Labour by Role */}
+          <LabourByRole
             isLoading={isLoading}
             metricMode={metricMode}
           />

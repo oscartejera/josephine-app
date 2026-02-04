@@ -17,11 +17,15 @@ import { useNavigate } from 'react-router-dom';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import type { LabourDateRange, MetricMode } from '@/hooks/useLabourData';
 
+export type CompareMode = 'forecast' | 'last_week' | 'last_month' | 'last_year';
+
 interface LabourHeaderProps {
   dateRange: LabourDateRange;
   setDateRange: (range: LabourDateRange) => void;
   metricMode: MetricMode;
   setMetricMode: (mode: MetricMode) => void;
+  compareMode?: CompareMode;
+  setCompareMode?: (mode: CompareMode) => void;
   locationId?: string | null;
   locationName?: string;
   onAskJosephine: () => void;
@@ -32,6 +36,8 @@ export function LabourHeader({
   setDateRange,
   metricMode,
   setMetricMode,
+  compareMode = 'forecast',
+  setCompareMode,
   locationId,
   locationName,
   onAskJosephine
@@ -39,6 +45,16 @@ export function LabourHeader({
   const { accessibleLocations, canShowAllLocations } = useApp();
   const navigate = useNavigate();
   const [dateMode, setDateMode] = useState<DateMode>('weekly');
+
+  const getCompareModeLabel = (mode: CompareMode) => {
+    switch (mode) {
+      case 'forecast': return 'vs Forecast';
+      case 'last_week': return 'vs Last Week';
+      case 'last_month': return 'vs Last Month';
+      case 'last_year': return 'vs Last Year';
+      default: return 'vs Forecast';
+    }
+  };
 
   const handleDateChange = (range: { from: Date; to: Date }, mode: DateMode, _granularity: ChartGranularity) => {
     setDateRange(range);
@@ -107,15 +123,15 @@ export function LabourHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-2">
-                vs Forecast
+                {getCompareModeLabel(compareMode)}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>vs Forecast</DropdownMenuItem>
-              <DropdownMenuItem>vs Last Week</DropdownMenuItem>
-              <DropdownMenuItem>vs Last Month</DropdownMenuItem>
-              <DropdownMenuItem>vs Last Year</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('forecast')}>vs Forecast</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('last_week')}>vs Last Week</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('last_month')}>vs Last Month</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('last_year')}>vs Last Year</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
