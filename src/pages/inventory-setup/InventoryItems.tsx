@@ -10,6 +10,14 @@ import { AddItemDialog } from '@/components/inventory/AddItemDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { toast } from 'sonner';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -120,10 +128,13 @@ const mockItems = [
   },
 ];
 
+const ITEMS_PER_PAGE = 50;
+
 export default function InventoryItems() {
   const [items, setItems] = useState<any[]>(mockItems);
   const [loading, setLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
@@ -196,6 +207,53 @@ export default function InventoryItems() {
     }
   };
 
+  // Pagination
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  // Export to PDF
+  const handleExportPDF = () => {
+    toast.info('Generating PDF...');
+    
+    // Simple CSV export for now (PDF library would add ~200KB)
+    const headers = ['Name', 'Type', 'Category', 'Supplier', 'Order Unit', 'Price', 'VAT Rate'];
+    const rows = filteredItems.map(item => [
+      item.name,
+      item.type,
+      item.category,
+      item.supplier,
+      `${item.orderUnit} (${item.orderQty}${item.orderUnit === 'kg' ? 'kg' : 'ea'})`,
+      `€${item.price.toFixed(2)}`,
+      `${item.vatRate}%`,
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory-items-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast.success('Exported successfully');
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -212,9 +270,20 @@ export default function InventoryItems() {
             <Plus className="h-4 w-4 mr-2" />
             Add item
           </Button>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Export to CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -294,7 +363,7 @@ export default function InventoryItems() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.map((item) => (
+            {paginatedItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
                   <Checkbox
@@ -324,12 +393,33 @@ export default function InventoryItems() {
           </TableBody>
         </Table>
 
-        {/* Pagination */}
-        <div className="border-t p-4 flex items-center justify-between text-sm text-muted-foreground">
-          <div>1-{filteredItems.length} of {items.length}</div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled>Previous</Button>
-            <Button variant="outline" size="sm" disabled>Next</Button>
+        {/* Pagination - Minimal with arrows only */}
+        <div className="border-t p-4 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length}
+          </div>
+          
+          <div className="flex items-center gap-1">
+            {currentPage > 1 && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={handlePrevPage}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={handleNextPage}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </Card>
