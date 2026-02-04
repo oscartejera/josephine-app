@@ -67,74 +67,68 @@ export function LabourHeader({
 
   return (
     <div className="space-y-4">
-      {/* Row 1: Breadcrumbs, Date selector, Compare, Toggle, Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Breadcrumb dropdowns */}
+      {/* Title */}
+      <h1 className="text-3xl font-bold text-gray-900">Labour</h1>
+
+      {/* Controls row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Location Selector (simplified like Sales) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 px-2 text-muted-foreground gap-1 text-sm">
-                Insights
+              <Button variant="outline" size="sm" className="w-[200px] justify-between">
+                {currentLocationLabel}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => navigate('/insights/sales')}>Sales</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/insights/labour')}>Labour</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/insights/instant-pl')}>Instant P&L</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <span className="text-muted-foreground">/</span>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 px-2 font-semibold gap-1 text-sm">
-                Labour
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => navigate('/insights/labour')}>Labour</DropdownMenuItem>
-              <DropdownMenuItem disabled>Scheduling (coming soon)</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Date Range Picker */}
-          <div className="ml-2">
-            <DateRangePickerNoryLike
-              value={dateRange}
-              onChange={handleDateChange}
-              mode={dateMode}
-              onModeChange={handleModeChange}
-            />
-          </div>
-
-          {/* Compare dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2 text-sm">
-                Compare: Forecast
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Forecast</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleLocationSelect(null)}>
+                All locations
+              </DropdownMenuItem>
+              {accessibleLocations.map(loc => (
+                <DropdownMenuItem key={loc.id} onClick={() => handleLocationSelect(loc.id)}>
+                  {loc.name}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Date Range Picker */}
+          <DateRangePickerNoryLike
+            value={dateRange}
+            onChange={handleDateChange}
+            mode={dateMode}
+            onModeChange={handleModeChange}
+          />
+
+          {/* Compare dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-2">
+                vs Forecast
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>vs Forecast</DropdownMenuItem>
+              <DropdownMenuItem>vs Last Week</DropdownMenuItem>
+              <DropdownMenuItem>vs Last Month</DropdownMenuItem>
+              <DropdownMenuItem>vs Last Year</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Metric Toggle Pills */}
-          <div className="flex items-center bg-muted rounded-lg p-0.5">
+          <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
                 "h-7 px-3 rounded-md text-xs font-medium transition-all",
                 metricMode === 'percentage' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white shadow-sm text-gray-900" 
+                  : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setMetricMode('percentage')}
             >
@@ -146,8 +140,8 @@ export function LabourHeader({
               className={cn(
                 "h-7 px-3 rounded-md text-xs font-medium transition-all",
                 metricMode === 'amount' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white shadow-sm text-gray-900" 
+                  : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setMetricMode('amount')}
             >
@@ -159,8 +153,8 @@ export function LabourHeader({
               className={cn(
                 "h-7 px-3 rounded-md text-xs font-medium transition-all",
                 metricMode === 'hours' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white shadow-sm text-gray-900" 
+                  : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setMetricMode('hours')}
             >
@@ -168,45 +162,14 @@ export function LabourHeader({
             </Button>
           </div>
 
-          {/* Location dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2 text-sm">
-                {currentLocationLabel}
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {/* Always show All locations option */}
-              <DropdownMenuItem onClick={() => handleLocationSelect(null)}>
-                All locations
-              </DropdownMenuItem>
-              {accessibleLocations.map(loc => (
-                <DropdownMenuItem key={loc.id} onClick={() => handleLocationSelect(loc.id)}>
-                  {loc.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* More actions */}
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
+          {/* Ask Josephine */}
+          <Button 
+            onClick={onAskJosephine}
+            variant="outline"
+          >
+            ✨ Ask Josephine
           </Button>
         </div>
-      </div>
-
-      {/* Row 2: Page title and Ask Josephine */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-display font-bold text-foreground">{pageTitle}</h1>
-        
-        <Button 
-          onClick={onAskJosephine}
-          className="bg-gradient-primary text-white gap-2"
-        >
-          <Sparkles className="h-4 w-4" />
-          Ask Josephine
-        </Button>
       </div>
     </div>
   );
