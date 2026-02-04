@@ -101,6 +101,54 @@ export default function AdminTools() {
         <p className="text-gray-600 mt-2">Herramientas para generar datos demo y gestión del sistema</p>
       </div>
 
+      {/* Banner de instrucciones SQL directas */}
+      <Card className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+            <Database className="h-6 w-6 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold mb-2">⚡ Usa SQL Directo (más rápido)</h3>
+            <p className="text-indigo-100 mb-4">
+              Los botones de abajo pueden dar error porque las Edge Functions están desplegándose.
+              Mientras tanto, usa este método SQL directo (funciona 100%):
+            </p>
+            <div className="bg-white/10 backdrop-blur rounded-lg p-4 space-y-2">
+              <p className="font-semibold text-sm">Pasos:</p>
+              <ol className="list-decimal list-inside space-y-1.5 text-sm text-indigo-100">
+                <li>Ir a <strong className="text-white">Supabase Dashboard → SQL Editor</strong></li>
+                <li>Abrir archivo del proyecto: <code className="bg-white/20 px-2 py-0.5 rounded font-mono text-white">SEED_DIRECT_SQL.sql</code></li>
+                <li>Copiar <strong className="text-white">TODO</strong> el contenido</li>
+                <li>Pegar en SQL Editor y click <strong className="text-white">"Run"</strong></li>
+                <li>Esperar 2-3 minutos (verás progress en logs)</li>
+                <li>Verás: <span className="text-emerald-300 font-semibold">"✅ COMPLETADO! 📊 ~60,000 registros"</span></li>
+              </ol>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <Button 
+                variant="secondary"
+                size="sm"
+                onClick={() => window.open('https://supabase.com/dashboard/project/gbddbubzvhmgnwyowucd/sql/new', '_blank')}
+              >
+                Abrir Supabase SQL Editor
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30"
+                onClick={() => {
+                  // Copy instructions to clipboard
+                  navigator.clipboard.writeText('1. Ve a Supabase Dashboard\n2. SQL Editor\n3. Abre SEED_DIRECT_SQL.sql del proyecto\n4. Copia todo y pega\n5. Run');
+                  toast.success('Instrucciones copiadas al portapapeles');
+                }}
+              >
+                Copiar instrucciones
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Forecast Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-900">Generate Prophet Forecast</h2>
@@ -448,12 +496,31 @@ export default function AdminTools() {
               <p className="text-sm text-gray-700 mb-3">{error}</p>
               
               <div className="bg-white rounded-lg p-3 text-xs">
-                <p className="font-medium mb-2">Alternativas:</p>
-                <ol className="list-decimal list-inside space-y-1 text-gray-600">
-                  <li>Ir a Supabase Dashboard → SQL Editor</li>
-                  <li>Ejecutar: <code className="bg-gray-100 px-1 rounded">SELECT * FROM seed_josephine_demo_data();</code></li>
-                  <li>O usar el botón "30 Días Rápido" arriba</li>
+                <p className="font-medium mb-2">Solución directa (USA ESTO):</p>
+                <ol className="list-decimal list-inside space-y-2 text-gray-600">
+                  <li className="font-semibold text-indigo-600">
+                    Ir a Supabase Dashboard → SQL Editor
+                  </li>
+                  <li>
+                    Abrir archivo: <code className="bg-indigo-50 px-2 py-1 rounded font-mono text-indigo-700">SEED_DIRECT_SQL.sql</code>
+                  </li>
+                  <li>
+                    Copiar TODO el contenido y pegarlo en SQL Editor
+                  </li>
+                  <li>
+                    Click "Run" → Esperar 2-3 minutos
+                  </li>
+                  <li>
+                    Verás: "✅ COMPLETADO! 📊 Sales records: ~60000"
+                  </li>
+                  <li className="font-semibold text-emerald-600">
+                    Refresh esta página y ve a /sales
+                  </li>
                 </ol>
+                <p className="mt-2 text-amber-600 font-medium">
+                  ⚠️ Las Edge Functions se desplegarán en próximo push de Lovable.
+                  Mientras tanto, usa el SQL directo.
+                </p>
               </div>
             </div>
           </div>
