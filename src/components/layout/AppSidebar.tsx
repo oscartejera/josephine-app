@@ -35,7 +35,7 @@ import { Badge } from '@/components/ui/badge';
 
 const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
 
-// Insights children with permission keys
+// Insights children
 const insightsChildren = [
   { icon: TrendingUp, label: 'Sales', path: '/insights/sales', key: 'sales' as const },
   { icon: Users, label: 'Labour', path: '/insights/labour', key: 'labour' as const },
@@ -48,14 +48,16 @@ const insightsChildren = [
   { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets', key: 'settings' as const },
 ];
 
-// Nav items - Nory-style AI Ops only
+// Workforce children
+const workforceChildren = [
+  { icon: CalendarDays, label: 'Schedule', path: '/scheduling', key: 'scheduling' as const },
+  { icon: Clock, label: 'Availability', path: '/availability', key: 'availability' as const },
+  { icon: Calculator, label: 'Payroll', path: '/payroll', key: 'payroll' as const },
+];
+
+// Main nav items
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', key: 'dashboard' as const },
-  { icon: Plug2, label: 'Integraciones', path: '/integrations', key: 'settings' as const },
-  { icon: CalendarDays, label: 'Turnos', path: '/scheduling', key: 'scheduling' as const },
-  { icon: Clock, label: 'Disponibilidad', path: '/availability', key: 'availability' as const },
-  { icon: ShoppingCart, label: 'Compras', path: '/procurement', key: 'procurement' as const },
-  { icon: Calculator, label: 'Nóminas', path: '/payroll', key: 'payroll' as const },
+  { icon: LayoutDashboard, label: 'Control Tower', path: '/dashboard', key: 'dashboard' as const },
 ];
 
 const roleLabels: Record<string, string> = {

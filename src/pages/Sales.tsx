@@ -122,7 +122,7 @@ export default function Sales() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sales</h1>
-          <p className="text-muted-foreground">Análisis de ventas con forecast AI</p>
+          <p className="text-muted-foreground">Sales analysis with AI forecast</p>
         </div>
 
         <div className="flex items-center gap-3">
