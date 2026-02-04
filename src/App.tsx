@@ -12,6 +12,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
+import Insights from "@/pages/Insights";
 import Sales from "@/pages/Sales";
 import Labour from "@/pages/Labour";
 import InstantPL from "@/pages/InstantPL";
@@ -88,6 +89,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         
         {/* Insights routes */}
+        <Route path="/insights" element={<Insights />} />
         <Route path="/insights/sales" element={<Sales />} />
         <Route path="/insights/labour" element={<Labour />} />
         <Route path="/insights/labour/:locationId" element={<Labour />} />
