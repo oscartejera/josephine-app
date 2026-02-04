@@ -3,8 +3,10 @@
  * Master catalog of all inventory items with filters and CRUD
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
+import { AddItemDialog } from '@/components/inventory/AddItemDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -119,13 +121,59 @@ const mockItems = [
 ];
 
 export default function InventoryItems() {
+  const [items, setItems] = useState<any[]>(mockItems);
+  const [loading, setLoading] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const filteredItems = mockItems.filter(item => {
+  // Load items from Supabase
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  const loadItems = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Map to UI format
+        const mapped = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          type: item.type || 'Food',
+          category: item.category_name || 'Other',
+          supplier: 'Demo Supplier', // TODO: Join with suppliers
+          orderUnit: item.order_unit || 'kg',
+          orderQty: item.order_unit_qty || 1,
+          price: item.price || 0,
+          vatRate: item.vat_rate || 10,
+        }));
+        setItems(mapped);
+      } else {
+        // Use mock data if no DB data
+        setItems(mockItems);
+      }
+    } catch (error) {
+      console.error('Error loading items:', error);
+      // Fallback to mock
+      setItems(mockItems);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredItems = items.filter(item => {
     if (search && !item.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
     if (selectedSupplier !== 'all' && item.supplier !== selectedSupplier) return false;
@@ -160,7 +208,7 @@ export default function InventoryItems() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button>
+          <Button onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add item
           </Button>
@@ -278,13 +326,20 @@ export default function InventoryItems() {
 
         {/* Pagination */}
         <div className="border-t p-4 flex items-center justify-between text-sm text-muted-foreground">
-          <div>1-{filteredItems.length} of {mockItems.length}</div>
+          <div>1-{filteredItems.length} of {items.length}</div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>Previous</Button>
             <Button variant="outline" size="sm" disabled>Next</Button>
           </div>
         </div>
       </Card>
+
+      {/* Add Item Dialog */}
+      <AddItemDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onSuccess={loadItems}
+      />
     </div>
   );
 }
