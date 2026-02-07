@@ -23,7 +23,8 @@ import {
   PiggyBank,
   Monitor,
   QrCode,
-  Plug2
+  Plug2,
+  UserCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -336,6 +337,20 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               </Button>
             );
           })}
+
+          {/* Team Portal */}
+          <Button
+            variant={location.pathname.startsWith('/team') ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname.startsWith('/team') && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/team')}
+          >
+            <UserCircle className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Portal de Equipo</span>}
+          </Button>
 
           {/* Settings - only show if has permission */}
           {canViewSidebarItem('settings') && (

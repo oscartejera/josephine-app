@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -77,6 +78,31 @@ function ProtectedLayout() {
   );
 }
 
+function RoleRedirect() {
+  const { roles, isOwner } = useAuth();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (roles.length > 0 || isOwner) {
+      setReady(true);
+    }
+    // Fallback: if roles don't load in 2s, default to dashboard
+    const timer = setTimeout(() => setReady(true), 2000);
+    return () => clearTimeout(timer);
+  }, [roles, isOwner]);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const isEmployeeOnly = roles.length > 0 && roles.every(r => r.role_name === 'employee');
+  return <Navigate to={isEmployeeOnly ? '/team' : '/dashboard'} replace />;
+}
+
 function AppRoutes() {
   const { user, loading } = useAuth();
 
@@ -90,10 +116,10 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
-      <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <Signup />} />
+      <Route path="/login" element={user ? <RoleRedirect /> : <Login />} />
+      <Route path="/signup" element={user ? <RoleRedirect /> : <Signup />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={user ? <RoleRedirect /> : <Navigate to="/login" replace />} />
       
       <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />

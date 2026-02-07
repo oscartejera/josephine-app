@@ -65,6 +65,18 @@ export function TeamLayout() {
 
   const isManagerRole = primaryRole && ['owner', 'admin', 'ops_manager', 'store_manager'].includes(primaryRole);
 
+  const getBreadcrumb = () => {
+    const breadcrumbMap: Record<string, string> = {
+      '/team': 'Inicio',
+      '/team/schedule': 'Mi Horario',
+      '/team/clock': 'Fichaje',
+      '/team/pay': 'Mi Nómina',
+      '/team/directory': 'Equipo',
+      '/team/news': 'Novedades',
+    };
+    return breadcrumbMap[location.pathname] || 'Inicio';
+  };
+
   const NavContent = () => (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -210,6 +222,9 @@ export function TeamLayout() {
 
       {/* Main Content */}
       <main className="lg:ml-72 pt-14 lg:pt-0 pb-20 lg:pb-0 min-h-screen">
+        <div className="hidden lg:flex h-14 items-center px-6 border-b border-border text-sm text-muted-foreground">
+          Portal de Equipo / {getBreadcrumb()}
+        </div>
         <Outlet />
       </main>
     </div>
