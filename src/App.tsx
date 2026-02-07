@@ -40,6 +40,15 @@ import InventoryItems from "@/pages/inventory-setup/InventoryItems";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
+// Team (Employee Portal)
+import { TeamLayout } from "@/components/team/TeamLayout";
+import TeamHome from "@/pages/team/TeamHome";
+import TeamSchedule from "@/pages/team/TeamSchedule";
+import TeamClock from "@/pages/team/TeamClock";
+import TeamPay from "@/pages/team/TeamPay";
+import TeamDirectory from "@/pages/team/TeamDirectory";
+import TeamNews from "@/pages/team/TeamNews";
+
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -125,6 +134,16 @@ function AppRoutes() {
         {/* Settings */}
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/admin/tools" element={<AdminTools />} />
+      </Route>
+
+      {/* Team (Employee Portal) */}
+      <Route element={<ProtectedRoute><AppProvider><TeamLayout /></AppProvider></ProtectedRoute>}>
+        <Route path="/team" element={<TeamHome />} />
+        <Route path="/team/schedule" element={<TeamSchedule />} />
+        <Route path="/team/clock" element={<TeamClock />} />
+        <Route path="/team/pay" element={<TeamPay />} />
+        <Route path="/team/directory" element={<TeamDirectory />} />
+        <Route path="/team/news" element={<TeamNews />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
