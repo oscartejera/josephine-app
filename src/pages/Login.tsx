@@ -43,7 +43,7 @@ export default function Login() {
         description: error.message
       });
     } else {
-      navigate('/dashboard');
+      navigate('/');
     }
     
     setLoading(false);
@@ -82,7 +82,7 @@ export default function Login() {
           title: "¡Bienvenido al modo demo!",
           description: "Explora Josephine con datos de ejemplo"
         });
-        navigate('/dashboard');
+        navigate('/');
       }
     } catch (err) {
       console.error('Demo login error:', err);
