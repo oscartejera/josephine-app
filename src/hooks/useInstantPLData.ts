@@ -123,14 +123,13 @@ export function useInstantPLData({
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
       
-      // Fetch actual sales from tickets
-      const { data: tickets } = await supabase
-        .from('tickets')
-        .select('location_id, net_total, gross_total, closed_at')
+      // Fetch actual sales from pos_daily_finance (aggregated daily data)
+      const { data: dailyFinance } = await supabase
+        .from('pos_daily_finance')
+        .select('location_id, date, net_sales, gross_sales')
         .in('location_id', locationIds)
-        .gte('closed_at', dateRange.from.toISOString())
-        .lte('closed_at', dateRange.to.toISOString())
-        .eq('status', 'closed');
+        .gte('date', fromDate)
+        .lte('date', toDate);
       
       // Fetch forecasts from LR+SI v3 model
       const { data: forecasts } = await supabase
@@ -150,9 +149,9 @@ export function useInstantPLData({
       
       // Aggregate by location
       const locationMetrics: LocationPLMetrics[] = locations.map(loc => {
-        // Actuals
-        const locTickets = (tickets || []).filter(t => t.location_id === loc.id);
-        const salesActual = locTickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
+        // Actuals from daily finance aggregates
+        const locFinance = (dailyFinance || []).filter(d => d.location_id === loc.id);
+        const salesActual = locFinance.reduce((sum, d) => sum + (d.net_sales || d.gross_sales || 0), 0);
         
         // Forecasts
         const locForecasts = (forecasts || []).filter(f => f.location_id === loc.id);

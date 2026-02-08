@@ -60,28 +60,31 @@ export default function Dashboard() {
   };
 
   const fetchPeriodMetrics = async (from: Date, to: Date, locationId: string | null): Promise<Metrics> => {
-    let query = supabase.from('tickets').select('gross_total, covers').eq('status', 'closed');
+    const fromDate = from.toISOString().split('T')[0];
+    const toDate = to.toISOString().split('T')[0];
+
+    // Get sales from pos_daily_finance (aggregated daily data)
+    let query = supabase.from('pos_daily_finance').select('gross_sales, net_sales, orders_count');
     if (locationId && locationId !== 'all') {
       query = query.eq('location_id', locationId);
     }
-    query = query.gte('closed_at', from.toISOString()).lte('closed_at', to.toISOString());
-    
-    const { data: tickets } = await query;
-    
-    const sales = tickets?.reduce((sum, t) => sum + (Number(t.gross_total) || 0), 0) || 0;
-    const covers = tickets?.reduce((sum, t) => sum + (t.covers || 0), 0) || 0;
-    const avgTicket = tickets?.length ? sales / tickets.length : 0;
+    query = query.gte('date', fromDate).lte('date', toDate);
+    const { data: dailyFinance } = await query;
 
-    // Get labor cost
-    let laborQuery = supabase.from('timesheets').select('labor_cost');
+    const sales = dailyFinance?.reduce((sum, d) => sum + (Number(d.gross_sales) || 0), 0) || 0;
+    const orders = dailyFinance?.reduce((sum, d) => sum + (Number(d.orders_count) || 0), 0) || 0;
+    const avgTicket = orders > 0 ? sales / orders : 0;
+
+    // Get labor cost from labour_daily
+    let laborQuery = supabase.from('labour_daily').select('labour_cost');
     if (locationId && locationId !== 'all') {
       laborQuery = laborQuery.eq('location_id', locationId);
     }
-    laborQuery = laborQuery.gte('clock_in', from.toISOString()).lte('clock_in', to.toISOString());
-    const { data: timesheets } = await laborQuery;
-    const laborCost = timesheets?.reduce((sum, t) => sum + (Number(t.labor_cost) || 0), 0) || 0;
+    laborQuery = laborQuery.gte('date', fromDate).lte('date', toDate);
+    const { data: labourData } = await laborQuery;
+    const laborCost = labourData?.reduce((sum, d) => sum + (Number(d.labour_cost) || 0), 0) || 0;
 
-    return { sales, covers, avgTicket, laborCost, cogsPercent: 30 };
+    return { sales, covers: orders, avgTicket, laborCost, cogsPercent: 30 };
   };
 
   const fetchData = async () => {
