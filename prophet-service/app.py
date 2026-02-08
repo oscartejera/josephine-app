@@ -165,7 +165,7 @@ def calculate_cv_metrics(model: Prophet, df: pd.DataFrame) -> dict:
         if reg in train.columns:
             m.add_regressor(reg, mode="multiplicative" if reg == "evento_impact" else "additive")
 
-    m.fit(train, suppress_logging=True)
+    m.fit(train)
 
     future = test[["ds"] + [r for r in REGRESSOR_NAMES if r in test.columns]].copy()
     pred = m.predict(future)
@@ -253,7 +253,7 @@ async def forecast(req: ForecastRequest, authorization: str = Header(default="")
 
     # ── Fit model ─────────────────────────────────────────────────────────
     logger.info("Fitting Prophet model with %d data points...", len(df))
-    model.fit(df, suppress_logging=True)
+    model.fit(df)
     logger.info("Model fitted successfully")
 
     # ── Build future DataFrame ────────────────────────────────────────────
