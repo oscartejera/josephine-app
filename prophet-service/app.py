@@ -23,11 +23,16 @@ logger = logging.getLogger("prophet-service")
 
 app = FastAPI(title="Josephine Prophet Service", version="5.0.0")
 
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://*.supabase.co,https://*.josephine.app,http://localhost:*"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 API_KEY = os.getenv("PROPHET_API_KEY", "")

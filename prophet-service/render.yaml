@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: josephine-prophet
+    runtime: docker
+    region: frankfurt  # Closest to Madrid
+    plan: starter  # $7/mo, 512MB RAM
+    healthCheckPath: /health
+    envVars:
+      - key: PROPHET_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: PORT
+        value: 8080
+    autoDeploy: true
+    branch: main
+    rootDir: prophet-service
