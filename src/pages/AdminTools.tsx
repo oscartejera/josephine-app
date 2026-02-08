@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar, Sparkles } from 'lucide-react';
+import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar, Sparkles, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -15,6 +15,8 @@ export default function AdminTools() {
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingForecast, setIsGeneratingForecast] = useState(false);
   const [forecastResult, setForecastResult] = useState<any>(null);
+  const [isGeneratingV5, setIsGeneratingV5] = useState(false);
+  const [v5Result, setV5Result] = useState<any>(null);
 
   const handleSeed18Months = async () => {
     setIsSeeding(true);
@@ -94,6 +96,34 @@ export default function AdminTools() {
     }
   };
 
+  const handleGenerateProphetV5 = async () => {
+    setIsGeneratingV5(true);
+    setV5Result(null);
+    setError(null);
+
+    try {
+      console.log('🧠 Generating Real Prophet ML forecast...');
+
+      const { data, error } = await supabase.functions.invoke('generate_forecast_v5', {
+        body: { horizon_days: 90 }
+      });
+
+      if (error) throw error;
+
+      console.log('Prophet v5 result:', data);
+      setV5Result(data);
+      toast.success(`Prophet ML forecast: ${data.locations_processed} locations`);
+
+    } catch (err) {
+      console.error('Prophet v5 error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
+      setError(errorMsg);
+      toast.error(`Error: ${errorMsg}`);
+    } finally {
+      setIsGeneratingV5(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-[1200px] mx-auto">
       <div>
@@ -104,56 +134,110 @@ export default function AdminTools() {
       {/* Forecast Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-900">Generate Prophet Forecast</h2>
-        
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-100">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-              <Sparkles className="h-6 w-6 text-purple-600" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* V4 - Statistical Prophet */}
+          <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-100">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                <Sparkles className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-gray-900">Prophet v4</h3>
+                    <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">Statistical</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Forecast estadistico con trend + seasonality + regresores
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-lg p-3 space-y-2 text-sm">
+                  <p className="font-medium text-gray-900">Incluye:</p>
+                  <ul className="space-y-1 text-gray-700 ml-4">
+                    <li>✓ Trend lineal + Seasonality</li>
+                    <li>✓ 9 regresores externos</li>
+                    <li>✓ Confidence intervals 95%</li>
+                    <li>✓ No requiere servicio externo</li>
+                  </ul>
+                </div>
+
+                <Button
+                  onClick={handleGenerateForecast}
+                  disabled={isGeneratingForecast}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  {isGeneratingForecast ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Generando... (~60 seg)
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generar v4 (3 meses)
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1 space-y-3">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Forecast con Regresores Externos</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Genera forecast de 90 días (3 meses) usando Prophet mejorado con clima, eventos y festivos españoles
+          </Card>
+
+          {/* V5 - Real Python Prophet ML */}
+          <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 ring-2 ring-blue-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                <Brain className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-gray-900">Prophet v5</h3>
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Real ML</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Facebook Prophet real (Python) con Machine Learning
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-lg p-3 space-y-2 text-sm">
+                  <p className="font-medium text-gray-900">Ventajas sobre v4:</p>
+                  <ul className="space-y-1 text-gray-700 ml-4">
+                    <li>✓ Facebook Prophet ML real (Python)</li>
+                    <li>✓ Changepoint detection automatico</li>
+                    <li>✓ Bayesian uncertainty intervals</li>
+                    <li>✓ Fourier seasonality (monthly custom)</li>
+                    <li>✓ Cross-validation metrics (MAPE, RMSE)</li>
+                    <li>✓ Multiplicative + additive regressors</li>
+                  </ul>
+                </div>
+
+                <Button
+                  onClick={handleGenerateProphetV5}
+                  disabled={isGeneratingV5}
+                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                >
+                  {isGeneratingV5 ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Entrenando modelo ML... (~2-3 min)
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4 mr-2" />
+                      Generar v5 Prophet ML (3 meses)
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-xs text-gray-500">
+                  Requiere PROPHET_SERVICE_URL configurado. Deploy el servicio Python primero.
                 </p>
               </div>
-
-              <div className="bg-white rounded-lg p-3 space-y-2 text-sm">
-                <p className="font-medium text-gray-900">Incluye:</p>
-                <ul className="space-y-1 text-gray-700 ml-4">
-                  <li>✓ Trend + Seasonality (13 meses de historia)</li>
-                  <li>✓ Clima: Temperatura y lluvia (impacto -25% en lluvia)</li>
-                  <li>✓ Eventos: Partidos Real Madrid, festivales (+30%)</li>
-                  <li>✓ Festivos españoles: 20+ días marcados (-20%)</li>
-                  <li>✓ Días de pago: Fin de mes (+5%)</li>
-                  <li>✓ Confidence intervals al 95%</li>
-                </ul>
-              </div>
-
-              <Button 
-                onClick={handleGenerateForecast}
-                disabled={isGeneratingForecast}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                {isGeneratingForecast ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Generando forecast... (~60 seg)
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generar Forecast (3 meses)
-                  </>
-                )}
-              </Button>
-
-              <p className="text-xs text-gray-500">
-                ⚠️ Requiere datos históricos en facts_sales_15m. Ejecuta "Generar 18 Meses" primero si no tienes datos.
-              </p>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {/* Seed Data Section */}
@@ -424,6 +508,122 @@ export default function AdminTools() {
                   </Button>
                   <Button 
                     size="sm" 
+                    variant="outline"
+                    onClick={() => window.location.href = '/insights/labour'}
+                  >
+                    Ver en Labour
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* V5 Prophet ML Result Display */}
+      {v5Result && (
+        <Card className="p-6 bg-blue-50 border-blue-200">
+          <div className="flex items-start gap-3">
+            <Brain className="h-6 w-6 text-blue-600 shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Prophet v5 - Real ML Forecast
+              </h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Engine:</span>
+                    <span className="font-semibold ml-2">{v5Result.engine}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Locations:</span>
+                    <span className="font-semibold ml-2">{v5Result.locations_processed}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Horizon:</span>
+                    <span className="font-semibold ml-2">{v5Result.horizon_days} dias</span>
+                  </div>
+                </div>
+
+                {v5Result.features && (
+                  <div className="bg-white rounded-lg p-3 text-xs">
+                    <p className="font-medium text-gray-900 mb-1">ML Features:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {v5Result.features.map((f: string, i: number) => (
+                        <span key={i} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {v5Result.results && v5Result.results.length > 0 && (
+                  <div className="bg-white rounded-lg p-3 space-y-3">
+                    <p className="font-medium text-gray-900 text-sm">Resultados por location:</p>
+                    {v5Result.results.map((r: any, i: number) => (
+                      <div key={i} className="text-xs space-y-2 border-b border-gray-100 pb-3 last:border-0">
+                        <p className="font-semibold text-gray-900 text-sm">{r.location_name}</p>
+
+                        {r.error ? (
+                          <p className="text-red-600">{r.error}</p>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              <div className="bg-blue-50 rounded p-2 text-center">
+                                <p className="text-[10px] text-gray-500">MAPE</p>
+                                <p className="font-bold text-blue-700">{r.metrics?.mape}</p>
+                              </div>
+                              <div className="bg-blue-50 rounded p-2 text-center">
+                                <p className="text-[10px] text-gray-500">RMSE</p>
+                                <p className="font-bold text-blue-700">{r.metrics?.rmse}</p>
+                              </div>
+                              <div className="bg-blue-50 rounded p-2 text-center">
+                                <p className="text-[10px] text-gray-500">R2</p>
+                                <p className="font-bold text-blue-700">{r.metrics?.r_squared}</p>
+                              </div>
+                              <div className="bg-blue-50 rounded p-2 text-center">
+                                <p className="text-[10px] text-gray-500">Confidence</p>
+                                <p className="font-bold text-blue-700">{r.confidence}%</p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2 text-gray-700">
+                              <span>Engine: {r.engine}</span>
+                              <span>Changepoints: {r.changepoints}</span>
+                              <span>Data: {r.data_points} dias</span>
+                            </div>
+
+                            {r.sample_forecast && r.sample_forecast.length > 0 && (
+                              <div className="mt-2 bg-gray-50 p-2 rounded">
+                                <p className="font-medium mb-1">Proximos 7 dias:</p>
+                                {r.sample_forecast.slice(0, 5).map((f: any, j: number) => (
+                                  <div key={j} className="text-[10px] text-gray-600 flex justify-between">
+                                    <span>{f.date}</span>
+                                    <span className="font-medium">
+                                      EUR{f.forecast?.toFixed(0)} [{f.lower?.toFixed(0)} - {f.upper?.toFixed(0)}]
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.location.href = '/sales'}
+                  >
+                    Ver en Sales
+                  </Button>
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => window.location.href = '/insights/labour'}
                   >

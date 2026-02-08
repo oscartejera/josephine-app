@@ -1,6 +1,6 @@
 /**
  * Prophet API Client
- * Calls Prophet model deployed on Modal Labs or similar
+ * Supports v4 (Supabase Edge Function) and v5 (Real Python Prophet ML)
  * Note: This is for browser context - use environment variables
  */
 
@@ -23,6 +23,46 @@ export interface ProphetForecastResponse {
     yhat_upper: number;
   }[];
   model_version: string;
+}
+
+// ── V5 Real Prophet ML Types ─────────────────────────────────────────────────
+
+export interface ProphetV5Metrics {
+  mape: string;
+  rmse: string;
+  mae: string;
+  r_squared: string;
+}
+
+export interface ProphetV5LocationResult {
+  location_id: string;
+  location_name: string;
+  model: string;
+  engine: string;
+  forecasts_generated: number;
+  data_points: number;
+  metrics: ProphetV5Metrics;
+  confidence: number;
+  changepoints: number;
+  components: Record<string, unknown>;
+  sample_forecast: {
+    date: string;
+    forecast: number;
+    lower: number;
+    upper: number;
+    explanation: string;
+  }[];
+  error?: string;
+}
+
+export interface ProphetV5Response {
+  success: boolean;
+  version: string;
+  engine: string;
+  features: string[];
+  horizon_days: number;
+  locations_processed: number;
+  results: ProphetV5LocationResult[];
 }
 
 export class ProphetClient {

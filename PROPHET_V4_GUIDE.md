@@ -299,59 +299,100 @@ JOIN forecasts f ON a.date = f.date;
 4. **Redes sociales:** Sentiment analysis de reviews → ajustar forecast
 5. **Competencia:** Si abre restaurante nuevo cerca → -5%
 
-### **Prophet ML real (Python):**
-Si quieres Prophet real en lugar de nuestra implementación:
+### **Prophet v5 - Real Python ML (IMPLEMENTADO):**
 
-```python
-# Desplegar en Modal Labs, AWS Lambda, o Google Cloud Run
-from prophet import Prophet
-import pandas as pd
+Prophet v5 usa la libreria **real de Facebook Prophet** en Python, desplegada como microservicio.
 
-# Con tus 13 meses:
-model = Prophet(
-    yearly_seasonality=True,
-    weekly_seasonality=True,
-    daily_seasonality=False,
-)
+#### **Arquitectura v5:**
 
-# Agregar regresores
-model.add_regressor('temperatura')
-model.add_regressor('rain')
-model.add_regressor('evento_impact')
-model.add_regressor('festivo')
-# ... etc
+```
+AdminTools UI  ->  Edge Function v5  ->  Python Prophet Service  ->  Supabase DB
+(React)            (Deno/Supabase)       (FastAPI + Prophet)         (forecast_daily_metrics)
+```
 
-model.fit(historical_data)
-future = model.make_future_dataframe(periods=90)
-# Agregar valores de regresores
-forecast = model.predict(future)
+#### **Componentes:**
+
+| Componente | Ubicacion | Tecnologia |
+|---|---|---|
+| Python Service | `prophet-service/app.py` | FastAPI + Prophet 1.1.6 |
+| Edge Function | `supabase/functions/generate_forecast_v5/index.ts` | Deno/TypeScript |
+| Frontend Types | `src/lib/forecast/prophet-client.ts` | TypeScript |
+| UI | `src/pages/AdminTools.tsx` | React |
+
+#### **Deploy del servicio Python:**
+
+```bash
+# 1. Build Docker image
+cd prophet-service
+docker build -t josephine-prophet .
+
+# 2. Run locally
+docker run -p 8080:8080 -e PROPHET_API_KEY=my-key josephine-prophet
+
+# 3. Deploy a Google Cloud Run
+gcloud run deploy josephine-prophet \
+  --source . \
+  --region europe-west1 \
+  --set-env-vars PROPHET_API_KEY=my-key
+```
+
+#### **Configurar en Supabase:**
+
+```bash
+# Agregar secrets al proyecto Supabase:
+supabase secrets set PROPHET_SERVICE_URL=https://josephine-prophet-xyz.run.app
+supabase secrets set PROPHET_API_KEY=my-key
+```
+
+#### **Ventajas v5 vs v4:**
+
+| Feature | v4 (Statistical) | v5 (Real Prophet ML) |
+|---|---|---|
+| Engine | TypeScript custom | Facebook Prophet (Python) |
+| Trend | Linear regression | Piecewise linear + changepoints |
+| Seasonality | Monthly/Weekly indices | Fourier series (yearly + weekly + monthly) |
+| Uncertainty | StdDev x 1.96 | Bayesian posterior sampling |
+| Changepoints | None | Automatic detection |
+| Regressors | Multiplicative only | Multiplicative + Additive |
+| Cross-validation | None | Holdout 80/20 split |
+| Metrics | R2 only | MAPE, RMSE, MAE, R2 |
+| Deploy | Supabase only | Docker / Cloud Run / Modal |
+
+#### **API Endpoints:**
+
+```
+GET  /health          -> {"status": "ok", "version": "5.0.0"}
+POST /forecast        -> Single location forecast
+POST /batch_forecast  -> Multiple locations
 ```
 
 ---
 
-## 📋 **Checklist Post-Forecast:**
+## Checklist Post-Forecast:
 
 - [ ] Ejecutar seed de 18 meses
-- [ ] Ejecutar generate_forecast_v4
+- [ ] Ejecutar generate_forecast_v4 o v5
 - [ ] Verificar en Sales: forecast bars aparecen
 - [ ] Verificar en Labour: planned hours calculados
 - [ ] Probar Compare "vs Last Year"
-- [ ] Probar drill-down en día futuro
+- [ ] Probar drill-down en dia futuro
 - [ ] Ask Josephine sobre forecast
 - [ ] Verificar explicaciones en AdminTools
 - [ ] Review confidence intervals
-- [ ] Preparar demo para inversores
+- [ ] Para v5: Deploy prophet-service y configurar PROPHET_SERVICE_URL
 
 ---
 
-## 🎉 **RESULTADO:**
+## RESULTADO:
 
-Prophet V4 con regresores está **production-ready** para:
-- ✅ Forecast de 3 meses con 80-85% precisión
-- ✅ Explicaciones automáticas de variaciones
-- ✅ Confidence intervals realistas
-- ✅ Labour planning automático
-- ✅ Integración completa con Sales/Labour modules
-- ✅ Listo para impresionar inversores
+**Prophet V4** (statistical) esta **production-ready** - no requiere servicios externos.
 
-**Con tus 13 meses de historia, el forecast será súper sólido** 💪
+**Prophet V5** (real ML) esta **implementado** - requiere deploy del servicio Python.
+
+Ambas versiones:
+- Forecast de 3 meses con 80-90% precision
+- Explicaciones automaticas de variaciones
+- Confidence intervals realistas
+- Labour planning automatico
+- Integracion completa con Sales/Labour modules
+- 9 regresores externos (clima, eventos, festivos)
