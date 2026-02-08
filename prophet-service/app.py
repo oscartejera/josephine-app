@@ -390,6 +390,218 @@ async def forecast(req: ForecastRequest, authorization: str = Header(default="")
     )
 
 
+@app.post("/forecast_supabase")
+async def forecast_supabase(req: dict, authorization: str = Header(default="")):
+    """Full pipeline: fetch from Supabase, run Prophet, store results.
+    Designed to be called by Edge Functions that can't handle 60s timeout."""
+    import httpx
+
+    if API_KEY and not authorization.endswith(API_KEY):
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    supabase_url = req.get("supabase_url")
+    supabase_key = req.get("supabase_key")
+    location_id = req.get("location_id", "")
+    location_name = req.get("location_name", "")
+    horizon_days = req.get("horizon_days", 90)
+    seasonality_mode = req.get("seasonality_mode", "multiplicative")
+    changepoint_prior_scale = req.get("changepoint_prior_scale", 0.05)
+
+    if not supabase_url or not supabase_key:
+        raise HTTPException(status_code=400, detail="supabase_url and supabase_key required")
+
+    logger.info("forecast_supabase: location=%s, horizon=%d", location_name or location_id, horizon_days)
+
+    # ── Fetch sales data (paginated at 1000 rows) ────────────────────
+    headers_sb = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+    }
+    sales_data = []
+    page = 0
+    async with httpx.AsyncClient(timeout=30) as client:
+        while True:
+            url = (
+                f"{supabase_url}/rest/v1/facts_sales_15m"
+                f"?location_id=eq.{location_id}"
+                f"&select=ts_bucket,sales_net"
+                f"&order=ts_bucket.asc"
+            )
+            resp = await client.get(
+                url,
+                headers={**headers_sb, "Range": f"{page*1000}-{(page+1)*1000-1}"},
+            )
+            resp.raise_for_status()
+            rows = resp.json()
+            if not rows:
+                break
+            sales_data.extend(rows)
+            page += 1
+            if len(rows) < 1000:
+                break
+
+    logger.info("Fetched %d sales records in %d pages", len(sales_data), page)
+
+    if len(sales_data) == 0:
+        raise HTTPException(status_code=400, detail="No sales data found for this location")
+
+    # ── Aggregate to daily ────────────────────────────────────────────
+    daily: dict[str, float] = {}
+    for s in sales_data:
+        date_str = s["ts_bucket"][:10]
+        daily[date_str] = daily.get(date_str, 0) + float(s.get("sales_net") or 0)
+
+    dates = sorted(daily.keys())
+    logger.info("Aggregated to %d days: %s to %s", len(dates), dates[0], dates[-1])
+
+    if len(dates) < 14:
+        raise HTTPException(status_code=400, detail=f"Need 14+ days, got {len(dates)}")
+
+    # ── Build regressors ──────────────────────────────────────────────
+    HOLIDAYS = {
+        "2025-01-01","2025-01-06","2025-04-18","2025-04-21","2025-05-01",
+        "2025-05-02","2025-05-15","2025-08-15","2025-10-12","2025-11-01",
+        "2025-11-09","2025-12-06","2025-12-08","2025-12-25","2025-12-26",
+        "2026-01-01","2026-01-06","2026-02-09","2026-04-03","2026-04-06",
+        "2026-05-01","2026-08-15","2026-10-12","2026-11-01","2026-12-06",
+        "2026-12-08","2026-12-25",
+    }
+    EVENTS = {
+        "2025-03-15":0.3,"2025-04-20":0.3,"2025-05-15":0.25,
+        "2025-07-10":0.4,"2025-07-11":0.4,"2025-07-12":0.4,
+        "2025-09-20":0.3,"2025-10-25":0.3,"2025-12-31":0.35,
+    }
+    MONTH_TEMPS = {1:6,2:8,3:12,4:14,5:19,6:25,7:30,8:29,9:23,10:16,11:10,12:7}
+
+    def build_regs(ds: str) -> dict:
+        from datetime import date as ddate
+        d = ddate.fromisoformat(ds)
+        dow = d.weekday()  # 0=Mon
+        m = d.month
+        dy = d.day
+        nd = (d + timedelta(days=1)).isoformat()
+        temp = MONTH_TEMPS.get(m, 15)
+        return {
+            "festivo": int(ds in HOLIDAYS),
+            "day_before_festivo": int(nd in HOLIDAYS),
+            "evento_impact": EVENTS.get(ds, 0),
+            "payday": int(dy == 1 or dy == 15 or dy >= 25),
+            "temperatura": temp,
+            "rain": int(m in (3, 4, 10, 11)),
+            "cold_day": int(temp < 10),
+            "weekend": int(dow >= 5),
+            "mid_week": int(dow in (1, 2)),
+        }
+
+    historical = [{"ds": d, "y": round(daily[d], 2), **build_regs(d)} for d in dates]
+    today = datetime.utcnow().date()
+    future_regressors = [
+        {"ds": (today + timedelta(days=k)).isoformat(), **build_regs((today + timedelta(days=k)).isoformat())}
+        for k in range(1, horizon_days + 1)
+    ]
+
+    # ── Call the existing forecast logic ──────────────────────────────
+    forecast_req = ForecastRequest(
+        historical=historical,
+        horizon_days=horizon_days,
+        future_regressors=future_regressors,
+        location_id=location_id,
+        location_name=location_name,
+        freq="D",
+        yearly_seasonality=len(dates) >= 365,
+        weekly_seasonality=True,
+        daily_seasonality=False,
+        seasonality_mode=seasonality_mode,
+        changepoint_prior_scale=changepoint_prior_scale,
+        include_regressors=True,
+    )
+
+    result = await forecast(forecast_req, authorization=authorization)
+
+    # ── Store forecasts in Supabase ───────────────────────────────────
+    TARGET_COL_PERCENT = 28
+    AVG_HOURLY_RATE = 14.5
+    today_str = today.isoformat()
+
+    forecasts_to_store = []
+    for f in result.forecast:
+        target_labour = f.yhat * (TARGET_COL_PERCENT / 100)
+        planned_hours = max(20, min(120, target_labour / AVG_HOURLY_RATE))
+        forecasts_to_store.append({
+            "location_id": location_id,
+            "date": f.ds,
+            "forecast_sales": f.yhat,
+            "forecast_sales_lower": f.yhat_lower,
+            "forecast_sales_upper": f.yhat_upper,
+            "planned_labor_hours": round(planned_hours, 1),
+            "planned_labor_cost": round(target_labour, 2),
+            "model_version": "Prophet_v5_Real_ML",
+            "confidence": round(result.metrics.r_squared * 100),
+            "mape": result.metrics.mape,
+            "mse": result.metrics.rmse ** 2,
+            "explanation": f.explanation,
+            "generated_at": datetime.utcnow().isoformat(),
+        })
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        # Delete old forecasts
+        await client.delete(
+            f"{supabase_url}/rest/v1/forecast_daily_metrics"
+            f"?location_id=eq.{location_id}&date=gte.{today_str}",
+            headers={**headers_sb, "Prefer": "return=minimal"},
+        )
+
+        # Insert in batches
+        for i in range(0, len(forecasts_to_store), 500):
+            batch = forecasts_to_store[i:i + 500]
+            resp = await client.post(
+                f"{supabase_url}/rest/v1/forecast_daily_metrics",
+                headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
+                json=batch,
+            )
+            if resp.status_code >= 400:
+                logger.error("Insert error: %s", resp.text[:200])
+
+        # Log model run
+        await client.post(
+            f"{supabase_url}/rest/v1/forecast_model_runs",
+            headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
+            json={
+                "location_id": location_id,
+                "model_version": "Prophet_v5_Real_ML",
+                "algorithm": "Facebook_Prophet_ML",
+                "history_start": dates[0],
+                "history_end": dates[-1],
+                "horizon_days": horizon_days,
+                "mse": result.metrics.rmse ** 2,
+                "mape": result.metrics.mape,
+                "confidence": round(result.metrics.r_squared * 100),
+                "data_points": len(dates),
+                "trend_slope": result.metrics.trend_slope_avg,
+            },
+        )
+
+    logger.info("Stored %d forecasts for %s", len(forecasts_to_store), location_name)
+
+    return {
+        "success": True,
+        "location_id": location_id,
+        "location_name": location_name,
+        "data_points": len(dates),
+        "forecasts_stored": len(forecasts_to_store),
+        "metrics": {
+            "mape": f"{result.metrics.mape * 100:.1f}%",
+            "rmse": f"EUR {result.metrics.rmse:.0f}",
+            "mae": f"EUR {result.metrics.mae:.0f}",
+            "r_squared": f"{result.metrics.r_squared:.3f}",
+        },
+        "sample_forecast": [
+            {"date": f.ds, "forecast": f.yhat, "lower": f.yhat_lower, "upper": f.yhat_upper}
+            for f in result.forecast[:7]
+        ],
+    }
+
+
 @app.post("/batch_forecast")
 async def batch_forecast(
     locations: list[ForecastRequest],
