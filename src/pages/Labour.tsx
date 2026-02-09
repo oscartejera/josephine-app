@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { startOfWeek, endOfWeek } from 'date-fns';
+import { startOfWeek, endOfWeek, subWeeks } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { useLabourData, type MetricMode, type LabourDateRange } from '@/hooks/useLabourData';
 import { LabourHeader, type CompareMode } from '@/components/labour/LabourHeader';
@@ -27,11 +27,14 @@ export default function Labour() {
   const { locationId } = useParams<{ locationId?: string }>();
   const { accessibleLocations, loading: appLoading } = useApp();
 
-  // Initial date range: current week
-  const initialDateRange = useMemo(() => ({
-    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
-    to: endOfWeek(new Date(), { weekStartsOn: 1 }),
-  }), []);
+  // Initial date range: last complete week (always has data)
+  const initialDateRange = useMemo(() => {
+    const lastWeek = subWeeks(new Date(), 1);
+    return {
+      from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
+      to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
+    };
+  }, []);
 
   const [dateRange, setDateRange] = useState<LabourDateRange>(initialDateRange);
   const [metricMode, setMetricMode] = useState<MetricMode>('percentage');
