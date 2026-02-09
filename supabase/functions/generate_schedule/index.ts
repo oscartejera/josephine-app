@@ -411,27 +411,21 @@ Deno.serve(async (req) => {
       
       if (!isClosed && forecastSales > 0) {
         // Calculate staff needed per role
-        // FOH: Camarero/a based on tables and demand
-        const serversLunch = Math.max(
-          CONFIG.minStaff.lunch['Camarero/a'],
-          Math.ceil(CONFIG.tables / 5) + (lunchCovers > capacityLunch * 0.8 ? 1 : 0)
-        );
-        const serversDinner = Math.max(
-          CONFIG.minStaff.dinner['Camarero/a'],
-          Math.ceil(CONFIG.tables / 5) + (dinnerCovers > capacityDinner * 0.8 ? 1 : 0)
-        );
+        // FOH: Servers based on tables (1 server per 7-8 tables)
+        const serversLunch = isHighDemand ? 4 : 3;
+        const serversDinner = isHighDemand ? 5 : 4;
         
-        // BOH: Cocinero/a based on covers
-        const cooksLunch = Math.max(CONFIG.minStaff.lunch['Cocinero/a'], isHighDemand ? 3 : 2);
-        const cooksDinner = Math.max(CONFIG.minStaff.dinner['Cocinero/a'], isHighDemand ? 4 : 3);
+        // BOH: Chefs based on demand
+        const cooksLunch = isHighDemand ? 3 : 2;
+        const cooksDinner = isHighDemand ? 3 : 2;
         
-        // Calculate initial staff needs (role names match employees table)
+        // Calculate staff needs per shift (role names match employees table)
         plan.staffNeeded = {
           'Chef': { shiftA: cooksLunch, shiftB: cooksDinner },
           'Server': { shiftA: serversLunch, shiftB: serversDinner },
-          'Bartender': { shiftA: isHighDemand ? 1 : 0, shiftB: CONFIG.minStaff.dinner['Bartender'] },
-          'Host': { shiftA: isHighDemand ? 1 : 0, shiftB: CONFIG.minStaff.dinner['Host'] },
-          'Manager': { shiftA: isHighDemand ? 1 : 0, shiftB: CONFIG.minStaff.dinner['Manager'] },
+          'Bartender': { shiftA: 1, shiftB: 1 },
+          'Host': { shiftA: 1, shiftB: 1 },
+          'Manager': { shiftA: 1, shiftB: 1 },
         };
       }
       
