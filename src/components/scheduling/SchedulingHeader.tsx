@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, TrendingUp, TrendingDown, Sparkles, Loader2 } from 'lucide-react';
 import { format, addWeeks, subWeeks, endOfWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -183,9 +183,19 @@ export function SchedulingHeader({
           <Button
             onClick={onCreateSchedule}
             disabled={isCreating}
-            className="bg-primary hover:bg-primary/90"
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white gap-2 shadow-md"
           >
-            {isCreating ? 'Creating...' : 'Create Schedule'}
+            {isCreating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                AI generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                AI Auto-Schedule
+              </>
+            )}
           </Button>
           
           <Button variant="outline">

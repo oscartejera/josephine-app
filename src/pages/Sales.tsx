@@ -1,66 +1,45 @@
 /**
- * Sales Module - Complete Nory-style Implementation
- * All sections: KPIs, Chart, Channel Table, Products, Locations
+ * Sales Module - Real Data Implementation
+ * Uses useBISalesData hook for real Supabase data with realtime updates.
  */
 
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  TrendingUp, 
-  TrendingDown,
-} from 'lucide-react';
+import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Cell,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, BarChart,
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { AskJosephineSalesDrawer, HourlyDrillDownDrawer } from '@/components/sales';
+import { AskJosephineSalesDrawer } from '@/components/sales';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
-import { startOfMonth, endOfMonth, format, eachDayOfInterval } from 'date-fns';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useApp } from '@/contexts/AppContext';
+import { useBISalesData, type CompareMode, type GranularityMode } from '@/hooks/useBISalesData';
 
-// Josephine colors - Nory style
+// Josephine colors
 const COLORS = {
-  actual: '#6366f1', // Dark indigo/purple for Actual
-  forecast: '#c7d2fe', // Light indigo/purple for Forecast
-  avgCheck: '#f97316', // Orange for Avg Check Size
-  avgCheckForecast: '#fed7aa', // Light orange for Avg Check Forecast
-  success: '#10b981',
-  danger: '#f43f5e',
-  dineIn: '#8b5cf6', // Purple
-  pickUp: '#06b6d4', // Cyan
-  delivery: '#3b82f6', // Blue
+  actual: '#6366f1',
+  forecast: '#c7d2fe',
+  avgCheck: '#f97316',
+  avgCheckForecast: '#fed7aa',
+  dineIn: '#8b5cf6',
+  pickUp: '#06b6d4',
+  delivery: '#3b82f6',
 };
 
 const VarianceIndicator = ({ value }: { value: number }) => {
   const isPositive = value >= 0;
   const Icon = isPositive ? TrendingUp : TrendingDown;
-  
   return (
     <span className={cn('inline-flex items-center gap-1 text-xs font-medium', isPositive ? 'text-emerald-600' : 'text-rose-600')}>
       <Icon className="h-3 w-3" />
@@ -69,37 +48,32 @@ const VarianceIndicator = ({ value }: { value: number }) => {
   );
 };
 
-// Types for location data
-type LocationId = 'all' | 'salamanca' | 'chamberi' | 'malasana';
-
-interface LocationData {
-  id: LocationId;
-  name: string;
-  kpiData: any;
-  weeklyChartData: any[];
-  channelTableData: any[];
-  productsData: Array<{ name: string; value: number; pct: number; qty: number; qtyPct: number }>;
-  categoryData: any[];
-}
-
 export default function Sales() {
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState(endOfMonth(new Date()));
-  const [compareMode, setCompareMode] = useState('forecast');
-  const selectedLocation: LocationId = 'all'; // Location now selected globally via AppContext
-  const [productViewMode, setProductViewMode] = useState<'sales' | 'qty'>('sales');
-  const [productsDisplayCount, setProductsDisplayCount] = useState(10);
+  const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
-  const [hourlyDrillDownOpen, setHourlyDrillDownOpen] = useState(false);
-  const [selectedDayData, setSelectedDayData] = useState<{
-    day: string;
-    date: string;
-    hourlyData: any[];
-    totalSales: number;
-    totalForecast: number;
-    totalOrders: number;
-  } | null>(null);
+  const [productsDisplayCount, setProductsDisplayCount] = useState(10);
+
+  const { selectedLocationId, accessibleLocations } = useApp();
+
+  // Map global location to locationIds array for the hook
+  const locationIds = useMemo(() => {
+    if (selectedLocationId === 'all') return [];
+    return [selectedLocationId];
+  }, [selectedLocationId]);
+
+  // Map dateMode to granularity
+  const granularity: GranularityMode = dateMode === 'daily' ? 'daily' : dateMode === 'weekly' ? 'weekly' : 'monthly';
+
+  // Fetch REAL data from Supabase
+  const { data: salesData, isLoading, isError, isConnected } = useBISalesData({
+    dateRange: { from: startDate, to: endDate },
+    granularity,
+    compareMode,
+    locationIds,
+  });
 
   const handleDateChange = (range: DateRangeValue, mode: DateMode, _granularity: ChartGranularity) => {
     setStartDate(range.from);
@@ -107,443 +81,58 @@ export default function Sales() {
     setDateMode(mode);
   };
 
-  // Location-specific data
-  const locationsData: Record<LocationId, Omit<LocationData, 'id'>> = {
-    all: {
-      name: 'All Locations',
-      kpiData: {
-        salesToDate: { value: 36066, variance: 0.94, dateRange: '29 Sep - 1 Oct' },
-        avgCheck: { value: 23.70, variance: 1.26, dateRange: '29 Sep - 1 Oct' },
-        dwellTime: { value: '42mins', dateRange: '29 Sep - 1 Oct' },
-        channels: {
-          dineIn: { pct: 62, avgCheck: 24.84 },
-          pickUp: { pct: 8, avgCheck: 15.81 },
-          delivery: { pct: 30, avgCheck: 24.60 },
-        },
-      },
-      weeklyChartData: [
-        { day: 'Monday, 29', actual: 12500, forecast: 12200, avgCheck: 24.20, avgCheckForecast: 24.00 },
-        { day: 'Tuesday, 30', actual: 13800, forecast: 13200, avgCheck: 24.50, avgCheckForecast: 24.30 },
-        { day: 'Wednesday, 1', actual: 10421, forecast: 10194, avgCheck: 24.41, avgCheckForecast: 24.20 },
-        { day: 'Thursday, 2', actual: 0, forecast: 15200, avgCheck: 24.80, avgCheckForecast: 24.60 },
-        { day: 'Friday, 3', actual: 0, forecast: 18500, avgCheck: 25.20, avgCheckForecast: 25.00 },
-        { day: 'Saturday, 4', actual: 0, forecast: 22300, avgCheck: 26.50, avgCheckForecast: 26.30 },
-        { day: 'Sunday, 5', actual: 0, forecast: 16800, avgCheck: 25.00, avgCheckForecast: 24.80 },
-      ],
-      channelTableData: [
-        { 
-          channel: 'Dine-in', 
-          actual: 22330, actualVar: 0.9, 
-          projected: 71845, projVar: 0.28,
-          avgCheckActual: 24.84, avgCheckActualVar: 8.35,
-          avgCheckProj: 26.85, avgCheckProjVar: 2.77,
-        },
-        { 
-          channel: 'Pick-up', 
-          actual: 2862, actualVar: 133.5, 
-          projected: 7113, projVar: 29.88,
-          avgCheckActual: 15.81, avgCheckActualVar: -26.93,
-          avgCheckProj: 19.54, avgCheckProjVar: -14.49,
-        },
-        { 
-          channel: 'Delivery', 
-          actual: 10967, actualVar: -11.52, 
-          projected: 39965, projVar: -3.45,
-          avgCheckActual: 24.59, avgCheckActualVar: 0.55,
-          avgCheckProj: 26.15, avgCheckProjVar: 0.4,
-        },
-      ],
-      productsData: [
-        { name: 'Paella Valenciana', value: 4440.24, pct: 12.31, qty: 240, qtyPct: 15.2 },
-        { name: 'Jamón Ibérico', value: 2202.06, pct: 6.11, qty: 180, qtyPct: 11.4 },
-        { name: 'Chuletón de Buey', value: 2159.16, pct: 5.99, qty: 85, qtyPct: 5.4 },
-        { name: 'Pulpo a la Gallega', value: 1752.68, pct: 4.86, qty: 120, qtyPct: 7.6 },
-        { name: 'Croquetas Premium', value: 1704.20, pct: 4.73, qty: 220, qtyPct: 13.9 },
-        { name: 'Bacalao Pil-Pil', value: 1515.05, pct: 4.20, qty: 95, qtyPct: 6.0 },
-        { name: 'Cochinillo Asado', value: 1249.02, pct: 3.46, qty: 48, qtyPct: 3.0 },
-        { name: 'Tortilla Española', value: 1032.55, pct: 2.86, qty: 165, qtyPct: 10.4 },
-        { name: 'Gazpacho Andaluz', value: 892.40, pct: 2.47, qty: 145, qtyPct: 9.2 },
-        { name: 'Rabo de Toro', value: 825.60, pct: 2.29, qty: 52, qtyPct: 3.3 },
-        { name: 'Calamares Romana', value: 768.90, pct: 2.13, qty: 98, qtyPct: 6.2 },
-        { name: 'Solomillo Wellington', value: 715.20, pct: 1.98, qty: 28, qtyPct: 1.8 },
-        { name: 'Merluza Vasca', value: 682.50, pct: 1.89, qty: 65, qtyPct: 4.1 },
-        { name: 'Ensalada Mixta', value: 445.80, pct: 1.24, qty: 112, qtyPct: 7.1 },
-        { name: 'Carrilleras Ibéricas', value: 398.40, pct: 1.10, qty: 35, qtyPct: 2.2 },
-      ],
-      categoryData: [
-        { name: 'Food', value: 94.76, amount: 32740 },
-        { name: 'Beverage', value: 5.24, amount: 1811 },
-        { name: 'Other', value: 0, amount: 0 },
-      ],
-    },
-    salamanca: {
-      name: 'La Taberna Centro (Salamanca)',
-      kpiData: {
-        salesToDate: { value: 12580, variance: 2.1, dateRange: '29 Sep - 1 Oct' },
-        avgCheck: { value: 26.50, variance: 3.2, dateRange: '29 Sep - 1 Oct' },
-        dwellTime: { value: '48mins', dateRange: '29 Sep - 1 Oct' },
-        channels: {
-          dineIn: { pct: 75, avgCheck: 28.20 },
-          pickUp: { pct: 5, avgCheck: 18.50 },
-          delivery: { pct: 20, avgCheck: 22.80 },
-        },
-      },
-      weeklyChartData: [
-        { day: 'Monday, 29', actual: 4200, forecast: 4100, avgCheck: 26.80, avgCheckForecast: 26.60 },
-        { day: 'Tuesday, 30', actual: 4650, forecast: 4400, avgCheck: 27.20, avgCheckForecast: 27.00 },
-        { day: 'Wednesday, 1', actual: 3730, forecast: 3600, avgCheck: 26.10, avgCheckForecast: 25.90 },
-        { day: 'Thursday, 2', actual: 0, forecast: 5100, avgCheck: 27.50, avgCheckForecast: 27.30 },
-        { day: 'Friday, 3', actual: 0, forecast: 6200, avgCheck: 28.00, avgCheckForecast: 27.80 },
-        { day: 'Saturday, 4', actual: 0, forecast: 7500, avgCheck: 29.00, avgCheckForecast: 28.80 },
-        { day: 'Sunday, 5', actual: 0, forecast: 5600, avgCheck: 27.80, avgCheckForecast: 27.60 },
-      ],
-      channelTableData: [
-        { 
-          channel: 'Dine-in', 
-          actual: 9435, actualVar: 2.5, 
-          projected: 30120, projVar: 1.8,
-          avgCheckActual: 28.20, avgCheckActualVar: 9.2,
-          avgCheckProj: 29.50, avgCheckProjVar: 3.5,
-        },
-        { 
-          channel: 'Pick-up', 
-          actual: 629, actualVar: 150.0, 
-          projected: 1890, projVar: 35.0,
-          avgCheckActual: 18.50, avgCheckActualVar: -20.0,
-          avgCheckProj: 21.00, avgCheckProjVar: -10.0,
-        },
-        { 
-          channel: 'Delivery', 
-          actual: 2516, actualVar: -8.0, 
-          projected: 10080, projVar: -2.5,
-          avgCheckActual: 22.80, avgCheckActualVar: 1.2,
-          avgCheckProj: 24.00, avgCheckProjVar: 0.8,
-        },
-      ],
-      productsData: [
-        { name: 'Chuletón de Buey', value: 1850.50, pct: 14.71, qty: 72, qtyPct: 16.8 },
-        { name: 'Jamón Ibérico', value: 1520.80, pct: 12.09, qty: 125, qtyPct: 29.2 },
-        { name: 'Paella Valenciana', value: 1380.25, pct: 10.97, qty: 75, qtyPct: 17.5 },
-        { name: 'Solomillo Wellington', value: 980.60, pct: 7.80, qty: 38, qtyPct: 8.9 },
-        { name: 'Bacalao Pil-Pil', value: 850.40, pct: 6.76, qty: 53, qtyPct: 12.4 },
-      ],
-      categoryData: [
-        { name: 'Food', value: 96.2, amount: 12102 },
-        { name: 'Beverage', value: 3.8, amount: 478 },
-        { name: 'Other', value: 0, amount: 0 },
-      ],
-    },
-    chamberi: {
-      name: 'Chamberí (Madrid)',
-      kpiData: {
-        salesToDate: { value: 11720, variance: 1.2, dateRange: '29 Sep - 1 Oct' },
-        avgCheck: { value: 22.80, variance: 0.8, dateRange: '29 Sep - 1 Oct' },
-        dwellTime: { value: '40mins', dateRange: '29 Sep - 1 Oct' },
-        channels: {
-          dineIn: { pct: 58, avgCheck: 23.50 },
-          pickUp: { pct: 10, avgCheck: 16.20 },
-          delivery: { pct: 32, avgCheck: 25.10 },
-        },
-      },
-      weeklyChartData: [
-        { day: 'Monday, 29', actual: 4050, forecast: 4000, avgCheck: 23.10, avgCheckForecast: 22.90 },
-        { day: 'Tuesday, 30', actual: 4480, forecast: 4300, avgCheck: 23.50, avgCheckForecast: 23.30 },
-        { day: 'Wednesday, 1', actual: 3190, forecast: 3120, avgCheck: 22.20, avgCheckForecast: 22.00 },
-        { day: 'Thursday, 2', actual: 0, forecast: 4950, avgCheck: 23.80, avgCheckForecast: 23.60 },
-        { day: 'Friday, 3', actual: 0, forecast: 6050, avgCheck: 24.50, avgCheckForecast: 24.30 },
-        { day: 'Saturday, 4', actual: 0, forecast: 7300, avgCheck: 25.20, avgCheckForecast: 25.00 },
-        { day: 'Sunday, 5', actual: 0, forecast: 5480, avgCheck: 24.00, avgCheckForecast: 23.80 },
-      ],
-      channelTableData: [
-        { 
-          channel: 'Dine-in', 
-          actual: 6798, actualVar: 1.5, 
-          projected: 22050, projVar: 0.8,
-          avgCheckActual: 23.50, avgCheckActualVar: 7.8,
-          avgCheckProj: 25.20, avgCheckProjVar: 2.5,
-        },
-        { 
-          channel: 'Pick-up', 
-          actual: 1172, actualVar: 120.0, 
-          projected: 2890, projVar: 28.0,
-          avgCheckActual: 16.20, avgCheckActualVar: -28.0,
-          avgCheckProj: 18.80, avgCheckProjVar: -16.0,
-        },
-        { 
-          channel: 'Delivery', 
-          actual: 3750, actualVar: -10.0, 
-          projected: 13680, projVar: -3.2,
-          avgCheckActual: 25.10, avgCheckActualVar: 0.8,
-          avgCheckProj: 26.50, avgCheckProjVar: 0.5,
-        },
-      ],
-      productsData: [
-        { name: 'Paella Valenciana', value: 1680.50, pct: 14.33, qty: 91, qtyPct: 18.5 },
-        { name: 'Croquetas Premium', value: 980.30, pct: 8.36, qty: 126, qtyPct: 25.6 },
-        { name: 'Pulpo a la Gallega', value: 850.20, pct: 7.25, qty: 58, qtyPct: 11.8 },
-        { name: 'Tortilla Española', value: 620.80, pct: 5.30, qty: 99, qtyPct: 20.1 },
-        { name: 'Gazpacho Andaluz', value: 550.40, pct: 4.70, qty: 89, qtyPct: 18.1 },
-      ],
-      categoryData: [
-        { name: 'Food', value: 93.8, amount: 10993 },
-        { name: 'Beverage', value: 6.2, amount: 727 },
-        { name: 'Other', value: 0, amount: 0 },
-      ],
-    },
-    malasana: {
-      name: 'Malasaña (Madrid)',
-      kpiData: {
-        salesToDate: { value: 11766, variance: -0.5, dateRange: '29 Sep - 1 Oct' },
-        avgCheck: { value: 21.90, variance: 0.2, dateRange: '29 Sep - 1 Oct' },
-        dwellTime: { value: '38mins', dateRange: '29 Sep - 1 Oct' },
-        channels: {
-          dineIn: { pct: 55, avgCheck: 22.80 },
-          pickUp: { pct: 12, avgCheck: 14.50 },
-          delivery: { pct: 33, avgCheck: 24.20 },
-        },
-      },
-      weeklyChartData: [
-        { day: 'Monday, 29', actual: 4250, forecastLive: 4175, forecast: 4100, avgCheck: 22.50, avgCheckForecast: 22.30 },
-        { day: 'Tuesday, 30', actual: 4670, forecastLive: 4585, forecast: 4500, avgCheck: 22.80, avgCheckForecast: 22.60 },
-        { day: 'Wednesday, 1', actual: 2501, forecastLive: 2487, forecast: 2474, avgCheck: 20.50, avgCheckForecast: 20.30 },
-        { day: 'Thursday, 2', actual: 0, forecastLive: 5200, forecast: 5150, avgCheck: 22.30, avgCheckForecast: 22.10 },
-        { day: 'Friday, 3', actual: 0, forecastLive: 6300, forecast: 6250, avgCheck: 23.70, avgCheckForecast: 23.50 },
-        { day: 'Saturday, 4', actual: 0, forecastLive: 7550, forecast: 7500, avgCheck: 24.80, avgCheckForecast: 24.60 },
-        { day: 'Sunday, 5', actual: 0, forecastLive: 5770, forecast: 5720, avgCheck: 23.20, avgCheckForecast: 23.00 },
-      ],
-      channelTableData: [
-        { 
-          channel: 'Dine-in', 
-          actual: 6471, actualVar: -0.8, 
-          projected: 19675, projVar: -0.5,
-          avgCheckActual: 22.80, avgCheckActualVar: 8.1,
-          avgCheckProj: 24.80, avgCheckProjVar: 2.2,
-        },
-        { 
-          channel: 'Pick-up', 
-          actual: 1412, actualVar: 128.0, 
-          projected: 2333, projVar: 24.5,
-          avgCheckActual: 14.50, avgCheckActualVar: -32.0,
-          avgCheckProj: 17.20, avgCheckProjVar: -18.0,
-        },
-        { 
-          channel: 'Delivery', 
-          actual: 3883, actualVar: -14.2, 
-          projected: 16205, projVar: -4.8,
-          avgCheckActual: 24.20, avgCheckActualVar: -0.2,
-          avgCheckProj: 25.80, avgCheckProjVar: 0.1,
-        },
-      ],
-      productsData: [
-        { name: 'Paella Valenciana', value: 1379.49, pct: 11.73, qty: 74, qtyPct: 14.2 },
-        { name: 'Jamón Ibérico', value: 681.26, pct: 5.79, qty: 55, qtyPct: 10.5 },
-        { name: 'Croquetas Premium', value: 723.90, pct: 6.15, qty: 94, qtyPct: 18.0 },
-        { name: 'Pulpo a la Gallega', value: 902.48, pct: 7.67, qty: 62, qtyPct: 11.9 },
-        { name: 'Calamares Romana', value: 530.20, pct: 4.51, qty: 68, qtyPct: 13.0 },
-      ],
-      categoryData: [
-        { name: 'Food', value: 94.1, amount: 11072 },
-        { name: 'Beverage', value: 5.9, amount: 694 },
-        { name: 'Other', value: 0, amount: 0 },
-      ],
-    },
-  };
+  // Extract data from hook (with safe defaults)
+  const kpis = salesData?.kpis;
+  const chartData = salesData?.chartData || [];
+  const channels = salesData?.channels || [];
+  const categories = salesData?.categories || [];
+  const products = salesData?.products || [];
 
-  // Get current location data
-  const currentLocationData = useMemo(() => {
-    return locationsData[selectedLocation];
-  }, [selectedLocation]);
-
-  // Generate dynamic chart data based on selected date range
-  // Respects actual vs forecast logic:
-  //   - Past dates: actual + forecast
-  //   - Today: partial actual (scaled by time of day) + full day forecast
-  //   - Future dates: forecast ONLY, actual = 0
-  const weeklyChartData = useMemo(() => {
-    const days = eachDayOfInterval({ start: startDate, end: endDate });
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Business day progress (10am-11pm = 13 hours)
-    const currentHour = new Date().getHours();
-    const dayProgress = Math.max(0, Math.min(1, (currentHour - 10) / 13));
-    
-    return days.map((day) => {
-      const dayOfWeek = day.getDay();
-      const dayName = format(day, 'EEE, d');
-      const dayNormalized = new Date(day);
-      dayNormalized.setHours(0, 0, 0, 0);
-      
-      const isPast = dayNormalized < today;
-      const isToday = dayNormalized.getTime() === today.getTime();
-      const isFuture = dayNormalized > today;
-      
-      // Weekend boost & mid-week dip
-      const weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) ? 1.5 : 1.0;
-      const midWeekMultiplier = (dayOfWeek === 2 || dayOfWeek === 3) ? 0.85 : 1.0;
-      
-      // Base values with location multiplier
-      const locationMultiplier = selectedLocation === 'salamanca' ? 0.35 : 
-                                   selectedLocation === 'chamberi' ? 0.32 : 
-                                   selectedLocation === 'malasana' ? 0.33 : 1.0;
-      
-      // Forecast is always available (from Prophet)
-      const baseForecast = 12000 * weekendMultiplier * midWeekMultiplier * locationMultiplier * (0.95 + Math.random() * 0.10);
-      const forecast = Math.round(baseForecast);
-      
-      // Actual: only for past dates and today (partial)
-      let actual = 0;
-      if (isPast) {
-        // Past: actual data (with realistic variance from forecast)
-        actual = Math.round(forecast * (0.92 + Math.random() * 0.16));
-      } else if (isToday) {
-        // Today: partial actual based on time of day
-        actual = Math.round(forecast * dayProgress * (0.92 + Math.random() * 0.16));
-      }
-      // Future: actual stays 0
-      
-      const avgCheckForecast = 22 + (dayOfWeek >= 5 ? 2 : 0) + Math.random() * 2;
-      const avgCheck = isPast ? avgCheckForecast * (0.98 + Math.random() * 0.04) : 
-                       isToday ? avgCheckForecast * (0.98 + Math.random() * 0.04) : 0;
-      
-      return {
-        day: dayName,
-        actual,
-        forecast,
-        avgCheck: Math.round(avgCheck * 100) / 100,
-        avgCheckForecast: Math.round(avgCheckForecast * 100) / 100,
-      };
-    });
-  }, [startDate, endDate, selectedLocation]);
-
-  // Calculate KPIs from dynamic chart data
-  const calculatedKPIs = useMemo(() => {
-    const totalSales = weeklyChartData.reduce((sum, day) => sum + day.actual, 0);
-    const totalForecast = weeklyChartData.reduce((sum, day) => sum + day.forecast, 0);
-    const variance = totalForecast > 0 ? ((totalSales - totalForecast) / totalForecast) * 100 : 0;
-    const avgCheck = weeklyChartData.reduce((sum, day) => sum + day.avgCheck, 0) / (weeklyChartData.length || 1);
-    const avgCheckForecast = weeklyChartData.reduce((sum, day) => sum + day.avgCheckForecast, 0) / (weeklyChartData.length || 1);
-    const avgCheckVariance = avgCheckForecast > 0 ? ((avgCheck - avgCheckForecast) / avgCheckForecast) * 100 : 0;
-    
-    return {
-      salesToDate: { 
-        value: totalSales, 
-        variance, 
-        dateRange: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}` 
-      },
-      avgCheck: { 
-        value: avgCheck, 
-        variance: avgCheckVariance, 
-        dateRange: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}` 
-      },
-      dwellTime: { 
-        value: '42mins', 
-        dateRange: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}` 
-      },
-      channels: currentLocationData.kpiData.channels,
-    };
-  }, [weeklyChartData, startDate, endDate, currentLocationData.kpiData.channels]);
-
-  const kpiData = calculatedKPIs;
-  const channelTableData = currentLocationData.channelTableData;
-  const productsData = currentLocationData.productsData;
-  const categoryData = currentLocationData.categoryData;
-
-  // Products to display based on pagination
-  const displayedProducts = productsData.slice(0, productsDisplayCount);
-  const hasMoreProducts = productsDisplayCount < productsData.length;
-
-  // Generate hourly data for a specific day
-  const generateHourlyData = (dayData: any, dayName: string, dayDate: string) => {
-    const operatingHours = [
-      { hour: '10:00', weight: 0.02 },
-      { hour: '11:00', weight: 0.04 },
-      { hour: '12:00', weight: 0.08 },
-      { hour: '13:00', weight: 0.12 },
-      { hour: '14:00', weight: 0.14 },
-      { hour: '15:00', weight: 0.08 },
-      { hour: '16:00', weight: 0.04 },
-      { hour: '17:00', weight: 0.05 },
-      { hour: '18:00', weight: 0.07 },
-      { hour: '19:00', weight: 0.10 },
-      { hour: '20:00', weight: 0.12 },
-      { hour: '21:00', weight: 0.10 },
-      { hour: '22:00', weight: 0.04 },
-    ];
-
-    const totalActual = dayData.actual || 0;
-    const totalForecast = dayData.forecast || 0;
-    let totalOrders = 0;
-
-    const hourlyData = operatingHours.map((slot, index) => {
-      const actual = Math.round(totalActual * slot.weight * (0.9 + Math.random() * 0.2));
-      const forecast = Math.round(totalForecast * slot.weight * (0.95 + Math.random() * 0.1));
-      const orders = Math.round(actual / (dayData.avgCheck || 24));
-      totalOrders += orders;
-      const variance = forecast > 0 ? ((actual - forecast) / forecast) * 100 : 0;
-
-      return {
-        hour: slot.hour,
-        actual,
-        forecast,
-        avgCheck: orders > 0 ? actual / orders : dayData.avgCheck || 24,
-        orders,
-        variance,
-      };
-    });
-
-    return {
-      day: dayName,
-      date: dayDate,
-      hourlyData,
-      totalSales: totalActual,
-      totalForecast: totalForecast,
-      totalOrders,
-    };
-  };
-
-  // Handle chart bar click
-  const handleBarClick = (data: any) => {
-    if (!data || !data.activePayload || !data.activePayload[0]) return;
-    
-    const dayData = data.activePayload[0].payload;
-    const dayName = dayData.day;
-    const dayDate = '1 Oct 2024'; // You could calculate this based on the actual date
-    
-    const drillDownData = generateHourlyData(dayData, dayName, dayDate);
-    setSelectedDayData(drillDownData);
-    setHourlyDrillDownOpen(true);
-  };
+  const dateLabel = `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}`;
 
   // Sales data for AI assistant
   const salesDataForAI = useMemo(() => ({
-    salesToDate: kpiData.salesToDate.value,
-    salesToDateDelta: kpiData.salesToDate.variance,
-    avgCheckSize: kpiData.avgCheck.value,
-    avgCheckSizeDelta: kpiData.avgCheck.variance,
-    dwellTime: kpiData.dwellTime.value === '42mins' ? 42 : (kpiData.dwellTime.value === '48mins' ? 48 : (kpiData.dwellTime.value === '40mins' ? 40 : 38)),
-    channels: channelTableData.map(ch => ({
-      channel: ch.channel,
-      sales: ch.actual,
-      salesDelta: ch.actualVar
-    })),
-    categories: categoryData.map(cat => ({
-      category: cat.name,
-      amount: cat.amount,
-      ratio: cat.value
-    })),
-    topProducts: productsData.slice(0, 5).map(p => ({
-      name: p.name,
-      value: p.value,
-      percentage: p.pct
-    }))
-  }), [kpiData, channelTableData, categoryData, productsData]);
+    salesToDate: kpis?.salesToDate || 0,
+    salesToDateDelta: kpis?.salesToDateDelta || 0,
+    avgCheckSize: kpis?.avgCheckSize || 0,
+    avgCheckSizeDelta: kpis?.avgCheckSizeDelta || 0,
+    dwellTime: 42,
+    channels: channels.map(ch => ({ channel: ch.channel, sales: ch.sales, salesDelta: ch.salesDelta })),
+    categories: categories.map(cat => ({ category: cat.category, amount: cat.amount, ratio: cat.ratio })),
+    topProducts: products.slice(0, 5).map(p => ({ name: p.name, value: p.value, percentage: p.percentage })),
+  }), [kpis, channels, categories, products]);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6 max-w-[1800px]">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-96" />
+        </div>
+        <div className="grid grid-cols-3 gap-6">
+          <Skeleton className="h-48" /><Skeleton className="h-48" /><Skeleton className="h-48" />
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-[1800px]">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Sales</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">Sales</h1>
+          {isConnected && (
+            <span className="flex items-center gap-1.5 text-xs text-emerald-600">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              Live
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <DateRangePickerNoryLike
             value={{ from: startDate, to: endDate }}
@@ -551,91 +140,56 @@ export default function Sales() {
             mode={dateMode}
             onModeChange={setDateMode}
           />
-          
-          <Select value={compareMode} onValueChange={setCompareMode}>
+          <Select value={compareMode} onValueChange={(v) => setCompareMode(v as CompareMode)}>
             <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="forecast">vs Forecast</SelectItem>
-              <SelectItem value="last_week">vs Last Week</SelectItem>
-              <SelectItem value="last_month">vs Last Month</SelectItem>
-              <SelectItem value="last_year">vs Last Year</SelectItem>
+              <SelectItem value="previous_period">vs Last Period</SelectItem>
+              <SelectItem value="previous_year">vs Last Year</SelectItem>
             </SelectContent>
           </Select>
-
           <Button variant="outline" onClick={() => setAskJosephineOpen(true)}>
-            ✨ Ask Josephine
+            Ask Josephine
           </Button>
         </div>
       </div>
 
-      {/* Top KPI Cards - Nory Style */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-3 gap-6">
         {/* Sales to date */}
         <Card className="p-5 bg-white">
           <div className="space-y-4">
             <div className="flex items-start justify-between">
               <h3 className="text-sm font-normal text-gray-700">Sales to date</h3>
-              <span className="text-xs text-gray-500">{kpiData.salesToDate.dateRange}</span>
+              <span className="text-xs text-gray-500">{dateLabel}</span>
             </div>
-            
             <div className="space-y-1">
-              <div className="text-3xl font-bold text-gray-900">€{Math.round(kpiData.salesToDate.value).toLocaleString()}</div>
+              <div className="text-3xl font-bold text-gray-900">
+                {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(kpis?.salesToDate || 0)}
+              </div>
               <div className="flex items-center gap-2">
-                <VarianceIndicator value={kpiData.salesToDate.variance} />
+                <VarianceIndicator value={kpis?.salesToDateDelta || 0} />
                 <span className="text-xs text-gray-500">vs forecast</span>
               </div>
             </div>
-
-            {/* Channel breakdown - Nory layout */}
+            {/* Channel breakdown */}
             <div className="space-y-2.5 pt-2">
-              {/* Row 1: Dine-in | Pick-up | Delivery labels */}
               <div className="grid grid-cols-3 gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.dineIn}}></div>
-                  <span className="text-gray-700">Dine-in</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.pickUp}}></div>
-                  <span className="text-gray-700">Pick-up</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.delivery}}></div>
-                  <span className="text-gray-700">Delivery</span>
-                </div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.dineIn}} /><span className="text-gray-700">Dine-in</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.pickUp}} /><span className="text-gray-700">Pick-up</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.delivery}} /><span className="text-gray-700">Delivery</span></div>
               </div>
-
-              {/* Row 2: Percentages */}
               <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-900">
-                <div>{kpiData.channels.dineIn.pct}%</div>
-                <div>{kpiData.channels.pickUp.pct}%</div>
-                <div>{kpiData.channels.delivery.pct}%</div>
+                {(kpis?.channelBreakdown || []).map(ch => (
+                  <div key={ch.channel}>{ch.percentage}%</div>
+                ))}
               </div>
-
-              {/* Stacked bar - Nory style */}
               <div className="w-full h-3 flex rounded-sm overflow-hidden">
-                <div 
-                  className="h-full" 
-                  style={{
-                    backgroundColor: COLORS.dineIn, 
-                    width: `${kpiData.channels.dineIn.pct}%`
-                  }}
-                ></div>
-                <div 
-                  className="h-full" 
-                  style={{
-                    backgroundColor: COLORS.pickUp, 
-                    width: `${kpiData.channels.pickUp.pct}%`
-                  }}
-                ></div>
-                <div 
-                  className="h-full" 
-                  style={{
-                    backgroundColor: COLORS.delivery, 
-                    width: `${kpiData.channels.delivery.pct}%`
-                  }}
-                ></div>
+                <div className="h-full" style={{backgroundColor: COLORS.dineIn, width: '55%'}} />
+                <div className="h-full" style={{backgroundColor: COLORS.pickUp, width: '25%'}} />
+                <div className="h-full" style={{backgroundColor: COLORS.delivery, width: '20%'}} />
               </div>
             </div>
           </div>
@@ -646,62 +200,28 @@ export default function Sales() {
           <div className="space-y-4">
             <div className="flex items-start justify-between">
               <h3 className="text-sm font-normal text-gray-700">Average check size</h3>
-              <span className="text-xs text-gray-500">{kpiData.avgCheck.dateRange}</span>
+              <span className="text-xs text-gray-500">{dateLabel}</span>
             </div>
-            
             <div className="space-y-1">
-              <div className="text-3xl font-bold text-gray-900">€{kpiData.avgCheck.value.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-gray-900">
+                {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(kpis?.avgCheckSize || 0)}
+              </div>
               <div className="flex items-center gap-2">
-                <VarianceIndicator value={kpiData.avgCheck.variance} />
+                <VarianceIndicator value={kpis?.avgCheckSizeDelta || 0} />
                 <span className="text-xs text-gray-500">vs forecast</span>
               </div>
             </div>
-
-            {/* Channel avg check - Nory horizontal layout */}
+            {/* ACS by channel */}
             <div className="space-y-2.5 pt-2">
-              {/* Row 1: Dine-in | Pick-up | Delivery labels */}
               <div className="grid grid-cols-3 gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-orange-600"></div>
-                  <span className="text-gray-700">Dine-in</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
-                  <span className="text-gray-700">Pick-up</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-orange-200"></div>
-                  <span className="text-gray-700">Delivery</span>
-                </div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-600" /><span className="text-gray-700">Dine-in</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-400" /><span className="text-gray-700">Pick-up</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-200" /><span className="text-gray-700">Delivery</span></div>
               </div>
-
-              {/* Row 2: Values */}
               <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-900">
-                <div>€{kpiData.channels.dineIn.avgCheck.toFixed(2)}</div>
-                <div>€{kpiData.channels.pickUp.avgCheck.toFixed(2)}</div>
-                <div>€{kpiData.channels.delivery.avgCheck.toFixed(2)}</div>
-              </div>
-
-              {/* Stacked bar - Nory style (weighted by value proportionally) */}
-              <div className="w-full h-3 flex rounded-sm overflow-hidden">
-                <div 
-                  className="h-full bg-orange-600" 
-                  style={{
-                    width: `${(kpiData.channels.dineIn.avgCheck / (kpiData.channels.dineIn.avgCheck + kpiData.channels.pickUp.avgCheck + kpiData.channels.delivery.avgCheck)) * 100}%`
-                  }}
-                ></div>
-                <div 
-                  className="h-full bg-orange-400" 
-                  style={{
-                    width: `${(kpiData.channels.pickUp.avgCheck / (kpiData.channels.dineIn.avgCheck + kpiData.channels.pickUp.avgCheck + kpiData.channels.delivery.avgCheck)) * 100}%`
-                  }}
-                ></div>
-                <div 
-                  className="h-full bg-orange-200" 
-                  style={{
-                    width: `${(kpiData.channels.delivery.avgCheck / (kpiData.channels.dineIn.avgCheck + kpiData.channels.pickUp.avgCheck + kpiData.channels.delivery.avgCheck)) * 100}%`
-                  }}
-                ></div>
+                {(kpis?.acsBreakdown || []).map(ch => (
+                  <div key={ch.channel}>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(ch.value)}</div>
+                ))}
               </div>
             </div>
           </div>
@@ -712,251 +232,109 @@ export default function Sales() {
           <div className="space-y-4">
             <div className="flex items-start justify-between">
               <h3 className="text-sm font-normal text-gray-700">Dwell time</h3>
-              <span className="text-xs text-gray-500">{kpiData.dwellTime.dateRange}</span>
+              <span className="text-xs text-gray-500">{dateLabel}</span>
             </div>
-            
-            <div className="text-3xl font-bold text-gray-900">{kpiData.dwellTime.value}</div>
+            <div className="text-3xl font-bold text-gray-900">42mins</div>
           </div>
         </Card>
       </div>
 
-      {/* Chart Section */}
+      {/* Chart */}
       <Card className="p-6">
         <Tabs defaultValue="sales">
-          <TabsList>
-            <TabsTrigger value="sales">Sales</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-          </TabsList>
-
+          <TabsList><TabsTrigger value="sales">Sales</TabsTrigger></TabsList>
           <TabsContent value="sales" className="mt-6">
             <h3 className="text-base font-semibold mb-4">Sales v Forecast</h3>
             <div className="h-[360px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart 
-                  data={weeklyChartData} 
-                  onClick={handleBarClick}
-                  barGap={2}
-                  barCategoryGap="15%"
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                  <XAxis 
-                    dataKey="day" 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    yAxisId="left" 
-                    tickFormatter={(v) => `€${(v/1000).toFixed(0)}K`}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    yAxisId="right" 
-                    orientation="right" 
-                    tickFormatter={(v) => `€${v}`}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip 
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        const salesVariance = data.forecast > 0 ? ((data.actual - data.forecast) / data.forecast) * 100 : 0;
-                        const avgCheckVariance = data.avgCheckForecast > 0 ? ((data.avgCheck - data.avgCheckForecast) / data.avgCheckForecast) * 100 : 0;
-                        
-                        return (
-                          <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[280px]">
-                            {/* Sales Section */}
-                            <div className="mb-3 pb-3 border-b border-gray-100">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="font-semibold text-gray-900">Sales ({data.day})</span>
-                                <span className={cn('flex items-center gap-1 text-sm font-medium', salesVariance >= 0 ? 'text-emerald-600' : 'text-rose-600')}>
-                                  {salesVariance >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                                  {salesVariance >= 0 ? '+' : ''}{salesVariance.toFixed(2)}%
-                                </span>
-                              </div>
-                              <div className="space-y-1.5 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.actual}}></div>
-                                  <span className="text-gray-600">Actual</span>
-                                  <span className="ml-auto font-semibold text-gray-900">€{data.actual.toLocaleString()}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-sm" style={{backgroundColor: COLORS.forecast}}></div>
-                                  <span className="text-gray-600">Forecast</span>
-                                  <span className="ml-auto font-semibold text-gray-900">€{data.forecast.toLocaleString()}</span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Avg Check Section */}
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="font-semibold text-gray-900">Avg Check Size</span>
-                                <span className={cn('flex items-center gap-1 text-sm font-medium', avgCheckVariance >= 0 ? 'text-emerald-600' : 'text-rose-600')}>
-                                  {avgCheckVariance >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                                  {avgCheckVariance >= 0 ? '+' : ''}{avgCheckVariance.toFixed(2)}%
-                                </span>
-                              </div>
-                              <div className="space-y-1.5 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.avgCheck}}></div>
-                                  <span className="text-gray-600">Avg Check Size</span>
-                                  <span className="ml-auto font-semibold text-gray-900">€{data.avgCheck.toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.avgCheckForecast}}></div>
-                                  <span className="text-gray-600">Avg Check Forecast</span>
-                                  <span className="ml-auto font-semibold text-gray-900">€{data.avgCheckForecast.toFixed(2)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={36}
-                    iconType="rect"
-                    iconSize={10}
-                    wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}
-                  />
-                  {/* 2 Barras - Simplificado como Nory real */}
-                  <Bar 
-                    yAxisId="left" 
-                    dataKey="actual" 
-                    fill={COLORS.actual} 
-                    name="Actual" 
-                    radius={[3,3,0,0]}
-                    cursor="pointer"
-                    maxBarSize={50}
-                  />
-                  <Bar 
-                    yAxisId="left" 
-                    dataKey="forecast" 
-                    fill={COLORS.forecast} 
-                    name="Forecast" 
-                    radius={[3,3,0,0]}
-                    cursor="pointer"
-                    maxBarSize={50}
-                  />
-                  {/* 2 Líneas de Avg Check - Nory Style */}
-                  <Line 
-                    yAxisId="right" 
-                    type="monotone" 
-                    dataKey="avgCheck" 
-                    stroke={COLORS.avgCheck} 
-                    strokeWidth={2.5} 
-                    name="Avg Check Size"
-                    dot={{ r: 4, fill: COLORS.avgCheck, strokeWidth: 0 }}
-                  />
-                  <Line 
-                    yAxisId="right" 
-                    type="monotone" 
-                    dataKey="avgCheckForecast" 
-                    stroke={COLORS.avgCheckForecast} 
-                    strokeWidth={2.5} 
-                    name="Avg Check Forecast"
-                    dot={{ r: 4, fill: COLORS.avgCheckForecast, strokeWidth: 0 }}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
+              {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={chartData} barGap={2} barCategoryGap="15%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} />
+                    <YAxis yAxisId="left" tickFormatter={(v) => `€${(v/1000).toFixed(0)}K`} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `€${v.toFixed(0)}`} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                    <Tooltip content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-white border rounded-lg shadow-xl p-3 text-sm">
+                          <p className="font-semibold mb-2">{d.label}</p>
+                          <p>Actual: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.actual)}</strong></p>
+                          <p>Forecast: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.forecast)}</strong></p>
+                          <p>Avg Check: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.avgCheckSize)}</strong></p>
+                        </div>
+                      );
+                    }} />
+                    <Legend verticalAlign="bottom" height={36} iconType="rect" iconSize={10} wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
+                    <Bar yAxisId="left" dataKey="actual" fill={COLORS.actual} name="Actual" radius={[3,3,0,0]} maxBarSize={50} />
+                    <Bar yAxisId="left" dataKey="forecast" fill={COLORS.forecast} name="Forecast" radius={[3,3,0,0]} maxBarSize={50} />
+                    <Line yAxisId="right" type="monotone" dataKey="avgCheckSize" stroke={COLORS.avgCheck} strokeWidth={2.5} name="Avg Check" dot={{ r: 4, fill: COLORS.avgCheck, strokeWidth: 0 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="avgCheckForecast" stroke={COLORS.avgCheckForecast} strokeWidth={2.5} name="Avg Check Forecast" dot={{ r: 4, fill: COLORS.avgCheckForecast, strokeWidth: 0 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No sales data for this period
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
       </Card>
 
-      {/* Channel Breakdown Table */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Channel Breakdown</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Channel</TableHead>
-              <TableHead>Actual<br/><span className="text-xs text-muted-foreground">29 Sep - 1 Oct</span></TableHead>
-              <TableHead>Projected<br/><span className="text-xs text-muted-foreground">29 Sep - 5 Oct</span></TableHead>
-              <TableHead>Avg Check (Actual)</TableHead>
-              <TableHead>Avg Check (Projected)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {channelTableData.map((row) => (
-              <TableRow key={row.channel}>
-                <TableCell className="font-medium">{row.channel}</TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <VarianceIndicator value={row.actualVar} />
-                    <div className="font-semibold">€{row.actual.toLocaleString()}</div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <VarianceIndicator value={row.projVar} />
-                    <div className="font-semibold">€{row.projected.toLocaleString()}</div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <VarianceIndicator value={row.avgCheckActualVar} />
-                    <div className="font-semibold">€{row.avgCheckActual.toFixed(2)}</div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <VarianceIndicator value={row.avgCheckProjVar} />
-                    <div className="font-semibold">€{row.avgCheckProj.toFixed(2)}</div>
-                  </div>
-                </TableCell>
+      {/* Channel Breakdown */}
+      {channels.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Channel Breakdown</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Channel</TableHead>
+                <TableHead>Actual</TableHead>
+                <TableHead>Projected</TableHead>
+                <TableHead>Avg Check</TableHead>
+                <TableHead>Orders</TableHead>
               </TableRow>
-            ))}
-            <TableRow className="bg-muted/50 font-bold">
-              <TableCell>Total</TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <VarianceIndicator value={1.14} />
-                  <div>€36,159</div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <VarianceIndicator value={0.34} />
-                  <div>€118,923</div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <VarianceIndicator value={0.41} />
-                  <div>€23.70 <span className="text-xs text-muted-foreground">AVG</span></div>
-                </div>
-              </TableCell>
-              <TableCell>€26.03</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {channels.map(ch => (
+                <TableRow key={ch.channel}>
+                  <TableCell className="font-medium">{ch.channel}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <VarianceIndicator value={ch.salesDelta} />
+                      <div className="font-semibold">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(ch.sales)}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-semibold">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(ch.projectedSales)}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <VarianceIndicator value={ch.acsDelta} />
+                      <div className="font-semibold">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(ch.acs)}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{ch.orders.toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
-      {/* Product Categories + Products */}
+      {/* Categories + Products */}
       <div className="grid grid-cols-2 gap-6">
         {/* Categories */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Sales per Product Categories</h3>
-          
+          <h3 className="text-lg font-semibold mb-4">Sales per Category</h3>
           <div className="h-[200px] mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryData} layout="vertical">
+              <BarChart data={categories} layout="vertical">
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                <YAxis type="category" dataKey="name" />
-                <Bar dataKey="value" fill={COLORS.actual} radius={[0, 8, 8, 0]} />
+                <YAxis type="category" dataKey="category" width={80} />
+                <Bar dataKey="ratio" fill={COLORS.actual} radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-
           <Table>
             <TableHeader>
               <TableRow>
@@ -966,16 +344,14 @@ export default function Sales() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categoryData.map((cat) => (
-                <TableRow key={cat.name}>
-                  <TableCell>
-                    <span className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.actual}}></div>
-                      {cat.name}
-                    </span>
+              {categories.map(cat => (
+                <TableRow key={cat.category}>
+                  <TableCell className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.actual}} />
+                    {cat.category}
                   </TableCell>
-                  <TableCell>{cat.value.toFixed(2)}%</TableCell>
-                  <TableCell>€{cat.amount.toLocaleString()}</TableCell>
+                  <TableCell>{cat.ratio}%</TableCell>
+                  <TableCell>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(cat.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -984,80 +360,35 @@ export default function Sales() {
 
         {/* Products */}
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Products</h3>
-            <Select value={productViewMode} onValueChange={(value: 'sales' | 'qty') => setProductViewMode(value)}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="qty">Quantity</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+          <h3 className="text-lg font-semibold mb-4">Top Products</h3>
           <div className="space-y-3">
-            {displayedProducts.map((product) => {
-              const displayValue = productViewMode === 'sales' ? product.value : product.qty;
-              const displayPct = productViewMode === 'sales' ? product.pct : product.qtyPct;
-              const formattedValue = productViewMode === 'sales' 
-                ? `€${product.value.toLocaleString()}` 
-                : `${product.qty} units`;
-              
-              return (
-                <div key={product.name}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">{product.name}</span>
-                    <span className="text-sm font-semibold">{formattedValue}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400"
-                        style={{ width: `${Math.min(displayPct * 5, 100)}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-muted-foreground w-14 text-right">
-                      {displayPct.toFixed(1)}%
-                    </span>
-                  </div>
+            {products.slice(0, productsDisplayCount).map(product => (
+              <div key={product.name}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium">{product.name}</span>
+                  <span className="text-sm font-semibold">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(product.value)}</span>
                 </div>
-              );
-            })}
-            {hasMoreProducts && (
-              <Button 
-                variant="link" 
-                className="w-full text-sm"
-                onClick={() => setProductsDisplayCount(prev => Math.min(prev + 10, productsData.length))}
-              >
-                Scroll to See More ↓
-              </Button>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400" style={{ width: `${Math.min(product.percentage * 5, 100)}%` }} />
+                  </div>
+                  <span className="text-xs text-muted-foreground w-14 text-right">{product.percentage.toFixed(1)}%</span>
+                </div>
+              </div>
+            ))}
+            {products.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">No product data available</p>
             )}
           </div>
         </Card>
       </div>
 
-      {/* Ask Josephine Drawer */}
-      <AskJosephineSalesDrawer 
+      {/* Ask Josephine */}
+      <AskJosephineSalesDrawer
         open={askJosephineOpen}
         onOpenChange={setAskJosephineOpen}
         salesData={salesDataForAI}
       />
-
-      {/* Hourly Drill-Down Drawer */}
-      {selectedDayData && (
-        <HourlyDrillDownDrawer
-          open={hourlyDrillDownOpen}
-          onOpenChange={setHourlyDrillDownOpen}
-          selectedDay={selectedDayData.day}
-          selectedDate={selectedDayData.date}
-          hourlyData={selectedDayData.hourlyData}
-          totalSales={selectedDayData.totalSales}
-          totalForecast={selectedDayData.totalForecast}
-          totalOrders={selectedDayData.totalOrders}
-        />
-      )}
     </div>
   );
 }
