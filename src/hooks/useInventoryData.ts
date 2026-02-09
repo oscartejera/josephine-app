@@ -261,11 +261,31 @@ export function useInventoryData(
     toDateStr: string,
     effectiveLocationIds: string[]
   ) => {
-    // Fetch ticket lines for category breakdown
-    const { data: ticketLines } = await supabase
-      .from('ticket_lines')
-      .select('ticket_id, item_name, category_name, gross_line_total, quantity')
-      .in('ticket_id', tickets.map(t => t.id));
+    // Fetch COGS from cogs_daily (seeded as ~28% of net_sales)
+    let cogsQuery = supabase
+      .from('cogs_daily')
+      .select('date, location_id, cogs_amount')
+      .gte('date', fromDateStr)
+      .lte('date', toDateStr);
+
+    if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      cogsQuery = cogsQuery.in('location_id', effectiveLocationIds);
+    }
+
+    const { data: cogsRows } = await cogsQuery;
+
+    // Fetch product sales for category breakdown
+    let prodQuery = supabase
+      .from('product_sales_daily')
+      .select('date, location_id, product_id, net_sales, cogs, products(name, category)')
+      .gte('date', fromDateStr)
+      .lte('date', toDateStr);
+
+    if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      prodQuery = prodQuery.in('location_id', effectiveLocationIds);
+    }
+
+    const { data: productSales } = await prodQuery;
 
     // Fetch waste events
     let wasteQuery = supabase
@@ -280,46 +300,13 @@ export function useInventoryData(
 
     const { data: wasteEvents } = await wasteQuery;
 
-    // Fetch recipes for theoretical cost
-    const { data: recipes } = await supabase
-      .from('recipes')
-      .select(`
-        id, menu_item_name, selling_price,
-        recipe_ingredients(quantity, inventory_items(last_cost))
-      `);
-
-    // Fetch stock counts for the period
-    const { data: stockCounts } = await supabase
-      .from('stock_counts')
-      .select('id, location_id, status')
-      .gte('start_date', fromDateStr)
-      .lte('end_date', toDateStr);
-
     if (!isMountedRef.current) return;
 
     // Calculate metrics from real data
     const totalSales = tickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
     
-    // Build recipe cost map
-    const recipeCostMap = new Map<string, number>();
-    (recipes || []).forEach((r: any) => {
-      const cost = (r.recipe_ingredients || []).reduce((sum: number, ing: any) => {
-        return sum + (ing.quantity * (ing.inventory_items?.last_cost || 0));
-      }, 0);
-      recipeCostMap.set(r.menu_item_name.toLowerCase(), cost);
-    });
-
-    // Calculate theoretical COGS from ticket lines
-    let theoreticalCOGS = 0;
-    (ticketLines || []).forEach(line => {
-      const itemName = line.item_name?.toLowerCase() || '';
-      const recipeCost = recipeCostMap.get(itemName);
-      if (recipeCost) {
-        theoreticalCOGS += recipeCost * (line.quantity || 1);
-      } else {
-        theoreticalCOGS += (line.gross_line_total || 0) * 0.28;
-      }
-    });
+    // Theoretical COGS from cogs_daily table
+    const theoreticalCOGS = (cogsRows || []).reduce((sum, r) => sum + (r.cogs_amount || 0), 0);
 
     const totalWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
     const actualCOGS = theoreticalCOGS + totalWaste * 0.6;
@@ -353,26 +340,23 @@ export function useInventoryData(
       surplus
     });
 
-    // Category breakdown from real data
+    // Category breakdown from product_sales_daily joined with products
     const categoryMap = new Map<string, { actual: number; theoretical: number }>();
     ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
       categoryMap.set(cat, { actual: 0, theoretical: 0 });
     });
 
-    (ticketLines || []).forEach(line => {
-      const cat = line.category_name || 'Miscellaneous';
-      const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink') 
-        ? 'Beverage' 
+    (productSales || []).forEach((row: any) => {
+      const cat = row.products?.category || 'Food';
+      const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink')
+        ? 'Beverage'
         : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
         ? 'Food'
         : 'Miscellaneous';
-      
+
       const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
-      const lineTotal = line.gross_line_total || 0;
-      const recipeCost = recipeCostMap.get(line.item_name?.toLowerCase() || '') || lineTotal * 0.28;
-      
-      existing.actual += recipeCost * 1.05;
-      existing.theoretical += recipeCost;
+      existing.theoretical += row.cogs || 0;
+      existing.actual += (row.cogs || 0) * 1.05; // Actual = theoretical + 5% variance
       categoryMap.set(mappedCat, existing);
     });
 
@@ -398,7 +382,6 @@ export function useInventoryData(
       wasteByCat.set(mappedCat, existing);
     });
 
-    // Distribute unaccounted proportionally
     const totalAccounted = Array.from(wasteByCat.values()).reduce((s, v) => s + v.accounted, 0);
     if (totalAccounted > 0 && unaccountedWaste > 0) {
       wasteByCat.forEach((val) => {
@@ -415,9 +398,14 @@ export function useInventoryData(
     // Waste by location
     const wasteByLoc = new Map<string, { accounted: number; unaccounted: number }>();
     const salesByLoc = new Map<string, number>();
+    const cogsByLoc = new Map<string, number>();
 
     tickets.forEach(t => {
       salesByLoc.set(t.location_id, (salesByLoc.get(t.location_id) || 0) + (t.net_total || t.gross_total || 0));
+    });
+
+    (cogsRows || []).forEach(r => {
+      cogsByLoc.set(r.location_id, (cogsByLoc.get(r.location_id) || 0) + (r.cogs_amount || 0));
     });
 
     (wasteEvents || []).forEach((w: any) => {
@@ -425,8 +413,6 @@ export function useInventoryData(
       existing.accounted += w.waste_value || 0;
       wasteByLoc.set(w.location_id, existing);
     });
-
-    const stockCountLocations = new Set((stockCounts || []).map(sc => sc.location_id));
 
     setWasteByLocation(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
       const data = wasteByLoc.get(loc.id) || { accounted: 0, unaccounted: 0 };
@@ -440,15 +426,16 @@ export function useInventoryData(
         accountedAmount: data.accounted,
         unaccountedPercent: locSales > 0 ? (locUnaccounted / locSales) * 100 : 0,
         unaccountedAmount: locUnaccounted,
-        hasStockCount: stockCountLocations.has(loc.id)
+        hasStockCount: false
       };
     }));
 
-    // Location performance
+    // Location performance using cogs_daily per location
     setLocationPerformance(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
       const locSales = salesByLoc.get(loc.id) || 0;
-      const locTheoreticalCOGS = locSales * 0.28;
-      const locActualCOGS = locTheoreticalCOGS * 1.05;
+      const locTheoreticalCOGS = cogsByLoc.get(loc.id) || 0;
+      const locWaste = (wasteByLoc.get(loc.id)?.accounted || 0);
+      const locActualCOGS = locTheoreticalCOGS + locWaste * 0.6;
       const locVariance = locActualCOGS - locTheoreticalCOGS;
       
       return {
@@ -461,7 +448,7 @@ export function useInventoryData(
         actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
         variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
         varianceAmount: locVariance,
-        hasStockCount: stockCountLocations.has(loc.id)
+        hasStockCount: false
       };
     }));
 
