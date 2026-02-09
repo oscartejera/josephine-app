@@ -142,7 +142,70 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   const [drillDownOpen, setDrillDownOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState<any>(null);
 
-  if (isLoading || !data || data.length === 0) {
+  // Detect single-day (Today mode) → show hourly breakdown
+  const isSingleDayView = data.length === 1 || (data.length > 1 && isSameDay(new Date(data[0].date), new Date(data[data.length - 1].date)));
+
+  // Transform data for chart - hourly for single day, daily for ranges
+  // MUST be before any conditional return to respect React hooks rules
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    if (isSingleDayView) {
+      const dayData = data[0];
+      const HOURLY_WEIGHTS = [
+        { hour: '10:00', weight: 0.03 },
+        { hour: '11:00', weight: 0.05 },
+        { hour: '12:00', weight: 0.09 },
+        { hour: '13:00', weight: 0.12 },
+        { hour: '14:00', weight: 0.13 },
+        { hour: '15:00', weight: 0.07 },
+        { hour: '16:00', weight: 0.04 },
+        { hour: '17:00', weight: 0.05 },
+        { hour: '18:00', weight: 0.08 },
+        { hour: '19:00', weight: 0.11 },
+        { hour: '20:00', weight: 0.12 },
+        { hour: '21:00', weight: 0.09 },
+        { hour: '22:00', weight: 0.02 },
+      ];
+
+      return HOURLY_WEIGHTS.map(slot => {
+        const w = slot.weight;
+        const actualSales = (dayData.actual_sales || 0) * w;
+        const forecastSales = (dayData.forecast_sales || 0) * w;
+        const actualCost = (dayData.actual_labor_cost || 0) * w;
+        const plannedCost = (dayData.planned_labor_cost || 0) * w;
+        const actualHrs = (dayData.actual_hours || 0) * w;
+        const plannedHrs = (dayData.planned_hours || 0) * w;
+        const actualOrders = (dayData.actual_orders || 0) * w;
+        const forecastOrders = (dayData.forecast_orders || 0) * w;
+
+        return {
+          date: slot.hour,
+          actual_sales: actualSales,
+          forecast_sales: forecastSales,
+          actual_labor_cost: actualCost,
+          planned_labor_cost: plannedCost,
+          actual_hours: actualHrs,
+          planned_hours: plannedHrs,
+          actual_orders: actualOrders,
+          forecast_orders: forecastOrders,
+          actual_col_pct: actualSales > 0 ? (actualCost / actualSales) * 100 : 0,
+          planned_col_pct: forecastSales > 0 ? (plannedCost / forecastSales) * 100 : 0,
+          actual_splh: actualHrs > 0 ? actualSales / actualHrs : 0,
+          planned_splh: plannedHrs > 0 ? forecastSales / plannedHrs : 0,
+          actual_oplh: actualHrs > 0 ? actualOrders / actualHrs : 0,
+          planned_oplh: plannedHrs > 0 ? forecastOrders / plannedHrs : 0,
+        };
+      });
+    }
+
+    return data.map(row => ({
+      ...row,
+      date: format(new Date(row.date), 'dd MMM'),
+    }));
+  }, [data, isSingleDayView]);
+
+  if (isLoading || chartData.length === 0) {
     return <ChartSkeleton />;
   }
 
@@ -218,67 +281,6 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
     setSelectedDayData(drillDownData);
     setDrillDownOpen(true);
   };
-
-  // Detect single-day (Today mode) → show hourly breakdown
-  const isSingleDayView = data.length === 1 || (data.length > 0 && isSameDay(new Date(data[0].date), new Date(data[data.length - 1].date)));
-
-  // Transform data for chart - hourly for single day, daily for ranges
-  const chartData = useMemo(() => {
-    if (isSingleDayView && data.length > 0) {
-      // Generate hourly data from the single day's totals
-      const dayData = data[0];
-      const HOURLY_WEIGHTS = [
-        { hour: '10:00', weight: 0.03 },
-        { hour: '11:00', weight: 0.05 },
-        { hour: '12:00', weight: 0.09 },
-        { hour: '13:00', weight: 0.12 },
-        { hour: '14:00', weight: 0.13 },
-        { hour: '15:00', weight: 0.07 },
-        { hour: '16:00', weight: 0.04 },
-        { hour: '17:00', weight: 0.05 },
-        { hour: '18:00', weight: 0.08 },
-        { hour: '19:00', weight: 0.11 },
-        { hour: '20:00', weight: 0.12 },
-        { hour: '21:00', weight: 0.09 },
-        { hour: '22:00', weight: 0.02 },
-      ];
-
-      return HOURLY_WEIGHTS.map(slot => {
-        const w = slot.weight;
-        const actualSales = (dayData.actual_sales || 0) * w;
-        const forecastSales = (dayData.forecast_sales || 0) * w;
-        const actualCost = (dayData.actual_labor_cost || 0) * w;
-        const plannedCost = (dayData.planned_labor_cost || 0) * w;
-        const actualHrs = (dayData.actual_hours || 0) * w;
-        const plannedHrs = (dayData.planned_hours || 0) * w;
-        const actualOrders = (dayData.actual_orders || 0) * w;
-        const forecastOrders = (dayData.forecast_orders || 0) * w;
-
-        return {
-          date: slot.hour,
-          actual_sales: actualSales,
-          forecast_sales: forecastSales,
-          actual_labor_cost: actualCost,
-          planned_labor_cost: plannedCost,
-          actual_hours: actualHrs,
-          planned_hours: plannedHrs,
-          actual_orders: actualOrders,
-          forecast_orders: forecastOrders,
-          actual_col_pct: actualSales > 0 ? (actualCost / actualSales) * 100 : 0,
-          planned_col_pct: forecastSales > 0 ? (plannedCost / forecastSales) * 100 : 0,
-          actual_splh: actualHrs > 0 ? actualSales / actualHrs : 0,
-          planned_splh: plannedHrs > 0 ? forecastSales / plannedHrs : 0,
-          actual_oplh: actualHrs > 0 ? actualOrders / actualHrs : 0,
-          planned_oplh: plannedHrs > 0 ? forecastOrders / plannedHrs : 0,
-        };
-      });
-    }
-
-    return data.map(row => ({
-      ...row,
-      date: format(new Date(row.date), 'dd MMM'),
-    }));
-  }, [data, isSingleDayView]);
 
   // Determine bar and line data keys based on metric mode
   const getBarConfig = () => {
