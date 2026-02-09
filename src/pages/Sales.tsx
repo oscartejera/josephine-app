@@ -40,8 +40,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AskJosephineSalesDrawer, HourlyDrillDownDrawer, DateRangePicker, DateRangePreset } from '@/components/sales';
-import { startOfWeek, endOfWeek, format, eachDayOfInterval } from 'date-fns';
+import { AskJosephineSalesDrawer, HourlyDrillDownDrawer } from '@/components/sales';
+import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
+import { startOfMonth, endOfMonth, format, eachDayOfInterval } from 'date-fns';
 
 // Josephine colors - Nory style
 const COLORS = {
@@ -82,9 +83,9 @@ interface LocationData {
 }
 
 export default function Sales() {
-  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>('week');
-  const [startDate, setStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [endDate, setEndDate] = useState(endOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [startDate, setStartDate] = useState(startOfMonth(new Date()));
+  const [endDate, setEndDate] = useState(endOfMonth(new Date()));
   const [compareMode, setCompareMode] = useState('forecast');
   const [selectedLocation, setSelectedLocation] = useState<LocationId>('all');
   const [productViewMode, setProductViewMode] = useState<'sales' | 'qty'>('sales');
@@ -99,6 +100,12 @@ export default function Sales() {
     totalForecast: number;
     totalOrders: number;
   } | null>(null);
+
+  const handleDateChange = (range: DateRangeValue, mode: DateMode, _granularity: ChartGranularity) => {
+    setStartDate(range.from);
+    setEndDate(range.to);
+    setDateMode(mode);
+  };
 
   // Location-specific data
   const locationsData: Record<LocationId, Omit<LocationData, 'id'>> = {
@@ -524,15 +531,11 @@ export default function Sales() {
             </SelectContent>
           </Select>
 
-          <DateRangePicker
-            selectedPreset={dateRangePreset}
-            onPresetChange={setDateRangePreset}
-            startDate={startDate}
-            endDate={endDate}
-            onDateRangeChange={(start, end) => {
-              setStartDate(start);
-              setEndDate(end);
-            }}
+          <DateRangePickerNoryLike
+            value={{ from: startDate, to: endDate }}
+            onChange={handleDateChange}
+            mode={dateMode}
+            onModeChange={setDateMode}
           />
           
           <Select value={compareMode} onValueChange={setCompareMode}>

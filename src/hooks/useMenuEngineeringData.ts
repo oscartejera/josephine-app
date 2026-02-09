@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 
@@ -45,6 +46,9 @@ export function useMenuEngineeringData() {
 
   // Filters
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date>(() => startOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState<Date>(() => endOfMonth(new Date()));
+  // Keep datePreset for backward compatibility
   const [datePreset, setDatePreset] = useState<DatePreset>('last30');
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
@@ -57,31 +61,13 @@ export function useMenuEngineeringData() {
     return Array.from(cats).sort();
   }, [items]);
 
-  // Date range calculation
+  // Date range calculation - uses the direct from/to dates
   const getDateRange = useCallback(() => {
-    const now = new Date();
-    let from: Date;
-    let to: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    if (datePreset === 'last7') {
-      from = new Date(to);
-      from.setDate(from.getDate() - 7);
-    } else if (datePreset === 'last30') {
-      from = new Date(to);
-      from.setDate(from.getDate() - 30);
-    } else if (customDateFrom && customDateTo) {
-      from = customDateFrom;
-      to = customDateTo;
-    } else {
-      from = new Date(to);
-      from.setDate(from.getDate() - 30);
-    }
-
     return {
-      from: from.toISOString().split('T')[0],
-      to: to.toISOString().split('T')[0],
+      from: format(dateFrom, 'yyyy-MM-dd'),
+      to: format(dateTo, 'yyyy-MM-dd'),
     };
-  }, [datePreset, customDateFrom, customDateTo]);
+  }, [dateFrom, dateTo]);
 
   // Fetch data from RPC
   const fetchData = useCallback(async () => {
@@ -215,6 +201,10 @@ export function useMenuEngineeringData() {
     // Filters
     selectedLocationId,
     setSelectedLocationId,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
     datePreset,
     setDatePreset,
     customDateFrom,

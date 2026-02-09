@@ -44,7 +44,7 @@ export function LabourHeader({
 }: LabourHeaderProps) {
   const { accessibleLocations, canShowAllLocations } = useApp();
   const navigate = useNavigate();
-  const [dateMode, setDateMode] = useState<DateMode>('weekly');
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
 
   const getCompareModeLabel = (mode: CompareMode) => {
     switch (mode) {

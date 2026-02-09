@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, RefreshCw, CalendarPlus } from 'lucide-react';
+import { Database, RefreshCw } from 'lucide-react';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
+import { type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import {
   MenuEngineeringHeader,
   MenuEngineeringKPICards,
@@ -20,12 +22,10 @@ export default function MenuEngineering() {
     error,
     selectedLocationId,
     setSelectedLocationId,
-    datePreset,
-    setDatePreset,
-    customDateFrom,
-    setCustomDateFrom,
-    customDateTo,
-    setCustomDateTo,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
     selectedCategory,
     setSelectedCategory,
     popularityMode,
@@ -35,6 +35,14 @@ export default function MenuEngineering() {
     accessibleLocations,
   } = useMenuEngineeringData();
 
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+
+  const handleDateChange = (range: DateRangeValue, mode: DateMode, _granularity: ChartGranularity) => {
+    setDateFrom(range.from);
+    setDateTo(range.to);
+    setDateMode(mode);
+  };
+
   const showEmptyState = !loading && !error && items.length === 0;
 
   return (
@@ -43,12 +51,10 @@ export default function MenuEngineering() {
       <MenuEngineeringHeader
         selectedLocationId={selectedLocationId}
         onLocationChange={setSelectedLocationId}
-        datePreset={datePreset}
-        onDatePresetChange={setDatePreset}
-        customDateFrom={customDateFrom}
-        customDateTo={customDateTo}
-        onCustomDateFromChange={setCustomDateFrom}
-        onCustomDateToChange={setCustomDateTo}
+        dateRange={{ from: dateFrom, to: dateTo }}
+        dateMode={dateMode}
+        onDateChange={handleDateChange}
+        onDateModeChange={setDateMode}
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
@@ -81,16 +87,6 @@ export default function MenuEngineering() {
               periodo o seleccionar otro local.
             </p>
             <div className="flex justify-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setDatePreset('last30');
-                  refetch();
-                }}
-              >
-                <CalendarPlus className="h-4 w-4 mr-2" />
-                Ampliar a 30 días
-              </Button>
               <Button variant="outline" onClick={refetch}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Actualizar

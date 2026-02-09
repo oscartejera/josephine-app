@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { subDays, startOfDay, endOfDay } from 'date-fns';
+import { startOfMonth, endOfMonth } from 'date-fns';
 import { 
   InstantPLHeader, 
   FilterChips, 
@@ -19,12 +19,12 @@ import {
 import { DateMode, ChartGranularity, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 export default function InstantPL() {
-  // Date range state (default: last 7 days)
+  // Date range state (default: current month)
   const [dateRange, setDateRange] = useState<PLDateRange>(() => ({
-    from: startOfDay(subDays(new Date(), 6)),
-    to: endOfDay(new Date())
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
   }));
-  const [dateMode, setDateMode] = useState<DateMode>('daily');
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
   
   // Filter mode state (Best/Worst/All)
   const [filterMode, setFilterMode] = useState<FilterMode>('all');

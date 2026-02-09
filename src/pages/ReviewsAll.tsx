@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { format, subDays, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -34,13 +34,13 @@ export default function ReviewsAll() {
       }
     }
     return {
-      from: subDays(new Date(), 7),
-      to: new Date(),
+      from: startOfMonth(new Date()),
+      to: endOfMonth(new Date()),
     };
   };
 
   const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('daily');
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [platform, setPlatform] = useState<Platform>(
     (searchParams.get('platform') as Platform) || 'all'
   );
