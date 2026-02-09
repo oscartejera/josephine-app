@@ -2,7 +2,8 @@
 -- REPOPULATE DAILY TABLES FROM FACTS TABLES
 -- After data cleanup, facts_sales_15m and facts_labor_daily retained
 -- data but the daily aggregate tables the frontend queries were emptied.
--- This migration repopulates them from the facts tables.
+-- This migration repopulates them AND upgrades the seed RPC so the
+-- "Generate Demo Data" button fills ALL tables at once.
 -- ====================================================================
 
 -- 1) pos_daily_finance ← aggregate facts_sales_15m by day
@@ -15,7 +16,6 @@ SELECT
   SUM(sales_net)         AS net_sales,
   SUM(sales_gross)       AS gross_sales,
   SUM(tickets)           AS orders_count,
-  -- Split payments: ~25% cash, ~70% card, ~5% other
   ROUND(SUM(sales_net) * 0.25, 2) AS payments_cash,
   ROUND(SUM(sales_net) * 0.70, 2) AS payments_card,
   ROUND(SUM(sales_net) * 0.05, 2) AS payments_other,
@@ -74,7 +74,7 @@ ON CONFLICT (date, location_id) DO UPDATE SET
   labor_cost = EXCLUDED.labor_cost,
   labor_hours = EXCLUDED.labor_hours;
 
--- 4) cogs_daily ← estimate as ~28% of net_sales from pos_daily_finance
+-- 4) cogs_daily ← estimate as ~28% of net_sales
 INSERT INTO cogs_daily (date, location_id, cogs_amount)
 SELECT
   date,
@@ -85,7 +85,6 @@ ON CONFLICT (date, location_id) DO UPDATE SET
   cogs_amount = EXCLUDED.cogs_amount;
 
 -- 5) budgets_daily ← actuals with realistic budget variance
---    Budget = actuals * (0.95 to 1.05 range, using a deterministic offset)
 INSERT INTO budgets_daily (date, location_id, budget_sales, budget_labour, budget_cogs)
 SELECT
   pdf.date,
@@ -100,7 +99,7 @@ ON CONFLICT (date, location_id) DO UPDATE SET
   budget_labour = EXCLUDED.budget_labour,
   budget_cogs = EXCLUDED.budget_cogs;
 
--- 6) cash_counts_daily ← cash payments with small variance (simulates manual count)
+-- 6) cash_counts_daily ← cash payments with small variance
 INSERT INTO cash_counts_daily (date, location_id, cash_counted, notes)
 SELECT
   date,
@@ -129,3 +128,169 @@ ON CONFLICT (date, location_id) DO UPDATE SET
   planned_labor_cost = EXCLUDED.planned_labor_cost,
   planned_labor_hours = EXCLUDED.planned_labor_hours,
   model_version = EXCLUDED.model_version;
+
+-- ====================================================================
+-- 8) UPGRADE seed_demo_labour_data RPC to populate ALL 7 daily tables
+--    So clicking "Generate Demo Data" on ANY page fills everything.
+-- ====================================================================
+CREATE OR REPLACE FUNCTION public.seed_demo_labour_data(
+  p_days int DEFAULT 30,
+  p_locations int DEFAULT 6
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_group_id uuid;
+  v_location RECORD;
+  v_day date;
+  v_base_sales numeric;
+  v_sales_multiplier numeric;
+  v_net_sales numeric;
+  v_gross_sales numeric;
+  v_orders numeric;
+  v_labor_hours numeric;
+  v_labor_cost numeric;
+  v_blended_rate numeric;
+  v_forecast_sales numeric;
+  v_forecast_orders numeric;
+  v_planned_hours numeric;
+  v_planned_cost numeric;
+  v_dow int;
+  v_locations_count int := 0;
+  v_days_count int := 0;
+BEGIN
+  v_group_id := get_user_group_id();
+
+  IF v_group_id IS NULL THEN
+    RETURN jsonb_build_object('seeded', false, 'error', 'No group found');
+  END IF;
+
+  -- Clear existing data for this group
+  DELETE FROM pos_daily_metrics
+  WHERE location_id IN (SELECT id FROM locations WHERE group_id = v_group_id);
+  DELETE FROM forecast_daily_metrics
+  WHERE location_id IN (SELECT id FROM locations WHERE group_id = v_group_id);
+  DELETE FROM pos_daily_finance
+  WHERE location_id IN (SELECT id FROM locations WHERE group_id = v_group_id);
+  DELETE FROM labour_daily
+  WHERE location_id IN (SELECT id FROM locations WHERE group_id = v_group_id);
+  DELETE FROM cogs_daily
+  WHERE location_id IN (SELECT id FROM locations WHERE group_id = v_group_id);
+  DELETE FROM budgets_daily
+  WHERE location_id IN (SELECT id FROM locations WHERE group_id = v_group_id);
+  DELETE FROM cash_counts_daily
+  WHERE location_id IN (SELECT id FROM locations WHERE group_id = v_group_id);
+
+  FOR v_location IN
+    SELECT id, name FROM locations WHERE group_id = v_group_id
+  LOOP
+    v_locations_count := v_locations_count + 1;
+
+    v_base_sales := CASE
+      WHEN v_location.name ILIKE '%HQ%' THEN 18000 + random() * 5000
+      WHEN v_location.name ILIKE '%Centro%' OR v_location.name ILIKE '%Central%' THEN 22000 + random() * 8000
+      ELSE 8000 + random() * 12000
+    END;
+
+    v_blended_rate := 12 + random() * 8;
+
+    FOR v_day IN SELECT generate_series(
+      CURRENT_DATE - (p_days || ' days')::interval,
+      CURRENT_DATE - interval '1 day',
+      '1 day'
+    )::date
+    LOOP
+      v_dow := EXTRACT(DOW FROM v_day);
+
+      v_sales_multiplier := CASE v_dow
+        WHEN 5 THEN 1.35 + random() * 0.15
+        WHEN 6 THEN 1.45 + random() * 0.20
+        WHEN 0 THEN 1.10 + random() * 0.15
+        WHEN 1 THEN 0.75 + random() * 0.10
+        ELSE 0.90 + random() * 0.15
+      END;
+
+      v_net_sales := ROUND((v_base_sales * v_sales_multiplier * (0.85 + random() * 0.30))::numeric, 2);
+      v_gross_sales := ROUND((v_net_sales * 1.05)::numeric, 2);
+      v_orders := ROUND(v_net_sales / (25 + random() * 15));
+      v_labor_hours := ROUND((v_orders / (4 + random() * 3))::numeric, 1);
+      v_labor_cost := ROUND((v_labor_hours * v_blended_rate * (0.95 + random() * 0.10))::numeric, 2);
+
+      v_forecast_sales := ROUND((v_net_sales * (0.88 + random() * 0.24))::numeric, 2);
+      v_forecast_orders := ROUND(v_orders * (0.90 + random() * 0.20));
+      v_planned_hours := ROUND((v_labor_hours * (0.85 + random() * 0.30))::numeric, 1);
+      v_planned_cost := ROUND((v_planned_hours * v_blended_rate)::numeric, 2);
+
+      -- pos_daily_metrics (Labour page)
+      INSERT INTO pos_daily_metrics (date, location_id, net_sales, orders, labor_hours, labor_cost)
+      VALUES (v_day, v_location.id, v_net_sales, v_orders, v_labor_hours, v_labor_cost)
+      ON CONFLICT (date, location_id) DO UPDATE SET
+        net_sales = EXCLUDED.net_sales, orders = EXCLUDED.orders,
+        labor_hours = EXCLUDED.labor_hours, labor_cost = EXCLUDED.labor_cost;
+
+      -- forecast_daily_metrics (Labour + Instant P&L)
+      INSERT INTO forecast_daily_metrics (date, location_id, forecast_sales, forecast_orders, planned_labor_hours, planned_labor_cost)
+      VALUES (v_day, v_location.id, v_forecast_sales, v_forecast_orders, v_planned_hours, v_planned_cost)
+      ON CONFLICT (date, location_id) DO UPDATE SET
+        forecast_sales = EXCLUDED.forecast_sales, forecast_orders = EXCLUDED.forecast_orders,
+        planned_labor_hours = EXCLUDED.planned_labor_hours, planned_labor_cost = EXCLUDED.planned_labor_cost;
+
+      -- pos_daily_finance (Dashboard, Cash Management, Instant P&L)
+      INSERT INTO pos_daily_finance (date, location_id, net_sales, gross_sales, orders_count,
+        payments_cash, payments_card, payments_other, refunds_amount, refunds_count,
+        discounts_amount, comps_amount, voids_amount)
+      VALUES (v_day, v_location.id, v_net_sales, v_gross_sales, v_orders,
+        ROUND(v_net_sales * 0.25, 2), ROUND(v_net_sales * 0.70, 2), ROUND(v_net_sales * 0.05, 2),
+        ROUND(v_net_sales * 0.005, 2), GREATEST(1, FLOOR(v_orders * 0.02)),
+        ROUND(v_net_sales * 0.03, 2), ROUND(v_net_sales * 0.01, 2), ROUND(v_net_sales * 0.008, 2))
+      ON CONFLICT (date, location_id) DO UPDATE SET
+        net_sales = EXCLUDED.net_sales, gross_sales = EXCLUDED.gross_sales,
+        orders_count = EXCLUDED.orders_count, payments_cash = EXCLUDED.payments_cash,
+        payments_card = EXCLUDED.payments_card, payments_other = EXCLUDED.payments_other,
+        refunds_amount = EXCLUDED.refunds_amount, refunds_count = EXCLUDED.refunds_count,
+        discounts_amount = EXCLUDED.discounts_amount, comps_amount = EXCLUDED.comps_amount,
+        voids_amount = EXCLUDED.voids_amount;
+
+      -- labour_daily (Dashboard, Budgets)
+      INSERT INTO labour_daily (date, location_id, labour_cost, labour_hours)
+      VALUES (v_day, v_location.id, v_labor_cost, v_labor_hours)
+      ON CONFLICT (date, location_id) DO UPDATE SET
+        labour_cost = EXCLUDED.labour_cost, labour_hours = EXCLUDED.labour_hours;
+
+      -- cogs_daily (Budgets)
+      INSERT INTO cogs_daily (date, location_id, cogs_amount)
+      VALUES (v_day, v_location.id, ROUND(v_net_sales * 0.28, 2))
+      ON CONFLICT (date, location_id) DO UPDATE SET
+        cogs_amount = EXCLUDED.cogs_amount;
+
+      -- budgets_daily (Budgets)
+      INSERT INTO budgets_daily (date, location_id, budget_sales, budget_labour, budget_cogs)
+      VALUES (v_day, v_location.id,
+        ROUND(v_net_sales * (1.0 + 0.03 * SIN(EXTRACT(DOY FROM v_day))), 2),
+        ROUND(v_labor_cost * (1.0 - 0.02 * COS(EXTRACT(DOY FROM v_day))), 2),
+        ROUND(v_net_sales * 0.28 * (1.0 + 0.02 * SIN(EXTRACT(DOY FROM v_day) + 1)), 2))
+      ON CONFLICT (date, location_id) DO UPDATE SET
+        budget_sales = EXCLUDED.budget_sales, budget_labour = EXCLUDED.budget_labour,
+        budget_cogs = EXCLUDED.budget_cogs;
+
+      -- cash_counts_daily (Cash Management)
+      INSERT INTO cash_counts_daily (date, location_id, cash_counted)
+      VALUES (v_day, v_location.id,
+        ROUND(v_net_sales * 0.25 * (1.0 + 0.01 * SIN(EXTRACT(DOY FROM v_day) * 3)), 2))
+      ON CONFLICT (date, location_id) DO UPDATE SET
+        cash_counted = EXCLUDED.cash_counted;
+
+      v_days_count := v_days_count + 1;
+    END LOOP;
+  END LOOP;
+
+  RETURN jsonb_build_object(
+    'seeded', true,
+    'locations', v_locations_count,
+    'days', v_days_count / GREATEST(v_locations_count, 1)
+  );
+END;
+$$;
