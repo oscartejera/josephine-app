@@ -100,12 +100,21 @@ export default function PayrollCalculate({
   };
 
   const handleCalculate = async () => {
-    if (!currentRun || !selectedLegalEntity) return;
+    if (!currentRun) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error', 
+        description: 'No hay nómina iniciada para este período. Vuelve a Inicio y pulsa "Iniciar nómina del mes".' 
+      });
+      return;
+    }
     
     setCalculating(true);
     
     try {
+      console.log('Calculating payroll for run:', currentRun.id);
       const result = await payrollApi.calculatePayroll(currentRun.id);
+      console.log('Calculation result:', result);
       
       await refreshData();
       await fetchPayslips();
@@ -113,14 +122,14 @@ export default function PayrollCalculate({
       setCalculated(true);
       toast({ 
         title: 'Cálculo completado', 
-        description: `Se han calculado ${result.employees_calculated} nóminas. Total neto: €${result.totals?.net_pay?.toLocaleString() || '0'}` 
+        description: `Se han calculado ${result.employees_calculated || 0} nóminas. Total neto: €${result.totals?.net_pay?.toLocaleString() || '0'}` 
       });
     } catch (error) {
       console.error('Payroll calculation error:', error);
       toast({ 
         variant: 'destructive', 
-        title: 'Error', 
-        description: error instanceof Error ? error.message : 'Error al calcular nóminas' 
+        title: 'Error al calcular', 
+        description: error instanceof Error ? error.message : 'Error al calcular nóminas. Revisa la consola para más detalles.' 
       });
     } finally {
       setCalculating(false);

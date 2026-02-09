@@ -651,55 +651,77 @@ async function handleCalculatePayroll(body: any) {
     return { error: 'Falta payroll_run_id' };
   }
   
-  // 1. Get the payroll run
+  console.log('=== CALCULATE PAYROLL START ===', payroll_run_id);
+  
+  // 1. Get the payroll run (NO JOINS - separate queries for safety)
   const { data: run, error: runError } = await supabase
     .from('payroll_runs')
-    .select('*, legal_entities(razon_social, nif, cnae)')
+    .select('*')
     .eq('id', payroll_run_id)
     .single();
   
   if (runError || !run) {
-    return { error: 'Nómina no encontrada' };
+    console.error('Run query error:', runError);
+    return { error: `Nómina no encontrada: ${runError?.message || 'ID inválido'}` };
   }
   
-  // 2. Get all active employees with contracts for this legal entity
-  const { data: contracts, error: contractsError } = await supabase
-    .from('employment_contracts')
-    .select(`
-      id, employee_id, contract_type, base_salary_monthly, 
-      group_ss, category, jornada_pct, irpf_rate,
-      employees(id, full_name, role_name, location_id)
-    `)
-    .eq('legal_entity_id', run.legal_entity_id)
-    .eq('active', true);
+  console.log('Run found:', { id: run.id, status: run.status, legal_entity_id: run.legal_entity_id, group_id: run.group_id });
   
-  if (contractsError) {
-    console.error('Contracts query error:', contractsError);
-    // Table might not exist, continue with fallback
+  // 2. Try to get contracts (separate query, no FK joins)
+  let contractsWithEmployees: any[] = [];
+  try {
+    const { data: contracts, error: contractsError } = await supabase
+      .from('employment_contracts')
+      .select('id, employee_id, contract_type, base_salary_monthly, group_ss, category, jornada_pct, irpf_rate')
+      .eq('legal_entity_id', run.legal_entity_id)
+      .eq('active', true);
+    
+    if (!contractsError && contracts && contracts.length > 0) {
+      // Get employee details separately
+      const empIds = contracts.map((c: any) => c.employee_id);
+      const { data: emps } = await supabase
+        .from('employees')
+        .select('id, full_name, role_name, location_id')
+        .in('id', empIds);
+      
+      const empMap = new Map((emps || []).map((e: any) => [e.id, e]));
+      contractsWithEmployees = contracts
+        .map((c: any) => ({ ...c, employee: empMap.get(c.employee_id) }))
+        .filter((c: any) => c.employee);
+      
+      console.log(`Found ${contractsWithEmployees.length} contracts with employees`);
+    } else {
+      console.log('No contracts found (or table missing):', contractsError?.message);
+    }
+  } catch (err) {
+    console.warn('Contracts query failed:', err);
   }
   
   // 3. Get payroll inputs (hours, bonuses) for this period
   let inputsByEmployee = new Map();
   try {
-    const { data: inputs } = await supabase
+    const { data: inputs, error: inputsErr } = await supabase
       .from('payroll_inputs')
       .select('*')
       .eq('period_year', run.period_year)
       .eq('period_month', run.period_month);
     
-    inputsByEmployee = new Map((inputs || []).map((i: any) => [i.employee_id, i]));
+    if (!inputsErr && inputs) {
+      inputsByEmployee = new Map(inputs.map((i: any) => [i.employee_id, i]));
+      console.log(`Found ${inputs.length} payroll inputs`);
+    }
   } catch (err) {
     console.warn('Could not fetch payroll_inputs:', err);
   }
   
+  // 4. Calculate payslips
   let payslips: any[] = [];
   
-  if (contracts && contracts.length > 0) {
+  if (contractsWithEmployees.length > 0) {
     // Calculate using actual contracts
-    payslips = contracts.map((contract: any) => {
-      const emp = contract.employees;
-      if (!emp) return null;
-      
+    console.log('Calculating with contracts...');
+    payslips = contractsWithEmployees.map((contract: any) => {
+      const emp = contract.employee;
       const input = inputsByEmployee.get(emp.id);
       
       return calculatePayslip(
@@ -712,19 +734,24 @@ async function handleCalculatePayroll(body: any) {
         run,
         contract.irpf_rate
       );
-    }).filter(Boolean);
+    });
   } else {
     // Fallback: use all active employees with role-based salary estimates
     // Per Convenio Colectivo Hostelería Madrid, Anexo I (tablas salariales)
-    const allEmployees = await getActiveEmployees(run.group_id);
+    console.log('No contracts - falling back to employee role-based salaries...');
+    const allEmployees = await getActiveEmployees(run.group_id || '');
+    
+    console.log(`Found ${allEmployees.length} active employees`);
     
     if (allEmployees.length === 0) {
-      return { error: 'No hay empleados activos en el sistema' };
+      return { error: 'No hay empleados activos en el sistema. Verifica que existen empleados con status activo.' };
     }
     
     payslips = allEmployees.map((emp: any) => {
       const baseSalary = SALARY_TABLES[emp.role_name] || SMI_MONTHLY_14;
       const input = inputsByEmployee.get(emp.id);
+      
+      console.log(`  ${emp.full_name} (${emp.role_name}): €${baseSalary}/mes`);
       
       return calculatePayslip(emp, baseSalary, 'indefinido', 100, '5', input, run);
     });
@@ -734,8 +761,11 @@ async function handleCalculatePayroll(body: any) {
     return { error: 'No se pudieron calcular nóminas. Verifica que hay empleados activos.' };
   }
   
-  // 4. Delete existing payslips and insert new ones
-  await supabase.from('payslips').delete().eq('payroll_run_id', payroll_run_id);
+  console.log(`Calculated ${payslips.length} payslips. Inserting...`);
+  
+  // 5. Delete existing payslips and insert new ones
+  const { error: deleteError } = await supabase.from('payslips').delete().eq('payroll_run_id', payroll_run_id);
+  if (deleteError) console.warn('Delete old payslips warning:', deleteError.message);
   
   const { error: insertError } = await supabase
     .from('payslips')
@@ -746,13 +776,15 @@ async function handleCalculatePayroll(body: any) {
     return { error: `Error al guardar nóminas: ${insertError.message}` };
   }
   
-  // 5. Update payroll run status
-  await supabase
+  // 6. Update payroll run status to 'calculated'
+  const { error: statusError } = await supabase
     .from('payroll_runs')
     .update({ status: 'calculated' })
     .eq('id', payroll_run_id);
   
-  // 6. Return summary with full breakdown
+  if (statusError) console.warn('Status update warning:', statusError.message);
+  
+  // 7. Return summary with full breakdown
   const totals = payslips.reduce((acc: any, p: any) => ({
     gross_pay: acc.gross_pay + p.gross,
     net_pay: acc.net_pay + p.net,
@@ -760,6 +792,12 @@ async function handleCalculatePayroll(body: any) {
     employer_ss: acc.employer_ss + p.employerSS,
     irpf_total: acc.irpf_total + p.irpf,
   }), { gross_pay: 0, net_pay: 0, employee_ss: 0, employer_ss: 0, irpf_total: 0 });
+  
+  console.log('=== CALCULATE PAYROLL DONE ===', {
+    employees: payslips.length,
+    gross: round2(totals.gross_pay),
+    net: round2(totals.net_pay),
+  });
   
   return {
     success: true,
@@ -1075,25 +1113,44 @@ function getSubmissionDetails(agency: string): Record<string, string> {
 async function handleGenerateSEPA(body: any) {
   const { payroll_run_id } = body;
   
-  // Get payslips with employee data
+  // Get payslips (NO JOINS)
   const { data: payslips } = await supabase
     .from('payslips')
-    .select(`
-      id, employee_id, net_pay,
-      employees(full_name)
-    `)
+    .select('id, employee_id, net_pay')
     .eq('payroll_run_id', payroll_run_id);
   
   if (!payslips || payslips.length === 0) {
     return { error: 'No hay nóminas calculadas' };
   }
   
-  // Get legal entity info
+  // Get employee names separately
+  const empIds = payslips.map((p: any) => p.employee_id);
+  const { data: employees } = await supabase
+    .from('employees')
+    .select('id, full_name')
+    .in('id', empIds);
+  const empMap = new Map((employees || []).map((e: any) => [e.id, e]));
+  
+  // Get run and entity info separately
   const { data: run } = await supabase
     .from('payroll_runs')
-    .select('*, legal_entities(razon_social, nif)')
+    .select('*')
     .eq('id', payroll_run_id)
     .single();
+  
+  let entityName = 'Josephine';
+  let entityNif = '';
+  if (run?.legal_entity_id) {
+    const { data: entity } = await supabase
+      .from('legal_entities')
+      .select('razon_social, nif')
+      .eq('id', run.legal_entity_id)
+      .single();
+    if (entity) {
+      entityName = entity.razon_social;
+      entityNif = entity.nif;
+    }
+  }
   
   // Generate SEPA XML structure (ISO 20022 pain.001.001.03)
   const totalAmount = payslips.reduce((s: number, p: any) => s + Number(p.net_pay), 0);
@@ -1103,15 +1160,15 @@ async function handleGenerateSEPA(body: any) {
     // SEPA Credit Transfer Initiation (pain.001.001.03)
     messageId,
     creationDateTime: new Date().toISOString(),
-    initiatorName: (run as any)?.legal_entities?.razon_social || 'Josephine',
-    initiatorId: (run as any)?.legal_entities?.nif || '',
+    initiatorName: entityName,
+    initiatorId: entityNif,
     numberOfTransactions: payslips.length,
     controlSum: round2(totalAmount),
     paymentMethod: 'TRF', // Credit Transfer
     serviceLevel: 'SEPA',
     payments: payslips.map((p: any) => ({
       endToEndId: `NOM-${p.employee_id.slice(0, 8)}-${run?.period_month}`,
-      employee: (p as any).employees?.full_name,
+      employee: empMap.get(p.employee_id)?.full_name || 'Empleado',
       amount: round2(Number(p.net_pay)),
       currency: 'EUR',
       concept: `Nómina ${run?.period_month}/${run?.period_year}`,
