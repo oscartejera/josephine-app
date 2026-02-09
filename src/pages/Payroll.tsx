@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -66,67 +66,56 @@ export default function Payroll() {
   const [isSandboxMode, setIsSandboxMode] = useState(true);
   const [schemaReady, setSchemaReady] = useState(false);
   
+  // Use ref to track selected entity across async calls (avoids stale closure)
+  const selectedEntityRef = useRef<any>(null);
+  selectedEntityRef.current = selectedLegalEntity;
+  
   const isPayrollAdmin = hasRole('owner_admin') || hasRole('owner') || hasRole('admin');
   const hasPayrollAccess = true;
   
   const currentStep = location.pathname.split('/payroll/')[1] || 'home';
   const stepIndex = PAYROLL_STEPS.findIndex(s => s.key === currentStep);
   
-  // Core data fetching - uses explicit error checking (supabase-js doesn't throw)
-  const fetchData = useCallback(async () => {
+  // Data fetching - NO useCallback, uses ref for entity to avoid stale closures
+  const fetchData = async () => {
     if (!group?.id) return;
     setLoading(true);
     
-    // 1. Fetch legal entities - CRITICAL: check error explicitly, not try/catch
-    let entities: any[] = [];
+    // 1. Fetch legal entities (simple query, no FK joins)
     const { data: entitiesData, error: entitiesError } = await supabase
       .from('legal_entities')
       .select('*')
       .eq('group_id', group.id);
     
-    if (entitiesError) {
-      console.error('Error fetching entities:', entitiesError.message);
-    } else {
-      entities = entitiesData || [];
-    }
-    
-    // Try to enrich with SSA data (non-blocking)
-    if (entities.length > 0) {
-      const { data: enriched, error: enrichErr } = await supabase
-        .from('legal_entities')
-        .select('*, social_security_accounts(*)')
-        .eq('group_id', group.id);
-      if (!enrichErr && enriched) {
-        entities = enriched;
-      }
-    }
-    
+    const entities = entitiesError ? [] : (entitiesData || []);
     setLegalEntities(entities);
-    console.log(`[Payroll] Fetched ${entities.length} entities`);
     
-    // 2. Determine active entity (use local var to avoid stale closure)
-    let activeEntity = selectedLegalEntity;
-    if (entities.length > 0 && !activeEntity) {
-      activeEntity = entities[0];
+    console.log(`[Payroll] ${entities.length} entities for group ${group.id}`);
+    
+    // 2. Determine active entity
+    let activeEntity = selectedEntityRef.current;
+    if (entities.length > 0) {
+      if (!activeEntity) {
+        activeEntity = entities[0];
+      } else {
+        // Refresh from latest data
+        activeEntity = entities.find((e: any) => e.id === activeEntity.id) || entities[0];
+      }
       setSelectedLegalEntity(activeEntity);
-    }
-    // If selectedLegalEntity was set but might be stale, update it
-    if (activeEntity && entities.length > 0) {
-      const fresh = entities.find((e: any) => e.id === activeEntity.id);
-      if (fresh) activeEntity = fresh;
+      selectedEntityRef.current = activeEntity;
     }
     
-    // 3. Fetch payroll run for current entity + period
+    // 3. Fetch payroll run + sandbox status
     if (activeEntity) {
-      // Sandbox mode check
-      const { data: tokens, error: tokErr } = await supabase
+      // Sandbox check
+      const { data: tokens } = await supabase
         .from('compliance_tokens')
         .select('id')
         .eq('legal_entity_id', activeEntity.id)
         .limit(1);
-      setIsSandboxMode(tokErr || !tokens || tokens.length === 0);
+      setIsSandboxMode(!tokens || tokens.length === 0);
       
-      // Fetch current payroll run
+      // Payroll run for current period
       const { data: run, error: runErr } = await supabase
         .from('payroll_runs')
         .select('*')
@@ -135,21 +124,18 @@ export default function Payroll() {
         .eq('period_month', currentPeriod.month)
         .maybeSingle();
       
-      if (runErr) {
-        console.error('[Payroll] Run fetch error:', runErr.message);
-      }
-      
-      console.log(`[Payroll] Run for ${activeEntity.razon_social} ${currentPeriod.month}/${currentPeriod.year}:`, run ? `${run.id} (${run.status})` : 'none');
+      if (runErr) console.error('[Payroll] Run error:', runErr.message);
+      console.log(`[Payroll] Run: ${run ? `${run.id} (${run.status})` : 'none'} for ${currentPeriod.month}/${currentPeriod.year}`);
       setCurrentRun(run);
     } else {
-      console.warn('[Payroll] No active entity, skipping run fetch');
+      console.warn('[Payroll] No entity found');
       setCurrentRun(null);
     }
     
     setLoading(false);
-  }, [group?.id, currentPeriod, selectedLegalEntity]);
+  };
   
-  // Init: setup schema + fetch data
+  // Init on mount & period change
   useEffect(() => {
     if (!group?.id) return;
     
@@ -166,7 +152,7 @@ export default function Payroll() {
       await fetchData();
     };
     init();
-  }, [group?.id, currentPeriod, schemaReady]);
+  }, [group?.id, currentPeriod.year, currentPeriod.month, schemaReady]);
   
   const refreshData = async () => {
     await fetchData();
@@ -176,26 +162,26 @@ export default function Payroll() {
     navigate(`/payroll/${step === 'home' ? '' : step}`);
   };
   
+  // Step status: always highlight the current URL step
   const getStepStatus = (stepKey: string): 'complete' | 'current' | 'upcoming' => {
     const stepIdx = PAYROLL_STEPS.findIndex(s => s.key === stepKey);
     
-    if (!currentRun) {
-      return stepIdx === 0 ? 'current' : 'upcoming';
-    }
+    // The step matching the current URL is ALWAYS 'current'
+    if (stepIdx === stepIndex) return 'current';
+    
+    if (!currentRun) return 'upcoming';
     
     const statusToStep: Record<string, number> = {
-      'draft': 3,
-      'validated': 4,
-      'calculated': 5,
-      'approved': 6,
-      'submitted': 7,
-      'paid': 8,
+      'draft': 1,       // employees onwards
+      'validated': 4,    // calculate onwards
+      'calculated': 5,   // review onwards
+      'approved': 6,     // submit onwards
+      'submitted': 7,    // pay onwards
+      'paid': 8,         // all done
     };
     
     const completedUpTo = statusToStep[currentRun.status] || 0;
-    
     if (stepIdx < completedUpTo) return 'complete';
-    if (stepIdx === stepIndex) return 'current';
     return 'upcoming';
   };
   
@@ -272,7 +258,7 @@ export default function Payroll() {
           <div className="flex items-center justify-between">
             {PAYROLL_STEPS.map((step, idx) => {
               const status = getStepStatus(step.key);
-              const isClickable = currentRun || idx === 0;
+              const isClickable = currentRun || idx === 0 || idx === stepIndex;
               
               return (
                 <div key={step.key} className="flex items-center">

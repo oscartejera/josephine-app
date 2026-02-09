@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
-  AlertTriangle, CheckCircle, ArrowRight, 
+  AlertTriangle, CheckCircle, ArrowRight, Upload,
   Building, Calendar, Plus, RotateCcw, FileWarning, Loader2
 } from 'lucide-react';
 import { format, subMonths } from 'date-fns';
@@ -506,6 +506,57 @@ export default function PayrollHome({
           </CardContent>
         </Card>
       </div>
+
+      {/* Certificate Setup (Sandbox mode) */}
+      {isSandboxMode && isPayrollAdmin && (
+        <Card className="border-dashed">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium">Configurar Certificado Digital</h3>
+                <p className="text-sm text-muted-foreground">
+                  Sube el certificado de empresa (P12/PFX) para presentar a TGSS/AEAT/SEPE
+                </p>
+              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Subir Certificado
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Configurar Certificado Digital</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Arrastra tu certificado P12/PFX aquí
+                      </p>
+                      <input type="file" className="hidden" accept=".p12,.pfx" />
+                      <Button variant="link" className="mt-2">
+                        O selecciona un archivo
+                      </Button>
+                    </div>
+                    <div>
+                      <Label>Contraseña del certificado</Label>
+                      <Input type="password" placeholder="••••••••" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      El certificado se almacenará cifrado. Solo payroll_admin puede gestionarlo.
+                    </p>
+                    <Button className="w-full" disabled>
+                      Guardar Certificado
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Seed Test Data (sandbox only) */}
       {isSandboxMode && selectedLegalEntity && (
