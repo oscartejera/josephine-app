@@ -12,19 +12,24 @@ interface PayrollApiResponse<T = any> {
 }
 
 async function callPayrollApi<T = any>(action: string, body: Record<string, any> = {}): Promise<PayrollApiResponse<T>> {
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  // Use anon key for Authorization - the Edge Function uses service role key internally
+  // This avoids 401 errors from expired user session tokens
   const response = await fetch(`${SUPABASE_URL}/functions/v1/payroll_api`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
       'apikey': SUPABASE_KEY,
     },
     body: JSON.stringify({ action, ...body }),
   });
   
-  const result = await response.json();
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
+  }
   
   if (!response.ok || result.error) {
     throw new Error(result.error || `Error ${response.status}`);
