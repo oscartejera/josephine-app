@@ -4,6 +4,7 @@ import { startOfWeek, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import { ArrowRightLeft, AlertTriangle } from 'lucide-react';
 import { useSchedulingSupabase, ViewMode, Shift, resolveLocationId } from '@/hooks/useSchedulingSupabase';
+import { useApp } from '@/contexts/AppContext';
 import {
   SchedulingHeader,
   CreateScheduleModal,
@@ -51,8 +52,10 @@ function generatePlaceholderKPIs(weekStart: Date) {
 export default function Scheduling() {
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Parse URL params
-  const locationIdParam = searchParams.get('location');
+  const { selectedLocationId, accessibleLocations } = useApp();
+  
+  // Parse URL params - location comes from global context now
+  const locationIdParam = selectedLocationId !== 'all' ? selectedLocationId : searchParams.get('location');
   const startParam = searchParams.get('start');
   const weekStart = startParam 
     ? startOfWeek(parseISO(startParam), { weekStartsOn: 1 })
@@ -93,11 +96,16 @@ export default function Scheduling() {
     rejectSwapRequest,
   } = useSchedulingSupabase(null, weekStart); // Initial call to get locations
   
-  // Resolve location ID from param
+  // Resolve location ID - prefer global context, fallback to URL param or first location
   const resolvedLocationId = useMemo(() => {
     if (locations.length === 0) return null;
+    // If global context has a specific location, use it
+    if (selectedLocationId && selectedLocationId !== 'all') {
+      return selectedLocationId;
+    }
+    // Otherwise resolve from URL param or default to first
     return resolveLocationId(locationIdParam, locations);
-  }, [locations, locationIdParam]);
+  }, [locations, locationIdParam, selectedLocationId]);
   
   // Get the actual scheduling data with the resolved location
   const schedulingData = useSchedulingSupabase(resolvedLocationId, weekStart);
@@ -258,19 +266,6 @@ export default function Scheduling() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ViewModeDropdown value={viewMode} onChange={setViewMode} />
-          
-          <Select value={currentLocationId} onValueChange={handleLocationChange}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select location" />
-            </SelectTrigger>
-            <SelectContent>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
         
         <div className="flex items-center gap-3">
