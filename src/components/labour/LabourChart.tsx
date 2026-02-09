@@ -142,7 +142,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   const [drillDownOpen, setDrillDownOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState<any>(null);
 
-  if (isLoading) {
+  if (isLoading || !data || data.length === 0) {
     return <ChartSkeleton />;
   }
 

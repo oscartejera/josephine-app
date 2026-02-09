@@ -132,10 +132,22 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
     },
   });
 
+  // Template with all numeric fields set to 0 (prevents undefined crashes in charts)
+  const emptyRow: LabourTimeseriesRow = {
+    date: '',
+    actual_sales: 0, forecast_sales: 0,
+    actual_labor_cost: 0, planned_labor_cost: 0,
+    actual_hours: 0, planned_hours: 0,
+    actual_orders: 0, forecast_orders: 0,
+    actual_col_pct: 0, planned_col_pct: 0,
+    actual_splh: 0, planned_splh: 0,
+    actual_oplh: 0, planned_oplh: 0,
+  };
+
   // Fill missing dates in timeseries so the chart shows ALL dates in range
   const filledTimeseries = useMemo(() => {
     const raw = timeseriesQuery.data || [];
-    return fillMissingDates<LabourTimeseriesRow>(raw, dateRange.from, dateRange.to);
+    return fillMissingDates<LabourTimeseriesRow>(raw, dateRange.from, dateRange.to, emptyRow);
   }, [timeseriesQuery.data, dateRange.from, dateRange.to]);
 
   // Check if data is empty (for showing seed button)
