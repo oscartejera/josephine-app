@@ -994,11 +994,12 @@ function calculatePayslip(
 async function handleUpdatePayrollStatus(body: any) {
   const { payroll_run_id, status, user_id } = body;
   
+  // Flexible transitions - allows skipping steps in sandbox mode
   const validTransitions: Record<string, string[]> = {
-    draft: ['validated'],
+    draft: ['validated', 'calculated'],
     validated: ['calculated', 'draft'],
-    calculated: ['approved', 'validated'],
-    approved: ['submitted', 'calculated'],
+    calculated: ['approved', 'validated', 'submitted'],
+    approved: ['submitted', 'calculated', 'paid'],
     submitted: ['paid', 'approved'],
   };
   
@@ -1180,6 +1181,228 @@ async function handleGenerateSEPA(body: any) {
   return { success: true, sepa: sepaData };
 }
 
+// ===== SEED TEST DATA =====
+// Creates 20 realistic employees with contracts and legal data for e2e testing
+
+async function handleSeedTestData(body: any) {
+  const { group_id, legal_entity_id, period_year, period_month } = body;
+  
+  if (!group_id || !legal_entity_id) {
+    return { error: 'Falta group_id o legal_entity_id' };
+  }
+  
+  await ensureSchema();
+  
+  // Get locations for this group
+  const { data: locations } = await supabase
+    .from('locations')
+    .select('id, name')
+    .eq('group_id', group_id);
+  
+  const locationIds = (locations || []).map((l: any) => l.id);
+  const defaultLocationId = locationIds[0] || null;
+  
+  // Check existing employees
+  let existingEmployees: any[] = [];
+  if (locationIds.length > 0) {
+    const { data } = await supabase
+      .from('employees')
+      .select('id, full_name, role_name, location_id')
+      .in('location_id', locationIds)
+      .eq('active', true);
+    existingEmployees = data || [];
+  }
+  if (existingEmployees.length === 0) {
+    const { data } = await supabase
+      .from('employees')
+      .select('id, full_name, role_name, location_id')
+      .eq('active', true);
+    existingEmployees = data || [];
+  }
+  
+  // 20 realistic restaurant employees
+  const testEmployees = [
+    { name: 'Carlos García López', role: 'Manager', salary: 2200, group_ss: '3', irpf: 18, contract: 'indefinido', jornada: 100 },
+    { name: 'María Fernández Ruiz', role: 'Jefe de Cocina', salary: 2400, group_ss: '3', irpf: 20, contract: 'indefinido', jornada: 100 },
+    { name: 'Antonio Martínez Sánchez', role: 'Jefe de Sala', salary: 2200, group_ss: '3', irpf: 18, contract: 'indefinido', jornada: 100 },
+    { name: 'Laura Rodríguez Pérez', role: 'Chef', salary: 1850, group_ss: '4', irpf: 15, contract: 'indefinido', jornada: 100 },
+    { name: 'Pablo Hernández Torres', role: 'Cocinero', salary: 1650, group_ss: '5', irpf: 12, contract: 'indefinido', jornada: 100 },
+    { name: 'Ana López Jiménez', role: 'Cocinero', salary: 1650, group_ss: '5', irpf: 12, contract: 'indefinido', jornada: 100 },
+    { name: 'David Sánchez Moreno', role: 'Camarero', salary: 1500, group_ss: '5', irpf: 10, contract: 'indefinido', jornada: 100 },
+    { name: 'Elena Martín Alonso', role: 'Camarero', salary: 1500, group_ss: '5', irpf: 10, contract: 'indefinido', jornada: 100 },
+    { name: 'Javier Ruiz Navarro', role: 'Camarero', salary: 1500, group_ss: '5', irpf: 10, contract: 'temporal', jornada: 100 },
+    { name: 'Carmen Díaz Serrano', role: 'Camarero', salary: 1500, group_ss: '5', irpf: 10, contract: 'indefinido', jornada: 75 },
+    { name: 'Miguel Álvarez Prieto', role: 'Barman', salary: 1550, group_ss: '5', irpf: 11, contract: 'indefinido', jornada: 100 },
+    { name: 'Isabel Torres Vega', role: 'Barman', salary: 1550, group_ss: '5', irpf: 11, contract: 'indefinido', jornada: 100 },
+    { name: 'Roberto Jiménez Castro', role: 'Ayudante de Cocina', salary: 1350, group_ss: '6', irpf: 8, contract: 'temporal', jornada: 100 },
+    { name: 'Sara Moreno Blanco', role: 'Ayudante de Cocina', salary: 1350, group_ss: '6', irpf: 8, contract: 'indefinido', jornada: 100 },
+    { name: 'Álvaro Navarro Romero', role: 'Runner', salary: 1350, group_ss: '6', irpf: 8, contract: 'temporal', jornada: 80 },
+    { name: 'Lucía Castro Herrero', role: 'Host', salary: 1400, group_ss: '5', irpf: 9, contract: 'indefinido', jornada: 100 },
+    { name: 'Diego Alonso Medina', role: 'Repartidor', salary: 1400, group_ss: '6', irpf: 9, contract: 'temporal', jornada: 100 },
+    { name: 'Patricia Romero Gil', role: 'Limpieza', salary: 1300, group_ss: '6', irpf: 6, contract: 'indefinido', jornada: 50 },
+    { name: 'Sergio Blanco Peña', role: 'Kitchen Porter', salary: 1350, group_ss: '6', irpf: 8, contract: 'indefinido', jornada: 100 },
+    { name: 'Marta Herrero Cano', role: 'Segundo Jefe', salary: 2000, group_ss: '4', irpf: 16, contract: 'indefinido', jornada: 100 },
+  ];
+  
+  // If we have existing employees, use them (up to 20). Otherwise, create new ones.
+  let employees: any[] = existingEmployees.slice(0, 20);
+  
+  // If we have fewer than 20, create the missing ones
+  if (employees.length < 20) {
+    const needed = testEmployees.slice(employees.length);
+    
+    for (const emp of needed) {
+      const { data: newEmp, error: empErr } = await supabase
+        .from('employees')
+        .insert({
+          full_name: emp.name,
+          role_name: emp.role,
+          location_id: defaultLocationId,
+          active: true,
+          weekly_hours: Math.round(40 * emp.jornada / 100),
+          contract_type: emp.contract,
+        })
+        .select()
+        .single();
+      
+      if (!empErr && newEmp) {
+        employees.push(newEmp);
+      }
+    }
+  }
+  
+  // Deactivate employees beyond 20 for cleaner test
+  if (existingEmployees.length > 20) {
+    const toDeactivate = existingEmployees.slice(20).map((e: any) => e.id);
+    await supabase
+      .from('employees')
+      .update({ active: false })
+      .in('id', toDeactivate);
+  }
+  
+  console.log(`[Seed] Working with ${employees.length} employees`);
+  
+  // Generate realistic NIF, NSS, IBAN for each
+  const nifLetters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+  const seedResults = { contracts: 0, legal: 0, inputs: 0 };
+  
+  for (let i = 0; i < employees.length; i++) {
+    const emp = employees[i];
+    const template = testEmployees[i] || testEmployees[0];
+    
+    // NIF: number + letter (Spanish DNI format)
+    const dniNumber = 10000000 + i * 3217891 % 90000000;
+    const nif = `${dniNumber}${nifLetters[dniNumber % 23]}`;
+    
+    // NSS: 28/XXXXXXXX/XX (Madrid format)
+    const nssBase = 10000000 + i * 4567;
+    const nss = `28/${String(nssBase).padStart(8, '0')}/${String((nssBase * 7) % 100).padStart(2, '0')}`;
+    
+    // IBAN: ES + 2 check digits + 20 digits
+    const iban = `ES${60 + i}2100${String(1234567890 + i * 111).slice(0, 10)}${String(i * 12345).padStart(10, '0')}`;
+    
+    // Domicilio
+    const calles = ['Gran Vía', 'Alcalá', 'Serrano', 'Fuencarral', 'Hortaleza', 'Atocha', 'Princesa', 'Bravo Murillo'];
+    const domicilio = `C/ ${calles[i % calles.length]} ${10 + i * 3}, ${i % 2 === 0 ? '2ºA' : '3ºB'}, 280${String(i % 50).padStart(2, '0')} Madrid`;
+    
+    // 1. Save legal data
+    const { error: legalErr } = await supabase
+      .from('employee_legal')
+      .upsert({
+        employee_id: emp.id,
+        legal_entity_id,
+        nif,
+        nss,
+        iban,
+        domicilio,
+      }, { onConflict: 'employee_id,legal_entity_id' });
+    
+    if (!legalErr) seedResults.legal++;
+    
+    // 2. Create/update contract
+    // First deactivate existing
+    await supabase
+      .from('employment_contracts')
+      .update({ active: false })
+      .eq('employee_id', emp.id)
+      .eq('active', true);
+    
+    const { error: contractErr } = await supabase
+      .from('employment_contracts')
+      .insert({
+        employee_id: emp.id,
+        legal_entity_id,
+        location_id: emp.location_id || defaultLocationId,
+        start_date: '2024-01-15',
+        contract_type: template.contract,
+        base_salary_monthly: template.salary,
+        group_ss: template.group_ss,
+        category: template.role,
+        jornada_pct: template.jornada,
+        irpf_rate: template.irpf,
+        active: true,
+      });
+    
+    if (!contractErr) seedResults.contracts++;
+    
+    // 3. Create payroll inputs for this period (realistic hours/variables)
+    if (period_year && period_month) {
+      const jornadaHours = 150 * template.jornada / 100;
+      const nightHours = template.role.includes('Cocin') || template.role === 'Barman' ? Math.round(Math.random() * 8 + 4) : 0;
+      const overtimeHours = Math.random() > 0.7 ? Math.round(Math.random() * 6 + 2) : 0;
+      const holidayHours = Math.random() > 0.8 ? 8 : 0;
+      
+      const bonuses: any[] = [];
+      if (Math.random() > 0.7) bonuses.push({ concept: 'Plus productividad', amount: Math.round(Math.random() * 80 + 20) });
+      if (template.role === 'Manager' || template.role === 'Jefe de Cocina') bonuses.push({ concept: 'Plus responsabilidad', amount: 100 });
+      
+      const { error: inputErr } = await supabase
+        .from('payroll_inputs')
+        .upsert({
+          employee_id: emp.id,
+          period_year,
+          period_month,
+          hours_regular: jornadaHours,
+          hours_night: nightHours,
+          hours_overtime: overtimeHours,
+          hours_holiday: holidayHours,
+          bonuses_json: bonuses,
+          deductions_json: [],
+          tips_json: [],
+        }, { onConflict: 'employee_id,period_year,period_month' });
+      
+      if (!inputErr) seedResults.inputs++;
+    }
+  }
+  
+  console.log('[Seed] Complete:', seedResults);
+  
+  return {
+    success: true,
+    employees_count: employees.length,
+    contracts_created: seedResults.contracts,
+    legal_data_created: seedResults.legal,
+    inputs_created: seedResults.inputs,
+    message: `Datos de prueba creados: ${employees.length} empleados con contratos, datos legales y variables mensuales.`,
+  };
+}
+
+// ===== RESET PAYROLL =====
+async function handleResetPayroll(body: any) {
+  const { payroll_run_id } = body;
+  
+  if (!payroll_run_id) {
+    return { error: 'Falta payroll_run_id' };
+  }
+  
+  // Delete in order: payslips -> submissions -> inputs -> run
+  await supabase.from('payslips').delete().eq('payroll_run_id', payroll_run_id);
+  await supabase.from('compliance_submissions').delete().eq('payroll_run_id', payroll_run_id);
+  await supabase.from('payroll_runs').delete().eq('id', payroll_run_id);
+  
+  return { success: true, message: 'Nómina reseteada correctamente' };
+}
+
 // ===== MAIN HANDLER =====
 
 Deno.serve(async (req) => {
@@ -1219,6 +1442,12 @@ Deno.serve(async (req) => {
         break;
       case 'generate_sepa':
         result = await handleGenerateSEPA(body);
+        break;
+      case 'seed_test_data':
+        result = await handleSeedTestData(body);
+        break;
+      case 'reset_payroll':
+        result = await handleResetPayroll(body);
         break;
       default:
         result = { error: `Acción no reconocida: ${action}` };

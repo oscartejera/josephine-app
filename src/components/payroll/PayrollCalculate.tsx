@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useApp } from '@/contexts/AppContext';
 import { payrollApi } from '@/lib/payroll-api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -26,18 +24,15 @@ interface Payslip {
   irpf_withheld: number;
   other_deductions: number;
   net_pay: number;
-  variation?: number; // vs previous month
+  variation?: number;
 }
 
 export default function PayrollCalculate({
-  selectedLegalEntity,
   currentPeriod,
   currentRun,
   refreshData,
-  isPayrollAdmin,
 }: PayrollContextData) {
   const navigate = useNavigate();
-  const { group } = useApp();
   const { toast } = useToast();
   
   const [payslips, setPayslips] = useState<Payslip[]>([]);
@@ -57,45 +52,43 @@ export default function PayrollCalculate({
     
     setLoading(true);
     
-    try {
-      const { data, error } = await supabase
-        .from('payslips')
-        .select(`
-          id, employee_id, gross_pay, employee_ss, employer_ss, 
-          irpf_withheld, other_deductions, net_pay,
-          employees(full_name)
-        `)
-        .eq('payroll_run_id', currentRun.id);
-      
-      if (error) {
-        console.warn('Error fetching payslips:', error.message);
-        setPayslips([]);
-        setCalculated(false);
-        setLoading(false);
-        return;
-      }
-      
-      const mapped: Payslip[] = (data || []).map((p: any) => ({
-        id: p.id,
-        employee_id: p.employee_id,
-        employee_name: p.employees?.full_name || 'Desconocido',
-        gross_pay: Number(p.gross_pay),
-        employee_ss: Number(p.employee_ss),
-        employer_ss: Number(p.employer_ss),
-        irpf_withheld: Number(p.irpf_withheld),
-        other_deductions: Number(p.other_deductions),
-        net_pay: Number(p.net_pay),
-        variation: 0,
-      }));
-      
-      setPayslips(mapped);
-      setCalculated(mapped.length > 0);
-    } catch (err) {
-      console.warn('Payslips table may not exist yet:', err);
+    // Fetch payslips WITHOUT join (no FK guarantee)
+    const { data: rawPayslips, error } = await supabase
+      .from('payslips')
+      .select('id, employee_id, gross_pay, employee_ss, employer_ss, irpf_withheld, other_deductions, net_pay')
+      .eq('payroll_run_id', currentRun.id);
+    
+    if (error || !rawPayslips || rawPayslips.length === 0) {
+      if (error) console.warn('Error fetching payslips:', error.message);
       setPayslips([]);
       setCalculated(false);
+      setLoading(false);
+      return;
     }
     
+    // Fetch employee names separately
+    const empIds = rawPayslips.map((p: any) => p.employee_id);
+    const { data: employees } = await supabase
+      .from('employees')
+      .select('id, full_name')
+      .in('id', empIds);
+    const empMap = new Map((employees || []).map((e: any) => [e.id, e.full_name]));
+    
+    const mapped: Payslip[] = rawPayslips.map((p: any) => ({
+      id: p.id,
+      employee_id: p.employee_id,
+      employee_name: empMap.get(p.employee_id) || 'Desconocido',
+      gross_pay: Number(p.gross_pay),
+      employee_ss: Number(p.employee_ss),
+      employer_ss: Number(p.employer_ss),
+      irpf_withheld: Number(p.irpf_withheld),
+      other_deductions: Number(p.other_deductions),
+      net_pay: Number(p.net_pay),
+      variation: 0,
+    }));
+    
+    setPayslips(mapped);
+    setCalculated(mapped.length > 0);
     setLoading(false);
   };
 
@@ -112,9 +105,7 @@ export default function PayrollCalculate({
     setCalculating(true);
     
     try {
-      console.log('Calculating payroll for run:', currentRun.id);
       const result = await payrollApi.calculatePayroll(currentRun.id);
-      console.log('Calculation result:', result);
       
       await refreshData();
       await fetchPayslips();
@@ -122,14 +113,14 @@ export default function PayrollCalculate({
       setCalculated(true);
       toast({ 
         title: 'Cálculo completado', 
-        description: `Se han calculado ${result.employees_calculated || 0} nóminas. Total neto: €${result.totals?.net_pay?.toLocaleString() || '0'}` 
+        description: `Se han calculado ${result.employees_calculated || 0} nóminas. Total neto: €${result.totals?.net_pay?.toLocaleString('es-ES') || '0'}` 
       });
     } catch (error) {
       console.error('Payroll calculation error:', error);
       toast({ 
         variant: 'destructive', 
         title: 'Error al calcular', 
-        description: error instanceof Error ? error.message : 'Error al calcular nóminas. Revisa la consola para más detalles.' 
+        description: error instanceof Error ? error.message : 'Error al calcular nóminas.' 
       });
     } finally {
       setCalculating(false);
@@ -144,11 +135,10 @@ export default function PayrollCalculate({
     net: payslips.reduce((s, p) => s + p.net_pay, 0),
   };
 
-  const hasVariationWarnings = payslips.some(p => Math.abs(p.variation || 0) > 100);
+  const fmt = (n: number) => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Cálculo de Nóminas</h2>
@@ -157,27 +147,19 @@ export default function PayrollCalculate({
           </p>
         </div>
         
-        {!calculated && (
-          <Button onClick={handleCalculate} disabled={calculating}>
-            {calculating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Calculator className="h-4 w-4 mr-2" />
-            )}
+        {!calculated && !calculating && (
+          <Button onClick={handleCalculate}>
+            <Calculator className="h-4 w-4 mr-2" />
             Calcular Nóminas
           </Button>
         )}
+        {calculated && (
+          <Button onClick={handleCalculate} variant="outline">
+            <Calculator className="h-4 w-4 mr-2" />
+            Recalcular
+          </Button>
+        )}
       </div>
-
-      {/* Variation Warning */}
-      {hasVariationWarnings && (
-        <Alert className="border-warning bg-warning/5">
-          <AlertTriangle className="h-4 w-4 text-warning" />
-          <AlertDescription className="text-warning">
-            Algunas nóminas tienen variaciones significativas respecto al mes anterior. Revisa los detalles.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Summary Cards */}
       {calculated && (
@@ -185,31 +167,31 @@ export default function PayrollCalculate({
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Total Bruto</p>
-              <p className="text-2xl font-bold">€{totals.gross.toLocaleString()}</p>
+              <p className="text-2xl font-bold">€{fmt(totals.gross)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">SS Empleado</p>
-              <p className="text-2xl font-bold">€{totals.employeeSS.toLocaleString()}</p>
+              <p className="text-2xl font-bold">€{fmt(totals.employeeSS)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">SS Empresa</p>
-              <p className="text-2xl font-bold">€{totals.employerSS.toLocaleString()}</p>
+              <p className="text-2xl font-bold">€{fmt(totals.employerSS)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">IRPF</p>
-              <p className="text-2xl font-bold">€{totals.irpf.toLocaleString()}</p>
+              <p className="text-2xl font-bold">€{fmt(totals.irpf)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">Total Neto</p>
-              <p className="text-2xl font-bold text-success">€{totals.net.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-success">€{fmt(totals.net)}</p>
             </CardContent>
           </Card>
         </div>
@@ -232,30 +214,17 @@ export default function PayrollCalculate({
                   <TableHead className="text-right">IRPF</TableHead>
                   <TableHead className="text-right">Otras Ded.</TableHead>
                   <TableHead className="text-right">Neto</TableHead>
-                  <TableHead className="text-center">Var. Mes Ant.</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payslips.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.employee_name}</TableCell>
-                    <TableCell className="text-right">€{p.gross_pay.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">€{p.employee_ss.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">€{p.irpf_withheld.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">€{p.other_deductions.toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-semibold">€{p.net_pay.toLocaleString()}</TableCell>
-                    <TableCell className="text-center">
-                      {p.variation !== undefined && (
-                        <div className={`flex items-center justify-center gap-1 ${
-                          p.variation > 0 ? 'text-success' : p.variation < 0 ? 'text-destructive' : 'text-muted-foreground'
-                        }`}>
-                          {p.variation > 0 ? <TrendingUp className="h-4 w-4" /> : p.variation < 0 ? <TrendingDown className="h-4 w-4" /> : null}
-                          <span className="text-sm">
-                            {p.variation > 0 ? '+' : ''}{p.variation?.toFixed(0)}€
-                          </span>
-                        </div>
-                      )}
-                    </TableCell>
+                    <TableCell className="text-right">€{fmt(p.gross_pay)}</TableCell>
+                    <TableCell className="text-right">€{fmt(p.employee_ss)}</TableCell>
+                    <TableCell className="text-right">€{fmt(p.irpf_withheld)}</TableCell>
+                    <TableCell className="text-right">€{fmt(p.other_deductions)}</TableCell>
+                    <TableCell className="text-right font-semibold">€{fmt(p.net_pay)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -281,27 +250,22 @@ export default function PayrollCalculate({
         </Card>
       )}
 
-      {/* Calculating */}
       {calculating && (
         <Card>
           <CardContent className="py-12 text-center">
             <Loader2 className="h-12 w-12 mx-auto text-primary mb-4 animate-spin" />
             <h3 className="text-lg font-medium">Calculando nóminas...</h3>
-            <p className="text-muted-foreground">Esto puede tardar unos segundos</p>
+            <p className="text-muted-foreground">Aplicando legislación española vigente</p>
           </CardContent>
         </Card>
       )}
 
-      {/* Navigation */}
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/validate')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Validar
         </Button>
-        <Button 
-          onClick={() => navigate('/payroll/review')}
-          disabled={!calculated}
-        >
+        <Button onClick={() => navigate('/payroll/review')} disabled={!calculated}>
           Siguiente: Revisar
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>

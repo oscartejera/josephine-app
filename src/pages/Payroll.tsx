@@ -1,19 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   DollarSign, Users, FileText, AlertTriangle, CheckCircle, 
-  Clock, Send, CreditCard, ArrowRight, Building, Calendar
+  Clock, Send, CreditCard, Building, Calendar
 } from 'lucide-react';
-import { format, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
@@ -52,7 +50,7 @@ const PAYROLL_STEPS = [
 
 export default function Payroll() {
   const { group } = useApp();
-  const { hasRole, user } = useAuth();
+  const { hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -66,85 +64,70 @@ export default function Payroll() {
   const [currentRun, setCurrentRun] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSandboxMode, setIsSandboxMode] = useState(true);
+  const [schemaReady, setSchemaReady] = useState(false);
   
-  // Grant payroll access to owners, admins, and ops managers
   const isPayrollAdmin = hasRole('owner_admin') || hasRole('owner') || hasRole('admin');
-  const hasPayrollAccess = true; // All authenticated users can view payroll (role checks inside for editing)
+  const hasPayrollAccess = true;
   
   const currentStep = location.pathname.split('/payroll/')[1] || 'home';
   const stepIndex = PAYROLL_STEPS.findIndex(s => s.key === currentStep);
   
-  // Ensure payroll tables exist on first load
-  const [schemaReady, setSchemaReady] = useState(false);
-  
-  useEffect(() => {
-    if (group?.id) {
-      // Run schema setup once, then fetch data
-      const init = async () => {
-        if (!schemaReady) {
-          try {
-            const { payrollApi } = await import('@/lib/payroll-api');
-            await payrollApi.setup();
-            setSchemaReady(true);
-          } catch (err) {
-            console.warn('Schema setup warning:', err);
-            setSchemaReady(true); // Continue even if setup fails
-          }
-        }
-        await fetchData();
-      };
-      init();
-    }
-  }, [group?.id, currentPeriod, schemaReady]);
-  
-  const fetchData = async () => {
+  // Core data fetching - uses explicit error checking (supabase-js doesn't throw)
+  const fetchData = useCallback(async () => {
+    if (!group?.id) return;
     setLoading(true);
     
-    // Fetch legal entities - use try/catch for resilience
+    // 1. Fetch legal entities - CRITICAL: check error explicitly, not try/catch
     let entities: any[] = [];
-    try {
-      const { data } = await supabase
+    const { data: entitiesData, error: entitiesError } = await supabase
+      .from('legal_entities')
+      .select('*')
+      .eq('group_id', group.id);
+    
+    if (entitiesError) {
+      console.error('Error fetching entities:', entitiesError.message);
+    } else {
+      entities = entitiesData || [];
+    }
+    
+    // Try to enrich with SSA data (non-blocking)
+    if (entities.length > 0) {
+      const { data: enriched, error: enrichErr } = await supabase
         .from('legal_entities')
-        .select('*, social_security_accounts(*), tax_accounts(*)')
-        .eq('group_id', group?.id);
-      entities = data || [];
-    } catch {
-      // social_security_accounts or tax_accounts might not exist yet
-      const { data } = await supabase
-        .from('legal_entities')
-        .select('*')
-        .eq('group_id', group?.id);
-      entities = data || [];
+        .select('*, social_security_accounts(*)')
+        .eq('group_id', group.id);
+      if (!enrichErr && enriched) {
+        entities = enriched;
+      }
     }
     
     setLegalEntities(entities);
+    console.log(`[Payroll] Fetched ${entities.length} entities`);
     
-    // Use local variable to avoid stale closure issue
+    // 2. Determine active entity (use local var to avoid stale closure)
     let activeEntity = selectedLegalEntity;
     if (entities.length > 0 && !activeEntity) {
       activeEntity = entities[0];
       setSelectedLegalEntity(activeEntity);
     }
+    // If selectedLegalEntity was set but might be stale, update it
+    if (activeEntity && entities.length > 0) {
+      const fresh = entities.find((e: any) => e.id === activeEntity.id);
+      if (fresh) activeEntity = fresh;
+    }
     
-    // Fetch payroll run and sandbox status
+    // 3. Fetch payroll run for current entity + period
     if (activeEntity) {
-      // Check sandbox mode
-      let isSandbox = true;
-      try {
-        const { data: tokens } = await supabase
-          .from('compliance_tokens')
-          .select('id')
-          .eq('legal_entity_id', activeEntity.id)
-          .limit(1);
-        isSandbox = !tokens || tokens.length === 0;
-      } catch {
-        // Table might not exist yet
-        isSandbox = true;
-      }
-      setIsSandboxMode(isSandbox);
+      // Sandbox mode check
+      const { data: tokens, error: tokErr } = await supabase
+        .from('compliance_tokens')
+        .select('id')
+        .eq('legal_entity_id', activeEntity.id)
+        .limit(1);
+      setIsSandboxMode(tokErr || !tokens || tokens.length === 0);
       
       // Fetch current payroll run
-      const { data: run } = await supabase
+      const { data: run, error: runErr } = await supabase
         .from('payroll_runs')
         .select('*')
         .eq('legal_entity_id', activeEntity.id)
@@ -152,11 +135,38 @@ export default function Payroll() {
         .eq('period_month', currentPeriod.month)
         .maybeSingle();
       
+      if (runErr) {
+        console.error('[Payroll] Run fetch error:', runErr.message);
+      }
+      
+      console.log(`[Payroll] Run for ${activeEntity.razon_social} ${currentPeriod.month}/${currentPeriod.year}:`, run ? `${run.id} (${run.status})` : 'none');
       setCurrentRun(run);
+    } else {
+      console.warn('[Payroll] No active entity, skipping run fetch');
+      setCurrentRun(null);
     }
     
     setLoading(false);
-  };
+  }, [group?.id, currentPeriod, selectedLegalEntity]);
+  
+  // Init: setup schema + fetch data
+  useEffect(() => {
+    if (!group?.id) return;
+    
+    const init = async () => {
+      if (!schemaReady) {
+        try {
+          const { payrollApi } = await import('@/lib/payroll-api');
+          await payrollApi.setup();
+        } catch (err) {
+          console.warn('Schema setup warning:', err);
+        }
+        setSchemaReady(true);
+      }
+      await fetchData();
+    };
+    init();
+  }, [group?.id, currentPeriod, schemaReady]);
   
   const refreshData = async () => {
     await fetchData();
@@ -168,29 +178,24 @@ export default function Payroll() {
   
   const getStepStatus = (stepKey: string): 'complete' | 'current' | 'upcoming' => {
     const stepIdx = PAYROLL_STEPS.findIndex(s => s.key === stepKey);
-    const currentIdx = stepIndex;
     
     if (!currentRun) {
       return stepIdx === 0 ? 'current' : 'upcoming';
     }
     
-    const statusOrder = ['draft', 'validated', 'calculated', 'approved', 'submitted', 'paid'];
-    const runStatusIdx = statusOrder.indexOf(currentRun.status);
-    
-    // Map status to step
     const statusToStep: Record<string, number> = {
-      'draft': 3, // validate
-      'validated': 4, // calculate
-      'calculated': 5, // review
-      'approved': 6, // submit
-      'submitted': 7, // pay
-      'paid': 8, // done
+      'draft': 3,
+      'validated': 4,
+      'calculated': 5,
+      'approved': 6,
+      'submitted': 7,
+      'paid': 8,
     };
     
     const completedUpTo = statusToStep[currentRun.status] || 0;
     
     if (stepIdx < completedUpTo) return 'complete';
-    if (stepIdx === currentIdx) return 'current';
+    if (stepIdx === stepIndex) return 'current';
     return 'upcoming';
   };
   
@@ -203,7 +208,6 @@ export default function Payroll() {
             <h2 className="text-xl font-bold mb-2">Acceso Restringido</h2>
             <p className="text-muted-foreground">
               No tienes permisos para acceder al módulo de nóminas.
-              Contacta con un administrador.
             </p>
           </CardContent>
         </Card>
@@ -233,14 +237,12 @@ export default function Payroll() {
             Gestión de nóminas y presentaciones oficiales (España)
           </p>
         </div>
-        
         <div className="flex items-center gap-4">
           {isSandboxMode && (
             <Badge variant="outline" className="bg-warning/10 text-warning border-warning">
               Modo Sandbox
             </Badge>
           )}
-          
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">
@@ -257,11 +259,7 @@ export default function Payroll() {
           <AlertDescription className="text-warning">
             <strong>Modo Sandbox activo:</strong> No hay certificados configurados. 
             Las presentaciones se simularán sin envío real a TGSS/AEAT/SEPE.
-            <Button 
-              variant="link" 
-              className="text-warning p-0 h-auto ml-2"
-              onClick={() => navigateToStep('home')}
-            >
+            <Button variant="link" className="text-warning p-0 h-auto ml-2" onClick={() => navigateToStep('home')}>
               Configurar certificados →
             </Button>
           </AlertDescription>
@@ -274,7 +272,7 @@ export default function Payroll() {
           <div className="flex items-center justify-between">
             {PAYROLL_STEPS.map((step, idx) => {
               const status = getStepStatus(step.key);
-              const isClickable = idx <= stepIndex + 1 || status === 'complete';
+              const isClickable = currentRun || idx === 0;
               
               return (
                 <div key={step.key} className="flex items-center">

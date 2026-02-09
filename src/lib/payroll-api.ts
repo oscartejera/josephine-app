@@ -103,4 +103,15 @@ export const payrollApi = {
 
   generateSEPA: (payrollRunId: string) =>
     callPayrollApi('generate_sepa', { payroll_run_id: payrollRunId }),
+
+  seedTestData: (groupId: string, legalEntityId: string, year?: number, month?: number) =>
+    callPayrollApi('seed_test_data', {
+      group_id: groupId,
+      legal_entity_id: legalEntityId,
+      period_year: year,
+      period_month: month,
+    }),
+
+  resetPayroll: (payrollRunId: string) =>
+    callPayrollApi('reset_payroll', { payroll_run_id: payrollRunId }),
 };
