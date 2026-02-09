@@ -28,6 +28,7 @@ export default function PayrollValidate({
   currentRun,
   refreshData,
   isPayrollAdmin,
+  isSandboxMode,
 }: PayrollContextData) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -45,11 +46,15 @@ export default function PayrollValidate({
     
     const results: ValidationItem[] = [];
     
-    // Check employees without NIF/NSS
-    const { data: employeeLegal } = await supabase
-      .from('employee_legal')
-      .select('employee_id, nif, nss, iban')
-      .eq('legal_entity_id', selectedLegalEntity?.id);
+    // Check employees without NIF/NSS (handle missing tables)
+    let employeeLegal: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('employee_legal')
+        .select('employee_id, nif, nss, iban')
+        .eq('legal_entity_id', selectedLegalEntity?.id);
+      if (!error && data) employeeLegal = data;
+    } catch {}
     
     const { data: employees } = await supabase
       .from('employees')
@@ -61,13 +66,16 @@ export default function PayrollValidate({
     const missingNss = (employees || []).filter(e => !legalMap.get(e.id)?.nss);
     const missingIban = (employees || []).filter(e => !legalMap.get(e.id)?.iban);
     
+    // In sandbox mode, critical items become warnings (allow proceeding without real data)
+    const critSeverity = isSandboxMode ? 'warning' : 'critical';
+    
     results.push({
       id: 'nif',
       category: 'Datos Legales',
       description: 'Empleados con NIF',
-      severity: 'critical',
+      severity: critSeverity,
       status: missingNif.length === 0 ? 'pass' : 'fail',
-      details: missingNif.length > 0 ? `${missingNif.length} empleado(s) sin NIF: ${missingNif.map(e => e.full_name).join(', ')}` : undefined,
+      details: missingNif.length > 0 ? `${missingNif.length} empleado(s) sin NIF${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
       action: 'employees',
     });
     
@@ -75,9 +83,9 @@ export default function PayrollValidate({
       id: 'nss',
       category: 'Datos Legales',
       description: 'Empleados con NSS',
-      severity: 'critical',
+      severity: critSeverity,
       status: missingNss.length === 0 ? 'pass' : 'fail',
-      details: missingNss.length > 0 ? `${missingNss.length} empleado(s) sin NSS` : undefined,
+      details: missingNss.length > 0 ? `${missingNss.length} empleado(s) sin NSS${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
       action: 'employees',
     });
     
@@ -91,72 +99,87 @@ export default function PayrollValidate({
       action: 'employees',
     });
     
-    // Check active contracts
-    const { data: contracts } = await supabase
-      .from('employment_contracts')
-      .select('employee_id')
-      .eq('legal_entity_id', selectedLegalEntity?.id)
-      .eq('active', true);
+    // Check active contracts (handle missing table)
+    let contractsList: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('employment_contracts')
+        .select('employee_id')
+        .eq('legal_entity_id', selectedLegalEntity?.id)
+        .eq('active', true);
+      if (!error && data) contractsList = data;
+    } catch {}
     
-    const contractSet = new Set((contracts || []).map(c => c.employee_id));
+    const contractSet = new Set(contractsList.map(c => c.employee_id));
     const missingContract = (employees || []).filter(e => !contractSet.has(e.id));
     
     results.push({
       id: 'contracts',
       category: 'Contratos',
       description: 'Contratos activos',
-      severity: 'critical',
+      severity: critSeverity,
       status: missingContract.length === 0 ? 'pass' : 'fail',
-      details: missingContract.length > 0 ? `${missingContract.length} empleado(s) sin contrato activo` : undefined,
+      details: missingContract.length > 0 ? `${missingContract.length} empleado(s) sin contrato activo${isSandboxMode ? ' (sandbox: se usarán salarios del convenio)' : ''}` : undefined,
       action: 'employees',
     });
     
-    // Check pending timesheets
+    // Check pending timesheets (handle missing table)
     const startDate = new Date(currentPeriod.year, currentPeriod.month - 1, 1);
     const endDate = new Date(currentPeriod.year, currentPeriod.month, 0);
     
-    const { data: pendingTs } = await supabase
-      .from('timesheets')
-      .select('id')
-      .eq('approved', false)
-      .gte('clock_in', startDate.toISOString())
-      .lte('clock_in', endDate.toISOString());
+    let pendingTsCount = 0;
+    try {
+      const { data: pendingTs, error } = await supabase
+        .from('timesheets')
+        .select('id')
+        .eq('approved', false)
+        .gte('clock_in', startDate.toISOString())
+        .lte('clock_in', endDate.toISOString());
+      if (!error) pendingTsCount = pendingTs?.length || 0;
+    } catch {}
     
     results.push({
       id: 'timesheets',
       category: 'Timesheets',
       description: 'Timesheets aprobados',
       severity: 'warning',
-      status: (pendingTs?.length || 0) === 0 ? 'pass' : 'fail',
-      details: (pendingTs?.length || 0) > 0 ? `${pendingTs?.length} timesheet(s) pendientes de aprobar` : undefined,
+      status: pendingTsCount === 0 ? 'pass' : 'fail',
+      details: pendingTsCount > 0 ? `${pendingTsCount} timesheet(s) pendientes de aprobar` : undefined,
       action: 'inputs',
     });
     
-    // Check payroll inputs exist
-    const { data: inputs } = await supabase
-      .from('payroll_inputs')
-      .select('id')
-      .eq('period_year', currentPeriod.year)
-      .eq('period_month', currentPeriod.month);
+    // Check payroll inputs exist (handle missing table)
+    let inputsCount = 0;
+    try {
+      const { data: inputs, error } = await supabase
+        .from('payroll_inputs')
+        .select('id')
+        .eq('period_year', currentPeriod.year)
+        .eq('period_month', currentPeriod.month);
+      if (!error) inputsCount = inputs?.length || 0;
+    } catch {}
     
     results.push({
       id: 'inputs',
       category: 'Variables',
       description: 'Variables del mes cargadas',
       severity: 'warning',
-      status: (inputs?.length || 0) > 0 ? 'pass' : 'fail',
-      details: (inputs?.length || 0) === 0 ? 'No hay variables cargadas para este período' : undefined,
+      status: inputsCount > 0 ? 'pass' : 'fail',
+      details: inputsCount === 0 ? `No hay variables cargadas${isSandboxMode ? ' (sandbox: se usarán horas de contrato)' : ''}` : undefined,
       action: 'inputs',
     });
     
     // Check entity has CCC
+    const hasCCC = Array.isArray(selectedLegalEntity?.social_security_accounts) 
+      ? selectedLegalEntity.social_security_accounts.length > 0 
+      : false;
     results.push({
       id: 'ccc',
       category: 'Entidad',
       description: 'Código Cuenta Cotización',
-      severity: 'critical',
-      status: (selectedLegalEntity?.social_security_accounts?.length || 0) > 0 ? 'pass' : 'fail',
-      details: (selectedLegalEntity?.social_security_accounts?.length || 0) === 0 ? 'La entidad no tiene CCC configurado' : undefined,
+      severity: critSeverity,
+      status: hasCCC ? 'pass' : 'fail',
+      details: !hasCCC ? `Entidad sin CCC${isSandboxMode ? ' (sandbox: presentaciones se simularán)' : ''}` : undefined,
     });
     
     setValidations(results);

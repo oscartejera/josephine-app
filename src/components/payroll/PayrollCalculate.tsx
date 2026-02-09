@@ -57,30 +57,45 @@ export default function PayrollCalculate({
     
     setLoading(true);
     
-    const { data } = await supabase
-      .from('payslips')
-      .select(`
-        id, employee_id, gross_pay, employee_ss, employer_ss, 
-        irpf_withheld, other_deductions, net_pay,
-        employees(full_name)
-      `)
-      .eq('payroll_run_id', currentRun.id);
+    try {
+      const { data, error } = await supabase
+        .from('payslips')
+        .select(`
+          id, employee_id, gross_pay, employee_ss, employer_ss, 
+          irpf_withheld, other_deductions, net_pay,
+          employees(full_name)
+        `)
+        .eq('payroll_run_id', currentRun.id);
+      
+      if (error) {
+        console.warn('Error fetching payslips:', error.message);
+        setPayslips([]);
+        setCalculated(false);
+        setLoading(false);
+        return;
+      }
+      
+      const mapped: Payslip[] = (data || []).map((p: any) => ({
+        id: p.id,
+        employee_id: p.employee_id,
+        employee_name: p.employees?.full_name || 'Desconocido',
+        gross_pay: Number(p.gross_pay),
+        employee_ss: Number(p.employee_ss),
+        employer_ss: Number(p.employer_ss),
+        irpf_withheld: Number(p.irpf_withheld),
+        other_deductions: Number(p.other_deductions),
+        net_pay: Number(p.net_pay),
+        variation: 0,
+      }));
+      
+      setPayslips(mapped);
+      setCalculated(mapped.length > 0);
+    } catch (err) {
+      console.warn('Payslips table may not exist yet:', err);
+      setPayslips([]);
+      setCalculated(false);
+    }
     
-    const mapped: Payslip[] = (data || []).map((p: any) => ({
-      id: p.id,
-      employee_id: p.employee_id,
-      employee_name: p.employees?.full_name || 'Desconocido',
-      gross_pay: Number(p.gross_pay),
-      employee_ss: Number(p.employee_ss),
-      employer_ss: Number(p.employer_ss),
-      irpf_withheld: Number(p.irpf_withheld),
-      other_deductions: Number(p.other_deductions),
-      net_pay: Number(p.net_pay),
-      variation: (Math.random() - 0.5) * 200, // Mock variation
-    }));
-    
-    setPayslips(mapped);
-    setCalculated(mapped.length > 0);
     setLoading(false);
   };
 

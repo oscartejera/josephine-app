@@ -74,42 +74,80 @@ export default function Payroll() {
   const currentStep = location.pathname.split('/payroll/')[1] || 'home';
   const stepIndex = PAYROLL_STEPS.findIndex(s => s.key === currentStep);
   
+  // Ensure payroll tables exist on first load
+  const [schemaReady, setSchemaReady] = useState(false);
+  
   useEffect(() => {
     if (group?.id) {
-      fetchData();
+      // Run schema setup once, then fetch data
+      const init = async () => {
+        if (!schemaReady) {
+          try {
+            const { payrollApi } = await import('@/lib/payroll-api');
+            await payrollApi.setup();
+            setSchemaReady(true);
+          } catch (err) {
+            console.warn('Schema setup warning:', err);
+            setSchemaReady(true); // Continue even if setup fails
+          }
+        }
+        await fetchData();
+      };
+      init();
     }
-  }, [group?.id, currentPeriod]);
+  }, [group?.id, currentPeriod, schemaReady]);
   
   const fetchData = async () => {
     setLoading(true);
     
-    // Fetch legal entities
-    const { data: entities } = await supabase
-      .from('legal_entities')
-      .select('*, social_security_accounts(*), tax_accounts(*)')
-      .eq('group_id', group?.id);
-    
-    setLegalEntities(entities || []);
-    
-    if (entities && entities.length > 0 && !selectedLegalEntity) {
-      setSelectedLegalEntity(entities[0]);
+    // Fetch legal entities - use try/catch for resilience
+    let entities: any[] = [];
+    try {
+      const { data } = await supabase
+        .from('legal_entities')
+        .select('*, social_security_accounts(*), tax_accounts(*)')
+        .eq('group_id', group?.id);
+      entities = data || [];
+    } catch {
+      // social_security_accounts or tax_accounts might not exist yet
+      const { data } = await supabase
+        .from('legal_entities')
+        .select('*')
+        .eq('group_id', group?.id);
+      entities = data || [];
     }
     
-    // Check if we have compliance tokens (sandbox mode check)
-    if (selectedLegalEntity) {
-      const { data: tokens } = await supabase
-        .from('compliance_tokens')
-        .select('id')
-        .eq('legal_entity_id', selectedLegalEntity?.id)
-        .limit(1);
-      
-      setIsSandboxMode(!tokens || tokens.length === 0);
+    setLegalEntities(entities);
+    
+    // Use local variable to avoid stale closure issue
+    let activeEntity = selectedLegalEntity;
+    if (entities.length > 0 && !activeEntity) {
+      activeEntity = entities[0];
+      setSelectedLegalEntity(activeEntity);
+    }
+    
+    // Fetch payroll run and sandbox status
+    if (activeEntity) {
+      // Check sandbox mode
+      let isSandbox = true;
+      try {
+        const { data: tokens } = await supabase
+          .from('compliance_tokens')
+          .select('id')
+          .eq('legal_entity_id', activeEntity.id)
+          .limit(1);
+        isSandbox = !tokens || tokens.length === 0;
+      } catch {
+        // Table might not exist yet
+        isSandbox = true;
+      }
+      setIsSandboxMode(isSandbox);
       
       // Fetch current payroll run
       const { data: run } = await supabase
         .from('payroll_runs')
         .select('*')
-        .eq('legal_entity_id', selectedLegalEntity.id)
+        .eq('legal_entity_id', activeEntity.id)
         .eq('period_year', currentPeriod.year)
         .eq('period_month', currentPeriod.month)
         .maybeSingle();

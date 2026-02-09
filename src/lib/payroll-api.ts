@@ -41,6 +41,9 @@ async function callPayrollApi<T = any>(action: string, body: Record<string, any>
 // ===== Public API methods =====
 
 export const payrollApi = {
+  // Setup: ensures all payroll tables exist in the database
+  setup: () => callPayrollApi('setup', {}),
+
   createEntity: (groupId: string, data: {
     razon_social: string;
     nif: string;

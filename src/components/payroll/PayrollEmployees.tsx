@@ -67,18 +67,40 @@ export default function PayrollEmployees({
   const fetchEmployees = async () => {
     setLoading(true);
     
-    // Fetch employees with their legal data and contracts
-    const { data } = await supabase
-      .from('employees')
-      .select(`
-        id, full_name, role_name, location_id,
-        employee_legal(nif, nss, iban),
-        employment_contracts(id, contract_type, base_salary_monthly, active)
-      `)
-      .eq('active', true)
-      .order('full_name');
+    try {
+      // Try full query with joins first
+      const { data, error } = await supabase
+        .from('employees')
+        .select(`
+          id, full_name, role_name, location_id,
+          employee_legal(nif, nss, iban),
+          employment_contracts(id, contract_type, base_salary_monthly, active)
+        `)
+        .eq('active', true)
+        .order('full_name');
+      
+      if (!error && data) {
+        setEmployees((data as Employee[]) || []);
+      } else {
+        // Fallback: fetch employees without joins (tables might not exist yet)
+        console.warn('Full query failed, fetching employees without joins:', error?.message);
+        const { data: basicData } = await supabase
+          .from('employees')
+          .select('id, full_name, role_name, location_id')
+          .eq('active', true)
+          .order('full_name');
+        
+        setEmployees((basicData || []).map(e => ({
+          ...e,
+          employee_legal: [],
+          employment_contracts: [],
+        })) as Employee[]);
+      }
+    } catch (err) {
+      console.error('Error fetching employees:', err);
+      setEmployees([]);
+    }
     
-    setEmployees((data as Employee[]) || []);
     setLoading(false);
   };
 

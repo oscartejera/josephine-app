@@ -52,27 +52,50 @@ export default function PayrollInputs({
   const fetchInputs = async () => {
     setLoading(true);
     
-    // Fetch employees and their inputs for this period
+    // Fetch employees
     const { data: employees } = await supabase
       .from('employees')
       .select('id, full_name')
       .eq('active', true);
     
-    const { data: existingInputs } = await supabase
-      .from('payroll_inputs')
-      .select('*')
-      .eq('period_year', currentPeriod.year)
-      .eq('period_month', currentPeriod.month);
+    // Fetch existing inputs (handle missing table)
+    let existingInputs: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('payroll_inputs')
+        .select('*')
+        .eq('period_year', currentPeriod.year)
+        .eq('period_month', currentPeriod.month);
+      if (!error && data) existingInputs = data;
+    } catch {
+      console.warn('payroll_inputs table might not exist yet');
+    }
     
-    const inputsMap = new Map((existingInputs || []).map(i => [i.employee_id, i]));
+    // Fetch contracts for default hours (Art. 34 ET - jornada pactada)
+    let contractMap = new Map<string, any>();
+    try {
+      const { data: contracts } = await supabase
+        .from('employment_contracts')
+        .select('employee_id, jornada_pct')
+        .eq('active', true);
+      contractMap = new Map((contracts || []).map((c: any) => [c.employee_id, c]));
+    } catch {}
+    
+    const inputsMap = new Map(existingInputs.map(i => [i.employee_id, i]));
     
     const merged: PayrollInput[] = (employees || []).map(emp => {
       const existing = inputsMap.get(emp.id);
+      const contract = contractMap.get(emp.id);
+      // Default hours: 150h/month * jornada % (Convenio Hostelería Madrid = 1800h/year)
+      const defaultHours = existing?.hours_regular 
+        ? Number(existing.hours_regular) 
+        : (150 * ((contract?.jornada_pct || 100) / 100));
+      
       return {
         id: existing?.id || '',
         employee_id: emp.id,
         employee_name: emp.full_name,
-        hours_regular: Number(existing?.hours_regular) || 0,
+        hours_regular: round2(defaultHours),
         hours_night: Number(existing?.hours_night) || 0,
         hours_holiday: Number(existing?.hours_holiday) || 0,
         hours_overtime: Number(existing?.hours_overtime) || 0,
@@ -84,6 +107,8 @@ export default function PayrollInputs({
     setInputs(merged);
     setLoading(false);
   };
+  
+  function round2(n: number) { return Math.round(n * 100) / 100; }
 
   const handlePullTimesheets = async () => {
     setPullLoading(true);
@@ -131,26 +156,30 @@ export default function PayrollInputs({
       deductions_json: input.deductions,
     };
 
-    let error;
-    if (input.id) {
-      const result = await supabase
-        .from('payroll_inputs')
-        .update(payload)
-        .eq('id', input.id);
-      error = result.error;
-    } else {
-      const result = await supabase
-        .from('payroll_inputs')
-        .insert(payload);
-      error = result.error;
-    }
+    try {
+      let error;
+      if (input.id) {
+        const result = await supabase
+          .from('payroll_inputs')
+          .update(payload)
+          .eq('id', input.id);
+        error = result.error;
+      } else {
+        const result = await supabase
+          .from('payroll_inputs')
+          .upsert(payload, { onConflict: 'employee_id,period_year,period_month' });
+        error = result.error;
+      }
 
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar' });
-    } else {
-      toast({ title: 'Guardado', description: 'Variables actualizadas' });
-      fetchInputs();
-      setEditingInput(null);
+      if (error) {
+        toast({ variant: 'destructive', title: 'Error', description: `No se pudo guardar: ${error.message}` });
+      } else {
+        toast({ title: 'Guardado', description: 'Variables actualizadas' });
+        fetchInputs();
+        setEditingInput(null);
+      }
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar las variables' });
     }
   };
 

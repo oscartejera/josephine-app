@@ -112,7 +112,7 @@ export default function PayrollHome({
       );
       
       toast({ title: 'Nómina iniciada', description: `Período ${format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}` });
-      refreshData();
+      await refreshData();
       navigate('/payroll/employees');
     } catch (error) {
       toast({ 

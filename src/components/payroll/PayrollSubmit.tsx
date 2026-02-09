@@ -30,11 +30,16 @@ export default function PayrollSubmit({
   }, [currentRun]);
 
   const fetchSubmissions = async () => {
-    const { data } = await supabase
-      .from('compliance_submissions')
-      .select('*')
-      .eq('payroll_run_id', currentRun?.id);
-    setSubmissions(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('compliance_submissions')
+        .select('*')
+        .eq('payroll_run_id', currentRun?.id);
+      if (!error && data) setSubmissions(data);
+    } catch {
+      console.warn('compliance_submissions table may not exist');
+      setSubmissions([]);
+    }
   };
 
   const handleSubmit = async (agency: string, _type: string) => {

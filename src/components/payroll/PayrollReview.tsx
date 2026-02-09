@@ -54,13 +54,19 @@ export default function PayrollReview({
     
     setLoading(true);
     
-    const { data: payslips } = await supabase
-      .from('payslips')
-      .select(`
-        gross_pay, net_pay, employer_ss, employee_id,
-        employees(location_id)
-      `)
-      .eq('payroll_run_id', currentRun.id);
+    let payslips: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('payslips')
+        .select(`
+          gross_pay, net_pay, employer_ss, employee_id,
+          employees(location_id)
+        `)
+        .eq('payroll_run_id', currentRun.id);
+      if (!error && data) payslips = data;
+    } catch {
+      console.warn('Could not fetch payslips for review');
+    }
     
     // Group by location
     const locationMap = new Map<string, LocationSummary>();
