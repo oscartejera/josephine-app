@@ -147,8 +147,7 @@ function AppRoutes() {
         <Route path="/procurement" element={<Procurement />} />
         <Route path="/procurement/cart" element={<ProcurementCart />} />
         <Route path="/procurement/orders" element={<ProcurementOrders />} />
-        <Route path="/payroll" element={<Payroll />} />
-        <Route path="/payroll/:step" element={<Payroll />} />
+        <Route path="/payroll/*" element={<Payroll />} />
         
         {/* Integrations */}
         <Route path="/integrations" element={<Integrations />} />
