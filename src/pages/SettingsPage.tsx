@@ -17,7 +17,6 @@ import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, Che
 import { useToast } from '@/hooks/use-toast';
 import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
 import { TeamManager } from '@/components/settings/TeamManager';
-import { DemoDataManager } from '@/components/settings/DemoDataManager';
 import { ProductKDSManager } from '@/components/settings/ProductKDSManager';
 import { PaymentHistoryManager } from '@/components/settings/PaymentHistoryManager';
 import { PrinterConfigManager } from '@/components/settings/PrinterConfigManager';
@@ -277,7 +276,6 @@ export default function SettingsPage() {
           <TabsTrigger value="payment">{t('settings.paymentMethods')}</TabsTrigger>
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
-          <TabsTrigger value="demo">{t('settings.demoData')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -648,11 +646,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {isOwner && (
-          <TabsContent value="demo">
-            <DemoDataManager />
-          </TabsContent>
-        )}
       </Tabs>
     </div>
   );

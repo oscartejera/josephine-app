@@ -3,14 +3,12 @@ import { startOfMonth, endOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MapPin, ChevronDown, Sparkles } from 'lucide-react';
+import { MapPin, ChevronDown } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { CashKPICards, CashLeakageChart, CashLocationTable } from '@/components/cash-management';
 import { useCashManagementData } from '@/hooks/useCashManagementData';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export default function CashManagement() {
   const { locations } = useApp();
@@ -25,62 +23,14 @@ export default function CashManagement() {
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [locationsOpen, setLocationsOpen] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
-  const { isLoading, metrics, dailyData, locationData, hasData, refetch } = useCashManagementData(dateRange, selectedLocations);
-
-  const handleSeedDemoData = async () => {
-    setSeeding(true);
-    try {
-      // Insert demo data directly
-      const locationIds = locations.map(l => l.id);
-      const rows = [];
-      const today = new Date();
-      
-      for (let i = 0; i < 30; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        for (const locId of locationIds) {
-          const baseSales = 5000 + Math.random() * 15000;
-          const cashPct = 0.15 + Math.random() * 0.25;
-          rows.push({
-            date: dateStr,
-            location_id: locId,
-            net_sales: Math.round(baseSales),
-            gross_sales: Math.round(baseSales * 1.1),
-            orders_count: Math.round(baseSales / 35),
-            payments_cash: Math.round(baseSales * cashPct),
-            payments_card: Math.round(baseSales * (1 - cashPct)),
-            payments_other: 0,
-            refunds_amount: Math.round(baseSales * (0.002 + Math.random() * 0.013)),
-            refunds_count: Math.round(Math.random() * 5),
-            discounts_amount: Math.round(baseSales * (0.01 + Math.random() * 0.03)),
-            comps_amount: Math.round(baseSales * Math.random() * 0.01),
-            voids_amount: Math.round(baseSales * Math.random() * 0.005),
-          });
-        }
-      }
-
-      const { error } = await supabase.from('pos_daily_finance').upsert(rows, { onConflict: 'date,location_id' });
-      if (error) throw error;
-      
-      toast.success('Demo data generated successfully');
-      refetch();
-    } catch (err) {
-      console.error('Error seeding data:', err);
-      toast.error('Failed to generate demo data');
-    } finally {
-      setSeeding(false);
-    }
-  };
+  const { isLoading, metrics, dailyData, locationData } = useCashManagementData(dateRange, selectedLocations);
 
   // Loading state only - no access blocking
   if (permLoading) return null;
 
-  const locationsLabel = selectedLocations.length === 0 ? 'All locations' : 
-    selectedLocations.length === 1 ? locations.find(l => l.id === selectedLocations[0])?.name : 
+  const locationsLabel = selectedLocations.length === 0 ? 'All locations' :
+    selectedLocations.length === 1 ? locations.find(l => l.id === selectedLocations[0])?.name :
     `${selectedLocations.length} locations`;
 
   return (
@@ -125,26 +75,10 @@ export default function CashManagement() {
         </div>
       </div>
 
-      {/* Empty State */}
-      {!isLoading && !hasData && (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No data available</h3>
-          <p className="text-sm text-muted-foreground mb-4">Generate demo data to explore Cash Management</p>
-          <Button onClick={handleSeedDemoData} disabled={seeding}>
-            {seeding ? 'Generating...' : 'Generate Demo Data'}
-          </Button>
-        </div>
-      )}
-
       {/* Content */}
-      {(isLoading || hasData) && (
-        <>
-          <CashKPICards metrics={metrics} isLoading={isLoading} />
-          <CashLeakageChart data={dailyData} isLoading={isLoading} />
-          {selectedLocations.length === 0 && <CashLocationTable data={locationData} isLoading={isLoading} />}
-        </>
-      )}
+      <CashKPICards metrics={metrics} isLoading={isLoading} />
+      <CashLeakageChart data={dailyData} isLoading={isLoading} />
+      {selectedLocations.length === 0 && <CashLocationTable data={locationData} isLoading={isLoading} />}
     </div>
   );
 }

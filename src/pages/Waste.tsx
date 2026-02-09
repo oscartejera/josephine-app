@@ -46,7 +46,6 @@ export default function Waste() {
     byCategory,
     leaderboard,
     items,
-    seedDemoData
   } = useWasteData(dateRange, dateMode, selectedLocations);
 
   const handleWasteLogged = () => {
@@ -115,7 +114,6 @@ export default function Waste() {
         items={items}
         totalWastePercent={metrics.wastePercentOfSales}
         isLoading={isLoading}
-        onGenerateDemo={seedDemoData}
       />
     </div>
   );

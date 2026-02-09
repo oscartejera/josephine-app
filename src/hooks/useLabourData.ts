@@ -153,13 +153,3 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
   };
 }
 
-// Seed demo data function
-export async function seedLabourDemoData(days: number = 30): Promise<{ seeded: boolean; locations: number; days: number }> {
-  const { data, error } = await supabase.rpc('seed_demo_labour_data', {
-    p_days: days,
-    p_locations: 6,
-  });
-
-  if (error) throw error;
-  return data as { seeded: boolean; locations: number; days: number };
-}

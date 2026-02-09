@@ -13,7 +13,6 @@ import { LabourKPICards } from '@/components/labour/LabourKPICards';
 import { LabourChart } from '@/components/labour/LabourChart';
 import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
 import { LabourByRole } from '@/components/labour/LabourByRole';
-import { LabourEmptyState } from '@/components/labour/LabourEmptyState';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -123,40 +122,33 @@ export default function Labour() {
           locations={locations}
         />
 
-      {/* Empty State */}
-      {isEmpty && !isLoading ? (
-        <LabourEmptyState onDataSeeded={refetch} />
-      ) : (
-        <>
-          {/* KPI Cards */}
-          <LabourKPICards
-            kpis={kpis}
-            isLoading={isLoading}
-            metricMode={metricMode}
-            dateRange={dateRange}
-          />
+      {/* KPI Cards */}
+      <LabourKPICards
+        kpis={kpis}
+        isLoading={isLoading}
+        metricMode={metricMode}
+        dateRange={dateRange}
+      />
 
-          {/* Chart */}
-          <LabourChart
-            data={timeseries}
-            isLoading={isLoading}
-            metricMode={metricMode}
-          />
+      {/* Chart */}
+      <LabourChart
+        data={timeseries}
+        isLoading={isLoading}
+        metricMode={metricMode}
+      />
 
-          {/* Labour by Role */}
-          <LabourByRole
-            isLoading={isLoading}
-            metricMode={metricMode}
-          />
+      {/* Labour by Role */}
+      <LabourByRole
+        isLoading={isLoading}
+        metricMode={metricMode}
+      />
 
-          {/* Locations Table */}
-          <LabourLocationsTable
-            data={locations}
-            isLoading={isLoading}
-            metricMode={metricMode}
-          />
-        </>
-      )}
+      {/* Locations Table */}
+      <LabourLocationsTable
+        data={locations}
+        isLoading={isLoading}
+        metricMode={metricMode}
+      />
     </div>
   );
 }
