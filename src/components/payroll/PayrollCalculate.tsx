@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { payrollApi } from '@/lib/payroll-api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -89,28 +90,7 @@ export default function PayrollCalculate({
     setCalculating(true);
     
     try {
-      // Call Edge Function for payroll calculation
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payroll_calculate`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ payroll_run_id: currentRun.id }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error en el cálculo');
-      }
-
-      const result = await response.json();
+      const result = await payrollApi.calculatePayroll(currentRun.id);
       
       await refreshData();
       await fetchPayslips();
@@ -118,7 +98,7 @@ export default function PayrollCalculate({
       setCalculated(true);
       toast({ 
         title: 'Cálculo completado', 
-        description: `Se han calculado ${result.employees_calculated} nóminas. Total neto: €${result.totals.net_pay.toLocaleString()}` 
+        description: `Se han calculado ${result.employees_calculated} nóminas. Total neto: €${result.totals?.net_pay?.toLocaleString() || '0'}` 
       });
     } catch (error) {
       console.error('Payroll calculation error:', error);

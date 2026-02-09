@@ -18,18 +18,34 @@ export default function PayrollPay({
   const [generating, setGenerating] = useState(false);
 
   const handleGenerateSEPA = async () => {
+    if (!currentRun) return;
     setGenerating(true);
-    // Simulate SEPA file generation
-    await new Promise(r => setTimeout(r, 1000));
-    toast({ title: 'Fichero SEPA generado', description: 'Descarga iniciada' });
+    try {
+      const { payrollApi } = await import('@/lib/payroll-api');
+      const result = await payrollApi.generateSEPA(currentRun.id);
+      toast({ 
+        title: 'Fichero SEPA generado', 
+        description: `${result.sepa?.numberOfTransactions || 0} transferencias por €${result.sepa?.controlSum?.toLocaleString() || '0'}` 
+      });
+      await refreshData();
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error generando SEPA' });
+    }
     setGenerating(false);
   };
 
   const handleMarkPaid = async () => {
     if (!currentRun) return;
-    await supabase.from('payroll_runs').update({ status: 'paid' }).eq('id', currentRun.id);
-    await refreshData();
-    toast({ title: 'Nóminas marcadas como pagadas' });
+    try {
+      const { payrollApi } = await import('@/lib/payroll-api');
+      await payrollApi.updateStatus(currentRun.id, 'paid');
+      await refreshData();
+      toast({ title: 'Nóminas marcadas como pagadas' });
+    } catch {
+      await supabase.from('payroll_runs').update({ status: 'paid' }).eq('id', currentRun.id);
+      await refreshData();
+      toast({ title: 'Nóminas marcadas como pagadas' });
+    }
   };
 
   const isPaid = currentRun?.status === 'paid';

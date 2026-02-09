@@ -93,40 +93,20 @@ export default function PayrollReview({
     
     setApproving(true);
     
-    const { error } = await supabase
-      .from('payroll_runs')
-      .update({ 
-        status: 'approved',
-        approved_at: new Date().toISOString(),
-        approved_by: user.id,
-      })
-      .eq('id', currentRun.id);
-    
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo aprobar' });
+    try {
+      const { payrollApi } = await import('@/lib/payroll-api');
+      await payrollApi.updateStatus(currentRun.id, 'approved', user.id);
+      
+      await refreshData();
       setApproving(false);
-      return;
+      setShowApproveDialog(false);
+      
+      toast({ title: 'Nóminas aprobadas', description: 'Puedes proceder a la presentación' });
+      navigate('/payroll/submit');
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo aprobar' });
+      setApproving(false);
     }
-    
-    // Log audit
-    await supabase
-      .from('payroll_audit')
-      .insert({
-        group_id: selectedLegalEntity?.group_id,
-        actor_user_id: user.id,
-        action: 'APPROVE_PAYROLL',
-        payload_json: {
-          payroll_run_id: currentRun.id,
-          period: `${currentPeriod.year}-${currentPeriod.month}`,
-        },
-      });
-    
-    await refreshData();
-    setApproving(false);
-    setShowApproveDialog(false);
-    
-    toast({ title: 'Nóminas aprobadas', description: 'Puedes proceder a la presentación' });
-    navigate('/payroll/submit');
   };
 
   const totals = {

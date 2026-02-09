@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { payrollApi } from '@/lib/payroll-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -96,51 +97,44 @@ export default function PayrollEmployees({
   const handleSaveLegalData = async () => {
     if (!editingEmployee || !selectedLegalEntity) return;
 
-    const { error } = await supabase
-      .from('employee_legal')
-      .upsert({
-        employee_id: editingEmployee.id,
-        legal_entity_id: selectedLegalEntity.id,
-        nif: legalData.nif || null,
-        nss: legalData.nss || null,
-        iban: legalData.iban || null,
-        domicilio: legalData.domicilio || null,
-      }, { onConflict: 'employee_id,legal_entity_id' });
-
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron guardar los datos' });
-    } else {
+    try {
+      await payrollApi.saveEmployeeLegal(editingEmployee.id, selectedLegalEntity.id, {
+        nif: legalData.nif || undefined,
+        nss: legalData.nss || undefined,
+        iban: legalData.iban || undefined,
+        domicilio: legalData.domicilio || undefined,
+      });
       toast({ title: 'Guardado', description: 'Datos legales actualizados' });
       fetchEmployees();
       setEditingEmployee(null);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudieron guardar los datos' });
     }
   };
 
   const handleCreateContract = async () => {
     if (!editingEmployee || !selectedLegalEntity) return;
 
-    const { error } = await supabase
-      .from('employment_contracts')
-      .insert({
-        employee_id: editingEmployee.id,
-        legal_entity_id: selectedLegalEntity.id,
-        location_id: editingEmployee.location_id,
-        start_date: new Date().toISOString().split('T')[0],
-        contract_type: contractData.contract_type,
-        base_salary_monthly: parseFloat(contractData.base_salary_monthly) || 0,
-        group_ss: contractData.group_ss,
-        category: contractData.category,
-        jornada_pct: parseFloat(contractData.jornada_pct) || 100,
-        irpf_rate: parseFloat(contractData.irpf_rate) || null,
-        active: true,
-      });
-
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo crear el contrato' });
-    } else {
-      toast({ title: 'Contrato creado', description: 'El contrato se ha creado correctamente' });
+    try {
+      const result = await payrollApi.createContract(
+        editingEmployee.id,
+        selectedLegalEntity.id,
+        editingEmployee.location_id,
+        {
+          contract_type: contractData.contract_type,
+          base_salary_monthly: contractData.base_salary_monthly,
+          group_ss: contractData.group_ss,
+          category: contractData.category,
+          jornada_pct: contractData.jornada_pct,
+          irpf_rate: contractData.irpf_rate,
+        }
+      );
+      const irpfMsg = result.auto_irpf_rate ? ` (IRPF auto: ${result.auto_irpf_rate}%)` : '';
+      toast({ title: 'Contrato creado', description: `El contrato se ha creado correctamente${irpfMsg}` });
       fetchEmployees();
       setEditingEmployee(null);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo crear el contrato' });
     }
   };
 

@@ -177,12 +177,17 @@ export default function PayrollValidate({
     
     setValidating(true);
     
-    // Update run status to validated
+    // Update run status to validated via API
     if (currentRun) {
-      await supabase
-        .from('payroll_runs')
-        .update({ status: 'validated' })
-        .eq('id', currentRun.id);
+      try {
+        const { payrollApi } = await import('@/lib/payroll-api');
+        await payrollApi.updateStatus(currentRun.id, 'validated');
+      } catch {
+        await supabase
+          .from('payroll_runs')
+          .update({ status: 'validated' })
+          .eq('id', currentRun.id);
+      }
     }
     
     await refreshData();

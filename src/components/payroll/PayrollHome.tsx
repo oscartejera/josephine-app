@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { payrollApi } from '@/lib/payroll-api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,29 +60,33 @@ export default function PayrollHome({
       return;
     }
 
+    if (!group?.id) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se ha detectado el grupo. Recarga la página.' });
+      return;
+    }
+
     setLoading(true);
-    const { data, error } = await supabase
-      .from('legal_entities')
-      .insert({
-        group_id: group?.id,
+    try {
+      const result = await payrollApi.createEntity(group.id, {
         razon_social: newEntity.razon_social,
         nif: newEntity.nif,
         domicilio_fiscal: newEntity.domicilio_fiscal,
-        cnae: newEntity.cnae || null,
-      })
-      .select()
-      .single();
-
-    setLoading(false);
-
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo crear la entidad' });
-    } else {
+        cnae: newEntity.cnae || undefined,
+      });
+      
       toast({ title: 'Entidad creada', description: 'La entidad legal se ha creado correctamente' });
       setShowNewEntityDialog(false);
       setNewEntity({ razon_social: '', nif: '', domicilio_fiscal: '', cnae: '' });
       refreshData();
-      if (data) setSelectedLegalEntity(data);
+      if (result.data) setSelectedLegalEntity(result.data);
+    } catch (error) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error', 
+        description: error instanceof Error ? error.message : 'No se pudo crear la entidad' 
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,28 +103,25 @@ export default function PayrollHome({
     }
 
     setLoading(true);
-
-    // Create new payroll run
-    const { data, error } = await supabase
-      .from('payroll_runs')
-      .insert({
-        group_id: group?.id,
-        legal_entity_id: selectedLegalEntity.id,
-        period_year: currentPeriod.year,
-        period_month: currentPeriod.month,
-        status: 'draft',
-      })
-      .select()
-      .single();
-
-    setLoading(false);
-
-    if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar la nómina' });
-    } else {
+    try {
+      const result = await payrollApi.createPayrollRun(
+        group?.id || '',
+        selectedLegalEntity.id,
+        currentPeriod.year,
+        currentPeriod.month
+      );
+      
       toast({ title: 'Nómina iniciada', description: `Período ${format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}` });
       refreshData();
       navigate('/payroll/employees');
+    } catch (error) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error', 
+        description: error instanceof Error ? error.message : 'No se pudo iniciar la nómina'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -37,23 +37,17 @@ export default function PayrollSubmit({
     setSubmissions(data || []);
   };
 
-  const handleSubmit = async (agency: string, type: string) => {
+  const handleSubmit = async (agency: string, _type: string) => {
     if (!currentRun) return;
     setLoading(true);
-
-    // Simulate submission in sandbox mode
-    const { error } = await supabase.from('compliance_submissions').insert({
-      payroll_run_id: currentRun.id,
-      agency: agency as 'TGSS' | 'AEAT' | 'SEPE',
-      submission_type: type,
-      status: isSandboxMode ? 'accepted' as const : 'sent' as const,
-      response_json: isSandboxMode ? { sandbox: true, message: 'Simulación OK' } : null,
-      submitted_at: new Date().toISOString(),
-    });
-
-    if (!error) {
-      toast({ title: isSandboxMode ? 'Simulación completada' : 'Enviado', description: `${agency} - ${type}` });
+    
+    try {
+      const { payrollApi } = await import('@/lib/payroll-api');
+      await payrollApi.createSubmission(currentRun.id, agency, isSandboxMode);
+      toast({ title: isSandboxMode ? 'Simulación completada' : 'Enviado', description: `${agency} presentado correctamente` });
       fetchSubmissions();
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error al presentar' });
     }
     setLoading(false);
   };
