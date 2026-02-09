@@ -108,11 +108,16 @@ export interface ScheduleData {
   totalActualLaborCost: number;
   // Target
   targetColPercent: number;
+  targetCost: number;
   totalHours: number;
   status: 'draft' | 'published';
   timeOffConflicts: number;
   // Missing payroll flag
   missingPayrollCount: number;
+  // Nory-style metrics
+  splh: number;   // Sales Per Labor Hour
+  oplh: number;   // Orders Per Labor Hour (estimated)
+  scheduledColPercent: number; // COL% based on scheduled shifts (not forecast)
 }
 
 export interface Location {
@@ -193,6 +198,65 @@ async function fetchLocations(): Promise<Location[]> {
   return data || [];
 }
 
+// Fix double-UTF-8 encoding (mojibake): MarÃ­a → María, etc.
+function fixEncoding(name: string): string {
+  return name
+    .replace(/Ã¡/g, 'á')
+    .replace(/Ã©/g, 'é')
+    .replace(/Ã­/g, 'í')
+    .replace(/Ã³/g, 'ó')
+    .replace(/Ãº/g, 'ú')
+    .replace(/Ã±/g, 'ñ')
+    .replace(/Ã¼/g, 'ü')
+    .replace(/Ã\x81/g, 'Á')
+    .replace(/Ã‰/g, 'É')
+    .replace(/Ã\x8D/g, 'Í')
+    .replace(/Ã"/g, 'Ó')
+    .replace(/Ãš/g, 'Ú')
+    .replace(/Ã'/g, 'Ñ');
+}
+
+// Nory-style department mapping: Kitchen, Front of House, Bar, Management
+function getDepartment(roleName: string): string {
+  const r = (roleName || '').toLowerCase();
+  // Kitchen (BOH)
+  if (['chef', 'cocinero/a', 'preparación', 'lavaplatos', 'prep cook', 'sous chef', 'chef de partida', 'dishwasher'].includes(r)) {
+    return 'Kitchen';
+  }
+  // Bar
+  if (['bartender', 'barra', 'barista'].includes(r)) {
+    return 'Bar';
+  }
+  // Management
+  if (['manager', 'gerente', 'general manager', 'duty manager', 'assistant manager'].includes(r)) {
+    return 'Management';
+  }
+  // Front of House (default)
+  return 'Front of House';
+}
+
+function getStation(roleName: string): string {
+  const map: Record<string, string> = {
+    'Chef': 'Cocina',
+    'Cocinero/a': 'Cocina',
+    'Sous Chef': 'Cocina',
+    'Chef de Partida': 'Cocina',
+    'Prep Cook': 'Prep',
+    'Preparación': 'Prep',
+    'Dishwasher': 'Cocina',
+    'Lavaplatos': 'Cocina',
+    'Server': 'Sala',
+    'Camarero/a': 'Sala',
+    'Bartender': 'Bar',
+    'Barra': 'Bar',
+    'Host': 'Sala',
+    'Manager': 'Sala',
+    'Gerente': 'Sala',
+    'Limpieza': 'Limpieza',
+  };
+  return map[roleName] || 'Sala';
+}
+
 // Fetch employees for a location
 async function fetchEmployees(locationId: string): Promise<Employee[]> {
   const { data, error } = await supabase
@@ -206,39 +270,28 @@ async function fetchEmployees(locationId: string): Promise<Employee[]> {
   // Filter out OPEN placeholder employees for display
   const filtered = (data || []).filter(e => !e.full_name.startsWith('OPEN -'));
   
-  return filtered.map((emp, idx) => {
-    const nameParts = emp.full_name.split(' ');
+  return filtered.map((emp) => {
+    // Fix mojibake encoding in names
+    const fixedName = fixEncoding(emp.full_name);
+    
+    const nameParts = fixedName.split(' ');
     const initials = nameParts.length >= 2 
       ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-      : emp.full_name.substring(0, 2).toUpperCase();
+      : fixedName.substring(0, 2).toUpperCase();
     
-    // Assign department based on role
-    const bohRoles = ['Cocinero/a', 'Preparación', 'Lavaplatos'];
-    const department = bohRoles.includes(emp.role_name || '') ? 'BOH' : 'FOH';
-    
-    // Assign station based on role
-    const stationMap: Record<string, string> = {
-      'Cocinero/a': 'Cocina',
-      'Preparación': 'Prep',
-      'Lavaplatos': 'Cocina',
-      'Camarero/a': 'Sala',
-      'Barra': 'Bar',
-      'Gerente': 'Sala',
-      'Limpieza': 'Limpieza',
-    };
-    const station = stationMap[emp.role_name || ''] || 'Sala';
+    const roleName = emp.role_name || 'Server';
     
     return {
       id: emp.id,
-      name: emp.full_name,
+      name: fixedName,
       initials,
-      department,
-      position: emp.role_name || 'Team Member',
-      station,
+      department: getDepartment(roleName),
+      position: roleName,
+      station: getStation(roleName),
       weeklyHours: 0, // Will be calculated from shifts
       targetHours: 40,
       hourlyRate: emp.hourly_cost,
-      availability: {}, // Default available
+      availability: {}, // Derived from shifts below
       timeOffInfo: undefined,
     };
   });
@@ -593,16 +646,18 @@ export function useSchedulingSupabase(
     const regularShifts = allShifts.filter(s => s.employeeId && !openEmployeeIds.has(s.employeeId));
     const openShifts = allShifts.filter(s => !s.employeeId || openEmployeeIds.has(s.employeeId) || s.isOpen);
     
-    // Calculate employee weekly hours
+    // Calculate employee weekly hours and derive availability from actual shifts
     const employeesWithHours = employees.map(emp => {
       const empShifts = regularShifts.filter(s => s.employeeId === emp.id);
-      const weeklyHours = empShifts.reduce((sum, s) => sum + s.hours, 0);
+      // Sum hours correctly even when employee has multiple shifts per day
+      const weeklyHours = Math.round(empShifts.reduce((sum, s) => sum + s.hours, 0) * 10) / 10;
       
-      // Generate availability (default available for all days)
+      // Derive availability from actual shifts
       const availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'> = {};
       for (let d = 0; d < 7; d++) {
-        // Monday (d=0 in our grid) is closed
-        availability[d.toString()] = d === 0 ? 'unavailable' : 'available';
+        const dayDate = format(addDays(weekStart, d), 'yyyy-MM-dd');
+        const hasShift = empShifts.some(s => s.date === dayDate);
+        availability[d.toString()] = hasShift ? 'available' : 'day_off';
       }
       
       return { ...emp, weeklyHours, availability };
@@ -639,6 +694,22 @@ export function useSchedulingSupabase(
     // Count employees missing payroll (no hourly_cost)
     const missingPayrollCount = employees.filter(e => e.hourlyRate === null).length;
     
+    // Nory-style metrics
+    const splh = totalShiftsHours > 0 
+      ? Math.round((projectedSales / totalShiftsHours) * 100) / 100 
+      : 0;
+    // Estimate OPLH from sales / average check size (~€25)
+    const estimatedOrders = projectedSales / 25;
+    const oplh = totalShiftsHours > 0 
+      ? Math.round((estimatedOrders / totalShiftsHours) * 100) / 100 
+      : 0;
+    // COL% based on actual scheduled shifts cost (not forecast labor)
+    const scheduledColPercent = projectedSales > 0 
+      ? Math.round((totalShiftsCost / projectedSales) * 1000) / 10 
+      : 0;
+    // Target cost = forecast sales × target COL%
+    const targetCost = Math.round(projectedSales * (targetColPercent / 100));
+    
     return {
       locationId,
       locationName: location.name,
@@ -656,6 +727,7 @@ export function useSchedulingSupabase(
       totalVarianceCost,
       totalVarianceCostPct,
       targetColPercent,
+      targetCost,
       totalHours: Math.round(totalHours * 10) / 10,
       status: 'draft',
       timeOffConflicts: 0,
@@ -663,6 +735,10 @@ export function useSchedulingSupabase(
       // Actual totals for past days
       totalActualSales,
       totalActualLaborCost,
+      // Nory-style metrics
+      splh,
+      oplh,
+      scheduledColPercent,
     };
   }, [
     locationId, hasSchedule, locations, employees, dbShifts, 

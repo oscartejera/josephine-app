@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight, MoreHorizontal, TrendingUp, TrendingDown, Sparkles, Loader2 } from 'lucide-react';
-import { format, addWeeks, subWeeks, endOfWeek } from 'date-fns';
+import { ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Loader2, Clock, TrendingUp, DollarSign } from 'lucide-react';
+import { format, addWeeks, subWeeks, endOfWeek, getWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -29,13 +29,19 @@ interface SchedulingHeaderProps {
   onWeekChange: (date: Date) => void;
   onCreateSchedule: () => void;
   onPublish: () => void;
+  onOpenSettings?: () => void;
   hasSchedule: boolean;
   isCreating: boolean;
   projectedSales?: number;
   projectedColPercent?: number;
+  scheduledColPercent?: number;
   targetColPercent?: number;
+  targetCost?: number;
   totalShiftsCost?: number;
+  totalShiftsHours?: number;
   totalVarianceCost?: number;
+  splh?: number;
+  oplh?: number;
 }
 
 export function SchedulingHeader({
@@ -47,17 +53,22 @@ export function SchedulingHeader({
   isCreating,
   projectedSales,
   projectedColPercent,
+  scheduledColPercent,
   targetColPercent,
+  targetCost,
   totalShiftsCost,
+  totalShiftsHours,
   totalVarianceCost,
+  splh,
+  oplh,
+  onOpenSettings,
 }: SchedulingHeaderProps) {
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const weekLabel = `${format(weekStart, 'd')} - ${format(weekEnd, 'd MMM')}`;
+  const weekNum = getWeek(weekStart, { weekStartsOn: 1 });
   
-  const hasVariance = totalVarianceCost !== undefined && totalVarianceCost !== 0;
-  const varianceIsPositive = (totalVarianceCost ?? 0) > 0;
-  const varianceAbs = Math.abs(totalVarianceCost ?? 0);
-  const varianceSignificant = varianceAbs > 100; // Show if > €100 difference
+  const colOnTarget = scheduledColPercent !== undefined && targetColPercent !== undefined 
+    && scheduledColPercent <= targetColPercent + 2;
   
   return (
     <div className="space-y-4">
@@ -76,124 +87,85 @@ export function SchedulingHeader({
         </BreadcrumbList>
       </Breadcrumb>
       
-      {/* Main header row */}
+      {/* Main header row — exact Nory layout */}
+      {/* "Week 7 / Projected €24,100  32% / €8,200 / 513h  Target 32% / €7,712" */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Week selector */}
-          <div className="flex items-center gap-1 bg-card border border-border rounded-lg px-1 py-1">
+        <div className="flex items-center gap-3">
+          {/* Week navigation: < 9 - 15 Feb > */}
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() => onWeekChange(subWeeks(weekStart, 1))}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="px-3 text-sm font-medium min-w-[120px] text-center">
+            <span className="text-sm font-medium min-w-[110px] text-center">
               {weekLabel}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() => onWeekChange(addWeeks(weekStart, 1))}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
           
+          {/* KPI strip — Nory exact format */}
+          <div className="flex items-center gap-1.5 text-sm">
+            {/* Week N */}
+            <span className="text-muted-foreground">Week {weekNum}</span>
+            
+            {hasSchedule && projectedSales !== undefined && projectedSales > 0 && (
+              <>
+                {/* / Projected €{SUM(forecast_sales)} */}
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground">Projected</span>
+                <span className="font-semibold">€{Math.round(projectedSales).toLocaleString()}</span>
+                
+                {/* {shiftsCost / projectedSales * 100}% / €{SUM(planned_cost)} / {SUM(planned_hours)}h */}
+                {scheduledColPercent !== undefined && totalShiftsCost !== undefined && totalShiftsHours !== undefined && totalShiftsHours > 0 && (
+                  <span className={cn("font-semibold ml-3", colOnTarget ? 'text-emerald-600' : 'text-amber-600')}>
+                    {scheduledColPercent}% / €{Math.round(totalShiftsCost).toLocaleString()} / {Math.round(totalShiftsHours)}h
+                  </span>
+                )}
+                
+                {/* Target {location_settings.target_col_percent}% / €{projectedSales * target / 100} */}
+                {targetColPercent !== undefined && (
+                  <span className="text-muted-foreground ml-3">
+                    Target {targetColPercent}%{targetCost !== undefined && ` / €${Math.round(targetCost).toLocaleString()}`}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+        
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
           {/* Status badge */}
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
             Draft
           </Badge>
           
-          {/* KPI pills when schedule exists */}
-          {hasSchedule && projectedSales !== undefined && (
-            <TooltipProvider>
-              <div className="flex items-center gap-3 text-sm">
-                {/* Projected Sales */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
-                  <span className="text-muted-foreground">Forecast</span>
-                  <span className="font-medium">€{projectedSales.toLocaleString()}</span>
-                </div>
-                
-                {/* COL% */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
-                  <span className="text-muted-foreground">COL</span>
-                  <span className={cn(
-                    "font-medium",
-                    projectedColPercent && targetColPercent && projectedColPercent <= targetColPercent 
-                      ? 'text-[hsl(var(--success))]' 
-                      : 'text-amber-600'
-                  )}>
-                    {projectedColPercent}%
-                  </span>
-                </div>
-                
-                {/* Target */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-md">
-                  <span className="text-muted-foreground">Target</span>
-                  <span className="font-medium">{targetColPercent}%</span>
-                </div>
-                
-                {/* Shifts cost with variance tooltip */}
-                {totalShiftsCost !== undefined && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-md border",
-                        hasVariance && varianceSignificant
-                          ? varianceIsPositive 
-                            ? "bg-red-50 border-red-200" 
-                            : "bg-green-50 border-green-200"
-                          : "bg-muted/50 border-transparent"
-                      )}>
-                        <span className="text-muted-foreground">Shifts</span>
-                        <span className="font-medium">€{Math.round(totalShiftsCost).toLocaleString()}</span>
-                        {hasVariance && varianceSignificant && (
-                          <>
-                            {varianceIsPositive ? (
-                              <TrendingUp className="h-3.5 w-3.5 text-red-500" />
-                            ) : (
-                              <TrendingDown className="h-3.5 w-3.5 text-green-500" />
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      <div className="space-y-1">
-                        <div>Coste planificado (turnos): €{Math.round(totalShiftsCost).toLocaleString()}</div>
-                        {hasVariance && (
-                          <div className={varianceIsPositive ? "text-red-600" : "text-green-600"}>
-                            Δ vs Forecast: {varianceIsPositive ? '+' : ''}€{Math.round(totalVarianceCost ?? 0).toLocaleString()}
-                          </div>
-                        )}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            </TooltipProvider>
-          )}
-        </div>
-        
-        {/* Action buttons */}
-        <div className="flex items-center gap-2">
           <Button
             onClick={onCreateSchedule}
             disabled={isCreating}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white gap-2 shadow-md"
+            variant="outline"
+            className="gap-2"
           >
             {isCreating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                AI generating...
+                Generating...
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                AI Auto-Schedule
+                Create Schedule
               </>
             )}
           </Button>
@@ -203,27 +175,75 @@ export function SchedulingHeader({
           </Button>
           
           <Button
-            variant="outline"
             onClick={onPublish}
             disabled={!hasSchedule}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             Publish
           </Button>
           
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setTimeout(() => onOpenSettings?.(), 50); }}>
+                Schedule Settings
+              </DropdownMenuItem>
               <DropdownMenuItem>Export Schedule</DropdownMenuItem>
               <DropdownMenuItem>Print Schedule</DropdownMenuItem>
-              <DropdownMenuItem>Schedule Settings</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+      
+      {/* SPLH / OPLH metrics bar — only when schedule exists */}
+      {hasSchedule && splh !== undefined && splh > 0 && (
+        <div className="flex items-center gap-4 text-xs">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-md cursor-default">
+                <DollarSign className="h-3.5 w-3.5 text-blue-500" />
+                <span className="text-blue-600 font-medium">SPLH</span>
+                <span className="font-semibold text-blue-800">€{splh.toFixed(0)}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              Sales Per Labor Hour — €{projectedSales?.toLocaleString()} / {Math.round(totalShiftsHours || 0)}h
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-100 rounded-md cursor-default">
+                <TrendingUp className="h-3.5 w-3.5 text-purple-500" />
+                <span className="text-purple-600 font-medium">OPLH</span>
+                <span className="font-semibold text-purple-800">{oplh?.toFixed(1)}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              Orders Per Labor Hour (estimated from avg check €25)
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 border border-border rounded-md cursor-default">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground font-medium">Scheduled</span>
+                <span className="font-semibold">{Math.round(totalShiftsHours || 0)}h</span>
+                <span className="text-muted-foreground">·</span>
+                <span className="font-medium">{Math.round((totalShiftsHours || 0) / 7)}h/day avg</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              Total scheduled labor hours for the week
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      )}
     </div>
   );
 }

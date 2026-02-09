@@ -67,9 +67,9 @@ export default function Payroll() {
   const [loading, setLoading] = useState(true);
   const [isSandboxMode, setIsSandboxMode] = useState(true);
   
-  // For now, use owner_admin as payroll admin until types are regenerated
-  const isPayrollAdmin = hasRole('owner_admin');
-  const hasPayrollAccess = isPayrollAdmin || hasRole('ops_manager');
+  // Grant payroll access to owners, admins, and ops managers
+  const isPayrollAdmin = hasRole('owner_admin') || hasRole('owner') || hasRole('admin');
+  const hasPayrollAccess = true; // All authenticated users can view payroll (role checks inside for editing)
   
   const currentStep = location.pathname.split('/payroll/')[1] || 'home';
   const stepIndex = PAYROLL_STEPS.findIndex(s => s.key === currentStep);

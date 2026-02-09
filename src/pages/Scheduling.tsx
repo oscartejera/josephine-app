@@ -15,6 +15,8 @@ import {
   EmptyScheduleState,
   SwapShiftDialog,
   SwapRequestsPanel,
+  PopularShifts,
+  ScheduleSettingsSheet,
 } from '@/components/scheduling';
 import {
   Select,
@@ -67,6 +69,7 @@ export default function Scheduling() {
   const [showToast, setShowToast] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showSwapPanel, setShowSwapPanel] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [swapDialogData, setSwapDialogData] = useState<{
     shift: Shift;
     employeeName: string;
@@ -240,13 +243,19 @@ export default function Scheduling() {
         onWeekChange={handleWeekChange}
         onCreateSchedule={handleCreateSchedule}
         onPublish={() => setShowPublishModal(true)}
+        onOpenSettings={() => setShowSettings(true)}
         hasSchedule={actualHasSchedule}
         isCreating={isCreating}
         projectedSales={actualData?.projectedSales}
         projectedColPercent={actualData?.projectedColPercent}
+        scheduledColPercent={actualData?.scheduledColPercent}
         targetColPercent={actualData?.targetColPercent}
+        targetCost={actualData?.targetCost}
         totalShiftsCost={actualData?.totalShiftsCost}
+        totalShiftsHours={actualData?.totalShiftsHours}
         totalVarianceCost={actualData?.totalVarianceCost}
+        splh={actualData?.splh}
+        oplh={actualData?.oplh}
       />
       
       {/* Missing payroll warning */}
@@ -298,7 +307,11 @@ export default function Scheduling() {
         </div>
       </div>
       
-      {/* Grid */}
+      {/* Popular Shifts + Grid */}
+      {actualHasSchedule && actualData && (
+        <PopularShifts />
+      )}
+      
       {actualHasSchedule && actualData ? (
         <ScheduleGrid 
           data={actualData} 
@@ -353,6 +366,14 @@ export default function Scheduling() {
         requests={actualSwapRequests}
         onApprove={handleApproveSwap}
         onReject={handleRejectSwap}
+      />
+      
+      {/* Schedule Settings Sheet */}
+      <ScheduleSettingsSheet
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        locationId={currentLocationId}
+        locationName={currentLocation?.name || 'Location'}
       />
     </div>
   );

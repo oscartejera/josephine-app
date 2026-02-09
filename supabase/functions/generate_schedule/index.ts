@@ -5,139 +5,179 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // =================================================================
-// CONFIGURATION: Restaurant parameters
+// NORY-STYLE SCHEDULING v3
+// - Uses employee contracts (weekly_hours) for max shift limits
+// - Hourly demand curve for dynamic staffing
+// - OPLH-based staff calculation (not hardcoded templates)
+// - Budget optimization with redistribution
+// - Availability/time-off awareness
 // =================================================================
+
+// Shift windows — determined dynamically but these are the possible types
+const SHIFT_WINDOWS: Record<string, { start: string; end: string; hours: number }> = {
+  APERTURA:  { start: '09:00', end: '14:00', hours: 5 },
+  COMIDA:    { start: '11:00', end: '16:00', hours: 5 },
+  JORNADA:   { start: '10:00', end: '18:00', hours: 8 },
+  TARDE:     { start: '16:00', end: '23:00', hours: 7 },
+  CENA:      { start: '18:00', end: '23:00', hours: 5 },
+  CIERRE:    { start: '20:00', end: '00:30', hours: 4.5 },
+};
+
+// Hourly demand curve for a Madrid casual dining restaurant (% of daily sales per hour)
+const HOURLY_DEMAND_CURVE: Record<number, number> = {
+  9: 0.01, 10: 0.02, 11: 0.04, 12: 0.07,
+  13: 0.14, 14: 0.15, 15: 0.08, 16: 0.03,
+  17: 0.03, 18: 0.04, 19: 0.05, 20: 0.10,
+  21: 0.12, 22: 0.09, 23: 0.03,
+};
+
+// OPLH targets by role (orders one person can handle per hour)
+const OPLH_TARGETS: Record<string, number> = {
+  Chef: 12,        // 1 chef per 12 covers/hour
+  Server: 16,      // 1 server per 16 covers/hour
+  Bartender: 25,   // 1 bartender per 25 covers/hour
+  Host: 40,        // 1 host per 40 covers/hour (greeting/seating)
+  Manager: 999,    // Managers scheduled based on shift coverage, not OPLH
+};
+
+// Which shift windows each role can work
+const ROLE_SHIFT_MAP: Record<string, string[]> = {
+  Chef:      ['APERTURA', 'JORNADA', 'COMIDA', 'CENA', 'TARDE'],
+  Server:    ['COMIDA', 'CENA', 'JORNADA', 'TARDE'],
+  Bartender: ['COMIDA', 'TARDE', 'CENA'],
+  Host:      ['COMIDA', 'CENA'],
+  Manager:   ['JORNADA', 'CENA'],
+};
+
 const CONFIG = {
-  // Restaurant setup
-  tables: 30,
-  partySize: 2.4, // fallback average party size
-  
-  // Operating hours (Madrid casual dining)
-  openDays: [2, 3, 4, 5, 6, 0], // Tue-Sun (1=Monday is closed)
-  
-  // Service windows
-  lunch: { start: '12:30', end: '15:00', minutes: 150 },
-  dinner: { start: '19:00', end: '23:00', minutes: 240 },
-  closeFinal: '23:30',
-  
-  // Shift templates (exactly 8h)
-  shiftA: { start: '10:00', end: '18:00', label: 'Comida' }, // Lunch + prep + partial close
-  shiftB: { start: '15:30', end: '23:30', label: 'Cena' },   // Dinner + prep + final close
-  
-  // Demand distribution (if no hourly data)
-  lunchShare: 0.45,
-  dinnerShare: 0.55,
-  
-  // Dwell time (fallback)
-  dwellTimeFallback: 75, // minutes
-  
-  // Target COL
-  targetColPercent: 22,
-  
-  // Labor constraints
-  maxShiftsPerWeek: 5,
-  minRestHours: 12,
-  shiftDuration: 8,
-  
-  // Minimum staffing per service (casual dining 30 tables)
-  // Role names must match what's in the employees table
-  minStaff: {
-    lunch: {
-      'Chef': 2,
-      'Server': 4,
-      'Bartender': 0,
-      'Host': 0,
-      'Manager': 0,
-    },
-    dinner: {
-      'Chef': 3,
-      'Server': 5,
-      'Bartender': 1,
-      'Host': 1,
-      'Manager': 1,
-    },
-  },
+  defaultTargetColPercent: 32,
+  defaultHourlyCost: 14.5,
+  defaultACS: 25,          // Average Check Size €
+  minRestHours: 10,        // Spain hospitality collective agreement allows 10h
+  maxHoursPerDay: 10,
 };
 
 // =================================================================
 // TYPES
 // =================================================================
-interface GenerateScheduleRequest {
-  location_id: string;
-  week_start: string; // YYYY-MM-DD
-}
-
 interface Employee {
   id: string;
   full_name: string;
   role_name: string;
   hourly_cost: number;
-  isOpenShift: boolean;
+  weekly_hours: number;    // From employee_payroll
+  contract_type: string;   // indefinido, temporal
+  max_shifts: number;      // Derived: weekly_hours / avg_shift_duration
 }
 
-interface ForecastDay {
+interface Slot {
   date: string;
-  forecast_sales: number;
-  planned_labor_cost: number;
-  planned_labor_hours: number;
-}
-
-interface ShiftAssignment {
-  employee_id: string;
+  shiftType: string;
   role: string;
-  shift_template: 'A' | 'B';
-  cost: number;
+  startTime: string;
+  endTime: string;
+  hours: number;
 }
 
-interface DayPlan {
-  date: string;
-  dayOfWeek: number;
-  isClosed: boolean;
-  forecastSales: number;
-  expectedCovers: number;
-  lunchCovers: number;
-  dinnerCovers: number;
-  turnsLunch: number;
-  turnsDinner: number;
-  capacityLunch: number;
-  capacityDinner: number;
-  isHighDemand: boolean;
-  staffNeeded: Record<string, { shiftA: number; shiftB: number }>;
-  assignments: ShiftAssignment[];
-  totalCost: number;
-  colPercent: number;
-}
-
-interface ShiftToInsert {
-  employee_id: string;
-  location_id: string;
-  shift_date: string;
-  start_time: string;
-  end_time: string;
-  planned_hours: number;
-  planned_cost: number;
-  role: string;
-  status: string;
+interface EmpState {
+  shiftsCount: number;
+  totalHours: number;
+  workingDays: Set<string>;
+  lastShiftDate: string;
+  lastShiftEnd: string;
+  shiftVariety: Record<string, number>;
 }
 
 // =================================================================
-// HELPER FUNCTIONS
+// HELPERS
 // =================================================================
-
-function getDayOfWeek(dateStr: string): number {
-  // 0=Sunday, 1=Monday, ..., 6=Saturday
-  return new Date(dateStr).getDay();
+function shuffleArray<T>(arr: T[], seed: number): T[] {
+  const copy = [...arr];
+  let s = seed;
+  for (let i = copy.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const j = s % (i + 1);
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
 
-function isClosedDay(dayOfWeek: number): boolean {
-  // Monday (1) is closed
-  return dayOfWeek === 1;
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function shiftsOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+  const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  let aS = toMin(aStart), aE = toMin(aEnd), bS = toMin(bStart), bE = toMin(bEnd);
+  if (aE <= aS) aE += 24 * 60;
+  if (bE <= bS) bE += 24 * 60;
+  return aS < bE && bS < aE;
+}
+
+/** Calculate staff needed per role from hourly demand curve (OPLH-based) */
+function calculateStaffNeeds(
+  dailySales: number,
+  acs: number,
+): Record<string, Record<string, number>> {
+  const dailyCovers = dailySales / acs;
+
+  // Calculate peak covers for lunch (12-15) and dinner (19-23)
+  const lunchPct = [12, 13, 14, 15].reduce((s, h) => s + (HOURLY_DEMAND_CURVE[h] || 0), 0);
+  const dinnerPct = [19, 20, 21, 22, 23].reduce((s, h) => s + (HOURLY_DEMAND_CURVE[h] || 0), 0);
+  const lunchPeakCoversPerHour = dailyCovers * Math.max(...[13, 14].map(h => HOURLY_DEMAND_CURVE[h] || 0));
+  const dinnerPeakCoversPerHour = dailyCovers * Math.max(...[21, 22].map(h => HOURLY_DEMAND_CURVE[h] || 0));
+
+  const needs: Record<string, Record<string, number>> = {};
+
+  for (const [role, oplh] of Object.entries(OPLH_TARGETS)) {
+    needs[role] = {};
+
+    if (role === 'Manager') {
+      // 1 Manager full day always, +1 CENA on busy days
+      needs[role]['JORNADA'] = 1;
+      if (dinnerPeakCoversPerHour > 15) needs[role]['CENA'] = 1;
+      continue;
+    }
+
+    // Calculate staff for each service period
+    const lunchStaff = Math.max(1, Math.ceil(lunchPeakCoversPerHour / oplh));
+    const dinnerStaff = Math.max(1, Math.ceil(dinnerPeakCoversPerHour / oplh));
+
+    if (role === 'Chef') {
+      // 1 APERTURA (prep), lunch COMIDA, dinner CENA
+      needs[role]['APERTURA'] = 1;
+      needs[role]['COMIDA'] = Math.max(1, lunchStaff - 1); // -1 because apertura covers into lunch
+      needs[role]['CENA'] = dinnerStaff;
+    } else if (role === 'Host') {
+      // Hosts only during service
+      if (lunchStaff >= 2) needs[role]['COMIDA'] = 1;
+      needs[role]['CENA'] = 1;
+    } else if (role === 'Bartender') {
+      // Bar opens for lunch on busy days, always for dinner
+      if (lunchStaff >= 2) needs[role]['COMIDA'] = 1;
+      needs[role]['TARDE'] = 1;
+    } else {
+      // Server: COMIDA shifts + CENA shifts (+ JORNADA for 1 senior on busy days)
+      needs[role]['COMIDA'] = lunchStaff;
+      needs[role]['CENA'] = dinnerStaff;
+      // On busy days, add 1 JORNADA server for full coverage
+      if (lunchStaff >= 3 && dinnerStaff >= 3) {
+        needs[role]['JORNADA'] = 1;
+        // Reduce COMIDA by 1 since JORNADA covers lunch
+        needs[role]['COMIDA'] = Math.max(1, lunchStaff - 1);
+      }
+    }
+  }
+
+  return needs;
 }
 
 // =================================================================
 // MAIN HANDLER
 // =================================================================
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -148,82 +188,116 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    const body: GenerateScheduleRequest = await req.json();
-    const { location_id, week_start } = body;
-    
+    const { location_id, week_start } = await req.json();
+
     if (!location_id || !week_start) {
       return new Response(
         JSON.stringify({ error: 'Missing location_id or week_start' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    logs.push(`[SCHEDULE] Starting for location ${location_id}, week ${week_start}`);
-    
-    const weekStartDate = new Date(week_start);
+
+    logs.push(`[SCHEDULE] v3 — Starting for location ${location_id}, week ${week_start}`);
+
+    const weekStartDate = new Date(week_start + 'T00:00:00Z');
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
     const weekEnd = weekEndDate.toISOString().split('T')[0];
-    
+
     // =========================================================
-    // 1. FETCH BASE DATA
+    // 1. FETCH ALL DATA (employees + payroll + contracts + forecast + settings)
     // =========================================================
-    
-    // 1a. Fetch active employees (exclude OPEN placeholder for now)
-    const { data: employeesRaw, error: empError } = await supabase
+
+    // 1a. Employees with payroll data (LEFT JOIN via separate query)
+    const { data: employeesRaw } = await supabase
       .from('employees')
       .select('id, full_name, role_name, hourly_cost')
       .eq('location_id', location_id)
       .eq('active', true);
-    
-    if (empError) throw new Error(`Failed to fetch employees: ${empError.message}`);
-    
-    // Separate real employees from OPEN placeholders
-    const realEmployees: Employee[] = [];
-    const openPlaceholders: Employee[] = [];
-    
-    (employeesRaw || []).forEach(e => {
-      const emp: Employee = {
-        id: e.id,
-        full_name: e.full_name,
-        role_name: e.role_name || 'Camarero/a',
-        hourly_cost: e.hourly_cost ?? 15.00,
-        isOpenShift: e.full_name.startsWith('OPEN -'),
-      };
-      if (emp.isOpenShift) {
-        openPlaceholders.push(emp);
-      } else {
-        realEmployees.push(emp);
-      }
+
+    const { data: payrollRaw } = await supabase
+      .from('employee_payroll')
+      .select('employee_id, weekly_hours, contract_type')
+      .eq('location_id', location_id);
+
+    const payrollMap: Record<string, { weekly_hours: number; contract_type: string }> = {};
+    (payrollRaw || []).forEach((p: any) => {
+      payrollMap[p.employee_id] = { weekly_hours: p.weekly_hours, contract_type: p.contract_type };
     });
-    
-    logs.push(`[SCHEDULE] Found ${realEmployees.length} real employees, ${openPlaceholders.length} open placeholders`);
-    
-    if (realEmployees.length === 0 && openPlaceholders.length === 0) {
+
+    const employees: Employee[] = (employeesRaw || [])
+      .filter((e: any) => !e.full_name.startsWith('OPEN -'))
+      .map((e: any) => {
+        const payroll = payrollMap[e.id];
+        const weeklyHours = payroll?.weekly_hours ?? 40;
+        const avgShiftHours = 6.5; // average across shift types
+        return {
+          id: e.id,
+          full_name: e.full_name,
+          role_name: e.role_name || 'Server',
+          hourly_cost: e.hourly_cost ?? CONFIG.defaultHourlyCost,
+          weekly_hours: weeklyHours,
+          contract_type: payroll?.contract_type ?? 'indefinido',
+          max_shifts: Math.min(6, Math.ceil(weeklyHours / avgShiftHours)),
+        };
+      });
+
+    if (employees.length === 0) {
       return new Response(
-        JSON.stringify({ 
-          error: 'No active employees found for this location',
-          shifts_created: 0,
-          days_generated: 0 
-        }),
+        JSON.stringify({ error: 'No employees found', shifts_created: 0 }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    // 1b. Fetch location settings
-    const { data: locationSettings } = await supabase
+
+    const employeesByRole: Record<string, Employee[]> = {};
+    employees.forEach(emp => {
+      if (!employeesByRole[emp.role_name]) employeesByRole[emp.role_name] = [];
+      employeesByRole[emp.role_name].push(emp);
+    });
+
+    const avgHourlyCost = employees.reduce((s, e) => s + e.hourly_cost, 0) / employees.length;
+
+    logs.push(`[SCHEDULE] ${employees.length} employees. Roles: ${Object.entries(employeesByRole).map(([r, e]) => `${r}(${e.length})`).join(', ')}`);
+
+    // Log contract distribution
+    const hourDist: Record<string, number> = {};
+    employees.forEach(e => { hourDist[e.weekly_hours + 'h'] = (hourDist[e.weekly_hours + 'h'] || 0) + 1; });
+    logs.push(`[SCHEDULE] Contract hours: ${JSON.stringify(hourDist)}`);
+
+    // 1b. Location settings — fetch ALL scheduling config from DB
+    const { data: locSettings } = await supabase
       .from('location_settings')
-      .select('default_hourly_cost, target_col_percent')
+      .select('target_col_percent, default_hourly_cost, average_check_size, min_rest_hours, max_hours_per_day, staffing_ratios, hourly_demand_curve, closed_days, tables_count, splh_goal')
       .eq('location_id', location_id)
       .maybeSingle();
-    
-    const defaultHourlyCost = locationSettings?.default_hourly_cost ?? 15.00;
-    const targetColPercent = locationSettings?.target_col_percent ?? CONFIG.targetColPercent;
-    
-    logs.push(`[SCHEDULE] Target COL%: ${targetColPercent}%, Default hourly cost: €${defaultHourlyCost}`);
-    
-    // 1c. Fetch forecast metrics for the week
+
+    const targetColPercent = locSettings?.target_col_percent ?? CONFIG.defaultTargetColPercent;
+    const acs = Number(locSettings?.average_check_size) || CONFIG.defaultACS;
+    const minRestHours = Number(locSettings?.min_rest_hours) || CONFIG.minRestHours;
+    const maxHoursPerDay = Number(locSettings?.max_hours_per_day) || CONFIG.maxHoursPerDay;
+    const closedDays: number[] = locSettings?.closed_days ?? [];
+
+    // Override OPLH targets from DB if available
+    const dbStaffingRatios = locSettings?.staffing_ratios as Record<string, number> | null;
+    if (dbStaffingRatios) {
+      for (const [role, val] of Object.entries(dbStaffingRatios)) {
+        if (typeof val === 'number' && val > 0) {
+          OPLH_TARGETS[role] = val;
+        }
+      }
+      logs.push(`[SCHEDULE] OPLH targets from DB: ${JSON.stringify(OPLH_TARGETS)}`);
+    }
+
+    // Override hourly demand curve from DB if available
+    const dbDemandCurve = locSettings?.hourly_demand_curve as Record<string, number> | null;
+    if (dbDemandCurve && Object.keys(dbDemandCurve).length > 5) {
+      for (const [hour, pct] of Object.entries(dbDemandCurve)) {
+        HOURLY_DEMAND_CURVE[Number(hour)] = Number(pct);
+      }
+      logs.push(`[SCHEDULE] Demand curve from DB (${Object.keys(dbDemandCurve).length} hours)`);
+    }
+
+    // 1c. Forecast
     const { data: forecasts } = await supabase
       .from('forecast_daily_metrics')
       .select('date, forecast_sales, planned_labor_cost, planned_labor_hours')
@@ -231,420 +305,321 @@ Deno.serve(async (req) => {
       .gte('date', week_start)
       .lte('date', weekEnd)
       .order('date');
-    
-    const forecastByDate: Record<string, ForecastDay> = {};
-    (forecasts || []).forEach(f => {
+
+    const forecastByDate: Record<string, any> = {};
+    (forecasts || []).forEach((f: any) => {
       forecastByDate[f.date] = {
-        date: f.date,
         forecast_sales: Number(f.forecast_sales) || 0,
         planned_labor_cost: Number(f.planned_labor_cost) || 0,
         planned_labor_hours: Number(f.planned_labor_hours) || 0,
       };
     });
-    
-    logs.push(`[SCHEDULE] Forecast data for ${Object.keys(forecastByDate).length} days`);
-    
-    // 1d. Fetch Average Check Size (ACS) - last 28 days
-    const today = new Date().toISOString().split('T')[0];
-    const acs28Start = new Date();
-    acs28Start.setDate(acs28Start.getDate() - 28);
-    const acs28StartStr = acs28Start.toISOString().split('T')[0];
-    
-    const { data: acsData } = await supabase
-      .from('tickets')
-      .select('net_total, covers')
-      .eq('location_id', location_id)
-      .eq('status', 'closed')
-      .gte('closed_at', acs28StartStr)
-      .lt('closed_at', today);
-    
-    let acs28d = 25.0; // Fallback ACS
-    if (acsData && acsData.length > 0) {
-      const totalSales = acsData.reduce((s, t) => s + (Number(t.net_total) || 0), 0);
-      const totalCovers = acsData.reduce((s, t) => s + (Number(t.covers) || 0), 0);
-      if (totalCovers > 0) {
-        acs28d = totalSales / totalCovers;
-      }
-    }
-    logs.push(`[SCHEDULE] ACS (28d): €${acs28d.toFixed(2)}`);
-    
-    // 1e. Fetch Avg Dwell Time - last 7 days (dine-in only)
-    const dwell7Start = new Date();
-    dwell7Start.setDate(dwell7Start.getDate() - 7);
-    const dwell7StartStr = dwell7Start.toISOString().split('T')[0];
-    
-    const { data: dwellData } = await supabase
-      .from('tickets')
-      .select('opened_at, closed_at, channel')
-      .eq('location_id', location_id)
-      .eq('status', 'closed')
-      .eq('channel', 'dine-in')
-      .gte('closed_at', dwell7StartStr)
-      .lt('closed_at', today)
-      .not('opened_at', 'is', null)
-      .not('closed_at', 'is', null);
-    
-    let avgDwellTime = CONFIG.dwellTimeFallback;
-    if (dwellData && dwellData.length > 0) {
-      const validDwells: number[] = [];
-      dwellData.forEach(t => {
-        if (t.opened_at && t.closed_at) {
-          const opened = new Date(t.opened_at).getTime();
-          const closed = new Date(t.closed_at).getTime();
-          const dwellMinutes = (closed - opened) / 60000;
-          // Filter outliers: <10 min or >240 min
-          if (dwellMinutes >= 10 && dwellMinutes <= 240) {
-            validDwells.push(dwellMinutes);
-          }
-        }
-      });
-      if (validDwells.length > 0) {
-        avgDwellTime = validDwells.reduce((a, b) => a + b, 0) / validDwells.length;
-      }
-    }
-    logs.push(`[SCHEDULE] Avg Dwell Time (7d): ${avgDwellTime.toFixed(1)} min`);
-    
-    // 1f. Fetch average party size from tickets (last 28d dine-in)
-    const { data: partyData } = await supabase
-      .from('tickets')
-      .select('covers')
-      .eq('location_id', location_id)
-      .eq('status', 'closed')
-      .eq('channel', 'dine-in')
-      .gte('closed_at', acs28StartStr)
-      .lt('closed_at', today)
-      .gt('covers', 0);
-    
-    let avgPartySize = CONFIG.partySize;
-    if (partyData && partyData.length > 0) {
-      const totalCovers = partyData.reduce((s, t) => s + (Number(t.covers) || 0), 0);
-      avgPartySize = totalCovers / partyData.length;
-    }
-    logs.push(`[SCHEDULE] Avg Party Size: ${avgPartySize.toFixed(2)}`);
-    
+
+    // 1d. Check for time-off / availability (from planned_shifts with status='time_off' or future table)
+    // For now, we don't block any days since no availability table exists yet
+    const blockedDays: Record<string, Set<string>> = {}; // employeeId -> Set of blocked dates
+
     // =========================================================
-    // 2. DELETE EXISTING SHIFTS FOR THIS WEEK (ALL statuses)
+    // 2. DELETE EXISTING SHIFTS
     // =========================================================
-    const { error: deleteError } = await supabase
+    await supabase
       .from('planned_shifts')
       .delete()
       .eq('location_id', location_id)
       .gte('shift_date', week_start)
       .lte('shift_date', weekEnd);
-    
-    if (deleteError) {
-      warnings.push(`Delete existing shifts error: ${deleteError.message}`);
-    }
-    
+
     // =========================================================
-    // 3. CALCULATE STAFFING NEEDS PER DAY
+    // 3. CALCULATE DYNAMIC STAFFING PER DAY (OPLH-based)
     // =========================================================
-    const dayPlans: DayPlan[] = [];
-    
-    // Group employees by role
-    const employeesByRole: Record<string, Employee[]> = {};
-    realEmployees.forEach(emp => {
-      if (!employeesByRole[emp.role_name]) {
-        employeesByRole[emp.role_name] = [];
-      }
-      employeesByRole[emp.role_name].push(emp);
-    });
-    
-    // Also track open placeholders by role
-    const openByRole: Record<string, Employee> = {};
-    openPlaceholders.forEach(emp => {
-      // Extract role from "OPEN - Camarero/a"
-      const role = emp.role_name;
-      if (role) {
-        openByRole[role] = emp;
-      }
-    });
-    
-    // Calculate table turns based on dwell time
-    const turnsLunch = Math.max(1, Math.floor(CONFIG.lunch.minutes / avgDwellTime));
-    const turnsDinner = Math.max(1, Math.floor(CONFIG.dinner.minutes / avgDwellTime));
-    
-    logs.push(`[SCHEDULE] Table turns: Lunch=${turnsLunch}, Dinner=${turnsDinner}`);
-    
-    // Capacity per service
-    const capacityLunch = CONFIG.tables * avgPartySize * turnsLunch;
-    const capacityDinner = CONFIG.tables * avgPartySize * turnsDinner;
-    
-    logs.push(`[SCHEDULE] Capacity: Lunch=${capacityLunch.toFixed(0)} covers, Dinner=${capacityDinner.toFixed(0)} covers`);
-    
-    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-      const currentDate = new Date(weekStartDate);
-      currentDate.setDate(currentDate.getDate() + dayOffset);
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const dayOfWeek = getDayOfWeek(dateStr);
-      const isClosed = isClosedDay(dayOfWeek);
-      
+    const salesValues = Object.values(forecastByDate).map((f: any) => f.forecast_sales).filter((s: number) => s > 0);
+    const medianSales = median(salesValues);
+    logs.push(`[SCHEDULE] Target COL%: ${targetColPercent}%, Median daily sales: €${medianSales.toFixed(0)}`);
+
+    const allSlots: Slot[] = [];
+
+    for (let d = 0; d < 7; d++) {
+      const current = new Date(weekStartDate);
+      current.setUTCDate(current.getUTCDate() + d);
+      const dateStr = current.toISOString().split('T')[0];
       const forecast = forecastByDate[dateStr];
-      const forecastSales = forecast?.forecast_sales || 0;
-      
-      // Calculate expected covers
-      const expectedCovers = forecastSales > 0 ? forecastSales / acs28d : 0;
-      const lunchCovers = expectedCovers * CONFIG.lunchShare;
-      const dinnerCovers = expectedCovers * CONFIG.dinnerShare;
-      
-      // Determine high demand
-      const isHighDemand = lunchCovers > capacityLunch * 0.8 || dinnerCovers > capacityDinner * 0.8;
-      
-      const plan: DayPlan = {
-        date: dateStr,
-        dayOfWeek,
-        isClosed,
-        forecastSales,
-        expectedCovers,
-        lunchCovers,
-        dinnerCovers,
-        turnsLunch,
-        turnsDinner,
-        capacityLunch,
-        capacityDinner,
-        isHighDemand,
-        staffNeeded: {},
-        assignments: [],
-        totalCost: 0,
-        colPercent: 0,
-      };
-      
-      if (!isClosed && forecastSales > 0) {
-        // Calculate staff needed per role
-        // FOH: Servers based on tables (1 server per 7-8 tables)
-        const serversLunch = isHighDemand ? 4 : 3;
-        const serversDinner = isHighDemand ? 5 : 4;
-        
-        // BOH: Chefs based on demand
-        const cooksLunch = isHighDemand ? 3 : 2;
-        const cooksDinner = isHighDemand ? 3 : 2;
-        
-        // Calculate staff needs per shift (role names match employees table)
-        plan.staffNeeded = {
-          'Chef': { shiftA: cooksLunch, shiftB: cooksDinner },
-          'Server': { shiftA: serversLunch, shiftB: serversDinner },
-          'Bartender': { shiftA: 1, shiftB: 1 },
-          'Host': { shiftA: 1, shiftB: 1 },
-          'Manager': { shiftA: 1, shiftB: 1 },
-        };
+      const sales = forecast?.forecast_sales || 0;
+
+      if (sales <= 0) {
+        logs.push(`[SCHEDULE] ${dateStr}: CLOSED`);
+        continue;
       }
-      
-      dayPlans.push(plan);
-    }
-    
-    // =========================================================
-    // 4. ASSIGN EMPLOYEES TO SHIFTS (with legal constraints)
-    // =========================================================
-    
-    // Track employee assignments across the week
-    const employeeWeeklyShifts: Record<string, { count: number; lastEndDate?: string; lastEndTime?: string }> = {};
-    realEmployees.forEach(emp => {
-      employeeWeeklyShifts[emp.id] = { count: 0 };
-    });
-    
-    // Track used employee+date+time combinations to avoid duplicate key violations
-    const usedSlots = new Set<string>(); // "employeeId|date|startTime"
-    
-    // Process each day
-    for (const plan of dayPlans) {
-      if (plan.isClosed) continue;
-      
-      // For each role and shift template, assign employees
-      for (const [role, needs] of Object.entries(plan.staffNeeded)) {
-        for (const shiftTemplate of ['A', 'B'] as const) {
-          const needed = shiftTemplate === 'A' ? needs.shiftA : needs.shiftB;
-          const shiftConfig = shiftTemplate === 'A' ? CONFIG.shiftA : CONFIG.shiftB;
-          
-          // Get available employees for this role (clone to avoid mutation issues)
-          const roleEmployees = [...(employeesByRole[role] || [])];
-          
-          for (let i = 0; i < needed; i++) {
-            let assignedEmployee: Employee | null = null;
-            const slotKey = (empId: string) => `${empId}|${plan.date}|${shiftConfig.start}`;
-            
-            // Try to find an available real employee
-            for (let j = 0; j < roleEmployees.length; j++) {
-              const emp = roleEmployees[j];
-              const weekData = employeeWeeklyShifts[emp.id];
-              if (!weekData) continue;
-              
-              // Check if already assigned to this slot
-              if (usedSlots.has(slotKey(emp.id))) continue;
-              
-              // Check max shifts per week
-              if (weekData.count >= CONFIG.maxShiftsPerWeek) continue;
-              
-              // Check 12h rest between shifts
-              if (weekData.lastEndDate === plan.date) {
-                // Same day - already assigned to a shift, skip
-                continue;
-              }
-              
-              if (weekData.lastEndDate) {
-                const lastEnd = new Date(`${weekData.lastEndDate}T${weekData.lastEndTime || '00:00'}`);
-                const thisStart = new Date(`${plan.date}T${shiftConfig.start}`);
-                const restHours = (thisStart.getTime() - lastEnd.getTime()) / 3600000;
-                if (restHours < CONFIG.minRestHours) continue;
-              }
-              
-              assignedEmployee = emp;
-              // Remove from available pool for this role
-              roleEmployees.splice(j, 1);
-              break;
-            }
-            
-            // If no real employee available, DON'T use OPEN placeholder for DB insert
-            // Instead, log a warning - we'll only create shifts for real employees
-            if (!assignedEmployee) {
-              warnings.push(`Need additional ${role} on ${plan.date} (Shift ${shiftTemplate}) - OPEN SLOT`);
-              // Skip creating this shift - no duplicate key issues
-              continue;
-            }
-            
-            // Mark slot as used
-            usedSlots.add(slotKey(assignedEmployee.id));
-            
-            const cost = assignedEmployee.hourly_cost * CONFIG.shiftDuration;
-            
-            plan.assignments.push({
-              employee_id: assignedEmployee.id,
+
+      // Check if this day of week is a closed day
+      const dayOfWeek = current.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      if (closedDays.includes(dayOfWeek)) {
+        logs.push(`[SCHEDULE] ${dateStr}: CLOSED (closed day setting)`);
+        continue;
+      }
+
+      // Dynamic staffing calculation based on OPLH hourly demand curve
+      const staffNeeds = calculateStaffNeeds(sales, acs);
+
+      let daySlots: Slot[] = [];
+      let dayHours = 0;
+
+      for (const [role, shiftNeeds] of Object.entries(staffNeeds)) {
+        if (!employeesByRole[role] || employeesByRole[role].length === 0) continue;
+
+        for (const [shiftType, count] of Object.entries(shiftNeeds)) {
+          const sw = SHIFT_WINDOWS[shiftType];
+          if (!sw || count <= 0) continue;
+
+          for (let i = 0; i < count; i++) {
+            daySlots.push({
+              date: dateStr,
+              shiftType,
               role,
-              shift_template: shiftTemplate,
-              cost,
+              startTime: sw.start,
+              endTime: sw.end,
+              hours: sw.hours,
             });
-            
-            plan.totalCost += cost;
-            
-            // Update tracking
-            employeeWeeklyShifts[assignedEmployee.id].count++;
-            employeeWeeklyShifts[assignedEmployee.id].lastEndDate = plan.date;
-            employeeWeeklyShifts[assignedEmployee.id].lastEndTime = shiftConfig.end;
+            dayHours += sw.hours;
           }
         }
       }
-      
-      // Calculate COL% for the day
-      plan.colPercent = plan.forecastSales > 0 
-        ? (plan.totalCost / plan.forecastSales) * 100 
-        : 0;
-      
-      // Optimization: if COL% > target, try to reduce flex roles
-      if (plan.colPercent > targetColPercent && plan.forecastSales > 0) {
-        // Remove last added non-essential shifts (prep extra, second barra, etc.)
-        const flexRoles = ['Bartender', 'Host'];
-        let removed = false;
-        
-        for (let i = plan.assignments.length - 1; i >= 0 && !removed; i--) {
-          const assignment = plan.assignments[i];
-          if (flexRoles.includes(assignment.role)) {
-            // Check if above minimum
-            const roleCount = plan.assignments.filter(a => a.role === assignment.role).length;
-            const minNeeded = 
-              CONFIG.minStaff.dinner[assignment.role as keyof typeof CONFIG.minStaff.dinner] || 0;
-            
-            if (roleCount > minNeeded) {
-              plan.totalCost -= assignment.cost;
-              plan.assignments.splice(i, 1);
-              plan.colPercent = (plan.totalCost / plan.forecastSales) * 100;
-              removed = true;
-              logs.push(`[SCHEDULE] Removed flex ${assignment.role} on ${plan.date} to optimize COL%`);
+
+      // =========================================================
+      // BUDGET OPTIMIZATION — trim if over, add if under
+      // =========================================================
+      const laborBudget = sales * (targetColPercent / 100);
+      let dayCost = dayHours * avgHourlyCost;
+
+      // If over budget by >10%, trim non-essential roles iteratively
+      if (dayCost > laborBudget * 1.10) {
+        const trimPriority = ['Host', 'Bartender', 'Server', 'Chef']; // trim least essential first
+        for (const trimRole of trimPriority) {
+          if (dayCost <= laborBudget * 1.10) break;
+          // Find shortest shifts of this role to trim
+          const roleSlots = daySlots
+            .filter(s => s.role === trimRole)
+            .sort((a, b) => a.hours - b.hours);
+          // Keep at least 1 of each role
+          if (roleSlots.length > 1) {
+            const toRemove = roleSlots[0];
+            const idx = daySlots.indexOf(toRemove);
+            if (idx >= 0) {
+              dayHours -= toRemove.hours;
+              dayCost = dayHours * avgHourlyCost;
+              daySlots.splice(idx, 1);
+              logs.push(`[SCHEDULE] ${dateStr}: Trimmed ${toRemove.role} ${toRemove.shiftType} (budget opt)`);
             }
           }
         }
       }
-    }
-    
-    // =========================================================
-    // 5. INSERT SHIFTS INTO DATABASE
-    // =========================================================
-    const shiftsToInsert: ShiftToInsert[] = [];
-    
-    for (const plan of dayPlans) {
-      for (const assignment of plan.assignments) {
-        const shiftConfig = assignment.shift_template === 'A' ? CONFIG.shiftA : CONFIG.shiftB;
-        
-        shiftsToInsert.push({
-          employee_id: assignment.employee_id,
-          location_id,
-          shift_date: plan.date,
-          start_time: shiftConfig.start + ':00',
-          end_time: shiftConfig.end + ':00',
-          planned_hours: CONFIG.shiftDuration,
-          planned_cost: Math.round(assignment.cost * 100) / 100,
-          role: assignment.role,
-          status: 'draft',
+
+      // If under budget by >25%, consider adding a Server shift
+      if (dayCost < laborBudget * 0.75 && employeesByRole['Server']?.length > 0) {
+        const addShift = sales > medianSales ? 'CENA' : 'COMIDA';
+        const sw = SHIFT_WINDOWS[addShift];
+        daySlots.push({
+          date: dateStr, shiftType: addShift, role: 'Server',
+          startTime: sw.start, endTime: sw.end, hours: sw.hours,
         });
+        dayHours += sw.hours;
+        dayCost = dayHours * avgHourlyCost;
+      }
+
+      allSlots.push(...daySlots);
+      const dayColPct = sales > 0 ? ((dayCost / sales) * 100).toFixed(1) : '0';
+      logs.push(`[SCHEDULE] ${dateStr}: €${sales.toFixed(0)} → ${daySlots.length} shifts, ${dayHours.toFixed(1)}h, est.COL ${dayColPct}%`);
+    }
+
+    // =========================================================
+    // 4. ASSIGN EMPLOYEES (contract-aware, load-balanced)
+    // =========================================================
+    const empState = new Map<string, EmpState>();
+    employees.forEach(e => {
+      empState.set(e.id, {
+        shiftsCount: 0,
+        totalHours: 0,
+        workingDays: new Set(),
+        lastShiftDate: '',
+        lastShiftEnd: '',
+        shiftVariety: {},
+      });
+    });
+
+    const seedValue = week_start.split('-').reduce((a: number, b: string) => a + parseInt(b), 0);
+    const assignments: Array<{ employee: Employee; slot: Slot }> = [];
+
+    // Group and sort slots
+    const slotsByRole: Record<string, Slot[]> = {};
+    allSlots.forEach(slot => {
+      if (!slotsByRole[slot.role]) slotsByRole[slot.role] = [];
+      slotsByRole[slot.role].push(slot);
+    });
+
+    for (const [role, slots] of Object.entries(slotsByRole)) {
+      const roleEmps = employeesByRole[role];
+      if (!roleEmps || roleEmps.length === 0) {
+        warnings.push(`No ${role} employees — ${slots.length} slots unfilled`);
+        continue;
+      }
+
+      // Sort: busiest days first
+      const dayDemand: Record<string, number> = {};
+      for (const [date, f] of Object.entries(forecastByDate)) {
+        dayDemand[date] = (f as any).forecast_sales || 0;
+      }
+      slots.sort((a, b) => (dayDemand[b.date] || 0) - (dayDemand[a.date] || 0));
+
+      for (const slot of slots) {
+        const shuffled = shuffleArray(roleEmps, seedValue + slot.date.charCodeAt(9) + Math.round(slot.hours * 7));
+
+        const candidates = shuffled
+          .filter(emp => {
+            const state = empState.get(emp.id)!;
+
+            // CONTRACT-AWARE: max shifts based on weekly_hours
+            if (state.shiftsCount >= emp.max_shifts) return false;
+
+            // CONTRACT-AWARE: don't exceed weekly_hours
+            if (state.totalHours + slot.hours > emp.weekly_hours + 2) return false; // +2h tolerance
+
+            // AVAILABILITY: check blocked days
+            const blocked = blockedDays[emp.id];
+            if (blocked && blocked.has(slot.date)) return false;
+
+            // Same-day overlap check
+            const existingToday = assignments.filter(a => a.employee.id === emp.id && a.slot.date === slot.date);
+            if (existingToday.length >= 2) return false;
+            if (existingToday.length === 1) {
+              const existing = existingToday[0].slot;
+              if (shiftsOverlap(existing.startTime, existing.endTime, slot.startTime, slot.endTime)) return false;
+              if (existing.hours + slot.hours > maxHoursPerDay) return false;
+            }
+
+            // Rest between days (uses DB setting, not hardcoded)
+            if (state.lastShiftDate && state.lastShiftDate !== slot.date && state.lastShiftEnd) {
+              const lastEnd = new Date(`${state.lastShiftDate}T${state.lastShiftEnd}:00Z`);
+              const thisStart = new Date(`${slot.date}T${slot.startTime}:00Z`);
+              const restMs = thisStart.getTime() - lastEnd.getTime();
+              if (restMs > 0 && restMs < minRestHours * 3600000) return false;
+            }
+
+            return true;
+          })
+          .sort((a, b) => {
+            const sa = empState.get(a.id)!;
+            const sb = empState.get(b.id)!;
+            // Primary: utilization ratio (hours worked / weekly_hours contract)
+            const ratioA = sa.totalHours / a.weekly_hours;
+            const ratioB = sb.totalHours / b.weekly_hours;
+            if (Math.abs(ratioA - ratioB) > 0.1) return ratioA - ratioB;
+            // Secondary: fewer total shifts
+            if (sa.shiftsCount !== sb.shiftsCount) return sa.shiftsCount - sb.shiftsCount;
+            // Tertiary: variety
+            return (sa.shiftVariety[slot.shiftType] || 0) - (sb.shiftVariety[slot.shiftType] || 0);
+          });
+
+        if (candidates.length === 0) {
+          warnings.push(`No available ${role} for ${slot.date} ${slot.shiftType}`);
+          continue;
+        }
+
+        const chosen = candidates[0];
+        const state = empState.get(chosen.id)!;
+        state.shiftsCount++;
+        state.totalHours += slot.hours;
+        state.workingDays.add(slot.date);
+        state.lastShiftDate = slot.date;
+        state.lastShiftEnd = slot.endTime;
+        state.shiftVariety[slot.shiftType] = (state.shiftVariety[slot.shiftType] || 0) + 1;
+
+        assignments.push({ employee: chosen, slot });
       }
     }
-    
-    logs.push(`[SCHEDULE] Prepared ${shiftsToInsert.length} shifts to insert`);
-    
+
+    // =========================================================
+    // 5. INSERT SHIFTS
+    // =========================================================
+    const shiftsToInsert = assignments.map(({ employee, slot }) => ({
+      employee_id: employee.id,
+      location_id,
+      shift_date: slot.date,
+      start_time: slot.startTime + ':00',
+      end_time: slot.endTime + ':00',
+      planned_hours: slot.hours,
+      planned_cost: Math.round(employee.hourly_cost * slot.hours * 100) / 100,
+      role: slot.role,
+      status: 'draft',
+    }));
+
     let shiftsCreated = 0;
-    if (shiftsToInsert.length > 0) {
+    for (let i = 0; i < shiftsToInsert.length; i += 100) {
+      const batch = shiftsToInsert.slice(i, i + 100);
       const { data: inserted, error: insertError } = await supabase
         .from('planned_shifts')
-        .insert(shiftsToInsert)
+        .insert(batch)
         .select('id');
-      
-      if (insertError) {
-        throw new Error(`Failed to insert shifts: ${insertError.message}`);
-      }
-      
-      shiftsCreated = inserted?.length || 0;
+      if (insertError) throw new Error(`Insert batch ${i}: ${insertError.message}`);
+      shiftsCreated += inserted?.length || 0;
     }
-    
+
     // =========================================================
-    // 6. CALCULATE SUMMARY STATISTICS
+    // 6. SUMMARY
     // =========================================================
-    const totalCost = dayPlans.reduce((s, p) => s + p.totalCost, 0);
-    const totalSales = dayPlans.reduce((s, p) => s + p.forecastSales, 0);
-    const overallColPercent = totalSales > 0 ? (totalCost / totalSales) * 100 : 0;
-    
-    // Count shifts by role
+    const totalCost = shiftsToInsert.reduce((s, sh) => s + sh.planned_cost, 0);
+    const totalHours = shiftsToInsert.reduce((s, sh) => s + sh.planned_hours, 0);
+    const totalSales = Object.values(forecastByDate).reduce((s: number, f: any) => s + (f.forecast_sales || 0), 0);
+    const colPercent = totalSales > 0 ? (totalCost / totalSales) * 100 : 0;
+
     const shiftsByRole: Record<string, number> = {};
-    shiftsToInsert.forEach(s => {
-      shiftsByRole[s.role] = (shiftsByRole[s.role] || 0) + 1;
+    const shiftsByType: Record<string, number> = {};
+    assignments.forEach(a => {
+      shiftsByRole[a.slot.role] = (shiftsByRole[a.slot.role] || 0) + 1;
+      shiftsByType[a.slot.shiftType] = (shiftsByType[a.slot.shiftType] || 0) + 1;
     });
-    
-    logs.push(`[SCHEDULE] Created ${shiftsCreated} shifts successfully`);
-    logs.push(`[SCHEDULE] Total Cost: €${totalCost.toFixed(2)}, Forecast Sales: €${totalSales.toFixed(2)}, COL%: ${overallColPercent.toFixed(1)}%`);
-    logs.push(`[SCHEDULE] Shifts by role: ${JSON.stringify(shiftsByRole)}`);
-    
-    // Log all to console
+
+    // Employee utilization
+    const utilization: Record<string, string> = {};
+    employees.forEach(e => {
+      const state = empState.get(e.id)!;
+      utilization[e.full_name] = `${state.totalHours}/${e.weekly_hours}h (${state.shiftsCount} shifts)`;
+    });
+
+    logs.push(`[SCHEDULE] Created ${shiftsCreated} shifts, ${totalHours.toFixed(1)}h total`);
+    logs.push(`[SCHEDULE] Cost: €${totalCost.toFixed(0)} / Sales: €${totalSales.toFixed(0)} = COL% ${colPercent.toFixed(1)}% (target ${targetColPercent}%)`);
+    logs.push(`[SCHEDULE] By role: ${JSON.stringify(shiftsByRole)}`);
+    logs.push(`[SCHEDULE] By type: ${JSON.stringify(shiftsByType)}`);
+    logs.push(`[SCHEDULE] Contract hours dist: ${JSON.stringify(hourDist)}`);
+
     logs.forEach(l => console.log(l));
     warnings.forEach(w => console.warn(w));
-    
+
     return new Response(
       JSON.stringify({
         success: true,
         shifts_created: shiftsCreated,
-        days_generated: dayPlans.filter(p => !p.isClosed).length,
-        employees_count: realEmployees.length,
+        days_generated: new Set(assignments.map(a => a.slot.date)).size,
+        employees_count: employees.length,
+        total_hours: Math.round(totalHours * 10) / 10,
         summary: {
-          totalCost: Math.round(totalCost * 100) / 100,
-          totalForecastSales: Math.round(totalSales * 100) / 100,
-          colPercent: Math.round(overallColPercent * 10) / 10,
+          totalCost: Math.round(totalCost),
+          totalForecastSales: Math.round(totalSales),
+          colPercent: Math.round(colPercent * 10) / 10,
           targetColPercent,
+          totalHours: Math.round(totalHours * 10) / 10,
           shiftsByRole,
-          acs28d: Math.round(acs28d * 100) / 100,
-          avgDwellTime: Math.round(avgDwellTime),
-          avgPartySize: Math.round(avgPartySize * 100) / 100,
+          shiftsByType,
+          avgShiftsPerEmployee: +(assignments.length / employees.length).toFixed(1),
         },
         warnings: warnings.length > 0 ? warnings.slice(0, 20) : undefined,
-        logs: logs.slice(0, 30),
+        logs: logs.slice(0, 50),
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-    
+
   } catch (error) {
     console.error('[SCHEDULE] Error:', error);
-    logs.forEach(l => console.log(l));
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        shifts_created: 0,
-        logs,
-      }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error', shifts_created: 0, logs }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

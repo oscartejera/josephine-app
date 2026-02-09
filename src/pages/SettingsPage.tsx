@@ -57,7 +57,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<LocationSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState({ target_gp: '', target_col: '', default_cogs: '' });
+  const [editValues, setEditValues] = useState({ target_gp: '', target_col: '', default_cogs: '', hourly_cost: '' });
   const { toast } = useToast();
   
   const canManageUsers = isOwner || hasPermission(PERMISSIONS.SETTINGS_USERS_MANAGE);
@@ -93,7 +93,7 @@ export default function SettingsPage() {
     const { data } = await supabase
       .from('location_settings')
       .select(`
-        id, location_id, target_gp_percent, target_col_percent, default_cogs_percent,
+        id, location_id, target_gp_percent, target_col_percent, default_cogs_percent, default_hourly_cost,
         locations(name)
       `);
     
@@ -103,7 +103,8 @@ export default function SettingsPage() {
       location_name: s.locations?.name || 'Desconocido',
       target_gp_percent: s.target_gp_percent,
       target_col_percent: s.target_col_percent,
-      default_cogs_percent: s.default_cogs_percent
+      default_cogs_percent: s.default_cogs_percent,
+      default_hourly_cost: s.default_hourly_cost ?? 14.5,
     }));
     setSettings(mapped);
     setLoading(false);
@@ -114,7 +115,8 @@ export default function SettingsPage() {
     setEditValues({
       target_gp: setting.target_gp_percent.toString(),
       target_col: setting.target_col_percent.toString(),
-      default_cogs: setting.default_cogs_percent.toString()
+      default_cogs: setting.default_cogs_percent.toString(),
+      hourly_cost: (setting as any).default_hourly_cost?.toString() || '14.5',
     });
   };
 
@@ -124,7 +126,8 @@ export default function SettingsPage() {
       .update({
         target_gp_percent: parseFloat(editValues.target_gp),
         target_col_percent: parseFloat(editValues.target_col),
-        default_cogs_percent: parseFloat(editValues.default_cogs)
+        default_cogs_percent: parseFloat(editValues.default_cogs),
+        default_hourly_cost: parseFloat(editValues.hourly_cost),
       })
       .eq('id', id);
     
@@ -300,14 +303,15 @@ export default function SettingsPage() {
           <SupplierIntegrationManager />
         </TabsContent>
 
-        <TabsContent value="objectives">
+        <TabsContent value="objectives" className="space-y-6">
+          {/* P&L Objectives */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Objetivos por Local
+                Objetivos P&L por Local
               </CardTitle>
-              <CardDescription>Define los KPIs objetivo para cada local</CardDescription>
+              <CardDescription>Define los KPIs objetivo para cada local. Estos valores se usan en el scheduling y forecast.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -316,7 +320,8 @@ export default function SettingsPage() {
                     <TableHead>Local</TableHead>
                     <TableHead className="text-right">Target GP%</TableHead>
                     <TableHead className="text-right">Target COL%</TableHead>
-                    <TableHead className="text-right">COGS Default %</TableHead>
+                    <TableHead className="text-right">COGS %</TableHead>
+                    <TableHead className="text-right">€/h Medio</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -345,7 +350,7 @@ export default function SettingsPage() {
                             onChange={(e) => setEditValues({...editValues, target_col: e.target.value})}
                           />
                         ) : (
-                          `${setting.target_col_percent}%`
+                          <span className="font-medium text-emerald-600">{setting.target_col_percent}%</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -358,6 +363,19 @@ export default function SettingsPage() {
                           />
                         ) : (
                           `${setting.default_cogs_percent}%`
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {editingId === setting.id ? (
+                          <Input 
+                            type="number" 
+                            step="0.5"
+                            className="w-20 text-right" 
+                            value={editValues.hourly_cost}
+                            onChange={(e) => setEditValues({...editValues, hourly_cost: e.target.value})}
+                          />
+                        ) : (
+                          `€${(setting as any).default_hourly_cost?.toFixed(1) || '14.5'}`
                         )}
                       </TableCell>
                       <TableCell>
@@ -377,6 +395,53 @@ export default function SettingsPage() {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+          
+          {/* Scheduling Impact Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <span className="text-lg">📊</span>
+                Impacto en Scheduling
+              </CardTitle>
+              <CardDescription>Cómo los objetivos afectan la generación automática de turnos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {settings.map((s) => {
+                  const weeklyBudget = Math.round(3500 * 7 * (s.target_col_percent / 100));
+                  const hourlyCost = (s as any).default_hourly_cost || 14.5;
+                  const maxHours = Math.round(weeklyBudget / hourlyCost);
+                  const splhTarget = Math.round((3500 * 7) / maxHours);
+                  return (
+                    <div key={s.id} className="p-4 bg-muted/30 rounded-lg border space-y-3">
+                      <div className="font-medium text-sm">{s.location_name}</div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Target COL%</span>
+                          <span className="font-semibold text-emerald-600">{s.target_col_percent}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Budget semanal (est.)</span>
+                          <span className="font-medium">~€{weeklyBudget.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Max horas/semana</span>
+                          <span className="font-medium">~{maxHours}h</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">SPLH objetivo</span>
+                          <span className="font-medium">€{splhTarget}/h</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                * Estimaciones basadas en ventas promedio de ~€3,500/día. El AI Scheduler usa el forecast real de cada día para calcular los turnos óptimos.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
