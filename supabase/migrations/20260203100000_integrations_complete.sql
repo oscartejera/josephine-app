@@ -228,24 +228,31 @@ ALTER TABLE cdm_payments ENABLE ROW LEVEL SECURITY;
 -- For now, allow authenticated users to read their org's data
 -- Service role bypasses RLS for Edge Functions
 
+DROP POLICY IF EXISTS integrations_org_policy ON integrations;
 CREATE POLICY integrations_org_policy ON integrations
-  FOR ALL USING (true); -- TODO: Add proper org_id check via auth.jwt()
+  FOR ALL USING (true);
 
+DROP POLICY IF EXISTS integration_accounts_org_policy ON integration_accounts;
 CREATE POLICY integration_accounts_org_policy ON integration_accounts
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS cdm_locations_org_policy ON cdm_locations;
 CREATE POLICY cdm_locations_org_policy ON cdm_locations
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS cdm_items_org_policy ON cdm_items;
 CREATE POLICY cdm_items_org_policy ON cdm_items
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS cdm_orders_org_policy ON cdm_orders;
 CREATE POLICY cdm_orders_org_policy ON cdm_orders
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS cdm_order_lines_org_policy ON cdm_order_lines;
 CREATE POLICY cdm_order_lines_org_policy ON cdm_order_lines
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS cdm_payments_org_policy ON cdm_payments;
 CREATE POLICY cdm_payments_org_policy ON cdm_payments
   FOR ALL USING (true);
 

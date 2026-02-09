@@ -3,9 +3,11 @@
  * Calls get_labour_kpis, get_labour_timeseries, get_labour_locations_table
  */
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { fillMissingDates } from '@/lib/fillMissingDates';
 
 export type MetricMode = 'percentage' | 'amount' | 'hours';
 
@@ -130,6 +132,12 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
     },
   });
 
+  // Fill missing dates in timeseries so the chart shows ALL dates in range
+  const filledTimeseries = useMemo(() => {
+    const raw = timeseriesQuery.data || [];
+    return fillMissingDates<LabourTimeseriesRow>(raw, dateRange.from, dateRange.to);
+  }, [timeseriesQuery.data, dateRange.from, dateRange.to]);
+
   // Check if data is empty (for showing seed button)
   const isEmpty = 
     !kpisQuery.isLoading && 
@@ -139,7 +147,7 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
 
   return {
     kpis: kpisQuery.data,
-    timeseries: timeseriesQuery.data || [],
+    timeseries: filledTimeseries,
     locations: locationsQuery.data || [],
     isLoading: kpisQuery.isLoading || timeseriesQuery.isLoading || locationsQuery.isLoading,
     isError: kpisQuery.isError || timeseriesQuery.isError || locationsQuery.isError,

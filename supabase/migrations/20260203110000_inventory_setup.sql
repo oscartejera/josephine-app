@@ -155,11 +155,17 @@ ALTER TABLE procurement_suggestions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
 
 -- Simple policies
+DROP POLICY IF EXISTS suppliers_policy ON suppliers;
 CREATE POLICY suppliers_policy ON suppliers FOR ALL USING (true);
+DROP POLICY IF EXISTS inventory_items_policy ON inventory_items;
 CREATE POLICY inventory_items_policy ON inventory_items FOR ALL USING (true);
+DROP POLICY IF EXISTS recipes_policy ON recipes;
 CREATE POLICY recipes_policy ON recipes FOR ALL USING (true);
+DROP POLICY IF EXISTS recipe_ingredients_policy ON recipe_ingredients;
 CREATE POLICY recipe_ingredients_policy ON recipe_ingredients FOR ALL USING (true);
+DROP POLICY IF EXISTS procurement_suggestions_policy ON procurement_suggestions;
 CREATE POLICY procurement_suggestions_policy ON procurement_suggestions FOR ALL USING (true);
+DROP POLICY IF EXISTS stock_movements_policy ON stock_movements;
 CREATE POLICY stock_movements_policy ON stock_movements FOR ALL USING (true);
 
 -- Trigger to calculate cost_per_uom

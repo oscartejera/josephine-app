@@ -151,13 +151,21 @@ ALTER TABLE ai_actions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_action_results ENABLE ROW LEVEL SECURITY;
 
 -- Simple policies (adjust based on org structure)
+DROP POLICY IF EXISTS facts_sales_policy ON facts_sales_15m;
 CREATE POLICY facts_sales_policy ON facts_sales_15m FOR ALL USING (true);
+DROP POLICY IF EXISTS facts_item_mix_policy ON facts_item_mix_daily;
 CREATE POLICY facts_item_mix_policy ON facts_item_mix_daily FOR ALL USING (true);
+DROP POLICY IF EXISTS facts_labor_policy ON facts_labor_daily;
 CREATE POLICY facts_labor_policy ON facts_labor_daily FOR ALL USING (true);
+DROP POLICY IF EXISTS facts_inventory_policy ON facts_inventory_daily;
 CREATE POLICY facts_inventory_policy ON facts_inventory_daily FOR ALL USING (true);
+DROP POLICY IF EXISTS forecasts_policy ON ai_forecasts;
 CREATE POLICY forecasts_policy ON ai_forecasts FOR ALL USING (true);
+DROP POLICY IF EXISTS recommendations_policy ON ai_recommendations;
 CREATE POLICY recommendations_policy ON ai_recommendations FOR ALL USING (true);
+DROP POLICY IF EXISTS actions_policy ON ai_actions;
 CREATE POLICY actions_policy ON ai_actions FOR ALL USING (true);
+DROP POLICY IF EXISTS action_results_policy ON ai_action_results;
 CREATE POLICY action_results_policy ON ai_action_results FOR ALL USING (true);
 
 COMMENT ON TABLE facts_sales_15m IS 'Sales metrics aggregated per 15-minute bucket for forecasting';
