@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, CalendarIcon, AlertTriangle, Package, Loader2 } from 'lucide-react';
+import { TrendingUp, CalendarIcon, AlertTriangle, Package } from 'lucide-react';
 import { useTopProducts, OrderByOption } from '@/hooks/useTopProducts';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -29,7 +29,6 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
   const {
     products,
     loading,
-    seeding,
     locations,
     selectedLocationId,
     setSelectedLocationId,
@@ -41,7 +40,6 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
     setCustomDateTo,
     orderBy,
     setOrderBy,
-    seedDemoData
   } = useTopProducts();
 
   const showEmptyState = !loading && products.length === 0;
@@ -156,19 +154,9 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No hay datos de productos</h3>
-            <p className="text-muted-foreground mb-4 max-w-sm">
-              No se encontraron ventas de productos para el período y ubicación seleccionados.
+            <p className="text-muted-foreground max-w-sm">
+              No se encontraron ventas de productos para el periodo y ubicacion seleccionados.
             </p>
-            <Button onClick={seedDemoData} disabled={seeding}>
-              {seeding ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                'Generar datos demo'
-              )}
-            </Button>
           </div>
         ) : (
           <div className="overflow-x-auto">

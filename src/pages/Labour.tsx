@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { startOfWeek, endOfWeek } from 'date-fns';
+import { startOfWeek, endOfWeek, subWeeks } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { useLabourData, type MetricMode, type LabourDateRange } from '@/hooks/useLabourData';
 import { LabourHeader, type CompareMode } from '@/components/labour/LabourHeader';
@@ -13,7 +13,6 @@ import { LabourKPICards } from '@/components/labour/LabourKPICards';
 import { LabourChart } from '@/components/labour/LabourChart';
 import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
 import { LabourByRole } from '@/components/labour/LabourByRole';
-import { LabourEmptyState } from '@/components/labour/LabourEmptyState';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -28,11 +27,14 @@ export default function Labour() {
   const { locationId } = useParams<{ locationId?: string }>();
   const { accessibleLocations, loading: appLoading } = useApp();
 
-  // Initial date range: current week
-  const initialDateRange = useMemo(() => ({
-    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
-    to: endOfWeek(new Date(), { weekStartsOn: 1 }),
-  }), []);
+  // Initial date range: last complete week (always has data)
+  const initialDateRange = useMemo(() => {
+    const lastWeek = subWeeks(new Date(), 1);
+    return {
+      from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
+      to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
+    };
+  }, []);
 
   const [dateRange, setDateRange] = useState<LabourDateRange>(initialDateRange);
   const [metricMode, setMetricMode] = useState<MetricMode>('percentage');
@@ -123,40 +125,33 @@ export default function Labour() {
           locations={locations}
         />
 
-      {/* Empty State */}
-      {isEmpty && !isLoading ? (
-        <LabourEmptyState onDataSeeded={refetch} />
-      ) : (
-        <>
-          {/* KPI Cards */}
-          <LabourKPICards
-            kpis={kpis}
-            isLoading={isLoading}
-            metricMode={metricMode}
-            dateRange={dateRange}
-          />
+      {/* KPI Cards */}
+      <LabourKPICards
+        kpis={kpis}
+        isLoading={isLoading}
+        metricMode={metricMode}
+        dateRange={dateRange}
+      />
 
-          {/* Chart */}
-          <LabourChart
-            data={timeseries}
-            isLoading={isLoading}
-            metricMode={metricMode}
-          />
+      {/* Chart */}
+      <LabourChart
+        data={timeseries}
+        isLoading={isLoading}
+        metricMode={metricMode}
+      />
 
-          {/* Labour by Role */}
-          <LabourByRole
-            isLoading={isLoading}
-            metricMode={metricMode}
-          />
+      {/* Labour by Role */}
+      <LabourByRole
+        isLoading={isLoading}
+        metricMode={metricMode}
+      />
 
-          {/* Locations Table */}
-          <LabourLocationsTable
-            data={locations}
-            isLoading={isLoading}
-            metricMode={metricMode}
-          />
-        </>
-      )}
+      {/* Locations Table */}
+      <LabourLocationsTable
+        data={locations}
+        isLoading={isLoading}
+        metricMode={metricMode}
+      />
     </div>
   );
 }

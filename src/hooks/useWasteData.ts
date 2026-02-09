@@ -92,7 +92,7 @@ export function useWasteData(
   _dateMode: DateMode, // Reserved for future use
   selectedLocations: string[]
 ) {
-  const { locations, group } = useApp();
+  const { locations } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [metrics, setMetrics] = useState<WasteMetrics>({
@@ -120,25 +120,24 @@ export function useWasteData(
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Fetch tickets for sales data
-      let ticketsQuery = supabase
-        .from('tickets')
-        .select('id, location_id, net_total, gross_total')
-        .gte('closed_at', `${fromDate}T00:00:00`)
-        .lte('closed_at', `${toDate}T23:59:59`)
-        .eq('status', 'closed');
+      // Fetch sales data from pos_daily_finance
+      let salesQuery = supabase
+        .from('pos_daily_finance')
+        .select('location_id, net_sales')
+        .gte('date', fromDate)
+        .lte('date', toDate);
 
       if (locationIds.length > 0 && locationIds.length < locations.length) {
-        ticketsQuery = ticketsQuery.in('location_id', locationIds);
+        salesQuery = salesQuery.in('location_id', locationIds);
       }
 
-      const { data: tickets } = await ticketsQuery;
-      const totalSales = (tickets || []).reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
+      const { data: dailySales } = await salesQuery;
+      const totalSales = (dailySales || []).reduce((sum, d) => sum + (d.net_sales || 0), 0);
 
       // Fetch waste events with inventory items
       let wasteQuery = supabase
         .from('waste_events')
-        .select('id, location_id, waste_value, reason, quantity, created_at, inventory_item_id, inventory_items(name, category)')
+        .select('id, location_id, waste_value, reason, quantity, created_at, inventory_item_id, inventory_items(name, category_name)')
         .gte('created_at', `${fromDate}T00:00:00`)
         .lte('created_at', `${toDate}T23:59:59`);
 
@@ -208,7 +207,7 @@ export function useWasteData(
       // Calculate by category
       const categoryMap = new Map<string, number>();
       (wasteEvents || []).forEach((event: any) => {
-        const cat = event.inventory_items?.category || 'Other';
+        const cat = event.inventory_items?.category_name || 'Other';
         const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
         const existing = categoryMap.get(catLabel) || 0;
         categoryMap.set(catLabel, existing + (event.waste_value || 0));
@@ -360,170 +359,6 @@ export function useWasteData(
     };
   }, [fetchData]);
 
-  // Seed demo data to database
-  const seedDemoData = useCallback(async () => {
-    if (!group?.id || locations.length === 0) {
-      toast.error('No group or locations available');
-      return;
-    }
-
-    const reasonsWeighted = [
-      'End of day', 'End of day', 'End of day', 'End of day', 'End of day',
-      'Expired', 'Expired', 'Expired',
-      'Broken', 'Broken',
-      'Other',
-      'Theft'
-    ];
-    const categories = ['Fresh', 'Dairy', 'Frozen', 'Sauce', 'Dry goods'];
-    const itemNames = [
-      'Brined Chicken Fillets (kg)', 'Luxury cheese sauce (kg)', 'Fresh salmon (kg)',
-      'Organic eggs (dozen)', 'Butter (500g)', 'Fresh cream (ltr)',
-      'Mixed salad leaves (kg)', 'Tomatoes (kg)', 'Potatoes (kg)',
-      'Pasta sauce (jar)', 'Olive oil (ltr)', 'Milk (ltr)',
-      'Ice cream (tub)', 'Frozen peas (kg)', 'Beef mince (kg)',
-      'Yogurt (pack)', 'Cheese block (kg)', 'Ham slices (pack)'
-    ];
-
-    const wasteRows = [];
-    const today = new Date();
-
-    for (const loc of locations) {
-      // Generate 80-200 logs per location
-      const logsCount = 80 + Math.floor(Math.random() * 120);
-      
-      for (let i = 0; i < logsCount; i++) {
-        const daysAgo = Math.floor(Math.random() * 30);
-        const eventDate = new Date(today);
-        eventDate.setDate(eventDate.getDate() - daysAgo);
-        
-        const reason = reasonsWeighted[Math.floor(Math.random() * reasonsWeighted.length)];
-        const quantity = 0.5 + Math.random() * 10;
-        const unitCost = 2 + Math.random() * 40;
-        const wasteValue = quantity * unitCost;
-
-        wasteRows.push({
-          location_id: loc.id,
-          inventory_item_id: null, // We'll use the first available or skip FK
-          quantity: Math.round(quantity * 100) / 100,
-          reason,
-          waste_value: Math.round(wasteValue * 100) / 100,
-          created_at: eventDate.toISOString()
-        });
-      }
-    }
-
-    // Get an inventory item to use (or skip if none)
-    const { data: invItems } = await supabase
-      .from('inventory_items')
-      .select('id')
-      .limit(1);
-
-    const inventoryItemId = invItems?.[0]?.id;
-    
-    if (!inventoryItemId) {
-      toast.error('No inventory items found. Please create inventory items first.');
-      return;
-    }
-
-    // Update all rows with the inventory item ID
-    const rowsWithItem = wasteRows.map(r => ({
-      ...r,
-      inventory_item_id: inventoryItemId
-    }));
-
-    const { error } = await supabase
-      .from('waste_events')
-      .insert(rowsWithItem);
-
-    if (error) {
-      console.error('Error seeding waste data:', error);
-      toast.error('Failed to generate demo data');
-      return;
-    }
-
-    toast.success(`Generated ${wasteRows.length} waste events`);
-    fetchData();
-  }, [group?.id, locations, fetchData]);
-
-  // Generate demo data fallback if empty (in-memory only)
-  useEffect(() => {
-    if (!isLoading && metrics.totalAccountedWaste === 0) {
-      generateDemoData();
-    }
-  }, [isLoading, metrics.totalAccountedWaste]);
-
-  const generateDemoData = () => {
-    const demoSales = 52000 + Math.random() * 8000;
-    const demoWaste = demoSales * (0.018 + Math.random() * 0.008); // 1.8-2.6% waste
-
-    setMetrics({
-      totalSales: demoSales,
-      totalAccountedWaste: demoWaste,
-      wastePercentOfSales: (demoWaste / demoSales) * 100
-    });
-
-    // Demo trend data
-    const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
-    const demoTrend: WasteTrendData[] = days.map(day => {
-      const dayFactor = Math.random() * 0.5 + 0.75;
-      const baseDaily = demoWaste / days.length * dayFactor;
-      return {
-        date: format(day, 'yyyy-MM-dd'),
-        broken: baseDaily * 0.08,
-        end_of_day: baseDaily * 0.55,
-        expired: baseDaily * 0.20,
-        theft: baseDaily * 0.05,
-        other: baseDaily * 0.12
-      };
-    });
-    setTrendData(demoTrend);
-
-    // Demo by reason
-    setByReason([
-      { reason: 'end_of_day', count: 156, value: demoWaste * 0.55 },
-      { reason: 'expired', count: 42, value: demoWaste * 0.20 },
-      { reason: 'broken', count: 28, value: demoWaste * 0.08 },
-      { reason: 'other', count: 18, value: demoWaste * 0.12 },
-      { reason: 'theft', count: 5, value: demoWaste * 0.05 }
-    ]);
-
-    // Demo by category
-    setByCategory([
-      { category: 'Fresh', value: demoWaste * 0.35, percentOfTotal: 35 },
-      { category: 'Dairy', value: demoWaste * 0.22, percentOfTotal: 22 },
-      { category: 'Frozen', value: demoWaste * 0.18, percentOfTotal: 18 },
-      { category: 'Sauce', value: demoWaste * 0.15, percentOfTotal: 15 },
-      { category: 'Other', value: demoWaste * 0.10, percentOfTotal: 10 }
-    ]);
-
-    // Demo leaderboard
-    setLeaderboard([
-      { employeeId: '1', employeeName: 'Carlos Martín', initials: 'CM', locationName: 'Madrid Centro', logsCount: 48, totalValue: demoWaste * 0.32 },
-      { employeeId: '2', employeeName: 'Ana López', initials: 'AL', locationName: 'Barcelona Gràcia', logsCount: 35, totalValue: demoWaste * 0.28 },
-      { employeeId: '3', employeeName: 'María García', initials: 'MG', locationName: 'Valencia Ruzafa', logsCount: 28, totalValue: demoWaste * 0.22 },
-      { employeeId: '4', employeeName: 'David Ruiz', initials: 'DR', locationName: 'Madrid Centro', logsCount: 15, totalValue: demoWaste * 0.12 },
-      { employeeId: '5', employeeName: 'Laura Sánchez', initials: 'LS', locationName: 'Barcelona Gràcia', logsCount: 8, totalValue: demoWaste * 0.06 }
-    ]);
-
-    // Demo items
-    const demoItems = [
-      'Ensalada mixta', 'Tomate fresco', 'Lechuga romana', 'Pollo asado',
-      'Salmón', 'Queso manchego', 'Pan de barra', 'Leche entera',
-      'Huevos', 'Patatas', 'Cebolla', 'Pimiento rojo'
-    ];
-    const reasons: WasteReason[] = ['end_of_day', 'expired', 'broken', 'other', 'theft'];
-    
-    setItems(demoItems.map((name, i) => ({
-      itemId: `demo-${i}`,
-      itemName: name,
-      quantity: Math.floor(5 + Math.random() * 20),
-      value: (demoWaste / demoItems.length) * (1.5 - i * 0.08),
-      type: Math.random() > 0.3 ? 'ingredient' : 'product',
-      topReason: reasons[i % reasons.length],
-      percentOfSales: ((demoWaste / demoItems.length) * (1.5 - i * 0.08)) / demoSales * 100
-    })));
-  };
-
   return {
     isLoading,
     isConnected,
@@ -535,7 +370,6 @@ export function useWasteData(
     items,
     locations: locations.filter(l => locationIds.includes(l.id)),
     REASON_LABELS,
-    seedDemoData,
     refetch: fetchData
   };
 }

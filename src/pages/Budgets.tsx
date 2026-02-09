@@ -4,14 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, ChevronDown, Sparkles } from 'lucide-react';
+import { MapPin, ChevronDown } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { BudgetKPICards, BudgetChart, BudgetLocationTable } from '@/components/budgets';
 import { useBudgetsData, type BudgetTab } from '@/hooks/useBudgetsData';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export default function Budgets() {
   const { locations } = useApp();
@@ -27,68 +25,14 @@ export default function Budgets() {
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<BudgetTab>('sales');
   const [locationsOpen, setLocationsOpen] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
-  const { isLoading, metrics, dailyData, locationData, hasData, refetch } = useBudgetsData(dateRange, selectedLocations);
-
-  const handleSeedDemoData = async () => {
-    setSeeding(true);
-    try {
-      const locationIds = locations.map(l => l.id);
-      const budgetRows = [];
-      const labourRows = [];
-      const cogsRows = [];
-      const today = new Date();
-      
-      for (let i = 0; i < 30; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        for (const locId of locationIds) {
-          const budgetSales = 8000 + Math.random() * 12000;
-          budgetRows.push({
-            date: dateStr,
-            location_id: locId,
-            budget_sales: Math.round(budgetSales),
-            budget_labour: Math.round(budgetSales * (0.25 + Math.random() * 0.1)),
-            budget_cogs: Math.round(budgetSales * (0.25 + Math.random() * 0.1)),
-          });
-          labourRows.push({
-            date: dateStr,
-            location_id: locId,
-            labour_cost: Math.round(budgetSales * (0.22 + Math.random() * 0.12)),
-            labour_hours: Math.round((budgetSales * 0.28) / 14),
-          });
-          cogsRows.push({
-            date: dateStr,
-            location_id: locId,
-            cogs_amount: Math.round(budgetSales * (0.22 + Math.random() * 0.12)),
-          });
-        }
-      }
-
-      await Promise.all([
-        supabase.from('budgets_daily').upsert(budgetRows, { onConflict: 'date,location_id' }),
-        supabase.from('labour_daily').upsert(labourRows, { onConflict: 'date,location_id' }),
-        supabase.from('cogs_daily').upsert(cogsRows, { onConflict: 'date,location_id' }),
-      ]);
-      
-      toast.success('Demo data generated successfully');
-      refetch();
-    } catch (err) {
-      console.error('Error seeding data:', err);
-      toast.error('Failed to generate demo data');
-    } finally {
-      setSeeding(false);
-    }
-  };
+  const { isLoading, metrics, dailyData, locationData } = useBudgetsData(dateRange, selectedLocations);
 
   // Loading state
   if (permLoading) return null;
 
-  const locationsLabel = selectedLocations.length === 0 ? 'All locations' : 
-    selectedLocations.length === 1 ? locations.find(l => l.id === selectedLocations[0])?.name : 
+  const locationsLabel = selectedLocations.length === 0 ? 'All locations' :
+    selectedLocations.length === 1 ? locations.find(l => l.id === selectedLocations[0])?.name :
     `${selectedLocations.length} locations`;
 
   return (
@@ -143,26 +87,10 @@ export default function Budgets() {
         </TabsList>
       </Tabs>
 
-      {/* Empty State */}
-      {!isLoading && !hasData && (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No data available</h3>
-          <p className="text-sm text-muted-foreground mb-4">Generate demo data to explore Budgets</p>
-          <Button onClick={handleSeedDemoData} disabled={seeding}>
-            {seeding ? 'Generating...' : 'Generate Demo Data'}
-          </Button>
-        </div>
-      )}
-
       {/* Content */}
-      {(isLoading || hasData) && (
-        <>
-          <BudgetKPICards metrics={metrics} activeTab={activeTab} isLoading={isLoading} />
-          <BudgetChart data={dailyData} activeTab={activeTab} isLoading={isLoading} />
-          {selectedLocations.length === 0 && <BudgetLocationTable data={locationData} isLoading={isLoading} />}
-        </>
-      )}
+      <BudgetKPICards metrics={metrics} activeTab={activeTab} isLoading={isLoading} />
+      <BudgetChart data={dailyData} activeTab={activeTab} isLoading={isLoading} />
+      {selectedLocations.length === 0 && <BudgetLocationTable data={locationData} isLoading={isLoading} />}
     </div>
   );
 }

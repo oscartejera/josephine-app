@@ -38,15 +38,15 @@ export function useGlobalRealtimeNotifications() {
       .channel('global-notifications')
       .on(
         'postgres_changes' as any,
-        { event: 'INSERT', schema: 'public', table: 'tickets' },
+        { event: 'INSERT', schema: 'public', table: 'pos_daily_finance' },
         (payload: RealtimePostgresChangesPayload<TicketPayload>) => {
-          const ticket = payload.new as TicketPayload;
-          const amount = ticket.gross_total || ticket.net_total || 0;
+          const record = payload.new as TicketPayload;
+          const amount = record.gross_total || record.net_total || 0;
           addNotification({
             type: 'sale',
             title: 'Nueva venta registrada',
-            message: `Ticket de €${amount.toFixed(2)} ${ticket.covers ? `(${ticket.covers} cubiertos)` : ''}`,
-            data: { ticketId: ticket.id },
+            message: `Ventas diarias de €${amount.toFixed(2)}`,
+            data: { ticketId: record.id },
           });
         }
       )

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { subDays, format } from 'date-fns';
-import { toast } from 'sonner';
 
 export type OrderByOption = 'share' | 'gp_eur' | 'gp_pct';
 
@@ -42,7 +41,6 @@ export function useTopProducts() {
   const { group, locations } = useApp();
   const [products, setProducts] = useState<TopProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [seeding, setSeeding] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [datePreset, setDatePreset] = useState<'last7' | 'last30' | 'custom'>('last7');
   const [customDateFrom, setCustomDateFrom] = useState<Date>(subDays(new Date(), 7));
@@ -82,51 +80,6 @@ export function useTopProducts() {
     }
   }, [selectedLocationId, orderBy, getDateRange]);
 
-  const seedDemoData = useCallback(async () => {
-    console.log('seedDemoData called, group:', group);
-    
-    if (!group?.id) {
-      console.error('No group ID available');
-      toast.error('Error: No se encontró el grupo');
-      return;
-    }
-    
-    // Clear localStorage to allow re-seeding
-    localStorage.removeItem('topProductsDemoSeeded');
-    
-    setSeeding(true);
-    toast.loading('Generando datos de ventas...', { id: 'seeding' });
-    
-    try {
-      console.log('Calling seed_sales_for_existing_products with group_id:', group.id);
-      
-      // Use the new function that seeds sales for EXISTING POS products
-      const { data, error } = await supabase.rpc('seed_sales_for_existing_products', {
-        p_group_id: group.id
-      });
-
-      console.log('Seed RPC response:', { data, error });
-
-      if (error) {
-        console.error('Seed RPC error:', error);
-        throw error;
-      }
-      
-      // Mark as seeded
-      localStorage.setItem('topProductsDemoSeeded', 'true');
-      
-      toast.success('Datos de ventas generados para productos del POS', { id: 'seeding' });
-      
-      // Refetch products
-      await fetchTopProducts();
-    } catch (error: any) {
-      console.error('Error seeding demo data:', error);
-      toast.error(`Error: ${error.message || 'No se pudieron generar los datos'}`, { id: 'seeding' });
-    } finally {
-      setSeeding(false);
-    }
-  }, [group?.id, fetchTopProducts]);
-
   // Fetch products when filters change
   useEffect(() => {
     if (group?.id) {
@@ -137,7 +90,6 @@ export function useTopProducts() {
   return {
     products,
     loading,
-    seeding,
     locations,
     selectedLocationId,
     setSelectedLocationId,
@@ -149,7 +101,6 @@ export function useTopProducts() {
     setCustomDateTo,
     orderBy,
     setOrderBy,
-    seedDemoData,
     refetch: fetchTopProducts
   };
 }

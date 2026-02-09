@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
-import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
@@ -150,49 +149,38 @@ export function useInventoryData(
       // Determine which location IDs to use
       let effectiveLocationIds = selectedLocations;
       
-      // If no selected locations, use all from context OR demo
-      if (effectiveLocationIds.length === 0) {
-        if (locations.length > 0) {
-          effectiveLocationIds = locations.map(l => l.id);
-        } else {
-          // Use demo locations if no real locations
-          const generator = getDemoGenerator(fromDate, toDate);
-          effectiveLocationIds = generator.getLocations().map(l => l.id);
-        }
+      // If no selected locations, use all from context
+      if (effectiveLocationIds.length === 0 && locations.length > 0) {
+        effectiveLocationIds = locations.map(l => l.id);
       }
 
-      // Try to fetch real data first (only if we have real locations)
-      let hasReal = false;
+      // Fetch real data
       if (locations.length > 0 && !appLoading) {
-        let ticketsQuery = supabase
-          .from('tickets')
-          .select('id, location_id, net_total, gross_total, closed_at')
-          .gte('closed_at', `${fromDateStr}T00:00:00`)
-          .lte('closed_at', `${toDateStr}T23:59:59`)
-          .eq('status', 'closed');
+        let salesQuery = supabase
+          .from('pos_daily_finance')
+          .select('date, location_id, net_sales, gross_sales, orders_count')
+          .gte('date', fromDateStr)
+          .lte('date', toDateStr);
 
         if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
-          ticketsQuery = ticketsQuery.in('location_id', effectiveLocationIds);
+          salesQuery = salesQuery.in('location_id', effectiveLocationIds);
         }
 
-        const { data: tickets, error: ticketsError } = await ticketsQuery;
-        
-        if (ticketsError) {
-          console.warn('Error fetching tickets, using demo data:', ticketsError);
-        } else {
-          hasReal = tickets && tickets.length > 0;
-          if (hasReal && isMountedRef.current) {
-            setHasRealData(true);
-            await processRealData(tickets, fromDateStr, toDateStr, effectiveLocationIds);
-            return;
-          }
-        }
-      }
+        const { data: dailySales, error: salesError } = await salesQuery;
 
-      // Use demo generator for data
-      if (isMountedRef.current) {
-        setHasRealData(false);
-        useDemoData(fromDate, toDate, effectiveLocationIds);
+        if (salesError) {
+          console.warn('Error fetching sales data:', salesError);
+        } else if (dailySales && dailySales.length > 0 && isMountedRef.current) {
+          setHasRealData(true);
+          const salesAsTickets = (dailySales || []).map(d => ({
+            id: `${d.date}-${d.location_id}`,
+            location_id: d.location_id,
+            net_total: d.net_sales,
+            gross_total: d.gross_sales,
+            closed_at: `${d.date}T12:00:00`,
+          }));
+          await processRealData(salesAsTickets, fromDateStr, toDateStr, effectiveLocationIds);
+        }
       }
 
       if (isMountedRef.current) {
@@ -202,12 +190,6 @@ export function useInventoryData(
       console.error('Error fetching inventory data:', err);
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
-        // Still try demo data as fallback
-        try {
-          useDemoData(dateRange.from, dateRange.to, selectedLocations);
-        } catch {
-          // Ignore demo fallback errors
-        }
       }
     } finally {
       if (isMountedRef.current) {
@@ -288,7 +270,7 @@ export function useInventoryData(
     // Fetch waste events
     let wasteQuery = supabase
       .from('waste_events')
-      .select('id, location_id, waste_value, reason, created_at, inventory_items(name, category)')
+      .select('id, location_id, waste_value, reason, created_at, inventory_items(name, category_name)')
       .gte('created_at', `${fromDateStr}T00:00:00`)
       .lte('created_at', `${toDateStr}T23:59:59`);
 
@@ -409,7 +391,7 @@ export function useInventoryData(
     });
 
     (wasteEvents || []).forEach((w: any) => {
-      const cat = w.inventory_items?.category || 'food';
+      const cat = w.inventory_items?.category_name || 'food';
       const mappedCat = cat === 'beverage' ? 'Beverage' : cat === 'food' ? 'Food' : 'Miscellaneous';
       const existing = wasteByCat.get(mappedCat) || { accounted: 0, unaccounted: 0 };
       existing.accounted += w.waste_value || 0;
@@ -483,44 +465,6 @@ export function useInventoryData(
       };
     }));
 
-    setLastUpdated(new Date());
-  };
-
-  const useDemoData = (fromDate: Date, toDate: Date, effectiveLocationIds: string[]) => {
-    const generator = getDemoGenerator(fromDate, toDate);
-    
-    // Use demo location IDs if none provided
-    const demoLocationIds = generator.getLocations().map(l => l.id);
-    const finalLocationIds = effectiveLocationIds.length > 0 ? effectiveLocationIds : demoLocationIds;
-
-    // Get demo metrics
-    const demoMetrics = generator.getInventoryMetrics(fromDate, toDate, finalLocationIds);
-    
-    setMetrics({
-      totalSales: demoMetrics.totalSales,
-      assignedSales: demoMetrics.assignedSales,
-      unassignedSales: demoMetrics.unassignedSales,
-      theoreticalCOGS: demoMetrics.theoreticalCOGS,
-      theoreticalCOGSPercent: demoMetrics.theoreticalCOGSPercent,
-      actualCOGS: demoMetrics.actualCOGS,
-      actualCOGSPercent: demoMetrics.actualCOGSPercent,
-      theoreticalGP: demoMetrics.theoreticalGP,
-      theoreticalGPPercent: demoMetrics.theoreticalGPPercent,
-      actualGP: demoMetrics.actualGP,
-      actualGPPercent: demoMetrics.actualGPPercent,
-      gapCOGS: demoMetrics.gapCOGS,
-      gapCOGSPercent: demoMetrics.gapCOGSPercent,
-      gapGP: demoMetrics.gapGP,
-      gapGPPercent: demoMetrics.gapGPPercent,
-      accountedWaste: demoMetrics.accountedWaste,
-      unaccountedWaste: demoMetrics.unaccountedWaste,
-      surplus: demoMetrics.surplus
-    });
-
-    setCategoryBreakdown(generator.getCategoryBreakdown(fromDate, toDate, finalLocationIds));
-    setWasteByCategory(generator.getWasteByCategory(fromDate, toDate, finalLocationIds));
-    setWasteByLocation(generator.getWasteByLocation(fromDate, toDate, finalLocationIds));
-    setLocationPerformance(generator.getLocationPerformance(fromDate, toDate, finalLocationIds));
     setLastUpdated(new Date());
   };
 

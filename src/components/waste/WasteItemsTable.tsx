@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowDown, Sparkles, X } from 'lucide-react';
+import { Search, ArrowDown, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -38,7 +38,6 @@ interface WasteItemsTableProps {
   totalWastePercent: number;
   isLoading?: boolean;
   currency?: string;
-  onGenerateDemo?: () => void;
 }
 
 export function WasteItemsTable({
@@ -46,7 +45,6 @@ export function WasteItemsTable({
   totalWastePercent,
   isLoading = false,
   currency = '€',
-  onGenerateDemo
 }: WasteItemsTableProps) {
   const [search, setSearch] = useState('');
   const [reasonFilter, setReasonFilter] = useState<WasteReason | 'all'>('all');
@@ -97,23 +95,17 @@ export function WasteItemsTable({
     );
   }
 
-  // Empty state with generate demo button
+  // Empty state
   if (items.length === 0) {
     return (
       <Card className="border-border">
         <CardContent className="py-16">
           <div className="flex flex-col items-center justify-center text-center">
-            <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
+            <Search className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No waste data found</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md">
-              There's no waste data for the selected period and location. Generate demo data to explore the Waste module.
+            <p className="text-sm text-muted-foreground max-w-md">
+              No waste events recorded for the selected period and location.
             </p>
-            {onGenerateDemo && (
-              <Button onClick={onGenerateDemo} className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                Generate Demo Data
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
