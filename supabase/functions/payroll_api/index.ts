@@ -44,7 +44,24 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
     }
   }
   
+  // Even if tables exist, ensure columns are up-to-date and PostgREST cache is fresh
   if (missingTables.length === 0) {
+    // Try to add breakdown_json if missing (PostgREST cache might not know about it)
+    try {
+      const dbUrl = Deno.env.get('SUPABASE_DB_URL');
+      if (dbUrl) {
+        const { default: postgres } = await import('https://deno.land/x/postgresjs@v3.4.4/mod.js');
+        const sql = postgres(dbUrl, { max: 1 });
+        try {
+          await sql.unsafe(`ALTER TABLE payslips ADD COLUMN IF NOT EXISTS breakdown_json jsonb`);
+          await sql.unsafe(`NOTIFY pgrst, 'reload schema'`);
+        } finally {
+          await sql.end();
+        }
+      }
+    } catch (e) {
+      console.warn('Column/cache update warning:', e);
+    }
     return { success: true, message: 'All tables exist', tables_created: [] };
   }
   
@@ -222,6 +239,9 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
         await tx.unsafe(`CREATE POLICY "payroll_service_all" ON ${table} FOR ALL TO service_role USING (true)`);
       }
     });
+    
+    // Notify PostgREST to reload schema cache
+    await sql.unsafe(`NOTIFY pgrst, 'reload schema'`);
     
     tables_created.push(...missingTables);
     return { success: true, message: `Created ${missingTables.length} tables`, tables_created };
@@ -767,9 +787,19 @@ async function handleCalculatePayroll(body: any) {
   const { error: deleteError } = await supabase.from('payslips').delete().eq('payroll_run_id', payroll_run_id);
   if (deleteError) console.warn('Delete old payslips warning:', deleteError.message);
   
-  const { error: insertError } = await supabase
-    .from('payslips')
-    .insert(payslips.map((p: any) => p.payslipRow));
+  const rows = payslips.map((p: any) => p.payslipRow);
+  let { error: insertError } = await supabase.from('payslips').insert(rows);
+  
+  // If breakdown_json column not in schema cache, retry without it
+  if (insertError && insertError.message.includes('breakdown_json')) {
+    console.warn('breakdown_json not in cache, retrying without it...');
+    const rowsWithout = rows.map((r: any) => {
+      const { breakdown_json, ...rest } = r;
+      return rest;
+    });
+    const retry = await supabase.from('payslips').insert(rowsWithout);
+    insertError = retry.error;
+  }
   
   if (insertError) {
     console.error('Error inserting payslips:', insertError);
@@ -1449,6 +1479,16 @@ Deno.serve(async (req) => {
       case 'reset_payroll':
         result = await handleResetPayroll(body);
         break;
+      case 'diagnose': {
+        // Returns existing groups, entities, employee count for debugging
+        const { data: groups } = await supabase.from('groups').select('id, name').limit(5);
+        const { data: entities } = await supabase.from('legal_entities').select('id, razon_social, nif, group_id').limit(5);
+        const { data: runs } = await supabase.from('payroll_runs').select('id, legal_entity_id, period_year, period_month, status').limit(5);
+        const { data: empCount } = await supabase.from('employees').select('id', { count: 'exact', head: true }).eq('active', true);
+        const { data: locs } = await supabase.from('locations').select('id, name, group_id').limit(5);
+        result = { groups, entities, runs, employee_count: empCount, locations: locs };
+        break;
+      }
       default:
         result = { error: `Acción no reconocida: ${action}` };
     }
