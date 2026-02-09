@@ -2,7 +2,7 @@
  * LabourHeader - Nory-style header with breadcrumbs, date picker, toggles
  */
 
-import { ChevronDown, Sparkles, MoreHorizontal } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -10,10 +10,8 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import type { LabourDateRange, MetricMode } from '@/hooks/useLabourData';
 
@@ -42,8 +40,6 @@ export function LabourHeader({
   locationName,
   onAskJosephine
 }: LabourHeaderProps) {
-  const { accessibleLocations, canShowAllLocations } = useApp();
-  const navigate = useNavigate();
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
 
   const getCompareModeLabel = (mode: CompareMode) => {
@@ -65,22 +61,6 @@ export function LabourHeader({
     setDateMode(mode);
   };
 
-  const handleLocationSelect = (locId: string | null) => {
-    if (locId) {
-      navigate(`/insights/labour/${locId}`);
-    } else {
-      navigate('/insights/labour');
-    }
-  };
-
-  const pageTitle = locationId && locationName 
-    ? `Labour - ${locationName}` 
-    : 'Labour - All locations';
-
-  const currentLocationLabel = locationId && locationName 
-    ? locationName 
-    : 'All locations';
-
   return (
     <div className="space-y-4">
       {/* Title */}
@@ -88,28 +68,6 @@ export function LabourHeader({
 
       {/* Controls row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Location Selector (simplified like Sales) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-[200px] justify-between">
-                {currentLocationLabel}
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleLocationSelect(null)}>
-                All locations
-              </DropdownMenuItem>
-              {accessibleLocations.map(loc => (
-                <DropdownMenuItem key={loc.id} onClick={() => handleLocationSelect(loc.id)}>
-                  {loc.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
         <div className="flex items-center gap-2">
           {/* Date Range Picker */}
           <DateRangePickerNoryLike

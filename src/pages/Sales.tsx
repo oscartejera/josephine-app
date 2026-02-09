@@ -87,7 +87,7 @@ export default function Sales() {
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState(endOfMonth(new Date()));
   const [compareMode, setCompareMode] = useState('forecast');
-  const [selectedLocation, setSelectedLocation] = useState<LocationId>('all');
+  const selectedLocation: LocationId = 'all'; // Location now selected globally via AppContext
   const [productViewMode, setProductViewMode] = useState<'sales' | 'qty'>('sales');
   const [productsDisplayCount, setProductsDisplayCount] = useState(10);
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
@@ -545,19 +545,6 @@ export default function Sales() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Sales</h1>
         <div className="flex items-center gap-3">
-          {/* Location Selector */}
-          <Select value={selectedLocation} onValueChange={(value) => setSelectedLocation(value as LocationId)}>
-            <SelectTrigger className="w-[240px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">✓ All Locations</SelectItem>
-              <SelectItem value="salamanca">La Taberna Centro (Salamanca)</SelectItem>
-              <SelectItem value="chamberi">Chamberí (Madrid)</SelectItem>
-              <SelectItem value="malasana">Malasaña (Madrid)</SelectItem>
-            </SelectContent>
-          </Select>
-
           <DateRangePickerNoryLike
             value={{ from: startDate, to: endDate }}
             onChange={handleDateChange}

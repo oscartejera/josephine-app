@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Platform, LOCATIONS } from '@/hooks/useReviewsData';
+import { Platform } from '@/hooks/useReviewsData';
 
 interface ReviewsHeaderProps {
   dateRange: DateRangeValue;
@@ -62,20 +62,6 @@ export function ReviewsHeader({
               <SelectItem value="tripadvisor">TripAdvisor</SelectItem>
               <SelectItem value="deliveroo">Deliveroo</SelectItem>
               <SelectItem value="justeat">Just Eat</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={locationId} onValueChange={onLocationChange}>
-            <SelectTrigger className="h-9 w-[150px] text-sm">
-              <SelectValue placeholder="All Locations" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {LOCATIONS.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
