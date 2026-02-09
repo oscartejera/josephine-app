@@ -164,26 +164,33 @@ export function useInventoryData(
       // Try to fetch real data first (only if we have real locations)
       let hasReal = false;
       if (locations.length > 0 && !appLoading) {
-        let ticketsQuery = supabase
-          .from('tickets')
-          .select('id, location_id, net_total, gross_total, closed_at')
-          .gte('closed_at', `${fromDateStr}T00:00:00`)
-          .lte('closed_at', `${toDateStr}T23:59:59`)
-          .eq('status', 'closed');
+        let salesQuery = supabase
+          .from('pos_daily_finance')
+          .select('date, location_id, net_sales, gross_sales, orders_count')
+          .gte('date', fromDateStr)
+          .lte('date', toDateStr);
 
         if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
-          ticketsQuery = ticketsQuery.in('location_id', effectiveLocationIds);
+          salesQuery = salesQuery.in('location_id', effectiveLocationIds);
         }
 
-        const { data: tickets, error: ticketsError } = await ticketsQuery;
-        
-        if (ticketsError) {
-          console.warn('Error fetching tickets, using demo data:', ticketsError);
+        const { data: dailySales, error: salesError } = await salesQuery;
+
+        if (salesError) {
+          console.warn('Error fetching sales data, using demo data:', salesError);
         } else {
-          hasReal = tickets && tickets.length > 0;
+          hasReal = dailySales && dailySales.length > 0;
           if (hasReal && isMountedRef.current) {
             setHasRealData(true);
-            await processRealData(tickets, fromDateStr, toDateStr, effectiveLocationIds);
+            // Convert daily sales to ticket-like format for processRealData
+            const salesAsTickets = (dailySales || []).map(d => ({
+              id: `${d.date}-${d.location_id}`,
+              location_id: d.location_id,
+              net_total: d.net_sales,
+              gross_total: d.gross_sales,
+              closed_at: `${d.date}T12:00:00`,
+            }));
+            await processRealData(salesAsTickets, fromDateStr, toDateStr, effectiveLocationIds);
             return;
           }
         }

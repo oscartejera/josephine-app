@@ -179,7 +179,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         {
           event: '*',
           schema: 'public',
-          table: 'tickets'
+          table: 'pos_daily_finance'
         },
         (payload) => {
           console.log('Sales realtime update:', payload);

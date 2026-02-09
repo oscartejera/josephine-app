@@ -144,9 +144,9 @@ export default function SettingsPage() {
     
     switch (table) {
       case 'tickets':
-        const { data: tickets } = await supabase.from('tickets').select('*').limit(1000);
-        data = tickets || [];
-        filename = 'tickets.csv';
+        const { data: salesData } = await supabase.from('pos_daily_finance').select('*').limit(1000);
+        data = salesData || [];
+        filename = 'sales_daily.csv';
         break;
       case 'employees':
         const { data: employees } = await supabase.from('employees').select('*');

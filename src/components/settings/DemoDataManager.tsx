@@ -47,17 +47,21 @@ export function DemoDataManager() {
       setProgress(10);
       
       // Call cleanup - delete old tickets and timesheets for demo group
-      await supabase.from('tickets')
-        .delete()
-        .in('location_id', (await supabase.from('locations').select('id').eq('group_id', '11111111-1111-1111-1111-111111111111')).data?.map(l => l.id) || []);
-      
-      await supabase.from('timesheets')
-        .delete()
-        .in('location_id', (await supabase.from('locations').select('id').eq('group_id', '11111111-1111-1111-1111-111111111111')).data?.map(l => l.id) || []);
-      
-      await supabase.from('planned_shifts')
-        .delete()
-        .in('location_id', (await supabase.from('locations').select('id').eq('group_id', '11111111-1111-1111-1111-111111111111')).data?.map(l => l.id) || []);
+      const demoLocationIds = (await supabase.from('locations').select('id').eq('group_id', '11111111-1111-1111-1111-111111111111')).data?.map(l => l.id) || [];
+
+      // Clean up daily aggregate tables
+      await supabase.from('pos_daily_finance').delete().in('location_id', demoLocationIds);
+      await supabase.from('pos_daily_metrics').delete().in('location_id', demoLocationIds);
+      await supabase.from('labour_daily').delete().in('location_id', demoLocationIds);
+      await supabase.from('forecast_daily_metrics').delete().in('location_id', demoLocationIds);
+      await supabase.from('cogs_daily').delete().in('location_id', demoLocationIds);
+      await supabase.from('budgets_daily').delete().in('location_id', demoLocationIds);
+      await supabase.from('cash_counts_daily').delete().in('location_id', demoLocationIds);
+
+      // Clean up legacy tables
+      await supabase.from('tickets').delete().in('location_id', demoLocationIds);
+      await supabase.from('timesheets').delete().in('location_id', demoLocationIds);
+      await supabase.from('planned_shifts').delete().in('location_id', demoLocationIds);
 
       updateStepStatus('cleanup', 'success', 'Datos antiguos eliminados');
       setProgress(20);

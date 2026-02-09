@@ -120,20 +120,19 @@ export function useWasteData(
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Fetch tickets for sales data
-      let ticketsQuery = supabase
-        .from('tickets')
-        .select('id, location_id, net_total, gross_total')
-        .gte('closed_at', `${fromDate}T00:00:00`)
-        .lte('closed_at', `${toDate}T23:59:59`)
-        .eq('status', 'closed');
+      // Fetch sales data from pos_daily_finance
+      let salesQuery = supabase
+        .from('pos_daily_finance')
+        .select('location_id, net_sales')
+        .gte('date', fromDate)
+        .lte('date', toDate);
 
       if (locationIds.length > 0 && locationIds.length < locations.length) {
-        ticketsQuery = ticketsQuery.in('location_id', locationIds);
+        salesQuery = salesQuery.in('location_id', locationIds);
       }
 
-      const { data: tickets } = await ticketsQuery;
-      const totalSales = (tickets || []).reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
+      const { data: dailySales } = await salesQuery;
+      const totalSales = (dailySales || []).reduce((sum, d) => sum + (d.net_sales || 0), 0);
 
       // Fetch waste events with inventory items
       let wasteQuery = supabase
