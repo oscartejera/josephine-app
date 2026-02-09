@@ -355,12 +355,28 @@ export default function Sales() {
   }, [selectedLocation]);
 
   // Generate dynamic chart data based on selected date range
+  // Respects actual vs forecast logic:
+  //   - Past dates: actual + forecast
+  //   - Today: partial actual (scaled by time of day) + full day forecast
+  //   - Future dates: forecast ONLY, actual = 0
   const weeklyChartData = useMemo(() => {
     const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    return days.map((day, index) => {
+    // Business day progress (10am-11pm = 13 hours)
+    const currentHour = new Date().getHours();
+    const dayProgress = Math.max(0, Math.min(1, (currentHour - 10) / 13));
+    
+    return days.map((day) => {
       const dayOfWeek = day.getDay();
-      const dayName = format(day, 'EEEE, d');
+      const dayName = format(day, 'EEE, d');
+      const dayNormalized = new Date(day);
+      dayNormalized.setHours(0, 0, 0, 0);
+      
+      const isPast = dayNormalized < today;
+      const isToday = dayNormalized.getTime() === today.getTime();
+      const isFuture = dayNormalized > today;
       
       // Weekend boost & mid-week dip
       const weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) ? 1.5 : 1.0;
@@ -371,13 +387,24 @@ export default function Sales() {
                                    selectedLocation === 'chamberi' ? 0.32 : 
                                    selectedLocation === 'malasana' ? 0.33 : 1.0;
       
-      const baseActual = 12000 * weekendMultiplier * midWeekMultiplier * locationMultiplier * (0.95 + Math.random() * 0.1);
-      const actual = Math.round(baseActual);
-      // Forecast dinámico (Prophet-style con variables)
-      // En producción este vendría de Prophet con regresores (clima, eventos, reservas, etc.)
-      const forecast = Math.round(baseActual * 0.97); // Slightly below actual to simulate realistic variance
-      const avgCheck = 22 + (dayOfWeek >= 5 ? 2 : 0) + Math.random() * 2;
-      const avgCheckForecast = avgCheck * 0.98;
+      // Forecast is always available (from Prophet)
+      const baseForecast = 12000 * weekendMultiplier * midWeekMultiplier * locationMultiplier * (0.95 + Math.random() * 0.10);
+      const forecast = Math.round(baseForecast);
+      
+      // Actual: only for past dates and today (partial)
+      let actual = 0;
+      if (isPast) {
+        // Past: actual data (with realistic variance from forecast)
+        actual = Math.round(forecast * (0.92 + Math.random() * 0.16));
+      } else if (isToday) {
+        // Today: partial actual based on time of day
+        actual = Math.round(forecast * dayProgress * (0.92 + Math.random() * 0.16));
+      }
+      // Future: actual stays 0
+      
+      const avgCheckForecast = 22 + (dayOfWeek >= 5 ? 2 : 0) + Math.random() * 2;
+      const avgCheck = isPast ? avgCheckForecast * (0.98 + Math.random() * 0.04) : 
+                       isToday ? avgCheckForecast * (0.98 + Math.random() * 0.04) : 0;
       
       return {
         day: dayName,
