@@ -50,6 +50,8 @@ Deno.serve(async (req) => {
       ? 'https://connect.squareup.com/oauth2/token'
       : 'https://connect.squareupsandbox.com/oauth2/token';
 
+    const redirectUri = `${supabaseUrl}/functions/v1/square-oauth-callback`;
+
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -58,6 +60,7 @@ Deno.serve(async (req) => {
         client_secret: clientSecret,
         code,
         grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
       }),
     });
 
