@@ -5,8 +5,6 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { NarrativeInsightsPanel } from '@/components/dashboard/NarrativeInsightsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
-import { HourlySalesChart, HourlyLaborChart } from '@/components/dashboard/Charts';
-import { CategoryBreakdownChart } from '@/components/dashboard/CategoryBreakdownChart';
 import { OnboardingWizard } from '@/components/onboarding';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
 import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
@@ -37,8 +35,6 @@ export default function Dashboard() {
     previous: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 }
   });
   const [topItems, setTopItems] = useState<any[]>([]);
-  const [hourlySales, setHourlySales] = useState<any[]>([]);
-  const [hourlyLabor, setHourlyLabor] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -107,11 +103,6 @@ export default function Dashboard() {
     
     const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
     setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item, margin: Math.floor(55 + Math.random() * 20) })));
-
-    // Mock hourly data
-    const hours = Array.from({ length: 14 }, (_, i) => ({ hour: `${10 + i}:00`, real: Math.random() * 300 + 50, forecast: Math.random() * 300 + 100 }));
-    setHourlySales(hours);
-    setHourlyLabor(hours.map(h => ({ hour: h.hour, real: Math.random() * 80 + 20, recommended: Math.random() * 60 + 30 })));
 
     setLoading(false);
   };
@@ -222,15 +213,6 @@ export default function Dashboard() {
           trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: 'vs anterior' } : undefined}
         />
       </div>
-
-      {/* Charts */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <HourlySalesChart data={hourlySales} title="Ventas por Hora (Real vs Forecast)" className="lg:col-span-2" />
-        <CategoryBreakdownChart />
-      </div>
-
-      {/* Labor Chart */}
-      <HourlyLaborChart data={hourlyLabor} title="Labor por Hora (Real vs Recomendado)" />
 
       {/* Top 10 Products - full width */}
       <TopProductsCard />
