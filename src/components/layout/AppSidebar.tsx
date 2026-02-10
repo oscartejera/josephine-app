@@ -339,6 +339,22 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
 
+          {/* Reservas */}
+          {canViewSidebarItem('reservations') && (
+            <Button
+              variant={location.pathname === '/reservations' ? "secondary" : "ghost"}
+              className={cn(
+                "w-full justify-start gap-3 h-10",
+                location.pathname === '/reservations' && "bg-accent text-accent-foreground font-medium",
+                collapsed && "justify-center px-2"
+              )}
+              onClick={() => navigate('/reservations')}
+            >
+              <CalendarCheck className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Reservas</span>}
+            </Button>
+          )}
+
           {/* Purchases */}
           <Button
             variant={location.pathname === '/procurement' ? "secondary" : "ghost"}

@@ -34,6 +34,7 @@ import MenuEngineering from "@/pages/MenuEngineering";
 import CashManagement from "@/pages/CashManagement";
 import Budgets from "@/pages/Budgets";
 import Payroll from "@/pages/Payroll";
+import Reservations from "@/pages/Reservations";
 import SettingsPage from "@/pages/SettingsPage";
 import Integrations from "@/pages/Integrations";
 import SquareIntegration from "@/pages/integrations/SquareIntegration";
@@ -148,7 +149,8 @@ function AppRoutes() {
         <Route path="/procurement/cart" element={<ProcurementCart />} />
         <Route path="/procurement/orders" element={<ProcurementOrders />} />
         <Route path="/payroll/*" element={<Payroll />} />
-        
+        <Route path="/reservations" element={<Reservations />} />
+
         {/* Integrations */}
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/integrations/square" element={<SquareIntegration />} />
