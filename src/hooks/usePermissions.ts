@@ -65,6 +65,11 @@ export const PERMISSIONS = {
   PAYROLL_EXPORT: 'payroll.export',
   PAYROLL_APPROVE_HOURS: 'payroll.approve_hours',
   
+  // Reservations
+  RESERVATIONS_VIEW: 'reservations.view',
+  RESERVATIONS_CREATE: 'reservations.create',
+  RESERVATIONS_EDIT: 'reservations.edit',
+
   // Settings
   SETTINGS_VIEW: 'settings.view',
   SETTINGS_USERS_MANAGE: 'settings.users.manage',
@@ -95,6 +100,7 @@ export const SIDEBAR_PERMISSIONS = {
   procurement: [PERMISSIONS.PROCUREMENT_VIEW],
   menu_engineering: [PERMISSIONS.MENU_ENGINEERING_VIEW],
   payroll: [PERMISSIONS.PAYROLL_VIEW],
+  reservations: [PERMISSIONS.RESERVATIONS_VIEW],
   settings: [PERMISSIONS.SETTINGS_VIEW],
 } as const;
 
