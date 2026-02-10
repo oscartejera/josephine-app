@@ -1,6 +1,6 @@
 /**
  * Square OAuth Start
- * Genera URL de autorización Square
+ * Genera URL de autorización Square y guarda state para CSRF
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
@@ -12,29 +12,28 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { integrationId, environment } = await req.json();
+    const { integrationId, environment, appUrl } = await req.json();
 
-    // Get Square credentials from Supabase Secrets
     const clientId = environment === 'production'
       ? Deno.env.get('SQUARE_PRODUCTION_CLIENT_ID')
       : Deno.env.get('SQUARE_SANDBOX_CLIENT_ID');
 
     if (!clientId) {
-      throw new Error('Square client ID not configured');
+      throw new Error('Square client ID not configured for ' + environment);
     }
 
     // Generate state for CSRF protection
     const state = crypto.randomUUID();
-    
-    // Save state to verify on callback
+
+    // Save state + app URL to verify on callback
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     await supabase
       .from('integrations')
-      .update({ 
-        metadata: { oauth_state: state, oauth_environment: environment } 
+      .update({
+        metadata: { oauth_state: state, oauth_environment: environment, app_url: appUrl }
       })
       .eq('id', integrationId);
 
@@ -44,8 +43,15 @@ Deno.serve(async (req) => {
       : 'https://connect.squareupsandbox.com/oauth2/authorize';
 
     const redirectUri = `${supabaseUrl}/functions/v1/square-oauth-callback`;
-    
-    const authUrl = `${baseUrl}?client_id=${clientId}&scope=MERCHANT_PROFILE_READ+ITEMS_READ+ORDERS_READ+PAYMENTS_READ&session=false&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+    const scopes = [
+      'MERCHANT_PROFILE_READ',
+      'ITEMS_READ',
+      'ORDERS_READ',
+      'PAYMENTS_READ',
+    ].join('+');
+
+    const authUrl = `${baseUrl}?client_id=${clientId}&scope=${scopes}&session=false&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     return new Response(
       JSON.stringify({ authUrl }),

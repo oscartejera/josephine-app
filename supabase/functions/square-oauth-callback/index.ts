@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
     }
 
     const environment = integration.metadata?.oauth_environment || 'sandbox';
+    const appUrl = integration.metadata?.app_url || 'https://josephine-app.vercel.app';
     const clientId = environment === 'production'
       ? Deno.env.get('SQUARE_PRODUCTION_CLIENT_ID')
       : Deno.env.get('SQUARE_SANDBOX_CLIENT_ID');
@@ -67,19 +68,19 @@ Deno.serve(async (req) => {
 
     const tokens = await tokenResponse.json();
 
-    // Create integration_account (tokens should be encrypted in production)
+    // Create integration_account
     await supabase
       .from('integration_accounts')
-      .insert({
+      .upsert({
         integration_id: integration.id,
         provider: 'square',
         environment,
         external_account_id: tokens.merchant_id,
-        access_token_encrypted: tokens.access_token, // TODO: Encrypt
+        access_token_encrypted: tokens.access_token,
         refresh_token_encrypted: tokens.refresh_token || null,
         token_expires_at: tokens.expires_at || null,
         metadata: { merchant_id: tokens.merchant_id },
-      });
+      }, { onConflict: 'integration_id,environment' });
 
     // Update integration status
     await supabase
@@ -87,17 +88,21 @@ Deno.serve(async (req) => {
       .update({ status: 'active' })
       .eq('id', integration.id);
 
-    // Redirect to success page
+    // Redirect to the app
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': `${supabaseUrl.replace('/functions/v1', '')}/integrations/square?success=true`,
+        'Location': `${appUrl}/integrations/square?connected=true`,
       },
     });
   } catch (error) {
     console.error('OAuth callback error:', error);
     return new Response(
-      `<html><body><h1>Error</h1><p>${error.message}</p></body></html>`,
+      `<html><body>
+        <h2>Error de conexión</h2>
+        <p>${error.message}</p>
+        <a href="javascript:window.close()">Cerrar</a>
+      </body></html>`,
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     );
   }
