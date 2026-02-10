@@ -73,32 +73,51 @@ export default function Reviews() {
     setLocationId(locId);
   }, []);
 
-  // Mock API handlers for refine and submit
+  // AI-powered review reply generation via edge function
   const handleRefine = useCallback(
     async (
-      _reviewId: string,
+      reviewId: string,
       tone: 'friendly' | 'professional' | 'concise',
       currentText: string
     ): Promise<string> => {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      
-      const toneResponses: Record<string, string> = {
-        friendly: `Hey there! Thanks so much for taking the time to leave us a review. We really appreciate your feedback and can't wait to see you again soon! 😊`,
-        professional: `Thank you for your valued feedback. We appreciate you taking the time to share your experience with us. Your input helps us maintain our high standards of service.`,
-        concise: `Thanks for the feedback! We appreciate it.`,
-      };
-      
-      return toneResponses[tone] || currentText;
+      const review = reviews.find((r) => r.id === reviewId);
+      if (!review) return currentText;
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/review_reply`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            reviewText: review.text,
+            reviewRating: review.rating,
+            authorName: review.author_name,
+            platform: review.platform,
+            locationName: review.location_name,
+            tone,
+            currentReply: currentText || undefined,
+          }),
+        }
+      );
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(err.error || `Error ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      return data.reply || currentText;
     },
-    []
+    [reviews]
   );
 
   const handleSubmit = useCallback(
     async (_reviewId: string, _replyText: string): Promise<void> => {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      // In real implementation, this would call POST /api/reviews/reply
+      // TODO: persist reply to reviews table via Supabase
+      await new Promise((resolve) => setTimeout(resolve, 300));
     },
     []
   );

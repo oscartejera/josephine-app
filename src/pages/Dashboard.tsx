@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { AlertsPanel, Alert } from '@/components/dashboard/AlertsPanel';
+import { NarrativeInsightsPanel } from '@/components/dashboard/NarrativeInsightsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { HourlySalesChart, HourlyLaborChart } from '@/components/dashboard/Charts';
 import { CategoryBreakdownChart } from '@/components/dashboard/CategoryBreakdownChart';
 import { OnboardingWizard } from '@/components/onboarding';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
+import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
 
 interface Metrics {
   sales: number;
@@ -39,14 +40,6 @@ export default function Dashboard() {
   const [hourlySales, setHourlySales] = useState<any[]>([]);
   const [hourlyLabor, setHourlyLabor] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const alerts: Alert[] = [
-    { id: '1', type: 'warning', title: 'Labor alto', description: 'COL% por encima del objetivo en La Taberna Centro', metric: '28%', trend: 'up' },
-    { id: '2', type: 'error', title: 'Margen bajo', description: 'GP% cayendo en los últimos 7 días', metric: '-3%', trend: 'down' },
-    { id: '3', type: 'warning', title: 'Waste elevado', description: '€120 de waste ayer en Malasaña', metric: '€120' },
-    { id: '4', type: 'info', title: 'Comps/Voids', description: '2.1% de líneas anuladas hoy', metric: '2.1%' },
-    { id: '5', type: 'warning', title: 'Forecast desviación', description: 'Ventas 15% por debajo del forecast', metric: '-15%', trend: 'down' },
-  ];
 
   useEffect(() => {
     fetchData();
@@ -144,6 +137,31 @@ export default function Dashboard() {
   const coversDelta = calculateDelta(current.covers, previous.covers);
   const avgTicketDelta = calculateDelta(current.avgTicket, previous.avgTicket);
 
+  // Build metrics object for AI narrative
+  const selectedLocName = selectedLocationId === 'all' ? 'Todos los locales' : 'Local seleccionado';
+  const narrativeMetrics: DashboardMetricsForAI | null = useMemo(() => {
+    if (loading || current.sales === 0) return null;
+    return {
+      sales: current.sales,
+      salesDelta: salesDelta?.value || 0,
+      covers: current.covers,
+      coversDelta: coversDelta?.value || 0,
+      avgTicket: current.avgTicket,
+      avgTicketDelta: avgTicketDelta?.value || 0,
+      laborCost: current.laborCost,
+      laborDelta: laborDelta?.value || 0,
+      colPercent,
+      colDelta: colDelta?.value || 0,
+      cogsPercent: current.cogsPercent,
+      cogsDelta: cogsDelta?.value || 0,
+      gpPercent,
+      gpDelta: gpDelta?.value || 0,
+      locationName: selectedLocName,
+      periodLabel: 'periodo actual vs anterior',
+      topProducts: topItems.map(item => ({ name: item.name, sales: item.sales, margin: item.margin })),
+    };
+  }, [loading, current, salesDelta, coversDelta, avgTicketDelta, laborDelta, colPercent, colDelta, gpPercent, gpDelta, topItems, selectedLocName]);
+
   // Show onboarding wizard for new users
   if (needsOnboarding) {
     return <OnboardingWizard onComplete={setOnboardingComplete} />;
@@ -217,9 +235,9 @@ export default function Dashboard() {
       {/* Top 10 Products - full width */}
       <TopProductsCard />
 
-      {/* Alerts and Low Stock */}
+      {/* AI Narrative and Low Stock */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <AlertsPanel alerts={alerts} />
+        <NarrativeInsightsPanel metrics={narrativeMetrics} />
         <LowStockWidget />
       </div>
     </div>
