@@ -10,6 +10,7 @@ import {
   MenuEngineeringMatrix,
   MenuEngineeringActions,
   MenuEngineeringTable,
+  DynamicPricingPanel,
 } from '@/components/menu-engineering';
 
 export default function MenuEngineering() {
@@ -121,6 +122,17 @@ export default function MenuEngineering() {
               />
             </div>
           </div>
+
+          {/* Dynamic Pricing AI */}
+          <DynamicPricingPanel
+            items={items}
+            stats={stats}
+            locationName={
+              selectedLocationId
+                ? accessibleLocations.find((l) => l.id === selectedLocationId)?.name || 'Local'
+                : 'Todos los locales'
+            }
+          />
 
           {/* Products Table */}
           <MenuEngineeringTable items={items} loading={loading} />
