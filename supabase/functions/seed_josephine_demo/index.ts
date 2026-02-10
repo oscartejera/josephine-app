@@ -140,9 +140,9 @@ serve(async (req) => {
       currentDate.setDate(currentDate.getDate() - dayOffset);
       const dayOfWeek = currentDate.getDay();
 
-      // Base sales por día de semana
-      const baseSales = dayOfWeek === 5 || dayOfWeek === 6 ? 18000 : 
-                       dayOfWeek === 2 || dayOfWeek === 3 ? 10000 : 13000;
+      // Base sales per day of week (realistic casual dining Madrid, per location)
+      const baseSales = dayOfWeek === 5 || dayOfWeek === 6 ? 7000 :
+                       dayOfWeek === 2 || dayOfWeek === 3 ? 4000 : 5000;
 
       // Generar slots cada 15min (10:00 - 23:00)
       for (let hour = 10; hour <= 23; hour++) {

@@ -151,8 +151,9 @@ function generateMockData(startDate: Date, endDate: Date, locationIds: string[])
     // Mid-week dip
     const midWeekMultiplier = (dayOfWeek === 2 || dayOfWeek === 3) ? 0.85 : 1.0;
     
-    const baseActual = 12000 * weekendMultiplier * midWeekMultiplier * (0.9 + Math.random() * 0.2);
-    const forecast = baseActual * 0.98;
+    // Realistic casual dining Madrid: ~€5,000/day base per location
+    const baseActual = 5000 * weekendMultiplier * midWeekMultiplier * (0.92 + Math.random() * 0.16);
+    const forecast = baseActual * (0.93 + Math.random() * 0.14);
     const forecastLive = baseActual * 1.01;
     const covers = Math.floor(baseActual / 24);
     
