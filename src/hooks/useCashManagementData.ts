@@ -89,7 +89,7 @@ export function useCashManagementData(
   dateRange: DateRangeValue,
   selectedLocations: string[]
 ) {
-  const { locations, loading: appLoading } = useApp();
+  const { locations, loading: appLoading, dataSource } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [metrics, setMetrics] = useState<CashManagementMetrics>(defaultMetrics);
   const [dailyData, setDailyData] = useState<CashDailyData[]>([]);
@@ -119,6 +119,7 @@ export function useCashManagementData(
       let query = supabase
         .from('pos_daily_finance')
         .select('*')
+        .eq('data_source', dataSource)
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -139,6 +140,7 @@ export function useCashManagementData(
       let prevQuery = supabase
         .from('pos_daily_finance')
         .select('*')
+        .eq('data_source', dataSource)
         .gte('date', prevFrom)
         .lte('date', prevTo);
 

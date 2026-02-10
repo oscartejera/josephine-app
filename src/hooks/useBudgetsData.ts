@@ -99,7 +99,7 @@ export function useBudgetsData(
   selectedLocations: string[],
   compareMode: CompareMode = 'budget'
 ) {
-  const { locations, loading: appLoading } = useApp();
+  const { locations, loading: appLoading, dataSource } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [metrics, setMetrics] = useState<BudgetMetrics>(defaultMetrics);
   const [dailyData, setDailyData] = useState<BudgetDailyData[]>([]);
@@ -137,6 +137,7 @@ export function useBudgetsData(
       let salesQuery = supabase
         .from('pos_daily_finance')
         .select('date, location_id, net_sales')
+        .eq('data_source', dataSource)
         .gte('date', fromDate)
         .lte('date', toDate);
 

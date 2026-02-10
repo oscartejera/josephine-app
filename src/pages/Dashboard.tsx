@@ -29,7 +29,7 @@ function calculateDelta(current: number, previous: number): { value: number; pos
 }
 
 export default function Dashboard() {
-  const { selectedLocationId, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete } = useApp();
+  const { selectedLocationId, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete, dataSource } = useApp();
   const [metrics, setMetrics] = useState<ComparisonMetrics>({
     current: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 },
     previous: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 }
@@ -53,7 +53,7 @@ export default function Dashboard() {
     const toDate = to.toISOString().split('T')[0];
 
     // Get sales from pos_daily_finance (aggregated daily data)
-    let query = supabase.from('pos_daily_finance').select('gross_sales, net_sales, orders_count');
+    let query = supabase.from('pos_daily_finance').select('gross_sales, net_sales, orders_count').eq('data_source', dataSource);
     if (locationId && locationId !== 'all') {
       query = query.eq('location_id', locationId);
     }

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { DEMO_MODE } from './DemoModeContext';
+import { usePOSConnection } from '@/hooks/usePOSConnection';
 
 export interface Location {
   id: string;
@@ -32,12 +33,16 @@ interface AppContextType {
   canShowAllLocations: boolean;
   needsOnboarding: boolean;
   setOnboardingComplete: () => void;
+  posConnected: boolean;
+  dataSource: 'pos' | 'simulated';
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { profile, isOwner, hasGlobalScope, accessibleLocationIds, refreshProfile } = useAuth();
+  const { posConnected } = usePOSConnection();
+  const dataSource: 'pos' | 'simulated' = posConnected ? 'pos' : 'simulated';
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(null);
@@ -176,6 +181,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       canShowAllLocations,
       needsOnboarding,
       setOnboardingComplete,
+      posConnected,
+      dataSource,
     }}>
       {children}
     </AppContext.Provider>

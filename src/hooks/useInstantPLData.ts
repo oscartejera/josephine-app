@@ -104,12 +104,13 @@ export function useInstantPLData({
   filterMode,
   activeChips
 }: UseInstantPLDataParams): InstantPLData {
-  const { locations } = useApp();
-  
+  const { locations, dataSource } = useApp();
+
   const queryKey = [
     'instant-pl',
     format(dateRange.from, 'yyyy-MM-dd'),
-    format(dateRange.to, 'yyyy-MM-dd')
+    format(dateRange.to, 'yyyy-MM-dd'),
+    dataSource
   ];
   
   const { data, isLoading, isError } = useQuery({
@@ -127,6 +128,7 @@ export function useInstantPLData({
       const { data: dailyFinance } = await supabase
         .from('pos_daily_finance')
         .select('location_id, date, net_sales, gross_sales')
+        .eq('data_source', dataSource)
         .in('location_id', locationIds)
         .gte('date', fromDate)
         .lte('date', toDate);
@@ -143,6 +145,7 @@ export function useInstantPLData({
       const { data: laborData } = await supabase
         .from('pos_daily_metrics')
         .select('location_id, date, labor_cost, labor_hours')
+        .eq('data_source', dataSource)
         .in('location_id', locationIds)
         .gte('date', fromDate)
         .lte('date', toDate);

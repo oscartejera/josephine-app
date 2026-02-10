@@ -123,7 +123,7 @@ function emptyData(): BISalesData {
 }
 
 export function useBISalesData({ dateRange, granularity, compareMode, locationIds }: UseBISalesDataParams) {
-  const { locations } = useApp();
+  const { locations, dataSource } = useApp();
   const queryClient = useQueryClient();
   const effectiveLocationIds = locationIds.length > 0 ? locationIds : locations.map(l => l.id);
   const [isConnected, setIsConnected] = useState(false);
@@ -173,7 +173,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
   }, [queryClient]);
 
   const query = useQuery({
-    queryKey: ['bi-sales', dateRange, granularity, compareMode, effectiveLocationIds],
+    queryKey: ['bi-sales', dateRange, granularity, compareMode, effectiveLocationIds, dataSource],
     queryFn: async (): Promise<BISalesData> => {
       if (effectiveLocationIds.length === 0) {
         return emptyData();
@@ -201,6 +201,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             comps_amount,
             voids_amount
           `)
+          .eq('data_source', dataSource)
           .in('location_id', effectiveLocationIds)
           .gte('date', fromStr)
           .lte('date', toStr),
@@ -217,6 +218,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             cogs,
             products ( id, name, category )
           `)
+          .eq('data_source', dataSource)
           .in('location_id', effectiveLocationIds)
           .gte('date', fromStr)
           .lte('date', toStr),
