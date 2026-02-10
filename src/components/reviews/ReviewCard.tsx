@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, RefreshCw, Loader2 } from 'lucide-react';
+import { Star, RefreshCw, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -122,22 +122,42 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <Popover open={refineOpen} onOpenChange={setRefineOpen}>
-          <PopoverTrigger asChild>
+        <div className="flex items-center gap-1.5">
+          {/* Auto-generate AI reply */}
+          {!replyText.trim() && (
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              className="gap-1.5"
+              className="gap-1.5 bg-violet-600 hover:bg-violet-700"
               disabled={isRefining || isSubmitting}
+              onClick={() => handleRefine('professional')}
             >
               {isRefining ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <RefreshCw className="h-4 w-4" />
+                <Sparkles className="h-4 w-4" />
               )}
-              Refine
+              AI Reply
             </Button>
-          </PopoverTrigger>
+          )}
+
+          {/* Refine with tone options */}
+          <Popover open={refineOpen} onOpenChange={setRefineOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={isRefining || isSubmitting}
+              >
+                {isRefining && replyText.trim() ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Refine
+              </Button>
+            </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-2 py-1.5">
               Rewrite as
@@ -156,6 +176,7 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
             </div>
           </PopoverContent>
         </Popover>
+        </div>
 
         <Button
           size="sm"
