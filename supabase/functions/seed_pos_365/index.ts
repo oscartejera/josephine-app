@@ -121,7 +121,8 @@ function generateDailySales(
       * paydayBoost;
 
     const finalSales = Math.max(2000, Math.round(dailySales * 100) / 100);
-    const avgCheck = 23 + (locationMultiplier - 0.9) * 30; // 23-26 EUR avg check
+    // Avg check varies by location tier (derived from base daily sales)
+    const avgCheck = baseDailySales >= 5500 ? 26 : baseDailySales >= 5000 ? 24 : 22;
     const tickets = Math.max(10, Math.round(finalSales / avgCheck));
     const covers = Math.round(tickets * (1.1 + seededRandom(d + 999) * 0.3));
 
@@ -261,10 +262,11 @@ Deno.serve(async (req) => {
 
     // ── Step 5: Generate sales (365+ days × 3 locations) ────────────────
     // Base daily sales: EUR 12,000 (realistic for a mid-range Madrid restaurant)
+    // Realistic casual dining Madrid: ~€4,500-€5,500/day per location
     const locationConfigs = [
-      { loc: centro, base: 13500, mult: 1.10 },   // Premium: higher
-      { loc: chamberi, base: 12000, mult: 1.00 },  // Mid-range
-      { loc: malasana, base: 10500, mult: 0.90 },  // Casual: lower
+      { loc: centro, base: 5500, mult: 1.00 },    // Premium: €5,500/day base
+      { loc: chamberi, base: 5000, mult: 1.00 },   // Mid-range: €5,000/day base
+      { loc: malasana, base: 4500, mult: 1.00 },   // Casual: €4,500/day base
     ];
 
     let totalSalesRecords = 0;

@@ -74,21 +74,27 @@ export function generateRealisticCDMData(locationId: string, orgId: string = 'de
     const dateStr = date.toISOString().split('T')[0];
     const dayOfWeek = date.getDay();
 
-    // Realistic daily patterns
+    // Realistic daily patterns for casual dining Madrid
     const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
-    const baseCovers = isWeekend ? 120 : 80;
+    const isSunday = dayOfWeek === 0;
+    const baseCovers = isWeekend ? 160 : isSunday ? 120 : 90;
     const variation = Math.random() * 20 - 10;
     const dailyCovers = Math.round(baseCovers + variation);
+
+    // Realistic labour for casual dining (~28% COL)
+    const dailySales = dailyCovers * 25; // ~€25 avg check
+    const labourCost = dailySales * 0.28;
+    const labourHours = labourCost / 14.5; // €14.50 avg wage
 
     // facts_labor_daily
     data.factsLaborDaily.push({
       location_id: locationId,
       day: dateStr,
-      scheduled_hours: isWeekend ? 45 : 35,
-      actual_hours: isWeekend ? 48 : 36,
-      labor_cost_est: isWeekend ? 720 : 540,
-      overtime_hours: isWeekend ? 3 : 1,
-      headcount: isWeekend ? 8 : 6,
+      scheduled_hours: Math.round(labourHours * 0.95 * 10) / 10,
+      actual_hours: Math.round(labourHours * 10) / 10,
+      labor_cost_est: Math.round(labourCost * 100) / 100,
+      overtime_hours: Math.max(0, Math.round((labourHours * 0.05) * 10) / 10),
+      headcount: Math.round(labourHours / 8),
     });
 
     // Generate hourly sales data (11:00-23:00)

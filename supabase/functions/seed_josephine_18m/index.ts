@@ -159,10 +159,10 @@ serve(async (req) => {
       const growthMult = getGrowthMultiplier(currentDate);
       const seasonalMult = getSeasonalMultiplier(currentDate);
 
-      // Base sales por día de semana
-      const baseDailySales = (dayOfWeek === 5 || dayOfWeek === 6 ? 18000 : 
-                             dayOfWeek === 0 ? 16000 :
-                             dayOfWeek === 2 || dayOfWeek === 3 ? 10000 : 13000);
+      // Base sales per day of week (realistic casual dining Madrid, per location)
+      const baseDailySales = (dayOfWeek === 5 || dayOfWeek === 6 ? 7000 :
+                             dayOfWeek === 0 ? 5500 :
+                             dayOfWeek === 2 || dayOfWeek === 3 ? 4000 : 5000);
       
       const adjustedDailySales = baseDailySales * growthMult * seasonalMult;
 
