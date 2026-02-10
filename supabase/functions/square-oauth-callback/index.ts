@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const { data: integration } = await supabase
       .from('integrations')
       .select('*')
-      .eq('metadata->oauth_state', state)
+      .eq('metadata->>oauth_state', state)
       .single();
 
     if (!integration) {
