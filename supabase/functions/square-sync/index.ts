@@ -418,6 +418,58 @@ Deno.serve(async (req) => {
           }
           (stats as any).product_sales_rows = productRows.length;
         }
+
+        // 9) Populate facts_sales_15m from CDM orders (for Prophet forecasting)
+        //    Prophet V4/V5 read from facts_sales_15m to generate forecasts.
+        //    We bucket CDM orders into 15-minute intervals.
+        const factsAgg = new Map<string, {
+          location_id: string;
+          ts_bucket: string;
+          sales_gross: number;
+          sales_net: number;
+          tickets: number;
+          covers: number;
+        }>();
+
+        for (const order of cdmOrders) {
+          const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
+          const closedAt = new Date(order.closed_at);
+          // Floor to 15-minute bucket
+          closedAt.setMinutes(Math.floor(closedAt.getMinutes() / 15) * 15, 0, 0);
+          const bucket = closedAt.toISOString();
+          const key = `${bucket}|${jLocId}`;
+
+          const existing = factsAgg.get(key) || {
+            location_id: jLocId,
+            ts_bucket: bucket,
+            sales_gross: 0,
+            sales_net: 0,
+            tickets: 0,
+            covers: 0,
+          };
+
+          existing.sales_gross += Number(order.gross_total || 0);
+          existing.sales_net += Number(order.net_total || order.gross_total || 0);
+          existing.tickets += 1;
+          factsAgg.set(key, existing);
+        }
+
+        if (factsAgg.size > 0) {
+          const factsRows = Array.from(factsAgg.values());
+          // Delete existing 15m facts for the synced date range
+          const factsDates = [...new Set(factsRows.map(r => r.ts_bucket.split('T')[0]))];
+          for (const d of factsDates) {
+            await supabase
+              .from('facts_sales_15m')
+              .delete()
+              .gte('ts_bucket', `${d}T00:00:00`)
+              .lte('ts_bucket', `${d}T23:59:59`)
+              .in('location_id', [...new Set(factsRows.map(r => r.location_id))]);
+          }
+
+          await supabase.from('facts_sales_15m').insert(factsRows);
+          (stats as any).facts_15m_rows = factsRows.length;
+        }
       }
 
       // Complete sync
