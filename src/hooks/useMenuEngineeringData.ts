@@ -36,7 +36,7 @@ export interface MenuEngineeringStats {
 }
 
 export function useMenuEngineeringData() {
-  const { accessibleLocations } = useApp();
+  const { accessibleLocations, dataSource } = useApp();
 
   // State
   const [items, setItems] = useState<MenuEngineeringItem[]>([]);
@@ -81,6 +81,7 @@ export function useMenuEngineeringData() {
         p_date_from: from,
         p_date_to: to,
         p_location_id: selectedLocationId || null,
+        p_data_source: dataSource,
       });
 
       if (rpcError) throw rpcError;
@@ -131,7 +132,7 @@ export function useMenuEngineeringData() {
     } finally {
       setLoading(false);
     }
-  }, [getDateRange, selectedLocationId]);
+  }, [getDateRange, selectedLocationId, dataSource]);
 
   // Refetch on filter changes
   useEffect(() => {
