@@ -39,7 +39,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedLocationId, customDateRange]);
+  }, [selectedLocationId, customDateRange, dataSource]);
 
   const getPreviousPeriod = (from: Date, to: Date): { from: Date; to: Date } => {
     const periodLength = to.getTime() - from.getTime();

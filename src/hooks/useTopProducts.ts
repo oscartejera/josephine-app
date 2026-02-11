@@ -38,7 +38,7 @@ const getPresetDates = (preset: 'last7' | 'last30' | 'custom'): { from: Date; to
 };
 
 export function useTopProducts() {
-  const { group, locations } = useApp();
+  const { group, locations, dataSource } = useApp();
   const [products, setProducts] = useState<TopProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
@@ -63,7 +63,8 @@ export function useTopProducts() {
         p_location_id: selectedLocationId || null,
         p_date_from: format(from, 'yyyy-MM-dd'),
         p_date_to: format(to, 'yyyy-MM-dd'),
-        p_order_by: orderBy
+        p_order_by: orderBy,
+        p_data_source: dataSource
       });
 
       if (error) {
@@ -78,7 +79,7 @@ export function useTopProducts() {
     } finally {
       setLoading(false);
     }
-  }, [selectedLocationId, orderBy, getDateRange]);
+  }, [selectedLocationId, orderBy, getDateRange, dataSource]);
 
   // Fetch products when filters change
   useEffect(() => {

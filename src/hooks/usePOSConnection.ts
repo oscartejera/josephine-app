@@ -1,5 +1,6 @@
 /**
- * usePOSConnection - Detects if there's an active POS integration connected.
+ * usePOSConnection - Detects if there's an active POS integration that has
+ * been successfully synced at least once.
  * Returns { posConnected, provider, loading }
  * Used globally to decide whether to show real POS data or simulated demo data.
  */
@@ -25,21 +26,38 @@ export function usePOSConnection(): POSConnectionState {
 
     async function check() {
       try {
-        // Look for any integration with an active account
+        // Find all integration accounts and their integration status
         const { data: accounts } = await supabase
           .from('integration_accounts')
-          .select('id, integration:integrations(provider, status)')
+          .select('id, is_active, integration:integrations(provider, status)');
+
+        if (cancelled) return;
+
+        // Find an account whose integration is active
+        const activeAccount = accounts?.find(
+          (a: any) => a.is_active && a.integration?.status === 'active'
+        );
+
+        if (!activeAccount) {
+          setState({ posConnected: false, provider: null, loading: false });
+          return;
+        }
+
+        // Verify there's at least one successful sync run for this account
+        const { data: syncRuns } = await supabase
+          .from('integration_sync_runs')
+          .select('id')
+          .eq('integration_account_id', activeAccount.id)
+          .eq('status', 'ok')
           .limit(1);
 
         if (cancelled) return;
 
-        const active = accounts?.find(
-          (a: any) => a.integration?.status === 'active'
-        );
+        const hasSynced = syncRuns && syncRuns.length > 0;
 
         setState({
-          posConnected: !!active,
-          provider: active ? (active as any).integration?.provider : null,
+          posConnected: hasSynced,
+          provider: hasSynced ? (activeAccount as any).integration?.provider : null,
           loading: false,
         });
       } catch {
@@ -51,13 +69,16 @@ export function usePOSConnection(): POSConnectionState {
 
     check();
 
-    // Listen for changes on integrations table
+    // Listen for changes on integrations, accounts, and sync runs
     const channel = supabase
       .channel('pos-connection')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'integrations' }, () => {
         check();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'integration_accounts' }, () => {
+        check();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'integration_sync_runs' }, () => {
         check();
       })
       .subscribe();
