@@ -182,15 +182,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <DemoModeProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <DemoModeProvider>
             <BrowserRouter>
               <AppRoutes />
               <Toaster />
               <Sonner />
             </BrowserRouter>
-          </AuthProvider>
-        </DemoModeProvider>
+          </DemoModeProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
-import { DEMO_MODE } from './DemoModeContext';
+import { useDemoMode } from './DemoModeContext';
 import { usePOSConnection } from '@/hooks/usePOSConnection';
 
 export interface Location {
@@ -42,6 +42,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { profile, isOwner, hasGlobalScope, accessibleLocationIds, refreshProfile } = useAuth();
   const { posConnected } = usePOSConnection();
+  const { isDemoMode } = useDemoMode();
   const dataSource: 'pos' | 'simulated' = posConnected ? 'pos' : 'simulated';
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -52,7 +53,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   // Detect if user needs onboarding (no group_id)
-  const needsOnboarding = !DEMO_MODE && !loading && profile !== null && profile.group_id === null && !onboardingCompleted;
+  const needsOnboarding = !isDemoMode && !loading && profile !== null && profile.group_id === null && !onboardingCompleted;
 
   const setOnboardingComplete = async () => {
     setOnboardingCompleted(true);
@@ -61,18 +62,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // In DEMO_MODE, everyone can see all locations
-  const canShowAllLocations = DEMO_MODE ? true : (isOwner || hasGlobalScope);
+  const canShowAllLocations = isDemoMode ? true : (isOwner || hasGlobalScope);
 
   // In DEMO_MODE, all locations are accessible
   const accessibleLocations = React.useMemo(() => {
-    if (DEMO_MODE) {
+    if (isDemoMode) {
       return locations;
     }
     if (isOwner || hasGlobalScope) {
       return locations;
     }
     return locations.filter(l => accessibleLocationIds.includes(l.id));
-  }, [locations, isOwner, hasGlobalScope, accessibleLocationIds]);
+  }, [locations, isOwner, hasGlobalScope, accessibleLocationIds, isDemoMode]);
 
   useEffect(() => {
     if (profile?.group_id) {
@@ -117,8 +118,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Wrapped setter - in DEMO_MODE, all locations are valid
   const setSelectedLocationId = (id: string | null) => {
-    // In DEMO_MODE, all selections are valid
-    if (DEMO_MODE) {
+    // In demo mode, all selections are valid
+    if (isDemoMode) {
       setSelectedLocationIdInternal(id);
       return;
     }

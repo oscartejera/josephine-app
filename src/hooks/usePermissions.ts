@@ -1,6 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useCallback, useMemo } from 'react';
-import { DEMO_MODE } from '@/contexts/DemoModeContext';
 
 // Permission keys for the application
 export const PERMISSIONS = {
