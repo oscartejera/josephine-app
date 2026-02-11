@@ -6,11 +6,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders } from '../_shared/cors.ts';
 import { SquareClient } from '../_shared/square-client.ts';
-import { 
+import { decryptToken, encryptToken } from '../_shared/crypto.ts';
+import {
   normalizeSquareLocation,
   normalizeSquareItem,
   normalizeSquareOrder,
-  normalizeSquarePayment 
+  normalizeSquarePayment
 } from '../_shared/cdm-normalizer.ts';
 
 Deno.serve(async (req) => {
@@ -61,9 +62,79 @@ Deno.serve(async (req) => {
       .single();
 
     const orgId = account.integration.org_id;
+    const environment = account.environment as 'sandbox' | 'production';
+
+    // Decrypt access token
+    let accessToken: string;
+    try {
+      accessToken = await decryptToken(account.access_token_encrypted);
+    } catch {
+      // Fallback: token may have been stored before encryption was enabled
+      accessToken = account.access_token_encrypted;
+    }
+
+    // Check if token is expired and refresh if needed
+    if (account.token_expires_at && new Date(account.token_expires_at) <= new Date()) {
+      if (!account.refresh_token_encrypted) {
+        throw new Error('Access token expired and no refresh token available');
+      }
+
+      let refreshToken: string;
+      try {
+        refreshToken = await decryptToken(account.refresh_token_encrypted);
+      } catch {
+        refreshToken = account.refresh_token_encrypted;
+      }
+
+      const clientId = environment === 'production'
+        ? Deno.env.get('SQUARE_PRODUCTION_CLIENT_ID')
+        : Deno.env.get('SQUARE_SANDBOX_CLIENT_ID');
+      const clientSecret = environment === 'production'
+        ? Deno.env.get('SQUARE_PRODUCTION_CLIENT_SECRET')
+        : Deno.env.get('SQUARE_SANDBOX_CLIENT_SECRET');
+
+      const tokenUrl = environment === 'production'
+        ? 'https://connect.squareup.com/oauth2/token'
+        : 'https://connect.squareupsandbox.com/oauth2/token';
+
+      const refreshResp = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          client_secret: clientSecret,
+          refresh_token: refreshToken,
+          grant_type: 'refresh_token',
+        }),
+      });
+
+      if (!refreshResp.ok) {
+        const err = await refreshResp.text();
+        throw new Error(`Token refresh failed: ${err}`);
+      }
+
+      const newTokens = await refreshResp.json();
+      accessToken = newTokens.access_token;
+
+      // Encrypt and persist new tokens
+      const encryptedAccess = await encryptToken(newTokens.access_token);
+      const encryptedRefresh = newTokens.refresh_token
+        ? await encryptToken(newTokens.refresh_token)
+        : account.refresh_token_encrypted;
+
+      await supabase
+        .from('integration_accounts')
+        .update({
+          access_token_encrypted: encryptedAccess,
+          refresh_token_encrypted: encryptedRefresh,
+          token_expires_at: newTokens.expires_at || null,
+        })
+        .eq('id', accountId);
+    }
+
     const client = new SquareClient({
-      accessToken: account.access_token_encrypted, // TODO: Decrypt
-      environment: account.environment as 'sandbox' | 'production',
+      accessToken,
+      environment,
     });
 
     const stats = {
@@ -148,12 +219,23 @@ Deno.serve(async (req) => {
         ordersCursor = ordersResp.cursor;
       } while (ordersCursor);
 
-      // 4) Sync Payments (simplified)
-      for (const locId of locationIds.slice(0, 1)) { // First location only for MVP
-        const paymentsResp = await client.listPayments(locId, beginTime);
-        const payments = paymentsResp.payments || [];
-        stats.payments = payments.length;
-        // TODO: Full payment normalization
+      // 4) Sync Payments (all locations)
+      for (const locId of locationIds) {
+        let paymentsCursor;
+        do {
+          const paymentsResp = await client.listPayments(locId, beginTime, paymentsCursor);
+          const payments = paymentsResp.payments || [];
+
+          for (const payment of payments) {
+            const normalized = normalizeSquarePayment(payment, orgId, locationMap);
+            await supabase
+              .from('cdm_payments')
+              .upsert(normalized, { onConflict: 'external_provider,external_id' });
+          }
+
+          stats.payments += payments.length;
+          paymentsCursor = paymentsResp.cursor;
+        } while (paymentsCursor);
       }
 
       // 5) Aggregate CDM orders → pos_daily_finance (data_source = 'pos')

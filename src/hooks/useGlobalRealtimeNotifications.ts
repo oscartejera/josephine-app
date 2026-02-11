@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useAuth } from '@/contexts/AuthContext';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface TicketPayload {
@@ -32,8 +33,12 @@ interface PurchaseOrderPayload {
 
 export function useGlobalRealtimeNotifications() {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { session } = useAuth();
 
   useEffect(() => {
+    // Don't subscribe to Realtime until session is available
+    if (!session) return;
+
     const channel = supabase
       .channel('global-notifications')
       .on(
@@ -110,5 +115,5 @@ export function useGlobalRealtimeNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [addNotification]);
+  }, [addNotification, session]);
 }

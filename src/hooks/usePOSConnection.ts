@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface POSConnectionState {
   posConnected: boolean;
@@ -15,6 +16,7 @@ interface POSConnectionState {
 }
 
 export function usePOSConnection(): POSConnectionState {
+  const { session } = useAuth();
   const [state, setState] = useState<POSConnectionState>({
     posConnected: false,
     provider: null,
@@ -22,6 +24,12 @@ export function usePOSConnection(): POSConnectionState {
   });
 
   useEffect(() => {
+    // Don't query or subscribe until session is available
+    if (!session) {
+      setState({ posConnected: false, provider: null, loading: false });
+      return;
+    }
+
     let cancelled = false;
 
     async function check() {
@@ -73,7 +81,7 @@ export function usePOSConnection(): POSConnectionState {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [session]);
 
   return state;
 }

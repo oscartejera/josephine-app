@@ -5,6 +5,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { encryptToken } from '../_shared/crypto.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -71,6 +72,12 @@ Deno.serve(async (req) => {
 
     const tokens = await tokenResponse.json();
 
+    // Encrypt tokens before storing
+    const encryptedAccessToken = await encryptToken(tokens.access_token);
+    const encryptedRefreshToken = tokens.refresh_token
+      ? await encryptToken(tokens.refresh_token)
+      : null;
+
     // Create integration_account
     await supabase
       .from('integration_accounts')
@@ -79,8 +86,8 @@ Deno.serve(async (req) => {
         provider: 'square',
         environment,
         external_account_id: tokens.merchant_id,
-        access_token_encrypted: tokens.access_token,
-        refresh_token_encrypted: tokens.refresh_token || null,
+        access_token_encrypted: encryptedAccessToken,
+        refresh_token_encrypted: encryptedRefreshToken,
         token_expires_at: tokens.expires_at || null,
         metadata: { merchant_id: tokens.merchant_id },
       }, { onConflict: 'integration_id,environment' });

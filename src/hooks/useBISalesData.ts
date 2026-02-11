@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { format, eachDayOfInterval, eachHourOfInterval, startOfDay, endOfDay, differenceInDays, isSameDay } from 'date-fns';
 import { toast } from 'sonner';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -124,6 +125,7 @@ function emptyData(): BISalesData {
 
 export function useBISalesData({ dateRange, granularity, compareMode, locationIds }: UseBISalesDataParams) {
   const { locations, dataSource } = useApp();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
   const effectiveLocationIds = locationIds.length > 0 ? locationIds : locations.map(l => l.id);
   const [isConnected, setIsConnected] = useState(false);
@@ -133,6 +135,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
 
   // Subscribe to realtime pos_daily_finance updates
   useEffect(() => {
+    if (!session) return;
+
     const channel = supabase
       .channel('sales-tickets-realtime')
       .on(
@@ -170,7 +174,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       supabase.removeChannel(channel);
       setIsConnected(false);
     };
-  }, [queryClient]);
+  }, [queryClient, session]);
 
   const query = useQuery({
     queryKey: ['bi-sales', dateRange, granularity, compareMode, effectiveLocationIds, dataSource],

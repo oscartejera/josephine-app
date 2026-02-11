@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface PrintJob {
   id: string;
@@ -16,6 +17,7 @@ export interface PrintJob {
 }
 
 export function usePrintQueue(locationId: string) {
+  const { session } = useAuth();
   const [jobs, setJobs] = useState<PrintJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
@@ -152,7 +154,7 @@ export function usePrintQueue(locationId: string) {
 
   // Realtime subscription
   useEffect(() => {
-    if (!locationId) return;
+    if (!locationId || !session) return;
 
     const channel = supabase
       .channel(`print-queue-${locationId}`)
@@ -175,7 +177,7 @@ export function usePrintQueue(locationId: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [locationId, fetchJobs]);
+  }, [locationId, fetchJobs, session]);
 
   const pendingCount = jobs.filter(j => j.status === 'pending').length;
 
