@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       // Map CDM locations to Josephine locations
       const { data: josephineLocations } = await supabase
         .from('locations')
-        .select('id, name')
+        .select('id, name, group_id')
         .eq('active', true)
         .limit(10);
 
@@ -248,10 +248,161 @@ Deno.serve(async (req) => {
         }));
 
         if (rows.length > 0) {
-          await supabase.from('pos_daily_finance').insert(rows);
+          await supabase
+            .from('pos_daily_finance')
+            .upsert(rows, { onConflict: 'date,location_id' });
         }
 
         (stats as any).daily_finance_rows = rows.length;
+
+        // 6) Aggregate CDM orders → pos_daily_metrics (for Labour page)
+        //    Labour RPCs read from sales_daily_unified which joins pos_daily_metrics.
+        //    Square orders provide net_sales + orders; labor_hours/cost = 0
+        //    (Square doesn't include labor data in orders).
+        const metricsRows = Array.from(dailyAgg.values()).map(d => ({
+          date: d.date,
+          location_id: d.location_id,
+          net_sales: d.net_sales,
+          orders: d.orders_count,
+          labor_hours: 0,
+          labor_cost: 0,
+          data_source: 'pos',
+        }));
+
+        if (metricsRows.length > 0) {
+          await supabase
+            .from('pos_daily_metrics')
+            .upsert(metricsRows, { onConflict: 'date,location_id' });
+        }
+        (stats as any).daily_metrics_rows = metricsRows.length;
+
+        // 7) Sync CDM items → products table (for Menu Engineering)
+        //    Menu Engineering RPCs read from product_sales_daily JOIN products.
+        //    We need products to exist before we can write product_sales_daily.
+        const groupId = (josephineLocations as any[])[0]?.group_id;
+
+        const { data: cdmItemsList } = await supabase
+          .from('cdm_items')
+          .select('name, category_name, is_active')
+          .eq('org_id', orgId);
+
+        const productNameToId = new Map<string, string>();
+
+        if (cdmItemsList && groupId) {
+          // Fetch all existing products for this group in one query
+          const { data: existingProducts } = await supabase
+            .from('products')
+            .select('id, name')
+            .eq('group_id', groupId);
+
+          for (const p of (existingProducts || [])) {
+            productNameToId.set(p.name, p.id);
+          }
+
+          // Insert only new products (not already in the products table)
+          const newProducts = cdmItemsList
+            .filter(item => !productNameToId.has(item.name))
+            .map(item => ({
+              name: item.name,
+              category: item.category_name || 'Other',
+              is_active: item.is_active,
+              group_id: groupId,
+              location_id: josephineLocations[0].id,
+            }));
+
+          if (newProducts.length > 0) {
+            const { data: inserted } = await supabase
+              .from('products')
+              .insert(newProducts)
+              .select('id, name');
+
+            for (const p of (inserted || [])) {
+              productNameToId.set(p.name, p.id);
+            }
+          }
+        }
+        (stats as any).products_synced = productNameToId.size;
+
+        // 8) Aggregate CDM order lines → product_sales_daily (for Menu Engineering)
+        //    Groups line items by (date, location, product) and writes daily aggregates.
+        const cdmOrderIds = cdmOrders.map((o: any) => o.id);
+
+        if (cdmOrderIds.length > 0 && productNameToId.size > 0) {
+          // Fetch all order lines for synced orders
+          const { data: allLines } = await supabase
+            .from('cdm_order_lines')
+            .select('order_id, name, quantity, gross_line_total')
+            .in('order_id', cdmOrderIds);
+
+          // Build order_id → {date, location_id} lookup
+          const orderInfoMap = new Map<string, { date: string; location_id: string }>();
+          for (const order of cdmOrders) {
+            const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
+            const orderDate = new Date(order.closed_at).toISOString().split('T')[0];
+            orderInfoMap.set(order.id, { date: orderDate, location_id: jLocId });
+          }
+
+          // Group by (date, location, product)
+          const productDailyAgg = new Map<string, {
+            date: string;
+            location_id: string;
+            product_id: string;
+            units_sold: number;
+            net_sales: number;
+            cogs: number;
+          }>();
+
+          for (const line of (allLines || [])) {
+            const orderInfo = orderInfoMap.get(line.order_id);
+            if (!orderInfo) continue;
+
+            const productId = productNameToId.get(line.name);
+            if (!productId) continue;
+
+            const key = `${orderInfo.date}|${orderInfo.location_id}|${productId}`;
+            const existing = productDailyAgg.get(key) || {
+              date: orderInfo.date,
+              location_id: orderInfo.location_id,
+              product_id: productId,
+              units_sold: 0,
+              net_sales: 0,
+              cogs: 0,
+            };
+
+            existing.units_sold += Number(line.quantity || 0);
+            existing.net_sales += Number(line.gross_line_total || 0);
+            productDailyAgg.set(key, existing);
+          }
+
+          // Delete existing POS product_sales_daily
+          await supabase
+            .from('product_sales_daily')
+            .delete()
+            .eq('data_source', 'pos');
+
+          // Delete simulated rows for synced dates to avoid double-counting
+          const syncedDates = [...new Set(
+            Array.from(productDailyAgg.values()).map(d => d.date)
+          )];
+          if (syncedDates.length > 0) {
+            await supabase
+              .from('product_sales_daily')
+              .delete()
+              .eq('data_source', 'simulated')
+              .in('date', syncedDates);
+          }
+
+          // Insert fresh POS rows
+          const productRows = Array.from(productDailyAgg.values()).map(d => ({
+            ...d,
+            data_source: 'pos',
+          }));
+
+          if (productRows.length > 0) {
+            await supabase.from('product_sales_daily').insert(productRows);
+          }
+          (stats as any).product_sales_rows = productRows.length;
+        }
       }
 
       // Complete sync
