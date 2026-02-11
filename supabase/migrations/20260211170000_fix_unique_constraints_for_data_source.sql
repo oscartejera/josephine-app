@@ -5,6 +5,17 @@
 -- ==========================================================================
 
 -- =============================================
+-- 0) ADD MISSING RLS POLICY for integration_sync_runs
+--    RLS was enabled but no SELECT policy existed, blocking
+--    all frontend reads via anon/authenticated keys.
+-- =============================================
+
+CREATE POLICY "Authenticated users can view sync runs"
+  ON integration_sync_runs FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- =============================================
 -- 1) FIX UNIQUE CONSTRAINTS to include data_source
 -- =============================================
 
