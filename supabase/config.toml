@@ -40,5 +40,8 @@ verify_jwt = false
 [functions.square-seed-demo]
 verify_jwt = false
 
+[functions.square-oauth-exchange]
+verify_jwt = false
+
 [functions.process-raw-events]
 verify_jwt = false

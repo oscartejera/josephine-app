@@ -37,6 +37,7 @@ import Payroll from "@/pages/Payroll";
 import SettingsPage from "@/pages/SettingsPage";
 import Integrations from "@/pages/Integrations";
 import SquareIntegration from "@/pages/integrations/SquareIntegration";
+import SquareOAuthCallback from "@/pages/integrations/SquareOAuthCallback";
 import InventoryItems from "@/pages/inventory-setup/InventoryItems";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
@@ -152,7 +153,8 @@ function AppRoutes() {
         {/* Integrations */}
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/integrations/square" element={<SquareIntegration />} />
-        
+        <Route path="/integrations/square/callback" element={<SquareOAuthCallback />} />
+
         {/* Inventory Setup */}
         <Route path="/inventory-setup/items" element={<InventoryItems />} />
         
