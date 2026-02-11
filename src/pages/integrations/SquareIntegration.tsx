@@ -163,7 +163,7 @@ export default function SquareIntegration() {
         },
         body: JSON.stringify({
           integrationId,
-          environment: 'sandbox',
+          environment: 'production',
           appUrl: window.location.origin,
         }),
       });
