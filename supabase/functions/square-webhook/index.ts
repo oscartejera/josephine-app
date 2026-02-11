@@ -5,6 +5,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders } from '../_shared/cors.ts';
+import { verifySquareWebhookSignature } from '../_shared/crypto.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -18,10 +19,28 @@ Deno.serve(async (req) => {
   try {
     const webhookSignature = req.headers.get('x-square-hmacsha256-signature');
     const body = await req.text();
-    const event = JSON.parse(body);
 
-    // TODO: Verify webhook signature with signing key from Supabase Secrets
-    // For MVP, accept all webhooks (add verification in production)
+    // Verify webhook signature (HMAC-SHA256)
+    const signingKey = Deno.env.get('SQUARE_WEBHOOK_SIGNING_KEY');
+    if (signingKey && webhookSignature) {
+      const notificationUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/square-webhook`;
+      const valid = await verifySquareWebhookSignature(body, webhookSignature, signingKey, notificationUrl);
+      if (!valid) {
+        console.warn('[Square Webhook] Invalid signature — rejecting');
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else if (signingKey && !webhookSignature) {
+      console.warn('[Square Webhook] Missing signature header — rejecting');
+      return new Response(JSON.stringify({ error: 'Missing signature' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const event = JSON.parse(body);
 
     console.log('[Square Webhook] Received:', event.type);
 
