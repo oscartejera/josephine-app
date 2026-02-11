@@ -160,10 +160,15 @@ export default function SquareIntegration() {
         },
       });
 
-      if (fnError) throw new Error(fnError.message || 'Failed to start OAuth');
+      if (fnError) {
+        // Extract the real error message from the function response
+        const detail = typeof data === 'object' && data?.error ? data.error : fnError.message;
+        throw new Error(detail || 'Failed to start OAuth');
+      }
 
       window.location.href = data.authUrl;
     } catch (err: any) {
+      console.error('OAuth start error:', err);
       toast.error('Error iniciando conexión', { description: err.message });
       setConnecting(false);
     }
@@ -178,14 +183,18 @@ export default function SquareIntegration() {
         body: { accountId: account.id },
       });
 
-      if (fnError) throw new Error(fnError.message || 'Sync failed');
+      if (fnError) {
+        const detail = typeof data === 'object' && data?.error ? data.error : fnError.message;
+        throw new Error(detail || 'Sync failed');
+      }
 
       toast.success('Sincronización completada', {
-        description: `${data.stats.locations} locales, ${data.stats.items} productos, ${data.stats.orders} pedidos`,
+        description: `${data.stats?.locations || 0} locales, ${data.stats?.items || 0} productos, ${data.stats?.orders || 0} pedidos`,
       });
 
       await loadIntegration();
     } catch (err: any) {
+      console.error('Sync error:', err);
       toast.error('Error sincronizando', { description: err.message });
     } finally {
       setSyncing(false);
