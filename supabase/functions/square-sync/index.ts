@@ -223,13 +223,7 @@ Deno.serve(async (req) => {
           dailyAgg.set(key, existing);
         }
 
-        // Delete existing POS data and insert fresh
-        await supabase
-          .from('pos_daily_finance')
-          .delete()
-          .eq('data_source', 'pos');
-
-        // Insert aggregated data
+        // Build aggregated rows
         const rows = Array.from(dailyAgg.values()).map(d => ({
           date: d.date,
           location_id: d.location_id,
@@ -248,9 +242,21 @@ Deno.serve(async (req) => {
         }));
 
         if (rows.length > 0) {
+          // Collect synced dates to replace simulated data
+          const syncedDates = [...new Set(rows.map(r => r.date))];
+
+          // Delete ALL existing rows (simulated + pos) for synced dates
+          // The unique constraint is (date, location_id) without data_source,
+          // so we must remove existing rows before inserting POS replacements.
           await supabase
             .from('pos_daily_finance')
-            .upsert(rows, { onConflict: 'date,location_id,data_source' });
+            .delete()
+            .in('date', syncedDates)
+            .in('location_id', [...new Set(rows.map(r => r.location_id))]);
+
+          await supabase
+            .from('pos_daily_finance')
+            .insert(rows);
         }
 
         (stats as any).daily_finance_rows = rows.length;
@@ -270,9 +276,18 @@ Deno.serve(async (req) => {
         }));
 
         if (metricsRows.length > 0) {
+          // Delete existing rows (simulated + pos) for synced dates.
+          // Unique constraint is (date, location_id) without data_source.
+          const metricsDates = [...new Set(metricsRows.map(r => r.date))];
           await supabase
             .from('pos_daily_metrics')
-            .upsert(metricsRows, { onConflict: 'date,location_id,data_source' });
+            .delete()
+            .in('date', metricsDates)
+            .in('location_id', [...new Set(metricsRows.map(r => r.location_id))]);
+
+          await supabase
+            .from('pos_daily_metrics')
+            .insert(metricsRows);
         }
         (stats as any).daily_metrics_rows = metricsRows.length;
 
@@ -411,6 +426,18 @@ Deno.serve(async (req) => {
         p_status: 'ok',
         p_stats: stats,
       });
+
+      // Mark integration as synced so the frontend can detect POS connection
+      // without needing to query integration_sync_runs (blocked by RLS).
+      await supabase
+        .from('integrations')
+        .update({
+          metadata: {
+            ...account.integration.metadata,
+            last_synced_at: new Date().toISOString(),
+          },
+        })
+        .eq('id', account.integration.id);
 
       return new Response(
         JSON.stringify({ success: true, stats }),
