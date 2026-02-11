@@ -51,14 +51,38 @@ export default function SquareIntegration() {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
-  // Check for OAuth callback params
+  // Check for OAuth callback params — auto-sync is triggered server-side
   useEffect(() => {
     if (searchParams.get('connected') === 'true') {
       toast.success('Square conectado correctamente', {
-        description: 'Ya puedes sincronizar datos desde Square.',
+        description: 'Sincronización inicial en curso...',
       });
+      setSyncing(true);
       setSearchParams({});
-      loadIntegration();
+      // Poll until sync completes (auto-triggered by OAuth callback)
+      const poll = setInterval(async () => {
+        await loadIntegration();
+        const { data: runs } = await supabase
+          .from('integration_sync_runs')
+          .select('status')
+          .order('started_at', { ascending: false })
+          .limit(1);
+        const latest = runs?.[0];
+        if (latest && latest.status !== 'running') {
+          clearInterval(poll);
+          setSyncing(false);
+          if (latest.status === 'ok') {
+            toast.success('Datos importados correctamente', {
+              description: 'Todas las páginas mostrarán tus datos de Square.',
+            });
+          } else {
+            toast.error('Error en la sincronización inicial');
+          }
+        }
+      }, 3000);
+      // Safety timeout after 2 minutes
+      setTimeout(() => { clearInterval(poll); setSyncing(false); }, 120_000);
+      return () => clearInterval(poll);
     }
     if (searchParams.get('error')) {
       toast.error('Error conectando Square', {

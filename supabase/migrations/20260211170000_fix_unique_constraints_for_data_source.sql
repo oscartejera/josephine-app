@@ -92,7 +92,18 @@ BEGIN
     v_progress := 0.02;
   END IF;
 
-  FOR v_location IN SELECT id, name FROM locations LOOP
+  FOR v_location IN SELECT id, name FROM locations WHERE active LOOP
+    -- Skip locations that already have real POS data for today.
+    -- When POS is connected, the sync writes data_source='pos' rows
+    -- and we must not overwrite them with simulated data.
+    PERFORM 1 FROM pos_daily_finance
+    WHERE date = CURRENT_DATE
+      AND location_id = v_location.id
+      AND data_source = 'pos';
+    IF FOUND THEN
+      CONTINUE;
+    END IF;
+
     SELECT * INTO v_forecast
     FROM forecast_daily_metrics
     WHERE date = CURRENT_DATE AND location_id = v_location.id

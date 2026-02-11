@@ -91,6 +91,29 @@ Deno.serve(async (req) => {
       .update({ status: 'active' })
       .eq('id', integration.id);
 
+    // Get the created account ID for auto-sync
+    const { data: createdAccount } = await supabase
+      .from('integration_accounts')
+      .select('id')
+      .eq('integration_id', integration.id)
+      .eq('environment', environment)
+      .single();
+
+    // Trigger first sync automatically (fire-and-forget via pg_net or direct call)
+    // This runs the sync in the background so data is ready within ~30 seconds
+    if (createdAccount) {
+      fetch(`${supabaseUrl}/functions/v1/square-sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ accountId: createdAccount.id }),
+      }).catch(() => {
+        // Fire-and-forget: don't block redirect if sync fails to start
+      });
+    }
+
     // Redirect to the app
     return new Response(null, {
       status: 302,
