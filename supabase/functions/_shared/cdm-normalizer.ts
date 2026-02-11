@@ -74,12 +74,16 @@ export function normalizeSquareOrder(squareOrder: any, orgId: string, locationMa
   };
 }
 
-export function normalizeSquarePayment(squarePayment: any, orderExternalId: string) {
+export function normalizeSquarePayment(squarePayment: any, orgId: string, locationMap?: Map<string, string>) {
+  const locationId = locationMap?.get(squarePayment.location_id) || null;
+
   return {
-    order_external_id: orderExternalId, // Will be resolved to order_id
+    org_id: orgId,
+    location_id: locationId,
+    order_external_id: squarePayment.order_id || null,
     amount: squarePayment.amount_money?.amount ? Number(squarePayment.amount_money.amount) / 100 : 0,
     method: squarePayment.card_details ? 'card' : squarePayment.cash_details ? 'cash' : 'other',
-    status: squarePayment.status === 'COMPLETED' ? 'completed' : 
+    status: squarePayment.status === 'COMPLETED' ? 'completed' :
             squarePayment.status === 'FAILED' ? 'failed' : 'pending',
     paid_at: squarePayment.created_at,
     external_provider: 'square',

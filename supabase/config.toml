@@ -20,3 +20,25 @@ verify_jwt = false
 
 [functions.send_kpi_alerts]
 verify_jwt = false
+
+# Square POS integration — called by Square redirects/webhooks (no Supabase JWT)
+[functions.square-oauth-callback]
+verify_jwt = false
+
+[functions.square-oauth-start]
+verify_jwt = false
+
+[functions.square-sync]
+verify_jwt = false
+
+[functions.square-webhook]
+verify_jwt = false
+
+[functions.square-daily-simulator]
+verify_jwt = false
+
+[functions.square-seed-demo]
+verify_jwt = false
+
+[functions.process-raw-events]
+verify_jwt = false

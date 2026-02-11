@@ -102,7 +102,18 @@ Deno.serve(async (req) => {
 
     console.log('[Square Webhook] Stored event:', eventType, eventId);
 
-    // Acknowledge receipt
+    // Fire-and-forget: trigger async processing of pending events
+    // This does NOT block the webhook response (Square expects fast 200)
+    fetch(`${supabaseUrl}/functions/v1/process-raw-events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({}),
+    }).catch((err) => console.warn('[Square Webhook] Failed to trigger processing:', err));
+
+    // Acknowledge receipt immediately
     return new Response(
       JSON.stringify({ received: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -13,9 +13,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
 interface Integration {
   id: string;
   status: string;
@@ -155,21 +152,15 @@ export default function SquareIntegration() {
         setIntegration(newInteg as Integration);
       }
 
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/square-oauth-start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { data, error: fnError } = await supabase.functions.invoke('square-oauth-start', {
+        body: {
           integrationId,
           environment: 'production',
           appUrl: window.location.origin,
-        }),
+        },
       });
 
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Failed to start OAuth');
+      if (fnError) throw new Error(fnError.message || 'Failed to start OAuth');
 
       window.location.href = data.authUrl;
     } catch (err: any) {
@@ -183,17 +174,11 @@ export default function SquareIntegration() {
     setSyncing(true);
 
     try {
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/square-sync`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
-        body: JSON.stringify({ accountId: account.id }),
+      const { data, error: fnError } = await supabase.functions.invoke('square-sync', {
+        body: { accountId: account.id },
       });
 
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Sync failed');
+      if (fnError) throw new Error(fnError.message || 'Sync failed');
 
       toast.success('Sincronización completada', {
         description: `${data.stats.locations} locales, ${data.stats.items} productos, ${data.stats.orders} pedidos`,
