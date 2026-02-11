@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
         if (rows.length > 0) {
           await supabase
             .from('pos_daily_finance')
-            .upsert(rows, { onConflict: 'date,location_id' });
+            .upsert(rows, { onConflict: 'date,location_id,data_source' });
         }
 
         (stats as any).daily_finance_rows = rows.length;
@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
         if (metricsRows.length > 0) {
           await supabase
             .from('pos_daily_metrics')
-            .upsert(metricsRows, { onConflict: 'date,location_id' });
+            .upsert(metricsRows, { onConflict: 'date,location_id,data_source' });
         }
         (stats as any).daily_metrics_rows = metricsRows.length;
 
