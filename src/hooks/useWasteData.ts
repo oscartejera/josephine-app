@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { format, eachDayOfInterval, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
@@ -93,6 +94,7 @@ export function useWasteData(
   selectedLocations: string[]
 ) {
   const { locations, dataSource } = useApp();
+  const { session } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [metrics, setMetrics] = useState<WasteMetrics>({
@@ -324,6 +326,8 @@ export function useWasteData(
 
   // Subscribe to realtime waste event updates
   useEffect(() => {
+    if (!session) return;
+
     const channel = supabase
       .channel('waste-events-realtime')
       .on(
@@ -358,7 +362,7 @@ export function useWasteData(
       supabase.removeChannel(channel);
       setIsConnected(false);
     };
-  }, [fetchData]);
+  }, [fetchData, session]);
 
   return {
     isLoading,

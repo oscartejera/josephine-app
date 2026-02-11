@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
@@ -92,6 +93,7 @@ export function useInventoryData(
   selectedLocations: string[]
 ) {
   const { locations, group, loading: appLoading, dataSource } = useApp();
+  const { session } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [hasRealData, setHasRealData] = useState(false);
@@ -211,6 +213,8 @@ export function useInventoryData(
 
   // Subscribe to realtime inventory updates
   useEffect(() => {
+    if (!session) return;
+
     const channel = supabase
       .channel('inventory-items-realtime')
       .on(
@@ -254,7 +258,7 @@ export function useInventoryData(
       supabase.removeChannel(channel);
       setIsConnected(false);
     };
-  }, [fetchData]);
+  }, [fetchData, session]);
 
   const processRealData = async (
     tickets: any[], 

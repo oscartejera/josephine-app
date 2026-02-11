@@ -73,44 +73,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserData = useCallback(async (userId: string) => {
     try {
-      // Fetch roles with scope using RPC
-      const { data: rolesData } = await supabase.rpc('get_user_roles_with_scope', {
-        _user_id: userId
-      });
-      
-      if (rolesData) {
-        setRoles(rolesData as UserRole[]);
-      } else {
-        setRoles([]);
-      }
+      // Batch all RPC calls in parallel for faster auth resolution
+      const [rolesResult, ownerResult, globalResult, locationsResult, permsResult] = await Promise.all([
+        supabase.rpc('get_user_roles_with_scope', { _user_id: userId }),
+        supabase.rpc('is_owner', { _user_id: userId }),
+        supabase.rpc('get_user_has_global_scope', { _user_id: userId }),
+        supabase.rpc('get_user_accessible_locations', { _user_id: userId }),
+        supabase.rpc('get_user_permissions', { _user_id: userId }),
+      ]);
 
-      // Check if user is owner
-      const { data: ownerData } = await supabase.rpc('is_owner', { _user_id: userId });
-      setRealIsOwner(ownerData === true);
-
-      // Check global scope
-      const { data: globalData } = await supabase.rpc('get_user_has_global_scope', { _user_id: userId });
-      setRealHasGlobalScope(globalData === true);
-
-      // Get accessible locations
-      const { data: locationsData } = await supabase.rpc('get_user_accessible_locations', {
-        _user_id: userId
-      });
-      if (locationsData) {
-        setRealAccessibleLocationIds(locationsData as string[]);
-      } else {
-        setRealAccessibleLocationIds([]);
-      }
-
-      // Get permissions
-      const { data: permsData } = await supabase.rpc('get_user_permissions', {
-        _user_id: userId
-      });
-      if (permsData) {
-        setPermissions(permsData as Permission[]);
-      } else {
-        setPermissions([]);
-      }
+      setRoles(rolesResult.data ? (rolesResult.data as UserRole[]) : []);
+      setRealIsOwner(ownerResult.data === true);
+      setRealHasGlobalScope(globalResult.data === true);
+      setRealAccessibleLocationIds(locationsResult.data ? (locationsResult.data as string[]) : []);
+      setPermissions(permsResult.data ? (permsResult.data as Permission[]) : []);
     } catch (error) {
       console.error('Error fetching user data:', error);
       setRoles([]);
@@ -136,19 +112,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, fetchUserData]);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let initialised = false;
+
+    // Set up auth state listener FIRST (per Supabase docs)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Skip if this is the initial INITIAL_SESSION event — getSession handles it below
+        if (!initialised) return;
+
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Use setTimeout to avoid blocking the auth state change
-          setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-            await fetchUserData(session.user.id);
-          }, 0);
+          const [profileData] = await Promise.all([
+            fetchProfile(session.user.id),
+            fetchUserData(session.user.id),
+          ]);
+          setProfile(profileData);
         } else {
           setProfile(null);
           setRoles([]);
@@ -159,8 +139,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // THEN check for existing session
+    // THEN resolve the current session (avoids race condition)
     supabase.auth.getSession().then(({ data: { session } }) => {
+      initialised = true;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {

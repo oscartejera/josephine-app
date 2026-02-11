@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ interface LowStockItem {
 
 export function LowStockWidget() {
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [items, setItems] = useState<LowStockItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
@@ -58,6 +60,8 @@ export function LowStockWidget() {
   };
 
   useEffect(() => {
+    if (!session) return;
+
     fetchLowStockItems();
 
     // Subscribe to realtime inventory updates
@@ -94,7 +98,7 @@ export function LowStockWidget() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [session]);
 
   const getSeverityColor = (percentOfPar: number) => {
     if (percentOfPar <= 25) return 'bg-destructive/10 text-destructive border-destructive/30';

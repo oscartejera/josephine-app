@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
   DropdownMenu,
@@ -68,6 +69,7 @@ export default function ProcurementOrders() {
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [isLoadingLines, setIsLoadingLines] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const { session } = useAuth();
 
   // Request notification permission on mount
   useEffect(() => {
@@ -177,6 +179,8 @@ export default function ProcurementOrders() {
   };
 
   useEffect(() => {
+    if (!session) return;
+
     fetchData();
 
     // Subscribe to realtime updates for purchase_orders
@@ -226,7 +230,7 @@ export default function ProcurementOrders() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [session]);
 
   // Check if we came from a successful order placement
   useEffect(() => {
