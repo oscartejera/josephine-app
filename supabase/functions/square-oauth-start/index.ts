@@ -42,7 +42,9 @@ Deno.serve(async (req) => {
       ? 'https://connect.squareup.com/oauth2/authorize'
       : 'https://connect.squareupsandbox.com/oauth2/authorize';
 
-    const redirectUri = `${supabaseUrl}/functions/v1/square-oauth-callback`;
+    // Redirect to the frontend callback page (not the Edge Function directly)
+    // so the browser never hits the Supabase gateway without auth headers.
+    const redirectUri = `${appUrl}/integrations/square/callback`;
 
     const scopes = [
       'MERCHANT_PROFILE_READ',
