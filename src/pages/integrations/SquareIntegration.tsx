@@ -13,6 +13,26 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+/** Call an Edge Function using the anon key (bypasses user JWT issues). */
+async function invokeEdgeFunction(name: string, body: Record<string, unknown>) {
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || `Edge Function ${name} failed (${resp.status})`);
+  return data;
+}
+
 interface Integration {
   id: string;
   status: string;
@@ -152,19 +172,11 @@ export default function SquareIntegration() {
         setIntegration(newInteg as Integration);
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke('square-oauth-start', {
-        body: {
-          integrationId,
-          environment: 'production',
-          appUrl: window.location.origin,
-        },
+      const data = await invokeEdgeFunction('square-oauth-start', {
+        integrationId,
+        environment: 'production',
+        appUrl: window.location.origin,
       });
-
-      if (fnError) {
-        // Extract the real error message from the function response
-        const detail = typeof data === 'object' && data?.error ? data.error : fnError.message;
-        throw new Error(detail || 'Failed to start OAuth');
-      }
 
       window.location.href = data.authUrl;
     } catch (err: any) {
@@ -179,14 +191,7 @@ export default function SquareIntegration() {
     setSyncing(true);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('square-sync', {
-        body: { accountId: account.id },
-      });
-
-      if (fnError) {
-        const detail = typeof data === 'object' && data?.error ? data.error : fnError.message;
-        throw new Error(detail || 'Sync failed');
-      }
+      const data = await invokeEdgeFunction('square-sync', { accountId: account.id });
 
       toast.success('Sincronización completada', {
         description: `${data.stats?.locations || 0} locales, ${data.stats?.items || 0} productos, ${data.stats?.orders || 0} pedidos`,
