@@ -105,3 +105,35 @@ Context API for auth/app state, Zustand for UI state (notifications)
 - **POS Integration:** Square POS via OAuth + incremental webhook sync
 - **AI Integration:** Prophet forecasting and Claude API insights both run as Supabase Edge Functions
 - **Feature Store:** Facts tables for time-series aggregation (15min, hourly, daily)
+
+## Workflow & Deployment
+
+### CI/CD Pipeline
+
+- **GitHub -> Vercel:** Auto-deploy on merge to `main`. No manual deploy needed.
+- **Supabase:** Integrated with GitHub and Vercel via Supabase integration.
+- Push to branch -> Create PR -> Merge to `main` -> Vercel deploys automatically.
+
+### How Claude Should Operate
+
+1. **Write code** on a feature branch
+2. **Push** the branch and **create a PR**
+3. **Merge the PR** to `main` directly (owner has authorized autonomous merging)
+4. Vercel handles deployment automatically after merge
+
+### Environment Setup (per session)
+
+If `.env.local` does not exist, create it with the Supabase keys (anon/publishable only):
+- `VITE_SUPABASE_PROJECT_ID`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+These are the public anon keys from the Supabase project `gbddbubzvhmgnwyowucd`.
+
+If `gh` CLI is not authenticated, ask the user for a GitHub Personal Access Token.
+
+### Repository
+
+- **Owner:** oscartejera
+- **Repo:** oscartejera/josephine-app
+- **Main branch:** `main`
