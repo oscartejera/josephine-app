@@ -1,17 +1,23 @@
 /**
- * Square Daily Simulator
+ * Square Daily Simulator — Intraday Mode
  *
- * Runs on a daily cron schedule (22:30 Madrid time) and creates realistic
- * orders + payments in Square Production, simulating a full day of restaurant
- * activity. After creating orders, it triggers square-sync to import the data
- * into Josephine's CDM and aggregated tables.
+ * Runs every 15 minutes during business hours (10:00–23:00 Madrid) via pg_cron.
+ * Each invocation creates a small batch of orders matching that time slot's
+ * expected demand, simulating a real restaurant's order flow throughout the day.
  *
- * Invocation modes:
- *   - Scheduled (cron): no body needed, simulates "today"
- *   - Manual:          POST { "orders_target": 80, "dry_run": true }
+ * How it works:
+ *   1. Calculates today's total order target (70-90 base × dow × seasonal × noise)
+ *      using a deterministic seed per day so every 15-min invocation agrees on the target.
+ *   2. Distributes orders across 52 fifteen-minute slots using hourly demand weights
+ *      (lunch peak 13-14h, dinner peak 20-21h, quiet mornings).
+ *   3. Creates only the orders for the CURRENT 15-min slot, then triggers square-sync.
  *
- * Designed to run within the 60s Edge Function timeout by batching
- * order+payment creation in parallel groups.
+ * Invocation:
+ *   - Cron (default): no body needed, auto-detects current Madrid time slot
+ *   - Manual test:    POST { "slot_hour": 13, "slot_quarter": 2, "dry_run": true }
+ *   - Full day:       POST { "full_day": true } — creates all remaining slots at once
+ *
+ * Business hours: 10:00–23:00 Madrid (09:00–22:00 UTC in winter, 08:00–21:00 in summer)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
@@ -19,20 +25,16 @@ import { corsHeaders } from '../_shared/cors.ts';
 
 const SQUARE_BASE = 'https://connect.squareup.com/v2';
 
-// ─── Product catalog (must match items already in Square) ──────────────
-// Popularity weight: higher = more frequently ordered (Pareto distribution)
+// ─── Product catalog with Pareto popularity weights ────────────────────
 const PRODUCTS = [
-  // Top sellers (weight 10) — ~40% of orders
   { name: 'Hamburguesa Clasica', category: 'Food', price: 1250, weight: 10 },
   { name: 'Pizza Margherita', category: 'Food', price: 1400, weight: 9 },
   { name: 'Pasta Carbonara', category: 'Food', price: 1350, weight: 8 },
-  // High sellers (weight 6-7) — ~25% of orders
   { name: 'Hamburguesa Gourmet', category: 'Food', price: 1650, weight: 7 },
   { name: 'Cerveza Artesana', category: 'Beverage', price: 550, weight: 7 },
   { name: 'Coca-Cola', category: 'Beverage', price: 300, weight: 7 },
   { name: 'Pizza Pepperoni', category: 'Food', price: 1550, weight: 6 },
   { name: 'Pollo al Horno', category: 'Food', price: 1450, weight: 6 },
-  // Medium sellers (weight 3-5) — ~20% of orders
   { name: 'Ensalada Caesar', category: 'Food', price: 950, weight: 5 },
   { name: 'Patatas Bravas', category: 'Food', price: 650, weight: 5 },
   { name: 'Agua Mineral', category: 'Beverage', price: 250, weight: 5 },
@@ -41,7 +43,6 @@ const PRODUCTS = [
   { name: 'Croquetas Jamon', category: 'Food', price: 750, weight: 4 },
   { name: 'Tacos de Ternera', category: 'Food', price: 1100, weight: 4 },
   { name: 'Vino Tinto Copa', category: 'Beverage', price: 650, weight: 4 },
-  // Low sellers (weight 1-3) — ~15% of orders
   { name: 'Pasta Bolognesa', category: 'Food', price: 1250, weight: 3 },
   { name: 'Ensalada Mediterranea', category: 'Food', price: 1050, weight: 3 },
   { name: 'Salmon a la Plancha', category: 'Food', price: 1890, weight: 3 },
@@ -54,12 +55,52 @@ const PRODUCTS = [
   { name: 'Helado Artesano', category: 'Dessert', price: 550, weight: 1 },
 ];
 
-const TOTAL_WEIGHT = PRODUCTS.reduce((s, p) => s + p.weight, 0);
+const TOTAL_PRODUCT_WEIGHT = PRODUCTS.reduce((s, p) => s + p.weight, 0);
 
-// Day-of-week multipliers (0=Sun, 6=Sat)
+// Day-of-week multipliers (0=Sun ... 6=Sat)
 const DOW_MULT = [1.10, 0.80, 0.92, 0.95, 1.00, 1.35, 1.45];
 
-// Seasonal multiplier: uses day-of-year sine wave (±15%)
+// Hourly demand weights (Madrid local time, 10:00–22:59)
+// Reflects a typical Spanish restaurant: late lunch peak + strong dinner peak
+const HOUR_WEIGHTS: Record<number, number> = {
+  10: 2,  // Morning coffee / desayuno tardío
+  11: 3,  // Brunch
+  12: 5,  // Pre-lunch
+  13: 9,  // Lunch peak
+  14: 9,  // Lunch peak
+  15: 4,  // Sobremesa
+  16: 3,  // Merienda
+  17: 3,  // Transition
+  18: 4,  // Early tapas
+  19: 7,  // Tapas / early dinner
+  20: 9,  // Dinner peak
+  21: 9,  // Dinner peak
+  22: 4,  // Late dinner / copas
+};
+
+const TOTAL_HOUR_WEIGHT = Object.values(HOUR_WEIGHTS).reduce((a, b) => a + b, 0);
+
+// ─── Deterministic seeded random ───────────────────────────────────────
+// Simple mulberry32 PRNG so that all 15-min invocations in a day
+// agree on the same daily target without needing shared state.
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function dateSeed(date: Date): number {
+  // YYYYMMDD as integer — same seed for all invocations on the same day
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  return y * 10000 + m * 100 + d;
+}
+
+// Seasonal multiplier: sine wave over the year (±15%)
 function seasonalMult(date: Date): number {
   const doy = Math.floor(
     (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000,
@@ -72,12 +113,11 @@ function rand(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 function randInt(min: number, max: number) {
-  return Math.floor(rand(min, max + 1));
+  return Math.floor(min + Math.random() * (max - min + 1));
 }
 
-/** Pick a product index weighted by popularity */
 function pickProduct(): number {
-  let r = Math.random() * TOTAL_WEIGHT;
+  let r = Math.random() * TOTAL_PRODUCT_WEIGHT;
   for (let i = 0; i < PRODUCTS.length; i++) {
     r -= PRODUCTS[i].weight;
     if (r <= 0) return i;
@@ -85,7 +125,42 @@ function pickProduct(): number {
   return PRODUCTS.length - 1;
 }
 
-/** Square API request with error handling */
+/** Get current Madrid time (handles CET/CEST automatically) */
+function getMadridTime(utcDate: Date): Date {
+  const madrid = new Date(
+    utcDate.toLocaleString('en-US', { timeZone: 'Europe/Madrid' }),
+  );
+  return madrid;
+}
+
+/** Calculate how many orders this 15-min slot should get */
+function getSlotOrders(
+  dailyTarget: number,
+  hour: number,
+  _quarter: number,
+): number {
+  const hourWeight = HOUR_WEIGHTS[hour] ?? 0;
+  if (hourWeight === 0) return 0;
+
+  // This hour's share of the daily total
+  const hourOrders = (dailyTarget * hourWeight) / TOTAL_HOUR_WEIGHT;
+  // Split across 4 quarters with slight randomness
+  const quarterBase = hourOrders / 4;
+  // Add ±30% noise per quarter for realism
+  return Math.max(0, Math.round(quarterBase * rand(0.7, 1.3)));
+}
+
+/** Calculate deterministic daily target for a given date */
+function getDailyTarget(date: Date, overrideBase?: number): { target: number; base: number; dow: number; seasonal: number; noise: number } {
+  const rng = mulberry32(dateSeed(date));
+  const dow = date.getDay();
+  const base = overrideBase ?? Math.floor(70 + rng() * 21); // 70-90, deterministic
+  const noise = 0.92 + rng() * 0.16; // ±8%, deterministic
+  const seasonal = seasonalMult(date);
+  const target = Math.round(base * DOW_MULT[dow] * seasonal * noise);
+  return { target, base, dow, seasonal, noise };
+}
+
 async function sq(
   endpoint: string,
   token: string,
@@ -126,22 +201,65 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const dryRun: boolean = body.dry_run ?? false;
 
-    // Calculate today's order target
+    // Determine current time slot in Madrid timezone
     const now = new Date();
-    const dow = now.getDay();
-    const baseOrders = body.orders_target ?? randInt(70, 90);
-    const ordersTarget = Math.round(
-      baseOrders * DOW_MULT[dow] * seasonalMult(now) * rand(0.92, 1.08),
-    );
+    const madrid = getMadridTime(now);
+    const madridHour = body.slot_hour ?? madrid.getHours();
+    const madridQuarter = body.slot_quarter ?? Math.floor(madrid.getMinutes() / 15);
+    const dowNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Calculate deterministic daily target
+    const daily = getDailyTarget(madrid, body.orders_target);
 
     log(
-      `${now.toISOString().split('T')[0]} (${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow]})` +
-        ` — Target: ${ordersTarget} orders (base=${baseOrders}, dow=${DOW_MULT[dow].toFixed(2)}, seasonal=${seasonalMult(now).toFixed(2)})`,
+      `${madrid.toISOString().split('T')[0]} (${dowNames[daily.dow]}) ` +
+        `— Daily target: ${daily.target} (base=${daily.base}, dow=${DOW_MULT[daily.dow].toFixed(2)}, ` +
+        `seasonal=${daily.seasonal.toFixed(2)}, noise=${daily.noise.toFixed(2)})`,
     );
 
-    if (dryRun) {
+    // Determine orders for this slot
+    let slotOrders: number;
+    let slotLabel: string;
+
+    if (body.full_day) {
+      // Create all remaining orders for the day at once (manual catch-up mode)
+      slotOrders = daily.target;
+      slotLabel = 'full_day';
+      log(`Full day mode: creating all ${slotOrders} orders`);
+    } else {
+      slotOrders = getSlotOrders(daily.target, madridHour, madridQuarter);
+      slotLabel = `${String(madridHour).padStart(2, '0')}:${String(madridQuarter * 15).padStart(2, '0')}`;
+      log(`Slot ${slotLabel} (hour weight=${HOUR_WEIGHTS[madridHour] ?? 0}) → ${slotOrders} orders`);
+    }
+
+    if (slotOrders === 0) {
+      log('No orders for this slot (outside business hours or zero weight)');
       return new Response(
-        JSON.stringify({ dry_run: true, orders_target: ordersTarget, logs }),
+        JSON.stringify({
+          success: true, slot: slotLabel, orders_created: 0,
+          daily_target: daily.target, message: 'Outside business hours', logs,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (dryRun) {
+      // Show what would happen for every slot today
+      const slotPlan: Record<string, number> = {};
+      let planTotal = 0;
+      for (const h of Object.keys(HOUR_WEIGHTS).map(Number)) {
+        for (let q = 0; q < 4; q++) {
+          const n = getSlotOrders(daily.target, h, q);
+          slotPlan[`${String(h).padStart(2, '0')}:${String(q * 15).padStart(2, '0')}`] = n;
+          planTotal += n;
+        }
+      }
+      return new Response(
+        JSON.stringify({
+          dry_run: true, daily_target: daily.target,
+          current_slot: slotLabel, current_slot_orders: slotOrders,
+          plan_total_approx: planTotal, slot_plan: slotPlan, logs,
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -161,36 +279,31 @@ Deno.serve(async (req) => {
         variationIds.push(v.id);
       }
     }
-
     if (variationIds.length === 0) {
       throw new Error('No catalog items found — run square-seed-demo first');
     }
-    log(`Catalog: ${variationIds.length} variations`);
 
     // Create orders in parallel batches of 5
     let totalOrders = 0;
     let totalPayments = 0;
     const BATCH_SIZE = 5;
 
-    for (let batch = 0; batch < ordersTarget; batch += BATCH_SIZE) {
-      const batchCount = Math.min(BATCH_SIZE, ordersTarget - batch);
+    for (let batch = 0; batch < slotOrders; batch += BATCH_SIZE) {
+      const batchCount = Math.min(BATCH_SIZE, slotOrders - batch);
       const promises = [];
 
       for (let i = 0; i < batchCount; i++) {
         promises.push(
           (async () => {
-            // Build line items with weighted product selection
             const numItems = randInt(1, 4);
             const lineItems = [];
             const usedIndices = new Set<number>();
 
             for (let li = 0; li < numItems; li++) {
               let idx = pickProduct();
-              // Avoid exact duplicates in the same order, map to variation
               if (usedIndices.has(idx)) idx = randInt(0, PRODUCTS.length - 1);
               usedIndices.add(idx);
 
-              // Map product index to variation (may have duplicates from multiple catalog uploads)
               const varIdx = idx % variationIds.length;
               lineItems.push({
                 catalog_object_id: variationIds[varIdx],
@@ -198,7 +311,6 @@ Deno.serve(async (req) => {
               });
             }
 
-            // Create order
             const orderRes = await sq('/orders', token, 'POST', {
               idempotency_key: crypto.randomUUID(),
               order: {
@@ -211,7 +323,6 @@ Deno.serve(async (req) => {
             const order = orderRes.order;
             totalOrders++;
 
-            // Create payment (auto-completes the order)
             if (order?.total_money?.amount > 0) {
               const payType = Math.random() < 0.7 ? 'CARD' : 'CHECK';
               await sq('/payments', token, 'POST', {
@@ -234,54 +345,52 @@ Deno.serve(async (req) => {
       }
 
       await Promise.all(promises);
-
-      // Brief pause between batches for rate limiting
-      if (batch + BATCH_SIZE < ordersTarget) {
+      if (batch + BATCH_SIZE < slotOrders) {
         await new Promise((r) => setTimeout(r, 200));
       }
     }
 
     log(`Created: ${totalOrders} orders, ${totalPayments} payments`);
 
-    // Trigger square-sync to import data into Josephine
+    // Trigger square-sync
     let syncResult = 'not triggered';
-    try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
+    if (totalOrders > 0) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
-      // Find the production integration account
-      const { data: account } = await supabase
-        .from('integration_accounts')
-        .select('id')
-        .eq('environment', 'production')
-        .eq('provider', 'square')
-        .eq('is_active', true)
-        .limit(1)
-        .single();
+        const { data: account } = await supabase
+          .from('integration_accounts')
+          .select('id')
+          .eq('environment', 'production')
+          .eq('provider', 'square')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
 
-      if (account) {
-        // Trigger sync (fire-and-forget via pg_net if available, else direct)
-        log(`Triggering square-sync for account ${account.id}...`);
-        try {
-          await fetch(`${supabaseUrl}/functions/v1/square-sync`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${supabaseKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ accountId: account.id }),
-            signal: AbortSignal.timeout(10000), // 10s max wait
-          });
-          syncResult = 'triggered';
-        } catch {
-          syncResult = 'triggered (async)';
+        if (account) {
+          log(`Triggering square-sync for account ${account.id}...`);
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/square-sync`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${supabaseKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ accountId: account.id }),
+              signal: AbortSignal.timeout(10000),
+            });
+            syncResult = 'triggered';
+          } catch {
+            syncResult = 'triggered (async)';
+          }
+        } else {
+          syncResult = 'no production account found';
         }
-      } else {
-        syncResult = 'no production account found';
+      } catch (syncErr) {
+        syncResult = `error: ${syncErr.message}`;
       }
-    } catch (syncErr) {
-      syncResult = `error: ${syncErr.message}`;
     }
 
     log(`Sync: ${syncResult}`);
@@ -289,10 +398,11 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        date: now.toISOString().split('T')[0],
-        day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow],
-        location: { id: loc.id, name: loc.name },
-        orders_target: ordersTarget,
+        date: madrid.toISOString().split('T')[0],
+        day: dowNames[daily.dow],
+        slot: slotLabel,
+        daily_target: daily.target,
+        slot_target: slotOrders,
         orders_created: totalOrders,
         payments_created: totalPayments,
         sync: syncResult,
