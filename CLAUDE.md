@@ -121,16 +121,35 @@ Context API for auth/app state, Zustand for UI state (notifications)
 3. **Merge the PR** to `main` directly (owner has authorized autonomous merging)
 4. Vercel handles deployment automatically after merge
 
-### Environment Setup (per session)
+### Environment Setup (automated via session-start hook)
 
-If `.env.local` does not exist, create it with the Supabase keys (anon/publishable only):
-- `VITE_SUPABASE_PROJECT_ID`
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
+The `.claude/hooks/session-start.sh` hook runs automatically on every web session and handles:
+1. `npm install` - installs dependencies
+2. Creates `.env.local` with Supabase keys (anon + service_role)
+3. Installs `gh` CLI if missing
+4. Authenticates `gh` with the owner's GitHub token
 
-These are the public anon keys from the Supabase project `gbddbubzvhmgnwyowucd`.
+No manual setup needed. Everything is automated.
 
-If `gh` CLI is not authenticated, ask the user for a GitHub Personal Access Token.
+### Supabase Access
+
+- **Project:** `qzrbvjklgorfoqersdpx`
+- **URL:** `https://qzrbvjklgorfoqersdpx.supabase.co`
+- **Anon key:** Available in `.env.local` (created by hook)
+- **Service role key:** Available in `.env.local` (created by hook) - bypasses RLS for admin queries
+- Claude has full DB read/write access via the service_role key and the Supabase REST API
+
+### Database Access Pattern
+
+To query/modify the database directly, use curl with the service_role key:
+```bash
+# Read example
+curl "https://qzrbvjklgorfoqersdpx.supabase.co/rest/v1/TABLE_NAME" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+
+# Insert/Update via POST/PATCH to the same REST API
+```
 
 ### Repository
 
