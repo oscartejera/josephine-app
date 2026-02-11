@@ -178,14 +178,7 @@ export default function SquareIntegration() {
         appUrl: window.location.origin,
       });
 
-      // Replace the redirect_uri in the auth URL to point to the Vercel
-      // API route instead of the Supabase Edge Function (which blocks
-      // browser GET redirects that lack an Authorization header).
-      const vercelCallbackUrl = `${window.location.origin}/api/square-callback`;
-      const authUrl = new URL(data.authUrl);
-      authUrl.searchParams.set('redirect_uri', vercelCallbackUrl);
-
-      window.location.href = authUrl.toString();
+      window.location.href = data.authUrl;
     } catch (err: any) {
       console.error('OAuth start error:', err);
       toast.error('Error iniciando conexión', { description: err.message });
