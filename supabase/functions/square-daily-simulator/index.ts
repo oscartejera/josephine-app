@@ -395,6 +395,41 @@ Deno.serve(async (req) => {
 
     log(`Sync: ${syncResult}`);
 
+    // Run ETL: CDM orders → facts_sales_15m (so Prophet picks up the data)
+    let etlResult = 'not run';
+    if (totalOrders > 0) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        // Wait a few seconds for square-sync to finish importing CDM orders
+        await new Promise((r) => setTimeout(r, 3000));
+
+        const todayStr = madrid.toISOString().split('T')[0];
+        const etlResp = await fetch(
+          `${supabaseUrl}/rest/v1/rpc/etl_cdm_to_facts_sales_15m`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${supabaseKey}`,
+              apikey: supabaseKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              p_date_from: todayStr,
+              p_date_to: todayStr,
+            }),
+            signal: AbortSignal.timeout(10000),
+          },
+        );
+        const etlData = await etlResp.json();
+        etlResult = `${etlData?.facts_rows_upserted ?? 0} rows`;
+        log(`ETL cdm→facts: ${etlResult}`);
+      } catch (etlErr) {
+        etlResult = `error: ${etlErr.message}`;
+        log(`ETL error: ${etlResult}`);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -406,6 +441,7 @@ Deno.serve(async (req) => {
         orders_created: totalOrders,
         payments_created: totalPayments,
         sync: syncResult,
+        etl: etlResult,
         errors_count: errors.length,
         errors: errors.slice(0, 10),
         logs,

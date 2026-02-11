@@ -8,7 +8,7 @@
 -- The daily target (~74-100 orders) is deterministic per date via a seeded PRNG,
 -- so all 52 invocations in a day agree on the total without shared state.
 --
--- Flow: pg_cron → pg_net → square-daily-simulator Edge Function → Square API → square-sync
+-- Flow: pg_cron → pg_net → square-daily-simulator → Square API → square-sync → etl_cdm_to_facts_sales_15m → Prophet
 --
 -- Management:
 --   SELECT * FROM cron.job WHERE jobname = 'square-daily-simulator';
