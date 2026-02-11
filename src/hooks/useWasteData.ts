@@ -92,7 +92,7 @@ export function useWasteData(
   _dateMode: DateMode, // Reserved for future use
   selectedLocations: string[]
 ) {
-  const { locations } = useApp();
+  const { locations, dataSource } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [metrics, setMetrics] = useState<WasteMetrics>({
@@ -124,6 +124,7 @@ export function useWasteData(
       let salesQuery = supabase
         .from('pos_daily_finance')
         .select('location_id, net_sales')
+        .eq('data_source', dataSource)
         .gte('date', fromDate)
         .lte('date', toDate);
 

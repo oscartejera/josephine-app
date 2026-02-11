@@ -11,7 +11,7 @@ export interface CategorySales {
 }
 
 export function useCategorySales() {
-  const { group, selectedLocationId } = useApp();
+  const { group, selectedLocationId, dataSource } = useApp();
   const [categories, setCategories] = useState<CategorySales[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalSales, setTotalSales] = useState(0);
@@ -39,6 +39,7 @@ export function useCategorySales() {
       let salesQuery = supabase
         .from('product_sales_daily')
         .select('product_id, net_sales, units_sold')
+        .eq('data_source', dataSource)
         .gte('date', from.toISOString().split('T')[0])
         .lte('date', to.toISOString().split('T')[0]);
 

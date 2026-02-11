@@ -156,6 +156,104 @@ Deno.serve(async (req) => {
         // TODO: Full payment normalization
       }
 
+      // 5) Aggregate CDM orders → pos_daily_finance (data_source = 'pos')
+      // Map CDM locations to Josephine locations
+      const { data: josephineLocations } = await supabase
+        .from('locations')
+        .select('id, name')
+        .eq('active', true)
+        .limit(10);
+
+      const { data: cdmLocations } = await supabase
+        .from('cdm_locations')
+        .select('id, name, external_id')
+        .eq('org_id', orgId);
+
+      // Build CDM location → Josephine location mapping
+      // Match by name similarity or use first Josephine location as fallback
+      const cdmToJosephineMap = new Map<string, string>();
+      for (const cdmLoc of (cdmLocations || [])) {
+        // Try to find matching Josephine location by name
+        const match = (josephineLocations || []).find(jl =>
+          jl.name.toLowerCase().includes(cdmLoc.name.toLowerCase()) ||
+          cdmLoc.name.toLowerCase().includes(jl.name.toLowerCase())
+        );
+        cdmToJosephineMap.set(
+          cdmLoc.id,
+          match?.id || (josephineLocations?.[0]?.id ?? '')
+        );
+      }
+
+      // Fetch all CDM orders for aggregation
+      const { data: cdmOrders } = await supabase
+        .from('cdm_orders')
+        .select('id, location_id, closed_at, gross_total, net_total, status')
+        .eq('org_id', orgId)
+        .not('closed_at', 'is', null);
+
+      if (cdmOrders && cdmOrders.length > 0 && josephineLocations && josephineLocations.length > 0) {
+        // Group orders by date + josephine location
+        const dailyAgg = new Map<string, {
+          date: string;
+          location_id: string;
+          gross_sales: number;
+          net_sales: number;
+          orders_count: number;
+          payments_card: number;
+        }>();
+
+        for (const order of cdmOrders) {
+          const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
+          const orderDate = new Date(order.closed_at).toISOString().split('T')[0];
+          const key = `${orderDate}|${jLocId}`;
+
+          const existing = dailyAgg.get(key) || {
+            date: orderDate,
+            location_id: jLocId,
+            gross_sales: 0,
+            net_sales: 0,
+            orders_count: 0,
+            payments_card: 0,
+          };
+
+          existing.gross_sales += Number(order.gross_total || 0);
+          existing.net_sales += Number(order.net_total || order.gross_total || 0);
+          existing.orders_count += 1;
+          existing.payments_card += Number(order.net_total || order.gross_total || 0);
+          dailyAgg.set(key, existing);
+        }
+
+        // Delete existing POS data and insert fresh
+        await supabase
+          .from('pos_daily_finance')
+          .delete()
+          .eq('data_source', 'pos');
+
+        // Insert aggregated data
+        const rows = Array.from(dailyAgg.values()).map(d => ({
+          date: d.date,
+          location_id: d.location_id,
+          gross_sales: d.gross_sales,
+          net_sales: d.net_sales,
+          orders_count: d.orders_count,
+          payments_cash: 0,
+          payments_card: d.payments_card,
+          payments_other: 0,
+          refunds_amount: 0,
+          refunds_count: 0,
+          discounts_amount: 0,
+          comps_amount: 0,
+          voids_amount: 0,
+          data_source: 'pos',
+        }));
+
+        if (rows.length > 0) {
+          await supabase.from('pos_daily_finance').insert(rows);
+        }
+
+        (stats as any).daily_finance_rows = rows.length;
+      }
+
       // Complete sync
       await supabase.rpc('complete_sync_run', {
         p_run_id: run.id,

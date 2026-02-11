@@ -91,7 +91,7 @@ export function useInventoryData(
   viewMode: ViewMode,
   selectedLocations: string[]
 ) {
-  const { locations, group, loading: appLoading } = useApp();
+  const { locations, group, loading: appLoading, dataSource } = useApp();
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [hasRealData, setHasRealData] = useState(false);
@@ -159,6 +159,7 @@ export function useInventoryData(
         let salesQuery = supabase
           .from('pos_daily_finance')
           .select('date, location_id, net_sales, gross_sales, orders_count')
+          .eq('data_source', dataSource)
           .gte('date', fromDateStr)
           .lte('date', toDateStr);
 
@@ -278,6 +279,7 @@ export function useInventoryData(
     let prodQuery = supabase
       .from('product_sales_daily')
       .select('date, location_id, product_id, net_sales, cogs, products(name, category)')
+      .eq('data_source', dataSource)
       .gte('date', fromDateStr)
       .lte('date', toDateStr);
 
