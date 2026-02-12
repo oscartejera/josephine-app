@@ -484,12 +484,6 @@ Deno.serve(async (req) => {
             productDailyAgg.set(key, existing);
           }
 
-          // Only delete previous POS rows — keep simulated data intact.
-          await supabase
-            .from('product_sales_daily')
-            .delete()
-            .eq('data_source', 'pos');
-
           // Insert fresh POS rows
           const productRows = Array.from(productDailyAgg.values()).map(d => ({
             ...d,
@@ -497,6 +491,16 @@ Deno.serve(async (req) => {
           }));
 
           if (productRows.length > 0) {
+            // Only delete previous POS rows for synced dates/locations — keep simulated data intact.
+            const prodDates = [...new Set(productRows.map(r => r.date))];
+            const prodLocationIds = [...new Set(productRows.map(r => r.location_id))];
+            await supabase
+              .from('product_sales_daily')
+              .delete()
+              .eq('data_source', 'pos')
+              .in('date', prodDates)
+              .in('location_id', prodLocationIds);
+
             await supabase.from('product_sales_daily').insert(productRows);
           }
           (stats as any).product_sales_rows = productRows.length;
