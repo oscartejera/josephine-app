@@ -1,3 +1,5 @@
+// TODO: Migrate forecast_daily_metrics access to use get_labor_plan_unified RPC
+// which resolves data_source via resolve_data_source(org_id) internally.
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { startOfWeek, endOfWeek, addDays, format, parseISO, differenceInMinutes } from 'date-fns';

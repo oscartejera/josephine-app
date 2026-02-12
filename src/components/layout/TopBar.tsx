@@ -5,6 +5,7 @@
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -59,8 +60,9 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         {getBreadcrumb()}
       </div>
 
-      {/* Right side - empty for now, can add actions later */}
+      {/* Right side - data source badge */}
       <div className="flex-1" />
+      <DataSourceBadge />
     </header>
   );
 }
