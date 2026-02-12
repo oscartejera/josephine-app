@@ -223,7 +223,8 @@
     "suppliers": "Proveedores",
     "usersRoles": "Usuarios y Roles",
     "paymentMethods": "Métodos de Pago",
-    "addPaymentMethod": "Añadir Método de Pago"
+    "addPaymentMethod": "Añadir Método de Pago",
+    "dataSource": "Fuente de Datos"
   },
   "reports": {
     "title": "Informes",
