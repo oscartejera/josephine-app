@@ -25,6 +25,7 @@ import { SupplierIntegrationManager } from '@/components/settings/SupplierIntegr
 import { BookingSettingsManager } from '@/components/settings/BookingSettingsManager';
 import { LoyaltyManager } from '@/components/settings/LoyaltyManager';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
+import { DataSourceSettings } from '@/components/settings/DataSourceSettings';
 import { Progress } from '@/components/ui/progress';
 import { Receipt, CalendarDays, Gift, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -279,6 +280,7 @@ export default function SettingsPage() {
           <TabsTrigger value="payment">{t('settings.paymentMethods')}</TabsTrigger>
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
+          <TabsTrigger value="datasource">{t('settings.dataSource', 'Fuente de Datos')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -709,6 +711,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="datasource">
+          <DataSourceSettings />
         </TabsContent>
 
       </Tabs>

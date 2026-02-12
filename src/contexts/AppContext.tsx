@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { useDemoMode } from './DemoModeContext';
-import { usePOSConnection } from '@/hooks/usePOSConnection';
 
 export interface Location {
   id: string;
@@ -41,9 +40,12 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { profile, isOwner, hasGlobalScope, accessibleLocationIds, refreshProfile } = useAuth();
-  const { posConnected } = usePOSConnection();
-  const { isDemoMode } = useDemoMode();
+  const { isDemoMode, dataSource: resolvedDataSource } = useDemoMode();
+
+  // Derive posConnected and dataSource from the centralized data source resolution
+  const posConnected = resolvedDataSource === 'pos';
   const dataSource: 'pos' | 'simulated' = posConnected ? 'pos' : 'simulated';
+
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(null);
@@ -146,7 +148,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getDateRangeValues = (): { from: Date; to: Date } => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     switch (dateRange) {
       case 'today':
         return { from: today, to: now };
