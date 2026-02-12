@@ -170,35 +170,35 @@ Deno.serve(async (req) => {
       }
       stats.locations = locations.length;
 
-      // 2) Sync Catalog
-      // First pass: build category ID → name map, then sync items with resolved names
+      // 2) Sync Catalog — two passes to ensure categories are resolved
+      // Pass 1: Fetch ALL catalog objects and build category map
       const categoryMap = new Map<string, string>();
+      const allSquareItems: any[] = [];
       const allSquareItemIds: string[] = [];
       let catalogCursor;
       do {
         const catalogResp = await client.listCatalog(catalogCursor);
         const objects = catalogResp.objects || [];
 
-        // Extract category names
         for (const obj of objects) {
           if (obj.type === 'CATEGORY') {
             categoryMap.set(obj.id, obj.category_data?.name || 'Other');
+          } else if (obj.type === 'ITEM') {
+            allSquareItems.push(obj);
+            allSquareItemIds.push(obj.id);
           }
         }
-
-        // Normalize and upsert items
-        const items = objects.filter((obj: any) => obj.type === 'ITEM');
-        for (const item of items) {
-          allSquareItemIds.push(item.id);
-          const normalized = normalizeSquareItem(item, orgId, categoryMap);
-          await supabase
-            .from('cdm_items')
-            .upsert(normalized, { onConflict: 'external_provider,external_id' });
-        }
-
-        stats.items += items.length;
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
+
+      // Pass 2: Normalize and upsert items (now categoryMap is complete)
+      for (const item of allSquareItems) {
+        const normalized = normalizeSquareItem(item, orgId, categoryMap);
+        await supabase
+          .from('cdm_items')
+          .upsert(normalized, { onConflict: 'external_provider,external_id' });
+      }
+      stats.items = allSquareItems.length;
 
       // Clean up orphaned CDM items (deleted from Square catalog)
       if (allSquareItemIds.length > 0) {
