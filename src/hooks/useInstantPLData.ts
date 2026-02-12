@@ -105,6 +105,8 @@ export function useInstantPLData({
   activeChips
 }: UseInstantPLDataParams): InstantPLData {
   const { locations, dataSource } = useApp();
+  // forecast_daily_metrics uses 'demo'|'pos', not 'simulated'|'pos'
+  const forecastDataSource = dataSource === 'pos' ? 'pos' : 'demo';
 
   const queryKey = [
     'instant-pl',
@@ -137,6 +139,7 @@ export function useInstantPLData({
       const { data: forecasts } = await supabase
         .from('forecast_daily_metrics')
         .select('location_id, date, forecast_sales, planned_labor_cost')
+        .eq('data_source', forecastDataSource)
         .in('location_id', locationIds)
         .gte('date', fromDate)
         .lte('date', toDate);
