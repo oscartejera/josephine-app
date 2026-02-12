@@ -170,20 +170,26 @@ Deno.serve(async (req) => {
       }
       stats.locations = locations.length;
 
-      // 2) Sync Catalog — two passes to ensure categories are resolved
-      // Pass 1: Fetch ALL catalog objects and build category map
+      // 2) Sync Catalog — use searchCatalogItems with include_related_objects
+      //    to get category names resolved from their IDs.
       const categoryMap = new Map<string, string>();
       const allSquareItems: any[] = [];
       const allSquareItemIds: string[] = [];
       let catalogCursor;
       do {
-        const catalogResp = await client.listCatalog(catalogCursor);
+        const catalogResp = await client.searchCatalogItems(catalogCursor);
         const objects = catalogResp.objects || [];
+        const relatedObjects = catalogResp.related_objects || [];
 
-        for (const obj of objects) {
+        // Build category map from related objects
+        for (const obj of relatedObjects) {
           if (obj.type === 'CATEGORY') {
             categoryMap.set(obj.id, obj.category_data?.name || 'Other');
-          } else if (obj.type === 'ITEM') {
+          }
+        }
+
+        for (const obj of objects) {
+          if (obj.type === 'ITEM') {
             allSquareItems.push(obj);
             allSquareItemIds.push(obj.id);
           }
@@ -191,7 +197,7 @@ Deno.serve(async (req) => {
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
 
-      // Pass 2: Normalize and upsert items (now categoryMap is complete)
+      // Normalize and upsert items with resolved category names
       for (const item of allSquareItems) {
         const normalized = normalizeSquareItem(item, orgId, categoryMap);
         await supabase
