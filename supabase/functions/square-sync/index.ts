@@ -170,29 +170,32 @@ Deno.serve(async (req) => {
       }
       stats.locations = locations.length;
 
-      // 2) Sync Catalog — use searchCatalogItems with include_related_objects
-      //    to get category names resolved from their IDs.
+      // 2) Sync Catalog
+      //    Step A: fetch all categories to build id→name map
       const categoryMap = new Map<string, string>();
+      let catCursor;
+      do {
+        const catResp = await client.listCategories(catCursor);
+        for (const obj of (catResp.objects || [])) {
+          if (obj.type === 'CATEGORY') {
+            categoryMap.set(obj.id, obj.category_data?.name || 'Other');
+          }
+        }
+        catCursor = catResp.cursor;
+      } while (catCursor);
+
+      //    Step B: fetch items via /catalog/search-catalog-items which
+      //    returns item_data.categories[] on each item.
       const allSquareItems: any[] = [];
       const allSquareItemIds: string[] = [];
       let catalogCursor;
       do {
         const catalogResp = await client.searchCatalogItems(catalogCursor);
-        const objects = catalogResp.objects || [];
-        const relatedObjects = catalogResp.related_objects || [];
+        const items = catalogResp.items || [];
 
-        // Build category map from related objects
-        for (const obj of relatedObjects) {
-          if (obj.type === 'CATEGORY') {
-            categoryMap.set(obj.id, obj.category_data?.name || 'Other');
-          }
-        }
-
-        for (const obj of objects) {
-          if (obj.type === 'ITEM') {
-            allSquareItems.push(obj);
-            allSquareItemIds.push(obj.id);
-          }
+        for (const item of items) {
+          allSquareItems.push(item);
+          allSquareItemIds.push(item.id);
         }
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
