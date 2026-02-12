@@ -66,11 +66,10 @@ BEGIN
 
   -- Crear 3 locations
   INSERT INTO locations (id, group_id, name, city, timezone, currency, created_at)
-  VALUES 
+  VALUES
     (gen_random_uuid(), v_group_id, 'La Taberna Centro', 'Salamanca', 'Europe/Madrid', 'EUR', NOW()),
     (gen_random_uuid(), v_group_id, 'Chamberí', 'Madrid', 'Europe/Madrid', 'EUR', NOW()),
-    (gen_random_uuid(), v_group_id, 'Malasaña', 'Madrid', 'Europe/Madrid', 'EUR', NOW())
-  RETURNING id INTO v_location_centro;
+    (gen_random_uuid(), v_group_id, 'Malasaña', 'Madrid', 'Europe/Madrid', 'EUR', NOW());
 
   -- Obtener IDs de las locations
   SELECT id INTO v_location_centro FROM locations WHERE name = 'La Taberna Centro';
@@ -89,8 +88,7 @@ BEGIN
     (gen_random_uuid(), v_org_id, 'Pulpo a la Gallega', 'Food', 22.80, true, 'demo', 'demo-pulpo', NOW()),
     (gen_random_uuid(), v_org_id, 'Bacalao Pil-Pil', 'Food', 26.50, true, 'demo', 'demo-bacalao', NOW()),
     (gen_random_uuid(), v_org_id, 'Rioja Reserva', 'Beverage', 28.00, true, 'demo', 'demo-rioja', NOW()),
-    (gen_random_uuid(), v_org_id, 'Cerveza Alhambra', 'Beverage', 4.50, true, 'demo', 'demo-cerveza', NOW())
-  RETURNING id INTO v_paella_id;
+    (gen_random_uuid(), v_org_id, 'Cerveza Alhambra', 'Beverage', 4.50, true, 'demo', 'demo-cerveza', NOW());
 
   RAISE NOTICE 'Productos creados para 3 locations';
 
@@ -132,8 +130,7 @@ BEGIN
     (v_location_centro, 'Sofía Vargas', 'Host', 11.00, true, NOW()),
     -- Managers (€25/hour)
     (v_location_centro, 'Fernando Iglesias', 'Manager', 25.00, true, NOW()),
-    (v_location_centro, 'Marta Cortés', 'Manager', 25.00, true, NOW())
-  RETURNING id INTO v_chef_id;
+    (v_location_centro, 'Marta Cortés', 'Manager', 25.00, true, NOW());
 
   -- Replicar empleados para Chamberí y Malasaña (70% del staff de Centro)
   INSERT INTO employees (location_id, full_name, role_name, hourly_cost, active)
