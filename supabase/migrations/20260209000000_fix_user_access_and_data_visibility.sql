@@ -14,12 +14,9 @@
 -- 4. Verifies data is accessible through the RLS chain
 -- ====================================================================
 
--- Drop no-args wrapper to avoid ambiguity with DEFAULT param version
-DROP FUNCTION IF EXISTS public.is_admin_or_ops();
-
 -- Fix is_admin_or_ops to use role_id JOIN (the `role` column was dropped)
--- DEFAULT auth.uid() allows calling with no args
-CREATE OR REPLACE FUNCTION public.is_admin_or_ops(_user_id uuid DEFAULT auth.uid())
+-- Use uuid WITHOUT default to avoid ambiguity with the no-args wrapper
+CREATE OR REPLACE FUNCTION public.is_admin_or_ops(_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -33,6 +30,17 @@ AS $$
     WHERE ur.user_id = _user_id
       AND r.name IN ('owner', 'admin', 'ops_manager')
   )
+$$;
+
+-- No-param wrapper (calls the uuid version)
+CREATE OR REPLACE FUNCTION public.is_admin_or_ops()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.is_admin_or_ops(auth.uid())
 $$;
 
 -- Fix is_owner to use role_id JOIN
@@ -51,11 +59,8 @@ AS $$
   )
 $$;
 
--- Drop no-args wrapper to avoid ambiguity with DEFAULT param version
-DROP FUNCTION IF EXISTS public.get_user_has_global_scope();
-
--- Fix get_user_has_global_scope
-CREATE OR REPLACE FUNCTION public.get_user_has_global_scope(_user_id uuid DEFAULT auth.uid())
+-- Fix get_user_has_global_scope (uuid without default to avoid ambiguity)
+CREATE OR REPLACE FUNCTION public.get_user_has_global_scope(_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -70,6 +75,17 @@ AS $$
       AND ur.location_id IS NULL
       AND r.name IN ('owner', 'admin', 'ops_manager', 'finance', 'hr_payroll')
   )
+$$;
+
+-- No-param wrapper
+CREATE OR REPLACE FUNCTION public.get_user_has_global_scope()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.get_user_has_global_scope(auth.uid())
 $$;
 
 -- Fix get_accessible_location_ids to check all access paths
