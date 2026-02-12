@@ -493,8 +493,14 @@ Deno.serve(async (req) => {
 
         const { data: cdmItemsList } = await supabase
           .from('cdm_items')
-          .select('name, category_name, is_active')
+          .select('id, name, category_name, is_active')
           .eq('org_id', orgId);
+
+        // cdm_item.id → canonical name (for item_id-based lookup in step 8)
+        const cdmItemIdToName = new Map<string, string>();
+        for (const ci of (cdmItemsList || [])) {
+          cdmItemIdToName.set(ci.id, ci.name);
+        }
 
         // Key: "name__locationId" → product.id
         const productKeyToId = new Map<string, string>();
@@ -559,7 +565,7 @@ Deno.serve(async (req) => {
             const batch = cdmOrderIds.slice(i, i + LINES_BATCH);
             const { data: batchLines } = await supabase
               .from('cdm_order_lines')
-              .select('order_id, name, quantity, gross_line_total')
+              .select('order_id, name, quantity, gross_line_total, item_id')
               .in('order_id', batch)
               .limit(5000);
             if (batchLines) allLines.push(...batchLines);
@@ -587,7 +593,9 @@ Deno.serve(async (req) => {
             const orderInfo = orderInfoMap.get(line.order_id);
             if (!orderInfo) continue;
 
-            const productId = productKeyToId.get(`${line.name}__${orderInfo.location_id}`);
+            // Prefer item_id (stable FK) over line.name (stale if renamed)
+            const resolvedName = (line.item_id && cdmItemIdToName.get(line.item_id)) || line.name;
+            const productId = productKeyToId.get(`${resolvedName}__${orderInfo.location_id}`);
             if (!productId) continue;
 
             const key = `${orderInfo.date}|${orderInfo.location_id}|${productId}`;
