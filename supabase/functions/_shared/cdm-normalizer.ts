@@ -19,16 +19,22 @@ export function normalizeSquareLocation(squareLoc: any, orgId: string) {
   };
 }
 
-export function normalizeSquareItem(squareItem: any, orgId: string) {
+export function normalizeSquareItem(
+  squareItem: any,
+  orgId: string,
+  categoryMap?: Map<string, string>,
+) {
   const variation = squareItem.item_data?.variations?.[0];
-  
+  const categoryId = squareItem.item_data?.category_id;
+  const categoryName = categoryMap?.get(categoryId) || null;
+
   return {
     org_id: orgId,
     name: squareItem.item_data?.name || 'Unknown',
     sku: variation?.item_variation_data?.sku || null,
-    category_name: squareItem.item_data?.category_id || null,
-    price: variation?.item_variation_data?.price_money?.amount 
-      ? Number(variation.item_variation_data.price_money.amount) / 100 
+    category_name: categoryName,
+    price: variation?.item_variation_data?.price_money?.amount
+      ? Number(variation.item_variation_data.price_money.amount) / 100
       : 0,
     is_active: !squareItem.is_deleted,
     external_provider: 'square',
@@ -36,6 +42,7 @@ export function normalizeSquareItem(squareItem: any, orgId: string) {
     metadata: {
       variation_id: variation?.id,
       description: squareItem.item_data?.description,
+      category_id: categoryId,
     },
   };
 }

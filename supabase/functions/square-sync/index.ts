@@ -171,21 +171,54 @@ Deno.serve(async (req) => {
       stats.locations = locations.length;
 
       // 2) Sync Catalog
+      // First pass: build category ID → name map, then sync items with resolved names
+      const categoryMap = new Map<string, string>();
+      const allSquareItemIds: string[] = [];
       let catalogCursor;
       do {
         const catalogResp = await client.listCatalog(catalogCursor);
-        const items = (catalogResp.objects || []).filter((obj: any) => obj.type === 'ITEM');
-        
+        const objects = catalogResp.objects || [];
+
+        // Extract category names
+        for (const obj of objects) {
+          if (obj.type === 'CATEGORY') {
+            categoryMap.set(obj.id, obj.category_data?.name || 'Other');
+          }
+        }
+
+        // Normalize and upsert items
+        const items = objects.filter((obj: any) => obj.type === 'ITEM');
         for (const item of items) {
-          const normalized = normalizeSquareItem(item, orgId);
+          allSquareItemIds.push(item.id);
+          const normalized = normalizeSquareItem(item, orgId, categoryMap);
           await supabase
             .from('cdm_items')
             .upsert(normalized, { onConflict: 'external_provider,external_id' });
         }
-        
+
         stats.items += items.length;
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
+
+      // Clean up orphaned CDM items (deleted from Square catalog)
+      if (allSquareItemIds.length > 0) {
+        const { data: existingCdmItems } = await supabase
+          .from('cdm_items')
+          .select('id, external_id')
+          .eq('org_id', orgId)
+          .eq('external_provider', 'square');
+
+        const orphanIds = (existingCdmItems || [])
+          .filter(item => !allSquareItemIds.includes(item.external_id))
+          .map(item => item.id);
+
+        if (orphanIds.length > 0) {
+          for (let i = 0; i < orphanIds.length; i += 50) {
+            await supabase.from('cdm_items').delete().in('id', orphanIds.slice(i, i + 50));
+          }
+          (stats as any).items_cleaned = orphanIds.length;
+        }
+      }
 
       // 3) Sync Orders (last 7 days)
       const locationIds = locations.map((l: any) => l.id);
