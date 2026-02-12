@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
             type: 'ITEM', id: `#item_${itemIdx}`,
             item_data: {
               name: item.name,
-              category_id: `#cat_${ci}`,
+              categories: [{ id: `#cat_${ci}` }],
               variations: [{
                 type: 'ITEM_VARIATION', id: `#var_${itemIdx}`,
                 item_variation_data: {
