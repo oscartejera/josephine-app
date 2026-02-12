@@ -58,6 +58,12 @@ MIN_DAYS_NAIVE = 7    # 1 week minimum for seasonal naive
 HOLDOUT_DAYS = 14     # last 2 weeks as test set
 CHAMPION_WMAPE_TOLERANCE = 0.02  # prefer simpler model if WMAPE diff < 2%
 
+# ─── Data Availability Gating thresholds ─────────────────────────────────────
+GATING_LOW_MAX_DAYS = 14       # < 14 days => LOW (baseline only)
+GATING_MID_MAX_DAYS = 56       # 14..55 days => MID (blend)
+GATING_MID_BLEND_RATIO = 0.3   # LightGBM weight in MID tier
+MIN_BUCKET_SAMPLES_FOR_ML = 6  # per (DOW, HOUR) bucket
+
 
 # ─── Data Preparation ────────────────────────────────────────────────────────
 
@@ -489,6 +495,86 @@ def _seasonal_naive_single(
     return hourly_means.get(hour, 0.0)
 
 
+# ─── Data Availability Gating ─────────────────────────────────────────────────
+
+def compute_gating(hourly_df: pd.DataFrame) -> dict:
+    """
+    Assess data sufficiency for a location.
+
+    Returns dict with:
+      - sufficiency: 'LOW' | 'MID' | 'HIGH'
+      - blend_ratio: float (0.0 = baseline only, 1.0 = full ML)
+      - total_days: int
+      - min_bucket_samples: int (minimum across all DOW×HOUR buckets with data)
+      - algorithm: str (descriptive label for model_runs)
+    """
+    total_days = int(hourly_df["sale_date"].nunique())
+
+    # Compute samples per (dow, hour) bucket — only where sales > 0
+    active = hourly_df[hourly_df["sales_net"] > 0]
+    if len(active) == 0:
+        bucket_counts = pd.Series(dtype=int)
+    else:
+        bucket_counts = active.groupby(["day_of_week", "hour_of_day"]).size()
+
+    # Min across populated buckets (ignore empty buckets)
+    min_bucket = int(bucket_counts.min()) if len(bucket_counts) > 0 else 0
+
+    if total_days < GATING_LOW_MAX_DAYS:
+        return {
+            "sufficiency": "LOW",
+            "blend_ratio": 0.0,
+            "total_days": total_days,
+            "min_bucket_samples": min_bucket,
+            "algorithm": "BASELINE_ONLY",
+        }
+    elif total_days < GATING_MID_MAX_DAYS:
+        return {
+            "sufficiency": "MID",
+            "blend_ratio": GATING_MID_BLEND_RATIO,
+            "total_days": total_days,
+            "min_bucket_samples": min_bucket,
+            "algorithm": "BLEND_Naive70_LightGBM30",
+        }
+    else:
+        return {
+            "sufficiency": "HIGH",
+            "blend_ratio": 1.0,
+            "total_days": total_days,
+            "min_bucket_samples": min_bucket,
+            "algorithm": "LightGBM_ChampionChallenger",
+        }
+
+
+def apply_gating_to_registry(
+    registry: dict,
+    gating: dict,
+    bucket_counts: pd.Series,
+) -> dict:
+    """
+    Override registry champion based on gating rules:
+    - LOW  => force all buckets to seasonal_naive
+    - MID  => keep registry but blend predictions later
+    - HIGH => use registry as-is, but force naive for buckets with < MIN_BUCKET_SAMPLES_FOR_ML
+    """
+    if gating["sufficiency"] == "LOW":
+        for key in registry:
+            registry[key]["champion_model"] = "seasonal_naive"
+        return registry
+
+    # For MID and HIGH: force naive on under-sampled buckets
+    for (dow, hour), data in registry.items():
+        samples = bucket_counts.get((dow, hour), 0)
+        if samples < MIN_BUCKET_SAMPLES_FOR_ML and data["champion_model"] == "lgbm":
+            data["champion_model"] = "seasonal_naive"
+            logger.info(
+                "Gating override: bucket (%d,%d) forced to naive (samples=%d < %d)",
+                dow, hour, samples, MIN_BUCKET_SAMPLES_FOR_ML,
+            )
+
+    return registry
+
+
 # ─── Main Pipeline ───────────────────────────────────────────────────────────
 
 class HourlyForecaster:
@@ -497,28 +583,29 @@ class HourlyForecaster:
 
     Usage:
         forecaster = HourlyForecaster(location_id="abc", location_name="Test")
-        result = forecaster.run(sales_15m_rows, horizon_days=14)
+        result = forecaster.run(sales_15m_rows, horizon_days=14, enable_gating=True)
     """
 
     def __init__(self, location_id: str, location_name: str = ""):
         self.location_id = location_id
         self.location_name = location_name
 
-    def run(self, sales_15m: list[dict], horizon_days: int = 14) -> dict:
+    def run(self, sales_15m: list[dict], horizon_days: int = 14, enable_gating: bool = False) -> dict:
         """
         Execute the full pipeline:
           1. Aggregate 15-min → hourly
           2. Fill grid (24h/day)
           3. Build features
+          3b. Data availability gating (if enabled)
           4. Train/test split
           5. Train LightGBM + Seasonal Naive
-          6. Evaluate per bucket → registry
-          7. Predict future
+          6. Evaluate per bucket → registry (with gating overrides)
+          7. Predict future (with optional blending)
           8. Aggregate to daily for backwards compat
         """
         logger.info(
-            "Starting hourly forecast: location=%s, records=%d, horizon=%d days",
-            self.location_name or self.location_id, len(sales_15m), horizon_days,
+            "Starting hourly forecast: location=%s, records=%d, horizon=%d days, gating=%s",
+            self.location_name or self.location_id, len(sales_15m), horizon_days, enable_gating,
         )
 
         # Step 1-2: Aggregate and fill grid
@@ -535,10 +622,29 @@ class HourlyForecaster:
         # Step 3: Build features
         df = build_features(df)
 
+        # Step 3b: Data availability gating
+        if enable_gating:
+            gating = compute_gating(hourly)
+            logger.info(
+                "Gating: sufficiency=%s, blend_ratio=%.2f, total_days=%d, min_bucket_samples=%d",
+                gating["sufficiency"], gating["blend_ratio"],
+                gating["total_days"], gating["min_bucket_samples"],
+            )
+        else:
+            gating = {
+                "sufficiency": "HIGH",
+                "blend_ratio": 1.0,
+                "total_days": n_days,
+                "min_bucket_samples": 0,
+                "algorithm": "LightGBM_ChampionChallenger",
+            }
+
         # Step 4: Train/test split
         all_dates = sorted(df["sale_date"].unique())
         if n_days < MIN_DAYS_NAIVE:
-            return self._empty_result(f"Need {MIN_DAYS_NAIVE}+ days, got {n_days}")
+            result = self._empty_result(f"Need {MIN_DAYS_NAIVE}+ days, got {n_days}")
+            result["gating"] = gating
+            return result
 
         holdout_days = min(HOLDOUT_DAYS, max(7, n_days // 4))
         split_date = all_dates[-(holdout_days + 1)]
@@ -550,9 +656,9 @@ class HourlyForecaster:
             len(df_train), split_date, len(df_test), holdout_days,
         )
 
-        # Step 5: Train models
+        # Step 5: Train models — gating controls whether LightGBM trains
         lgbm_model = None
-        use_lgbm = n_days >= MIN_DAYS_LGBM
+        use_lgbm = n_days >= MIN_DAYS_LGBM and gating["sufficiency"] != "LOW"
 
         if use_lgbm:
             try:
@@ -577,6 +683,12 @@ class HourlyForecaster:
         # Step 6: Evaluate per bucket
         registry = evaluate_per_bucket(df_test, lgbm_test_preds, naive_test_preds)
 
+        # Apply gating overrides to registry
+        if enable_gating:
+            active = hourly[hourly["sales_net"] > 0]
+            bucket_counts = active.groupby(["day_of_week", "hour_of_day"]).size() if len(active) > 0 else pd.Series(dtype=int)
+            registry = apply_gating_to_registry(registry, gating, bucket_counts)
+
         # Conformal intervals for LightGBM
         conformal = compute_conformal_intervals(df_test, lgbm_test_preds)
 
@@ -596,6 +708,30 @@ class HourlyForecaster:
             lgbm_model=lgbm_model if use_lgbm else None,
             conformal_intervals=conformal,
         )
+
+        # Step 7b: Apply blending for MID tier
+        if enable_gating and gating["sufficiency"] == "MID" and use_lgbm and lgbm_model is not None:
+            blend_w = gating["blend_ratio"]  # 0.3 for LightGBM
+            naive_w = 1.0 - blend_w
+            # Re-generate naive-only forecasts for blending
+            naive_only_forecasts = predict_future(
+                df_history=df,
+                future_dates=future_dates,
+                registry={k: {**v, "champion_model": "seasonal_naive"} for k, v in registry.items()},
+                lgbm_model=None,
+                conformal_intervals=conformal,
+            )
+            for i, (hf, nf) in enumerate(zip(hourly_forecasts, naive_only_forecasts)):
+                hourly_forecasts[i] = {
+                    **hf,
+                    "forecast_sales": round(hf["forecast_sales"] * blend_w + nf["forecast_sales"] * naive_w, 2),
+                    "forecast_sales_lower": round(hf["forecast_sales_lower"] * blend_w + nf["forecast_sales_lower"] * naive_w, 2),
+                    "forecast_sales_upper": round(hf["forecast_sales_upper"] * blend_w + nf["forecast_sales_upper"] * naive_w, 2),
+                    "forecast_orders": round(hf["forecast_orders"] * blend_w + nf["forecast_orders"] * naive_w, 1),
+                    "forecast_covers": round(hf["forecast_covers"] * blend_w + nf["forecast_covers"] * naive_w, 1),
+                    "model_type": "blend_naive70_lgbm30",
+                }
+            logger.info("Applied MID blending: naive=%.0f%%, lgbm=%.0f%%", naive_w * 100, blend_w * 100)
 
         # Step 8: Aggregate to daily for backwards compat
         daily_forecasts = self._aggregate_to_daily(hourly_forecasts)
@@ -630,6 +766,7 @@ class HourlyForecaster:
             "history_days": n_days,
             "horizon_days": horizon_days,
             "lgbm_used": use_lgbm,
+            "gating": gating,
             "metrics": {
                 "wmape": round(global_wmape, 4),
                 "mase": round(global_mase, 4),
