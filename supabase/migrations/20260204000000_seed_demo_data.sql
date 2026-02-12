@@ -18,8 +18,9 @@ DELETE FROM facts_sales_15m WHERE location_id IN (
 DELETE FROM employees WHERE location_id IN (
   SELECT id FROM locations WHERE name LIKE '%Demo%' OR name IN ('La Taberna Centro', 'Chamberí', 'Malasaña')
 );
-DELETE FROM cdm_items WHERE location_id IN (
-  SELECT id FROM locations WHERE name LIKE '%Demo%' OR name IN ('La Taberna Centro', 'Chamberí', 'Malasaña')
+DELETE FROM cdm_items WHERE name IN (
+  'Paella Valenciana', 'Jamón Ibérico', 'Chuletón de Buey',
+  'Pulpo a la Gallega', 'Bacalao Pil-Pil', 'Rioja Reserva', 'Cerveza Alhambra'
 );
 DELETE FROM locations WHERE name IN ('La Taberna Centro', 'Chamberí', 'Malasaña');
 
@@ -79,26 +80,17 @@ BEGIN
   RAISE NOTICE 'Locations creadas: Centro=%, Chamberí=%, Malasaña=%', v_location_centro, v_location_chamberi, v_location_malasana;
 
   -- ============== PASO 3: CREAR PRODUCTOS (CDM_ITEMS) ==============
-  -- La Taberna Centro - Premium Spanish cuisine
-  INSERT INTO cdm_items (id, org_id, location_id, name, category_name, unit_price, cost_price, active, created_at)
+  -- Premium Spanish cuisine items (org-level, not per-location)
+  INSERT INTO cdm_items (id, org_id, name, category_name, price, is_active, external_provider, external_id, created_at)
   VALUES
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Paella Valenciana', 'Food', 24.50, 8.20, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Jamón Ibérico', 'Food', 18.90, 11.40, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Chuletón de Buey', 'Food', 38.50, 19.20, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Pulpo a la Gallega', 'Food', 22.80, 9.10, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Bacalao Pil-Pil', 'Food', 26.50, 10.60, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Rioja Reserva', 'Beverage', 28.00, 9.50, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Cerveza Alhambra', 'Beverage', 4.50, 1.20, true, NOW())
+    (gen_random_uuid(), v_org_id, 'Paella Valenciana', 'Food', 24.50, true, 'demo', 'demo-paella', NOW()),
+    (gen_random_uuid(), v_org_id, 'Jamón Ibérico', 'Food', 18.90, true, 'demo', 'demo-jamon', NOW()),
+    (gen_random_uuid(), v_org_id, 'Chuletón de Buey', 'Food', 38.50, true, 'demo', 'demo-chuleton', NOW()),
+    (gen_random_uuid(), v_org_id, 'Pulpo a la Gallega', 'Food', 22.80, true, 'demo', 'demo-pulpo', NOW()),
+    (gen_random_uuid(), v_org_id, 'Bacalao Pil-Pil', 'Food', 26.50, true, 'demo', 'demo-bacalao', NOW()),
+    (gen_random_uuid(), v_org_id, 'Rioja Reserva', 'Beverage', 28.00, true, 'demo', 'demo-rioja', NOW()),
+    (gen_random_uuid(), v_org_id, 'Cerveza Alhambra', 'Beverage', 4.50, true, 'demo', 'demo-cerveza', NOW())
   RETURNING id INTO v_paella_id;
-
-  -- Similar para otras locations (productos con precios ligeramente diferentes)
-  INSERT INTO cdm_items (org_id, location_id, name, category_name, unit_price, cost_price, active)
-  SELECT v_org_id, v_location_chamberi, name, category_name, unit_price * 0.95, cost_price * 0.95, true
-  FROM cdm_items WHERE location_id = v_location_centro;
-
-  INSERT INTO cdm_items (org_id, location_id, name, category_name, unit_price, cost_price, active)
-  SELECT v_org_id, v_location_malasana, name, category_name, unit_price * 0.90, cost_price * 0.90, true
-  FROM cdm_items WHERE location_id = v_location_centro;
 
   RAISE NOTICE 'Productos creados para 3 locations';
 
