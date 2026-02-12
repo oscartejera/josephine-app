@@ -714,20 +714,97 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
     location_id = req.get("location_id", "")
     location_name = req.get("location_name", "")
     horizon_days = req.get("horizon_days", 14)
+    req_data_source = req.get("data_source")  # 'demo' | 'pos' | None
+    req_org_id = req.get("org_id")            # uuid string | None
 
     if not supabase_url or not supabase_key:
         raise HTTPException(status_code=400, detail="supabase_url and supabase_key required")
 
     logger.info(
-        "forecast_hourly: location=%s, horizon=%d days",
-        location_name or location_id, horizon_days,
+        "forecast_hourly: location=%s, horizon=%d days, ds=%s",
+        location_name or location_id, horizon_days, req_data_source,
     )
 
-    # ── Fetch facts_sales_15m (paginated) ────────────────────────────
+    # ── Resolve data_source ──────────────────────────────────────────
     headers_sb = {
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}",
     }
+    ds = req_data_source  # may be None
+    if not ds and req_org_id:
+        # Call resolve_data_source RPC
+        try:
+            import httpx as _httpx
+            async with _httpx.AsyncClient(timeout=10) as _client:
+                rpc_resp = await _client.post(
+                    f"{supabase_url}/rest/v1/rpc/resolve_data_source",
+                    headers={**headers_sb, "Content-Type": "application/json"},
+                    json={"p_org_id": req_org_id},
+                )
+                if rpc_resp.status_code == 200:
+                    ds = rpc_resp.json().get("data_source", "demo")
+                else:
+                    logger.warning("resolve_data_source RPC failed: %s", rpc_resp.text[:200])
+                    ds = "demo"
+        except Exception as e:
+            logger.warning("resolve_data_source failed, defaulting to demo: %s", e)
+            ds = "demo"
+    if not ds:
+        ds = "demo"
+    logger.info("Resolved data_source=%s for location=%s", ds, location_name or location_id)
+
+    # ── Fetch location_hours (open/close/prep) ────────────────────
+    location_hours = {
+        "tz": "Europe/Madrid",
+        "open_time": "12:00",
+        "close_time": "23:00",
+        "prep_start": "09:00",
+        "prep_end": "12:00",
+    }
+    try:
+        import httpx as _httpx
+        async with _httpx.AsyncClient(timeout=10) as _client:
+            lh_resp = await _client.get(
+                f"{supabase_url}/rest/v1/location_hours"
+                f"?location_id=eq.{location_id}"
+                f"&select=tz,open_time,close_time,prep_start,prep_end",
+                headers=headers_sb,
+            )
+            if lh_resp.status_code == 200:
+                rows = lh_resp.json()
+                if rows:
+                    location_hours = rows[0]
+                    logger.info("Fetched location_hours: %s", location_hours)
+    except Exception as e:
+        logger.warning("Failed to fetch location_hours, using defaults: %s", e)
+
+    # Parse hours as integers for mask
+    def _parse_time_hour(t: str) -> int:
+        """Extract hour from 'HH:MM' or 'HH:MM:SS' string."""
+        return int(t.split(":")[0])
+
+    open_hour = _parse_time_hour(location_hours.get("open_time", "12:00"))
+    close_hour = _parse_time_hour(location_hours.get("close_time", "23:00"))
+    prep_start_hour = _parse_time_hour(location_hours.get("prep_start", "09:00"))
+    prep_end_hour = _parse_time_hour(location_hours.get("prep_end", "12:00"))
+
+    def is_service_hour(hour: int) -> bool:
+        """True if hour is within open service window [open, close)."""
+        if open_hour <= close_hour:
+            return open_hour <= hour < close_hour
+        # Wraps midnight (e.g. 20:00 - 02:00)
+        return hour >= open_hour or hour < close_hour
+
+    def is_prep_hour(hour: int) -> bool:
+        """True if hour is within prep window [prep_start, prep_end)."""
+        return prep_start_hour <= hour < prep_end_hour
+
+    logger.info(
+        "Open hours mask: service=[%d,%d), prep=[%d,%d)",
+        open_hour, close_hour, prep_start_hour, prep_end_hour,
+    )
+
+    # ── Fetch facts_sales_15m (paginated) ────────────────────────────
     sales_data = []
     page = 0
     async with httpx.AsyncClient(timeout=30) as client:
@@ -759,9 +836,9 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
             detail=f"Need at least 1 week of 15-min data, got {len(sales_data)} records",
         )
 
-    # ── Run hourly forecaster ────────────────────────────────────────
+    # ── Run hourly forecaster (with data-availability gating) ───────
     forecaster = HourlyForecaster(location_id=location_id, location_name=location_name)
-    result = forecaster.run(sales_data, horizon_days=horizon_days)
+    result = forecaster.run(sales_data, horizon_days=horizon_days, enable_gating=True)
 
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Forecast failed"))
@@ -779,24 +856,45 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
             headers={**headers_sb, "Prefer": "return=minimal"},
         )
 
-        # 2) Insert hourly forecasts in batches
+        # 2) Insert hourly forecasts in batches (with open-hours mask)
         hourly_rows = []
+        masked_count = 0
         for hf in result["hourly_forecasts"]:
+            h = hf["hour_of_day"]
+            # Apply open-hours mask: zero out outside service hours
+            if is_service_hour(h):
+                sales = hf["forecast_sales"]
+                lower = hf["forecast_sales_lower"]
+                upper = hf["forecast_sales_upper"]
+                orders = hf["forecast_orders"]
+                covers = hf["forecast_covers"]
+            else:
+                # Prep or closed — keep row but zero values
+                sales = 0
+                lower = 0
+                upper = 0
+                orders = 0
+                covers = 0
+                masked_count += 1
+
             hourly_rows.append({
                 "location_id": location_id,
                 "forecast_date": hf["forecast_date"],
-                "hour_of_day": hf["hour_of_day"],
-                "forecast_sales": hf["forecast_sales"],
-                "forecast_sales_lower": hf["forecast_sales_lower"],
-                "forecast_sales_upper": hf["forecast_sales_upper"],
-                "forecast_orders": hf["forecast_orders"],
-                "forecast_covers": hf["forecast_covers"],
+                "hour_of_day": h,
+                "forecast_sales": sales,
+                "forecast_sales_lower": lower,
+                "forecast_sales_upper": upper,
+                "forecast_orders": orders,
+                "forecast_covers": covers,
                 "model_type": hf["model_type"],
                 "model_version": "HourlyEngine_v1.0",
                 "bucket_wmape": hf.get("bucket_wmape"),
                 "bucket_mase": hf.get("bucket_mase"),
                 "generated_at": datetime.utcnow().isoformat(),
+                "data_source": ds,
             })
+
+        logger.info("Open-hours mask zeroed %d/%d hourly rows", masked_count, len(hourly_rows))
 
         for i in range(0, len(hourly_rows), 500):
             batch = hourly_rows[i:i + 500]
@@ -836,6 +934,7 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
                 "explanation": f"Hourly forecast (WMAPE {result['metrics']['wmape']*100:.1f}%, "
                                f"MASE {result['metrics']['mase']:.3f})",
                 "generated_at": datetime.utcnow().isoformat(),
+                "data_source": ds,
             })
 
         for i in range(0, len(daily_rows), 500):
@@ -866,15 +965,16 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
             if resp.status_code >= 400:
                 logger.error("Registry insert error: %s", resp.text[:200])
 
-        # 5) Log model run (audit)
+        # 5) Log model run (audit) with gating metadata
         metrics = result["metrics"]
+        gating = result.get("gating", {})
         await client.post(
             f"{supabase_url}/rest/v1/forecast_model_runs",
             headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
             json={
                 "location_id": location_id,
                 "model_version": "HourlyEngine_v1.0",
-                "algorithm": "LightGBM_ChampionChallenger",
+                "algorithm": gating.get("algorithm", "LightGBM_ChampionChallenger"),
                 "history_start": sales_data[0]["ts_bucket"][:10],
                 "history_end": sales_data[-1]["ts_bucket"][:10],
                 "horizon_days": horizon_days,
@@ -883,23 +983,30 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
                 "confidence": round(max(0, (1 - metrics["wmape"])) * 100),
                 "data_points": result["data_points"],
                 "trend_slope": 0,
+                "data_sufficiency_level": gating.get("sufficiency", "LOW"),
+                "blend_ratio": gating.get("blend_ratio"),
+                "total_days": gating.get("total_days", 0),
+                "min_bucket_samples": gating.get("min_bucket_samples", 0),
             },
         )
 
     logger.info(
-        "Stored %d hourly + %d daily forecasts for %s",
-        len(hourly_rows), len(daily_rows), location_name,
+        "Stored %d hourly + %d daily forecasts for %s (ds=%s, masked=%d)",
+        len(hourly_rows), len(daily_rows), location_name, ds, masked_count,
     )
 
     return {
         "success": True,
         "location_id": location_id,
         "location_name": location_name,
+        "data_source": ds,
         "data_points": result["data_points"],
         "history_days": result["history_days"],
         "hourly_forecasts_stored": len(hourly_rows),
         "daily_forecasts_stored": len(daily_rows),
+        "hours_masked": masked_count,
         "lgbm_used": result["lgbm_used"],
+        "gating": result.get("gating", {}),
         "metrics": {
             "wmape": f"{metrics['wmape'] * 100:.1f}%",
             "mase": f"{metrics['mase']:.3f}",
@@ -907,8 +1014,8 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
             "directional_accuracy": f"{metrics['directional_accuracy'] * 100:.0f}%",
         },
         "registry_summary": result["registry_summary"],
-        "sample_hourly": result["hourly_forecasts"][:24],  # first day
-        "sample_daily": result["daily_forecasts"][:7],      # first week
+        "sample_hourly": hourly_rows[:24],  # first day (with mask applied)
+        "sample_daily": result["daily_forecasts"][:7],
     }
 
 
