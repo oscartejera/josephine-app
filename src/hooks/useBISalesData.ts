@@ -167,10 +167,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
 
   const query = useQuery({
     queryKey: ['bi-sales', dateRange, granularity, compareMode, effectiveLocationIds, orgId],
+    enabled: !!orgId && effectiveLocationIds.length > 0,
     queryFn: async (): Promise<BISalesData> => {
-      if (!orgId || effectiveLocationIds.length === 0) {
-        return emptyData();
-      }
 
       const fromStr = format(dateRange.from, 'yyyy-MM-dd');
       const toStr = format(dateRange.to, 'yyyy-MM-dd');

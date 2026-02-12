@@ -90,6 +90,7 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
   // Fetch KPIs
   const kpisQuery = useQuery({
     queryKey: ['labour-kpis', dateFrom, dateTo, locationId, dataSource],
+    enabled: !!dataSource,
     queryFn: async (): Promise<LabourKpis> => {
       const { data, error } = await supabase.rpc('get_labour_kpis', {
         date_from: dateFrom,
@@ -106,6 +107,7 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
   // Fetch timeseries for chart
   const timeseriesQuery = useQuery({
     queryKey: ['labour-timeseries', dateFrom, dateTo, locationId, dataSource],
+    enabled: !!dataSource,
     queryFn: async (): Promise<LabourTimeseriesRow[]> => {
       const { data, error } = await supabase.rpc('get_labour_timeseries', {
         date_from: dateFrom,
@@ -122,6 +124,7 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
   // Fetch locations table
   const locationsQuery = useQuery({
     queryKey: ['labour-locations', dateFrom, dateTo, locationId, dataSource],
+    enabled: !!dataSource,
     queryFn: async (): Promise<LabourLocationRow[]> => {
       const { data, error } = await supabase.rpc('get_labour_locations_table', {
         date_from: dateFrom,

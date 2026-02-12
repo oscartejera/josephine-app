@@ -1,6 +1,4 @@
-// TODO: Migrate to unified views — replace supabase.from('pos_daily_finance') with
-// v_pos_daily_finance_unified (data_source_unified) and supabase.from('product_sales_daily')
-// with v_product_sales_daily_unified. See get_top_products_unified RPC for product data.
+// Migrated to unified views: v_pos_daily_finance_unified + v_product_sales_daily_unified
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -97,6 +95,8 @@ export function useInventoryData(
 ) {
   const { locations, group, loading: appLoading, dataSource } = useApp();
   const { session } = useAuth();
+  // Map AppContext dataSource ('pos'|'simulated') to unified view value ('pos'|'demo')
+  const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [hasRealData, setHasRealData] = useState(false);
@@ -112,13 +112,14 @@ export function useInventoryData(
   const fetchedRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
-  // Create a stable cache key for the current request
+  // Create a stable cache key for the current request — includes locations count
+  // and dataSource to ensure re-fetch when context finishes loading
   const cacheKey = useMemo(() => {
     const fromStr = dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : '';
     const toStr = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
     const locsStr = selectedLocations.sort().join(',');
-    return `${fromStr}-${toStr}-${locsStr}`;
-  }, [dateRange.from, dateRange.to, selectedLocations]);
+    return `${fromStr}-${toStr}-${locsStr}-${locations.length}-${dataSource}`;
+  }, [dateRange.from, dateRange.to, selectedLocations, locations.length, dataSource]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -162,9 +163,9 @@ export function useInventoryData(
       // Fetch real data
       if (locations.length > 0 && !appLoading) {
         let salesQuery = supabase
-          .from('pos_daily_finance')
+          .from('v_pos_daily_finance_unified' as any)
           .select('date, location_id, net_sales, gross_sales, orders_count')
-          .eq('data_source', dataSource)
+          .eq('data_source_unified', dsUnified)
           .gte('date', fromDateStr)
           .lte('date', toDateStr);
 
@@ -202,7 +203,7 @@ export function useInventoryData(
         setIsLoading(false);
       }
     }
-  }, [cacheKey, dateRange.from, dateRange.to, selectedLocations, locations, appLoading, dataSource]);
+  }, [cacheKey, dateRange.from, dateRange.to, selectedLocations, locations, appLoading, dataSource, dsUnified]);
 
   // Trigger fetch when dependencies change
   useEffect(() => {
@@ -284,9 +285,9 @@ export function useInventoryData(
 
     // Fetch product sales for category breakdown
     let prodQuery = supabase
-      .from('product_sales_daily')
+      .from('v_product_sales_daily_unified' as any)
       .select('date, location_id, product_id, net_sales, cogs, products(name, category)')
-      .eq('data_source', dataSource)
+      .eq('data_source_unified', dsUnified)
       .gte('date', fromDateStr)
       .lte('date', toDateStr);
 
