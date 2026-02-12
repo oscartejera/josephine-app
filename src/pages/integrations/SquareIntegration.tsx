@@ -193,9 +193,17 @@ export default function SquareIntegration() {
     try {
       const data = await invokeEdgeFunction('square-sync', { accountId: account.id });
 
-      toast.success('Sincronización completada', {
-        description: `${data.stats?.locations || 0} locales, ${data.stats?.items || 0} productos, ${data.stats?.orders || 0} pedidos`,
-      });
+      if (data.message === 'Sync already running') {
+        toast.info('Sincronización en curso', {
+          description: 'Ya hay una sincronización activa. Espera a que termine.',
+        });
+      } else if (data.stats) {
+        toast.success('Sincronización completada', {
+          description: `${data.stats.locations || 0} locales, ${data.stats.items || 0} productos, ${data.stats.orders || 0} pedidos`,
+        });
+      } else {
+        toast.success('Sincronización completada');
+      }
 
       await loadIntegration();
     } catch (err: any) {
