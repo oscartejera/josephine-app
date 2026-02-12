@@ -45,6 +45,36 @@ export function normalizeSquareItem(squareItem: any, orgId: string) {
 export function normalizeSquareOrder(squareOrder: any, orgId: string, locationMap: Map<string, string>) {
   const locationId = locationMap.get(squareOrder.location_id) || null;
 
+  // Extract discount total from Square order
+  const discountTotal = squareOrder.total_discount_money?.amount
+    ? Number(squareOrder.total_discount_money.amount) / 100
+    : 0;
+
+  // Extract refund total from Square refunds array
+  let refundTotal = 0;
+  if (squareOrder.refunds && Array.isArray(squareOrder.refunds)) {
+    for (const refund of squareOrder.refunds) {
+      if (refund.amount_money?.amount) {
+        refundTotal += Number(refund.amount_money.amount) / 100;
+      }
+    }
+  }
+
+  // Extract payment method breakdown from tenders
+  const tenderBreakdown = { cash: 0, card: 0, other: 0 };
+  if (squareOrder.tenders && Array.isArray(squareOrder.tenders)) {
+    for (const tender of squareOrder.tenders) {
+      const amt = tender.amount_money?.amount ? Number(tender.amount_money.amount) / 100 : 0;
+      if (tender.type === 'CASH') {
+        tenderBreakdown.cash += amt;
+      } else if (tender.type === 'CARD' || tender.type === 'SQUARE_GIFT_CARD') {
+        tenderBreakdown.card += amt;
+      } else {
+        tenderBreakdown.other += amt;
+      }
+    }
+  }
+
   return {
     order: {
       org_id: orgId,
@@ -55,20 +85,33 @@ export function normalizeSquareOrder(squareOrder: any, orgId: string, locationMa
       net_total: squareOrder.net_amounts?.total_money?.amount ? Number(squareOrder.net_amounts.total_money.amount) / 100 : 0,
       tax_total: squareOrder.total_tax_money?.amount ? Number(squareOrder.total_tax_money.amount) / 100 : 0,
       tip_total: squareOrder.total_tip_money?.amount ? Number(squareOrder.total_tip_money.amount) / 100 : 0,
-      status: squareOrder.state === 'COMPLETED' ? 'closed' : squareOrder.state === 'CANCELED' ? 'void' : 'open',
+      discount_total: discountTotal,
+      refund_total: refundTotal,
+      status: squareOrder.state === 'COMPLETED' ? 'closed'
+            : squareOrder.state === 'CANCELED' ? 'void'
+            : squareOrder.state === 'DRAFT' ? 'draft'
+            : 'open',
       source: squareOrder.source?.name || 'square',
       external_provider: 'square',
       external_id: squareOrder.id,
       metadata: {
         state: squareOrder.state,
         version: squareOrder.version,
+        customer_id: squareOrder.customer_id || null,
+        fulfillments: squareOrder.fulfillments || [],
+        rounding_adjustment: squareOrder.rounding_adjustment_money?.amount
+          ? Number(squareOrder.rounding_adjustment_money.amount) / 100
+          : 0,
       },
     },
+    tenderBreakdown,
     lines: (squareOrder.line_items || []).map((line: any) => ({
       name: line.name,
       quantity: Number(line.quantity),
       unit_price: line.base_price_money?.amount ? Number(line.base_price_money.amount) / 100 : 0,
       gross_line_total: line.gross_sales_money?.amount ? Number(line.gross_sales_money.amount) / 100 : 0,
+      discount_total: line.total_discount_money?.amount ? Number(line.total_discount_money.amount) / 100 : 0,
+      tax_total: line.total_tax_money?.amount ? Number(line.total_tax_money.amount) / 100 : 0,
       modifiers: line.modifiers || [],
       notes: line.note || null,
       external_id: line.uid,

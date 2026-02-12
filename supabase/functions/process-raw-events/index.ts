@@ -162,6 +162,39 @@ async function processPayment(
   if (!payment.id) return;
 
   const normalized = normalizeSquarePayment(payment, orgId, locationMap);
+
+  // Resolve order_id from order_external_id (Fix #3: FK requires internal UUID)
+  if (normalized.order_external_id) {
+    const { data: cdmOrder } = await supabase
+      .from('cdm_orders')
+      .select('id')
+      .eq('external_id', normalized.order_external_id)
+      .eq('external_provider', 'square')
+      .single();
+
+    if (cdmOrder) {
+      normalized.order_id = cdmOrder.id;
+
+      // Update order status to 'paid' when payment completes
+      if (normalized.status === 'completed') {
+        await supabase
+          .from('cdm_orders')
+          .update({ status: 'closed' })
+          .eq('id', cdmOrder.id)
+          .eq('status', 'open');
+      }
+    }
+  }
+
+  // Remove order_external_id (not a DB column) before upserting
+  delete normalized.order_external_id;
+
+  // Only insert if we resolved the order_id (required NOT NULL FK)
+  if (!normalized.order_id) {
+    console.warn(`[process-raw-events] Skipping payment ${payment.id}: could not resolve order_id`);
+    return;
+  }
+
   await supabase
     .from('cdm_payments')
     .upsert(normalized, { onConflict: 'external_provider,external_id' });
@@ -177,22 +210,49 @@ async function processInventory(
   for (const count of counts) {
     if (!count.catalog_object_id) continue;
 
-    // Find matching inventory item via CDM item
+    // Find matching CDM item by external_id
     const { data: cdmItem } = await supabase
       .from('cdm_items')
-      .select('name')
+      .select('name, external_id')
       .eq('external_id', count.catalog_object_id)
       .eq('org_id', orgId)
       .single();
 
     if (!cdmItem) continue;
 
-    // Update inventory_items if exists
-    const { data: invItem } = await supabase
+    // Fix #14: Match inventory_items by external_ref (catalog_object_id) first,
+    // then fallback to name + group_id composite to avoid wrong item updates.
+    // First try exact external reference match
+    let invItem = null;
+    const { data: byRef } = await supabase
       .from('inventory_items')
       .select('id')
-      .eq('name', cdmItem.name)
-      .single();
+      .eq('external_ref', count.catalog_object_id)
+      .limit(1)
+      .maybeSingle();
+
+    if (byRef) {
+      invItem = byRef;
+    } else {
+      // Fallback: match by name scoped to the org's group
+      const { data: integration } = await supabase
+        .from('integrations')
+        .select('org_id')
+        .eq('org_id', orgId)
+        .limit(1)
+        .single();
+
+      if (integration) {
+        const { data: byName } = await supabase
+          .from('inventory_items')
+          .select('id')
+          .eq('name', cdmItem.name)
+          .limit(1)
+          .maybeSingle();
+
+        invItem = byName;
+      }
+    }
 
     if (invItem) {
       await supabase

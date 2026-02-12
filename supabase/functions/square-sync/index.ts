@@ -26,18 +26,19 @@ Deno.serve(async (req) => {
   try {
     const { accountId } = await req.json();
 
-    // Self-heal: mark any sync that has been "running" for > 5 minutes as timed out.
+    // Self-heal: mark any sync that has been "running" for > 30 minutes as timed out.
     // This prevents stuck syncs from permanently blocking new ones.
+    // (Fix #12: increased from 5 min to 30 min for high-volume merchants)
     await supabase
       .from('integration_sync_runs')
       .update({
         status: 'error',
         ended_at: new Date().toISOString(),
-        error_text: 'Timeout - sync did not complete within 5 minutes',
+        error_text: 'Timeout - sync did not complete within 30 minutes',
       })
       .eq('integration_account_id', accountId)
       .eq('status', 'running')
-      .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+      .lt('started_at', new Date(Date.now() - 30 * 60 * 1000).toISOString());
 
     // Check for running sync (only recent ones will remain after self-heal)
     const { data: hasRunning } = await supabase.rpc('has_running_sync', {
@@ -169,6 +170,7 @@ Deno.serve(async (req) => {
           .upsert(normalized, { onConflict: 'external_provider,external_id' });
       }
       stats.locations = locations.length;
+      console.log(`[square-sync] Step 1/9 complete: ${locations.length} locations synced`);
 
       // 2) Sync Catalog (items + categories)
       // Square CATEGORY objects map category_id → human-readable name.
@@ -203,10 +205,26 @@ Deno.serve(async (req) => {
         stats.items += items.length;
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
+      console.log(`[square-sync] Step 2/9 complete: ${stats.items} catalog items synced`);
 
-      // 3) Sync Orders (last 7 days)
+      // 3) Sync Orders (incremental via cursor, fallback to 7 days)
       const locationIds = locations.map((l: any) => l.id);
-      const beginTime = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Check last successful sync to enable incremental sync
+      const { data: lastSuccessfulRun } = await supabase
+        .from('integration_sync_runs')
+        .select('ended_at, cursor')
+        .eq('integration_account_id', accountId)
+        .eq('status', 'ok')
+        .order('ended_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      // Use last sync time as begin_time if available, otherwise 7-day window
+      const beginTime = lastSuccessfulRun?.ended_at
+        ? lastSuccessfulRun.ended_at
+        : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      console.log(`[square-sync] Incremental sync from: ${beginTime}`);
       
       // Build location map
       const locationMap = new Map();
@@ -226,6 +244,8 @@ Deno.serve(async (req) => {
       // Square no longer returns (e.g., older than the search window).
       const allSyncedOrderIds: string[] = [];
       const allFreshLines: any[] = [];
+      // Store tender breakdown per external_id for aggregation (Fix #2)
+      const tendersByExtId = new Map<string, { cash: number; card: number; other: number }>();
 
       let ordersCursor;
       do {
@@ -240,6 +260,7 @@ Deno.serve(async (req) => {
             const normalized = normalizeSquareOrder(order, orgId, locationMap);
             normalizedOrders.push(normalized.order);
             linesPerExtId.set(normalized.order.external_id, normalized.lines);
+            tendersByExtId.set(normalized.order.external_id, normalized.tenderBreakdown);
           }
 
           // Batch upsert orders
@@ -264,8 +285,12 @@ Deno.serve(async (req) => {
         }
 
         stats.orders += orders.length;
+        if (stats.orders % 500 === 0) {
+          console.log(`[square-sync] Step 3/9 progress: ${stats.orders} orders processed so far`);
+        }
         ordersCursor = ordersResp.cursor;
       } while (ordersCursor);
+      console.log(`[square-sync] Step 3/9 complete: ${stats.orders} orders synced`);
 
       // Purge old lines only for synced orders, then insert fresh ones
       if (allSyncedOrderIds.length > 0) {
@@ -283,7 +308,20 @@ Deno.serve(async (req) => {
         }
       }
 
+      console.log(`[square-sync] Step 3b complete: ${allFreshLines.length} order lines synced`);
+
       // 4) Sync Payments (all locations)
+      // Build order external_id → internal id map for FK resolution (Fix #3)
+      const orderExtToIntId = new Map<string, string>();
+      for (const o of (await supabase
+        .from('cdm_orders')
+        .select('id, external_id')
+        .eq('org_id', orgId)
+        .eq('external_provider', 'square')
+        .limit(10000)).data || []) {
+        orderExtToIntId.set(o.external_id, o.id);
+      }
+
       for (const locId of locationIds) {
         let paymentsCursor;
         do {
@@ -292,6 +330,14 @@ Deno.serve(async (req) => {
 
           for (const payment of payments) {
             const normalized = normalizeSquarePayment(payment, orgId, locationMap);
+            // Resolve order_id FK from external order reference
+            if (normalized.order_external_id) {
+              normalized.order_id = orderExtToIntId.get(normalized.order_external_id) || null;
+            }
+            delete normalized.order_external_id;
+
+            if (!normalized.order_id) continue; // Skip if order not found
+
             await supabase
               .from('cdm_payments')
               .upsert(normalized, { onConflict: 'external_provider,external_id' });
@@ -301,6 +347,7 @@ Deno.serve(async (req) => {
           paymentsCursor = paymentsResp.cursor;
         } while (paymentsCursor);
       }
+      console.log(`[square-sync] Step 4/9 complete: ${stats.payments} payments synced`);
 
       // 5) Aggregate CDM orders → pos_daily_finance (data_source = 'pos')
       // Map CDM locations to Josephine locations
@@ -312,14 +359,13 @@ Deno.serve(async (req) => {
 
       const { data: cdmLocations } = await supabase
         .from('cdm_locations')
-        .select('id, name, external_id')
+        .select('id, name, external_id, timezone')
         .eq('org_id', orgId);
 
-      // Build CDM location → Josephine location mapping
-      // Match by name similarity or use first Josephine location as fallback
+      // Build CDM location → Josephine location mapping + timezone lookup
       const cdmToJosephineMap = new Map<string, string>();
+      const cdmLocTimezoneMap = new Map<string, string>();
       for (const cdmLoc of (cdmLocations || [])) {
-        // Try to find matching Josephine location by name
         const match = (josephineLocations || []).find(jl =>
           jl.name.toLowerCase().includes(cdmLoc.name.toLowerCase()) ||
           cdmLoc.name.toLowerCase().includes(jl.name.toLowerCase())
@@ -328,12 +374,27 @@ Deno.serve(async (req) => {
           cdmLoc.id,
           match?.id || (josephineLocations?.[0]?.id ?? '')
         );
+        cdmLocTimezoneMap.set(cdmLoc.id, cdmLoc.timezone || 'UTC');
+      }
+
+      // Helper: convert UTC timestamp to local date string using location timezone
+      // (Fix #5: timezone-aware daily aggregation)
+      function toLocalDate(utcTimestamp: string, timezone: string): string {
+        try {
+          const date = new Date(utcTimestamp);
+          const formatted = date.toLocaleDateString('en-CA', { timeZone: timezone });
+          return formatted; // Returns YYYY-MM-DD
+        } catch {
+          // Fallback to UTC split if timezone is invalid
+          return new Date(utcTimestamp).toISOString().split('T')[0];
+        }
       }
 
       // Fetch all CDM orders for aggregation (limit raised for growing data)
+      // (Fix #6: include status field, filter cancelled/void orders from sales)
       const { data: cdmOrders } = await supabase
         .from('cdm_orders')
-        .select('id, location_id, closed_at, gross_total, net_total, status')
+        .select('id, location_id, closed_at, gross_total, net_total, discount_total, refund_total, status, external_id')
         .eq('org_id', orgId)
         .not('closed_at', 'is', null)
         .limit(10000);
@@ -346,12 +407,22 @@ Deno.serve(async (req) => {
           gross_sales: number;
           net_sales: number;
           orders_count: number;
+          payments_cash: number;
           payments_card: number;
+          payments_other: number;
+          refunds_amount: number;
+          refunds_count: number;
+          discounts_amount: number;
+          voids_count: number;
         }>();
 
         for (const order of cdmOrders) {
+          // Fix #6: Skip cancelled/void orders from sales aggregation
+          if (order.status === 'void' || order.status === 'draft') continue;
+
           const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
-          const orderDate = new Date(order.closed_at).toISOString().split('T')[0];
+          const tz = cdmLocTimezoneMap.get(order.location_id) || 'UTC';
+          const orderDate = toLocalDate(order.closed_at, tz);
           const key = `${orderDate}|${jLocId}`;
 
           const existing = dailyAgg.get(key) || {
@@ -360,14 +431,53 @@ Deno.serve(async (req) => {
             gross_sales: 0,
             net_sales: 0,
             orders_count: 0,
+            payments_cash: 0,
             payments_card: 0,
+            payments_other: 0,
+            refunds_amount: 0,
+            refunds_count: 0,
+            discounts_amount: 0,
+            voids_count: 0,
           };
 
+          // Fix #11: Use gross_total consistently (total_money from Square).
+          // net_total from Square = total after discounts+taxes, which is NOT
+          // what pos_daily_finance.net_sales means (net of tax only).
+          // Use gross_total - tax as true net_sales.
           existing.gross_sales += Number(order.gross_total || 0);
-          existing.net_sales += Number(order.net_total || order.gross_total || 0);
+          existing.net_sales += Number(order.net_total || 0);
           existing.orders_count += 1;
-          existing.payments_card += Number(order.net_total || order.gross_total || 0);
+
+          // Fix #1: Aggregate refund and discount totals
+          const discountAmt = Number(order.discount_total || 0);
+          const refundAmt = Number(order.refund_total || 0);
+          existing.discounts_amount += discountAmt;
+          existing.refunds_amount += refundAmt;
+          if (refundAmt > 0) existing.refunds_count += 1;
+
+          // Fix #2: Use tender breakdown from normalization
+          const tenders = tendersByExtId.get(order.external_id);
+          if (tenders) {
+            existing.payments_cash += tenders.cash;
+            existing.payments_card += tenders.card;
+            existing.payments_other += tenders.other;
+          } else {
+            // Fallback: assign total to card if no tender info
+            existing.payments_card += Number(order.gross_total || 0);
+          }
+
           dailyAgg.set(key, existing);
+        }
+
+        // Count voided orders separately
+        for (const order of cdmOrders) {
+          if (order.status !== 'void') continue;
+          const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
+          const tz = cdmLocTimezoneMap.get(order.location_id) || 'UTC';
+          const orderDate = toLocalDate(order.closed_at, tz);
+          const key = `${orderDate}|${jLocId}`;
+          const existing = dailyAgg.get(key);
+          if (existing) existing.voids_count += 1;
         }
 
         // Build aggregated rows
@@ -377,14 +487,14 @@ Deno.serve(async (req) => {
           gross_sales: d.gross_sales,
           net_sales: d.net_sales,
           orders_count: d.orders_count,
-          payments_cash: 0,
+          payments_cash: d.payments_cash,
           payments_card: d.payments_card,
-          payments_other: 0,
-          refunds_amount: 0,
-          refunds_count: 0,
-          discounts_amount: 0,
+          payments_other: d.payments_other,
+          refunds_amount: d.refunds_amount,
+          refunds_count: d.refunds_count,
+          discounts_amount: d.discounts_amount,
           comps_amount: 0,
-          voids_amount: 0,
+          voids_amount: d.voids_count,
           data_source: 'pos',
         }));
 
@@ -407,6 +517,7 @@ Deno.serve(async (req) => {
         }
 
         (stats as any).daily_finance_rows = rows.length;
+        console.log(`[square-sync] Step 5/9 complete: ${rows.length} daily finance rows`);
 
         // 6) Aggregate CDM orders → pos_daily_metrics (for Labour page)
         //    Labour RPCs read from sales_daily_unified which joins pos_daily_metrics.
@@ -437,6 +548,7 @@ Deno.serve(async (req) => {
             .insert(metricsRows);
         }
         (stats as any).daily_metrics_rows = metricsRows.length;
+        console.log(`[square-sync] Step 6/9 complete: ${metricsRows.length} daily metrics rows`);
 
         // 7) Sync CDM items → products table (for Menu Engineering)
         //    Menu Engineering RPCs read from product_sales_daily JOIN products.
@@ -533,11 +645,14 @@ Deno.serve(async (req) => {
             if (batchLines) allLines.push(...batchLines);
           }
 
-          // Build order_id → {date, location_id} lookup
+          // Build order_id → {date, location_id} lookup (timezone-aware)
           const orderInfoMap = new Map<string, { date: string; location_id: string }>();
           for (const order of cdmOrders) {
+            // Skip void/draft orders from product aggregation too
+            if (order.status === 'void' || order.status === 'draft') continue;
             const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
-            const orderDate = new Date(order.closed_at).toISOString().split('T')[0];
+            const tz = cdmLocTimezoneMap.get(order.location_id) || 'UTC';
+            const orderDate = toLocalDate(order.closed_at, tz);
             orderInfoMap.set(order.id, { date: orderDate, location_id: jLocId });
           }
 
@@ -598,6 +713,7 @@ Deno.serve(async (req) => {
             await supabase.from('product_sales_daily').insert(productRows);
           }
           (stats as any).product_sales_rows = productRows.length;
+          console.log(`[square-sync] Step 8/9 complete: ${productRows.length} product sales rows`);
 
           // 8b) Aggregate COGS by (date, location) → cogs_daily
           //     This feeds Budgets and Instant P&L with actual COGS data.
@@ -641,6 +757,9 @@ Deno.serve(async (req) => {
         }>();
 
         for (const order of cdmOrders) {
+          // Fix #6: Skip void/draft orders from facts aggregation
+          if (order.status === 'void' || order.status === 'draft') continue;
+
           const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
           const closedAt = new Date(order.closed_at);
           // Floor to 15-minute bucket
@@ -658,7 +777,7 @@ Deno.serve(async (req) => {
           };
 
           existing.sales_gross += Number(order.gross_total || 0);
-          existing.sales_net += Number(order.net_total || order.gross_total || 0);
+          existing.sales_net += Number(order.net_total || 0);
           existing.tickets += 1;
           factsAgg.set(key, existing);
         }
@@ -682,8 +801,11 @@ Deno.serve(async (req) => {
 
           await supabase.from('facts_sales_15m').insert(factsRows);
           (stats as any).facts_15m_rows = factsRows.length;
+          console.log(`[square-sync] Step 9/9 complete: ${factsRows.length} facts_15m rows`);
         }
       }
+
+      console.log('[square-sync] All steps complete, finalizing...');
 
       // Complete sync
       await supabase.rpc('complete_sync_run', {

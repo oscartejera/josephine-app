@@ -21,20 +21,29 @@ Deno.serve(async (req) => {
     const body = await req.text();
 
     // Verify webhook signature (HMAC-SHA256)
+    // Fix #8: Reject ALL requests when signing key is not configured (security)
     const signingKey = Deno.env.get('SQUARE_WEBHOOK_SIGNING_KEY');
-    if (signingKey && webhookSignature) {
-      const notificationUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/square-webhook`;
-      const valid = await verifySquareWebhookSignature(body, webhookSignature, signingKey, notificationUrl);
-      if (!valid) {
-        console.warn('[Square Webhook] Invalid signature — rejecting');
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    } else if (signingKey && !webhookSignature) {
+    if (!signingKey) {
+      console.error('[Square Webhook] SQUARE_WEBHOOK_SIGNING_KEY not configured — rejecting all requests');
+      return new Response(JSON.stringify({ error: 'Webhook signing key not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!webhookSignature) {
       console.warn('[Square Webhook] Missing signature header — rejecting');
       return new Response(JSON.stringify({ error: 'Missing signature' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const notificationUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/square-webhook`;
+    const valid = await verifySquareWebhookSignature(body, webhookSignature, signingKey, notificationUrl);
+    if (!valid) {
+      console.warn('[Square Webhook] Invalid signature — rejecting');
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

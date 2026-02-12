@@ -19,23 +19,36 @@ export class SquareClient {
       : 'https://connect.squareupsandbox.com/v2';
   }
 
-  private async request(endpoint: string, options: RequestInit = {}) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Square-Version': '2024-01-18',
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+  private async request(endpoint: string, options: RequestInit = {}, retries = 3): Promise<any> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers: {
+          'Square-Version': '2025-01-23',
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Square API error (${response.status}): ${error}`);
+      // Handle rate limiting with exponential backoff (Fix #7)
+      if (response.status === 429 && attempt < retries) {
+        const retryAfter = response.headers.get('retry-after');
+        const waitMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.pow(2, attempt + 1) * 1000;
+        console.warn(`[SquareClient] Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1}/${retries})`);
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+        continue;
+      }
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Square API error (${response.status}): ${error}`);
+      }
+
+      return response.json();
     }
 
-    return response.json();
+    throw new Error('Square API: max retries exceeded after rate limiting');
   }
 
   // ===== LOCATIONS =====
