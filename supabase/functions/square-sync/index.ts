@@ -538,13 +538,17 @@ Deno.serve(async (req) => {
         }
 
         if (factsAgg.size > 0) {
-          const factsRows = Array.from(factsAgg.values());
-          // Delete existing 15m facts for the synced date range
+          const factsRows = Array.from(factsAgg.values()).map(r => ({
+            ...r,
+            data_source: 'pos',
+          }));
+          // Delete existing POS 15m facts for the synced date range (keep simulated)
           const factsDates = [...new Set(factsRows.map(r => r.ts_bucket.split('T')[0]))];
           for (const d of factsDates) {
             await supabase
               .from('facts_sales_15m')
               .delete()
+              .eq('data_source', 'pos')
               .gte('ts_bucket', `${d}T00:00:00`)
               .lte('ts_bucket', `${d}T23:59:59`)
               .in('location_id', [...new Set(factsRows.map(r => r.location_id))]);
