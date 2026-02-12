@@ -300,7 +300,7 @@ export function useCashManagementData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, effectiveLocationIds, locations, appLoading]);
+  }, [dateRange, effectiveLocationIds, locations, appLoading, dataSource]);
 
   useEffect(() => {
     if (!appLoading) {

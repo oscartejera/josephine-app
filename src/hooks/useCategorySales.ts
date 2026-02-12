@@ -108,7 +108,7 @@ export function useCategorySales() {
     } finally {
       setLoading(false);
     }
-  }, [group?.id, selectedLocationId]);
+  }, [group?.id, selectedLocationId, dataSource]);
 
   useEffect(() => {
     fetchCategorySales();

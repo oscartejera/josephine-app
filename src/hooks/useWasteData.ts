@@ -317,7 +317,7 @@ export function useWasteData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, locationIds, locations]);
+  }, [dateRange, locationIds, locations, dataSource]);
 
   // Initial data fetch
   useEffect(() => {
