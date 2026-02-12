@@ -48,6 +48,8 @@ DECLARE
   v_bartender_id UUID;
   v_paella_id UUID;
   v_jamon_id UUID;
+  v_loop_loc_id UUID;
+  v_loop_daily_sales NUMERIC;
 BEGIN
   -- Obtener el primer grupo existente (o crear uno demo)
   SELECT id INTO v_group_id FROM groups LIMIT 1;
@@ -220,8 +222,8 @@ BEGIN
 
     -- ============== PASO 6: GENERAR FACTS_LABOR_DAILY ==============
     -- Calcular labour basado en sales del día
-    FOR v_location_centro, v_base_sales IN 
-      SELECT 
+    FOR v_loop_loc_id, v_loop_daily_sales IN
+      SELECT
         location_id,
         SUM(sales_net) as daily_sales
       FROM facts_sales_15m
@@ -232,21 +234,21 @@ BEGIN
       -- COL target 28%, con variación ±3%
       DECLARE
         v_target_col NUMERIC := 0.28 + (random() - 0.5) * 0.06;
-        v_labor_cost NUMERIC := v_base_sales * v_target_col;
+        v_labor_cost NUMERIC := v_loop_daily_sales * v_target_col;
         v_labor_hours NUMERIC := v_labor_cost / 14.5; -- €14.5 promedio por hora
         v_scheduled_hours NUMERIC := v_labor_hours * 0.95; -- 95% de utilización
       BEGIN
         INSERT INTO facts_labor_daily (
-          location_id, 
-          day, 
-          scheduled_hours, 
-          actual_hours, 
-          labor_cost_est, 
+          location_id,
+          day,
+          scheduled_hours,
+          actual_hours,
+          labor_cost_est,
           overtime_hours,
           created_at
         )
         VALUES (
-          v_location_centro,
+          v_loop_loc_id,
           v_current_date,
           v_scheduled_hours,
           v_labor_hours,
