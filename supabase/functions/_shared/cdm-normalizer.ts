@@ -25,8 +25,12 @@ export function normalizeSquareItem(
   categoryMap?: Map<string, string>,
 ) {
   const variation = squareItem.item_data?.variations?.[0];
-  const categoryId = squareItem.item_data?.category_id;
-  const categoryName = categoryMap?.get(categoryId) || null;
+
+  // Square uses both legacy category_id and newer categories[] array
+  const legacyCategoryId = squareItem.item_data?.category_id;
+  const categoriesArray = squareItem.item_data?.categories;
+  const primaryCategoryId = categoriesArray?.[0]?.id || legacyCategoryId;
+  const categoryName = (primaryCategoryId && categoryMap?.get(primaryCategoryId)) || null;
 
   return {
     org_id: orgId,
@@ -42,7 +46,7 @@ export function normalizeSquareItem(
     metadata: {
       variation_id: variation?.id,
       description: squareItem.item_data?.description,
-      category_id: categoryId,
+      category_id: primaryCategoryId,
     },
   };
 }
