@@ -200,12 +200,35 @@ Deno.serve(async (req) => {
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
 
-      // Normalize and upsert items with resolved category names
-      for (const item of allSquareItems) {
-        const normalized = normalizeSquareItem(item, orgId, categoryMap);
+      // Normalize and upsert items + variations with resolved category names
+      for (const squareItem of allSquareItems) {
+        const { item, variations } = normalizeSquareItem(squareItem, orgId, categoryMap);
+
+        // Upsert parent item
         await supabase
           .from('cdm_items')
-          .upsert(normalized, { onConflict: 'external_provider,external_id' });
+          .upsert(item, { onConflict: 'external_provider,external_id' });
+
+        // Retrieve cdm_item_id for FK in variations
+        if (variations.length > 0) {
+          const { data: cdmItem } = await supabase
+            .from('cdm_items')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('external_provider', 'square')
+            .eq('external_id', item.external_id)
+            .single();
+
+          if (cdmItem) {
+            const variationRows = variations.map((v: any) => ({
+              ...v,
+              cdm_item_id: cdmItem.id,
+            }));
+            await supabase
+              .from('cdm_item_variations')
+              .upsert(variationRows, { onConflict: 'org_id,external_variation_id' });
+          }
+        }
       }
       stats.items = allSquareItems.length;
 
@@ -283,7 +306,7 @@ Deno.serve(async (req) => {
             allSyncedOrderIds.push(o.id);
             const lines = linesPerExtId.get(o.external_id) || [];
             for (const line of lines) {
-              allFreshLines.push({ ...line, order_id: o.id });
+              allFreshLines.push({ ...line, order_id: o.id, org_id: orgId });
             }
           }
         }
@@ -465,56 +488,75 @@ Deno.serve(async (req) => {
 
         // 7) Sync CDM items → products table (for Menu Engineering)
         //    Menu Engineering RPCs read from product_sales_daily JOIN products.
-        //    We need products to exist before we can write product_sales_daily.
+        //    We need products to exist for EVERY location in the group.
         const groupId = (josephineLocations as any[])[0]?.group_id;
 
         const { data: cdmItemsList } = await supabase
           .from('cdm_items')
-          .select('name, category_name, is_active')
+          .select('id, name, category_name, is_active')
           .eq('org_id', orgId);
 
-        const productNameToId = new Map<string, string>();
+        // cdm_item.id → canonical name (for item_id-based lookup in step 8)
+        const cdmItemIdToName = new Map<string, string>();
+        for (const ci of (cdmItemsList || [])) {
+          cdmItemIdToName.set(ci.id, ci.name);
+        }
+
+        // Key: "name__locationId" → product.id
+        const productKeyToId = new Map<string, string>();
 
         if (cdmItemsList && groupId) {
-          // Fetch all existing products for this group in one query
+          // Fetch all existing products for this group (all locations)
           const { data: existingProducts } = await supabase
             .from('products')
-            .select('id, name')
+            .select('id, name, location_id')
             .eq('group_id', groupId);
 
+          const existingKeys = new Set<string>();
           for (const p of (existingProducts || [])) {
-            productNameToId.set(p.name, p.id);
+            const key = `${p.name}__${p.location_id}`;
+            existingKeys.add(key);
+            productKeyToId.set(key, p.id);
           }
 
-          // Insert only new products (not already in the products table)
-          const newProducts = cdmItemsList
-            .filter(item => !productNameToId.has(item.name))
-            .map(item => ({
-              name: item.name,
-              category: item.category_name || 'Other',
-              is_active: item.is_active,
-              group_id: groupId,
-              location_id: josephineLocations[0].id,
-            }));
+          // Build missing products: one per (cdmItem, location) that doesn't exist yet
+          const newProducts: any[] = [];
+          for (const item of cdmItemsList) {
+            for (const loc of josephineLocations) {
+              const key = `${item.name}__${loc.id}`;
+              if (!existingKeys.has(key)) {
+                newProducts.push({
+                  name: item.name,
+                  category: item.category_name || 'Other',
+                  is_active: item.is_active,
+                  group_id: groupId,
+                  location_id: loc.id,
+                });
+              }
+            }
+          }
 
           if (newProducts.length > 0) {
-            const { data: inserted } = await supabase
-              .from('products')
-              .insert(newProducts)
-              .select('id, name');
+            // Insert in batches to avoid payload limits
+            for (let i = 0; i < newProducts.length; i += 500) {
+              const { data: inserted } = await supabase
+                .from('products')
+                .insert(newProducts.slice(i, i + 500))
+                .select('id, name, location_id');
 
-            for (const p of (inserted || [])) {
-              productNameToId.set(p.name, p.id);
+              for (const p of (inserted || [])) {
+                productKeyToId.set(`${p.name}__${p.location_id}`, p.id);
+              }
             }
           }
         }
-        (stats as any).products_synced = productNameToId.size;
+        (stats as any).products_synced = productKeyToId.size;
 
         // 8) Aggregate CDM order lines → product_sales_daily (for Menu Engineering)
         //    Groups line items by (date, location, product) and writes daily aggregates.
         const cdmOrderIds = cdmOrders.map((o: any) => o.id);
 
-        if (cdmOrderIds.length > 0 && productNameToId.size > 0) {
+        if (cdmOrderIds.length > 0 && productKeyToId.size > 0) {
           // Fetch order lines in batches to avoid PostgREST URL length limit
           // (642 UUIDs ≈ 23 KB query string, exceeds ~8 KB GET limit).
           const LINES_BATCH = 50;
@@ -523,7 +565,7 @@ Deno.serve(async (req) => {
             const batch = cdmOrderIds.slice(i, i + LINES_BATCH);
             const { data: batchLines } = await supabase
               .from('cdm_order_lines')
-              .select('order_id, name, quantity, gross_line_total')
+              .select('order_id, name, quantity, gross_line_total, item_id')
               .in('order_id', batch)
               .limit(5000);
             if (batchLines) allLines.push(...batchLines);
@@ -551,7 +593,9 @@ Deno.serve(async (req) => {
             const orderInfo = orderInfoMap.get(line.order_id);
             if (!orderInfo) continue;
 
-            const productId = productNameToId.get(line.name);
+            // Prefer item_id (stable FK) over line.name (stale if renamed)
+            const resolvedName = (line.item_id && cdmItemIdToName.get(line.item_id)) || line.name;
+            const productId = productKeyToId.get(`${resolvedName}__${orderInfo.location_id}`);
             if (!productId) continue;
 
             const key = `${orderInfo.date}|${orderInfo.location_id}|${productId}`;
@@ -647,6 +691,14 @@ Deno.serve(async (req) => {
           (stats as any).facts_15m_rows = factsRows.length;
         }
       }
+
+      // 10) Backfill: link cdm_order_lines.item_id via cdm_item_variations
+      //     Sets item_id on lines where external_variation_id is known but
+      //     item_id was not yet resolved.
+      const { data: backfillResult } = await supabase.rpc('backfill_order_lines_item_id', {
+        p_org_id: orgId,
+      });
+      (stats as any).lines_backfilled = backfillResult ?? 0;
 
       // Complete sync
       await supabase.rpc('complete_sync_run', {
