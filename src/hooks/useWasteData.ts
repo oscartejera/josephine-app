@@ -1,5 +1,4 @@
-// TODO: Migrate to unified view — replace supabase.from('pos_daily_finance')
-// with v_pos_daily_finance_unified (filter on data_source_unified='demo'|'pos').
+// Migrated to unified view: v_pos_daily_finance_unified
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -95,8 +94,10 @@ export function useWasteData(
   _dateMode: DateMode, // Reserved for future use
   selectedLocations: string[]
 ) {
-  const { locations, dataSource } = useApp();
+  const { locations, dataSource, loading: appLoading } = useApp();
   const { session } = useAuth();
+  // Map AppContext dataSource ('pos'|'simulated') to unified view value ('pos'|'demo')
+  const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [metrics, setMetrics] = useState<WasteMetrics>({
@@ -118,17 +119,20 @@ export function useWasteData(
   }, [selectedLocations, locations]);
 
   const fetchData = useCallback(async () => {
+    // Guard: don't fetch while app context is loading or if no locations
+    if (appLoading || locations.length === 0) return;
+
     setIsLoading(true);
 
     try {
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Fetch sales data from pos_daily_finance
+      // Fetch sales data from unified view
       let salesQuery = supabase
-        .from('pos_daily_finance')
+        .from('v_pos_daily_finance_unified' as any)
         .select('location_id, net_sales')
-        .eq('data_source', dataSource)
+        .eq('data_source_unified', dsUnified)
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -319,7 +323,7 @@ export function useWasteData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, locationIds, locations, dataSource]);
+  }, [dateRange, locationIds, locations, dsUnified, appLoading]);
 
   // Initial data fetch
   useEffect(() => {
