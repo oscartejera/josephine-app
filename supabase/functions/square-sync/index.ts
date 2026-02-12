@@ -170,19 +170,36 @@ Deno.serve(async (req) => {
       }
       stats.locations = locations.length;
 
-      // 2) Sync Catalog
+      // 2) Sync Catalog (items + categories)
+      // Square CATEGORY objects map category_id → human-readable name.
+      // We collect them first so items can reference real category names.
+      const squareCategoryMap = new Map<string, string>();
       let catalogCursor;
       do {
         const catalogResp = await client.listCatalog(catalogCursor);
-        const items = (catalogResp.objects || []).filter((obj: any) => obj.type === 'ITEM');
-        
+        const allObjects = catalogResp.objects || [];
+
+        // Collect category names
+        for (const obj of allObjects) {
+          if (obj.type === 'CATEGORY') {
+            squareCategoryMap.set(obj.id, obj.category_data?.name || 'Other');
+          }
+        }
+
+        // Process items
+        const items = allObjects.filter((obj: any) => obj.type === 'ITEM');
         for (const item of items) {
           const normalized = normalizeSquareItem(item, orgId);
+          // Resolve category_id to human-readable name
+          const categoryId = item.item_data?.category_id;
+          if (categoryId && squareCategoryMap.has(categoryId)) {
+            normalized.category_name = squareCategoryMap.get(categoryId)!;
+          }
           await supabase
             .from('cdm_items')
             .upsert(normalized, { onConflict: 'external_provider,external_id' });
         }
-        
+
         stats.items += items.length;
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
@@ -444,12 +461,13 @@ Deno.serve(async (req) => {
             productNameToId.set(p.name, p.id);
           }
 
-          // Insert only new products (not already in the products table)
+          // Insert only new products (not already in the products table).
+          // Use resolved category_name from Square catalog (populated by step 2).
           const newProducts = cdmItemsList
             .filter(item => !productNameToId.has(item.name))
             .map(item => ({
               name: item.name,
-              category: item.category_name || 'Other',
+              category: item.category_name || 'Food',
               is_active: item.is_active,
               group_id: groupId,
               location_id: josephineLocations[0].id,
@@ -470,7 +488,35 @@ Deno.serve(async (req) => {
 
         // 8) Aggregate CDM order lines → product_sales_daily (for Menu Engineering)
         //    Groups line items by (date, location, product) and writes daily aggregates.
+        //    Square doesn't provide cost data, so we estimate COGS using
+        //    industry-standard ratios per category (Food ~30%, Beverage ~20%, Other ~25%).
         const cdmOrderIds = cdmOrders.map((o: any) => o.id);
+
+        // Build product name → category lookup for COGS estimation
+        const productCategoryMap = new Map<string, string>();
+        if (cdmItemsList) {
+          for (const item of cdmItemsList) {
+            // category_name is actually Square category_id (UUID) - not useful.
+            // Match against the products table which has real categories.
+            productCategoryMap.set(item.name, 'Other');
+          }
+        }
+        // Get real categories from products table
+        const { data: allProducts } = await supabase
+          .from('products')
+          .select('name, category')
+          .eq('group_id', groupId);
+        for (const p of (allProducts || [])) {
+          productCategoryMap.set(p.name, p.category || 'Other');
+        }
+
+        // COGS ratio by category (industry standard for restaurants)
+        const COGS_RATIO: Record<string, number> = {
+          'Food': 0.30,
+          'Beverage': 0.20,
+          'Dessert': 0.25,
+          'Other': 0.28,
+        };
 
         if (cdmOrderIds.length > 0 && productNameToId.size > 0) {
           // Fetch order lines in batches to avoid PostgREST URL length limit
@@ -522,8 +568,13 @@ Deno.serve(async (req) => {
               cogs: 0,
             };
 
+            const lineSales = Number(line.gross_line_total || 0);
+            const category = productCategoryMap.get(line.name) || 'Other';
+            const cogsRatio = COGS_RATIO[category] || COGS_RATIO['Other'];
+
             existing.units_sold += Number(line.quantity || 0);
-            existing.net_sales += Number(line.gross_line_total || 0);
+            existing.net_sales += lineSales;
+            existing.cogs += lineSales * cogsRatio;
             productDailyAgg.set(key, existing);
           }
 
@@ -547,6 +598,34 @@ Deno.serve(async (req) => {
             await supabase.from('product_sales_daily').insert(productRows);
           }
           (stats as any).product_sales_rows = productRows.length;
+
+          // 8b) Aggregate COGS by (date, location) → cogs_daily
+          //     This feeds Budgets and Instant P&L with actual COGS data.
+          const cogsDailyAgg = new Map<string, { date: string; location_id: string; cogs_amount: number }>();
+          for (const row of productRows) {
+            const key = `${row.date}|${row.location_id}`;
+            const existing = cogsDailyAgg.get(key) || {
+              date: row.date,
+              location_id: row.location_id,
+              cogs_amount: 0,
+            };
+            existing.cogs_amount += row.cogs;
+            cogsDailyAgg.set(key, existing);
+          }
+
+          const cogsRows = Array.from(cogsDailyAgg.values());
+          if (cogsRows.length > 0) {
+            const cogsDates = [...new Set(cogsRows.map(r => r.date))];
+            const cogsLocationIds = [...new Set(cogsRows.map(r => r.location_id))];
+            await supabase
+              .from('cogs_daily')
+              .delete()
+              .in('date', cogsDates)
+              .in('location_id', cogsLocationIds);
+
+            await supabase.from('cogs_daily').insert(cogsRows);
+          }
+          (stats as any).cogs_daily_rows = cogsRows.length;
         }
 
         // 9) Populate facts_sales_15m from CDM orders (for Prophet forecasting)

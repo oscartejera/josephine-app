@@ -187,7 +187,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const toStr = format(dateRange.to, 'yyyy-MM-dd');
 
       // Fetch all three data sources in parallel
-      const [financeResult, productSalesResult, forecastResult] = await Promise.all([
+      const [financeResult, productSalesResult, forecastResult, facts15mResult] = await Promise.all([
         // 1. Main sales data from pos_daily_finance
         supabase
           .from('pos_daily_finance')
@@ -234,11 +234,23 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           .in('location_id', effectiveLocationIds)
           .gte('date', fromStr)
           .lte('date', toStr),
+
+        // 4. 15-minute sales buckets for hourly distribution (single-day view)
+        isSingleDay
+          ? supabase
+              .from('facts_sales_15m')
+              .select('location_id, ts_bucket, sales_net, tickets')
+              .eq('data_source', dataSource)
+              .in('location_id', effectiveLocationIds)
+              .gte('ts_bucket', `${fromStr}T00:00:00`)
+              .lte('ts_bucket', `${fromStr}T23:59:59`)
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
       const financeRows = financeResult.data || [];
       const productSalesRows = productSalesResult.data || [];
       const dailyForecasts = forecastResult.data || [];
+      const facts15mRows = facts15mResult.data || [];
 
       // If no finance data at all, return empty
       if (financeRows.length === 0) {
@@ -307,7 +319,6 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const chartData: ChartDataPoint[] = [];
 
       if (isSingleDay) {
-        // For a single day, distribute the daily total into hourly buckets
         const dayStr = format(dateRange.from, 'yyyy-MM-dd');
         const dayRows = financeByDate.get(dayStr) || [];
         const daySales = dayRows.reduce((sum, r) => sum + (r.net_sales || 0), 0);
@@ -316,27 +327,56 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           .filter(f => f.date === dayStr)
           .reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
 
-        const hours = eachHourOfInterval({
-          start: startOfDay(dateRange.from),
-          end: endOfDay(dateRange.from)
-        }).filter(h => h.getHours() >= 10 && h.getHours() <= 21);
+        // Use real 15-minute facts data if available, otherwise fall back to weights
+        if (facts15mRows.length > 0) {
+          // Aggregate 15-min buckets into hourly buckets
+          const hourlyAgg = new Map<number, { sales: number; tickets: number }>();
+          for (const row of facts15mRows) {
+            const hour = new Date(row.ts_bucket).getUTCHours();
+            const existing = hourlyAgg.get(hour) || { sales: 0, tickets: 0 };
+            existing.sales += Number(row.sales_net || 0);
+            existing.tickets += Number(row.tickets || 0);
+            hourlyAgg.set(hour, existing);
+          }
 
-        hours.forEach(hour => {
-          const hourNum = hour.getHours();
-          const weight = HOURLY_WEIGHTS[hourNum] || 0;
-          const hourSales = daySales * weight;
-          const hourOrders = dayOrders * weight;
-          const hourForecast = getHourlyForecast(dayForecastTotal, hourNum);
+          // Generate chart points for hours with data
+          const sortedHours = Array.from(hourlyAgg.keys()).sort((a, b) => a - b);
+          for (const hourNum of sortedHours) {
+            const data = hourlyAgg.get(hourNum)!;
+            const hourForecast = getHourlyForecast(dayForecastTotal, hourNum);
+            chartData.push({
+              label: `${String(hourNum).padStart(2, '0')}:00`,
+              actual: data.sales,
+              forecastLive: hourForecast * 1.05,
+              forecast: hourForecast,
+              avgCheckSize: data.tickets > 0 ? data.sales / data.tickets : avgCheckSize,
+              avgCheckForecast: forecastAvgCheckSize,
+            });
+          }
+        } else {
+          // Fallback: distribute daily total into hourly buckets using fixed weights
+          const hours = eachHourOfInterval({
+            start: startOfDay(dateRange.from),
+            end: endOfDay(dateRange.from)
+          }).filter(h => h.getHours() >= 10 && h.getHours() <= 21);
 
-          chartData.push({
-            label: format(hour, 'HH:mm'),
-            actual: hourSales,
-            forecastLive: hourForecast * 1.05,
-            forecast: hourForecast,
-            avgCheckSize: hourOrders > 0 ? hourSales / hourOrders : avgCheckSize,
-            avgCheckForecast: forecastAvgCheckSize,
+          hours.forEach(hour => {
+            const hourNum = hour.getHours();
+            const weight = HOURLY_WEIGHTS[hourNum] || 0;
+            const hourSales = daySales * weight;
+            const hourOrders = dayOrders * weight;
+            const hourForecast = getHourlyForecast(dayForecastTotal, hourNum);
+
+            chartData.push({
+              label: format(hour, 'HH:mm'),
+              actual: hourSales,
+              forecastLive: hourForecast * 1.05,
+              forecast: hourForecast,
+              avgCheckSize: hourOrders > 0 ? hourSales / hourOrders : avgCheckSize,
+              avgCheckForecast: forecastAvgCheckSize,
+            });
           });
-        });
+        }
       } else {
         const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
         days.forEach(day => {

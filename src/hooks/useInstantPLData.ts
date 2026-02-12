@@ -141,7 +141,7 @@ export function useInstantPLData({
         .gte('date', fromDate)
         .lte('date', toDate);
       
-      // Fetch labor actuals (if available)
+      // Fetch labor actuals from pos_daily_metrics (data_source aware)
       const { data: laborData } = await supabase
         .from('pos_daily_metrics')
         .select('location_id, date, labor_cost, labor_hours')
@@ -149,7 +149,23 @@ export function useInstantPLData({
         .in('location_id', locationIds)
         .gte('date', fromDate)
         .lte('date', toDate);
-      
+
+      // Fetch labour_daily as fallback (e.g. when POS doesn't provide labour)
+      const { data: labourDailyData } = await supabase
+        .from('labour_daily')
+        .select('location_id, date, labour_cost, labour_hours')
+        .in('location_id', locationIds)
+        .gte('date', fromDate)
+        .lte('date', toDate);
+
+      // Fetch actual COGS from cogs_daily (populated by sync)
+      const { data: cogsData } = await supabase
+        .from('cogs_daily')
+        .select('location_id, date, cogs_amount')
+        .in('location_id', locationIds)
+        .gte('date', fromDate)
+        .lte('date', toDate);
+
       // Aggregate by location
       const locationMetrics: LocationPLMetrics[] = locations.map(loc => {
         // Actuals from daily finance aggregates
@@ -161,27 +177,30 @@ export function useInstantPLData({
         const salesForecast = locForecasts.reduce((sum, f) => sum + (f.forecast_sales || 0), 0);
         const labourForecast = locForecasts.reduce((sum, f) => sum + (f.planned_labor_cost || 0), 0);
         
-        // Labor actuals
+        // Labor actuals from pos_daily_metrics
         const locLabor = (laborData || []).filter(l => l.location_id === loc.id);
         let labourActual = locLabor.reduce((sum, l) => sum + (l.labor_cost || 0), 0);
         let labourHoursActual = locLabor.reduce((sum, l) => sum + (l.labor_hours || 0), 0);
-        
-        // If no labour data, estimate based on typical 22% ratio
-        if (labourActual === 0 && salesActual > 0) {
-          const dateKey = format(dateRange.from, 'yyyy-MM-dd') + loc.id;
-          const rng = new SeededRandom(hashString(dateKey));
-          const labourRatio = rng.between(0.18, 0.26);
-          labourActual = Math.round(salesActual * labourRatio);
-          labourHoursActual = Math.round(labourActual / 20); // ~€20/hour
+
+        // Fallback to labour_daily when pos_daily_metrics has no labour data
+        // (e.g. Square POS doesn't provide labour - but timesheets/shifts do)
+        if (labourActual === 0) {
+          const locLabourDaily = (labourDailyData || []).filter(l => l.location_id === loc.id);
+          labourActual = locLabourDaily.reduce((sum, l) => sum + (l.labour_cost || 0), 0);
+          labourHoursActual = locLabourDaily.reduce((sum, l) => sum + (l.labour_hours || 0), 0);
         }
-        
-        // COGS estimation (typically 25-32% of sales)
-        const dateKey = format(dateRange.from, 'yyyy-MM-dd') + loc.id + 'cogs';
-        const rng = new SeededRandom(hashString(dateKey));
-        const cogsRatio = rng.between(0.25, 0.32);
-        const cogsActual = Math.round(salesActual * cogsRatio);
-        const cogsForecastRatio = rng.between(0.26, 0.30);
-        const cogsForecast = Math.round(salesForecast * cogsForecastRatio);
+
+        // COGS from cogs_daily (populated by sync with category-based estimates)
+        const locCogs = (cogsData || []).filter(c => c.location_id === loc.id);
+        let cogsActual = locCogs.reduce((sum, c) => sum + (c.cogs_amount || 0), 0);
+
+        // Fallback: estimate COGS at 28% if no real data
+        if (cogsActual === 0 && salesActual > 0) {
+          cogsActual = Math.round(salesActual * 0.28);
+        }
+
+        // Forecast COGS estimated at 28% of forecast sales
+        const cogsForecast = Math.round(salesForecast * 0.28);
         
         // Calculate percentages
         const cogsActualPct = salesActual > 0 ? (cogsActual / salesActual) * 100 : 0;

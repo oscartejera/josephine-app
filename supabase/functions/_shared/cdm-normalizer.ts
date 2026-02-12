@@ -26,7 +26,9 @@ export function normalizeSquareItem(squareItem: any, orgId: string) {
     org_id: orgId,
     name: squareItem.item_data?.name || 'Unknown',
     sku: variation?.item_variation_data?.sku || null,
-    category_name: squareItem.item_data?.category_id || null,
+    // Square provides category_id (UUID), not a human-readable name.
+    // Store null so the sync step can assign a proper category from the products table.
+    category_name: null,
     price: variation?.item_variation_data?.price_money?.amount 
       ? Number(variation.item_variation_data.price_money.amount) / 100 
       : 0,
