@@ -692,6 +692,226 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
     }
 
 
+@app.post("/forecast_hourly")
+async def forecast_hourly(req: dict, authorization: str = Header(default="")):
+    """Hourly forecast pipeline with champion/challenger per bucket.
+
+    1. Fetch facts_sales_15m → aggregate to hourly
+    2. Train LightGBM (global) + Seasonal Naive (baseline)
+    3. Evaluate per bucket (DOW × HOUR) → model registry
+    4. Predict future hours using registry winners
+    5. Store: forecast_hourly_metrics + forecast_daily_metrics (backwards compat)
+    6. Store: forecast_model_registry + forecast_model_runs (audit)
+    """
+    import httpx
+    from hourly_forecaster import HourlyForecaster
+
+    if API_KEY and not authorization.endswith(API_KEY):
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    supabase_url = req.get("supabase_url")
+    supabase_key = req.get("supabase_key")
+    location_id = req.get("location_id", "")
+    location_name = req.get("location_name", "")
+    horizon_days = req.get("horizon_days", 14)
+
+    if not supabase_url or not supabase_key:
+        raise HTTPException(status_code=400, detail="supabase_url and supabase_key required")
+
+    logger.info(
+        "forecast_hourly: location=%s, horizon=%d days",
+        location_name or location_id, horizon_days,
+    )
+
+    # ── Fetch facts_sales_15m (paginated) ────────────────────────────
+    headers_sb = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+    }
+    sales_data = []
+    page = 0
+    async with httpx.AsyncClient(timeout=30) as client:
+        while True:
+            url = (
+                f"{supabase_url}/rest/v1/facts_sales_15m"
+                f"?location_id=eq.{location_id}"
+                f"&select=ts_bucket,sales_net,tickets"
+                f"&order=ts_bucket.asc"
+            )
+            resp = await client.get(
+                url,
+                headers={**headers_sb, "Range": f"{page*1000}-{(page+1)*1000-1}"},
+            )
+            resp.raise_for_status()
+            rows = resp.json()
+            if not rows:
+                break
+            sales_data.extend(rows)
+            page += 1
+            if len(rows) < 1000:
+                break
+
+    logger.info("Fetched %d 15-min records in %d pages", len(sales_data), page)
+
+    if len(sales_data) < 24 * 7:  # minimum ~1 week of hourly data
+        raise HTTPException(
+            status_code=400,
+            detail=f"Need at least 1 week of 15-min data, got {len(sales_data)} records",
+        )
+
+    # ── Run hourly forecaster ────────────────────────────────────────
+    forecaster = HourlyForecaster(location_id=location_id, location_name=location_name)
+    result = forecaster.run(sales_data, horizon_days=horizon_days)
+
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Forecast failed"))
+
+    # ── Store results in Supabase ────────────────────────────────────
+    today_str = datetime.utcnow().date().isoformat()
+    TARGET_COL_PERCENT = 28
+    AVG_HOURLY_RATE = 14.5
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        # 1) Delete old hourly forecasts for this location
+        await client.delete(
+            f"{supabase_url}/rest/v1/forecast_hourly_metrics"
+            f"?location_id=eq.{location_id}&forecast_date=gte.{today_str}",
+            headers={**headers_sb, "Prefer": "return=minimal"},
+        )
+
+        # 2) Insert hourly forecasts in batches
+        hourly_rows = []
+        for hf in result["hourly_forecasts"]:
+            hourly_rows.append({
+                "location_id": location_id,
+                "forecast_date": hf["forecast_date"],
+                "hour_of_day": hf["hour_of_day"],
+                "forecast_sales": hf["forecast_sales"],
+                "forecast_sales_lower": hf["forecast_sales_lower"],
+                "forecast_sales_upper": hf["forecast_sales_upper"],
+                "forecast_orders": hf["forecast_orders"],
+                "forecast_covers": hf["forecast_covers"],
+                "model_type": hf["model_type"],
+                "model_version": "HourlyEngine_v1.0",
+                "bucket_wmape": hf.get("bucket_wmape"),
+                "bucket_mase": hf.get("bucket_mase"),
+                "generated_at": datetime.utcnow().isoformat(),
+            })
+
+        for i in range(0, len(hourly_rows), 500):
+            batch = hourly_rows[i:i + 500]
+            resp = await client.post(
+                f"{supabase_url}/rest/v1/forecast_hourly_metrics",
+                headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
+                json=batch,
+            )
+            if resp.status_code >= 400:
+                logger.error("Hourly insert error: %s", resp.text[:200])
+
+        # 3) Upsert daily forecasts (backwards compat with forecast_daily_metrics)
+        await client.delete(
+            f"{supabase_url}/rest/v1/forecast_daily_metrics"
+            f"?location_id=eq.{location_id}&date=gte.{today_str}",
+            headers={**headers_sb, "Prefer": "return=minimal"},
+        )
+
+        daily_rows = []
+        for df_row in result["daily_forecasts"]:
+            sales = df_row["forecast_sales"]
+            target_labour = sales * (TARGET_COL_PERCENT / 100)
+            planned_hours = max(20, min(120, target_labour / AVG_HOURLY_RATE))
+            daily_rows.append({
+                "location_id": location_id,
+                "date": df_row["date"],
+                "forecast_sales": sales,
+                "forecast_sales_lower": df_row["forecast_sales_lower"],
+                "forecast_sales_upper": df_row["forecast_sales_upper"],
+                "forecast_orders": df_row["forecast_orders"],
+                "planned_labor_hours": round(planned_hours, 1),
+                "planned_labor_cost": round(target_labour, 2),
+                "model_version": "HourlyEngine_v1.0",
+                "confidence": round(max(0, (1 - result["metrics"]["wmape"])) * 100),
+                "mape": result["metrics"]["wmape"],
+                "mse": 0,
+                "explanation": f"Hourly forecast (WMAPE {result['metrics']['wmape']*100:.1f}%, "
+                               f"MASE {result['metrics']['mase']:.3f})",
+                "generated_at": datetime.utcnow().isoformat(),
+            })
+
+        for i in range(0, len(daily_rows), 500):
+            batch = daily_rows[i:i + 500]
+            resp = await client.post(
+                f"{supabase_url}/rest/v1/forecast_daily_metrics",
+                headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
+                json=batch,
+            )
+            if resp.status_code >= 400:
+                logger.error("Daily insert error: %s", resp.text[:200])
+
+        # 4) Upsert model registry
+        await client.delete(
+            f"{supabase_url}/rest/v1/forecast_model_registry"
+            f"?location_id=eq.{location_id}",
+            headers={**headers_sb, "Prefer": "return=minimal"},
+        )
+
+        registry_rows = result["model_registry"]
+        for i in range(0, len(registry_rows), 200):
+            batch = registry_rows[i:i + 200]
+            resp = await client.post(
+                f"{supabase_url}/rest/v1/forecast_model_registry",
+                headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
+                json=batch,
+            )
+            if resp.status_code >= 400:
+                logger.error("Registry insert error: %s", resp.text[:200])
+
+        # 5) Log model run (audit)
+        metrics = result["metrics"]
+        await client.post(
+            f"{supabase_url}/rest/v1/forecast_model_runs",
+            headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
+            json={
+                "location_id": location_id,
+                "model_version": "HourlyEngine_v1.0",
+                "algorithm": "LightGBM_ChampionChallenger",
+                "history_start": sales_data[0]["ts_bucket"][:10],
+                "history_end": sales_data[-1]["ts_bucket"][:10],
+                "horizon_days": horizon_days,
+                "mse": 0,
+                "mape": metrics["wmape"],
+                "confidence": round(max(0, (1 - metrics["wmape"])) * 100),
+                "data_points": result["data_points"],
+                "trend_slope": 0,
+            },
+        )
+
+    logger.info(
+        "Stored %d hourly + %d daily forecasts for %s",
+        len(hourly_rows), len(daily_rows), location_name,
+    )
+
+    return {
+        "success": True,
+        "location_id": location_id,
+        "location_name": location_name,
+        "data_points": result["data_points"],
+        "history_days": result["history_days"],
+        "hourly_forecasts_stored": len(hourly_rows),
+        "daily_forecasts_stored": len(daily_rows),
+        "lgbm_used": result["lgbm_used"],
+        "metrics": {
+            "wmape": f"{metrics['wmape'] * 100:.1f}%",
+            "mase": f"{metrics['mase']:.3f}",
+            "bias": f"{metrics['bias'] * 100:.1f}%",
+            "directional_accuracy": f"{metrics['directional_accuracy'] * 100:.0f}%",
+        },
+        "registry_summary": result["registry_summary"],
+        "sample_hourly": result["hourly_forecasts"][:24],  # first day
+        "sample_daily": result["daily_forecasts"][:7],      # first week
+    }
+
+
 @app.post("/batch_forecast")
 async def batch_forecast(
     locations: list[ForecastRequest],
