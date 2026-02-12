@@ -51,7 +51,7 @@ interface LocationSetting {
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const { locations, group } = useApp();
+  const { locations, group, dataSource } = useApp();
   const { profile } = useAuth();
   const { isOwner, hasPermission } = usePermissions();
   const [settings, setSettings] = useState<LocationSetting[]>([]);
@@ -146,7 +146,7 @@ export default function SettingsPage() {
     
     switch (table) {
       case 'tickets':
-        const { data: salesData } = await supabase.from('pos_daily_finance').select('*').limit(1000);
+        const { data: salesData } = await supabase.from('pos_daily_finance').select('*').eq('data_source', dataSource).limit(1000);
         data = salesData || [];
         filename = 'sales_daily.csv';
         break;

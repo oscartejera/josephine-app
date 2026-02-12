@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useApp } from '@/contexts/AppContext';
 import { format, eachDayOfInterval, startOfDay, endOfDay } from 'date-fns';
 
 interface UseSalesDataParams {
@@ -14,6 +15,7 @@ interface UseSalesDataParams {
 }
 
 export function useSalesData({ locationIds, startDate, endDate }: UseSalesDataParams) {
+  const { dataSource } = useApp();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -26,10 +28,11 @@ export function useSalesData({ locationIds, startDate, endDate }: UseSalesDataPa
         setLoading(true);
         setError(null);
 
-        // Construir query base
+        // Construir query base — filter by data_source (pos vs simulated)
         let query = supabase
           .from('facts_sales_15m')
           .select('*')
+          .eq('data_source', dataSource)
           .gte('ts_bucket', startOfDay(startDate).toISOString())
           .lte('ts_bucket', endOfDay(endDate).toISOString())
           .order('ts_bucket', { ascending: true });
@@ -135,7 +138,7 @@ export function useSalesData({ locationIds, startDate, endDate }: UseSalesDataPa
     return () => {
       isMounted = false;
     };
-  }, [locationIds, startDate, endDate]);
+  }, [locationIds, startDate, endDate, dataSource]);
 
   return { data, loading, error };
 }
