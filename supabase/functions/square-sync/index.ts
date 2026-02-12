@@ -202,35 +202,69 @@ Deno.serve(async (req) => {
         if (cdmLoc) locationMap.set(loc.id, cdmLoc.id);
       }
 
+      // Sync orders page by page, collecting all normalized data.
+      // After all pages are fetched, we purge old order lines ONLY for
+      // orders actually returned by Square, then batch-insert fresh lines.
+      // This prevents duplicates without losing data for orders that
+      // Square no longer returns (e.g., older than the search window).
+      const allSyncedOrderIds: string[] = [];
+      const allFreshLines: any[] = [];
+
       let ordersCursor;
       do {
         const ordersResp = await client.searchOrders(locationIds, ordersCursor, beginTime);
         const orders = ordersResp.orders || [];
-        
-        for (const order of orders) {
-          const normalized = normalizeSquareOrder(order, orgId, locationMap);
-          
-          // Upsert order
-          const { data: cdmOrder } = await supabase
-            .from('cdm_orders')
-            .upsert(normalized.order, { onConflict: 'external_provider,external_id' })
-            .select()
-            .single();
 
-          // Upsert lines
-          for (const line of normalized.lines) {
-            await supabase
-              .from('cdm_order_lines')
-              .upsert({
-                ...line,
-                order_id: cdmOrder.id,
-              });
+        if (orders.length > 0) {
+          const normalizedOrders: any[] = [];
+          const linesPerExtId = new Map<string, any[]>();
+
+          for (const order of orders) {
+            const normalized = normalizeSquareOrder(order, orgId, locationMap);
+            normalizedOrders.push(normalized.order);
+            linesPerExtId.set(normalized.order.external_id, normalized.lines);
+          }
+
+          // Batch upsert orders
+          await supabase
+            .from('cdm_orders')
+            .upsert(normalizedOrders, { onConflict: 'external_provider,external_id' });
+
+          // Fetch CDM IDs (separate SELECT is more reliable than chained .select())
+          const externalIds = normalizedOrders.map((o: any) => o.external_id);
+          const { data: upsertedOrders } = await supabase
+            .from('cdm_orders')
+            .select('id, external_id')
+            .in('external_id', externalIds);
+
+          for (const o of (upsertedOrders || [])) {
+            allSyncedOrderIds.push(o.id);
+            const lines = linesPerExtId.get(o.external_id) || [];
+            for (const line of lines) {
+              allFreshLines.push({ ...line, order_id: o.id });
+            }
           }
         }
-        
+
         stats.orders += orders.length;
         ordersCursor = ordersResp.cursor;
       } while (ordersCursor);
+
+      // Purge old lines only for synced orders, then insert fresh ones
+      if (allSyncedOrderIds.length > 0) {
+        for (let i = 0; i < allSyncedOrderIds.length; i += 50) {
+          await supabase
+            .from('cdm_order_lines')
+            .delete()
+            .in('order_id', allSyncedOrderIds.slice(i, i + 50));
+        }
+
+        for (let i = 0; i < allFreshLines.length; i += 500) {
+          await supabase
+            .from('cdm_order_lines')
+            .insert(allFreshLines.slice(i, i + 500));
+        }
+      }
 
       // 4) Sync Payments (all locations)
       for (const locId of locationIds) {
@@ -279,12 +313,13 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Fetch all CDM orders for aggregation
+      // Fetch all CDM orders for aggregation (limit raised for growing data)
       const { data: cdmOrders } = await supabase
         .from('cdm_orders')
         .select('id, location_id, closed_at, gross_total, net_total, status')
         .eq('org_id', orgId)
-        .not('closed_at', 'is', null);
+        .not('closed_at', 'is', null)
+        .limit(10000);
 
       if (cdmOrders && cdmOrders.length > 0 && josephineLocations && josephineLocations.length > 0) {
         // Group orders by date + josephine location
@@ -438,11 +473,19 @@ Deno.serve(async (req) => {
         const cdmOrderIds = cdmOrders.map((o: any) => o.id);
 
         if (cdmOrderIds.length > 0 && productNameToId.size > 0) {
-          // Fetch all order lines for synced orders
-          const { data: allLines } = await supabase
-            .from('cdm_order_lines')
-            .select('order_id, name, quantity, gross_line_total')
-            .in('order_id', cdmOrderIds);
+          // Fetch order lines in batches to avoid PostgREST URL length limit
+          // (642 UUIDs ≈ 23 KB query string, exceeds ~8 KB GET limit).
+          const LINES_BATCH = 50;
+          const allLines: any[] = [];
+          for (let i = 0; i < cdmOrderIds.length; i += LINES_BATCH) {
+            const batch = cdmOrderIds.slice(i, i + LINES_BATCH);
+            const { data: batchLines } = await supabase
+              .from('cdm_order_lines')
+              .select('order_id, name, quantity, gross_line_total')
+              .in('order_id', batch)
+              .limit(5000);
+            if (batchLines) allLines.push(...batchLines);
+          }
 
           // Build order_id → {date, location_id} lookup
           const orderInfoMap = new Map<string, { date: string; location_id: string }>();
@@ -462,7 +505,7 @@ Deno.serve(async (req) => {
             cogs: number;
           }>();
 
-          for (const line of (allLines || [])) {
+          for (const line of allLines) {
             const orderInfo = orderInfoMap.get(line.order_id);
             if (!orderInfo) continue;
 
