@@ -11,9 +11,15 @@ import {
 } from '@/components/reviews';
 import { DateRangeValue, DateMode, ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import { useReviewsData, Platform } from '@/hooks/useReviewsData';
+import { useSalesTimeseries } from '@/hooks/useSalesTimeseries';
+import { useApp } from '@/contexts/AppContext';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Clock, TrendingUp } from 'lucide-react';
 
 export default function Reviews() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { group, locations } = useApp();
 
   // Parse URL params or use defaults
   const getInitialDateRange = (): DateRangeValue => {
@@ -60,6 +66,30 @@ export default function Reviews() {
     platform,
     locationId,
   });
+
+  // Fetch busy hours from unified timeseries RPC
+  const locationIds = locationId === 'all'
+    ? locations.map(l => l.id)
+    : [locationId];
+
+  const { data: timeseries, isLoading: busyLoading } = useSalesTimeseries({
+    orgId: group?.id,
+    locationIds,
+    from: dateRange.from,
+    to: dateRange.to,
+    enabled: !!group?.id && locationIds.length > 0,
+  });
+
+  // Group busy hours by date for display
+  const busyHoursByDate = (timeseries?.busy_hours || []).reduce<Record<string, { hour: number; forecast_sales: number }[]>>(
+    (acc, bh) => {
+      const key = bh.date;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push({ hour: bh.hour, forecast_sales: bh.forecast_sales });
+      return acc;
+    },
+    {},
+  );
 
   const handleDateChange = useCallback(
     (range: DateRangeValue, mode: DateMode, _granularity: ChartGranularity) => {
@@ -162,6 +192,51 @@ export default function Reviews() {
           />
         </div>
       </div>
+
+      {/* Busy Hours / Peak Demand */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="h-5 w-5 text-orange-500" />
+          <h3 className="text-lg font-semibold">Busy Hours (Forecast)</h3>
+        </div>
+        {busyLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20" />)}
+          </div>
+        ) : Object.keys(busyHoursByDate).length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            {Object.entries(busyHoursByDate)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .slice(0, 7)
+              .map(([date, hours]) => (
+                <div key={date} className="border rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {format(new Date(date + 'T00:00:00'), 'EEE, d MMM')}
+                  </p>
+                  {hours
+                    .sort((a, b) => b.forecast_sales - a.forecast_sales)
+                    .map((h, idx) => (
+                      <div key={h.hour} className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-1">
+                          {idx === 0 && <TrendingUp className="h-3 w-3 text-orange-500" />}
+                          <span className={idx === 0 ? 'font-semibold' : 'text-muted-foreground'}>
+                            {String(h.hour).padStart(2, '0')}:00
+                          </span>
+                        </span>
+                        <span className="text-xs font-medium">
+                          {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(h.forecast_sales)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No forecast data available for this period
+          </p>
+        )}
+      </Card>
 
       {/* Rating by location table */}
       <RatingByLocationTable
