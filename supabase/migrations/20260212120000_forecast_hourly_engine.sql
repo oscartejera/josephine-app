@@ -153,13 +153,14 @@ $$;
 
 
 -- ─── 4) pg_cron: 5:30 AM UTC daily (30 min after daily Prophet) ────
-SELECT cron.unschedule('hourly-forecast')
-WHERE EXISTS (
-  SELECT 1 FROM cron.job WHERE jobname = 'hourly-forecast'
-);
-
-SELECT cron.schedule(
-  'hourly-forecast',
-  '30 5 * * *',
-  $$SELECT run_hourly_forecast()$$
-);
+DO $cron$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'hourly-forecast') THEN
+      PERFORM cron.unschedule('hourly-forecast');
+    END IF;
+    PERFORM cron.schedule('hourly-forecast', '30 5 * * *', 'SELECT run_hourly_forecast()');
+  ELSE
+    RAISE NOTICE 'pg_cron not available — skipping hourly-forecast schedule';
+  END IF;
+END $cron$;
