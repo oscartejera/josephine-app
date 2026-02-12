@@ -488,7 +488,7 @@ Deno.serve(async (req) => {
 
         // 7) Sync CDM items → products table (for Menu Engineering)
         //    Menu Engineering RPCs read from product_sales_daily JOIN products.
-        //    We need products to exist before we can write product_sales_daily.
+        //    We need products to exist for EVERY location in the group.
         const groupId = (josephineLocations as any[])[0]?.group_id;
 
         const { data: cdmItemsList } = await supabase
@@ -496,48 +496,61 @@ Deno.serve(async (req) => {
           .select('name, category_name, is_active')
           .eq('org_id', orgId);
 
-        const productNameToId = new Map<string, string>();
+        // Key: "name__locationId" → product.id
+        const productKeyToId = new Map<string, string>();
 
         if (cdmItemsList && groupId) {
-          // Fetch all existing products for this group in one query
+          // Fetch all existing products for this group (all locations)
           const { data: existingProducts } = await supabase
             .from('products')
-            .select('id, name')
+            .select('id, name, location_id')
             .eq('group_id', groupId);
 
+          const existingKeys = new Set<string>();
           for (const p of (existingProducts || [])) {
-            productNameToId.set(p.name, p.id);
+            const key = `${p.name}__${p.location_id}`;
+            existingKeys.add(key);
+            productKeyToId.set(key, p.id);
           }
 
-          // Insert only new products (not already in the products table)
-          const newProducts = cdmItemsList
-            .filter(item => !productNameToId.has(item.name))
-            .map(item => ({
-              name: item.name,
-              category: item.category_name || 'Other',
-              is_active: item.is_active,
-              group_id: groupId,
-              location_id: josephineLocations[0].id,
-            }));
+          // Build missing products: one per (cdmItem, location) that doesn't exist yet
+          const newProducts: any[] = [];
+          for (const item of cdmItemsList) {
+            for (const loc of josephineLocations) {
+              const key = `${item.name}__${loc.id}`;
+              if (!existingKeys.has(key)) {
+                newProducts.push({
+                  name: item.name,
+                  category: item.category_name || 'Other',
+                  is_active: item.is_active,
+                  group_id: groupId,
+                  location_id: loc.id,
+                });
+              }
+            }
+          }
 
           if (newProducts.length > 0) {
-            const { data: inserted } = await supabase
-              .from('products')
-              .insert(newProducts)
-              .select('id, name');
+            // Insert in batches to avoid payload limits
+            for (let i = 0; i < newProducts.length; i += 500) {
+              const { data: inserted } = await supabase
+                .from('products')
+                .insert(newProducts.slice(i, i + 500))
+                .select('id, name, location_id');
 
-            for (const p of (inserted || [])) {
-              productNameToId.set(p.name, p.id);
+              for (const p of (inserted || [])) {
+                productKeyToId.set(`${p.name}__${p.location_id}`, p.id);
+              }
             }
           }
         }
-        (stats as any).products_synced = productNameToId.size;
+        (stats as any).products_synced = productKeyToId.size;
 
         // 8) Aggregate CDM order lines → product_sales_daily (for Menu Engineering)
         //    Groups line items by (date, location, product) and writes daily aggregates.
         const cdmOrderIds = cdmOrders.map((o: any) => o.id);
 
-        if (cdmOrderIds.length > 0 && productNameToId.size > 0) {
+        if (cdmOrderIds.length > 0 && productKeyToId.size > 0) {
           // Fetch order lines in batches to avoid PostgREST URL length limit
           // (642 UUIDs ≈ 23 KB query string, exceeds ~8 KB GET limit).
           const LINES_BATCH = 50;
@@ -574,7 +587,7 @@ Deno.serve(async (req) => {
             const orderInfo = orderInfoMap.get(line.order_id);
             if (!orderInfo) continue;
 
-            const productId = productNameToId.get(line.name);
+            const productId = productKeyToId.get(`${line.name}__${orderInfo.location_id}`);
             if (!productId) continue;
 
             const key = `${orderInfo.date}|${orderInfo.location_id}|${productId}`;
