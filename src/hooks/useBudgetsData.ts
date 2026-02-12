@@ -1,3 +1,6 @@
+// TODO: Migrate to unified RPCs/views — replace supabase.from('pos_daily_finance') with
+// v_pos_daily_finance_unified (data_source_unified) and supabase.from('labour_daily')
+// with a unified labour RPC. See get_instant_pnl_unified and v_pos_daily_finance_unified.
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';

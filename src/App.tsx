@@ -41,6 +41,7 @@ import SquareOAuthCallback from "@/pages/integrations/SquareOAuthCallback";
 import InventoryItems from "@/pages/inventory-setup/InventoryItems";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
+import DebugDataCoherence from "@/pages/DebugDataCoherence";
 
 // Team (Employee Portal)
 import { TeamLayout } from "@/components/team/TeamLayout";
@@ -161,6 +162,7 @@ function AppRoutes() {
         {/* Settings */}
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/admin/tools" element={<AdminTools />} />
+        <Route path="/debug/data-coherence" element={<DebugDataCoherence />} />
       </Route>
 
       {/* Team (Employee Portal) */}

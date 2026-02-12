@@ -1,3 +1,6 @@
+// TODO: Migrate to unified views — replace supabase.from('pos_daily_finance') with
+// v_pos_daily_finance_unified (data_source_unified) and supabase.from('product_sales_daily')
+// with v_product_sales_daily_unified. See get_top_products_unified RPC for product data.
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
