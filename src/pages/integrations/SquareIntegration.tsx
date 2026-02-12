@@ -1,18 +1,20 @@
 /**
  * Square Integration Page
- * Real OAuth flow + sync management
+ * Real OAuth flow + sync management with animated progress bar and splash screen.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Plug2, RefreshCw, Loader2, AlertCircle, ArrowLeft, Clock } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { CheckCircle, Plug2, RefreshCw, Loader2, ArrowLeft, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import SyncSplashScreen from '@/components/integrations/SyncSplashScreen';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -58,6 +60,15 @@ interface SyncRun {
   error_text: string | null;
 }
 
+// Sync phases for the progress bar (estimated durations in ms)
+const SYNC_PHASES = [
+  { label: 'Conectando con Square...', target: 15 },
+  { label: 'Importando locales...', target: 30 },
+  { label: 'Importando catálogo...', target: 55 },
+  { label: 'Importando pedidos...', target: 80 },
+  { label: 'Procesando datos...', target: 95 },
+];
+
 export default function SquareIntegration() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -70,15 +81,66 @@ export default function SquareIntegration() {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
-  // Check for OAuth callback params — auto-sync is triggered server-side
+  // Progress bar state
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncPhaseLabel, setSyncPhaseLabel] = useState('');
+  const [syncComplete, setSyncComplete] = useState(false);
+  const progressTimer = useRef<ReturnType<typeof setInterval>>();
+
+  // Splash screen state
+  const [showSplash, setShowSplash] = useState(false);
+  const [splashMessage, setSplashMessage] = useState('');
+
+  const startProgressAnimation = useCallback(() => {
+    setSyncProgress(0);
+    setSyncComplete(false);
+    let phase = 0;
+    let current = 0;
+    setSyncPhaseLabel(SYNC_PHASES[0].label);
+
+    progressTimer.current = setInterval(() => {
+      const target = SYNC_PHASES[phase]?.target ?? 95;
+      // Ease toward target, slowing as we approach
+      current += (target - current) * 0.08;
+      setSyncProgress(Math.min(Math.round(current), 95));
+
+      if (current >= target - 1 && phase < SYNC_PHASES.length - 1) {
+        phase++;
+        setSyncPhaseLabel(SYNC_PHASES[phase].label);
+      }
+    }, 200);
+  }, []);
+
+  const completeProgressAnimation = useCallback(() => {
+    if (progressTimer.current) clearInterval(progressTimer.current);
+    setSyncProgress(100);
+    setSyncPhaseLabel('Sincronización completada');
+    setSyncComplete(true);
+    // Hide progress bar after a moment
+    setTimeout(() => {
+      setSyncProgress(0);
+      setSyncComplete(false);
+      setSyncPhaseLabel('');
+    }, 2500);
+  }, []);
+
+  const stopProgressAnimation = useCallback(() => {
+    if (progressTimer.current) clearInterval(progressTimer.current);
+    setSyncProgress(0);
+    setSyncComplete(false);
+    setSyncPhaseLabel('');
+  }, []);
+
+  // Check for OAuth callback params
   useEffect(() => {
     if (searchParams.get('connected') === 'true') {
       toast.success('Square conectado correctamente', {
         description: 'Sincronización inicial en curso...',
       });
       setSyncing(true);
+      startProgressAnimation();
       setSearchParams({});
-      // Poll until sync completes (auto-triggered by OAuth callback)
+
       const poll = setInterval(async () => {
         await loadIntegration();
         const { data: runs } = await supabase
@@ -89,18 +151,34 @@ export default function SquareIntegration() {
         const latest = runs?.[0];
         if (latest && latest.status !== 'running') {
           clearInterval(poll);
-          setSyncing(false);
           if (latest.status === 'ok') {
+            completeProgressAnimation();
             toast.success('Datos importados correctamente', {
               description: 'Todas las páginas mostrarán tus datos de Square.',
             });
+            // Show splash while app refreshes data
+            setTimeout(() => {
+              setSplashMessage('Cargando tus datos de Square...');
+              setShowSplash(true);
+              queryClient.invalidateQueries();
+              setTimeout(() => {
+                setShowSplash(false);
+                setSyncing(false);
+              }, 3000);
+            }, 2000);
           } else {
+            stopProgressAnimation();
+            setSyncing(false);
             toast.error('Error en la sincronización inicial');
           }
         }
       }, 3000);
-      // Safety timeout after 2 minutes
-      setTimeout(() => { clearInterval(poll); setSyncing(false); }, 120_000);
+
+      setTimeout(() => {
+        clearInterval(poll);
+        stopProgressAnimation();
+        setSyncing(false);
+      }, 120_000);
       return () => clearInterval(poll);
     }
     if (searchParams.get('error')) {
@@ -191,15 +269,24 @@ export default function SquareIntegration() {
   const handleSync = async () => {
     if (!account) return;
     setSyncing(true);
+    startProgressAnimation();
 
     try {
       const data = await invokeEdgeFunction('square-sync', { accountId: account.id });
 
       if (data.message === 'Sync already running') {
+        stopProgressAnimation();
         toast.info('Sincronización en curso', {
           description: 'Ya hay una sincronización activa. Espera a que termine.',
         });
-      } else if (data.stats) {
+        setSyncing(false);
+        return;
+      }
+
+      // Sync completed successfully
+      completeProgressAnimation();
+
+      if (data.stats) {
         toast.success('Sincronización completada', {
           description: `${data.stats.locations || 0} locales, ${data.stats.items || 0} productos, ${data.stats.orders || 0} pedidos`,
         });
@@ -207,27 +294,50 @@ export default function SquareIntegration() {
         toast.success('Sincronización completada');
       }
 
-      await loadIntegration();
+      // Show splash while app refreshes data
+      setTimeout(() => {
+        setSplashMessage('Actualizando datos...');
+        setShowSplash(true);
+        queryClient.invalidateQueries();
+        loadIntegration().then(() => {
+          setTimeout(() => {
+            setShowSplash(false);
+            setSyncing(false);
+          }, 2500);
+        });
+      }, 2000);
     } catch (err: any) {
       console.error('Sync error:', err);
+      stopProgressAnimation();
       toast.error('Error sincronizando', { description: err.message });
-    } finally {
       setSyncing(false);
     }
   };
 
   const handleDisconnect = async () => {
     if (!integration) return;
+
+    setSplashMessage('Desconectando Square...');
+    setShowSplash(true);
+
     await supabase.from('integrations').update({ status: 'disabled' }).eq('id', integration.id);
     setIntegration(null);
     setAccount(null);
     setSyncRuns([]);
-    // Invalidate all data caches so hooks re-fetch with dataSource='simulated'
     queryClient.invalidateQueries();
-    toast.info('Square desconectado');
+
+    setTimeout(() => {
+      setShowSplash(false);
+      toast.info('Square desconectado');
+    }, 3000);
   };
 
   const isConnected = integration?.status === 'active' && account;
+
+  // Splash screen overlay
+  if (showSplash) {
+    return <SyncSplashScreen message={splashMessage} />;
+  }
 
   if (loading) {
     return (
@@ -265,6 +375,29 @@ export default function SquareIntegration() {
           </Button>
         )}
       </div>
+
+      {/* Animated sync progress bar */}
+      {syncing && syncProgress > 0 && (
+        <Card className="animate-fade-in">
+          <CardContent className="pt-6 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium flex items-center gap-2">
+                {syncComplete ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                )}
+                {syncPhaseLabel}
+              </span>
+              <span className="text-muted-foreground">{syncProgress}%</span>
+            </div>
+            <Progress
+              value={syncProgress}
+              className={`h-3 transition-all duration-300 ${syncComplete ? '[&>div]:bg-green-500' : ''}`}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {!isConnected && (
         <Card>
