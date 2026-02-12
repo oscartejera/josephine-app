@@ -19,21 +19,37 @@ import SyncSplashScreen from '@/components/integrations/SyncSplashScreen';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-/** Call an Edge Function using the anon key (bypasses user JWT issues). */
-async function invokeEdgeFunction(name: string, body: Record<string, unknown>) {
-  const resp = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify(body),
-  });
+/** Max time to wait for the sync Edge Function (ms). */
+const SYNC_TIMEOUT_MS = 180_000; // 3 minutes
 
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error || `Edge Function ${name} failed (${resp.status})`);
-  return data;
+/** Call an Edge Function with a timeout via AbortController. */
+async function invokeEdgeFunction(name: string, body: Record<string, unknown>, timeoutMs = 30_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || `Edge Function ${name} failed (${resp.status})`);
+    return data;
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error('La sincronización está tardando demasiado. Verifica el historial en unos minutos.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 interface Integration {
@@ -45,6 +61,7 @@ interface Integration {
 
 interface IntegrationAccount {
   id: string;
+  integration_id: string;
   environment: string;
   external_account_id: string;
   metadata: any;
@@ -60,13 +77,13 @@ interface SyncRun {
   error_text: string | null;
 }
 
-// Sync phases for the progress bar (estimated durations in ms)
+// Sync phases for the progress bar
 const SYNC_PHASES = [
-  { label: 'Conectando con Square...', target: 15 },
-  { label: 'Importando locales...', target: 30 },
-  { label: 'Importando catálogo...', target: 55 },
-  { label: 'Importando pedidos...', target: 80 },
-  { label: 'Procesando datos...', target: 95 },
+  { label: 'Conectando con Square...', target: 10, durationMs: 3_000 },
+  { label: 'Importando locales...', target: 20, durationMs: 5_000 },
+  { label: 'Importando catálogo...', target: 40, durationMs: 15_000 },
+  { label: 'Importando pedidos...', target: 70, durationMs: 60_000 },
+  { label: 'Procesando datos...', target: 90, durationMs: 40_000 },
 ];
 
 export default function SquareIntegration() {
@@ -90,25 +107,48 @@ export default function SquareIntegration() {
   // Splash screen state
   const [showSplash, setShowSplash] = useState(false);
   const [splashMessage, setSplashMessage] = useState('');
+  const splashSafetyTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  /** Show splash with an auto-dismiss safety net. */
+  const showSplashScreen = useCallback((msg: string, maxMs = 8_000) => {
+    setSplashMessage(msg);
+    setShowSplash(true);
+    // Safety: always dismiss the splash after maxMs
+    if (splashSafetyTimer.current) clearTimeout(splashSafetyTimer.current);
+    splashSafetyTimer.current = setTimeout(() => {
+      setShowSplash(false);
+    }, maxMs);
+  }, []);
+
+  const hideSplashScreen = useCallback(() => {
+    if (splashSafetyTimer.current) clearTimeout(splashSafetyTimer.current);
+    setShowSplash(false);
+  }, []);
 
   const startProgressAnimation = useCallback(() => {
     setSyncProgress(0);
     setSyncComplete(false);
     let phase = 0;
     let current = 0;
+    let elapsedInPhase = 0;
     setSyncPhaseLabel(SYNC_PHASES[0].label);
 
     progressTimer.current = setInterval(() => {
-      const target = SYNC_PHASES[phase]?.target ?? 95;
-      // Ease toward target, slowing as we approach
-      current += (target - current) * 0.08;
-      setSyncProgress(Math.min(Math.round(current), 95));
+      const { target, durationMs } = SYNC_PHASES[phase] ?? { target: 90, durationMs: 40_000 };
+      const prevTarget = phase > 0 ? SYNC_PHASES[phase - 1].target : 0;
+      elapsedInPhase += 300;
 
-      if (current >= target - 1 && phase < SYNC_PHASES.length - 1) {
+      // Linear interpolation within each phase
+      const phaseProgress = Math.min(elapsedInPhase / durationMs, 0.95);
+      current = prevTarget + (target - prevTarget) * phaseProgress;
+      setSyncProgress(Math.min(Math.round(current), 90));
+
+      if (phaseProgress >= 0.95 && phase < SYNC_PHASES.length - 1) {
         phase++;
+        elapsedInPhase = 0;
         setSyncPhaseLabel(SYNC_PHASES[phase].label);
       }
-    }, 200);
+    }, 300);
   }, []);
 
   const completeProgressAnimation = useCallback(() => {
@@ -116,12 +156,6 @@ export default function SquareIntegration() {
     setSyncProgress(100);
     setSyncPhaseLabel('Sincronización completada');
     setSyncComplete(true);
-    // Hide progress bar after a moment
-    setTimeout(() => {
-      setSyncProgress(0);
-      setSyncComplete(false);
-      setSyncPhaseLabel('');
-    }, 2500);
   }, []);
 
   const stopProgressAnimation = useCallback(() => {
@@ -129,6 +163,20 @@ export default function SquareIntegration() {
     setSyncProgress(0);
     setSyncComplete(false);
     setSyncPhaseLabel('');
+  }, []);
+
+  const resetSyncState = useCallback(() => {
+    stopProgressAnimation();
+    setSyncing(false);
+    hideSplashScreen();
+  }, [stopProgressAnimation, hideSplashScreen]);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (progressTimer.current) clearInterval(progressTimer.current);
+      if (splashSafetyTimer.current) clearTimeout(splashSafetyTimer.current);
+    };
   }, []);
 
   // Check for OAuth callback params
@@ -153,31 +201,27 @@ export default function SquareIntegration() {
           clearInterval(poll);
           if (latest.status === 'ok') {
             completeProgressAnimation();
-            toast.success('Datos importados correctamente', {
-              description: 'Todas las páginas mostrarán tus datos de Square.',
-            });
-            // Show splash while app refreshes data
+            toast.success('Datos importados correctamente');
+            // Brief pause then show splash while refreshing data
             setTimeout(() => {
-              setSplashMessage('Cargando tus datos de Square...');
-              setShowSplash(true);
+              showSplashScreen('Cargando tus datos de Square...');
               queryClient.invalidateQueries();
               setTimeout(() => {
-                setShowSplash(false);
+                hideSplashScreen();
                 setSyncing(false);
-              }, 3000);
-            }, 2000);
+              }, 2500);
+            }, 1500);
           } else {
-            stopProgressAnimation();
-            setSyncing(false);
+            resetSyncState();
             toast.error('Error en la sincronización inicial');
           }
         }
       }, 3000);
 
+      // Safety timeout
       setTimeout(() => {
         clearInterval(poll);
-        stopProgressAnimation();
-        setSyncing(false);
+        resetSyncState();
       }, 120_000);
       return () => clearInterval(poll);
     }
@@ -201,6 +245,7 @@ export default function SquareIntegration() {
       .select('*')
       .eq('provider', 'square')
       .in('status', ['active', 'pending'])
+      .order('created_at', { ascending: false })
       .limit(1);
 
     if (integrations && integrations.length > 0) {
@@ -211,6 +256,7 @@ export default function SquareIntegration() {
         .from('integration_accounts')
         .select('*')
         .eq('integration_id', integ.id)
+        .eq('is_active', true)
         .limit(1);
 
       if (accounts && accounts.length > 0) {
@@ -224,7 +270,14 @@ export default function SquareIntegration() {
           .limit(10);
 
         setSyncRuns((runs || []) as SyncRun[]);
+      } else {
+        setAccount(null);
+        setSyncRuns([]);
       }
+    } else {
+      setIntegration(null);
+      setAccount(null);
+      setSyncRuns([]);
     }
 
     setLoading(false);
@@ -234,6 +287,7 @@ export default function SquareIntegration() {
     setConnecting(true);
 
     try {
+      // Reuse existing pending/active integration if available
       let integrationId = integration?.id;
 
       if (!integrationId) {
@@ -272,7 +326,7 @@ export default function SquareIntegration() {
     startProgressAnimation();
 
     try {
-      const data = await invokeEdgeFunction('square-sync', { accountId: account.id });
+      const data = await invokeEdgeFunction('square-sync', { accountId: account.id }, SYNC_TIMEOUT_MS);
 
       if (data.message === 'Sync already running') {
         stopProgressAnimation();
@@ -283,7 +337,7 @@ export default function SquareIntegration() {
         return;
       }
 
-      // Sync completed successfully
+      // Sync completed
       completeProgressAnimation();
 
       if (data.stats) {
@@ -294,18 +348,17 @@ export default function SquareIntegration() {
         toast.success('Sincronización completada');
       }
 
-      // Show splash while app refreshes data
+      // Refresh all data via splash
       setTimeout(() => {
-        setSplashMessage('Actualizando datos...');
-        setShowSplash(true);
+        showSplashScreen('Actualizando datos...');
         queryClient.invalidateQueries();
         loadIntegration().then(() => {
           setTimeout(() => {
-            setShowSplash(false);
+            hideSplashScreen();
             setSyncing(false);
-          }, 2500);
+          }, 2000);
         });
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       console.error('Sync error:', err);
       stopProgressAnimation();
@@ -317,19 +370,40 @@ export default function SquareIntegration() {
   const handleDisconnect = async () => {
     if (!integration) return;
 
-    setSplashMessage('Desconectando Square...');
-    setShowSplash(true);
+    showSplashScreen('Desconectando Square...');
 
-    await supabase.from('integrations').update({ status: 'disabled' }).eq('id', integration.id);
-    setIntegration(null);
-    setAccount(null);
-    setSyncRuns([]);
-    queryClient.invalidateQueries();
+    try {
+      // Disable the integration
+      await supabase
+        .from('integrations')
+        .update({ status: 'disabled' })
+        .eq('id', integration.id);
 
-    setTimeout(() => {
-      setShowSplash(false);
-      toast.info('Square desconectado');
-    }, 3000);
+      // Also disable the account so usePOSConnection picks up the change
+      if (account) {
+        await supabase
+          .from('integration_accounts')
+          .update({ is_active: false })
+          .eq('id', account.id);
+      }
+
+      setIntegration(null);
+      setAccount(null);
+      setSyncRuns([]);
+
+      // Invalidate all cached data so hooks re-fetch with dataSource='simulated'
+      queryClient.invalidateQueries();
+
+      // Give React Query time to refetch, then dismiss splash
+      setTimeout(() => {
+        hideSplashScreen();
+        toast.info('Square desconectado. Mostrando datos de demostración.');
+      }, 2500);
+    } catch (err: any) {
+      console.error('Disconnect error:', err);
+      hideSplashScreen();
+      toast.error('Error al desconectar', { description: err.message });
+    }
   };
 
   const isConnected = integration?.status === 'active' && account;
@@ -475,7 +549,7 @@ export default function SquareIntegration() {
                         </span>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {run.stats && typeof run.stats === 'object' && (
+                        {run.stats && typeof run.stats === 'object' && Object.keys(run.stats).length > 0 && (
                           <span>
                             {run.stats.locations || 0} locales, {run.stats.items || 0} items, {run.stats.orders || 0} pedidos
                           </span>

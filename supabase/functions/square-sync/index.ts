@@ -26,7 +26,20 @@ Deno.serve(async (req) => {
   try {
     const { accountId } = await req.json();
 
-    // Check for running sync
+    // Self-heal: mark any sync that has been "running" for > 5 minutes as timed out.
+    // This prevents stuck syncs from permanently blocking new ones.
+    await supabase
+      .from('integration_sync_runs')
+      .update({
+        status: 'error',
+        ended_at: new Date().toISOString(),
+        error_text: 'Timeout - sync did not complete within 5 minutes',
+      })
+      .eq('integration_account_id', accountId)
+      .eq('status', 'running')
+      .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+
+    // Check for running sync (only recent ones will remain after self-heal)
     const { data: hasRunning } = await supabase.rpc('has_running_sync', {
       p_account_id: accountId
     });
