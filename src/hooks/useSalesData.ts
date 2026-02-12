@@ -77,17 +77,73 @@ export function useSalesData({ locationIds, startDate, endDate }: UseSalesDataPa
           });
         });
 
+        // Fetch real forecasts from forecast_daily_metrics for this date range
+        const forecastMap = new Map<string, { forecast: number; lower: number; upper: number }>();
+        try {
+          const locFilter = locationIds.length > 0 && !locationIds.includes('all')
+            ? locationIds[0] : null;
+
+          let forecastQuery = supabase
+            .from('forecast_daily_metrics')
+            .select('date, forecast_sales, forecast_sales_lower, forecast_sales_upper')
+            .gte('date', format(startDate, 'yyyy-MM-dd'))
+            .lte('date', format(endDate, 'yyyy-MM-dd'))
+            .order('date', { ascending: true });
+
+          if (locFilter) {
+            forecastQuery = forecastQuery.eq('location_id', locFilter);
+          }
+
+          const { data: forecastData } = await forecastQuery;
+          if (forecastData) {
+            forecastData.forEach((f: any) => {
+              const existing = forecastMap.get(f.date);
+              const sales = Number(f.forecast_sales) || 0;
+              const lower = Number(f.forecast_sales_lower) || 0;
+              const upper = Number(f.forecast_sales_upper) || 0;
+              if (existing) {
+                existing.forecast += sales;
+                existing.lower += lower;
+                existing.upper += upper;
+              } else {
+                forecastMap.set(f.date, { forecast: sales, lower, upper });
+              }
+            });
+          }
+        } catch (fErr) {
+          console.warn('Could not fetch forecast data, will estimate:', fErr);
+        }
+
         // Aggregate sales data
         salesData.forEach((slot: any) => {
           const dayKey = format(new Date(slot.ts_bucket), 'yyyy-MM-dd');
           const dayData = dailyMap.get(dayKey);
-          
+
           if (dayData) {
             dayData.actual += Number(slot.sales_net) || 0;
-            dayData.forecast += (Number(slot.sales_net) || 0) * 0.98; // Mock forecast slightly below
-            dayData.forecastLive += (Number(slot.sales_net) || 0) * 1.02; // Mock live forecast slightly above
             dayData.tickets += Number(slot.tickets) || 0;
             dayData.covers += Number(slot.covers) || 0;
+          }
+        });
+
+        // Apply real forecasts (or estimate from actuals if no forecast exists)
+        allDays.forEach(day => {
+          const dayKey = format(day, 'yyyy-MM-dd');
+          const dayData = dailyMap.get(dayKey);
+          if (!dayData) return;
+
+          const realForecast = forecastMap.get(dayKey);
+          if (realForecast) {
+            dayData.forecast = realForecast.forecast;
+            dayData.forecastLive = realForecast.forecast;
+            dayData.forecastLower = realForecast.lower;
+            dayData.forecastUpper = realForecast.upper;
+          } else if (dayData.actual > 0) {
+            // Fallback: estimate from actual if no forecast stored
+            dayData.forecast = dayData.actual * 0.98;
+            dayData.forecastLive = dayData.actual * 1.02;
+            dayData.forecastLower = dayData.actual * 0.85;
+            dayData.forecastUpper = dayData.actual * 1.15;
           }
         });
 

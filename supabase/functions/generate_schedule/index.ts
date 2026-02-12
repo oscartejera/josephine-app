@@ -297,7 +297,7 @@ Deno.serve(async (req) => {
       logs.push(`[SCHEDULE] Demand curve from DB (${Object.keys(dbDemandCurve).length} hours)`);
     }
 
-    // 1c. Forecast
+    // 1c. Forecast (daily — always fetched as baseline)
     const { data: forecasts } = await supabase
       .from('forecast_daily_metrics')
       .select('date, forecast_sales, planned_labor_cost, planned_labor_hours')
@@ -315,7 +315,45 @@ Deno.serve(async (req) => {
       };
     });
 
-    // 1d. Check for time-off / availability (from planned_shifts with status='time_off' or future table)
+    // 1d. Hourly forecast — override demand curve with LEARNED data if available
+    let hourlyForecastUsed = false;
+    try {
+      const { data: hourlyForecasts } = await supabase
+        .from('forecast_hourly_metrics')
+        .select('forecast_date, hour_of_day, forecast_sales')
+        .eq('location_id', location_id)
+        .gte('forecast_date', week_start)
+        .lte('forecast_date', weekEnd)
+        .order('forecast_date')
+        .order('hour_of_day');
+
+      if (hourlyForecasts && hourlyForecasts.length > 0) {
+        // Build learned demand curve from real hourly forecast data
+        const hourlyTotals: Record<number, number> = {};
+        let grandTotal = 0;
+
+        for (const hf of hourlyForecasts) {
+          const h = Number(hf.hour_of_day);
+          const sales = Number(hf.forecast_sales) || 0;
+          hourlyTotals[h] = (hourlyTotals[h] || 0) + sales;
+          grandTotal += sales;
+        }
+
+        if (grandTotal > 0) {
+          // Clear existing curve and rebuild from data
+          for (let h = 0; h < 24; h++) {
+            HOURLY_DEMAND_CURVE[h] = (hourlyTotals[h] || 0) / grandTotal;
+          }
+          hourlyForecastUsed = true;
+          logs.push(`[SCHEDULE] Using LEARNED demand curve from hourly forecast (${hourlyForecasts.length} data points)`);
+        }
+      }
+    } catch (_e) {
+      // forecast_hourly_metrics table might not exist yet; fallback silently
+      logs.push('[SCHEDULE] Hourly forecast not available, using default demand curve');
+    }
+
+    // 1e. Check for time-off / availability (from planned_shifts with status='time_off' or future table)
     // For now, we don't block any days since no availability table exists yet
     const blockedDays: Record<string, Set<string>> = {}; // employeeId -> Set of blocked dates
 
@@ -334,7 +372,7 @@ Deno.serve(async (req) => {
     // =========================================================
     const salesValues = Object.values(forecastByDate).map((f: any) => f.forecast_sales).filter((s: number) => s > 0);
     const medianSales = median(salesValues);
-    logs.push(`[SCHEDULE] Target COL%: ${targetColPercent}%, Median daily sales: €${medianSales.toFixed(0)}`);
+    logs.push(`[SCHEDULE] Target COL%: ${targetColPercent}%, Median daily sales: €${medianSales.toFixed(0)}, Demand curve: ${hourlyForecastUsed ? 'LEARNED (hourly forecast)' : 'static'}`);
 
     const allSlots: Slot[] = [];
 
