@@ -379,3 +379,327 @@ export function explainForecast(
   if (parts.length === 0) return `Base forecast: €${baseForecast.toFixed(0)}`;
   return `Base €${baseForecast.toFixed(0)} ${adjustment >= 0 ? '+' : ''}${adjustment.toFixed(1)}% (${parts.join(', ')}) = €${finalForecast.toFixed(0)}`;
 }
+
+// ============================================
+// TIME SERIES ANALYSIS UTILITIES
+// ============================================
+
+export interface TimeSeriesMetrics {
+  mape: number;
+  rmse: number;
+  mae: number;
+  mase: number;
+  directional_accuracy: number;
+  forecast_bias: number;
+  r_squared: number;
+}
+
+export interface StationarityResult {
+  is_stationary: boolean;
+  adf_statistic: number;
+  mean_first_half: number;
+  mean_second_half: number;
+  variance_ratio: number;
+  recommendation: string;
+}
+
+export interface SeasonalityStrength {
+  weekly: number;   // 0-1 strength
+  monthly: number;  // 0-1 strength
+  has_weekly: boolean;
+  has_monthly: boolean;
+  dominant: 'weekly' | 'monthly' | 'none';
+}
+
+/**
+ * Compute comprehensive forecast evaluation metrics.
+ * Implements MAPE, RMSE, MAE, MASE, directional accuracy, and bias.
+ * MASE uses naive forecast (y_{t-1}) as baseline - scale-independent metric.
+ */
+export function computeTimeSeriesMetrics(
+  actual: number[],
+  predicted: number[],
+  historical?: number[]
+): TimeSeriesMetrics {
+  const n = Math.min(actual.length, predicted.length);
+  if (n === 0) return { mape: 0, rmse: 0, mae: 0, mase: 0, directional_accuracy: 0, forecast_bias: 0, r_squared: 0 };
+
+  let sumAbsPercentError = 0;
+  let sumSquaredError = 0;
+  let sumAbsError = 0;
+  let sumError = 0;
+  let countMape = 0;
+  let correctDirection = 0;
+  let directionCount = 0;
+
+  for (let i = 0; i < n; i++) {
+    const error = actual[i] - predicted[i];
+    sumAbsError += Math.abs(error);
+    sumSquaredError += error * error;
+    sumError += error;
+
+    if (actual[i] > 0) {
+      sumAbsPercentError += Math.abs(error / actual[i]);
+      countMape++;
+    }
+
+    // Directional accuracy: did we predict the direction of change correctly?
+    if (i > 0) {
+      const actualDir = actual[i] - actual[i - 1];
+      const predDir = predicted[i] - predicted[i - 1];
+      if ((actualDir >= 0 && predDir >= 0) || (actualDir < 0 && predDir < 0)) {
+        correctDirection++;
+      }
+      directionCount++;
+    }
+  }
+
+  const mape = countMape > 0 ? sumAbsPercentError / countMape : 0;
+  const rmse = Math.sqrt(sumSquaredError / n);
+  const mae = sumAbsError / n;
+  const bias = sumError / n;
+
+  // MASE: Mean Absolute Scaled Error (vs naive forecast y_{t-1})
+  let mase = 0;
+  const hist = historical || actual;
+  if (hist.length > 1) {
+    let naiveMAE = 0;
+    for (let i = 1; i < hist.length; i++) {
+      naiveMAE += Math.abs(hist[i] - hist[i - 1]);
+    }
+    naiveMAE /= (hist.length - 1);
+    mase = naiveMAE > 0 ? mae / naiveMAE : 0;
+  }
+
+  // R-squared
+  const meanActual = actual.slice(0, n).reduce((a, b) => a + b, 0) / n;
+  const ssTot = actual.slice(0, n).reduce((s, a) => s + (a - meanActual) ** 2, 0);
+  const ssRes = sumSquaredError;
+  const rSquared = ssTot > 0 ? Math.max(0, 1 - ssRes / ssTot) : 0;
+
+  return {
+    mape,
+    rmse,
+    mae,
+    mase,
+    directional_accuracy: directionCount > 0 ? correctDirection / directionCount : 0,
+    forecast_bias: bias,
+    r_squared: rSquared,
+  };
+}
+
+/**
+ * Simplified stationarity test for Deno/Edge Functions.
+ * Uses mean/variance comparison between first and second half of series
+ * plus first-order autocorrelation as a proxy for ADF test.
+ * For a proper ADF test, use the Python Prophet service.
+ */
+export function checkStationarity(values: number[]): StationarityResult {
+  const n = values.length;
+  if (n < 20) {
+    return {
+      is_stationary: true,
+      adf_statistic: 0,
+      mean_first_half: 0,
+      mean_second_half: 0,
+      variance_ratio: 1,
+      recommendation: 'Insufficient data for stationarity test',
+    };
+  }
+
+  const mid = Math.floor(n / 2);
+  const firstHalf = values.slice(0, mid);
+  const secondHalf = values.slice(mid);
+
+  const mean1 = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+  const mean2 = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+  const var1 = firstHalf.reduce((s, v) => s + (v - mean1) ** 2, 0) / firstHalf.length;
+  const var2 = secondHalf.reduce((s, v) => s + (v - mean2) ** 2, 0) / secondHalf.length;
+
+  // First-order autocorrelation as ADF proxy
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  let numerator = 0;
+  let denominator = 0;
+  for (let i = 1; i < n; i++) {
+    numerator += (values[i] - mean) * (values[i - 1] - mean);
+    denominator += (values[i - 1] - mean) ** 2;
+  }
+  const rho = denominator > 0 ? numerator / denominator : 0;
+  // ADF-like statistic: (rho - 1) * sqrt(n)
+  const adfStat = (rho - 1) * Math.sqrt(n);
+
+  const varianceRatio = var1 > 0 ? var2 / var1 : 1;
+  const meanShift = mean1 > 0 ? Math.abs(mean2 - mean1) / mean1 : 0;
+
+  // Heuristic: stationary if no significant mean shift and ADF < -2.86 (5% critical)
+  const isStationary = adfStat < -2.86 && meanShift < 0.25 && varianceRatio < 2.0 && varianceRatio > 0.5;
+
+  let recommendation = 'Series appears stationary';
+  if (!isStationary) {
+    if (meanShift > 0.25) recommendation = 'Significant trend detected - consider differencing (d=1)';
+    else if (varianceRatio > 2.0 || varianceRatio < 0.5) recommendation = 'Variance instability - consider log transform';
+    else recommendation = 'High autocorrelation - consider differencing (d=1)';
+  }
+
+  return {
+    is_stationary: isStationary,
+    adf_statistic: Math.round(adfStat * 100) / 100,
+    mean_first_half: Math.round(mean1),
+    mean_second_half: Math.round(mean2),
+    variance_ratio: Math.round(varianceRatio * 100) / 100,
+    recommendation,
+  };
+}
+
+/**
+ * Detect seasonality strength using variance decomposition.
+ * Compares variance within seasonal groups to total variance.
+ * Strength 0-1: 0 = no seasonality, 1 = perfectly seasonal.
+ */
+export function detectSeasonalityStrength(
+  dailyData: { dayOfWeek: number; month: number; sales: number }[]
+): SeasonalityStrength {
+  if (dailyData.length < 14) {
+    return { weekly: 0, monthly: 0, has_weekly: false, has_monthly: false, dominant: 'none' };
+  }
+
+  const salesValues = dailyData.map(d => d.sales).filter(s => s > 0);
+  if (salesValues.length === 0) {
+    return { weekly: 0, monthly: 0, has_weekly: false, has_monthly: false, dominant: 'none' };
+  }
+
+  const grandMean = salesValues.reduce((a, b) => a + b, 0) / salesValues.length;
+  const totalVar = salesValues.reduce((s, v) => s + (v - grandMean) ** 2, 0) / salesValues.length;
+  if (totalVar === 0) {
+    return { weekly: 0, monthly: 0, has_weekly: false, has_monthly: false, dominant: 'none' };
+  }
+
+  // Weekly: group by dayOfWeek
+  const weekGroups: Record<number, number[]> = {};
+  for (const d of dailyData) {
+    if (d.sales <= 0) continue;
+    if (!weekGroups[d.dayOfWeek]) weekGroups[d.dayOfWeek] = [];
+    weekGroups[d.dayOfWeek].push(d.sales);
+  }
+  let weeklyBetweenVar = 0;
+  for (const group of Object.values(weekGroups)) {
+    const groupMean = group.reduce((a, b) => a + b, 0) / group.length;
+    weeklyBetweenVar += group.length * (groupMean - grandMean) ** 2;
+  }
+  weeklyBetweenVar /= salesValues.length;
+  const weeklyStrength = Math.min(1, weeklyBetweenVar / totalVar);
+
+  // Monthly: group by month
+  const monthGroups: Record<number, number[]> = {};
+  for (const d of dailyData) {
+    if (d.sales <= 0) continue;
+    if (!monthGroups[d.month]) monthGroups[d.month] = [];
+    monthGroups[d.month].push(d.sales);
+  }
+  let monthlyBetweenVar = 0;
+  for (const group of Object.values(monthGroups)) {
+    const groupMean = group.reduce((a, b) => a + b, 0) / group.length;
+    monthlyBetweenVar += group.length * (groupMean - grandMean) ** 2;
+  }
+  monthlyBetweenVar /= salesValues.length;
+  const monthlyStrength = Math.min(1, monthlyBetweenVar / totalVar);
+
+  const hasWeekly = weeklyStrength > 0.05;
+  const hasMonthly = monthlyStrength > 0.05;
+
+  return {
+    weekly: Math.round(weeklyStrength * 1000) / 1000,
+    monthly: Math.round(monthlyStrength * 1000) / 1000,
+    has_weekly: hasWeekly,
+    has_monthly: hasMonthly,
+    dominant: weeklyStrength > monthlyStrength ? 'weekly' : monthlyStrength > 0.05 ? 'monthly' : 'none',
+  };
+}
+
+/**
+ * Expanding window cross-validation for time series.
+ * Unlike random K-fold, this preserves temporal order:
+ *   Fold 1: train[0..60%] → test[60%..70%]
+ *   Fold 2: train[0..70%] → test[70%..80%]
+ *   Fold 3: train[0..80%] → test[80%..90%]
+ *   Fold 4: train[0..90%] → test[90%..100%]
+ *
+ * Returns per-fold metrics and aggregated metrics.
+ */
+export interface CVFold {
+  fold: number;
+  train_size: number;
+  test_size: number;
+  metrics: TimeSeriesMetrics;
+}
+
+export interface ExpandingWindowCVResult {
+  folds: CVFold[];
+  aggregated: TimeSeriesMetrics;
+  stability: number; // std of MAPE across folds / mean MAPE (lower = more stable)
+}
+
+export function expandingWindowCV(
+  dailyData: { t: number; sales: number; month: number; dayOfWeek: number }[],
+  predictFn: (train: typeof dailyData, testDates: typeof dailyData) => number[],
+  nFolds: number = 4,
+  minTrainPct: number = 0.5
+): ExpandingWindowCVResult {
+  const n = dailyData.length;
+  const folds: CVFold[] = [];
+
+  // Calculate fold boundaries
+  const testPct = (1 - minTrainPct) / nFolds;
+
+  for (let i = 0; i < nFolds; i++) {
+    const trainEnd = Math.floor(n * (minTrainPct + i * testPct));
+    const testEnd = Math.floor(n * (minTrainPct + (i + 1) * testPct));
+
+    if (trainEnd < 30 || testEnd > n) continue;
+
+    const train = dailyData.slice(0, trainEnd);
+    const test = dailyData.slice(trainEnd, testEnd);
+
+    if (test.length < 7) continue;
+
+    const predictions = predictFn(train, test);
+    const actual = test.map(d => d.sales);
+    const historical = train.map(d => d.sales);
+
+    const metrics = computeTimeSeriesMetrics(actual, predictions, historical);
+
+    folds.push({
+      fold: i + 1,
+      train_size: train.length,
+      test_size: test.length,
+      metrics,
+    });
+  }
+
+  // Aggregate metrics
+  if (folds.length === 0) {
+    return {
+      folds: [],
+      aggregated: { mape: 0, rmse: 0, mae: 0, mase: 0, directional_accuracy: 0, forecast_bias: 0, r_squared: 0 },
+      stability: 0,
+    };
+  }
+
+  const agg: TimeSeriesMetrics = {
+    mape: folds.reduce((s, f) => s + f.metrics.mape, 0) / folds.length,
+    rmse: folds.reduce((s, f) => s + f.metrics.rmse, 0) / folds.length,
+    mae: folds.reduce((s, f) => s + f.metrics.mae, 0) / folds.length,
+    mase: folds.reduce((s, f) => s + f.metrics.mase, 0) / folds.length,
+    directional_accuracy: folds.reduce((s, f) => s + f.metrics.directional_accuracy, 0) / folds.length,
+    forecast_bias: folds.reduce((s, f) => s + f.metrics.forecast_bias, 0) / folds.length,
+    r_squared: folds.reduce((s, f) => s + f.metrics.r_squared, 0) / folds.length,
+  };
+
+  // Stability: coefficient of variation of MAPE across folds
+  const mapes = folds.map(f => f.metrics.mape);
+  const mapeMean = mapes.reduce((a, b) => a + b, 0) / mapes.length;
+  const mapeStd = Math.sqrt(mapes.reduce((s, m) => s + (m - mapeMean) ** 2, 0) / mapes.length);
+  const stability = mapeMean > 0 ? mapeStd / mapeMean : 0;
+
+  return { folds, aggregated: agg, stability: Math.round(stability * 1000) / 1000 };
+}

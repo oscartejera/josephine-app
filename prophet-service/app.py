@@ -85,10 +85,14 @@ class ModelMetrics(BaseModel):
     mape: float
     rmse: float
     mae: float
+    mase: float = 0.0
     r_squared: float
+    directional_accuracy: float = 0.0
+    forecast_bias: float = 0.0
     data_points: int
     changepoints: int
     trend_slope_avg: float
+    cv_stability: float = 0.0
 
 
 class ForecastResponse(BaseModel):
@@ -146,51 +150,123 @@ def build_explanation(row: pd.Series, base_forecast: float) -> str:
 
 
 def calculate_cv_metrics(model: Prophet, df: pd.DataFrame) -> dict:
-    """Calculate cross-validation metrics using the last 20% of data as
-    a hold-out set instead of running full Prophet cross-validation
-    (which is slow for an API call)."""
+    """Expanding window cross-validation with comprehensive time series metrics.
+
+    Instead of a single holdout, uses 3 expanding windows to assess stability:
+      Fold 1: train[0..60%] → test[60%..73%]
+      Fold 2: train[0..73%] → test[73%..87%]
+      Fold 3: train[0..87%] → test[87%..100%]
+
+    Returns aggregated metrics including MASE, directional accuracy, and bias.
+    """
+    import logging as _logging
+    _logging.getLogger('cmdstanpy').setLevel(_logging.WARNING)
+
     n = len(df)
-    split = max(int(n * 0.8), n - 90)  # last 20% or up to 90 days
-    train = df.iloc[:split].copy()
-    test = df.iloc[split:].copy()
+    if n < 30:
+        return {
+            "mape": 0, "rmse": 0, "mae": 0, "mase": 0, "r_squared": 0,
+            "directional_accuracy": 0, "forecast_bias": 0, "cv_stability": 0,
+        }
 
-    if len(test) < 7:
-        return {"mape": 0, "rmse": 0, "mae": 0, "r_squared": 0}
+    fold_results = []
+    n_folds = 3
+    min_train_pct = 0.5
+    test_pct = (1.0 - min_train_pct) / n_folds
 
-    m = Prophet(
-        yearly_seasonality=model.yearly_seasonality,
-        weekly_seasonality=model.weekly_seasonality,
-        daily_seasonality=model.daily_seasonality,
-        seasonality_mode=model.seasonality_mode,
-        changepoint_prior_scale=model.changepoint_prior_scale,
-        seasonality_prior_scale=model.seasonality_prior_scale,
+    for i in range(n_folds):
+        train_end = max(30, int(n * (min_train_pct + i * test_pct)))
+        test_end = min(n, int(n * (min_train_pct + (i + 1) * test_pct)))
+
+        if train_end >= n or test_end - train_end < 7:
+            continue
+
+        train = df.iloc[:train_end].copy()
+        test = df.iloc[train_end:test_end].copy()
+
+        try:
+            m = Prophet(
+                yearly_seasonality=model.yearly_seasonality,
+                weekly_seasonality=model.weekly_seasonality,
+                daily_seasonality=model.daily_seasonality,
+                seasonality_mode=model.seasonality_mode,
+                changepoint_prior_scale=model.changepoint_prior_scale,
+                seasonality_prior_scale=model.seasonality_prior_scale,
+            )
+            for reg in REGRESSOR_NAMES:
+                if reg in train.columns:
+                    m.add_regressor(reg, mode="multiplicative" if reg == "evento_impact" else "additive")
+
+            m.fit(train)
+            future = test[["ds"] + [r for r in REGRESSOR_NAMES if r in test.columns]].copy()
+            pred = m.predict(future)
+
+            actual = test["y"].values
+            predicted = pred["yhat"].values
+            mask = actual > 0
+
+            if mask.sum() < 3:
+                continue
+
+            fold_mape = float(np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])))
+            fold_rmse = float(np.sqrt(np.mean((actual - predicted) ** 2)))
+            fold_mae = float(np.mean(np.abs(actual - predicted)))
+            fold_bias = float(np.mean(actual - predicted))
+
+            # MASE: compare MAE to naive forecast MAE (y_{t-1})
+            naive_errors = np.abs(np.diff(train["y"].values))
+            naive_mae = float(np.mean(naive_errors)) if len(naive_errors) > 0 else 1.0
+            fold_mase = fold_mae / naive_mae if naive_mae > 0 else 0.0
+
+            # Directional accuracy
+            if len(actual) > 1:
+                actual_dir = np.diff(actual)
+                pred_dir = np.diff(predicted)
+                correct = np.sum((actual_dir >= 0) == (pred_dir >= 0))
+                fold_dir_acc = float(correct / len(actual_dir))
+            else:
+                fold_dir_acc = 0.0
+
+            # R-squared
+            ss_res = np.sum((actual - predicted) ** 2)
+            ss_tot = np.sum((actual - np.mean(actual)) ** 2)
+            fold_r2 = max(0.0, float(1 - ss_res / ss_tot)) if ss_tot > 0 else 0.0
+
+            fold_results.append({
+                "mape": fold_mape, "rmse": fold_rmse, "mae": fold_mae,
+                "mase": fold_mase, "r_squared": fold_r2,
+                "directional_accuracy": fold_dir_acc,
+                "forecast_bias": fold_bias,
+            })
+        except Exception as e:
+            logger.warning("CV fold %d failed: %s", i + 1, str(e))
+            continue
+
+    if not fold_results:
+        return {
+            "mape": 0, "rmse": 0, "mae": 0, "mase": 0, "r_squared": 0,
+            "directional_accuracy": 0, "forecast_bias": 0, "cv_stability": 0,
+        }
+
+    # Aggregate across folds
+    agg = {}
+    for key in fold_results[0]:
+        values = [f[key] for f in fold_results]
+        agg[key] = float(np.mean(values))
+
+    # CV stability: coefficient of variation of MAPE across folds
+    mapes = [f["mape"] for f in fold_results]
+    mape_mean = np.mean(mapes)
+    mape_std = np.std(mapes)
+    agg["cv_stability"] = float(mape_std / mape_mean) if mape_mean > 0 else 0.0
+
+    logger.info(
+        "CV (%d folds): MAPE=%.1f%% MASE=%.3f DirAcc=%.0f%% Bias=%.0f Stability=%.3f",
+        len(fold_results), agg["mape"] * 100, agg["mase"],
+        agg["directional_accuracy"] * 100, agg["forecast_bias"], agg["cv_stability"],
     )
 
-    for reg in REGRESSOR_NAMES:
-        if reg in train.columns:
-            m.add_regressor(reg, mode="multiplicative" if reg == "evento_impact" else "additive")
-
-    m.fit(train)
-
-    future = test[["ds"] + [r for r in REGRESSOR_NAMES if r in test.columns]].copy()
-    pred = m.predict(future)
-
-    actual = test["y"].values
-    predicted = pred["yhat"].values
-
-    mask = actual > 0
-    if mask.sum() == 0:
-        return {"mape": 0, "rmse": 0, "mae": 0, "r_squared": 0}
-
-    mape = float(np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])))
-    rmse = float(np.sqrt(np.mean((actual - predicted) ** 2)))
-    mae = float(np.mean(np.abs(actual - predicted)))
-
-    ss_res = np.sum((actual - predicted) ** 2)
-    ss_tot = np.sum((actual - np.mean(actual)) ** 2)
-    r_squared = float(1 - (ss_res / ss_tot)) if ss_tot > 0 else 0
-
-    return {"mape": mape, "rmse": rmse, "mae": mae, "r_squared": max(0, r_squared)}
+    return agg
 
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -294,7 +370,13 @@ async def forecast(req: ForecastRequest, authorization: str = Header(default="")
 
     # ── Cross-validation metrics ──────────────────────────────────────────
     cv_metrics = calculate_cv_metrics(model, df)
-    logger.info("CV metrics: MAPE=%.2f%%, R²=%.3f", cv_metrics["mape"] * 100, cv_metrics["r_squared"])
+    logger.info(
+        "CV metrics: MAPE=%.1f%% MASE=%.3f DirAcc=%.0f%% R²=%.3f Bias=%.0f Stability=%.3f",
+        cv_metrics["mape"] * 100, cv_metrics.get("mase", 0),
+        cv_metrics.get("directional_accuracy", 0) * 100,
+        cv_metrics["r_squared"], cv_metrics.get("forecast_bias", 0),
+        cv_metrics.get("cv_stability", 0),
+    )
 
     # ── Build trend slope ─────────────────────────────────────────────────
     trend_vals = pred["trend"].values
@@ -366,10 +448,14 @@ async def forecast(req: ForecastRequest, authorization: str = Header(default="")
         mape=round(cv_metrics["mape"], 4),
         rmse=round(cv_metrics["rmse"], 2),
         mae=round(cv_metrics["mae"], 2),
+        mase=round(cv_metrics.get("mase", 0), 4),
         r_squared=round(cv_metrics["r_squared"], 4),
+        directional_accuracy=round(cv_metrics.get("directional_accuracy", 0), 4),
+        forecast_bias=round(cv_metrics.get("forecast_bias", 0), 2),
         data_points=len(df),
         changepoints=len(model.changepoints) if hasattr(model, "changepoints") else 0,
         trend_slope_avg=round(trend_slope_avg, 4),
+        cv_stability=round(cv_metrics.get("cv_stability", 0), 4),
     )
 
     logger.info(
@@ -593,7 +679,11 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
             "mape": f"{result.metrics.mape * 100:.1f}%",
             "rmse": f"EUR {result.metrics.rmse:.0f}",
             "mae": f"EUR {result.metrics.mae:.0f}",
+            "mase": f"{result.metrics.mase:.3f}",
             "r_squared": f"{result.metrics.r_squared:.3f}",
+            "directional_accuracy": f"{result.metrics.directional_accuracy * 100:.0f}%",
+            "forecast_bias": f"EUR {result.metrics.forecast_bias:.0f}",
+            "cv_stability": f"{result.metrics.cv_stability:.3f}",
         },
         "sample_forecast": [
             {"date": f.ds, "forecast": f.yhat, "lower": f.yhat_lower, "upper": f.yhat_upper}

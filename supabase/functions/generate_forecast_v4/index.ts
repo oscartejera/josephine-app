@@ -5,20 +5,35 @@ import {
   calculateRegressorAdjustment,
   explainForecast,
   learnRegressorImpacts,
+  computeTimeSeriesMetrics,
+  checkStationarity,
+  detectSeasonalityStrength,
+  expandingWindowCV,
   type LearnedImpacts,
+  type TimeSeriesMetrics,
+  type StationarityResult,
+  type SeasonalityStrength,
+  type ExpandingWindowCVResult,
 } from "../_shared/regressors.ts";
 
 /**
- * Prophet-Style Forecast Generator V4.1
+ * Prophet-Style Forecast Generator V4.2 — Time Series Enhanced
  *
- * Improvements over v4.0:
+ * Improvements over v4.1:
+ * - Stationarity check (ADF-proxy with variance ratio analysis)
+ * - Seasonality strength detection (weekly + monthly ANOVA-style)
+ * - Expanding window cross-validation (4-fold temporal, no data leakage)
+ * - Full metrics suite: MAPE, RMSE, MAE, MASE, directional accuracy, bias
+ * - MASE comparison vs naive forecast (scale-independent accuracy)
+ * - Model evaluation report (DEPLOY/ACCEPTABLE/MONITOR/RETRAIN)
+ *
+ * Carried from v4.1:
  * - Reads target_col_percent, splh_goal, default_hourly_cost from location_settings
  * - Reads blended hourly cost from employees table (with fallback)
  * - Learns regressor impacts from historical data (data-driven, not hardcoded)
  * - Deterministic weather (seeded PRNG, reproducible forecasts)
- * - Backtesting with MAPE calculation
- * - Proper confidence: MAPE-based with data-quantity penalty
- * - Performance: stdDev computed once outside forecast loop
+ * - MAPE-based confidence with data-quantity penalty
+ * - 95% confidence intervals
  * - Reads from both facts_sales_15m and tickets (POS-first, fallback to tickets)
  */
 
@@ -152,7 +167,7 @@ Deno.serve(async (req) => {
     const horizonDays = body.horizon_days || 90;
 
     console.log(
-      `[FORECAST v4.1] Starting: location=${locationId || "all"}, horizon=${horizonDays}`
+      `[FORECAST v4.2] Starting: location=${locationId || "all"}, horizon=${horizonDays}`
     );
 
     // ── Get locations ──────────────────────────────────────────────
@@ -320,40 +335,84 @@ Deno.serve(async (req) => {
         ? calculateSeasonalIndex(dailyData, "monthly")
         : calculateSeasonalIndex(dailyData, "weekly");
 
-      const modelVersion = `Prophet_v4.1_${useMonthly ? "Monthly" : "Weekly"}_LearnedRegressors`;
+      const modelVersion = `Prophet_v4.2_${useMonthly ? "Monthly" : "Weekly"}_TSEnhanced`;
       logs.push(
         `Model: ${useMonthly ? "Monthly" : "Weekly"} seasonality, R²=${trend.rSquared.toFixed(3)}`
       );
 
-      // ── Backtesting ──────────────────────────────────────────────
+      // ── Stationarity Check ─────────────────────────────────────
+      const salesSeries = dailyData.map((d) => d.sales).filter((s) => s > 0);
+      const stationarity: StationarityResult = checkStationarity(salesSeries);
+      logs.push(
+        `Stationarity: ${stationarity.is_stationary ? 'YES' : 'NO'} (ADF=${stationarity.adf_statistic}, VR=${stationarity.variance_ratio})`
+      );
+      if (!stationarity.is_stationary) {
+        logs.push(`  → ${stationarity.recommendation}`);
+      }
+
+      // ── Seasonality Strength Detection ─────────────────────────
+      const seasonalityStrength: SeasonalityStrength = detectSeasonalityStrength(dailyData);
+      logs.push(
+        `Seasonality: weekly=${seasonalityStrength.weekly.toFixed(3)} monthly=${seasonalityStrength.monthly.toFixed(3)} dominant=${seasonalityStrength.dominant}`
+      );
+
+      // ── Expanding Window Cross-Validation (temporal, not random) ─
       let mse = 0;
       let mape = 0;
-      const hasEnoughForBacktest = dataPoints > BACKTEST_DAYS + 30;
+      let tsMetrics: TimeSeriesMetrics | null = null;
+      let cvResult: ExpandingWindowCVResult | null = null;
+      const hasEnoughForCV = dataPoints > 60;
 
-      if (hasEnoughForBacktest) {
-        const trainingEndIdx = dataPoints - BACKTEST_DAYS;
-        const backtestData = dailyData.slice(trainingEndIdx);
-        let sumSquaredError = 0;
-        let sumAbsPercentError = 0;
+      if (hasEnoughForCV) {
+        // Prediction function for CV: same model (trend + SI + regressors)
+        const predictFn = (
+          trainData: typeof dailyData,
+          testData: typeof dailyData
+        ): number[] => {
+          const trainRegression = linearRegression(trainData.map((d) => ({ x: d.t, y: d.sales })));
+          const trainSI = useMonthly
+            ? calculateSeasonalIndex(trainData, "monthly")
+            : calculateSeasonalIndex(trainData, "weekly");
+          return testData.map((d) => {
+            const tv = trainRegression.slope * d.t + trainRegression.intercept;
+            const siKey = useMonthly ? d.month : d.dayOfWeek;
+            return Math.max(0, tv * (1 + (trainSI[siKey] || 0)));
+          });
+        };
 
-        for (const d of backtestData) {
-          const trendValue = trend.slope * d.t + trend.intercept;
-          const siKey = useMonthly ? d.month : d.dayOfWeek;
-          const si = seasonalIndex[siKey] || 0;
-          const predicted = Math.max(0, trendValue * (1 + si));
-          const error = d.sales - predicted;
-          sumSquaredError += error * error;
-          const denom = Math.max(d.sales, 1);
-          sumAbsPercentError += Math.abs(error / denom);
-        }
+        cvResult = expandingWindowCV(dailyData, predictFn, 4, 0.5);
+        tsMetrics = cvResult.aggregated;
+        mse = Math.round(tsMetrics.rmse ** 2);
+        mape = tsMetrics.mape;
 
-        mse = Math.round(sumSquaredError / backtestData.length);
-        mape = sumAbsPercentError / backtestData.length;
         logs.push(
-          `Backtest (${backtestData.length}d): MSE=${mse}, MAPE=${(mape * 100).toFixed(1)}%`
+          `CV (${cvResult.folds.length} folds): MAPE=${(mape * 100).toFixed(1)}% RMSE=${tsMetrics.rmse.toFixed(0)} MAE=${tsMetrics.mae.toFixed(0)} MASE=${tsMetrics.mase.toFixed(3)} DirAcc=${(tsMetrics.directional_accuracy * 100).toFixed(0)}% Bias=€${tsMetrics.forecast_bias.toFixed(0)} Stability=${cvResult.stability}`
         );
+        for (const fold of cvResult.folds) {
+          logs.push(
+            `  Fold ${fold.fold}: train=${fold.train_size}d test=${fold.test_size}d MAPE=${(fold.metrics.mape * 100).toFixed(1)}%`
+          );
+        }
       } else {
-        logs.push(`Backtest skipped (need >${BACKTEST_DAYS + 30} days, have ${dataPoints})`);
+        // Fallback: simple holdout for small datasets
+        const hasEnoughForBacktest = dataPoints > BACKTEST_DAYS + 30;
+        if (hasEnoughForBacktest) {
+          const backtestData = dailyData.slice(dataPoints - BACKTEST_DAYS);
+          const predictions = backtestData.map((d) => {
+            const tv = trend.slope * d.t + trend.intercept;
+            const siKey = useMonthly ? d.month : d.dayOfWeek;
+            return Math.max(0, tv * (1 + (seasonalIndex[siKey] || 0)));
+          });
+          const actual = backtestData.map((d) => d.sales);
+          tsMetrics = computeTimeSeriesMetrics(actual, predictions, dailyData.map((d) => d.sales));
+          mse = Math.round(tsMetrics.rmse ** 2);
+          mape = tsMetrics.mape;
+          logs.push(
+            `Backtest (${backtestData.length}d): MAPE=${(mape * 100).toFixed(1)}% RMSE=${tsMetrics.rmse.toFixed(0)} MASE=${tsMetrics.mase.toFixed(3)} DirAcc=${(tsMetrics.directional_accuracy * 100).toFixed(0)}%`
+          );
+        } else {
+          logs.push(`Backtest skipped (need >${BACKTEST_DAYS + 30} days, have ${dataPoints})`);
+        }
       }
 
       // ── Historical stats (computed once, outside loop) ───────────
@@ -526,7 +585,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // ── Log model run ────────────────────────────────────────────
+      // ── Log model run (with enhanced metrics) ─────────────────
       await supabase.from("forecast_model_runs").insert({
         location_id: location.id,
         model_version: modelVersion,
@@ -567,6 +626,39 @@ Deno.serve(async (req) => {
           Math.round(blendedHourlyCost * 100) / 100,
         target_col_percent: targetColPercent,
         learned_impacts: learnedImpacts,
+        // Time Series Analysis (new)
+        time_series_analysis: {
+          stationarity,
+          seasonality_strength: seasonalityStrength,
+          metrics: tsMetrics ? {
+            mape: Math.round(tsMetrics.mape * 1000) / 10,
+            rmse: Math.round(tsMetrics.rmse),
+            mae: Math.round(tsMetrics.mae),
+            mase: Math.round(tsMetrics.mase * 1000) / 1000,
+            directional_accuracy: Math.round(tsMetrics.directional_accuracy * 1000) / 10,
+            forecast_bias: Math.round(tsMetrics.forecast_bias),
+            r_squared: Math.round(tsMetrics.r_squared * 1000) / 1000,
+          } : null,
+          cross_validation: cvResult ? {
+            folds: cvResult.folds.length,
+            stability: cvResult.stability,
+            per_fold_mape: cvResult.folds.map((f) => ({
+              fold: f.fold,
+              train: f.train_size,
+              test: f.test_size,
+              mape: Math.round(f.metrics.mape * 1000) / 10,
+            })),
+          } : null,
+          evaluation: mape > 0 ? {
+            mape_target_10pct: mape < 0.10 ? 'PASS' : 'FAIL',
+            mase_better_than_naive: (tsMetrics?.mase ?? 1) < 1 ? 'PASS' : 'FAIL',
+            directional_accuracy_50pct: (tsMetrics?.directional_accuracy ?? 0) > 0.5 ? 'PASS' : 'FAIL',
+            confidence_interval_coverage: 'N/A (computed at forecast time)',
+            recommendation: mape < 0.10 ? 'DEPLOY: Model meets accuracy targets' :
+              mape < 0.20 ? 'ACCEPTABLE: Model performing within tolerance' :
+              mape < 0.35 ? 'MONITOR: Model needs improvement' : 'RETRAIN: Model accuracy too low',
+          } : null,
+        },
         sample_forecast: forecasts.slice(0, 7).map((f) => ({
           date: f.date,
           forecast: f.forecast_sales,
@@ -578,14 +670,14 @@ Deno.serve(async (req) => {
       });
 
       console.log(
-        `[FORECAST v4.1] ${location.name}: ${forecasts.length} days, Conf=${confidence}%, MAPE=${(mape * 100).toFixed(1)}%`
+        `[FORECAST v4.2] ${location.name}: ${forecasts.length} days, Conf=${confidence}%, MAPE=${(mape * 100).toFixed(1)}%`
       );
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        version: "v4.1_prophet_learned_regressors",
+        version: "v4.2_timeseries_enhanced",
         features: [
           "Trend + Seasonality (monthly/weekly adaptive)",
           "Data-driven regressor impacts (learned from history)",
@@ -593,10 +685,15 @@ Deno.serve(async (req) => {
           "Reads location_settings for COL%, SPLH, hourly cost",
           "Reads employees for blended hourly cost",
           "POS-first data source (facts → tickets fallback)",
-          "Backtesting with MAPE (56-day holdout)",
+          "Stationarity check (ADF-proxy with variance ratio)",
+          "Seasonality strength detection (weekly + monthly)",
+          "Expanding window cross-validation (4-fold temporal)",
+          "Full metrics: MAPE, RMSE, MAE, MASE, directional accuracy, bias",
+          "MASE comparison vs naive forecast (scale-independent)",
           "MAPE-based confidence with data-quantity penalty",
           "95% confidence intervals",
           "Forecast clamping to historical P1-P99 range",
+          "Model evaluation report (DEPLOY/ACCEPTABLE/MONITOR/RETRAIN)",
         ],
         horizon_days: horizonDays,
         locations_processed: results.length,
@@ -606,7 +703,7 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[FORECAST v4.1] Error:", message);
+    console.error("[FORECAST v4.2] Error:", message);
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
