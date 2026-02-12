@@ -200,12 +200,35 @@ Deno.serve(async (req) => {
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
 
-      // Normalize and upsert items with resolved category names
-      for (const item of allSquareItems) {
-        const normalized = normalizeSquareItem(item, orgId, categoryMap);
+      // Normalize and upsert items + variations with resolved category names
+      for (const squareItem of allSquareItems) {
+        const { item, variations } = normalizeSquareItem(squareItem, orgId, categoryMap);
+
+        // Upsert parent item
         await supabase
           .from('cdm_items')
-          .upsert(normalized, { onConflict: 'external_provider,external_id' });
+          .upsert(item, { onConflict: 'external_provider,external_id' });
+
+        // Retrieve cdm_item_id for FK in variations
+        if (variations.length > 0) {
+          const { data: cdmItem } = await supabase
+            .from('cdm_items')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('external_provider', 'square')
+            .eq('external_id', item.external_id)
+            .single();
+
+          if (cdmItem) {
+            const variationRows = variations.map((v: any) => ({
+              ...v,
+              cdm_item_id: cdmItem.id,
+            }));
+            await supabase
+              .from('cdm_item_variations')
+              .upsert(variationRows, { onConflict: 'org_id,external_variation_id' });
+          }
+        }
       }
       stats.items = allSquareItems.length;
 
@@ -283,7 +306,7 @@ Deno.serve(async (req) => {
             allSyncedOrderIds.push(o.id);
             const lines = linesPerExtId.get(o.external_id) || [];
             for (const line of lines) {
-              allFreshLines.push({ ...line, order_id: o.id });
+              allFreshLines.push({ ...line, order_id: o.id, org_id: orgId });
             }
           }
         }
@@ -647,6 +670,14 @@ Deno.serve(async (req) => {
           (stats as any).facts_15m_rows = factsRows.length;
         }
       }
+
+      // 10) Backfill: link cdm_order_lines.item_id via cdm_item_variations
+      //     Sets item_id on lines where external_variation_id is known but
+      //     item_id was not yet resolved.
+      const { data: backfillResult } = await supabase.rpc('backfill_order_lines_item_id', {
+        p_org_id: orgId,
+      });
+      (stats as any).lines_backfilled = backfillResult ?? 0;
 
       // Complete sync
       await supabase.rpc('complete_sync_run', {
