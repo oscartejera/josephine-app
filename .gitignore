@@ -35,3 +35,6 @@ __pycache__/
 # Supabase
 supabase/.temp/
 .vercel
+
+# Migration repair input (contains remote DB state — do not commit)
+remote_versions.txt
