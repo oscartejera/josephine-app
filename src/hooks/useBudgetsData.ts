@@ -353,7 +353,7 @@ export function useBudgetsData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, effectiveLocationIds, locations, appLoading, compareMode]);
+  }, [dateRange, effectiveLocationIds, locations, appLoading, compareMode, dataSource]);
 
   useEffect(() => {
     if (!appLoading) {

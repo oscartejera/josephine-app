@@ -324,17 +324,17 @@ Deno.serve(async (req) => {
         }));
 
         if (rows.length > 0) {
-          // Collect synced dates to replace simulated data
           const syncedDates = [...new Set(rows.map(r => r.date))];
+          const syncedLocationIds = [...new Set(rows.map(r => r.location_id))];
 
-          // Delete ALL existing rows (simulated + pos) for synced dates
-          // The unique constraint is (date, location_id) without data_source,
-          // so we must remove existing rows before inserting POS replacements.
+          // Only delete previous POS rows — keep simulated data intact
+          // so disconnecting reverts cleanly to demo data.
           await supabase
             .from('pos_daily_finance')
             .delete()
+            .eq('data_source', 'pos')
             .in('date', syncedDates)
-            .in('location_id', [...new Set(rows.map(r => r.location_id))]);
+            .in('location_id', syncedLocationIds);
 
           await supabase
             .from('pos_daily_finance')
@@ -358,12 +358,12 @@ Deno.serve(async (req) => {
         }));
 
         if (metricsRows.length > 0) {
-          // Delete existing rows (simulated + pos) for synced dates.
-          // Unique constraint is (date, location_id) without data_source.
+          // Only delete previous POS rows — keep simulated data intact.
           const metricsDates = [...new Set(metricsRows.map(r => r.date))];
           await supabase
             .from('pos_daily_metrics')
             .delete()
+            .eq('data_source', 'pos')
             .in('date', metricsDates)
             .in('location_id', [...new Set(metricsRows.map(r => r.location_id))]);
 
@@ -471,23 +471,11 @@ Deno.serve(async (req) => {
             productDailyAgg.set(key, existing);
           }
 
-          // Delete existing POS product_sales_daily
+          // Only delete previous POS rows — keep simulated data intact.
           await supabase
             .from('product_sales_daily')
             .delete()
             .eq('data_source', 'pos');
-
-          // Delete simulated rows for synced dates to avoid double-counting
-          const syncedDates = [...new Set(
-            Array.from(productDailyAgg.values()).map(d => d.date)
-          )];
-          if (syncedDates.length > 0) {
-            await supabase
-              .from('product_sales_daily')
-              .delete()
-              .eq('data_source', 'simulated')
-              .in('date', syncedDates);
-          }
 
           // Insert fresh POS rows
           const productRows = Array.from(productDailyAgg.values()).map(d => ({

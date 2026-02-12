@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +61,7 @@ interface SyncRun {
 export default function SquareIntegration() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [integration, setIntegration] = useState<Integration | null>(null);
   const [account, setAccount] = useState<IntegrationAccount | null>(null);
@@ -220,6 +222,8 @@ export default function SquareIntegration() {
     setIntegration(null);
     setAccount(null);
     setSyncRuns([]);
+    // Invalidate all data caches so hooks re-fetch with dataSource='simulated'
+    queryClient.invalidateQueries();
     toast.info('Square desconectado');
   };
 
