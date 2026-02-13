@@ -18,7 +18,7 @@ export interface DashboardInsights {
 
 export interface LowStockItem {
   name: string;
-  percentOfPar: number;
+  percentOfPar: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -179,7 +179,8 @@ export function buildDashboardInsights(
 
   // ---- Low stock alerts ----
   if (lowStockItems && lowStockItems.length > 0) {
-    const critical = lowStockItems.filter(i => i.percentOfPar <= 25);
+    const withPar = lowStockItems.filter(i => i.percentOfPar !== null);
+    const critical = withPar.filter(i => i.percentOfPar! <= 25);
     if (critical.length > 0) {
       const names = critical.slice(0, 3).map(i => i.name).join(', ');
       risks.push({

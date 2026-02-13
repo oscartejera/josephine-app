@@ -78,7 +78,7 @@ export default function Dashboard() {
         name: a.name,
         percentOfPar: a.reorder_point > 0
           ? (a.on_hand / a.reorder_point) * 100
-          : 0,
+          : null,
       }))
     : null;
 
