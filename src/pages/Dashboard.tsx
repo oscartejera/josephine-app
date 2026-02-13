@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { HonestKpiCard } from '@/components/dashboard/HonestKpiCard';
 import { DateRangeSelector } from '@/components/dashboard/DateRangeSelector';
@@ -12,7 +12,9 @@ import {
   presetToDateRange,
   type DateRangePreset,
 } from '@/hooks/useDashboardMetrics';
-import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
+import { useTopProductsHonest } from '@/hooks/useTopProductsHonest';
+import { supabase } from '@/integrations/supabase/client';
+import type { LowStockItem } from '@/lib/buildDashboardInsights';
 
 // ---------------------------------------------------------------------------
 // Formatters
@@ -33,6 +35,39 @@ const periodLabels: Record<DateRangePreset, string> = {
   '30d': 'últimos 30 días vs 30 días anteriores',
   custom: 'periodo actual vs anterior',
 };
+
+// ---------------------------------------------------------------------------
+// Lightweight low-stock hook (for insights engine, not the widget)
+// ---------------------------------------------------------------------------
+
+function useLowStockForInsights(): LowStockItem[] | null {
+  const [items, setItems] = useState<LowStockItem[] | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('inventory_items')
+        .select('name, current_stock, par_level')
+        .not('par_level', 'is', null)
+        .gt('par_level', 0);
+
+      if (!data) { setItems([]); return; }
+
+      const low = data
+        .filter(i => (i.current_stock || 0) < (i.par_level || 0))
+        .map(i => ({
+          name: i.name,
+          percentOfPar: i.par_level ? ((i.current_stock || 0) / i.par_level) * 100 : 0,
+        }))
+        .sort((a, b) => a.percentOfPar - b.percentOfPar)
+        .slice(0, 5);
+
+      setItems(low);
+    })();
+  }, []);
+
+  return items;
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -61,57 +96,14 @@ export default function Dashboard() {
     dataSource,
   });
 
-  const current = data?.current;
-  const previous = data?.previous;
+  const current = data?.current ?? null;
+  const previous = data?.previous ?? null;
 
-  // Build metrics for AI narrative panel
-  const narrativeMetrics: DashboardMetricsForAI | null = useMemo(() => {
-    if (!current || isLoading) return null;
-    if (!current.sales.available) return null;
+  // Top products for insights engine (reuses same query as TopProductsCard when metric=share)
+  const { data: topProducts } = useTopProductsHonest({ dateRange, metric: 'share' });
 
-    const val = (kpi: typeof current.sales) => (kpi.available ? kpi.value : 0);
-
-    const sales = val(current.sales);
-    const prevSales = previous ? val(previous.sales) : 0;
-    const laborCost = val(current.labor);
-    const prevLabor = previous ? val(previous.labor) : 0;
-    const covers = val(current.covers);
-    const prevCovers = previous ? val(previous.covers) : 0;
-    const avgTicket = val(current.avgTicket);
-    const prevAvgTicket = previous ? val(previous.avgTicket) : 0;
-    const cogsPercent = current.cogs.available && sales > 0
-      ? (current.cogs.value / sales) * 100
-      : 0;
-    const prevCogsPercent = previous?.cogs.available && prevSales > 0
-      ? (previous.cogs.value / prevSales) * 100
-      : 0;
-    const gpPercent = val(current.gpPercent);
-    const prevGpPercent = previous ? val(previous.gpPercent) : 0;
-    const colPercent = val(current.colPercent);
-    const prevColPercent = previous ? val(previous.colPercent) : 0;
-
-    const delta = (c: number, p: number) => (p === 0 ? 0 : Math.round(((c - p) / p) * 1000) / 10);
-
-    return {
-      sales,
-      salesDelta: delta(sales, prevSales),
-      covers,
-      coversDelta: delta(covers, prevCovers),
-      avgTicket,
-      avgTicketDelta: delta(avgTicket, prevAvgTicket),
-      laborCost,
-      laborDelta: delta(laborCost, prevLabor),
-      colPercent,
-      colDelta: delta(colPercent, prevColPercent),
-      cogsPercent,
-      cogsDelta: delta(cogsPercent, prevCogsPercent),
-      gpPercent,
-      gpDelta: delta(gpPercent, prevGpPercent),
-      locationName: selectedLocationId === 'all' ? 'Todos los locales' : 'Local seleccionado',
-      periodLabel: periodLabels[preset],
-      topProducts: [],
-    };
-  }, [current, previous, isLoading, selectedLocationId, preset]);
+  // Low stock items for insights engine
+  const lowStockItems = useLowStockForInsights();
 
   if (needsOnboarding) {
     return <OnboardingWizard onComplete={setOnboardingComplete} />;
@@ -204,9 +196,15 @@ export default function Dashboard() {
       {/* Top 10 Products */}
       <TopProductsCard dateRange={dateRange} />
 
-      {/* AI Narrative and Low Stock */}
+      {/* Josephine Insights and Low Stock */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <NarrativeInsightsPanel metrics={narrativeMetrics} />
+        <NarrativeInsightsPanel
+          kpis={current}
+          previousKpis={previous}
+          topProducts={topProducts ?? null}
+          lowStockItems={lowStockItems}
+          loading={isLoading}
+        />
         <LowStockWidget />
       </div>
     </div>
