@@ -3,12 +3,19 @@
  * audit-data-source-aware.mjs
  *
  * Scans src/ for TS/TSX files that query "sensitive" analytics tables via
- * supabase.from('table') WITHOUT evidence of data-source-unified awareness.
+ * supabase.from('table') and verifies data-source-unified awareness.
  *
- * A file is considered "OK" if it contains at least one of:
- *   - `data_source_unified` (filter on unified column)
- *   - `dsUnified` (variable from DataSourceContext)
- *   - a `.from('..._unified')` or `.rpc('..._unified'` call
+ * Classification rules:
+ *   A) .from('..._unified')       → OK  (unified view handles data source)
+ *   B) .from('sensitive_table')   → requires .eq('data_source_unified', ...)
+ *                                    filter in the same file; otherwise offender
+ *   C) .rpc('..._unified')        → OK  (resolves data source server-side);
+ *                                    reported for context but does NOT excuse
+ *                                    unfiltered .from() calls on sensitive tables
+ *
+ * Previous heuristic checked for `dsUnified` anywhere in the file, which could
+ * give false OKs when the variable only appeared in a queryKey (for cache
+ * invalidation) but the actual query lacked a data_source_unified filter.
  *
  * Usage:
  *   node scripts/audit-data-source-aware.mjs               # warn mode (exit 0)
@@ -67,28 +74,45 @@ function isExcluded(filePath) {
   return EXCLUDED_PATHS.some((ex) => filePath.includes(ex));
 }
 
-/** Returns true if the file shows data-source-unified awareness. */
-function isDataSourceAware(content) {
-  return (
-    content.includes('data_source_unified') ||
-    content.includes('dsUnified') ||
-    /_unified['"`]/.test(content)  // .from('v_xxx_unified') or .rpc('xxx_unified')
-  );
-}
-
-/** Returns list of sensitive table names found in supabase .from() calls. */
-function findSensitiveQueries(content) {
-  // Match .from('table') or .from("table") or .from(`table`)
+/**
+ * Classify .from() calls into unified views vs non-unified sensitive tables.
+ *
+ * - A table ending in `_unified` is treated as a unified view (auto-OK).
+ * - A table in SENSITIVE_TABLES that does NOT end in `_unified` needs a filter.
+ */
+function classifyFromCalls(content) {
   const regex = /\.from\(\s*['"`]([^'"`]+)['"`]\s*\)/g;
-  const found = new Set();
+  const nonUnified = new Set();
+  const unified = new Set();
   let match;
   while ((match = regex.exec(content)) !== null) {
     const table = match[1];
-    if (SENSITIVE_TABLES.has(table)) {
-      found.add(table);
+    if (table.endsWith('_unified')) {
+      unified.add(table);
+    } else if (SENSITIVE_TABLES.has(table)) {
+      nonUnified.add(table);
     }
   }
-  return [...found];
+  return { nonUnified: [...nonUnified], unified: [...unified] };
+}
+
+/**
+ * Returns true if the file contains an actual Supabase filter on the
+ * data_source_unified column (.eq or .filter).
+ *
+ * This is stricter than the old check which accepted `dsUnified` anywhere
+ * (e.g. inside a queryKey array).
+ */
+function hasDataSourceFilter(content) {
+  return (
+    /\.eq\(\s*['"`]data_source_unified['"`]/.test(content) ||
+    /\.filter\(\s*['"`]data_source_unified['"`]/.test(content)
+  );
+}
+
+/** Returns true if the file calls a *_unified RPC (for reporting). */
+function hasUnifiedRpc(content) {
+  return /\.rpc\(\s*['"`][^'"`]*_unified['"`]/.test(content);
 }
 
 // ---------------------------------------------------------------------------
@@ -107,15 +131,29 @@ for (const filePath of files) {
   if (isExcluded(filePath)) continue;
 
   const content = await readFile(filePath, 'utf8');
-  const tables = findSensitiveQueries(content);
-  if (tables.length === 0) continue;
+  const { nonUnified, unified } = classifyFromCalls(content);
+
+  // Skip files with no sensitive .from() calls at all
+  if (nonUnified.length === 0 && unified.length === 0) continue;
 
   const rel = relative(process.cwd(), filePath);
+  const rpcUnified = hasUnifiedRpc(content);
 
-  if (isDataSourceAware(content)) {
-    okFiles.push({ path: rel, tables });
+  if (nonUnified.length === 0) {
+    // Only unified .from() calls — auto-OK
+    const reasons = [];
+    if (unified.length > 0) reasons.push('from_unified');
+    if (rpcUnified) reasons.push('rpc_unified');
+    okFiles.push({ path: rel, tables: unified, reasons });
+  } else if (hasDataSourceFilter(content)) {
+    // Has non-unified sensitive tables BUT also has an actual eq/filter — OK
+    const reasons = ['eq_filter'];
+    if (unified.length > 0) reasons.push('from_unified');
+    if (rpcUnified) reasons.push('rpc_unified');
+    okFiles.push({ path: rel, tables: [...nonUnified, ...unified], reasons });
   } else {
-    offenders.push({ path: rel, tables });
+    // Non-unified sensitive tables WITHOUT a data_source_unified filter
+    offenders.push({ path: rel, tables: nonUnified });
   }
 }
 
@@ -129,12 +167,12 @@ console.log('─'.repeat(50));
 if (okFiles.length > 0) {
   console.log('\n✅ OK files:');
   for (const f of okFiles) {
-    console.log(`   ${f.path}  [${f.tables.join(', ')}]`);
+    console.log(`   ${f.path}  [${f.tables.join(', ')}]  (${f.reasons.join(', ')})`);
   }
 }
 
 if (offenders.length > 0) {
-  console.log('\n⚠️  Offenders (missing data_source_unified / dsUnified / *_unified):');
+  console.log('\n⚠️  Offenders (need .eq("data_source_unified", ...) or migrate to *_unified view):');
   for (const f of offenders) {
     console.log(`   ${f.path}  [${f.tables.join(', ')}]`);
   }
