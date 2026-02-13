@@ -185,14 +185,19 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
 
       // Timeseries is blocking — if it fails, the whole query errors
+      console.log('[useBISalesData] Calling RPC', { orgId, locationIds: effectiveLocationIds, from: fromStr, to: toStr });
       const timeseriesResult = await rpc('get_sales_timeseries_unified', {
         p_org_id: orgId,
         p_location_ids: effectiveLocationIds,
         p_from: fromStr,
         p_to: toStr,
       });
-      if (timeseriesResult.error) throw timeseriesResult.error;
+      if (timeseriesResult.error) {
+        console.error('[useBISalesData] timeseries RPC error:', timeseriesResult.error);
+        throw timeseriesResult.error;
+      }
       const ts = timeseriesResult.data;
+      console.log('[useBISalesData] timeseries OK:', { data_source: (ts as any)?.data_source, daily: (ts as any)?.daily?.length, hourly: (ts as any)?.hourly?.length });
 
       // Top products is best-effort — page renders without it if RPC is missing/failing
       let tp: Record<string, unknown> | null = null;
