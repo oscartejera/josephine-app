@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { format, isSameDay, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -65,14 +64,7 @@ export interface ChartDataPoint {
   avgCheckForecast: number;
 }
 
-export interface BISalesMeta {
-  dataSource: 'demo' | 'pos';
-  reason?: string;
-  hasRows: boolean;
-}
-
 export interface BISalesData {
-  meta: BISalesMeta;
   kpis: {
     salesToDate: number;
     salesToDateDelta: number;
@@ -97,9 +89,8 @@ interface UseBISalesDataParams {
   locationIds: string[];
 }
 
-function emptyData(dataSource: 'demo' | 'pos' = 'demo', reason?: string): BISalesData {
+function emptyData(): BISalesData {
   return {
-    meta: { dataSource, reason, hasRows: false },
     kpis: {
       salesToDate: 0,
       salesToDateDelta: 0,
@@ -121,7 +112,6 @@ function emptyData(dataSource: 'demo' | 'pos' = 'demo', reason?: string): BISale
 export function useBISalesData({ dateRange, granularity, compareMode, locationIds }: UseBISalesDataParams) {
   const { locations, group } = useApp();
   const { session } = useAuth();
-  const { dsUnified } = useEffectiveDataSource();
   const queryClient = useQueryClient();
   const orgId = group?.id;
   const effectiveLocationIds = locationIds.length > 0 ? locationIds : locations.map(l => l.id);
@@ -173,56 +163,40 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
   }, [queryClient, session]);
 
   const query = useQuery({
-    queryKey: ['bi-sales', fromISO, toISO, granularity, compareMode, effectiveLocationIds, orgId, dsUnified],
+    queryKey: ['bi-sales', fromISO, toISO, granularity, compareMode, effectiveLocationIds, orgId],
     enabled: !!orgId && effectiveLocationIds.length > 0,
     queryFn: async (): Promise<BISalesData> => {
 
       const fromStr = format(dateRange.from, 'yyyy-MM-dd');
       const toStr = format(dateRange.to, 'yyyy-MM-dd');
 
+      // Call both unified RPCs in parallel — data source resolved server-side
       // RPCs not yet in auto-generated types, typed cast required
       type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
       const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
-
-      // Timeseries is blocking — if it fails, the whole query errors
-      console.log('[useBISalesData] Calling RPC', { orgId, locationIds: effectiveLocationIds, from: fromStr, to: toStr });
-      const timeseriesResult = await rpc('get_sales_timeseries_unified', {
-        p_org_id: orgId,
-        p_location_ids: effectiveLocationIds,
-        p_from: fromStr,
-        p_to: toStr,
-      });
-      if (timeseriesResult.error) {
-        console.error('[useBISalesData] timeseries RPC error:', timeseriesResult.error);
-        throw timeseriesResult.error;
-      }
-      const ts = timeseriesResult.data;
-      console.log('[useBISalesData] timeseries OK:', { data_source: (ts as any)?.data_source, daily: (ts as any)?.daily?.length, hourly: (ts as any)?.hourly?.length });
-
-      // Top products is best-effort — page renders without it if RPC is missing/failing
-      let tp: Record<string, unknown> | null = null;
-      try {
-        const topProductsResult = await rpc('get_top_products_unified', {
+      const [timeseriesResult, topProductsResult] = await Promise.all([
+        rpc('get_sales_timeseries_unified', {
+          p_org_id: orgId,
+          p_location_ids: effectiveLocationIds,
+          p_from: fromStr,
+          p_to: toStr,
+        }),
+        rpc('get_top_products_unified', {
           p_org_id: orgId,
           p_location_ids: effectiveLocationIds,
           p_from: fromStr,
           p_to: toStr,
           p_limit: 20,
-        });
-        if (!topProductsResult.error) tp = topProductsResult.data as Record<string, unknown>;
-      } catch {
-        // Swallow — top products is non-critical
-      }
+        }),
+      ]);
 
-      // Extract readiness metadata from the RPC response
-      const metaDataSource = ((ts as Record<string, unknown>)?.data_source as string) || 'demo';
-      const metaReason = ((ts as Record<string, unknown>)?.reason as string) || undefined;
-      const metaHourly = (ts as Record<string, unknown>)?.hourly as unknown[] | null;
-      const metaDaily = (ts as Record<string, unknown>)?.daily as unknown[] | null;
-      const metaHasRows = (metaHourly != null && metaHourly.length > 0) ||
-                          (metaDaily != null && metaDaily.length > 0);
+      if (timeseriesResult.error) throw timeseriesResult.error;
+      if (topProductsResult.error) throw topProductsResult.error;
 
-      if (!ts || !ts.kpis) return emptyData(metaDataSource as 'demo' | 'pos', metaReason);
+      const ts = timeseriesResult.data;
+      const tp = topProductsResult.data;
+
+      if (!ts || !ts.kpis) return emptyData();
 
       // ── KPIs from timeseries RPC ─────────────────────────────
       const kpis = ts.kpis;
@@ -343,11 +317,6 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         });
 
       return {
-        meta: {
-          dataSource: metaDataSource as 'demo' | 'pos',
-          reason: metaReason,
-          hasRows: metaHasRows,
-        },
         kpis: {
           salesToDate: totalNetSales,
           salesToDateDelta,
@@ -365,7 +334,6 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         locations: locationSalesData,
       };
     },
-    retry: 1,
     staleTime: 30000
   });
 

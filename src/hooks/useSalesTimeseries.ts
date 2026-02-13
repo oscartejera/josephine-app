@@ -7,7 +7,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { format } from 'date-fns';
 
 // ── Response types ────────────────────────────────────────────
@@ -77,8 +76,6 @@ export function useSalesTimeseries({
   to,
   enabled = true,
 }: UseSalesTimeseriesParams) {
-  const { dsUnified } = useEffectiveDataSource();
-
   return useQuery({
     queryKey: [
       'sales-timeseries-unified',
@@ -86,7 +83,6 @@ export function useSalesTimeseries({
       locationIds,
       format(from, 'yyyy-MM-dd'),
       format(to, 'yyyy-MM-dd'),
-      dsUnified,
     ],
     queryFn: async (): Promise<SalesTimeseriesResult> => {
       // RPC not yet in auto-generated types

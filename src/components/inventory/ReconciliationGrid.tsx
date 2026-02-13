@@ -64,7 +64,7 @@ export function ReconciliationGrid({
   );
 
   const filteredLines = useMemo(() => {
-    const result = lines.filter(line => 
+    let result = lines.filter(line => 
       line.itemName.toLowerCase().includes(search.toLowerCase())
     );
 

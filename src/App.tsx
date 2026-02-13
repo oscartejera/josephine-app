@@ -6,7 +6,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DemoModeProvider } from "@/contexts/DemoModeContext";
-import { DataSourceProvider } from "@/contexts/DataSourceContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -186,15 +185,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <DataSourceProvider>
-            <DemoModeProvider>
-              <BrowserRouter>
+          <DemoModeProvider>
+            <BrowserRouter>
               <AppRoutes />
               <Toaster />
               <Sonner />
-              </BrowserRouter>
-            </DemoModeProvider>
-          </DataSourceProvider>
+            </BrowserRouter>
+          </DemoModeProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

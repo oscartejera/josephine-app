@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useProcurementData } from '@/hooks/useProcurementData';
-import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, History, ChevronRight, MoreHorizontal, Database, Loader2, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, History, ChevronRight, MoreHorizontal, Database, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,9 +28,7 @@ import { ProcurementSettingsDialog } from '@/components/procurement/ProcurementS
 
 export default function Procurement() {
   const [activeTab, setActiveTab] = useState('order');
-  const { dsUnified } = useEffectiveDataSource();
-  const isDemo = dsUnified === 'demo';
-
+  
   const {
     suppliers,
     selectedSupplier,
@@ -151,22 +148,6 @@ export default function Procurement() {
           </DropdownMenu>
         </div>
       </div>
-
-      {/* Demo mode banner */}
-      {isDemo && (
-        <div className="flex items-start gap-3 p-4 bg-warning/10 rounded-xl border border-warning/30">
-          <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">Demo Mode — Live orders disabled</p>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Connect a POS integration to place real purchase orders.
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => window.location.href = '/settings?tab=datasource'}>
-            Connect POS
-          </Button>
-        </div>
-      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

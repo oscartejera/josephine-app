@@ -1,13 +1,10 @@
 import React, { createContext, useContext } from 'react';
-import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
-import type { DataSourceValue } from '@/hooks/useDataSource';
+import { useDataSource, DataSourceValue } from '@/hooks/useDataSource';
 
 /**
  * Demo Mode Context
  *
- * Now driven by the centralized DataSourceContext (which calls
- * resolve_data_source RPC exactly once).
- *
+ * Now driven by the centralized resolve_data_source RPC via useDataSource.
  * - dataSource='pos' → isDemoMode = false → real POS data
  * - dataSource='demo' → isDemoMode = true → simulated demo data
  *
@@ -43,11 +40,10 @@ const DemoModeContext = createContext<DemoModeContextType>({
 });
 
 export function DemoModeProvider({ children }: { children: React.ReactNode }) {
-  const { dsUnified, reason, blocked, isLoading, lastSyncedAt } =
-    useEffectiveDataSource();
+  const { dataSource, reason, blocked, loading, lastSyncedAt } = useDataSource();
 
   // While loading, keep demo mode on (avoids flicker)
-  const isDemoMode = isLoading ? DEMO_MODE_DEFAULT : dsUnified === 'demo';
+  const isDemoMode = loading ? DEMO_MODE_DEFAULT : dataSource === 'demo';
 
   const demoLabel = isDemoMode
     ? 'Demo Mode: mostrando datos del Admin'
@@ -57,7 +53,7 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
     <DemoModeContext.Provider value={{
       isDemoMode,
       demoLabel,
-      dataSource: isLoading ? 'demo' : dsUnified,
+      dataSource: loading ? 'demo' : dataSource,
       dataSourceReason: reason,
       dataSourceBlocked: blocked,
       lastSyncedAt,

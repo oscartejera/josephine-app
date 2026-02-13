@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Minus, Plus, CreditCard, Loader2, CheckCircle, AlertCircle, Truck, Calendar, Shield, Package, MessageSquare, Database, AlertTriangle } from 'lucide-react';
-import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
+import { ArrowLeft, Trash2, Minus, Plus, CreditCard, Loader2, CheckCircle, AlertCircle, Truck, Calendar, Shield, Package, MessageSquare, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -31,8 +30,6 @@ export default function ProcurementCart() {
     allSkus,
   } = useProcurementData();
   
-  const { dsUnified } = useEffectiveDataSource();
-  const isDemo = dsUnified === 'demo';
   const [paymentState, setPaymentState] = useState<PaymentState>('idle');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [comments, setComments] = useState('');
@@ -432,29 +429,20 @@ export default function ProcurementCart() {
                   >
                     Save for later
                   </Button>
-                  <Button
-                    className="w-full h-12 text-base font-semibold"
+                  <Button 
+                    className="w-full h-12 text-base font-semibold" 
                     size="lg"
                     onClick={handlePlaceOrder}
-                    disabled={!meetsMinOrder || isDemo}
+                    disabled={!meetsMinOrder}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
-                    {isDemo ? 'Demo Mode' : 'Place Order'}
+                    Place Order
                   </Button>
                 </div>
 
-                {isDemo ? (
-                  <div className="flex items-start gap-2 p-3 bg-warning/10 rounded-lg border border-warning/20">
-                    <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-muted-foreground">
-                      Live orders are disabled in demo mode. Connect a POS to place real orders.
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Payment will be charged to your saved payment method
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground text-center">
+                  Payment will be charged to your saved payment method
+                </p>
               </CardContent>
             </Card>
           </div>
