@@ -180,31 +180,34 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const fromStr = format(dateRange.from, 'yyyy-MM-dd');
       const toStr = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Call both unified RPCs in parallel — data source resolved server-side
       // RPCs not yet in auto-generated types, typed cast required
       type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
       const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
-      const [timeseriesResult, topProductsResult] = await Promise.all([
-        rpc('get_sales_timeseries_unified', {
-          p_org_id: orgId,
-          p_location_ids: effectiveLocationIds,
-          p_from: fromStr,
-          p_to: toStr,
-        }),
-        rpc('get_top_products_unified', {
+
+      // Timeseries is blocking — if it fails, the whole query errors
+      const timeseriesResult = await rpc('get_sales_timeseries_unified', {
+        p_org_id: orgId,
+        p_location_ids: effectiveLocationIds,
+        p_from: fromStr,
+        p_to: toStr,
+      });
+      if (timeseriesResult.error) throw timeseriesResult.error;
+      const ts = timeseriesResult.data;
+
+      // Top products is best-effort — page renders without it if RPC is missing/failing
+      let tp: Record<string, unknown> | null = null;
+      try {
+        const topProductsResult = await rpc('get_top_products_unified', {
           p_org_id: orgId,
           p_location_ids: effectiveLocationIds,
           p_from: fromStr,
           p_to: toStr,
           p_limit: 20,
-        }),
-      ]);
-
-      if (timeseriesResult.error) throw timeseriesResult.error;
-      if (topProductsResult.error) throw topProductsResult.error;
-
-      const ts = timeseriesResult.data;
-      const tp = topProductsResult.data;
+        });
+        if (!topProductsResult.error) tp = topProductsResult.data as Record<string, unknown>;
+      } catch {
+        // Swallow — top products is non-critical
+      }
 
       // Extract readiness metadata from the RPC response
       const metaDataSource = ((ts as Record<string, unknown>)?.data_source as string) || 'demo';
@@ -357,6 +360,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         locations: locationSalesData,
       };
     },
+    retry: 1,
     staleTime: 30000
   });
 
