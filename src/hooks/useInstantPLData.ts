@@ -192,13 +192,9 @@ export function useInstantPLData({
           labourHoursActual = Math.round(labourActual / 20);
         }
 
-        // COGS estimation (typically 25-32% of sales)
-        const dateKey = format(dateRange.from, 'yyyy-MM-dd') + loc.locationId + 'cogs';
-        const rng = new SeededRandom(hashString(dateKey));
-        const cogsRatio = rng.between(0.25, 0.32);
-        const cogsActual = Math.round(salesActual * cogsRatio);
-        const cogsForecastRatio = rng.between(0.26, 0.30);
-        const cogsForecast = Math.round(salesForecast * cogsForecastRatio);
+        // COGS: no real source — requires recipe costs or COGS feed
+        const cogsActual = 0;
+        const cogsForecast = 0;
 
         // Calculate percentages
         const cogsActualPct = salesActual > 0 ? (cogsActual / salesActual) * 100 : 0;

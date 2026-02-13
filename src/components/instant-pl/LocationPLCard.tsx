@@ -147,6 +147,15 @@ export function LocationPLCard({
   });
   
   const getCogsDisplay = () => {
+    // COGS not configured — show dash instead of fake numbers
+    if (data.estimatedCogs && data.cogsActual === 0) {
+      return {
+        actualPrimary: '—',
+        actualSecondary: 'Not configured',
+        forecastPrimary: '—',
+        forecastSecondary: ''
+      };
+    }
     if (viewMode === 'percentage') {
       return {
         actualPrimary: formatPct(data.cogsActualPct),
@@ -189,6 +198,15 @@ export function LocationPLCard({
   };
   
   const getFlashProfitDisplay = () => {
+    // Flash Profit depends on COGS — if COGS not configured, profit is unknown
+    if (data.estimatedCogs && data.cogsActual === 0) {
+      return {
+        actualPrimary: '—',
+        actualSecondary: 'Requires COGS',
+        forecastPrimary: '—',
+        forecastSecondary: ''
+      };
+    }
     if (viewMode === 'percentage') {
       return {
         actualPrimary: formatPct(data.flashProfitActualPct),
