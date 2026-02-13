@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { HonestKpiCard } from '@/components/dashboard/HonestKpiCard';
 import { DateRangeSelector } from '@/components/dashboard/DateRangeSelector';
@@ -13,7 +13,7 @@ import {
   type DateRangePreset,
 } from '@/hooks/useDashboardMetrics';
 import { useTopProductsHonest } from '@/hooks/useTopProductsHonest';
-import { supabase } from '@/integrations/supabase/client';
+import { useLowStockAlerts } from '@/hooks/useLowStockAlerts';
 import type { LowStockItem } from '@/lib/buildDashboardInsights';
 
 // ---------------------------------------------------------------------------
@@ -35,39 +35,6 @@ const periodLabels: Record<DateRangePreset, string> = {
   '30d': 'últimos 30 días vs 30 días anteriores',
   custom: 'periodo actual vs anterior',
 };
-
-// ---------------------------------------------------------------------------
-// Lightweight low-stock hook (for insights engine, not the widget)
-// ---------------------------------------------------------------------------
-
-function useLowStockForInsights(): LowStockItem[] | null {
-  const [items, setItems] = useState<LowStockItem[] | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from('inventory_items')
-        .select('name, current_stock, par_level')
-        .not('par_level', 'is', null)
-        .gt('par_level', 0);
-
-      if (!data) { setItems([]); return; }
-
-      const low = data
-        .filter(i => (i.current_stock || 0) < (i.par_level || 0))
-        .map(i => ({
-          name: i.name,
-          percentOfPar: i.par_level ? ((i.current_stock || 0) / i.par_level) * 100 : 0,
-        }))
-        .sort((a, b) => a.percentOfPar - b.percentOfPar)
-        .slice(0, 5);
-
-      setItems(low);
-    })();
-  }, []);
-
-  return items;
-}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -102,8 +69,18 @@ export default function Dashboard() {
   // Top products for insights engine (reuses same query as TopProductsCard when metric=share)
   const { data: topProducts } = useTopProductsHonest({ dateRange, metric: 'share' });
 
-  // Low stock items for insights engine
-  const lowStockItems = useLowStockForInsights();
+  // Low stock alerts (RPC-based, only when single location selected)
+  const { data: lowStockAlerts } = useLowStockAlerts(selectedLocationId);
+
+  // Map low stock alerts to the LowStockItem shape for insights engine
+  const lowStockItems: LowStockItem[] | null = lowStockAlerts
+    ? lowStockAlerts.map(a => ({
+        name: a.name,
+        percentOfPar: a.reorder_point > 0
+          ? (a.on_hand / a.reorder_point) * 100
+          : 0,
+      }))
+    : null;
 
   if (needsOnboarding) {
     return <OnboardingWizard onComplete={setOnboardingComplete} />;
@@ -205,7 +182,7 @@ export default function Dashboard() {
           lowStockItems={lowStockItems}
           loading={isLoading}
         />
-        <LowStockWidget />
+        <LowStockWidget locationId={selectedLocationId} />
       </div>
     </div>
   );
