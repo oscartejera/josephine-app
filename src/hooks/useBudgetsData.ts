@@ -1,3 +1,4 @@
+// Migrated to unified view: v_pos_daily_finance_unified
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -100,6 +101,8 @@ export function useBudgetsData(
   compareMode: CompareMode = 'budget'
 ) {
   const { locations, loading: appLoading, dataSource } = useApp();
+  // Map AppContext dataSource ('pos'|'simulated') to unified view value ('pos'|'demo')
+  const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
   const [isLoading, setIsLoading] = useState(true);
   const [metrics, setMetrics] = useState<BudgetMetrics>(defaultMetrics);
   const [dailyData, setDailyData] = useState<BudgetDailyData[]>([]);
@@ -123,7 +126,7 @@ export function useBudgetsData(
       // Fetch budgets
       let budgetQuery = supabase
         .from('budgets_daily')
-        .select('*')
+        .select('date, location_id, budget_sales, budget_labour, budget_cogs')
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -133,11 +136,11 @@ export function useBudgetsData(
 
       const { data: budgetData, error: budgetError } = await budgetQuery;
 
-      // Fetch actuals - pos_daily_finance for sales
+      // Fetch actuals - sales from unified view
       let salesQuery = supabase
-        .from('pos_daily_finance')
+        .from('v_pos_daily_finance_unified' as any)
         .select('date, location_id, net_sales')
-        .eq('data_source', dataSource)
+        .eq('data_source_unified', dsUnified)
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -150,7 +153,7 @@ export function useBudgetsData(
       // Fetch labour
       let labourQuery = supabase
         .from('labour_daily')
-        .select('*')
+        .select('date, location_id, labour_cost, labour_hours')
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -163,7 +166,7 @@ export function useBudgetsData(
       // Fetch COGS
       let cogsQuery = supabase
         .from('cogs_daily')
-        .select('*')
+        .select('date, location_id, cogs_amount')
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -353,7 +356,7 @@ export function useBudgetsData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, effectiveLocationIds, locations, appLoading, compareMode]);
+  }, [dateRange, effectiveLocationIds, locations, appLoading, compareMode, dataSource, dsUnified]);
 
   useEffect(() => {
     if (!appLoading) {

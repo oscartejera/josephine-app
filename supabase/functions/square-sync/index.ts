@@ -26,7 +26,20 @@ Deno.serve(async (req) => {
   try {
     const { accountId } = await req.json();
 
-    // Check for running sync
+    // Self-heal: mark any sync that has been "running" for > 5 minutes as timed out.
+    // This prevents stuck syncs from permanently blocking new ones.
+    await supabase
+      .from('integration_sync_runs')
+      .update({
+        status: 'error',
+        ended_at: new Date().toISOString(),
+        error_text: 'Timeout - sync did not complete within 5 minutes',
+      })
+      .eq('integration_account_id', accountId)
+      .eq('status', 'running')
+      .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+
+    // Check for running sync (only recent ones will remain after self-heal)
     const { data: hasRunning } = await supabase.rpc('has_running_sync', {
       p_account_id: accountId
     });
@@ -158,21 +171,86 @@ Deno.serve(async (req) => {
       stats.locations = locations.length;
 
       // 2) Sync Catalog
+      //    Step A: fetch all categories to build id→name map
+      const categoryMap = new Map<string, string>();
+      let catCursor;
+      do {
+        const catResp = await client.listCategories(catCursor);
+        for (const obj of (catResp.objects || [])) {
+          if (obj.type === 'CATEGORY') {
+            categoryMap.set(obj.id, obj.category_data?.name || 'Other');
+          }
+        }
+        catCursor = catResp.cursor;
+      } while (catCursor);
+
+      //    Step B: fetch items via /catalog/search-catalog-items which
+      //    returns item_data.categories[] on each item.
+      const allSquareItems: any[] = [];
+      const allSquareItemIds: string[] = [];
       let catalogCursor;
       do {
-        const catalogResp = await client.listCatalog(catalogCursor);
-        const items = (catalogResp.objects || []).filter((obj: any) => obj.type === 'ITEM');
-        
+        const catalogResp = await client.searchCatalogItems(catalogCursor);
+        const items = catalogResp.items || [];
+
         for (const item of items) {
-          const normalized = normalizeSquareItem(item, orgId);
-          await supabase
-            .from('cdm_items')
-            .upsert(normalized, { onConflict: 'external_provider,external_id' });
+          allSquareItems.push(item);
+          allSquareItemIds.push(item.id);
         }
-        
-        stats.items += items.length;
         catalogCursor = catalogResp.cursor;
       } while (catalogCursor);
+
+      // Normalize and upsert items + variations with resolved category names
+      for (const squareItem of allSquareItems) {
+        const { item, variations } = normalizeSquareItem(squareItem, orgId, categoryMap);
+
+        // Upsert parent item
+        await supabase
+          .from('cdm_items')
+          .upsert(item, { onConflict: 'external_provider,external_id' });
+
+        // Retrieve cdm_item_id for FK in variations
+        if (variations.length > 0) {
+          const { data: cdmItem } = await supabase
+            .from('cdm_items')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('external_provider', 'square')
+            .eq('external_id', item.external_id)
+            .single();
+
+          if (cdmItem) {
+            const variationRows = variations.map((v: any) => ({
+              ...v,
+              cdm_item_id: cdmItem.id,
+            }));
+            await supabase
+              .from('cdm_item_variations')
+              .upsert(variationRows, { onConflict: 'org_id,external_variation_id' });
+          }
+        }
+      }
+      stats.items = allSquareItems.length;
+
+      // Clean up orphaned CDM items (deleted from Square catalog)
+      if (allSquareItemIds.length > 0) {
+        const { data: existingCdmItems } = await supabase
+          .from('cdm_items')
+          .select('id, external_id')
+          .eq('org_id', orgId)
+          .eq('external_provider', 'square');
+
+        const orphanIds = (existingCdmItems || [])
+          .filter(item => !allSquareItemIds.includes(item.external_id))
+          .map(item => item.id);
+
+        if (orphanIds.length > 0) {
+          for (let i = 0; i < orphanIds.length; i += 50) {
+            await supabase.from('cdm_items').delete().in('id', orphanIds.slice(i, i + 50));
+          }
+          (stats as any).items_cleaned = orphanIds.length;
+        }
+      }
 
       // 3) Sync Orders (last 7 days)
       const locationIds = locations.map((l: any) => l.id);
@@ -189,35 +267,69 @@ Deno.serve(async (req) => {
         if (cdmLoc) locationMap.set(loc.id, cdmLoc.id);
       }
 
+      // Sync orders page by page, collecting all normalized data.
+      // After all pages are fetched, we purge old order lines ONLY for
+      // orders actually returned by Square, then batch-insert fresh lines.
+      // This prevents duplicates without losing data for orders that
+      // Square no longer returns (e.g., older than the search window).
+      const allSyncedOrderIds: string[] = [];
+      const allFreshLines: any[] = [];
+
       let ordersCursor;
       do {
         const ordersResp = await client.searchOrders(locationIds, ordersCursor, beginTime);
         const orders = ordersResp.orders || [];
-        
-        for (const order of orders) {
-          const normalized = normalizeSquareOrder(order, orgId, locationMap);
-          
-          // Upsert order
-          const { data: cdmOrder } = await supabase
-            .from('cdm_orders')
-            .upsert(normalized.order, { onConflict: 'external_provider,external_id' })
-            .select()
-            .single();
 
-          // Upsert lines
-          for (const line of normalized.lines) {
-            await supabase
-              .from('cdm_order_lines')
-              .upsert({
-                ...line,
-                order_id: cdmOrder.id,
-              });
+        if (orders.length > 0) {
+          const normalizedOrders: any[] = [];
+          const linesPerExtId = new Map<string, any[]>();
+
+          for (const order of orders) {
+            const normalized = normalizeSquareOrder(order, orgId, locationMap);
+            normalizedOrders.push(normalized.order);
+            linesPerExtId.set(normalized.order.external_id, normalized.lines);
+          }
+
+          // Batch upsert orders
+          await supabase
+            .from('cdm_orders')
+            .upsert(normalizedOrders, { onConflict: 'external_provider,external_id' });
+
+          // Fetch CDM IDs (separate SELECT is more reliable than chained .select())
+          const externalIds = normalizedOrders.map((o: any) => o.external_id);
+          const { data: upsertedOrders } = await supabase
+            .from('cdm_orders')
+            .select('id, external_id')
+            .in('external_id', externalIds);
+
+          for (const o of (upsertedOrders || [])) {
+            allSyncedOrderIds.push(o.id);
+            const lines = linesPerExtId.get(o.external_id) || [];
+            for (const line of lines) {
+              allFreshLines.push({ ...line, order_id: o.id, org_id: orgId });
+            }
           }
         }
-        
+
         stats.orders += orders.length;
         ordersCursor = ordersResp.cursor;
       } while (ordersCursor);
+
+      // Purge old lines only for synced orders, then insert fresh ones
+      if (allSyncedOrderIds.length > 0) {
+        for (let i = 0; i < allSyncedOrderIds.length; i += 50) {
+          await supabase
+            .from('cdm_order_lines')
+            .delete()
+            .in('order_id', allSyncedOrderIds.slice(i, i + 50));
+        }
+
+        for (let i = 0; i < allFreshLines.length; i += 500) {
+          await supabase
+            .from('cdm_order_lines')
+            .insert(allFreshLines.slice(i, i + 500));
+        }
+      }
 
       // 4) Sync Payments (all locations)
       for (const locId of locationIds) {
@@ -266,12 +378,13 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Fetch all CDM orders for aggregation
+      // Fetch all CDM orders for aggregation (limit raised for growing data)
       const { data: cdmOrders } = await supabase
         .from('cdm_orders')
         .select('id, location_id, closed_at, gross_total, net_total, status')
         .eq('org_id', orgId)
-        .not('closed_at', 'is', null);
+        .not('closed_at', 'is', null)
+        .limit(10000);
 
       if (cdmOrders && cdmOrders.length > 0 && josephineLocations && josephineLocations.length > 0) {
         // Group orders by date + josephine location
@@ -324,17 +437,17 @@ Deno.serve(async (req) => {
         }));
 
         if (rows.length > 0) {
-          // Collect synced dates to replace simulated data
           const syncedDates = [...new Set(rows.map(r => r.date))];
+          const syncedLocationIds = [...new Set(rows.map(r => r.location_id))];
 
-          // Delete ALL existing rows (simulated + pos) for synced dates
-          // The unique constraint is (date, location_id) without data_source,
-          // so we must remove existing rows before inserting POS replacements.
+          // Only delete previous POS rows — keep simulated data intact
+          // so disconnecting reverts cleanly to demo data.
           await supabase
             .from('pos_daily_finance')
             .delete()
+            .eq('data_source', 'pos')
             .in('date', syncedDates)
-            .in('location_id', [...new Set(rows.map(r => r.location_id))]);
+            .in('location_id', syncedLocationIds);
 
           await supabase
             .from('pos_daily_finance')
@@ -358,12 +471,12 @@ Deno.serve(async (req) => {
         }));
 
         if (metricsRows.length > 0) {
-          // Delete existing rows (simulated + pos) for synced dates.
-          // Unique constraint is (date, location_id) without data_source.
+          // Only delete previous POS rows — keep simulated data intact.
           const metricsDates = [...new Set(metricsRows.map(r => r.date))];
           await supabase
             .from('pos_daily_metrics')
             .delete()
+            .eq('data_source', 'pos')
             .in('date', metricsDates)
             .in('location_id', [...new Set(metricsRows.map(r => r.location_id))]);
 
@@ -375,61 +488,88 @@ Deno.serve(async (req) => {
 
         // 7) Sync CDM items → products table (for Menu Engineering)
         //    Menu Engineering RPCs read from product_sales_daily JOIN products.
-        //    We need products to exist before we can write product_sales_daily.
+        //    We need products to exist for EVERY location in the group.
         const groupId = (josephineLocations as any[])[0]?.group_id;
 
         const { data: cdmItemsList } = await supabase
           .from('cdm_items')
-          .select('name, category_name, is_active')
+          .select('id, name, category_name, is_active')
           .eq('org_id', orgId);
 
-        const productNameToId = new Map<string, string>();
+        // cdm_item.id → canonical name (for item_id-based lookup in step 8)
+        const cdmItemIdToName = new Map<string, string>();
+        for (const ci of (cdmItemsList || [])) {
+          cdmItemIdToName.set(ci.id, ci.name);
+        }
+
+        // Key: "name__locationId" → product.id
+        const productKeyToId = new Map<string, string>();
 
         if (cdmItemsList && groupId) {
-          // Fetch all existing products for this group in one query
+          // Fetch all existing products for this group (all locations)
           const { data: existingProducts } = await supabase
             .from('products')
-            .select('id, name')
+            .select('id, name, location_id')
             .eq('group_id', groupId);
 
+          const existingKeys = new Set<string>();
           for (const p of (existingProducts || [])) {
-            productNameToId.set(p.name, p.id);
+            const key = `${p.name}__${p.location_id}`;
+            existingKeys.add(key);
+            productKeyToId.set(key, p.id);
           }
 
-          // Insert only new products (not already in the products table)
-          const newProducts = cdmItemsList
-            .filter(item => !productNameToId.has(item.name))
-            .map(item => ({
-              name: item.name,
-              category: item.category_name || 'Other',
-              is_active: item.is_active,
-              group_id: groupId,
-              location_id: josephineLocations[0].id,
-            }));
+          // Build missing products: one per (cdmItem, location) that doesn't exist yet
+          const newProducts: any[] = [];
+          for (const item of cdmItemsList) {
+            for (const loc of josephineLocations) {
+              const key = `${item.name}__${loc.id}`;
+              if (!existingKeys.has(key)) {
+                newProducts.push({
+                  name: item.name,
+                  category: item.category_name || 'Other',
+                  is_active: item.is_active,
+                  group_id: groupId,
+                  location_id: loc.id,
+                });
+              }
+            }
+          }
 
           if (newProducts.length > 0) {
-            const { data: inserted } = await supabase
-              .from('products')
-              .insert(newProducts)
-              .select('id, name');
+            // Insert in batches to avoid payload limits
+            for (let i = 0; i < newProducts.length; i += 500) {
+              const { data: inserted } = await supabase
+                .from('products')
+                .insert(newProducts.slice(i, i + 500))
+                .select('id, name, location_id');
 
-            for (const p of (inserted || [])) {
-              productNameToId.set(p.name, p.id);
+              for (const p of (inserted || [])) {
+                productKeyToId.set(`${p.name}__${p.location_id}`, p.id);
+              }
             }
           }
         }
-        (stats as any).products_synced = productNameToId.size;
+        (stats as any).products_synced = productKeyToId.size;
 
         // 8) Aggregate CDM order lines → product_sales_daily (for Menu Engineering)
         //    Groups line items by (date, location, product) and writes daily aggregates.
         const cdmOrderIds = cdmOrders.map((o: any) => o.id);
 
-        if (cdmOrderIds.length > 0 && productNameToId.size > 0) {
-          // Fetch all order lines for synced orders
-          const { data: allLines } = await supabase
-            .from('cdm_order_lines')
-            .select('order_id, name, quantity, gross_line_total')
-            .in('order_id', cdmOrderIds);
+        if (cdmOrderIds.length > 0 && productKeyToId.size > 0) {
+          // Fetch order lines in batches to avoid PostgREST URL length limit
+          // (642 UUIDs ≈ 23 KB query string, exceeds ~8 KB GET limit).
+          const LINES_BATCH = 50;
+          const allLines: any[] = [];
+          for (let i = 0; i < cdmOrderIds.length; i += LINES_BATCH) {
+            const batch = cdmOrderIds.slice(i, i + LINES_BATCH);
+            const { data: batchLines } = await supabase
+              .from('cdm_order_lines')
+              .select('order_id, name, quantity, gross_line_total, item_id')
+              .in('order_id', batch)
+              .limit(5000);
+            if (batchLines) allLines.push(...batchLines);
+          }
 
           // Build order_id → {date, location_id} lookup
           const orderInfoMap = new Map<string, { date: string; location_id: string }>();
@@ -449,11 +589,13 @@ Deno.serve(async (req) => {
             cogs: number;
           }>();
 
-          for (const line of (allLines || [])) {
+          for (const line of allLines) {
             const orderInfo = orderInfoMap.get(line.order_id);
             if (!orderInfo) continue;
 
-            const productId = productNameToId.get(line.name);
+            // Prefer item_id (stable FK) over line.name (stale if renamed)
+            const resolvedName = (line.item_id && cdmItemIdToName.get(line.item_id)) || line.name;
+            const productId = productKeyToId.get(`${resolvedName}__${orderInfo.location_id}`);
             if (!productId) continue;
 
             const key = `${orderInfo.date}|${orderInfo.location_id}|${productId}`;
@@ -471,24 +613,6 @@ Deno.serve(async (req) => {
             productDailyAgg.set(key, existing);
           }
 
-          // Delete existing POS product_sales_daily
-          await supabase
-            .from('product_sales_daily')
-            .delete()
-            .eq('data_source', 'pos');
-
-          // Delete simulated rows for synced dates to avoid double-counting
-          const syncedDates = [...new Set(
-            Array.from(productDailyAgg.values()).map(d => d.date)
-          )];
-          if (syncedDates.length > 0) {
-            await supabase
-              .from('product_sales_daily')
-              .delete()
-              .eq('data_source', 'simulated')
-              .in('date', syncedDates);
-          }
-
           // Insert fresh POS rows
           const productRows = Array.from(productDailyAgg.values()).map(d => ({
             ...d,
@@ -496,6 +620,16 @@ Deno.serve(async (req) => {
           }));
 
           if (productRows.length > 0) {
+            // Only delete previous POS rows for synced dates/locations — keep simulated data intact.
+            const prodDates = [...new Set(productRows.map(r => r.date))];
+            const prodLocationIds = [...new Set(productRows.map(r => r.location_id))];
+            await supabase
+              .from('product_sales_daily')
+              .delete()
+              .eq('data_source', 'pos')
+              .in('date', prodDates)
+              .in('location_id', prodLocationIds);
+
             await supabase.from('product_sales_daily').insert(productRows);
           }
           (stats as any).product_sales_rows = productRows.length;
@@ -537,13 +671,17 @@ Deno.serve(async (req) => {
         }
 
         if (factsAgg.size > 0) {
-          const factsRows = Array.from(factsAgg.values());
-          // Delete existing 15m facts for the synced date range
+          const factsRows = Array.from(factsAgg.values()).map(r => ({
+            ...r,
+            data_source: 'pos',
+          }));
+          // Delete existing POS 15m facts for the synced date range (keep simulated)
           const factsDates = [...new Set(factsRows.map(r => r.ts_bucket.split('T')[0]))];
           for (const d of factsDates) {
             await supabase
               .from('facts_sales_15m')
               .delete()
+              .eq('data_source', 'pos')
               .gte('ts_bucket', `${d}T00:00:00`)
               .lte('ts_bucket', `${d}T23:59:59`)
               .in('location_id', [...new Set(factsRows.map(r => r.location_id))]);
@@ -553,6 +691,14 @@ Deno.serve(async (req) => {
           (stats as any).facts_15m_rows = factsRows.length;
         }
       }
+
+      // 10) Backfill: link cdm_order_lines.item_id via cdm_item_variations
+      //     Sets item_id on lines where external_variation_id is known but
+      //     item_id was not yet resolved.
+      const { data: backfillResult } = await supabase.rpc('backfill_order_lines_item_id', {
+        p_org_id: orgId,
+      });
+      (stats as any).lines_backfilled = backfillResult ?? 0;
 
       // Complete sync
       await supabase.rpc('complete_sync_run', {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
-import { subDays } from 'date-fns';
+import { subDays, format } from 'date-fns';
 
 export interface CategorySales {
   category: string;
@@ -11,13 +11,14 @@ export interface CategorySales {
 }
 
 export function useCategorySales() {
-  const { group, selectedLocationId, dataSource } = useApp();
+  const { group, selectedLocationId, locations } = useApp();
+  const orgId = group?.id;
   const [categories, setCategories] = useState<CategorySales[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalSales, setTotalSales] = useState(0);
 
   const fetchCategorySales = useCallback(async () => {
-    if (!group?.id) {
+    if (!orgId) {
       setLoading(false);
       return;
     }
@@ -27,79 +28,47 @@ export function useCategorySales() {
       const from = subDays(new Date(), 30);
       const to = new Date();
 
-      // Get products with their categories
-      const { data: products, error: productsError } = await supabase
-        .from('products')
-        .select('id, category')
-        .eq('group_id', group.id);
+      // Build location IDs
+      const locationIds = selectedLocationId && selectedLocationId !== 'all'
+        ? [selectedLocationId]
+        : locations.map(l => l.id);
 
-      if (productsError) throw productsError;
-
-      // Build location filter
-      let salesQuery = supabase
-        .from('product_sales_daily')
-        .select('product_id, net_sales, units_sold')
-        .eq('data_source', dataSource)
-        .gte('date', from.toISOString().split('T')[0])
-        .lte('date', to.toISOString().split('T')[0]);
-
-      if (selectedLocationId && selectedLocationId !== 'all') {
-        salesQuery = salesQuery.eq('location_id', selectedLocationId);
-      }
-
-      const { data: sales, error: salesError } = await salesQuery;
-
-      if (salesError) throw salesError;
-
-      // Create product to category map
-      const productCategoryMap = new Map<string, string>();
-      products?.forEach(p => {
-        productCategoryMap.set(p.id, p.category || 'Sin categoría');
+      // Use unified RPC — data source resolved server-side
+      type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+      const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
+      const { data, error } = await rpc('get_top_products_unified', {
+        p_org_id: orgId,
+        p_location_ids: locationIds,
+        p_from: format(from, 'yyyy-MM-dd'),
+        p_to: format(to, 'yyyy-MM-dd'),
+        p_limit: 100, // Get all products for accurate category aggregation
       });
 
-      // Aggregate by category
+      if (error) throw error;
+
+      const items = data?.items || [];
+      const total = Number(data?.total_sales) || 0;
+
+      // Aggregate items by category
       const categoryMap = new Map<string, { sales: number; units: number }>();
-      let total = 0;
 
-      sales?.forEach(sale => {
-        const category = productCategoryMap.get(sale.product_id) || 'Sin categoría';
+      items.forEach((item: Record<string, unknown>) => {
+        const category = (item.category as string) || 'Sin categoría';
         const existing = categoryMap.get(category) || { sales: 0, units: 0 };
-        existing.sales += Number(sale.net_sales) || 0;
-        existing.units += Number(sale.units_sold) || 0;
+        existing.sales += Number(item.sales) || 0;
+        existing.units += Number(item.qty) || 0;
         categoryMap.set(category, existing);
-        total += Number(sale.net_sales) || 0;
       });
 
-      // Convert to array and calculate percentages
-      const categoryOrder = ['Bebidas', 'Entrantes', 'Principales', 'Postres'];
-      const categoriesArray: CategorySales[] = [];
-
-      categoryOrder.forEach(cat => {
-        const data = categoryMap.get(cat);
-        if (data) {
-          categoriesArray.push({
-            category: cat,
-            sales: data.sales,
-            units: data.units,
-            percentage: total > 0 ? (data.sales / total) * 100 : 0
-          });
-        }
-      });
-
-      // Add any other categories not in the order
-      categoryMap.forEach((data, cat) => {
-        if (!categoryOrder.includes(cat)) {
-          categoriesArray.push({
-            category: cat,
-            sales: data.sales,
-            units: data.units,
-            percentage: total > 0 ? (data.sales / total) * 100 : 0
-          });
-        }
-      });
-
-      // Sort by sales descending
-      categoriesArray.sort((a, b) => b.sales - a.sales);
+      // Convert to array with percentages
+      const categoriesArray: CategorySales[] = Array.from(categoryMap.entries())
+        .map(([category, data]) => ({
+          category,
+          sales: data.sales,
+          units: data.units,
+          percentage: total > 0 ? (data.sales / total) * 100 : 0,
+        }))
+        .sort((a, b) => b.sales - a.sales);
 
       setCategories(categoriesArray);
       setTotalSales(total);
@@ -108,7 +77,7 @@ export function useCategorySales() {
     } finally {
       setLoading(false);
     }
-  }, [group?.id, selectedLocationId]);
+  }, [orgId, selectedLocationId, locations]);
 
   useEffect(() => {
     fetchCategorySales();

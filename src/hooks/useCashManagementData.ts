@@ -1,3 +1,4 @@
+// Migrated to unified view: v_pos_daily_finance_unified
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -90,6 +91,8 @@ export function useCashManagementData(
   selectedLocations: string[]
 ) {
   const { locations, loading: appLoading, dataSource } = useApp();
+  // Map AppContext dataSource ('pos'|'simulated') to unified view value ('pos'|'demo')
+  const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
   const [isLoading, setIsLoading] = useState(true);
   const [metrics, setMetrics] = useState<CashManagementMetrics>(defaultMetrics);
   const [dailyData, setDailyData] = useState<CashDailyData[]>([]);
@@ -115,11 +118,11 @@ export function useCashManagementData(
       const prevFrom = format(subDays(dateRange.from, daysDiff), 'yyyy-MM-dd');
       const prevTo = format(subDays(dateRange.to, daysDiff), 'yyyy-MM-dd');
 
-      // Fetch current period
+      // Fetch current period from unified view
       let query = supabase
-        .from('pos_daily_finance')
-        .select('*')
-        .eq('data_source', dataSource)
+        .from('v_pos_daily_finance_unified' as any)
+        .select('date, location_id, net_sales, gross_sales, orders_count, payments_cash, payments_card, payments_other, refunds_amount, refunds_count, discounts_amount, comps_amount, voids_amount')
+        .eq('data_source_unified', dsUnified)
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -136,11 +139,11 @@ export function useCashManagementData(
         return;
       }
 
-      // Fetch previous period
+      // Fetch previous period from unified view
       let prevQuery = supabase
-        .from('pos_daily_finance')
-        .select('*')
-        .eq('data_source', dataSource)
+        .from('v_pos_daily_finance_unified' as any)
+        .select('date, location_id, net_sales, gross_sales, orders_count, payments_cash, payments_card, payments_other, refunds_amount, refunds_count, discounts_amount, comps_amount, voids_amount')
+        .eq('data_source_unified', dsUnified)
         .gte('date', prevFrom)
         .lte('date', prevTo);
 
@@ -300,7 +303,7 @@ export function useCashManagementData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, effectiveLocationIds, locations, appLoading]);
+  }, [dateRange, effectiveLocationIds, locations, appLoading, dataSource, dsUnified]);
 
   useEffect(() => {
     if (!appLoading) {

@@ -18,8 +18,9 @@ DELETE FROM facts_sales_15m WHERE location_id IN (
 DELETE FROM employees WHERE location_id IN (
   SELECT id FROM locations WHERE name LIKE '%Demo%' OR name IN ('La Taberna Centro', 'Chamberí', 'Malasaña')
 );
-DELETE FROM cdm_items WHERE location_id IN (
-  SELECT id FROM locations WHERE name LIKE '%Demo%' OR name IN ('La Taberna Centro', 'Chamberí', 'Malasaña')
+DELETE FROM cdm_items WHERE name IN (
+  'Paella Valenciana', 'Jamón Ibérico', 'Chuletón de Buey',
+  'Pulpo a la Gallega', 'Bacalao Pil-Pil', 'Rioja Reserva', 'Cerveza Alhambra'
 );
 DELETE FROM locations WHERE name IN ('La Taberna Centro', 'Chamberí', 'Malasaña');
 
@@ -47,6 +48,8 @@ DECLARE
   v_bartender_id UUID;
   v_paella_id UUID;
   v_jamon_id UUID;
+  v_loop_loc_id UUID;
+  v_loop_daily_sales NUMERIC;
 BEGIN
   -- Obtener el primer grupo existente (o crear uno demo)
   SELECT id INTO v_group_id FROM groups LIMIT 1;
@@ -65,11 +68,10 @@ BEGIN
 
   -- Crear 3 locations
   INSERT INTO locations (id, group_id, name, city, timezone, currency, created_at)
-  VALUES 
+  VALUES
     (gen_random_uuid(), v_group_id, 'La Taberna Centro', 'Salamanca', 'Europe/Madrid', 'EUR', NOW()),
     (gen_random_uuid(), v_group_id, 'Chamberí', 'Madrid', 'Europe/Madrid', 'EUR', NOW()),
-    (gen_random_uuid(), v_group_id, 'Malasaña', 'Madrid', 'Europe/Madrid', 'EUR', NOW())
-  RETURNING id INTO v_location_centro;
+    (gen_random_uuid(), v_group_id, 'Malasaña', 'Madrid', 'Europe/Madrid', 'EUR', NOW());
 
   -- Obtener IDs de las locations
   SELECT id INTO v_location_centro FROM locations WHERE name = 'La Taberna Centro';
@@ -79,26 +81,16 @@ BEGIN
   RAISE NOTICE 'Locations creadas: Centro=%, Chamberí=%, Malasaña=%', v_location_centro, v_location_chamberi, v_location_malasana;
 
   -- ============== PASO 3: CREAR PRODUCTOS (CDM_ITEMS) ==============
-  -- La Taberna Centro - Premium Spanish cuisine
-  INSERT INTO cdm_items (id, org_id, location_id, name, category_name, unit_price, cost_price, active, created_at)
+  -- Premium Spanish cuisine items (org-level, not per-location)
+  INSERT INTO cdm_items (id, org_id, name, category_name, price, is_active, external_provider, external_id, created_at)
   VALUES
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Paella Valenciana', 'Food', 24.50, 8.20, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Jamón Ibérico', 'Food', 18.90, 11.40, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Chuletón de Buey', 'Food', 38.50, 19.20, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Pulpo a la Gallega', 'Food', 22.80, 9.10, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Bacalao Pil-Pil', 'Food', 26.50, 10.60, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Rioja Reserva', 'Beverage', 28.00, 9.50, true, NOW()),
-    (gen_random_uuid(), v_org_id, v_location_centro, 'Cerveza Alhambra', 'Beverage', 4.50, 1.20, true, NOW())
-  RETURNING id INTO v_paella_id;
-
-  -- Similar para otras locations (productos con precios ligeramente diferentes)
-  INSERT INTO cdm_items (org_id, location_id, name, category_name, unit_price, cost_price, active)
-  SELECT v_org_id, v_location_chamberi, name, category_name, unit_price * 0.95, cost_price * 0.95, true
-  FROM cdm_items WHERE location_id = v_location_centro;
-
-  INSERT INTO cdm_items (org_id, location_id, name, category_name, unit_price, cost_price, active)
-  SELECT v_org_id, v_location_malasana, name, category_name, unit_price * 0.90, cost_price * 0.90, true
-  FROM cdm_items WHERE location_id = v_location_centro;
+    (gen_random_uuid(), v_org_id, 'Paella Valenciana', 'Food', 24.50, true, 'demo', 'demo-paella', NOW()),
+    (gen_random_uuid(), v_org_id, 'Jamón Ibérico', 'Food', 18.90, true, 'demo', 'demo-jamon', NOW()),
+    (gen_random_uuid(), v_org_id, 'Chuletón de Buey', 'Food', 38.50, true, 'demo', 'demo-chuleton', NOW()),
+    (gen_random_uuid(), v_org_id, 'Pulpo a la Gallega', 'Food', 22.80, true, 'demo', 'demo-pulpo', NOW()),
+    (gen_random_uuid(), v_org_id, 'Bacalao Pil-Pil', 'Food', 26.50, true, 'demo', 'demo-bacalao', NOW()),
+    (gen_random_uuid(), v_org_id, 'Rioja Reserva', 'Beverage', 28.00, true, 'demo', 'demo-rioja', NOW()),
+    (gen_random_uuid(), v_org_id, 'Cerveza Alhambra', 'Beverage', 4.50, true, 'demo', 'demo-cerveza', NOW());
 
   RAISE NOTICE 'Productos creados para 3 locations';
 
@@ -140,8 +132,7 @@ BEGIN
     (v_location_centro, 'Sofía Vargas', 'Host', 11.00, true, NOW()),
     -- Managers (€25/hour)
     (v_location_centro, 'Fernando Iglesias', 'Manager', 25.00, true, NOW()),
-    (v_location_centro, 'Marta Cortés', 'Manager', 25.00, true, NOW())
-  RETURNING id INTO v_chef_id;
+    (v_location_centro, 'Marta Cortés', 'Manager', 25.00, true, NOW());
 
   -- Replicar empleados para Chamberí y Malasaña (70% del staff de Centro)
   INSERT INTO employees (location_id, full_name, role_name, hourly_cost, active)
@@ -231,8 +222,8 @@ BEGIN
 
     -- ============== PASO 6: GENERAR FACTS_LABOR_DAILY ==============
     -- Calcular labour basado en sales del día
-    FOR v_location_centro, v_base_sales IN 
-      SELECT 
+    FOR v_loop_loc_id, v_loop_daily_sales IN
+      SELECT
         location_id,
         SUM(sales_net) as daily_sales
       FROM facts_sales_15m
@@ -243,21 +234,21 @@ BEGIN
       -- COL target 28%, con variación ±3%
       DECLARE
         v_target_col NUMERIC := 0.28 + (random() - 0.5) * 0.06;
-        v_labor_cost NUMERIC := v_base_sales * v_target_col;
+        v_labor_cost NUMERIC := v_loop_daily_sales * v_target_col;
         v_labor_hours NUMERIC := v_labor_cost / 14.5; -- €14.5 promedio por hora
         v_scheduled_hours NUMERIC := v_labor_hours * 0.95; -- 95% de utilización
       BEGIN
         INSERT INTO facts_labor_daily (
-          location_id, 
-          day, 
-          scheduled_hours, 
-          actual_hours, 
-          labor_cost_est, 
+          location_id,
+          day,
+          scheduled_hours,
+          actual_hours,
+          labor_cost_est,
           overtime_hours,
           created_at
         )
         VALUES (
-          v_location_centro,
+          v_loop_loc_id,
           v_current_date,
           v_scheduled_hours,
           v_labor_hours,

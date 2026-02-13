@@ -36,7 +36,7 @@ export interface MenuEngineeringStats {
 }
 
 export function useMenuEngineeringData() {
-  const { accessibleLocations, dataSource } = useApp();
+  const { accessibleLocations, dataSource, loading: appLoading } = useApp();
 
   // State
   const [items, setItems] = useState<MenuEngineeringItem[]>([]);
@@ -71,6 +71,9 @@ export function useMenuEngineeringData() {
 
   // Fetch data from RPC
   const fetchData = useCallback(async () => {
+    // Guard: don't fetch while app context is loading
+    if (appLoading) return;
+
     setLoading(true);
     setError(null);
 
@@ -132,7 +135,7 @@ export function useMenuEngineeringData() {
     } finally {
       setLoading(false);
     }
-  }, [getDateRange, selectedLocationId, dataSource]);
+  }, [getDateRange, selectedLocationId, dataSource, appLoading]);
 
   // Refetch on filter changes
   useEffect(() => {

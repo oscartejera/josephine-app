@@ -7,6 +7,7 @@ import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { OnboardingWizard } from '@/components/onboarding';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
+import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
 import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
 
 interface Metrics {
@@ -52,8 +53,9 @@ export default function Dashboard() {
     const fromDate = from.toISOString().split('T')[0];
     const toDate = to.toISOString().split('T')[0];
 
-    // Get sales from pos_daily_finance (aggregated daily data)
-    let query = supabase.from('pos_daily_finance').select('gross_sales, net_sales, orders_count').eq('data_source', dataSource);
+    // Get sales via unified view (normalizes data_source → 'demo'|'pos')
+    const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
+    let query = supabase.from('v_pos_daily_finance_unified').select('gross_sales, net_sales, orders_count').eq('data_source_unified', dsUnified);
     if (locationId && locationId !== 'all') {
       query = query.eq('location_id', locationId);
     }
@@ -181,9 +183,9 @@ export default function Dashboard() {
           variant={gpPercent >= 65 ? 'success' : 'warning'}
           trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: 'vs anterior' } : undefined}
         />
-        <MetricCard 
-          title="COGS" 
-          value={`€${currentCogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`} 
+        <MetricCard
+          title={<span className="flex items-center gap-1">COGS <EstimatedLabel reason="COGS calculado con ratio fijo (30%). Conecta inventario para datos reales." /></span>}
+          value={`€${currentCogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
           icon={Receipt}
           trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: 'vs anterior' } : undefined}
         />

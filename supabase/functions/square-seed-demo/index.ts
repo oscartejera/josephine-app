@@ -1,41 +1,68 @@
 /**
  * Square Seed Demo Data
  * Creates catalog items, orders, and payments in Square Production.
- * TEMPORARY: Delete after seeding.
+ *
+ * Options (POST body):
+ *   - clean_catalog: true  → Delete ALL existing catalog before recreating
+ *   - skip_catalog: true   → Use existing catalog items
+ *   - days_back: number    → How many days of orders to create (default 0)
+ *   - orders_per_day: number → Base orders per day (default 15)
  */
 
 import { corsHeaders } from '../_shared/cors.ts';
 
 const SQUARE_BASE = 'https://connect.squareup.com/v2';
 
-const PRODUCTS = [
-  { name: 'Hamburguesa Clasica', category: 'Food', price: 1250 },
-  { name: 'Hamburguesa Gourmet', category: 'Food', price: 1650 },
-  { name: 'Pizza Margherita', category: 'Food', price: 1400 },
-  { name: 'Pizza Pepperoni', category: 'Food', price: 1550 },
-  { name: 'Ensalada Caesar', category: 'Food', price: 950 },
-  { name: 'Ensalada Mediterranea', category: 'Food', price: 1050 },
-  { name: 'Pasta Carbonara', category: 'Food', price: 1350 },
-  { name: 'Pasta Bolognesa', category: 'Food', price: 1250 },
-  { name: 'Salmon a la Plancha', category: 'Food', price: 1890 },
-  { name: 'Pollo al Horno', category: 'Food', price: 1450 },
-  { name: 'Tacos de Ternera', category: 'Food', price: 1100 },
-  { name: 'Nachos con Guacamole', category: 'Food', price: 850 },
-  { name: 'Wrap de Pollo', category: 'Food', price: 1050 },
-  { name: 'Bowl de Poke', category: 'Food', price: 1450 },
-  { name: 'Patatas Bravas', category: 'Food', price: 650 },
-  { name: 'Croquetas Jamon', category: 'Food', price: 750 },
-  { name: 'Coca-Cola', category: 'Beverage', price: 300 },
-  { name: 'Agua Mineral', category: 'Beverage', price: 250 },
-  { name: 'Cerveza Artesana', category: 'Beverage', price: 550 },
-  { name: 'Vino Tinto Copa', category: 'Beverage', price: 650 },
-  { name: 'Limonada Natural', category: 'Beverage', price: 450 },
-  { name: 'Cafe Espresso', category: 'Beverage', price: 200 },
-  { name: 'Zumo de Naranja', category: 'Beverage', price: 400 },
-  { name: 'Tarta de Queso', category: 'Dessert', price: 700 },
-  { name: 'Brownie con Helado', category: 'Dessert', price: 750 },
-  { name: 'Helado Artesano', category: 'Dessert', price: 550 },
-];
+// ─── Full restaurant menu with categories ──────────────────────────────
+const MENU: Record<string, Array<{ name: string; price: number }>> = {
+  Entrantes: [
+    { name: 'Patatas Bravas', price: 650 },
+    { name: 'Croquetas de Jamón', price: 850 },
+    { name: 'Nachos con Guacamole', price: 950 },
+    { name: 'Tabla de Quesos', price: 1250 },
+    { name: 'Gambas al Ajillo', price: 1350 },
+  ],
+  Ensaladas: [
+    { name: 'Ensalada César', price: 1100 },
+    { name: 'Ensalada Mediterránea', price: 1050 },
+    { name: 'Ensalada de Burrata', price: 1250 },
+  ],
+  Principales: [
+    { name: 'Hamburguesa Clásica', price: 1350 },
+    { name: 'Hamburguesa Gourmet', price: 1650 },
+    { name: 'Pizza Margherita', price: 1200 },
+    { name: 'Pizza Pepperoni', price: 1400 },
+    { name: 'Pasta Carbonara', price: 1250 },
+    { name: 'Pasta Boloñesa', price: 1150 },
+    { name: 'Salmón a la Plancha', price: 1890 },
+    { name: 'Pollo al Horno', price: 1450 },
+    { name: 'Tacos de Ternera', price: 1200 },
+    { name: 'Wrap de Pollo', price: 1050 },
+    { name: 'Bowl de Poké', price: 1450 },
+    { name: 'Risotto de Setas', price: 1350 },
+  ],
+  Bebidas: [
+    { name: 'Coca-Cola', price: 300 },
+    { name: 'Agua Mineral', price: 250 },
+    { name: 'Cerveza Artesana', price: 550 },
+    { name: 'Copa de Vino Tinto', price: 650 },
+    { name: 'Copa de Vino Blanco', price: 650 },
+    { name: 'Limonada Natural', price: 450 },
+    { name: 'Zumo de Naranja', price: 400 },
+    { name: 'Café Espresso', price: 250 },
+    { name: 'Café Latte', price: 380 },
+    { name: 'Té / Infusión', price: 280 },
+  ],
+  Postres: [
+    { name: 'Tarta de Queso', price: 700 },
+    { name: 'Brownie con Helado', price: 750 },
+    { name: 'Helado Artesano (2 bolas)', price: 550 },
+    { name: 'Crema Catalana', price: 650 },
+  ],
+};
+
+// Flat product list for order generation
+const PRODUCTS = Object.values(MENU).flat();
 
 const DOW_MULT = [1.10, 0.80, 0.92, 0.95, 1.00, 1.35, 1.45];
 const HOUR_WEIGHTS: Record<number, number> = {
@@ -84,9 +111,10 @@ Deno.serve(async (req) => {
     if (!token) throw new Error('SQUARE_PRODUCTION_ACCESS_TOKEN not set');
 
     const body = await req.json().catch(() => ({}));
-    const daysBack: number = body.days_back ?? 7;
-    const ordersPerDay: number = body.orders_per_day ?? 15; // Start small
+    const daysBack: number = body.days_back ?? 0;
+    const ordersPerDay: number = body.orders_per_day ?? 15;
     const skipCatalog: boolean = body.skip_catalog ?? false;
+    const cleanCatalog: boolean = body.clean_catalog ?? false;
 
     // Step 0: Locations
     log('Fetching locations...');
@@ -95,31 +123,69 @@ Deno.serve(async (req) => {
     if (!loc) throw new Error('No locations found');
     log(`Location: ${loc.name} (${loc.id}), currency: ${loc.currency}`);
 
+    // Step 0.5: Clean existing catalog if requested
+    if (cleanCatalog) {
+      log('Cleaning existing catalog...');
+      const allObjectIds: string[] = [];
+      let cursor: string | undefined;
+
+      do {
+        const params = new URLSearchParams({ types: 'ITEM,CATEGORY' });
+        if (cursor) params.append('cursor', cursor);
+        const catList = await sq(`/catalog/list?${params}`, token);
+        const objects = catList.objects || [];
+        for (const obj of objects) {
+          allObjectIds.push(obj.id);
+        }
+        cursor = catList.cursor;
+      } while (cursor);
+
+      log(`Found ${allObjectIds.length} existing catalog objects to delete`);
+
+      if (allObjectIds.length > 0) {
+        for (let i = 0; i < allObjectIds.length; i += 200) {
+          const batch = allObjectIds.slice(i, i + 200);
+          await sq('/catalog/batch-delete', token, 'POST', { object_ids: batch });
+          log(`  Deleted batch ${Math.floor(i / 200) + 1} (${batch.length} objects)`);
+        }
+        log('All existing catalog deleted');
+      }
+    }
+
     // Step 1: Catalog
     let variationIds: string[] = [];
 
     if (!skipCatalog) {
-      log('Creating catalog...');
-      const cats = [...new Set(PRODUCTS.map(p => p.category))];
-      const catObjs = cats.map(c => ({
-        type: 'CATEGORY', id: `#cat_${c.toLowerCase()}`,
-        category_data: { name: c },
+      log('Creating catalog with categories...');
+      const categories = Object.keys(MENU);
+      const catObjs = categories.map((cat, i) => ({
+        type: 'CATEGORY', id: `#cat_${i}`,
+        category_data: { name: cat },
       }));
-      const itemObjs = PRODUCTS.map((p, i) => ({
-        type: 'ITEM', id: `#item_${i}`,
-        item_data: {
-          name: p.name,
-          category_id: `#cat_${p.category.toLowerCase()}`,
-          variations: [{
-            type: 'ITEM_VARIATION', id: `#var_${i}`,
-            item_variation_data: {
-              name: 'Regular',
-              pricing_type: 'FIXED_PRICING',
-              price_money: { amount: p.price, currency: loc.currency || 'EUR' },
+
+      const itemObjs: unknown[] = [];
+      let itemIdx = 0;
+      for (let ci = 0; ci < categories.length; ci++) {
+        const cat = categories[ci];
+        for (const item of MENU[cat]) {
+          itemObjs.push({
+            type: 'ITEM', id: `#item_${itemIdx}`,
+            item_data: {
+              name: item.name,
+              categories: [{ id: `#cat_${ci}` }],
+              variations: [{
+                type: 'ITEM_VARIATION', id: `#var_${itemIdx}`,
+                item_variation_data: {
+                  name: 'Regular',
+                  pricing_type: 'FIXED_PRICING',
+                  price_money: { amount: item.price, currency: loc.currency || 'EUR' },
+                },
+              }],
             },
-          }],
-        },
-      }));
+          });
+          itemIdx++;
+        }
+      }
 
       const catResult = await sq('/catalog/batch-upsert', token, 'POST', {
         idempotency_key: crypto.randomUUID(),
@@ -131,8 +197,7 @@ Deno.serve(async (req) => {
         idMap[m.client_object_id] = m.object_id;
       }
       variationIds = PRODUCTS.map((_, i) => idMap[`#var_${i}`] || '');
-      log(`Catalog: ${PRODUCTS.length} items, ${Object.keys(idMap).length} mappings`);
-      log(`Sample variation ID: ${variationIds[0]}`);
+      log(`Catalog: ${categories.length} categories, ${PRODUCTS.length} items, ${Object.keys(idMap).length} mappings`);
     } else {
       // Fetch existing catalog to get variation IDs
       log('Fetching existing catalog...');
@@ -174,7 +239,6 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Create order as OPEN (Square requires payment before COMPLETED)
           const orderRes = await sq('/orders', token, 'POST', {
             idempotency_key: crypto.randomUUID(),
             order: {
@@ -187,7 +251,6 @@ Deno.serve(async (req) => {
           const order = orderRes.order;
           totalOrders++;
 
-          // Pay the order (auto-completes it)
           if (order?.total_money?.amount > 0) {
             try {
               const payType = Math.random() < 0.7 ? 'CARD' : 'CHECK';
@@ -205,11 +268,9 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Rate limit: ~100ms between orders
           if (o % 5 === 4) await new Promise(r => setTimeout(r, 500));
         } catch (oe) {
           errors.push(`Order err day-${d} #${o}: ${oe.message.slice(0, 200)}`);
-          // If first order fails, stop early
           if (totalOrders === 0 && o >= 2) {
             log('First orders failing, stopping early');
             break;
@@ -223,6 +284,7 @@ Deno.serve(async (req) => {
       success: true,
       location: { id: loc.id, name: loc.name },
       catalog_items: PRODUCTS.length,
+      catalog_cleaned: cleanCatalog,
       orders_created: totalOrders,
       payments_created: totalPayments,
       days_seeded: daysBack + 1,
