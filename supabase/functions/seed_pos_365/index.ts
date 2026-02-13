@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
       await supabase.from("facts_labor_daily").delete().in("location_id", locIds);
       await supabase.from("facts_sales_15m").delete().in("location_id", locIds);
       await supabase.from("employees").delete().in("location_id", locIds);
-      await supabase.from("cdm_items").delete().eq("org_id", groupId);
+      await supabase.from("cdm_items").delete().in("location_id", locIds);
       await supabase.from("locations").delete().in("id", locIds);
       console.log("[SEED] Cleaned.");
     }
@@ -352,12 +352,10 @@ Deno.serve(async (req) => {
       const priceMult = loc.id === centro.id ? 1.0 : loc.id === chamberi.id ? 0.95 : 0.90;
       for (const item of items) {
         itemRecords.push({
-          org_id: groupId, name: item.name,
+          org_id: groupId, location_id: loc.id, name: item.name,
           category_name: item.cat,
-          price: Math.round(item.price * priceMult * 100) / 100,
-          is_active: true,
-          external_provider: "demo",
-          external_id: `demo-${item.name.toLowerCase().replace(/\s+/g, "-")}-${loc.id}`,
+          unit_price: Math.round(item.price * priceMult * 100) / 100,
+          cost_price: item.cost, active: true,
         });
       }
     }

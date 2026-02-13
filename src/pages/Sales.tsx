@@ -96,7 +96,7 @@ export default function Sales() {
     salesToDateDelta: kpis?.salesToDateDelta || 0,
     avgCheckSize: kpis?.avgCheckSize || 0,
     avgCheckSizeDelta: kpis?.avgCheckSizeDelta || 0,
-    dwellTime: kpis?.dwellTime ?? null,
+    dwellTime: 42,
     channels: channels.map(ch => ({ channel: ch.channel, sales: ch.sales, salesDelta: ch.salesDelta })),
     categories: categories.map(cat => ({ category: cat.category, amount: cat.amount, ratio: cat.ratio })),
     topProducts: products.slice(0, 5).map(p => ({ name: p.name, value: p.value, percentage: p.percentage })),
@@ -174,33 +174,24 @@ export default function Sales() {
                 <span className="text-xs text-gray-500">vs forecast</span>
               </div>
             </div>
-            {/* Channel breakdown — only if POS provides channel data */}
-            {(kpis?.channelBreakdown?.length ?? 0) > 0 ? (
-              <div className="space-y-2.5 pt-2">
-                <div className="grid grid-cols-3 gap-4 text-xs">
-                  {kpis!.channelBreakdown.map(ch => (
-                    <div key={ch.channel} className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-gray-400" />
-                      <span className="text-gray-700">{ch.channel}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-900">
-                  {kpis!.channelBreakdown.map(ch => (
-                    <div key={ch.channel}>{ch.percentage}%</div>
-                  ))}
-                </div>
-                <div className="w-full h-3 flex rounded-sm overflow-hidden">
-                  {kpis!.channelBreakdown.map(ch => (
-                    <div key={ch.channel} className="h-full bg-gray-400" style={{ width: `${ch.percentage}%` }} />
-                  ))}
-                </div>
+            {/* Channel breakdown */}
+            <div className="space-y-2.5 pt-2">
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.dineIn}} /><span className="text-gray-700">Dine-in</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.pickUp}} /><span className="text-gray-700">Pick-up</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS.delivery}} /><span className="text-gray-700">Delivery</span></div>
               </div>
-            ) : (
-              <div className="pt-2 text-xs text-gray-400 italic">
-                Channel split requires POS channel tracking
+              <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-900">
+                {(kpis?.channelBreakdown || []).map(ch => (
+                  <div key={ch.channel}>{ch.percentage}%</div>
+                ))}
               </div>
-            )}
+              <div className="w-full h-3 flex rounded-sm overflow-hidden">
+                <div className="h-full" style={{backgroundColor: COLORS.dineIn, width: '55%'}} />
+                <div className="h-full" style={{backgroundColor: COLORS.pickUp, width: '25%'}} />
+                <div className="h-full" style={{backgroundColor: COLORS.delivery, width: '20%'}} />
+              </div>
+            </div>
           </div>
         </Card>
 

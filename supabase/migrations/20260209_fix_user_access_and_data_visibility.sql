@@ -15,8 +15,7 @@
 -- ====================================================================
 
 -- Fix is_admin_or_ops to use role_id JOIN (the `role` column was dropped)
--- Use uuid WITHOUT default to avoid ambiguity with the no-args wrapper
-CREATE OR REPLACE FUNCTION public.is_admin_or_ops(_user_id uuid)
+CREATE OR REPLACE FUNCTION public.is_admin_or_ops(_user_id uuid DEFAULT auth.uid())
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -32,7 +31,7 @@ AS $$
   )
 $$;
 
--- No-param wrapper (calls the uuid version)
+-- No-param wrapper
 CREATE OR REPLACE FUNCTION public.is_admin_or_ops()
 RETURNS boolean
 LANGUAGE sql
@@ -59,8 +58,8 @@ AS $$
   )
 $$;
 
--- Fix get_user_has_global_scope (uuid without default to avoid ambiguity)
-CREATE OR REPLACE FUNCTION public.get_user_has_global_scope(_user_id uuid)
+-- Fix get_user_has_global_scope
+CREATE OR REPLACE FUNCTION public.get_user_has_global_scope(_user_id uuid DEFAULT auth.uid())
 RETURNS boolean
 LANGUAGE sql
 STABLE

@@ -222,8 +222,7 @@
     "suppliers": "Proveïdors",
     "usersRoles": "Usuaris i Rols",
     "paymentMethods": "Mètodes de Pagament",
-    "addPaymentMethod": "Afegir Mètode de Pagament",
-    "dataSource": "Font de Dades"
+    "addPaymentMethod": "Afegir Mètode de Pagament"
   },
   "reports": {
     "title": "Informes",

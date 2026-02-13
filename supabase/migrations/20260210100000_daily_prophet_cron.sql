@@ -121,17 +121,16 @@ $$;
 
 -- 4) SCHEDULE: pg_cron job at 5 AM UTC daily
 --    Unschedule first if exists (idempotent)
-DO $cron$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
-    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'daily-prophet-forecast') THEN
-      PERFORM cron.unschedule('daily-prophet-forecast');
-    END IF;
-    PERFORM cron.schedule('daily-prophet-forecast', '0 5 * * *', 'SELECT run_daily_forecast()');
-  ELSE
-    RAISE NOTICE 'pg_cron not available — skipping daily-prophet-forecast schedule';
-  END IF;
-END $cron$;
+SELECT cron.unschedule('daily-prophet-forecast')
+WHERE EXISTS (
+  SELECT 1 FROM cron.job WHERE jobname = 'daily-prophet-forecast'
+);
+
+SELECT cron.schedule(
+  'daily-prophet-forecast',
+  '0 5 * * *',
+  $$SELECT run_daily_forecast()$$
+);
 
 
 -- 5) FUNCTION: simulate_today_partial_data()
@@ -213,14 +212,13 @@ $$;
 
 
 -- 6) SCHEDULE: Update today's partial data every 15 minutes during business hours
-DO $cron$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
-    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'simulate-today-partial') THEN
-      PERFORM cron.unschedule('simulate-today-partial');
-    END IF;
-    PERFORM cron.schedule('simulate-today-partial', '*/15 8-23 * * *', 'SELECT simulate_today_partial_data()');
-  ELSE
-    RAISE NOTICE 'pg_cron not available — skipping simulate-today-partial schedule';
-  END IF;
-END $cron$;
+SELECT cron.unschedule('simulate-today-partial')
+WHERE EXISTS (
+  SELECT 1 FROM cron.job WHERE jobname = 'simulate-today-partial'
+);
+
+SELECT cron.schedule(
+  'simulate-today-partial',
+  '*/15 8-23 * * *',
+  $$SELECT simulate_today_partial_data()$$
+);

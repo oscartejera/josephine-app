@@ -147,7 +147,7 @@ async function processOrder(
     for (const line of normalized.lines) {
       await supabase
         .from('cdm_order_lines')
-        .upsert({ ...line, order_id: cdmOrder.id, org_id: orgId });
+        .upsert({ ...line, order_id: cdmOrder.id });
     }
   }
 }

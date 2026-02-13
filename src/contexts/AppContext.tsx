@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
-import { useDemoMode } from './DemoModeContext';
+import { DEMO_MODE } from './DemoModeContext';
+import { usePOSConnection } from '@/hooks/usePOSConnection';
 
 export interface Location {
   id: string;
@@ -40,12 +41,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { profile, isOwner, hasGlobalScope, accessibleLocationIds, refreshProfile } = useAuth();
-  const { isDemoMode, dataSource: resolvedDataSource } = useDemoMode();
-
-  // Derive posConnected and dataSource from the centralized data source resolution
-  const posConnected = resolvedDataSource === 'pos';
+  const { posConnected } = usePOSConnection();
   const dataSource: 'pos' | 'simulated' = posConnected ? 'pos' : 'simulated';
-
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(null);
@@ -55,7 +52,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   // Detect if user needs onboarding (no group_id)
-  const needsOnboarding = !isDemoMode && !loading && profile !== null && profile.group_id === null && !onboardingCompleted;
+  const needsOnboarding = !DEMO_MODE && !loading && profile !== null && profile.group_id === null && !onboardingCompleted;
 
   const setOnboardingComplete = async () => {
     setOnboardingCompleted(true);
@@ -64,18 +61,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // In DEMO_MODE, everyone can see all locations
-  const canShowAllLocations = isDemoMode ? true : (isOwner || hasGlobalScope);
+  const canShowAllLocations = DEMO_MODE ? true : (isOwner || hasGlobalScope);
 
   // In DEMO_MODE, all locations are accessible
   const accessibleLocations = React.useMemo(() => {
-    if (isDemoMode) {
+    if (DEMO_MODE) {
       return locations;
     }
     if (isOwner || hasGlobalScope) {
       return locations;
     }
     return locations.filter(l => accessibleLocationIds.includes(l.id));
-  }, [locations, isOwner, hasGlobalScope, accessibleLocationIds, isDemoMode]);
+  }, [locations, isOwner, hasGlobalScope, accessibleLocationIds]);
 
   useEffect(() => {
     if (profile?.group_id) {
@@ -120,8 +117,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Wrapped setter - in DEMO_MODE, all locations are valid
   const setSelectedLocationId = (id: string | null) => {
-    // In demo mode, all selections are valid
-    if (isDemoMode) {
+    // In DEMO_MODE, all selections are valid
+    if (DEMO_MODE) {
       setSelectedLocationIdInternal(id);
       return;
     }
@@ -148,7 +145,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const getDateRangeValues = (): { from: Date; to: Date } => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
+    
     switch (dateRange) {
       case 'today':
         return { from: today, to: now };

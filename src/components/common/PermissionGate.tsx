@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePermissions, PermissionKey } from '@/hooks/usePermissions';
+import { DEMO_MODE } from '@/contexts/DemoModeContext';
 
 interface PermissionGateProps {
   /** Single permission required */

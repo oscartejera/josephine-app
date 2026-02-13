@@ -19,20 +19,6 @@ CREATE TABLE IF NOT EXISTS suppliers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ensure columns exist (table may pre-exist from initial migration with simpler schema)
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS org_id UUID;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS contact_name TEXT;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS contact_email TEXT;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS contact_phone TEXT;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS delivery_days TEXT[] DEFAULT '{}';
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS min_order_amount NUMERIC DEFAULT 0;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS lead_time_days INT DEFAULT 3;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS payment_terms TEXT;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS notes TEXT;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
-ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-UPDATE suppliers SET org_id = group_id WHERE org_id IS NULL AND group_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_suppliers_org ON suppliers(org_id, is_active);
 
 -- 2) Inventory Items (Master)
@@ -85,38 +71,6 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ensure columns exist (table may pre-exist from initial migration with simpler schema)
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS org_id UUID;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS sku TEXT;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'food';
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS category_name TEXT;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS main_supplier_id UUID;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS order_unit TEXT DEFAULT 'ea';
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS order_unit_qty NUMERIC DEFAULT 1;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS price NUMERIC DEFAULT 0;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS vat_rate NUMERIC DEFAULT 0;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'EUR';
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS min_order_qty NUMERIC DEFAULT 1;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS lead_time_days INT DEFAULT 3;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS reorder_point NUMERIC DEFAULT 0;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS safety_stock NUMERIC DEFAULT 0;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS shelf_life_days INT;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS storage_location TEXT;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS unit_of_measure TEXT DEFAULT 'ea';
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS cost_per_uom NUMERIC DEFAULT 0;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS is_recipe_ingredient BOOLEAN DEFAULT false;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS is_menu_item BOOLEAN DEFAULT false;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS location_ids UUID[] DEFAULT '{}';
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS cdm_item_id UUID;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS external_mappings JSONB DEFAULT '{}';
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS description TEXT;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS notes TEXT;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS image_url TEXT;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS allergens TEXT[];
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
-ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-UPDATE inventory_items SET org_id = group_id WHERE org_id IS NULL AND group_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_inventory_items_org ON inventory_items(org_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_inventory_items_supplier ON inventory_items(main_supplier_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_items_category ON inventory_items(category_name);
@@ -140,21 +94,6 @@ CREATE TABLE IF NOT EXISTS recipes (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ensure columns exist (table may pre-exist from initial migration with simpler schema)
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS org_id UUID;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS name TEXT;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS menu_item_id UUID;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS portions NUMERIC DEFAULT 1;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS portion_size TEXT;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS prep_time_minutes INT;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS cost_per_portion NUMERIC DEFAULT 0;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS selling_price NUMERIC DEFAULT 0;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS gp_percentage NUMERIC DEFAULT 0;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS instructions TEXT;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
-ALTER TABLE recipes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-UPDATE recipes SET org_id = group_id WHERE org_id IS NULL AND group_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_recipes_org ON recipes(org_id, is_active);
 
 CREATE TABLE IF NOT EXISTS recipe_ingredients (
@@ -166,13 +105,6 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Ensure columns exist (table may pre-exist from initial migration with simpler schema)
-ALTER TABLE recipe_ingredients ADD COLUMN IF NOT EXISTS ingredient_id UUID;
-ALTER TABLE recipe_ingredients ADD COLUMN IF NOT EXISTS unit TEXT DEFAULT 'ea';
-ALTER TABLE recipe_ingredients ADD COLUMN IF NOT EXISTS notes TEXT;
-ALTER TABLE recipe_ingredients ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
-UPDATE recipe_ingredients SET ingredient_id = inventory_item_id WHERE ingredient_id IS NULL AND inventory_item_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe ON recipe_ingredients(recipe_id);
 

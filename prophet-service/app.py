@@ -85,14 +85,10 @@ class ModelMetrics(BaseModel):
     mape: float
     rmse: float
     mae: float
-    mase: float = 0.0
     r_squared: float
-    directional_accuracy: float = 0.0
-    forecast_bias: float = 0.0
     data_points: int
     changepoints: int
     trend_slope_avg: float
-    cv_stability: float = 0.0
 
 
 class ForecastResponse(BaseModel):
@@ -150,123 +146,51 @@ def build_explanation(row: pd.Series, base_forecast: float) -> str:
 
 
 def calculate_cv_metrics(model: Prophet, df: pd.DataFrame) -> dict:
-    """Expanding window cross-validation with comprehensive time series metrics.
-
-    Instead of a single holdout, uses 3 expanding windows to assess stability:
-      Fold 1: train[0..60%] → test[60%..73%]
-      Fold 2: train[0..73%] → test[73%..87%]
-      Fold 3: train[0..87%] → test[87%..100%]
-
-    Returns aggregated metrics including MASE, directional accuracy, and bias.
-    """
-    import logging as _logging
-    _logging.getLogger('cmdstanpy').setLevel(_logging.WARNING)
-
+    """Calculate cross-validation metrics using the last 20% of data as
+    a hold-out set instead of running full Prophet cross-validation
+    (which is slow for an API call)."""
     n = len(df)
-    if n < 30:
-        return {
-            "mape": 0, "rmse": 0, "mae": 0, "mase": 0, "r_squared": 0,
-            "directional_accuracy": 0, "forecast_bias": 0, "cv_stability": 0,
-        }
+    split = max(int(n * 0.8), n - 90)  # last 20% or up to 90 days
+    train = df.iloc[:split].copy()
+    test = df.iloc[split:].copy()
 
-    fold_results = []
-    n_folds = 3
-    min_train_pct = 0.5
-    test_pct = (1.0 - min_train_pct) / n_folds
+    if len(test) < 7:
+        return {"mape": 0, "rmse": 0, "mae": 0, "r_squared": 0}
 
-    for i in range(n_folds):
-        train_end = max(30, int(n * (min_train_pct + i * test_pct)))
-        test_end = min(n, int(n * (min_train_pct + (i + 1) * test_pct)))
-
-        if train_end >= n or test_end - train_end < 7:
-            continue
-
-        train = df.iloc[:train_end].copy()
-        test = df.iloc[train_end:test_end].copy()
-
-        try:
-            m = Prophet(
-                yearly_seasonality=model.yearly_seasonality,
-                weekly_seasonality=model.weekly_seasonality,
-                daily_seasonality=model.daily_seasonality,
-                seasonality_mode=model.seasonality_mode,
-                changepoint_prior_scale=model.changepoint_prior_scale,
-                seasonality_prior_scale=model.seasonality_prior_scale,
-            )
-            for reg in REGRESSOR_NAMES:
-                if reg in train.columns:
-                    m.add_regressor(reg, mode="multiplicative" if reg == "evento_impact" else "additive")
-
-            m.fit(train)
-            future = test[["ds"] + [r for r in REGRESSOR_NAMES if r in test.columns]].copy()
-            pred = m.predict(future)
-
-            actual = test["y"].values
-            predicted = pred["yhat"].values
-            mask = actual > 0
-
-            if mask.sum() < 3:
-                continue
-
-            fold_mape = float(np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])))
-            fold_rmse = float(np.sqrt(np.mean((actual - predicted) ** 2)))
-            fold_mae = float(np.mean(np.abs(actual - predicted)))
-            fold_bias = float(np.mean(actual - predicted))
-
-            # MASE: compare MAE to naive forecast MAE (y_{t-1})
-            naive_errors = np.abs(np.diff(train["y"].values))
-            naive_mae = float(np.mean(naive_errors)) if len(naive_errors) > 0 else 1.0
-            fold_mase = fold_mae / naive_mae if naive_mae > 0 else 0.0
-
-            # Directional accuracy
-            if len(actual) > 1:
-                actual_dir = np.diff(actual)
-                pred_dir = np.diff(predicted)
-                correct = np.sum((actual_dir >= 0) == (pred_dir >= 0))
-                fold_dir_acc = float(correct / len(actual_dir))
-            else:
-                fold_dir_acc = 0.0
-
-            # R-squared
-            ss_res = np.sum((actual - predicted) ** 2)
-            ss_tot = np.sum((actual - np.mean(actual)) ** 2)
-            fold_r2 = max(0.0, float(1 - ss_res / ss_tot)) if ss_tot > 0 else 0.0
-
-            fold_results.append({
-                "mape": fold_mape, "rmse": fold_rmse, "mae": fold_mae,
-                "mase": fold_mase, "r_squared": fold_r2,
-                "directional_accuracy": fold_dir_acc,
-                "forecast_bias": fold_bias,
-            })
-        except Exception as e:
-            logger.warning("CV fold %d failed: %s", i + 1, str(e))
-            continue
-
-    if not fold_results:
-        return {
-            "mape": 0, "rmse": 0, "mae": 0, "mase": 0, "r_squared": 0,
-            "directional_accuracy": 0, "forecast_bias": 0, "cv_stability": 0,
-        }
-
-    # Aggregate across folds
-    agg = {}
-    for key in fold_results[0]:
-        values = [f[key] for f in fold_results]
-        agg[key] = float(np.mean(values))
-
-    # CV stability: coefficient of variation of MAPE across folds
-    mapes = [f["mape"] for f in fold_results]
-    mape_mean = np.mean(mapes)
-    mape_std = np.std(mapes)
-    agg["cv_stability"] = float(mape_std / mape_mean) if mape_mean > 0 else 0.0
-
-    logger.info(
-        "CV (%d folds): MAPE=%.1f%% MASE=%.3f DirAcc=%.0f%% Bias=%.0f Stability=%.3f",
-        len(fold_results), agg["mape"] * 100, agg["mase"],
-        agg["directional_accuracy"] * 100, agg["forecast_bias"], agg["cv_stability"],
+    m = Prophet(
+        yearly_seasonality=model.yearly_seasonality,
+        weekly_seasonality=model.weekly_seasonality,
+        daily_seasonality=model.daily_seasonality,
+        seasonality_mode=model.seasonality_mode,
+        changepoint_prior_scale=model.changepoint_prior_scale,
+        seasonality_prior_scale=model.seasonality_prior_scale,
     )
 
-    return agg
+    for reg in REGRESSOR_NAMES:
+        if reg in train.columns:
+            m.add_regressor(reg, mode="multiplicative" if reg == "evento_impact" else "additive")
+
+    m.fit(train)
+
+    future = test[["ds"] + [r for r in REGRESSOR_NAMES if r in test.columns]].copy()
+    pred = m.predict(future)
+
+    actual = test["y"].values
+    predicted = pred["yhat"].values
+
+    mask = actual > 0
+    if mask.sum() == 0:
+        return {"mape": 0, "rmse": 0, "mae": 0, "r_squared": 0}
+
+    mape = float(np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])))
+    rmse = float(np.sqrt(np.mean((actual - predicted) ** 2)))
+    mae = float(np.mean(np.abs(actual - predicted)))
+
+    ss_res = np.sum((actual - predicted) ** 2)
+    ss_tot = np.sum((actual - np.mean(actual)) ** 2)
+    r_squared = float(1 - (ss_res / ss_tot)) if ss_tot > 0 else 0
+
+    return {"mape": mape, "rmse": rmse, "mae": mae, "r_squared": max(0, r_squared)}
 
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -370,13 +294,7 @@ async def forecast(req: ForecastRequest, authorization: str = Header(default="")
 
     # ── Cross-validation metrics ──────────────────────────────────────────
     cv_metrics = calculate_cv_metrics(model, df)
-    logger.info(
-        "CV metrics: MAPE=%.1f%% MASE=%.3f DirAcc=%.0f%% R²=%.3f Bias=%.0f Stability=%.3f",
-        cv_metrics["mape"] * 100, cv_metrics.get("mase", 0),
-        cv_metrics.get("directional_accuracy", 0) * 100,
-        cv_metrics["r_squared"], cv_metrics.get("forecast_bias", 0),
-        cv_metrics.get("cv_stability", 0),
-    )
+    logger.info("CV metrics: MAPE=%.2f%%, R²=%.3f", cv_metrics["mape"] * 100, cv_metrics["r_squared"])
 
     # ── Build trend slope ─────────────────────────────────────────────────
     trend_vals = pred["trend"].values
@@ -448,14 +366,10 @@ async def forecast(req: ForecastRequest, authorization: str = Header(default="")
         mape=round(cv_metrics["mape"], 4),
         rmse=round(cv_metrics["rmse"], 2),
         mae=round(cv_metrics["mae"], 2),
-        mase=round(cv_metrics.get("mase", 0), 4),
         r_squared=round(cv_metrics["r_squared"], 4),
-        directional_accuracy=round(cv_metrics.get("directional_accuracy", 0), 4),
-        forecast_bias=round(cv_metrics.get("forecast_bias", 0), 2),
         data_points=len(df),
         changepoints=len(model.changepoints) if hasattr(model, "changepoints") else 0,
         trend_slope_avg=round(trend_slope_avg, 4),
-        cv_stability=round(cv_metrics.get("cv_stability", 0), 4),
     )
 
     logger.info(
@@ -679,343 +593,12 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
             "mape": f"{result.metrics.mape * 100:.1f}%",
             "rmse": f"EUR {result.metrics.rmse:.0f}",
             "mae": f"EUR {result.metrics.mae:.0f}",
-            "mase": f"{result.metrics.mase:.3f}",
             "r_squared": f"{result.metrics.r_squared:.3f}",
-            "directional_accuracy": f"{result.metrics.directional_accuracy * 100:.0f}%",
-            "forecast_bias": f"EUR {result.metrics.forecast_bias:.0f}",
-            "cv_stability": f"{result.metrics.cv_stability:.3f}",
         },
         "sample_forecast": [
             {"date": f.ds, "forecast": f.yhat, "lower": f.yhat_lower, "upper": f.yhat_upper}
             for f in result.forecast[:7]
         ],
-    }
-
-
-@app.post("/forecast_hourly")
-async def forecast_hourly(req: dict, authorization: str = Header(default="")):
-    """Hourly forecast pipeline with champion/challenger per bucket.
-
-    1. Fetch facts_sales_15m → aggregate to hourly
-    2. Train LightGBM (global) + Seasonal Naive (baseline)
-    3. Evaluate per bucket (DOW × HOUR) → model registry
-    4. Predict future hours using registry winners
-    5. Store: forecast_hourly_metrics + forecast_daily_metrics (backwards compat)
-    6. Store: forecast_model_registry + forecast_model_runs (audit)
-    """
-    import httpx
-    from hourly_forecaster import HourlyForecaster
-
-    if API_KEY and not authorization.endswith(API_KEY):
-        raise HTTPException(status_code=401, detail="Invalid API key")
-
-    supabase_url = req.get("supabase_url")
-    supabase_key = req.get("supabase_key")
-    location_id = req.get("location_id", "")
-    location_name = req.get("location_name", "")
-    horizon_days = req.get("horizon_days", 14)
-    req_data_source = req.get("data_source")  # 'demo' | 'pos' | None
-    req_org_id = req.get("org_id")            # uuid string | None
-
-    if not supabase_url or not supabase_key:
-        raise HTTPException(status_code=400, detail="supabase_url and supabase_key required")
-
-    logger.info(
-        "forecast_hourly: location=%s, horizon=%d days, ds=%s",
-        location_name or location_id, horizon_days, req_data_source,
-    )
-
-    # ── Resolve data_source ──────────────────────────────────────────
-    headers_sb = {
-        "apikey": supabase_key,
-        "Authorization": f"Bearer {supabase_key}",
-    }
-    ds = req_data_source  # may be None
-    if not ds and req_org_id:
-        # Call resolve_data_source RPC
-        try:
-            import httpx as _httpx
-            async with _httpx.AsyncClient(timeout=10) as _client:
-                rpc_resp = await _client.post(
-                    f"{supabase_url}/rest/v1/rpc/resolve_data_source",
-                    headers={**headers_sb, "Content-Type": "application/json"},
-                    json={"p_org_id": req_org_id},
-                )
-                if rpc_resp.status_code == 200:
-                    ds = rpc_resp.json().get("data_source", "demo")
-                else:
-                    logger.warning("resolve_data_source RPC failed: %s", rpc_resp.text[:200])
-                    ds = "demo"
-        except Exception as e:
-            logger.warning("resolve_data_source failed, defaulting to demo: %s", e)
-            ds = "demo"
-    if not ds:
-        ds = "demo"
-    logger.info("Resolved data_source=%s for location=%s", ds, location_name or location_id)
-
-    # ── Fetch location_hours (open/close/prep) ────────────────────
-    location_hours = {
-        "tz": "Europe/Madrid",
-        "open_time": "12:00",
-        "close_time": "23:00",
-        "prep_start": "09:00",
-        "prep_end": "12:00",
-    }
-    try:
-        import httpx as _httpx
-        async with _httpx.AsyncClient(timeout=10) as _client:
-            lh_resp = await _client.get(
-                f"{supabase_url}/rest/v1/location_hours"
-                f"?location_id=eq.{location_id}"
-                f"&select=tz,open_time,close_time,prep_start,prep_end",
-                headers=headers_sb,
-            )
-            if lh_resp.status_code == 200:
-                rows = lh_resp.json()
-                if rows:
-                    location_hours = rows[0]
-                    logger.info("Fetched location_hours: %s", location_hours)
-    except Exception as e:
-        logger.warning("Failed to fetch location_hours, using defaults: %s", e)
-
-    # Parse hours as integers for mask
-    def _parse_time_hour(t: str) -> int:
-        """Extract hour from 'HH:MM' or 'HH:MM:SS' string."""
-        return int(t.split(":")[0])
-
-    open_hour = _parse_time_hour(location_hours.get("open_time", "12:00"))
-    close_hour = _parse_time_hour(location_hours.get("close_time", "23:00"))
-    prep_start_hour = _parse_time_hour(location_hours.get("prep_start", "09:00"))
-    prep_end_hour = _parse_time_hour(location_hours.get("prep_end", "12:00"))
-
-    def is_service_hour(hour: int) -> bool:
-        """True if hour is within open service window [open, close)."""
-        if open_hour <= close_hour:
-            return open_hour <= hour < close_hour
-        # Wraps midnight (e.g. 20:00 - 02:00)
-        return hour >= open_hour or hour < close_hour
-
-    def is_prep_hour(hour: int) -> bool:
-        """True if hour is within prep window [prep_start, prep_end)."""
-        return prep_start_hour <= hour < prep_end_hour
-
-    logger.info(
-        "Open hours mask: service=[%d,%d), prep=[%d,%d)",
-        open_hour, close_hour, prep_start_hour, prep_end_hour,
-    )
-
-    # ── Fetch facts_sales_15m (paginated) ────────────────────────────
-    sales_data = []
-    page = 0
-    async with httpx.AsyncClient(timeout=30) as client:
-        while True:
-            url = (
-                f"{supabase_url}/rest/v1/facts_sales_15m"
-                f"?location_id=eq.{location_id}"
-                f"&select=ts_bucket,sales_net,tickets"
-                f"&order=ts_bucket.asc"
-            )
-            resp = await client.get(
-                url,
-                headers={**headers_sb, "Range": f"{page*1000}-{(page+1)*1000-1}"},
-            )
-            resp.raise_for_status()
-            rows = resp.json()
-            if not rows:
-                break
-            sales_data.extend(rows)
-            page += 1
-            if len(rows) < 1000:
-                break
-
-    logger.info("Fetched %d 15-min records in %d pages", len(sales_data), page)
-
-    if len(sales_data) < 24 * 7:  # minimum ~1 week of hourly data
-        raise HTTPException(
-            status_code=400,
-            detail=f"Need at least 1 week of 15-min data, got {len(sales_data)} records",
-        )
-
-    # ── Run hourly forecaster (with data-availability gating) ───────
-    forecaster = HourlyForecaster(location_id=location_id, location_name=location_name)
-    result = forecaster.run(sales_data, horizon_days=horizon_days, enable_gating=True)
-
-    if not result.get("success"):
-        raise HTTPException(status_code=400, detail=result.get("error", "Forecast failed"))
-
-    # ── Store results in Supabase ────────────────────────────────────
-    today_str = datetime.utcnow().date().isoformat()
-    TARGET_COL_PERCENT = 28
-    AVG_HOURLY_RATE = 14.5
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        # 1) Delete old hourly forecasts for this location
-        await client.delete(
-            f"{supabase_url}/rest/v1/forecast_hourly_metrics"
-            f"?location_id=eq.{location_id}&forecast_date=gte.{today_str}",
-            headers={**headers_sb, "Prefer": "return=minimal"},
-        )
-
-        # 2) Insert hourly forecasts in batches (with open-hours mask)
-        hourly_rows = []
-        masked_count = 0
-        for hf in result["hourly_forecasts"]:
-            h = hf["hour_of_day"]
-            # Apply open-hours mask: zero out outside service hours
-            if is_service_hour(h):
-                sales = hf["forecast_sales"]
-                lower = hf["forecast_sales_lower"]
-                upper = hf["forecast_sales_upper"]
-                orders = hf["forecast_orders"]
-                covers = hf["forecast_covers"]
-            else:
-                # Prep or closed — keep row but zero values
-                sales = 0
-                lower = 0
-                upper = 0
-                orders = 0
-                covers = 0
-                masked_count += 1
-
-            hourly_rows.append({
-                "location_id": location_id,
-                "forecast_date": hf["forecast_date"],
-                "hour_of_day": h,
-                "forecast_sales": sales,
-                "forecast_sales_lower": lower,
-                "forecast_sales_upper": upper,
-                "forecast_orders": orders,
-                "forecast_covers": covers,
-                "model_type": hf["model_type"],
-                "model_version": "HourlyEngine_v1.0",
-                "bucket_wmape": hf.get("bucket_wmape"),
-                "bucket_mase": hf.get("bucket_mase"),
-                "generated_at": datetime.utcnow().isoformat(),
-                "data_source": ds,
-            })
-
-        logger.info("Open-hours mask zeroed %d/%d hourly rows", masked_count, len(hourly_rows))
-
-        for i in range(0, len(hourly_rows), 500):
-            batch = hourly_rows[i:i + 500]
-            resp = await client.post(
-                f"{supabase_url}/rest/v1/forecast_hourly_metrics",
-                headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
-                json=batch,
-            )
-            if resp.status_code >= 400:
-                logger.error("Hourly insert error: %s", resp.text[:200])
-
-        # 3) Upsert daily forecasts (backwards compat with forecast_daily_metrics)
-        await client.delete(
-            f"{supabase_url}/rest/v1/forecast_daily_metrics"
-            f"?location_id=eq.{location_id}&date=gte.{today_str}",
-            headers={**headers_sb, "Prefer": "return=minimal"},
-        )
-
-        daily_rows = []
-        for df_row in result["daily_forecasts"]:
-            sales = df_row["forecast_sales"]
-            target_labour = sales * (TARGET_COL_PERCENT / 100)
-            planned_hours = max(20, min(120, target_labour / AVG_HOURLY_RATE))
-            daily_rows.append({
-                "location_id": location_id,
-                "date": df_row["date"],
-                "forecast_sales": sales,
-                "forecast_sales_lower": df_row["forecast_sales_lower"],
-                "forecast_sales_upper": df_row["forecast_sales_upper"],
-                "forecast_orders": df_row["forecast_orders"],
-                "planned_labor_hours": round(planned_hours, 1),
-                "planned_labor_cost": round(target_labour, 2),
-                "model_version": "HourlyEngine_v1.0",
-                "confidence": round(max(0, (1 - result["metrics"]["wmape"])) * 100),
-                "mape": result["metrics"]["wmape"],
-                "mse": 0,
-                "explanation": f"Hourly forecast (WMAPE {result['metrics']['wmape']*100:.1f}%, "
-                               f"MASE {result['metrics']['mase']:.3f})",
-                "generated_at": datetime.utcnow().isoformat(),
-                "data_source": ds,
-            })
-
-        for i in range(0, len(daily_rows), 500):
-            batch = daily_rows[i:i + 500]
-            resp = await client.post(
-                f"{supabase_url}/rest/v1/forecast_daily_metrics",
-                headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
-                json=batch,
-            )
-            if resp.status_code >= 400:
-                logger.error("Daily insert error: %s", resp.text[:200])
-
-        # 4) Upsert model registry
-        await client.delete(
-            f"{supabase_url}/rest/v1/forecast_model_registry"
-            f"?location_id=eq.{location_id}",
-            headers={**headers_sb, "Prefer": "return=minimal"},
-        )
-
-        registry_rows = result["model_registry"]
-        for i in range(0, len(registry_rows), 200):
-            batch = registry_rows[i:i + 200]
-            resp = await client.post(
-                f"{supabase_url}/rest/v1/forecast_model_registry",
-                headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
-                json=batch,
-            )
-            if resp.status_code >= 400:
-                logger.error("Registry insert error: %s", resp.text[:200])
-
-        # 5) Log model run (audit) with gating metadata
-        metrics = result["metrics"]
-        gating = result.get("gating", {})
-        await client.post(
-            f"{supabase_url}/rest/v1/forecast_model_runs",
-            headers={**headers_sb, "Content-Type": "application/json", "Prefer": "return=minimal"},
-            json={
-                "location_id": location_id,
-                "model_version": "HourlyEngine_v1.0",
-                "algorithm": gating.get("algorithm", "LightGBM_ChampionChallenger"),
-                "history_start": sales_data[0]["ts_bucket"][:10],
-                "history_end": sales_data[-1]["ts_bucket"][:10],
-                "horizon_days": horizon_days,
-                "mse": 0,
-                "mape": metrics["wmape"],
-                "confidence": round(max(0, (1 - metrics["wmape"])) * 100),
-                "data_points": result["data_points"],
-                "trend_slope": 0,
-                "data_sufficiency_level": gating.get("sufficiency", "LOW"),
-                "blend_ratio": gating.get("blend_ratio"),
-                "total_days": gating.get("total_days", 0),
-                "min_bucket_samples": gating.get("min_bucket_samples", 0),
-            },
-        )
-
-    logger.info(
-        "Stored %d hourly + %d daily forecasts for %s (ds=%s, masked=%d)",
-        len(hourly_rows), len(daily_rows), location_name, ds, masked_count,
-    )
-
-    return {
-        "success": True,
-        "location_id": location_id,
-        "location_name": location_name,
-        "data_source": ds,
-        "data_points": result["data_points"],
-        "history_days": result["history_days"],
-        "hourly_forecasts_stored": len(hourly_rows),
-        "daily_forecasts_stored": len(daily_rows),
-        "hours_masked": masked_count,
-        "lgbm_used": result["lgbm_used"],
-        "gating": result.get("gating", {}),
-        "metrics": {
-            "wmape": f"{metrics['wmape'] * 100:.1f}%",
-            "mase": f"{metrics['mase']:.3f}",
-            "bias": f"{metrics['bias'] * 100:.1f}%",
-            "directional_accuracy": f"{metrics['directional_accuracy'] * 100:.0f}%",
-        },
-        "registry_summary": result["registry_summary"],
-        "sample_hourly": hourly_rows[:24],  # first day (with mask applied)
-        "sample_daily": result["daily_forecasts"][:7],
     }
 
 
