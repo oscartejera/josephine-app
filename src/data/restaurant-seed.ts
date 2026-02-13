@@ -99,7 +99,7 @@ export function generateRealisticCDMData(locationId: string, orgId: string = 'de
 
     // Generate hourly sales data (11:00-23:00)
     for (let hour = 11; hour <= 23; hour++) {
-      for (let min of [0, 15, 30, 45]) {
+      for (const min of [0, 15, 30, 45]) {
         const ts = new Date(date);
         ts.setHours(hour, min, 0, 0);
 

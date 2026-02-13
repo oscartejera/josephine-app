@@ -152,8 +152,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.redirect('/integrations/square?connected=true');
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('OAuth callback error:', err);
-    return res.redirect(`/integrations/square?error=${encodeURIComponent(err.message)}`);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return res.redirect(`/integrations/square?error=${encodeURIComponent(message)}`);
   }
 }

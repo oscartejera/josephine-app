@@ -630,7 +630,7 @@ async function handleCreateContract(body: any) {
 // Get all active employees for a group (via locations)
 async function getActiveEmployees(groupId: string): Promise<any[]> {
   // First try direct group_id on employees
-  let { data: employees, error } = await supabase
+  const { data: employees, error } = await supabase
     .from('employees')
     .select('id, full_name, role_name, location_id')
     .eq('group_id', groupId)
@@ -1275,7 +1275,7 @@ async function handleSeedTestData(body: any) {
   ];
   
   // If we have existing employees, use them (up to 20). Otherwise, create new ones.
-  let employees: any[] = existingEmployees.slice(0, 20);
+  const employees: any[] = existingEmployees.slice(0, 20);
   
   // If we have fewer than 20, create the missing ones
   if (employees.length < 20) {

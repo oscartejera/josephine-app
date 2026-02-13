@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 interface Recommendation {
   id: string;
   type: 'adjust_staff' | 'create_order' | 'push_menu_item' | 'alert_variance';
-  payload_json: any;
+  payload_json: Record<string, unknown>;
   rationale: string;
   expected_impact: {
     revenue_delta?: number;

@@ -54,7 +54,7 @@ export function EmailOTPVerification({
         title: "Código enviado",
         description: `Hemos enviado un código de 6 dígitos a ${email}`
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending OTP:', error);
       toast({
         variant: "destructive",
@@ -133,7 +133,7 @@ export function EmailOTPVerification({
       });
       
       onVerified();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Verification error:', error);
       toast({
         variant: "destructive",
