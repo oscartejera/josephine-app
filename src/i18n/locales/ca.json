@@ -252,42 +252,6 @@
     "pointsEarned": "Punts Guanyats",
     "redemptionHistory": "Historial de Bescanvis"
   },
-  "lowStock": {
-    "selectLocation": "Selecciona una ubicació",
-    "selectLocationHint": "Les alertes d'estoc requereixen una ubicació específica.",
-    "demoTitle": "Dades d'inventari demo",
-    "demoDescription": "No hi ha moviments d'estoc reals per a aquesta ubicació. Carrega el pack demo per explorar o connecta el teu TPV / importa inventari.",
-    "loadDemoPack": "Carregar inventari demo",
-    "connectCTA": "Importar inventari o connectar TPV",
-    "allGood": "Tot l'estoc està en ordre",
-    "allGoodHint": "No hi ha articles per sota del punt de reordenament"
-  },
-  "labourReadiness": {
-    "badgeDemo": "Demo",
-    "demoTitle": "Labour en mode DEMO",
-    "demoDescriptionSimulated": "Mostrant dades demo de labour. Connecta el teu POS per veure dades reals de costos laborals.",
-    "demoDescriptionPosNoRows": "POS connectat però encara no hi ha dades de labour configurades per a aquest rang. Configura torns o fitxatges per veure dades reals.",
-    "connectPosCta": "Connectar POS",
-    "configureCta": "Configurar Labour",
-    "errorTitle": "Error en verificar dades de labour",
-    "errorDescription": "No s'han pogut verificar les dades de labour. Pots reintentar o continuar amb DEMO.",
-    "retry": "Reintentar",
-    "refresh": "Actualitzar"
-  },
-  "salesReadiness": {
-    "demoTitle": "Vendes en mode DEMO",
-    "integrationInactive": "POS no està connectat o està desactivat. Connecta el teu POS per veure vendes reals.",
-    "neverSynced": "POS connectat, però encara no hi ha cap sincronització exitosa. Executa el sync per veure vendes reals.",
-    "syncStale": "L'última sincronització és antiga. Reconnecta o torna a sincronitzar per veure vendes reals.",
-    "noIntegration": "No hi ha cap integració connectada. Estàs veient DEMO fins que connectis el teu POS.",
-    "posNoRows": "El teu POS està connectat, però encara no hi ha prou històric per mostrar vendes reals en aquest rang.",
-    "fallback": "Encara no hi ha dades reals disponibles. Estàs veient DEMO.",
-    "errorTitle": "Error en verificar dades de vendes",
-    "errorDescription": "No s'han pogut verificar les dades de vendes. Pots reintentar o continuar amb DEMO.",
-    "connectPOS": "Connectar POS",
-    "refresh": "Actualitzar",
-    "retry": "Reintentar"
-  },
   "errors": {
     "generic": "S'ha produït un error",
     "notFound": "No trobat",

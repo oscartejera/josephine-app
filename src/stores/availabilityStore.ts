@@ -45,7 +45,7 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 import { SeededRandom } from '@/lib/seededRandom';
 
 // In-memory store (would be database in production)
-const employeeAvailabilities: Map<string, EmployeeAvailability> = new Map();
+let employeeAvailabilities: Map<string, EmployeeAvailability> = new Map();
 let timeOffRequests: TimeOffRequest[] = [];
 let isInitialized = false;
 

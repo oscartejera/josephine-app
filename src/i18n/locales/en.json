@@ -252,42 +252,6 @@
     "pointsEarned": "Points Earned",
     "redemptionHistory": "Redemption History"
   },
-  "lowStock": {
-    "selectLocation": "Select a location",
-    "selectLocationHint": "Low stock alerts require a specific location.",
-    "demoTitle": "Demo inventory data",
-    "demoDescription": "No real stock movements exist for this location. Load the demo pack to explore, or connect your POS / import inventory.",
-    "loadDemoPack": "Load demo inventory",
-    "connectCTA": "Import inventory or connect POS",
-    "allGood": "All stock levels are healthy",
-    "allGoodHint": "No items below reorder point"
-  },
-  "labourReadiness": {
-    "badgeDemo": "Demo",
-    "demoTitle": "Labour in Demo Mode",
-    "demoDescriptionSimulated": "Showing demo labour data. Connect your POS to see real labour cost data.",
-    "demoDescriptionPosNoRows": "POS connected but no labour data configured for this range yet. Set up shifts or clock records to see real data.",
-    "connectPosCta": "Connect POS",
-    "configureCta": "Configure Labour",
-    "errorTitle": "Error verifying labour data",
-    "errorDescription": "Could not verify labour data. You can retry or continue with DEMO.",
-    "retry": "Retry",
-    "refresh": "Refresh"
-  },
-  "salesReadiness": {
-    "demoTitle": "Sales in Demo Mode",
-    "integrationInactive": "POS is not connected or is disabled. Connect your POS to see real sales.",
-    "neverSynced": "POS connected, but no successful sync yet. Run a sync to see real sales.",
-    "syncStale": "Last sync is outdated. Reconnect or re-sync to see real sales.",
-    "noIntegration": "No integration connected. You're viewing DEMO until you connect your POS.",
-    "posNoRows": "Your POS is connected, but there's not enough history to show real sales for this range.",
-    "fallback": "No real data available yet. You're viewing DEMO.",
-    "errorTitle": "Error verifying sales data",
-    "errorDescription": "Could not verify sales data. You can retry or continue with DEMO.",
-    "connectPOS": "Connect POS",
-    "refresh": "Refresh",
-    "retry": "Retry"
-  },
   "errors": {
     "generic": "An error occurred",
     "notFound": "Not found",

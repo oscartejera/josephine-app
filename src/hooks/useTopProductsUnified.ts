@@ -6,7 +6,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { format } from 'date-fns';
 
 // ── Response types ────────────────────────────────────────────
@@ -50,8 +49,6 @@ export function useTopProductsUnified({
   limit = 20,
   enabled = true,
 }: UseTopProductsUnifiedParams) {
-  const { dsUnified } = useEffectiveDataSource();
-
   return useQuery({
     queryKey: [
       'top-products-unified',
@@ -60,7 +57,6 @@ export function useTopProductsUnified({
       format(from, 'yyyy-MM-dd'),
       format(to, 'yyyy-MM-dd'),
       limit,
-      dsUnified,
     ],
     queryFn: async (): Promise<TopProductsUnifiedResult> => {
       // RPC not yet in auto-generated types

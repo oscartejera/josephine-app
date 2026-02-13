@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { format, subDays, startOfMonth } from 'date-fns';
 
 export interface ControlTowerKPIs {
@@ -36,12 +35,11 @@ const emptyKPIs: ControlTowerKPIs = {
 export function useControlTowerData() {
   const { locations, group } = useApp();
   const { session } = useAuth();
-  const { dsUnified } = useEffectiveDataSource();
   const orgId = group?.id;
   const locationIds = locations.map(l => l.id);
 
   return useQuery({
-    queryKey: ['control-tower', orgId, locationIds, dsUnified],
+    queryKey: ['control-tower', orgId, locationIds],
     enabled: !!orgId && locationIds.length > 0 && !!session,
     staleTime: 60000,
     queryFn: async (): Promise<ControlTowerKPIs> => {
@@ -50,7 +48,7 @@ export function useControlTowerData() {
       const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
       const mtdStartStr = format(startOfMonth(today), 'yyyy-MM-dd');
 
-       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: any; error: { message: string } | null }>;
       const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
 

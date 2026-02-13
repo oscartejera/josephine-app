@@ -7,15 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "lint:all": "eslint .",
+    "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "repair:migrations": "tsx tools/supabase/repair-migrations.ts",
-    "check:migrations": "tsx tools/supabase/check-migrations.ts",
-    "audit:ds": "node scripts/audit-data-source-aware.mjs",
-    "audit:ds:fail": "node scripts/audit-data-source-aware.mjs --fail-on-offenders"
+    "check:migrations": "tsx tools/supabase/check-migrations.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",

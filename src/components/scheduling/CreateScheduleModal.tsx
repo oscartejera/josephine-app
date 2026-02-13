@@ -39,7 +39,7 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
     }
     
     const stepDurations = [1400, 1600, 1500];
-    const timeouts: NodeJS.Timeout[] = [];
+    let timeouts: NodeJS.Timeout[] = [];
     
     let totalDelay = 0;
     stepDurations.forEach((duration, index) => {
