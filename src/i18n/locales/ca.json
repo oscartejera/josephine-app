@@ -252,6 +252,16 @@
     "pointsEarned": "Punts Guanyats",
     "redemptionHistory": "Historial de Bescanvis"
   },
+  "lowStock": {
+    "selectLocation": "Selecciona una ubicació",
+    "selectLocationHint": "Les alertes d'estoc requereixen una ubicació específica.",
+    "demoTitle": "Dades d'inventari demo",
+    "demoDescription": "No hi ha moviments d'estoc reals per a aquesta ubicació. Carrega el pack demo per explorar o connecta el teu TPV / importa inventari.",
+    "loadDemoPack": "Carregar inventari demo",
+    "connectCTA": "Importar inventari o connectar TPV",
+    "allGood": "Tot l'estoc està en ordre",
+    "allGoodHint": "No hi ha articles per sota del punt de reordenament"
+  },
   "errors": {
     "generic": "S'ha produït un error",
     "notFound": "No trobat",

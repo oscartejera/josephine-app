@@ -252,6 +252,16 @@
     "pointsEarned": "Points Earned",
     "redemptionHistory": "Redemption History"
   },
+  "lowStock": {
+    "selectLocation": "Select a location",
+    "selectLocationHint": "Low stock alerts require a specific location.",
+    "demoTitle": "Demo inventory data",
+    "demoDescription": "No real stock movements exist for this location. Load the demo pack to explore, or connect your POS / import inventory.",
+    "loadDemoPack": "Load demo inventory",
+    "connectCTA": "Import inventory or connect POS",
+    "allGood": "All stock levels are healthy",
+    "allGoodHint": "No items below reorder point"
+  },
   "errors": {
     "generic": "An error occurred",
     "notFound": "Not found",
