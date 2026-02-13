@@ -18,6 +18,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  v_caller_group uuid;
   v_org_id       uuid;
   v_items_before int;
   v_movements_before int;
@@ -27,8 +28,12 @@ DECLARE
   v_item_ids     uuid[];
 BEGIN
   -- -----------------------------------------------------------------------
-  -- 1. Resolve org from location
+  -- 1. Auth: caller must belong to the same org as the location
   -- -----------------------------------------------------------------------
+  SELECT p.group_id INTO v_caller_group
+  FROM profiles p
+  WHERE p.id = auth.uid();
+
   SELECT l.group_id INTO v_org_id
   FROM locations l
   WHERE l.id = p_location_id;
@@ -39,6 +44,15 @@ BEGIN
       'items_created', 0,
       'movements_created', 0,
       'error', 'location_not_found'
+    );
+  END IF;
+
+  IF v_caller_group IS NULL OR v_caller_group <> v_org_id THEN
+    RETURN jsonb_build_object(
+      'installed', false,
+      'items_created', 0,
+      'movements_created', 0,
+      'error', 'access_denied'
     );
   END IF;
 
@@ -75,16 +89,23 @@ BEGIN
   END IF;
 
   -- -----------------------------------------------------------------------
-  -- 4. Create a demo supplier
+  -- 4. Create a demo supplier (idempotent: reuse if already exists)
   -- -----------------------------------------------------------------------
-  INSERT INTO suppliers (id, org_id, name, contact_name, delivery_days, min_order_amount, lead_time_days, is_active)
-  VALUES (
-    gen_random_uuid(), v_org_id,
-    'Demo Proveedor S.L.', 'Demo Contact',
-    ARRAY['monday','wednesday','friday'],
-    50.00, 2, true
-  )
-  RETURNING id INTO v_supplier_id;
+  SELECT id INTO v_supplier_id
+  FROM suppliers
+  WHERE org_id = v_org_id AND name = 'Demo Proveedor S.L.'
+  LIMIT 1;
+
+  IF v_supplier_id IS NULL THEN
+    INSERT INTO suppliers (id, org_id, name, contact_name, delivery_days, min_order_amount, lead_time_days, is_active)
+    VALUES (
+      gen_random_uuid(), v_org_id,
+      'Demo Proveedor S.L.', 'Demo Contact',
+      ARRAY['monday','wednesday','friday'],
+      50.00, 2, true
+    )
+    RETURNING id INTO v_supplier_id;
+  END IF;
 
   -- -----------------------------------------------------------------------
   -- 5. Insert 8 demo inventory items
