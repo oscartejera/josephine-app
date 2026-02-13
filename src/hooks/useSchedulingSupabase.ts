@@ -1,7 +1,10 @@
+// TODO: Migrate forecast_daily_metrics access to use get_labor_plan_unified RPC
+// which resolves data_source via resolve_data_source(org_id) internally.
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { startOfWeek, endOfWeek, addDays, format, parseISO, differenceInMinutes } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 
 // Types
@@ -368,12 +371,14 @@ async function fetchTargetCol(locationId: string): Promise<number> {
 async function fetchActualSales(
   locationId: string,
   weekStartISO: string,
-  weekEndISO: string
+  weekEndISO: string,
+  dataSource: 'pos' | 'simulated' = 'simulated'
 ): Promise<Record<string, { actualSales: number; actualLaborCost: number; actualColPercent: number }>> {
   const { data, error } = await supabase
     .from('sales_daily_unified')
     .select('date, net_sales, labor_cost')
     .eq('location_id', locationId)
+    .eq('data_source', dataSource)
     .gte('date', weekStartISO)
     .lte('date', weekEndISO);
   
@@ -533,6 +538,7 @@ export function useSchedulingSupabase(
   weekStart: Date = startOfWeek(new Date(), { weekStartsOn: 1 })
 ) {
   const queryClient = useQueryClient();
+  const { dataSource } = useApp();
   const [hasSchedule, setHasSchedule] = useState(false);
   const [shiftOverrides, setShiftOverrides] = useState<Record<string, { employeeId: string; date: string }>>({});
   const [newShifts, setNewShifts] = useState<Shift[]>([]);
@@ -611,8 +617,8 @@ export function useSchedulingSupabase(
   
   // Fetch actual sales from sales_daily_unified (for past days comparison)
   const { data: actualByDate = {} } = useQuery({
-    queryKey: ['scheduling-actual-sales', locationId, weekStartISO],
-    queryFn: () => fetchActualSales(locationId!, weekStartISO, weekEndISO),
+    queryKey: ['scheduling-actual-sales', locationId, weekStartISO, dataSource],
+    queryFn: () => fetchActualSales(locationId!, weekStartISO, weekEndISO, dataSource),
     enabled: !!locationId,
     staleTime: 60 * 1000,
   });
