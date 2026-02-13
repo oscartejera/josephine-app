@@ -82,11 +82,21 @@ BEGIN
 END $$;
 
 -- Backfill: ensure existing org_id values are coherent with locations.group_id
-UPDATE public.cdm_location_items cli
-SET org_id = l.group_id
-FROM public.locations l
-WHERE l.id = cli.location_id
-  AND (cli.org_id IS NULL OR cli.org_id IS DISTINCT FROM l.group_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'cdm_location_items'
+      AND column_name = 'org_id'
+  ) THEN
+    UPDATE public.cdm_location_items cli
+    SET org_id = l.group_id
+    FROM public.locations l
+    WHERE l.id = cli.location_id
+      AND (cli.org_id IS NULL OR cli.org_id IS DISTINCT FROM l.group_id);
+    RAISE NOTICE 'org_id backfilled from locations.group_id';
+  END IF;
+END $$;
 
 
 -- ================== 3. price → NULLABLE ======================
