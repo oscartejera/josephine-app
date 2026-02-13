@@ -3,7 +3,7 @@
  * Displays warning when manual POS is blocked due to stale sync.
  */
 
-import { useDataSource } from '@/hooks/useDataSource';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
@@ -27,7 +27,7 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 export function DataSourceBadge() {
-  const { dataSource, mode, reason, lastSyncedAt, loading, blocked } = useDataSource();
+  const { dsUnified: dataSource, mode, reason, lastSyncedAt, isLoading: loading, blocked } = useEffectiveDataSource();
   const { t } = useTranslation();
 
   if (loading) return null;
