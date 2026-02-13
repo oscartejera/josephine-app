@@ -127,6 +127,10 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
 
   const isSingleDay = isSameDay(dateRange.from, dateRange.to) || differenceInDays(dateRange.to, dateRange.from) === 0;
 
+  // Stable ISO strings for queryKey (avoid Date object serialization issues)
+  const fromISO = format(dateRange.from, 'yyyy-MM-dd');
+  const toISO = format(dateRange.to, 'yyyy-MM-dd');
+
   // Subscribe to realtime pos_daily_finance updates
   useEffect(() => {
     if (!session) return;
@@ -166,7 +170,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
   }, [queryClient, session]);
 
   const query = useQuery({
-    queryKey: ['bi-sales', dateRange, granularity, compareMode, effectiveLocationIds, orgId],
+    queryKey: ['bi-sales', fromISO, toISO, granularity, compareMode, effectiveLocationIds, orgId],
     enabled: !!orgId && effectiveLocationIds.length > 0,
     queryFn: async (): Promise<BISalesData> => {
 
