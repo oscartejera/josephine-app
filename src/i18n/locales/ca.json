@@ -262,6 +262,18 @@
     "allGood": "Tot l'estoc està en ordre",
     "allGoodHint": "No hi ha articles per sota del punt de reordenament"
   },
+  "labourReadiness": {
+    "badgeDemo": "Demo",
+    "demoTitle": "Labour en mode DEMO",
+    "demoDescriptionSimulated": "Mostrant dades demo de labour. Connecta el teu POS per veure dades reals de costos laborals.",
+    "demoDescriptionPosNoRows": "POS connectat però encara no hi ha dades de labour configurades per a aquest rang. Configura torns o fitxatges per veure dades reals.",
+    "connectPosCta": "Connectar POS",
+    "configureCta": "Configurar Labour",
+    "errorTitle": "Error en verificar dades de labour",
+    "errorDescription": "No s'han pogut verificar les dades de labour. Pots reintentar o continuar amb DEMO.",
+    "retry": "Reintentar",
+    "refresh": "Actualitzar"
+  },
   "salesReadiness": {
     "demoTitle": "Vendes en mode DEMO",
     "integrationInactive": "POS no està connectat o està desactivat. Connecta el teu POS per veure vendes reals.",
