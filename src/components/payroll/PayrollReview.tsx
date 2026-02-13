@@ -108,7 +108,7 @@ export default function PayrollReview({
       navigate('/payroll/submit');
     } catch (error) {
       // Fallback: direct status update (bypass Edge Function transition check)
-      await supabase.from('payroll_runs').update({ status: 'approved', approved_at: new Date().toISOString(), approved_by: user?.id }).eq('id', currentRun.id);
+      await supabase.from('payroll_runs').update({ status: 'approved', approved_at: new Date().toISOString(), ...(user?.id ? { approved_by: user.id } : {}) }).eq('id', currentRun.id);
       await refreshData();
       setShowApproveDialog(false);
       toast({ title: 'Nóminas aprobadas', description: 'Puedes proceder a la presentación' });

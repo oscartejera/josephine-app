@@ -67,6 +67,10 @@ export default function PayrollEmployees({
   const fetchEmployees = async () => {
     setLoading(true);
     
+    // Only fetch employees from this group's locations
+    const locationIds = locations.map(l => l.id);
+    if (locationIds.length === 0) { setLoading(false); return; }
+
     try {
       // Try full query with joins first
       const { data, error } = await supabase
@@ -77,8 +81,9 @@ export default function PayrollEmployees({
           employment_contracts(id, contract_type, base_salary_monthly, active)
         `)
         .eq('active', true)
+        .in('location_id', locationIds)
         .order('full_name');
-      
+
       if (!error && data) {
         setEmployees((data as Employee[]) || []);
       } else {
@@ -88,6 +93,7 @@ export default function PayrollEmployees({
           .from('employees')
           .select('id, full_name, role_name, location_id')
           .eq('active', true)
+          .in('location_id', locationIds)
           .order('full_name');
         
         setEmployees((basicData || []).map(e => ({
