@@ -37,7 +37,7 @@ export default function PayrollInputs({
   isPayrollAdmin,
 }: PayrollContextData) {
   const navigate = useNavigate();
-  const { selectedLocationId } = useApp();
+  const { selectedLocationId, locations } = useApp();
   const { toast } = useToast();
   
   const [inputs, setInputs] = useState<PayrollInput[]>([]);
@@ -51,12 +51,12 @@ export default function PayrollInputs({
 
   const fetchInputs = async () => {
     setLoading(true);
-    
-    // Fetch employees
-    const { data: employees } = await supabase
-      .from('employees')
-      .select('id, full_name')
-      .eq('active', true);
+
+    // Fetch employees for this group's locations only
+    const locationIds = locations.map(l => l.id);
+    let empQuery = supabase.from('employees').select('id, full_name').eq('active', true);
+    if (locationIds.length > 0) empQuery = empQuery.in('location_id', locationIds);
+    const { data: employees } = await empQuery;
     
     // Fetch existing inputs (handle missing table)
     let existingInputs: any[] = [];
@@ -74,10 +74,9 @@ export default function PayrollInputs({
     // Fetch contracts for default hours (Art. 34 ET - jornada pactada)
     let contractMap = new Map<string, any>();
     try {
-      const { data: contracts } = await supabase
-        .from('employment_contracts')
-        .select('employee_id, jornada_pct')
-        .eq('active', true);
+      let contractQuery = supabase.from('employment_contracts').select('employee_id, jornada_pct').eq('active', true);
+      if (selectedLegalEntity?.id) contractQuery = contractQuery.eq('legal_entity_id', selectedLegalEntity.id);
+      const { data: contracts } = await contractQuery;
       contractMap = new Map((contracts || []).map((c: any) => [c.employee_id, c]));
     } catch {}
     

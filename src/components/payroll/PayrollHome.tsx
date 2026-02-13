@@ -38,7 +38,7 @@ export default function PayrollHome({
   isSandboxMode,
 }: PayrollContextData) {
   const navigate = useNavigate();
-  const { group } = useApp();
+  const { group, locations } = useApp();
   const { toast } = useToast();
   const [showNewEntityDialog, setShowNewEntityDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -56,11 +56,11 @@ export default function PayrollHome({
   const fetchIssuesAndKPIs = async () => {
     const newIssues: Issue[] = [];
     
-    // Count employees
-    const { data: emps } = await supabase
-      .from('employees')
-      .select('id')
-      .eq('active', true);
+    // Count employees for this group's locations only
+    const locationIds = locations.map(l => l.id);
+    const { data: emps } = locationIds.length > 0
+      ? await supabase.from('employees').select('id').eq('active', true).in('location_id', locationIds)
+      : { data: [] as any[] };
     setEmployeeCount(emps?.length || 0);
     
     if (!selectedLegalEntity) return;
