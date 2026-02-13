@@ -85,8 +85,10 @@ export default function Sales() {
   const { selectedLocationId, accessibleLocations } = useApp();
 
   // Map global location to locationIds array for the hook
+  // When selectedLocationId is null (pre-hydration) or 'all', pass [] so
+  // useBISalesData falls back to all locations from AppContext.
   const locationIds = useMemo(() => {
-    if (selectedLocationId === 'all') return [];
+    if (!selectedLocationId || selectedLocationId === 'all') return [];
     return [selectedLocationId];
   }, [selectedLocationId]);
 
