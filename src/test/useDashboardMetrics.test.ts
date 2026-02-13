@@ -3,6 +3,7 @@ import {
   presetToDateRange,
   getPreviousPeriod,
   localISODate,
+  __buildMissingKpiSignature,
 } from '@/hooks/useDashboardMetrics';
 
 // ---------------------------------------------------------------------------
@@ -123,5 +124,32 @@ describe('getPreviousPeriod', () => {
     const prev = getPreviousPeriod('2026-02-13', '2026-02-13');
     expect(prev.from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(prev.to).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// __buildMissingKpiSignature
+// ---------------------------------------------------------------------------
+
+describe('__buildMissingKpiSignature', () => {
+  it('returns null when no KPIs are missing', () => {
+    const result = {
+      sales: { available: true as const, value: 100 },
+      labor: { available: true as const, value: 50 },
+    };
+    expect(__buildMissingKpiSignature(result)).toBeNull();
+  });
+
+  it('produces stable signature regardless of key order', () => {
+    const a = {
+      labor: { available: false as const, reason: 'no data' },
+      sales: { available: false as const, reason: 'empty' },
+    };
+    const b = {
+      sales: { available: false as const, reason: 'empty' },
+      labor: { available: false as const, reason: 'no data' },
+    };
+    expect(__buildMissingKpiSignature(a)).toBe(__buildMissingKpiSignature(b));
+    expect(__buildMissingKpiSignature(a)).toBe('labor:no data|sales:empty');
   });
 });

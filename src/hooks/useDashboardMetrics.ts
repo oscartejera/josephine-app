@@ -49,6 +49,20 @@ function kpiMissing(reason: string): KpiResult {
   return { available: false, reason };
 }
 
+/** @internal Stable signature for missing KPIs (sorted, deterministic). */
+export function __buildMissingKpiSignature(result: Record<string, KpiResult>): string | null {
+  const pairs = Object.entries(result)
+    .filter(([, v]) => !v.available)
+    .map(([k, v]) => `${k}:${(v as { reason: string }).reason}`)
+    .sort();
+  return pairs.length > 0 ? pairs.join('|') : null;
+}
+
+// Dev-only dedupe state (tree-shaken in prod)
+const __devLastSig: Record<string, string> = {};
+const __devLastAt: Record<string, number> = {};
+const __DEV_THROTTLE_MS = 60_000;
+
 /** Build the previous period of equal length ending right before `from`. */
 export function getPreviousPeriod(from: string, to: string): DateRange {
   const f = new Date(from + 'T00:00:00');
@@ -236,13 +250,17 @@ async function fetchPeriodKpis(
 
   const result = { sales, gpPercent, cogs, labor, colPercent, covers, avgTicket };
 
-  // Observability: log missing KPIs in dev for setup diagnostics
+  // Observability: log missing KPIs in dev (deduped per location+range, throttled 60s)
   if (import.meta.env.DEV) {
-    const missingKeys = Object.entries(result)
-      .filter(([, v]) => !v.available)
-      .map(([k, v]) => `${k}: ${(v as { reason: string }).reason}`);
-    if (missingKeys.length > 0) {
-      console.warn('[Dashboard KPIs] missing:', missingKeys.join(' | '));
+    const sig = __buildMissingKpiSignature(result);
+    if (sig) {
+      const scopeKey = `${locationId ?? 'all'}:${from}->${to}`;
+      const now = Date.now();
+      if (sig !== __devLastSig[scopeKey] || now - (__devLastAt[scopeKey] ?? 0) > __DEV_THROTTLE_MS) {
+        console.warn('[Dashboard KPIs] missing:', sig.replace(/\|/g, ' | '));
+        __devLastSig[scopeKey] = sig;
+        __devLastAt[scopeKey] = now;
+      }
     }
   }
 
