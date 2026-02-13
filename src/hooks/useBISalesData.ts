@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { format, isSameDay, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -112,6 +113,7 @@ function emptyData(): BISalesData {
 export function useBISalesData({ dateRange, granularity, compareMode, locationIds }: UseBISalesDataParams) {
   const { locations, group } = useApp();
   const { session } = useAuth();
+  const { dsUnified } = useEffectiveDataSource();
   const queryClient = useQueryClient();
   const orgId = group?.id;
   const effectiveLocationIds = locationIds.length > 0 ? locationIds : locations.map(l => l.id);
@@ -163,7 +165,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
   }, [queryClient, session]);
 
   const query = useQuery({
-    queryKey: ['bi-sales', fromISO, toISO, granularity, compareMode, effectiveLocationIds, orgId],
+    queryKey: ['bi-sales', fromISO, toISO, granularity, compareMode, effectiveLocationIds, orgId, dsUnified],
     enabled: !!orgId && effectiveLocationIds.length > 0,
     queryFn: async (): Promise<BISalesData> => {
 

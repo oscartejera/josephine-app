@@ -7,6 +7,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { format } from 'date-fns';
 
 // ── Response types ────────────────────────────────────────────
@@ -60,6 +61,8 @@ export function useForecastItemsMix({
   limit = 50,
   enabled = true,
 }: UseForecastItemsMixParams) {
+  const { dsUnified } = useEffectiveDataSource();
+
   return useQuery({
     queryKey: [
       'forecast-items-mix-unified',
@@ -69,6 +72,7 @@ export function useForecastItemsMix({
       format(to, 'yyyy-MM-dd'),
       horizonDays,
       limit,
+      dsUnified,
     ],
     queryFn: async (): Promise<ForecastItemsMixResult> => {
       // RPC not yet in auto-generated types

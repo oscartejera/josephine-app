@@ -80,7 +80,7 @@ export function useDataSource(): DataSourceState {
         reason: result.reason,
         lastSyncedAt: result.last_synced_at ? new Date(result.last_synced_at) : null,
         loading: false,
-        blocked: result.reason === 'manual_pos_blocked_no_sync',
+        blocked: result.reason.startsWith('manual_pos_blocked_'),
       });
     } catch {
       await legacyFallback(setState);

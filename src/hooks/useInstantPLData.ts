@@ -12,6 +12,7 @@ import { format, subDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 
 // ============= TYPES =============
 
@@ -143,13 +144,15 @@ export function useInstantPLData({
 }: UseInstantPLDataParams): InstantPLData {
   const { locations } = useApp();
   const { profile } = useAuth();
+  const { dsUnified } = useEffectiveDataSource();
   const orgId = profile?.group_id;
 
   const queryKey = [
     'instant-pl-unified',
     format(dateRange.from, 'yyyy-MM-dd'),
     format(dateRange.to, 'yyyy-MM-dd'),
-    orgId
+    orgId,
+    dsUnified,
   ];
 
   const { data, isLoading, isError } = useQuery({

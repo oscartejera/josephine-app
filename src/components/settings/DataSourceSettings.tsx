@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDataSource } from '@/hooks/useDataSource';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 export function DataSourceSettings() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const { dataSource, mode, reason, lastSyncedAt, blocked, loading: dsLoading, refetch } = useDataSource();
+  const { dsUnified: dataSource, mode, reason, lastSyncedAt, blocked, isLoading: dsLoading, refetch } = useEffectiveDataSource();
   const { toast } = useToast();
 
   const [localMode, setLocalMode] = useState<'auto' | 'manual'>(mode);
