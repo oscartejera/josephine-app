@@ -37,7 +37,7 @@ export interface DashboardMetricsResult {
 // ---------------------------------------------------------------------------
 
 /** Format a Date as YYYY-MM-DD in the browser's local timezone (not UTC). */
-function localISODate(d: Date): string {
+export function localISODate(d: Date): string {
   return d.toLocaleDateString('en-CA'); // en-CA locale → YYYY-MM-DD
 }
 
@@ -50,7 +50,7 @@ function kpiMissing(reason: string): KpiResult {
 }
 
 /** Build the previous period of equal length ending right before `from`. */
-function getPreviousPeriod(from: string, to: string): DateRange {
+export function getPreviousPeriod(from: string, to: string): DateRange {
   const f = new Date(from + 'T00:00:00');
   const t = new Date(to + 'T23:59:59');
   const lengthMs = t.getTime() - f.getTime();
@@ -234,7 +234,19 @@ async function fetchPeriodKpis(
     avgTicket = kpiMissing('Covers = 0 en este periodo');
   }
 
-  return { sales, gpPercent, cogs, labor, colPercent, covers, avgTicket };
+  const result = { sales, gpPercent, cogs, labor, colPercent, covers, avgTicket };
+
+  // Observability: log missing KPIs in dev for setup diagnostics
+  if (import.meta.env.DEV) {
+    const missingKeys = Object.entries(result)
+      .filter(([, v]) => !v.available)
+      .map(([k, v]) => `${k}: ${(v as { reason: string }).reason}`);
+    if (missingKeys.length > 0) {
+      console.warn('[Dashboard KPIs] missing:', missingKeys.join(' | '));
+    }
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
