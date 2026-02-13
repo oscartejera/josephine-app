@@ -41,8 +41,16 @@ npm run audit:ds:fail
 ```
 
 The script scans `src/` for `.ts`/`.tsx` files querying sensitive tables via
-`supabase.from('table')` and checks whether the file shows awareness of
-`data_source_unified`, `dsUnified`, or uses a `*_unified` view/RPC.
+`supabase.from('table')` and classifies each call:
+
+| Pattern | Verdict |
+|---------|---------|
+| `.from('*_unified')` | OK — unified view |
+| `.from('sensitive')` + `.eq('data_source_unified', ...)` in same file | OK — explicit filter |
+| `.from('sensitive')` without filter | **Offender** |
+| `.rpc('*_unified')` | Informational only (does not excuse unfiltered `.from()`) |
+
+The audit runs in CI on every PR (`npm run audit:ds:fail`).
 
 ## resolve_data_source RPC
 
@@ -69,3 +77,23 @@ It returns:
 | `manual_pos_blocked_integration_inactive` | manual | User chose POS but integration is not active |
 | `manual_pos_blocked_never_synced` | manual | User chose POS, integration active but never synced |
 | `manual_pos_blocked_sync_stale` | manual | User chose POS but sync is > 24h old |
+
+## Contributor checklist
+
+Before opening a PR, run all gates locally:
+
+```bash
+npm run lint
+npm test
+npm run build
+npm run audit:ds:fail
+```
+
+All four must pass — CI enforces them on every PR to `main`.
+
+### Adding a new analytics hook
+
+1. Use a `*_unified` RPC or `.from('v_*_unified')` view
+2. Include `dsUnified` in the React Query `queryKey` (cache isolation)
+3. If querying a sensitive table directly, add `.eq('data_source_unified', dsUnified)`
+4. Run `npm run audit:ds` to verify your hook is classified as OK
