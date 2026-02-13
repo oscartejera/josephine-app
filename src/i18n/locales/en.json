@@ -262,6 +262,20 @@
     "allGood": "All stock levels are healthy",
     "allGoodHint": "No items below reorder point"
   },
+  "salesReadiness": {
+    "demoTitle": "Sales in Demo Mode",
+    "integrationInactive": "POS is not connected or is disabled. Connect your POS to see real sales.",
+    "neverSynced": "POS connected, but no successful sync yet. Run a sync to see real sales.",
+    "syncStale": "Last sync is outdated. Reconnect or re-sync to see real sales.",
+    "noIntegration": "No integration connected. You're viewing DEMO until you connect your POS.",
+    "posNoRows": "Your POS is connected, but there's not enough history to show real sales for this range.",
+    "fallback": "No real data available yet. You're viewing DEMO.",
+    "errorTitle": "Error verifying sales data",
+    "errorDescription": "Could not verify sales data. You can retry or continue with DEMO.",
+    "connectPOS": "Connect POS",
+    "refresh": "Refresh",
+    "retry": "Retry"
+  },
   "errors": {
     "generic": "An error occurred",
     "notFound": "Not found",

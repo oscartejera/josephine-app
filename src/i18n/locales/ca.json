@@ -262,6 +262,20 @@
     "allGood": "Tot l'estoc està en ordre",
     "allGoodHint": "No hi ha articles per sota del punt de reordenament"
   },
+  "salesReadiness": {
+    "demoTitle": "Vendes en mode DEMO",
+    "integrationInactive": "POS no està connectat o està desactivat. Connecta el teu POS per veure vendes reals.",
+    "neverSynced": "POS connectat, però encara no hi ha cap sincronització exitosa. Executa el sync per veure vendes reals.",
+    "syncStale": "L'última sincronització és antiga. Reconnecta o torna a sincronitzar per veure vendes reals.",
+    "noIntegration": "No hi ha cap integració connectada. Estàs veient DEMO fins que connectis el teu POS.",
+    "posNoRows": "El teu POS està connectat, però encara no hi ha prou històric per mostrar vendes reals en aquest rang.",
+    "fallback": "Encara no hi ha dades reals disponibles. Estàs veient DEMO.",
+    "errorTitle": "Error en verificar dades de vendes",
+    "errorDescription": "No s'han pogut verificar les dades de vendes. Pots reintentar o continuar amb DEMO.",
+    "connectPOS": "Connectar POS",
+    "refresh": "Actualitzar",
+    "retry": "Reintentar"
+  },
   "errors": {
     "generic": "S'ha produït un error",
     "notFound": "No trobat",

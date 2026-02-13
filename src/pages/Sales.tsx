@@ -1,13 +1,15 @@
 /**
  * Sales Module - Real Data Implementation
  * Uses useBISalesData hook for real Supabase data with realtime updates.
+ * Includes sales readiness gate: shows Demo banner + CTA when no real data.
  */
 
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Loader2, AlertTriangle, Database, Link, RefreshCw } from 'lucide-react';
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, BarChart,
@@ -25,6 +27,8 @@ import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApp } from '@/contexts/AppContext';
 import { useBISalesData, type CompareMode, type GranularityMode } from '@/hooks/useBISalesData';
+import { useSalesReadiness } from '@/hooks/useSalesReadiness';
+import { useTranslation } from 'react-i18next';
 
 // Josephine colors
 const COLORS = {
@@ -36,6 +40,28 @@ const COLORS = {
   pickUp: '#06b6d4',
   delivery: '#3b82f6',
 };
+
+// ── reason → i18n key mapping ─────────────────────────────────
+
+function getReadinessI18nKey(reason?: string): string {
+  switch (reason) {
+    case 'manual_pos_blocked_integration_inactive':
+      return 'salesReadiness.integrationInactive';
+    case 'manual_pos_blocked_never_synced':
+      return 'salesReadiness.neverSynced';
+    case 'manual_pos_blocked_sync_stale':
+    case 'auto_sync_stale':
+    case 'sync_stale':
+      return 'salesReadiness.syncStale';
+    case 'auto_no_integration':
+    case 'no_integration':
+      return 'salesReadiness.noIntegration';
+    case 'pos_no_rows':
+      return 'salesReadiness.posNoRows';
+    default:
+      return 'salesReadiness.fallback';
+  }
+}
 
 const VarianceIndicator = ({ value }: { value: number }) => {
   const isPositive = value >= 0;
@@ -49,6 +75,7 @@ const VarianceIndicator = ({ value }: { value: number }) => {
 };
 
 export default function Sales() {
+  const { t } = useTranslation();
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState(endOfMonth(new Date()));
@@ -67,8 +94,16 @@ export default function Sales() {
   // Map dateMode to granularity
   const granularity: GranularityMode = dateMode === 'daily' ? 'daily' : dateMode === 'weekly' ? 'weekly' : 'monthly';
 
+  // Sales readiness gate
+  const readiness = useSalesReadiness({
+    locationIds,
+    startDate: format(startDate, 'yyyy-MM-dd'),
+    endDate: format(endDate, 'yyyy-MM-dd'),
+    enabled: locationIds.length > 0,
+  });
+
   // Fetch REAL data from Supabase
-  const { data: salesData, isLoading, isError, isConnected } = useBISalesData({
+  const { data: salesData, isLoading, isError, isConnected, refetch: refetchSales } = useBISalesData({
     dateRange: { from: startDate, to: endDate },
     granularity,
     compareMode,
@@ -123,7 +158,13 @@ export default function Sales() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold">Sales</h1>
-          {isConnected && (
+          {readiness.status === 'demo' && (
+            <Badge variant="secondary" className="gap-1">
+              <Database className="h-3 w-3" />
+              Demo
+            </Badge>
+          )}
+          {readiness.isLive && isConnected && (
             <span className="flex items-center gap-1.5 text-xs text-emerald-600">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -155,6 +196,70 @@ export default function Sales() {
           </Button>
         </div>
       </div>
+
+      {/* Sales Readiness Banner — Demo */}
+      {readiness.status === 'demo' && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+          <div className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 space-y-1">
+              <p className="font-medium text-amber-900 dark:text-amber-200">
+                {t('salesReadiness.demoTitle')}
+              </p>
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                {t(getReadinessI18nKey(readiness.reason))}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => { readiness.refetch(); refetchSales(); }}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                {t('salesReadiness.refresh')}
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                asChild
+              >
+                <a href="/integrations">
+                  <Link className="h-3.5 w-3.5" />
+                  {t('salesReadiness.connectPOS')}
+                </a>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Sales Readiness Banner — Error */}
+      {readiness.status === 'error' && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
+          <div className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 space-y-1">
+              <p className="font-medium text-red-900 dark:text-red-200">
+                {t('salesReadiness.errorTitle')}
+              </p>
+              <p className="text-sm text-red-800 dark:text-red-300">
+                {t('salesReadiness.errorDescription')}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 flex-shrink-0"
+              onClick={() => { readiness.refetch(); refetchSales(); }}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              {t('salesReadiness.retry')}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-3 gap-6">
