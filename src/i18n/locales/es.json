@@ -253,6 +253,16 @@
     "pointsEarned": "Puntos Ganados",
     "redemptionHistory": "Historial de Canjes"
   },
+  "lowStock": {
+    "selectLocation": "Selecciona una ubicación",
+    "selectLocationHint": "Las alertas de stock requieren una ubicación específica.",
+    "demoTitle": "Datos de inventario demo",
+    "demoDescription": "No hay movimientos de stock reales para esta ubicación. Carga el pack demo para explorar o conecta tu POS / importa inventario.",
+    "loadDemoPack": "Cargar inventario demo",
+    "connectCTA": "Importar inventario o conectar POS",
+    "allGood": "Todo el stock está en orden",
+    "allGoodHint": "No hay items por debajo del punto de reorden"
+  },
   "errors": {
     "generic": "Ha ocurrido un error",
     "notFound": "No encontrado",
