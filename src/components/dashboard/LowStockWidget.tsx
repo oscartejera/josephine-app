@@ -3,8 +3,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertTriangle, Package, ShoppingCart, MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Package, ShoppingCart, MapPin, AlertCircle, Loader2, Database, Link } from 'lucide-react';
 import { useLowStockAlerts, useCreatePOFromLowStock, type LowStockAlert } from '@/hooks/useLowStockAlerts';
+import { useInventoryReadiness } from '@/hooks/useInventoryReadiness';
+import { useInstallDemoInventory } from '@/hooks/useInstallDemoInventory';
+import { useTranslation } from 'react-i18next';
 
 interface LowStockWidgetProps {
   locationId: string | null;
@@ -52,10 +55,22 @@ function MissingValue({ reason }: { reason: string }) {
   );
 }
 
+function DemoBadge() {
+  return (
+    <Badge variant="secondary" className="gap-1">
+      <Database className="h-3 w-3" />
+      Demo
+    </Badge>
+  );
+}
+
 export function LowStockWidget({ locationId }: LowStockWidgetProps) {
+  const { t } = useTranslation();
   const isAllLocations = !locationId || locationId === 'all';
+  const readiness = useInventoryReadiness(locationId);
   const { data: alerts, isLoading } = useLowStockAlerts(locationId);
   const createPO = useCreatePOFromLowStock();
+  const installDemo = useInstallDemoInventory();
 
   const orderableItems = alerts?.filter(i => i.supplier_id && i.recommended_qty > 0) ?? [];
   const canOrder = orderableItems.length > 0;
@@ -65,6 +80,11 @@ export function LowStockWidget({ locationId }: LowStockWidgetProps) {
     createPO.mutate({ locationId, items: orderableItems });
   };
 
+  const handleInstallDemo = () => {
+    if (!locationId || isAllLocations) return;
+    installDemo.mutate(locationId);
+  };
+
   // All locations → prompt to select one
   if (isAllLocations) {
     return (
@@ -72,15 +92,15 @@ export function LowStockWidget({ locationId }: LowStockWidgetProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
-            Low Stock Alerts
+            {t('dashboard.lowStock')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center py-8 text-center">
             <MapPin className="h-12 w-12 text-muted-foreground/40 mb-3" />
-            <p className="font-medium text-muted-foreground">Selecciona una ubicación</p>
+            <p className="font-medium text-muted-foreground">{t('lowStock.selectLocation')}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Las alertas de stock requieren una ubicación específica.
+              {t('lowStock.selectLocationHint')}
             </p>
           </div>
         </CardContent>
@@ -88,14 +108,14 @@ export function LowStockWidget({ locationId }: LowStockWidgetProps) {
     );
   }
 
-  // Loading
-  if (isLoading) {
+  // Loading (either readiness or alerts)
+  if (readiness.isLoading || isLoading) {
     return (
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
-            Low Stock Alerts
+            {t('dashboard.lowStock')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -114,6 +134,64 @@ export function LowStockWidget({ locationId }: LowStockWidgetProps) {
     );
   }
 
+  // DEMO state: no real inventory data for this location
+  if (!readiness.isLive) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              {t('dashboard.lowStock')}
+            </CardTitle>
+            <DemoBadge />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Demo callout */}
+          <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <Database className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-sm">{t('lowStock.demoTitle')}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('lowStock.demoDescription')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Install demo pack button */}
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleInstallDemo}
+            disabled={installDemo.isPending}
+          >
+            {installDemo.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Package className="h-4 w-4" />
+            )}
+            {t('lowStock.loadDemoPack')}
+          </Button>
+
+          {/* CTA to connect */}
+          <div className="mt-3 text-center">
+            <a
+              href="/settings"
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              <Link className="h-3 w-3" />
+              {t('lowStock.connectCTA')}
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // LIVE state: real inventory data exists
   const items = alerts || [];
 
   return (
@@ -122,7 +200,7 @@ export function LowStockWidget({ locationId }: LowStockWidgetProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
-            Low Stock Alerts
+            {t('dashboard.lowStock')}
           </CardTitle>
           {items.length > 0 && (
             <Badge variant="secondary">{items.length} items</Badge>
@@ -133,8 +211,8 @@ export function LowStockWidget({ locationId }: LowStockWidgetProps) {
         {items.length === 0 ? (
           <div className="py-8 text-center">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-muted-foreground">Todo el stock está en orden</p>
-            <p className="text-sm text-muted-foreground mt-1">No hay items por debajo del punto de reorden</p>
+            <p className="text-muted-foreground">{t('lowStock.allGood')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('lowStock.allGoodHint')}</p>
           </div>
         ) : (
           <div className="space-y-3">
