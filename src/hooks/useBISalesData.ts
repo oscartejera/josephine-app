@@ -89,13 +89,6 @@ interface UseBISalesDataParams {
   locationIds: string[];
 }
 
-// Channel distribution percentages derived from payment method patterns
-const CHANNEL_RATIOS = {
-  'Dine-in': 0.55,
-  'Pick-up': 0.25,
-  'Delivery': 0.20,
-} as const;
-
 function emptyData(): BISalesData {
   return {
     kpis: {
@@ -221,20 +214,9 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         ? ((avgCheckSize - forecastAvgCheckSize) / forecastAvgCheckSize) * 100
         : 0;
 
-      // ── Channel breakdown (derived from fixed ratios) ────────
-      const channelBreakdown = [
-        { channel: 'Dine-in', value: totalNetSales * CHANNEL_RATIOS['Dine-in'], percentage: 55 },
-        { channel: 'Pick-up', value: totalNetSales * CHANNEL_RATIOS['Pick-up'], percentage: 25 },
-        { channel: 'Delivery', value: totalNetSales * CHANNEL_RATIOS['Delivery'], percentage: 20 },
-      ];
-
-      const acsBreakdown = totalOrders > 0
-        ? [
-            { channel: 'Dine-in', value: avgCheckSize },
-            { channel: 'Pick-up', value: avgCheckSize },
-            { channel: 'Delivery', value: avgCheckSize },
-          ]
-        : [];
+      // ── Channel breakdown — requires POS channel data (not available) ──
+      const channelBreakdown: { channel: string; value: number; percentage: number }[] = [];
+      const acsBreakdown: { channel: string; value: number }[] = [];
 
       // ── Chart data from hourly or daily arrays ───────────────
       const chartData: ChartDataPoint[] = [];
@@ -276,29 +258,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         });
       }
 
-      // ── Channels table (derived from fixed ratios) ───────────
-      const channelsData: ChannelData[] = (['Dine-in', 'Pick-up', 'Delivery'] as const).map(ch => {
-        const ratio = CHANNEL_RATIOS[ch];
-        const sales = totalNetSales * ratio;
-        const orders = Math.round(totalOrders * ratio);
-        const acs = orders > 0 ? sales / orders : 0;
-        const projectedSales = totalForecast * ratio;
-        const projectedOrders = Math.round(forecastOrders * ratio);
-        const projectedAcs = projectedOrders > 0 ? projectedSales / projectedOrders : 0;
-
-        return {
-          channel: ch === 'Dine-in' ? 'Dine in' : ch,
-          sales,
-          salesDelta: projectedSales > 0 ? ((sales - projectedSales) / projectedSales) * 100 : 0,
-          projectedSales,
-          projectedSalesDelta: 0,
-          acs,
-          acsDelta: projectedAcs > 0 ? ((acs - projectedAcs) / projectedAcs) * 100 : 0,
-          projectedAcs,
-          projectedAcsDelta: 0,
-          orders,
-        };
-      });
+      // ── Channels table — requires POS channel tracking ─────
+      const channelsData: ChannelData[] = [];
 
       // ── Categories + Products from get_top_products_unified ──
       let categories: CategoryData[] = [];
@@ -343,12 +304,12 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
             name: loc.name,
             salesActual: locSales,
             salesForecast: locForecast,
-            dineIn: locSales * CHANNEL_RATIOS['Dine-in'],
-            dineInDelta: delta,
-            delivery: locSales * CHANNEL_RATIOS['Delivery'],
-            deliveryDelta: delta,
-            pickUp: locSales * CHANNEL_RATIOS['Pick-up'],
-            pickUpDelta: delta,
+            dineIn: 0,
+            dineInDelta: 0,
+            delivery: 0,
+            deliveryDelta: 0,
+            pickUp: 0,
+            pickUpDelta: 0,
             orders: locOrders,
             acs: locOrders > 0 ? locSales / locOrders : 0,
             dwellTime: null,
