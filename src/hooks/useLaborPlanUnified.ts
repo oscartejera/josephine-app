@@ -13,6 +13,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 
 export interface LaborPlanMetadata {
   data_source: 'pos' | 'demo';
@@ -67,10 +68,11 @@ export function useLaborPlanUnified(
   to: string,
 ) {
   const { profile } = useAuth();
+  const { dsUnified } = useEffectiveDataSource();
   const orgId = profile?.group_id;
 
   return useQuery<LaborPlanData | null>({
-    queryKey: ['labor-plan-unified', orgId, locationIds, from, to],
+    queryKey: ['labor-plan-unified', orgId, locationIds, from, to, dsUnified],
     queryFn: async () => {
       if (!orgId || locationIds.length === 0) return null;
 
