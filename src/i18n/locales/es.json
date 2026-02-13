@@ -263,6 +263,20 @@
     "allGood": "Todo el stock está en orden",
     "allGoodHint": "No hay items por debajo del punto de reorden"
   },
+  "salesReadiness": {
+    "demoTitle": "Ventas en modo DEMO",
+    "integrationInactive": "POS no está conectado o está desactivado. Conecta tu POS para ver ventas reales.",
+    "neverSynced": "POS conectado, pero aún no hay una sincronización exitosa. Ejecuta el sync para ver ventas reales.",
+    "syncStale": "La última sincronización es antigua. Reconecta o vuelve a sincronizar para ver ventas reales.",
+    "noIntegration": "No hay integración conectada. Estás viendo DEMO hasta que conectes tu POS.",
+    "posNoRows": "Tu POS está conectado, pero todavía no hay histórico suficiente para mostrar ventas reales en este rango.",
+    "fallback": "Aún no hay datos reales disponibles. Estás viendo DEMO.",
+    "errorTitle": "Error al verificar datos de ventas",
+    "errorDescription": "No se pudieron verificar los datos de ventas. Puedes reintentar o continuar con DEMO.",
+    "connectPOS": "Conectar POS",
+    "refresh": "Actualizar",
+    "retry": "Reintentar"
+  },
   "errors": {
     "generic": "Ha ocurrido un error",
     "notFound": "No encontrado",
