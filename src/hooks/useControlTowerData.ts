@@ -50,7 +50,7 @@ export function useControlTowerData() {
       const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
       const mtdStartStr = format(startOfMonth(today), 'yyyy-MM-dd');
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: any; error: { message: string } | null }>;
       const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
 

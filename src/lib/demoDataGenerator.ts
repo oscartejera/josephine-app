@@ -488,8 +488,8 @@ export class DemoDataGenerator {
       : this.locations;
 
     let totalSales = 0;
-    let theoreticalCOGS = { food: 0, beverage: 0, misc: 0 };
-    let actualCOGS = { food: 0, beverage: 0, misc: 0 };
+    const theoreticalCOGS = { food: 0, beverage: 0, misc: 0 };
+    const actualCOGS = { food: 0, beverage: 0, misc: 0 };
     let accountedWaste = 0;
     let unaccountedWaste = 0;
 
@@ -542,9 +542,9 @@ export class DemoDataGenerator {
     const totalSales = metrics.totalSales;
 
     // Calculate category breakdown from daily metrics
-    let food = { actual: 0, theoretical: 0 };
-    let beverage = { actual: 0, theoretical: 0 };
-    let misc = { actual: 0, theoretical: 0 };
+    const food = { actual: 0, theoretical: 0 };
+    const beverage = { actual: 0, theoretical: 0 };
+    const misc = { actual: 0, theoretical: 0 };
 
     const filteredLocations = locationIds.length > 0 
       ? this.locations.filter(l => locationIds.includes(l.id))

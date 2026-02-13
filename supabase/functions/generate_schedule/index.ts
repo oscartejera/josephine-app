@@ -136,7 +136,7 @@ function median(values: number[]): number {
 
 function shiftsOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
   const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-  let aS = toMin(aStart), aE = toMin(aEnd), bS = toMin(bStart), bE = toMin(bEnd);
+  const aS = toMin(aStart); let aE = toMin(aEnd); const bS = toMin(bStart); let bE = toMin(bEnd);
   if (aE <= aS) aE += 24 * 60;
   if (bE <= bS) bE += 24 * 60;
   return aS < bE && bS < aE;

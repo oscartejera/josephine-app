@@ -22,7 +22,7 @@ async function streamInsights({
   onDone,
   onError
 }: {
-  salesData: any;
+  salesData: Record<string, unknown>;
   question?: string;
   onDelta: (text: string) => void;
   onDone: () => void;
