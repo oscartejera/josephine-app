@@ -27,7 +27,6 @@ import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApp } from '@/contexts/AppContext';
 import { useBISalesData, type CompareMode, type GranularityMode } from '@/hooks/useBISalesData';
-import { useSalesReadiness } from '@/hooks/useSalesReadiness';
 import { useTranslation } from 'react-i18next';
 
 // Josephine colors
@@ -94,15 +93,7 @@ export default function Sales() {
   // Map dateMode to granularity
   const granularity: GranularityMode = dateMode === 'daily' ? 'daily' : dateMode === 'weekly' ? 'weekly' : 'monthly';
 
-  // Sales readiness gate
-  const readiness = useSalesReadiness({
-    locationIds,
-    startDate: format(startDate, 'yyyy-MM-dd'),
-    endDate: format(endDate, 'yyyy-MM-dd'),
-    enabled: locationIds.length > 0,
-  });
-
-  // Fetch REAL data from Supabase
+  // Fetch REAL data from Supabase (single source — readiness derived from meta)
   const { data: salesData, isLoading, isError, isConnected, refetch: refetchSales } = useBISalesData({
     dateRange: { from: startDate, to: endDate },
     granularity,
@@ -122,6 +113,21 @@ export default function Sales() {
   const channels = salesData?.channels || [];
   const categories = salesData?.categories || [];
   const products = salesData?.products || [];
+
+  // Derive readiness from useBISalesData meta (no duplicate RPC)
+  const readiness = (() => {
+    if (isError) {
+      return { status: 'error' as const, isLive: false, reason: undefined };
+    }
+    const meta = salesData?.meta;
+    if (!meta || meta.dataSource === 'demo') {
+      return { status: 'demo' as const, isLive: false, reason: meta?.reason };
+    }
+    if (meta.dataSource === 'pos' && !meta.hasRows) {
+      return { status: 'demo' as const, isLive: false, reason: 'pos_no_rows' };
+    }
+    return { status: 'live' as const, isLive: true, reason: undefined };
+  })();
 
   const dateLabel = `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}`;
 
@@ -215,7 +221,7 @@ export default function Sales() {
                 variant="outline"
                 size="sm"
                 className="gap-1.5"
-                onClick={() => { readiness.refetch(); refetchSales(); }}
+                onClick={() => { refetchSales(); }}
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 {t('salesReadiness.refresh')}
@@ -252,7 +258,7 @@ export default function Sales() {
               variant="outline"
               size="sm"
               className="gap-1.5 flex-shrink-0"
-              onClick={() => { readiness.refetch(); refetchSales(); }}
+              onClick={() => { refetchSales(); }}
             >
               <RefreshCw className="h-3.5 w-3.5" />
               {t('salesReadiness.retry')}
