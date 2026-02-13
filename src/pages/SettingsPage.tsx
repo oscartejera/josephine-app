@@ -26,6 +26,7 @@ import { BookingSettingsManager } from '@/components/settings/BookingSettingsMan
 import { LoyaltyManager } from '@/components/settings/LoyaltyManager';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
 import { DataSourceSettings } from '@/components/settings/DataSourceSettings';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import { Progress } from '@/components/ui/progress';
 import { Receipt, CalendarDays, Gift, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +53,8 @@ interface LocationSetting {
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const { locations, group, dataSource } = useApp();
+  const { locations, group } = useApp();
+  const { dsUnified } = useEffectiveDataSource();
   const { profile } = useAuth();
   const { isOwner, hasPermission } = usePermissions();
   const [settings, setSettings] = useState<LocationSetting[]>([]);
@@ -147,7 +149,7 @@ export default function SettingsPage() {
     
     switch (table) {
       case 'tickets':
-        const { data: salesData } = await supabase.from('pos_daily_finance').select('*').eq('data_source', dataSource).limit(1000);
+        const { data: salesData } = await supabase.from('v_pos_daily_finance_unified').select('*').eq('data_source_unified', dsUnified).limit(1000);
         data = salesData || [];
         filename = 'sales_daily.csv';
         break;

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { useEffectiveDataSource } from '@/hooks/useEffectiveDataSource';
 import type { DateRange } from './useDashboardMetrics';
 
 // ---------------------------------------------------------------------------
@@ -36,9 +37,8 @@ export interface UseTopProductsHonestParams {
 // ---------------------------------------------------------------------------
 
 export function useTopProductsHonest({ dateRange, metric }: UseTopProductsHonestParams) {
-  const { selectedLocationId, dataSource, locations } = useApp();
-
-  const dsLegacy = dataSource === 'pos' ? 'pos' : 'simulated';
+  const { selectedLocationId, locations } = useApp();
+  const { dsUnified } = useEffectiveDataSource();
 
   return useQuery({
     queryKey: [
@@ -46,7 +46,7 @@ export function useTopProductsHonest({ dateRange, metric }: UseTopProductsHonest
       selectedLocationId ?? 'all',
       dateRange.from,
       dateRange.to,
-      dsLegacy,
+      dsUnified,
       metric,
     ],
     queryFn: async (): Promise<HonestProduct[]> => {
@@ -57,16 +57,15 @@ export function useTopProductsHonest({ dateRange, metric }: UseTopProductsHonest
 
       if (locationIds.length === 0) return [];
 
-      // Fetch product_sales_daily rows for the period
+      // Fetch via unified view (normalizes 'simulated' → 'demo')
       let query = supabase
-        .from('product_sales_daily')
+        .from('v_product_sales_daily_unified')
         .select('product_id, net_sales, units_sold, cogs')
         .in('location_id', locationIds)
         .gte('date', dateRange.from)
         .lte('date', dateRange.to);
 
-      // Add data_source filter
-      query = query.eq('data_source', dsLegacy);
+      query = query.eq('data_source_unified', dsUnified);
 
       const { data: rows, error } = await query;
 
