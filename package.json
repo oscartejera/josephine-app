@@ -10,9 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "repair:migrations": "tsx tools/supabase/repair-migrations.ts",
-    "check:migrations": "tsx tools/supabase/check-migrations.ts"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",

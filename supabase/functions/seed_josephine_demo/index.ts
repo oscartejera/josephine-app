@@ -50,7 +50,7 @@ serve(async (req) => {
       await supabase.from('facts_sales_15m').delete().in('location_id', locIds);
       await supabase.from('facts_labor_daily').delete().in('location_id', locIds);
       await supabase.from('employees').delete().in('location_id', locIds);
-      await supabase.from('cdm_items').delete().eq('org_id', groupId);
+      await supabase.from('cdm_items').delete().in('location_id', locIds);
       await supabase.from('locations').delete().in('id', locIds);
     }
 
@@ -120,11 +120,11 @@ serve(async (req) => {
 
     // ========== PASO 4: Crear productos ==========
     const items = [
-      { org_id: groupId, name: 'Paella Valenciana', category_name: 'Food', price: 24.50, is_active: true, external_provider: 'demo', external_id: 'demo-paella-valenciana' },
-      { org_id: groupId, name: 'Jamón Ibérico', category_name: 'Food', price: 18.90, is_active: true, external_provider: 'demo', external_id: 'demo-jamon-iberico' },
-      { org_id: groupId, name: 'Chuletón de Buey', category_name: 'Food', price: 38.50, is_active: true, external_provider: 'demo', external_id: 'demo-chuleton-buey' },
-      { org_id: groupId, name: 'Pulpo a la Gallega', category_name: 'Food', price: 22.80, is_active: true, external_provider: 'demo', external_id: 'demo-pulpo-gallega' },
-      { org_id: groupId, name: 'Rioja Reserva', category_name: 'Beverage', price: 28.00, is_active: true, external_provider: 'demo', external_id: 'demo-rioja-reserva' },
+      { org_id: groupId, location_id: locCentro.id, name: 'Paella Valenciana', category_name: 'Food', unit_price: 24.50, cost_price: 8.20 },
+      { org_id: groupId, location_id: locCentro.id, name: 'Jamón Ibérico', category_name: 'Food', unit_price: 18.90, cost_price: 11.40 },
+      { org_id: groupId, location_id: locCentro.id, name: 'Chuletón de Buey', category_name: 'Food', unit_price: 38.50, cost_price: 19.20 },
+      { org_id: groupId, location_id: locCentro.id, name: 'Pulpo a la Gallega', category_name: 'Food', unit_price: 22.80, cost_price: 9.10 },
+      { org_id: groupId, location_id: locCentro.id, name: 'Rioja Reserva', category_name: 'Beverage', unit_price: 28.00, cost_price: 9.50 },
     ];
 
     const { error: itemsError } = await supabase.from('cdm_items').insert(items);

@@ -81,7 +81,7 @@ function MetricRow({
   actualSecondary?: string;
   forecastPrimary: string;
   forecastSecondary?: string;
-  delta: number | null;
+  delta: number;
   isBetter: boolean;
   tooltipContent?: string;
 }) {
@@ -99,7 +99,7 @@ function MetricRow({
             )}
           </div>
         </div>
-        {delta != null && <DeltaBadge value={delta} isBetter={isBetter} />}
+        <DeltaBadge value={delta} isBetter={isBetter} />
       </div>
       <p className="text-[11px] text-muted-foreground mt-1">
         Forecast: {forecastPrimary}
@@ -147,27 +147,19 @@ export function LocationPLCard({
   });
   
   const getCogsDisplay = () => {
-    if (data.cogsActual == null) {
-      return {
-        actualPrimary: '—',
-        actualSecondary: 'Not configured',
-        forecastPrimary: '—',
-        forecastSecondary: ''
-      };
-    }
     if (viewMode === 'percentage') {
       return {
-        actualPrimary: formatPct(data.cogsActualPct!),
+        actualPrimary: formatPct(data.cogsActualPct),
         actualSecondary: formatCurrency(data.cogsActual, true),
-        forecastPrimary: formatPct(data.cogsForecastPct ?? 0),
-        forecastSecondary: formatCurrency(data.cogsForecast ?? 0, true)
+        forecastPrimary: formatPct(data.cogsForecastPct),
+        forecastSecondary: formatCurrency(data.cogsForecast, true)
       };
     }
     return {
       actualPrimary: formatCurrency(data.cogsActual),
-      actualSecondary: formatPct(data.cogsActualPct!),
-      forecastPrimary: formatCurrency(data.cogsForecast ?? 0),
-      forecastSecondary: formatPct(data.cogsForecastPct ?? 0)
+      actualSecondary: formatPct(data.cogsActualPct),
+      forecastPrimary: formatCurrency(data.cogsForecast),
+      forecastSecondary: formatPct(data.cogsForecastPct)
     };
   };
   
@@ -197,28 +189,19 @@ export function LocationPLCard({
   };
   
   const getFlashProfitDisplay = () => {
-    // Flash Profit is data-driven: requires COGS to be meaningful
-    if (data.flashProfitActual == null) {
-      return {
-        actualPrimary: '—',
-        actualSecondary: 'Requires COGS',
-        forecastPrimary: '—',
-        forecastSecondary: ''
-      };
-    }
     if (viewMode === 'percentage') {
       return {
-        actualPrimary: formatPct(data.flashProfitActualPct!),
+        actualPrimary: formatPct(data.flashProfitActualPct),
         actualSecondary: formatCurrency(data.flashProfitActual, true),
-        forecastPrimary: formatPct(data.flashProfitForecastPct ?? 0),
-        forecastSecondary: formatCurrency(data.flashProfitForecast ?? 0, true)
+        forecastPrimary: formatPct(data.flashProfitForecastPct),
+        forecastSecondary: formatCurrency(data.flashProfitForecast, true)
       };
     }
     return {
       actualPrimary: formatCurrency(data.flashProfitActual),
-      actualSecondary: formatPct(data.flashProfitActualPct!),
-      forecastPrimary: formatCurrency(data.flashProfitForecast ?? 0),
-      forecastSecondary: formatPct(data.flashProfitForecastPct ?? 0)
+      actualSecondary: formatPct(data.flashProfitActualPct),
+      forecastPrimary: formatCurrency(data.flashProfitForecast),
+      forecastSecondary: formatPct(data.flashProfitForecastPct)
     };
   };
   

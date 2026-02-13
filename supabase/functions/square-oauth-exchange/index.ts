@@ -54,8 +54,9 @@ Deno.serve(async (req) => {
       ? 'https://connect.squareup.com/oauth2/token'
       : 'https://connect.squareupsandbox.com/oauth2/token';
 
-    // Don't send redirect_uri — it was omitted from the authorize request,
-    // so Square uses the Redirect URL from the Developer Dashboard for both steps.
+    // redirect_uri must match what was sent in the authorize request
+    const redirectUri = `${appUrl}/integrations/square/callback`;
+
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -64,6 +65,7 @@ Deno.serve(async (req) => {
         client_secret: clientSecret,
         code,
         grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
       }),
     });
 

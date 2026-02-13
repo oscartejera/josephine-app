@@ -47,24 +47,8 @@ export class SquareClient {
   async listCatalog(cursor?: string) {
     const params = new URLSearchParams({ types: 'ITEM,CATEGORY' });
     if (cursor) params.append('cursor', cursor);
-
+    
     return this.request(`/catalog/list?${params}`);
-  }
-
-  async listCategories(cursor?: string) {
-    const params = new URLSearchParams({ types: 'CATEGORY' });
-    if (cursor) params.append('cursor', cursor);
-    return this.request(`/catalog/list?${params}`);
-  }
-
-  async searchCatalogItems(cursor?: string) {
-    const body: any = { limit: 100 };
-    if (cursor) body.cursor = cursor;
-
-    return this.request('/catalog/search-catalog-items', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
   }
 
   // ===== ORDERS =====

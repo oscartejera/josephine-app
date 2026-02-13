@@ -25,7 +25,6 @@ import { SupplierIntegrationManager } from '@/components/settings/SupplierIntegr
 import { BookingSettingsManager } from '@/components/settings/BookingSettingsManager';
 import { LoyaltyManager } from '@/components/settings/LoyaltyManager';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
-import { DataSourceSettings } from '@/components/settings/DataSourceSettings';
 import { Progress } from '@/components/ui/progress';
 import { Receipt, CalendarDays, Gift, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +51,7 @@ interface LocationSetting {
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const { locations, group, dataSource } = useApp();
+  const { locations, group } = useApp();
   const { profile } = useAuth();
   const { isOwner, hasPermission } = usePermissions();
   const [settings, setSettings] = useState<LocationSetting[]>([]);
@@ -147,7 +146,7 @@ export default function SettingsPage() {
     
     switch (table) {
       case 'tickets':
-        const { data: salesData } = await supabase.from('pos_daily_finance').select('*').eq('data_source', dataSource).limit(1000);
+        const { data: salesData } = await supabase.from('pos_daily_finance').select('*').limit(1000);
         data = salesData || [];
         filename = 'sales_daily.csv';
         break;
@@ -280,7 +279,6 @@ export default function SettingsPage() {
           <TabsTrigger value="payment">{t('settings.paymentMethods')}</TabsTrigger>
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
-          <TabsTrigger value="datasource">{t('settings.dataSource', 'Fuente de Datos')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -711,10 +709,6 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="datasource">
-          <DataSourceSettings />
         </TabsContent>
 
       </Tabs>

@@ -19,54 +19,25 @@ export function normalizeSquareLocation(squareLoc: any, orgId: string) {
   };
 }
 
-export function normalizeSquareItem(
-  squareItem: any,
-  orgId: string,
-  categoryMap?: Map<string, string>,
-) {
-  const allVariations = squareItem.item_data?.variations || [];
-  const firstVariation = allVariations[0];
-
-  // Square uses both legacy category_id and newer categories[] array
-  const legacyCategoryId = squareItem.item_data?.category_id;
-  const categoriesArray = squareItem.item_data?.categories;
-  const primaryCategoryId = categoriesArray?.[0]?.id || legacyCategoryId;
-  const categoryName = (primaryCategoryId && categoryMap?.get(primaryCategoryId)) || null;
-
-  const item = {
+export function normalizeSquareItem(squareItem: any, orgId: string) {
+  const variation = squareItem.item_data?.variations?.[0];
+  
+  return {
     org_id: orgId,
     name: squareItem.item_data?.name || 'Unknown',
-    sku: firstVariation?.item_variation_data?.sku || null,
-    category_name: categoryName,
-    price: firstVariation?.item_variation_data?.price_money?.amount
-      ? Number(firstVariation.item_variation_data.price_money.amount) / 100
+    sku: variation?.item_variation_data?.sku || null,
+    category_name: squareItem.item_data?.category_id || null,
+    price: variation?.item_variation_data?.price_money?.amount 
+      ? Number(variation.item_variation_data.price_money.amount) / 100 
       : 0,
     is_active: !squareItem.is_deleted,
     external_provider: 'square',
     external_id: squareItem.id,
     metadata: {
-      variation_id: firstVariation?.id,
+      variation_id: variation?.id,
       description: squareItem.item_data?.description,
-      category_id: primaryCategoryId,
     },
   };
-
-  const variations = allVariations.map((v: any) => ({
-    org_id: orgId,
-    external_provider: 'square',
-    external_variation_id: v.id,
-    variation_name: v.item_variation_data?.name || '',
-    sku: v.item_variation_data?.sku || null,
-    price: v.item_variation_data?.price_money?.amount
-      ? Number(v.item_variation_data.price_money.amount) / 100
-      : 0,
-    metadata: {
-      catalog_version: v.version || null,
-      ordinal: v.item_variation_data?.ordinal || null,
-    },
-  }));
-
-  return { item, variations };
 }
 
 export function normalizeSquareOrder(squareOrder: any, orgId: string, locationMap: Map<string, string>) {
@@ -99,7 +70,6 @@ export function normalizeSquareOrder(squareOrder: any, orgId: string, locationMa
       modifiers: line.modifiers || [],
       notes: line.note || null,
       external_id: line.uid,
-      external_variation_id: line.catalog_object_id || null,
     })),
   };
 }

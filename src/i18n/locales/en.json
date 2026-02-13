@@ -222,8 +222,7 @@
     "suppliers": "Suppliers",
     "usersRoles": "Users & Roles",
     "paymentMethods": "Payment Methods",
-    "addPaymentMethod": "Add Payment Method",
-    "dataSource": "Data Source"
+    "addPaymentMethod": "Add Payment Method"
   },
   "reports": {
     "title": "Reports",

@@ -26,47 +26,33 @@ import { corsHeaders } from '../_shared/cors.ts';
 const SQUARE_BASE = 'https://connect.squareup.com/v2';
 
 // ─── Product catalog with Pareto popularity weights ────────────────────
-// Must match the catalog created by square-seed-demo (same order & count)
 const PRODUCTS = [
-  // Entrantes
-  { name: 'Patatas Bravas', category: 'Entrantes', price: 650, weight: 7 },
-  { name: 'Croquetas de Jamón', category: 'Entrantes', price: 850, weight: 6 },
-  { name: 'Nachos con Guacamole', category: 'Entrantes', price: 950, weight: 4 },
-  { name: 'Tabla de Quesos', category: 'Entrantes', price: 1250, weight: 3 },
-  { name: 'Gambas al Ajillo', category: 'Entrantes', price: 1350, weight: 3 },
-  // Ensaladas
-  { name: 'Ensalada César', category: 'Ensaladas', price: 1100, weight: 5 },
-  { name: 'Ensalada Mediterránea', category: 'Ensaladas', price: 1050, weight: 3 },
-  { name: 'Ensalada de Burrata', category: 'Ensaladas', price: 1250, weight: 2 },
-  // Principales
-  { name: 'Hamburguesa Clásica', category: 'Principales', price: 1350, weight: 10 },
-  { name: 'Hamburguesa Gourmet', category: 'Principales', price: 1650, weight: 7 },
-  { name: 'Pizza Margherita', category: 'Principales', price: 1200, weight: 9 },
-  { name: 'Pizza Pepperoni', category: 'Principales', price: 1400, weight: 6 },
-  { name: 'Pasta Carbonara', category: 'Principales', price: 1250, weight: 8 },
-  { name: 'Pasta Boloñesa', category: 'Principales', price: 1150, weight: 3 },
-  { name: 'Salmón a la Plancha', category: 'Principales', price: 1890, weight: 3 },
-  { name: 'Pollo al Horno', category: 'Principales', price: 1450, weight: 6 },
-  { name: 'Tacos de Ternera', category: 'Principales', price: 1200, weight: 4 },
-  { name: 'Wrap de Pollo', category: 'Principales', price: 1050, weight: 3 },
-  { name: 'Bowl de Poké', category: 'Principales', price: 1450, weight: 2 },
-  { name: 'Risotto de Setas', category: 'Principales', price: 1350, weight: 2 },
-  // Bebidas
-  { name: 'Coca-Cola', category: 'Bebidas', price: 300, weight: 8 },
-  { name: 'Agua Mineral', category: 'Bebidas', price: 250, weight: 7 },
-  { name: 'Cerveza Artesana', category: 'Bebidas', price: 550, weight: 7 },
-  { name: 'Copa de Vino Tinto', category: 'Bebidas', price: 650, weight: 5 },
-  { name: 'Copa de Vino Blanco', category: 'Bebidas', price: 650, weight: 3 },
-  { name: 'Limonada Natural', category: 'Bebidas', price: 450, weight: 2 },
-  { name: 'Zumo de Naranja', category: 'Bebidas', price: 400, weight: 2 },
-  { name: 'Café Espresso', category: 'Bebidas', price: 250, weight: 6 },
-  { name: 'Café Latte', category: 'Bebidas', price: 380, weight: 3 },
-  { name: 'Té / Infusión', category: 'Bebidas', price: 280, weight: 1 },
-  // Postres
-  { name: 'Tarta de Queso', category: 'Postres', price: 700, weight: 3 },
-  { name: 'Brownie con Helado', category: 'Postres', price: 750, weight: 2 },
-  { name: 'Helado Artesano (2 bolas)', category: 'Postres', price: 550, weight: 1 },
-  { name: 'Crema Catalana', category: 'Postres', price: 650, weight: 2 },
+  { name: 'Hamburguesa Clasica', category: 'Food', price: 1250, weight: 10 },
+  { name: 'Pizza Margherita', category: 'Food', price: 1400, weight: 9 },
+  { name: 'Pasta Carbonara', category: 'Food', price: 1350, weight: 8 },
+  { name: 'Hamburguesa Gourmet', category: 'Food', price: 1650, weight: 7 },
+  { name: 'Cerveza Artesana', category: 'Beverage', price: 550, weight: 7 },
+  { name: 'Coca-Cola', category: 'Beverage', price: 300, weight: 7 },
+  { name: 'Pizza Pepperoni', category: 'Food', price: 1550, weight: 6 },
+  { name: 'Pollo al Horno', category: 'Food', price: 1450, weight: 6 },
+  { name: 'Ensalada Caesar', category: 'Food', price: 950, weight: 5 },
+  { name: 'Patatas Bravas', category: 'Food', price: 650, weight: 5 },
+  { name: 'Agua Mineral', category: 'Beverage', price: 250, weight: 5 },
+  { name: 'Cafe Espresso', category: 'Beverage', price: 200, weight: 5 },
+  { name: 'Nachos con Guacamole', category: 'Food', price: 850, weight: 4 },
+  { name: 'Croquetas Jamon', category: 'Food', price: 750, weight: 4 },
+  { name: 'Tacos de Ternera', category: 'Food', price: 1100, weight: 4 },
+  { name: 'Vino Tinto Copa', category: 'Beverage', price: 650, weight: 4 },
+  { name: 'Pasta Bolognesa', category: 'Food', price: 1250, weight: 3 },
+  { name: 'Ensalada Mediterranea', category: 'Food', price: 1050, weight: 3 },
+  { name: 'Salmon a la Plancha', category: 'Food', price: 1890, weight: 3 },
+  { name: 'Wrap de Pollo', category: 'Food', price: 1050, weight: 3 },
+  { name: 'Bowl de Poke', category: 'Food', price: 1450, weight: 2 },
+  { name: 'Limonada Natural', category: 'Beverage', price: 450, weight: 2 },
+  { name: 'Zumo de Naranja', category: 'Beverage', price: 400, weight: 2 },
+  { name: 'Tarta de Queso', category: 'Dessert', price: 700, weight: 2 },
+  { name: 'Brownie con Helado', category: 'Dessert', price: 750, weight: 1 },
+  { name: 'Helado Artesano', category: 'Dessert', price: 550, weight: 1 },
 ];
 
 const TOTAL_PRODUCT_WEIGHT = PRODUCTS.reduce((s, p) => s + p.weight, 0);
