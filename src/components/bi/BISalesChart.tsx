@@ -30,14 +30,19 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+interface TooltipEntry {
+  dataKey: string;
+  value: number;
+}
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) {
   if (!active || !payload || !payload.length) return null;
 
-  const actual = payload.find((p: any) => p.dataKey === 'actual')?.value || 0;
-  const forecast = payload.find((p: any) => p.dataKey === 'forecast')?.value || 0;
-  const forecastLive = payload.find((p: any) => p.dataKey === 'forecastLive')?.value || 0;
-  const avgCheckSize = payload.find((p: any) => p.dataKey === 'avgCheckSize')?.value || 0;
-  const avgCheckForecast = payload.find((p: any) => p.dataKey === 'avgCheckForecast')?.value || 0;
+  const actual = payload.find((p) => p.dataKey === 'actual')?.value || 0;
+  const forecast = payload.find((p) => p.dataKey === 'forecast')?.value || 0;
+  const forecastLive = payload.find((p) => p.dataKey === 'forecastLive')?.value || 0;
+  const avgCheckSize = payload.find((p) => p.dataKey === 'avgCheckSize')?.value || 0;
+  const avgCheckForecast = payload.find((p) => p.dataKey === 'avgCheckForecast')?.value || 0;
 
   const salesDelta = forecast > 0 ? ((actual - forecast) / forecast) * 100 : 0;
   const acsDelta = avgCheckForecast > 0 ? ((avgCheckSize - avgCheckForecast) / avgCheckForecast) * 100 : 0;

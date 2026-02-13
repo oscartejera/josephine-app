@@ -240,7 +240,7 @@ export function LocationManager() {
 
       if (locationError) throw locationError;
 
-      let copiedItems = {
+      const copiedItems = {
         settings: false,
         products: 0,
         employees: 0,
