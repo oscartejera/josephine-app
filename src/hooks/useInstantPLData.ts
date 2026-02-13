@@ -116,6 +116,11 @@ interface RPCLocationRow {
   estimated_labour: boolean;
 }
 
+/** Sanitize a numeric value: NaN / Infinity → null */
+function finiteOrNull(v: number | null | undefined): number | null {
+  return v != null && Number.isFinite(v) ? v : null;
+}
+
 interface RPCResponse {
   data_source: string;
   mode: string;
@@ -229,12 +234,12 @@ export function useInstantPLData({
           salesForecast,
           salesDelta,
           salesDeltaPct,
-          cogsActual,
-          cogsForecast,
-          cogsActualPct,
-          cogsForecastPct,
-          cogsDelta,
-          cogsDeltaPct,
+          cogsActual: finiteOrNull(cogsActual),
+          cogsForecast: finiteOrNull(cogsForecast),
+          cogsActualPct: finiteOrNull(cogsActualPct),
+          cogsForecastPct: finiteOrNull(cogsForecastPct),
+          cogsDelta: finiteOrNull(cogsDelta),
+          cogsDeltaPct: finiteOrNull(cogsDeltaPct),
           cogsIsBetter: cogsActualPct != null && cogsForecastPct != null && cogsActualPct < cogsForecastPct,
           labourActual,
           labourForecast,
@@ -245,12 +250,12 @@ export function useInstantPLData({
           labourIsBetter: labourActual <= labourForecast,
           labourHoursActual,
           labourHoursForecast: labourHoursForecastCalc,
-          flashProfitActual,
-          flashProfitForecast,
-          flashProfitActualPct,
-          flashProfitForecastPct,
-          flashProfitDelta,
-          flashProfitDeltaPct,
+          flashProfitActual: finiteOrNull(flashProfitActual),
+          flashProfitForecast: finiteOrNull(flashProfitForecast),
+          flashProfitActualPct: finiteOrNull(flashProfitActualPct),
+          flashProfitForecastPct: finiteOrNull(flashProfitForecastPct),
+          flashProfitDelta: finiteOrNull(flashProfitDelta),
+          flashProfitDeltaPct: finiteOrNull(flashProfitDeltaPct),
           flashProfitIsBetter: flashProfitActual != null && flashProfitForecast != null && flashProfitActual >= flashProfitForecast,
           isProfitOverTarget: flashProfitActualPct != null && flashProfitActualPct >= 40,
           isSalesAboveForecast: salesActual >= salesForecast * 1.10,
@@ -311,12 +316,12 @@ export function useInstantPLData({
       });
     }
 
-    // Apply Best/Worst/All filter
+    // Apply Best/Worst/All filter (null profit sorts last)
     if (filterMode === 'best') {
-      filteredLocations.sort((a, b) => b.flashProfitActualPct - a.flashProfitActualPct);
+      filteredLocations.sort((a, b) => (b.flashProfitActualPct ?? -Infinity) - (a.flashProfitActualPct ?? -Infinity));
       filteredLocations = filteredLocations.slice(0, Math.ceil(filteredLocations.length / 2));
     } else if (filterMode === 'worst') {
-      filteredLocations.sort((a, b) => a.flashProfitActualPct - b.flashProfitActualPct);
+      filteredLocations.sort((a, b) => (a.flashProfitActualPct ?? Infinity) - (b.flashProfitActualPct ?? Infinity));
       filteredLocations = filteredLocations.slice(0, Math.ceil(filteredLocations.length / 2));
     }
 

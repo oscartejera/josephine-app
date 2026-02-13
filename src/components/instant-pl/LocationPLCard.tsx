@@ -18,6 +18,11 @@ interface LocationPLCardProps {
   onClick?: () => void;
 }
 
+/** Null-safe formatter: returns "—" for null/undefined, delegates to fn otherwise */
+function fmtN<T extends number>(value: T | null | undefined, fn: (v: T) => string): string {
+  return value != null ? fn(value) : '—';
+}
+
 // Format currency
 function formatCurrency(value: number, compact = false): string {
   if (compact && Math.abs(value) >= 1000) {
@@ -157,17 +162,17 @@ export function LocationPLCard({
     }
     if (viewMode === 'percentage') {
       return {
-        actualPrimary: formatPct(data.cogsActualPct!),
+        actualPrimary: fmtN(data.cogsActualPct, formatPct),
         actualSecondary: formatCurrency(data.cogsActual, true),
-        forecastPrimary: formatPct(data.cogsForecastPct ?? 0),
+        forecastPrimary: fmtN(data.cogsForecastPct, formatPct),
         forecastSecondary: formatCurrency(data.cogsForecast ?? 0, true)
       };
     }
     return {
       actualPrimary: formatCurrency(data.cogsActual),
-      actualSecondary: formatPct(data.cogsActualPct!),
+      actualSecondary: fmtN(data.cogsActualPct, formatPct),
       forecastPrimary: formatCurrency(data.cogsForecast ?? 0),
-      forecastSecondary: formatPct(data.cogsForecastPct ?? 0)
+      forecastSecondary: fmtN(data.cogsForecastPct, formatPct)
     };
   };
   
@@ -208,17 +213,17 @@ export function LocationPLCard({
     }
     if (viewMode === 'percentage') {
       return {
-        actualPrimary: formatPct(data.flashProfitActualPct!),
+        actualPrimary: fmtN(data.flashProfitActualPct, formatPct),
         actualSecondary: formatCurrency(data.flashProfitActual, true),
-        forecastPrimary: formatPct(data.flashProfitForecastPct ?? 0),
+        forecastPrimary: fmtN(data.flashProfitForecastPct, formatPct),
         forecastSecondary: formatCurrency(data.flashProfitForecast ?? 0, true)
       };
     }
     return {
       actualPrimary: formatCurrency(data.flashProfitActual),
-      actualSecondary: formatPct(data.flashProfitActualPct!),
+      actualSecondary: fmtN(data.flashProfitActualPct, formatPct),
       forecastPrimary: formatCurrency(data.flashProfitForecast ?? 0),
-      forecastSecondary: formatPct(data.flashProfitForecastPct ?? 0)
+      forecastSecondary: fmtN(data.flashProfitForecastPct, formatPct)
     };
   };
   
