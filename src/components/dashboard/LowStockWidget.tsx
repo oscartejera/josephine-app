@@ -161,10 +161,13 @@ export function LowStockWidget({ locationId }: LowStockWidgetProps) {
                 <div className="text-right shrink-0">
                   <p className="text-sm font-semibold">
                     Pedir:{' '}
-                    {item.recommended_qty > 0 ? (
-                      <span>{item.recommended_qty.toFixed(1)} {item.unit}</span>
-                    ) : (
+                    {item.recommended_qty === 0
+                      && item.forecast_qty === null
+                      && item.safety_stock <= 0
+                      && item.reorder_point <= 0 ? (
                       <MissingValue reason="Sin datos de uso ni safety stock para calcular" />
+                    ) : (
+                      <span>{item.recommended_qty.toFixed(1)} {item.unit}</span>
                     )}
                   </p>
                   <p className="text-xs opacity-70">

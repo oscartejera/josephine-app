@@ -36,6 +36,11 @@ export interface DashboardMetricsResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Format a Date as YYYY-MM-DD in the browser's local timezone (not UTC). */
+function localISODate(d: Date): string {
+  return d.toLocaleDateString('en-CA'); // en-CA locale → YYYY-MM-DD
+}
+
 function kpiOk(value: number): KpiResult {
   return { available: true, value };
 }
@@ -52,15 +57,15 @@ function getPreviousPeriod(from: string, to: string): DateRange {
   const prevTo = new Date(f.getTime() - 1);
   const prevFrom = new Date(prevTo.getTime() - lengthMs);
   return {
-    from: prevFrom.toISOString().split('T')[0],
-    to: prevTo.toISOString().split('T')[0],
+    from: localISODate(prevFrom),
+    to: localISODate(prevTo),
   };
 }
 
 /** Compute date range from a preset. */
 export function presetToDateRange(preset: DateRangePreset, custom?: { from: Date; to: Date }): DateRange {
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = localISODate(now);
 
   switch (preset) {
     case 'today':
@@ -68,18 +73,18 @@ export function presetToDateRange(preset: DateRangePreset, custom?: { from: Date
     case '7d': {
       const d = new Date(now);
       d.setDate(d.getDate() - 6);
-      return { from: d.toISOString().split('T')[0], to: todayStr };
+      return { from: localISODate(d), to: todayStr };
     }
     case '30d': {
       const d = new Date(now);
       d.setDate(d.getDate() - 29);
-      return { from: d.toISOString().split('T')[0], to: todayStr };
+      return { from: localISODate(d), to: todayStr };
     }
     case 'custom':
       if (custom) {
         return {
-          from: custom.from.toISOString().split('T')[0],
-          to: custom.to.toISOString().split('T')[0],
+          from: localISODate(custom.from),
+          to: localISODate(custom.to),
         };
       }
       return { from: todayStr, to: todayStr };
@@ -143,11 +148,7 @@ async function fetchPeriodKpis(
     labor = kpiMissing('Sin datos de nómina para este periodo');
   } else {
     totalLabor = laborRows.reduce((s, r) => s + (Number(r.labour_cost) || 0), 0);
-    if (totalLabor === 0) {
-      labor = kpiMissing('Coste laboral es 0 — revisa timesheets');
-    } else {
-      labor = kpiOk(totalLabor);
-    }
+    labor = kpiOk(totalLabor);
   }
 
   // --- COGS (real from cogs_daily) ------------------------------------
@@ -169,11 +170,7 @@ async function fetchPeriodKpis(
     cogs = kpiMissing('COGS no configurado — conecta recetas e inventario');
   } else {
     totalCogs = cogsRows.reduce((s, r) => s + (Number(r.cogs_amount) || 0), 0);
-    if (totalCogs === 0) {
-      cogs = kpiMissing('COGS es 0 — revisa costes de ingredientes');
-    } else {
-      cogs = kpiOk(totalCogs);
-    }
+    cogs = kpiOk(totalCogs);
   }
 
   // --- GP% (needs sales + cogs) ----------------------------------------
@@ -221,22 +218,20 @@ async function fetchPeriodKpis(
     covers = kpiMissing('Sin datos de covers para este periodo');
   } else {
     totalCovers = coverRows.reduce((s, r) => s + (Number(r.covers) || 0), 0);
-    if (totalCovers === 0) {
-      covers = kpiMissing('Covers en 0 — POS no reporta covers');
-    } else {
-      covers = kpiOk(totalCovers);
-    }
+    covers = kpiOk(totalCovers);
   }
 
   // --- Avg Ticket ------------------------------------------------------
   let avgTicket: KpiResult;
   if (sales.available && covers.available && totalCovers > 0) {
     avgTicket = kpiOk(Math.round((totalNetSales / totalCovers) * 100) / 100);
-  } else if (sales.available && totalOrders > 0) {
-    // Fallback: sales / orders (not covers)
-    avgTicket = kpiOk(Math.round((totalNetSales / totalOrders) * 100) / 100);
+  } else if (!sales.available) {
+    avgTicket = kpiMissing('Requiere datos de ventas');
+  } else if (!covers.available) {
+    avgTicket = kpiMissing('Covers no disponible');
   } else {
-    avgTicket = kpiMissing('Requiere ventas y covers/pedidos');
+    // covers === 0 with rows present
+    avgTicket = kpiMissing('Covers = 0 en este periodo');
   }
 
   return { sales, gpPercent, cogs, labor, colPercent, covers, avgTicket };
