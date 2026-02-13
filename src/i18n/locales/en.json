@@ -262,6 +262,18 @@
     "allGood": "All stock levels are healthy",
     "allGoodHint": "No items below reorder point"
   },
+  "labourReadiness": {
+    "badgeDemo": "Demo",
+    "demoTitle": "Labour in Demo Mode",
+    "demoDescriptionSimulated": "Showing demo labour data. Connect your POS to see real labour cost data.",
+    "demoDescriptionPosNoRows": "POS connected but no labour data configured for this range yet. Set up shifts or clock records to see real data.",
+    "connectPosCta": "Connect POS",
+    "configureCta": "Configure Labour",
+    "errorTitle": "Error verifying labour data",
+    "errorDescription": "Could not verify labour data. You can retry or continue with DEMO.",
+    "retry": "Retry",
+    "refresh": "Refresh"
+  },
   "salesReadiness": {
     "demoTitle": "Sales in Demo Mode",
     "integrationInactive": "POS is not connected or is disabled. Connect your POS to see real sales.",

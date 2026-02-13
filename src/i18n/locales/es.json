@@ -263,6 +263,18 @@
     "allGood": "Todo el stock está en orden",
     "allGoodHint": "No hay items por debajo del punto de reorden"
   },
+  "labourReadiness": {
+    "badgeDemo": "Demo",
+    "demoTitle": "Labour en modo DEMO",
+    "demoDescriptionSimulated": "Mostrando datos demo de labour. Conecta tu POS para ver datos reales de costes laborales.",
+    "demoDescriptionPosNoRows": "POS conectado pero aún no hay datos de labour configurados para este rango. Configura turnos o fichajes para ver datos reales.",
+    "connectPosCta": "Conectar POS",
+    "configureCta": "Configurar Labour",
+    "errorTitle": "Error al verificar datos de labour",
+    "errorDescription": "No se pudieron verificar los datos de labour. Puedes reintentar o continuar con DEMO.",
+    "retry": "Reintentar",
+    "refresh": "Actualizar"
+  },
   "salesReadiness": {
     "demoTitle": "Ventas en modo DEMO",
     "integrationInactive": "POS no está conectado o está desactivado. Conecta tu POS para ver ventas reales.",

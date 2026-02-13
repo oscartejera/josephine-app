@@ -1,13 +1,15 @@
 /**
  * Labour - Complete Labour page with Nory-style design
- * Uses optimized RPCs for data fetching
+ * Uses optimized RPCs for data fetching.
+ * Includes labour readiness gate: shows Demo banner + CTA when no real data.
  */
 
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { useLabourData, type MetricMode, type LabourDateRange } from '@/hooks/useLabourData';
+import { useLabourReadiness } from '@/hooks/useLabourReadiness';
 import { LabourHeader, type CompareMode } from '@/components/labour/LabourHeader';
 import { LabourKPICards } from '@/components/labour/LabourKPICards';
 import { LabourChart } from '@/components/labour/LabourChart';
@@ -15,6 +17,11 @@ import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
 import { LabourByRole } from '@/components/labour/LabourByRole';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, Database, Link, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Validate UUID format
 function isValidUUID(id: string | undefined): boolean {
@@ -24,6 +31,7 @@ function isValidUUID(id: string | undefined): boolean {
 }
 
 export default function Labour() {
+  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId?: string }>();
   const { accessibleLocations, loading: appLoading } = useApp();
 
@@ -40,7 +48,7 @@ export default function Labour() {
 
   // Validate location ID
   const validLocationId = isValidUUID(locationId) ? locationId : null;
-  
+
   // Find location name if we have a location ID
   const locationInfo = useMemo(() => {
     if (!validLocationId) return null;
@@ -48,15 +56,24 @@ export default function Labour() {
     return loc ? { id: loc.id, name: loc.name } : null;
   }, [validLocationId, accessibleLocations]);
 
+  // Labour readiness gate
+  const readiness = useLabourReadiness({
+    selectedLocationId: validLocationId ?? 'all',
+    dateRange: {
+      from: format(dateRange.from, 'yyyy-MM-dd'),
+      to: format(dateRange.to, 'yyyy-MM-dd'),
+    },
+  });
+
   // Fetch data
-  const { 
-    kpis, 
-    timeseries, 
-    locations, 
-    isLoading, 
+  const {
+    kpis,
+    timeseries,
+    locations,
+    isLoading,
     isError,
     isEmpty,
-    refetch 
+    refetch
   } = useLabourData({
     dateRange,
     locationId: validLocationId,
@@ -101,26 +118,102 @@ export default function Labour() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-        <LabourHeader
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          metricMode={metricMode}
-          setMetricMode={setMetricMode}
-          compareMode={compareMode}
-          setCompareMode={setCompareMode}
-          locationId={validLocationId}
-          locationName={locationInfo?.name}
-          onAskJosephine={() => setShowJosephine(true)}
-        />
+      {/* Header + Demo Badge */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <LabourHeader
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            metricMode={metricMode}
+            setMetricMode={setMetricMode}
+            compareMode={compareMode}
+            setCompareMode={setCompareMode}
+            locationId={validLocationId}
+            locationName={locationInfo?.name}
+            onAskJosephine={() => setShowJosephine(true)}
+          />
+        </div>
+        {readiness.status === 'demo' && (
+          <Badge variant="secondary" className="gap-1 flex-shrink-0">
+            <Database className="h-3 w-3" />
+            {t('labourReadiness.badgeDemo')}
+          </Badge>
+        )}
+      </div>
 
-        {/* Ask Josephine Panel */}
-        <AskJosephineLabourPanel
-          open={showJosephine}
-          onClose={() => setShowJosephine(false)}
-          kpis={kpis}
-          locations={locations}
-        />
+      {/* Ask Josephine Panel */}
+      <AskJosephineLabourPanel
+        open={showJosephine}
+        onClose={() => setShowJosephine(false)}
+        kpis={kpis}
+        locations={locations}
+      />
+
+      {/* Labour Readiness Banner — Demo */}
+      {readiness.status === 'demo' && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+          <div className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 space-y-1">
+              <p className="font-medium text-amber-900 dark:text-amber-200">
+                {t('labourReadiness.demoTitle')}
+              </p>
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                {readiness.reason === 'pos_no_rows'
+                  ? t('labourReadiness.demoDescriptionPosNoRows')
+                  : t('labourReadiness.demoDescriptionSimulated')}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => { readiness.refetch(); refetch(); }}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                {t('labourReadiness.refresh')}
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                asChild
+              >
+                <a href="/integrations">
+                  <Link className="h-3.5 w-3.5" />
+                  {t('labourReadiness.connectPosCta')}
+                </a>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Labour Readiness Banner — Error */}
+      {readiness.status === 'error' && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
+          <div className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 space-y-1">
+              <p className="font-medium text-red-900 dark:text-red-200">
+                {t('labourReadiness.errorTitle')}
+              </p>
+              <p className="text-sm text-red-800 dark:text-red-300">
+                {t('labourReadiness.errorDescription')}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 flex-shrink-0"
+              onClick={() => { readiness.refetch(); refetch(); }}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              {t('labourReadiness.retry')}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <LabourKPICards
