@@ -202,7 +202,7 @@ export default function Dashboard() {
       </div>
 
       {/* Top 10 Products */}
-      <TopProductsCard />
+      <TopProductsCard dateRange={dateRange} />
 
       {/* AI Narrative and Low Stock */}
       <div className="grid lg:grid-cols-2 gap-6">
