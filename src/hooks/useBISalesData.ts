@@ -65,7 +65,14 @@ export interface ChartDataPoint {
   avgCheckForecast: number;
 }
 
+export interface BISalesMeta {
+  dataSource: 'demo' | 'pos';
+  reason?: string;
+  hasRows: boolean;
+}
+
 export interface BISalesData {
+  meta: BISalesMeta;
   kpis: {
     salesToDate: number;
     salesToDateDelta: number;
@@ -90,8 +97,9 @@ interface UseBISalesDataParams {
   locationIds: string[];
 }
 
-function emptyData(): BISalesData {
+function emptyData(dataSource: 'demo' | 'pos' = 'demo', reason?: string): BISalesData {
   return {
+    meta: { dataSource, reason, hasRows: false },
     kpis: {
       salesToDate: 0,
       salesToDateDelta: 0,
@@ -198,7 +206,15 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const ts = timeseriesResult.data;
       const tp = topProductsResult.data;
 
-      if (!ts || !ts.kpis) return emptyData();
+      // Extract readiness metadata from the RPC response
+      const metaDataSource = ((ts as Record<string, unknown>)?.data_source as string) || 'demo';
+      const metaReason = ((ts as Record<string, unknown>)?.reason as string) || undefined;
+      const metaHourly = (ts as Record<string, unknown>)?.hourly as unknown[] | null;
+      const metaDaily = (ts as Record<string, unknown>)?.daily as unknown[] | null;
+      const metaHasRows = (metaHourly != null && metaHourly.length > 0) ||
+                          (metaDaily != null && metaDaily.length > 0);
+
+      if (!ts || !ts.kpis) return emptyData(metaDataSource as 'demo' | 'pos', metaReason);
 
       // ── KPIs from timeseries RPC ─────────────────────────────
       const kpis = ts.kpis;
@@ -319,6 +335,11 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         });
 
       return {
+        meta: {
+          dataSource: metaDataSource as 'demo' | 'pos',
+          reason: metaReason,
+          hasRows: metaHasRows,
+        },
         kpis: {
           salesToDate: totalNetSales,
           salesToDateDelta,
