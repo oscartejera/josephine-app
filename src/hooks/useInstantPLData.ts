@@ -40,12 +40,12 @@ export interface LocationPLMetrics {
   salesDeltaPct: number;
 
   // COGS
-  cogsActual: number;
-  cogsForecast: number;
-  cogsActualPct: number;
-  cogsForecastPct: number;
-  cogsDelta: number;
-  cogsDeltaPct: number;
+  cogsActual: number | null;
+  cogsForecast: number | null;
+  cogsActualPct: number | null;
+  cogsForecastPct: number | null;
+  cogsDelta: number | null;
+  cogsDeltaPct: number | null;
   cogsIsBetter: boolean;
 
   // Labour
@@ -60,12 +60,12 @@ export interface LocationPLMetrics {
   labourHoursForecast: number;
 
   // Flash Profit
-  flashProfitActual: number;
-  flashProfitForecast: number;
-  flashProfitActualPct: number;
-  flashProfitForecastPct: number;
-  flashProfitDelta: number;
-  flashProfitDeltaPct: number;
+  flashProfitActual: number | null;
+  flashProfitForecast: number | null;
+  flashProfitActualPct: number | null;
+  flashProfitForecastPct: number | null;
+  flashProfitDelta: number | null;
+  flashProfitDeltaPct: number | null;
   flashProfitIsBetter: boolean;
 
   // Chip filter flags
@@ -192,31 +192,31 @@ export function useInstantPLData({
           labourHoursActual = Math.round(labourActual / 20);
         }
 
-        // COGS: no real source — requires recipe costs or COGS feed
-        const cogsActual = 0;
-        const cogsForecast = 0;
+        // COGS: null = not configured (no recipe costs / COGS feed)
+        const cogsActual: number | null = null;
+        const cogsForecast: number | null = null;
 
         // Calculate percentages
-        const cogsActualPct = salesActual > 0 ? (cogsActual / salesActual) * 100 : 0;
-        const cogsForecastPct = salesForecast > 0 ? (cogsForecast / salesForecast) * 100 : 0;
+        const cogsActualPct = cogsActual != null && salesActual > 0 ? (cogsActual / salesActual) * 100 : null;
+        const cogsForecastPct = cogsForecast != null && salesForecast > 0 ? (cogsForecast / salesForecast) * 100 : null;
         const labourActualPct = salesActual > 0 ? (labourActual / salesActual) * 100 : 0;
         const labourForecastPct = salesForecast > 0 ? (labourForecast / salesForecast) * 100 : 0;
 
-        // Flash Profit
-        const flashProfitActual = salesActual - cogsActual - labourActual;
-        const flashProfitForecast = salesForecast - cogsForecast - labourForecast;
-        const flashProfitActualPct = salesActual > 0 ? (flashProfitActual / salesActual) * 100 : 0;
-        const flashProfitForecastPct = salesForecast > 0 ? (flashProfitForecast / salesForecast) * 100 : 0;
+        // Flash Profit — requires COGS to be meaningful
+        const flashProfitActual = cogsActual != null ? salesActual - cogsActual - labourActual : null;
+        const flashProfitForecast = cogsForecast != null ? salesForecast - cogsForecast - labourForecast : null;
+        const flashProfitActualPct = flashProfitActual != null && salesActual > 0 ? (flashProfitActual / salesActual) * 100 : null;
+        const flashProfitForecastPct = flashProfitForecast != null && salesForecast > 0 ? (flashProfitForecast / salesForecast) * 100 : null;
 
         // Deltas
         const salesDelta = salesActual - salesForecast;
         const salesDeltaPct = salesForecast > 0 ? (salesDelta / salesForecast) * 100 : 0;
-        const cogsDelta = cogsActual - cogsForecast;
-        const cogsDeltaPct = cogsForecast > 0 ? (cogsDelta / cogsForecast) * 100 : 0;
+        const cogsDelta = cogsActual != null && cogsForecast != null ? cogsActual - cogsForecast : null;
+        const cogsDeltaPct = cogsDelta != null && cogsForecast != null && cogsForecast > 0 ? (cogsDelta / cogsForecast) * 100 : null;
         const labourDelta = labourActual - labourForecast;
         const labourDeltaPct = labourForecast > 0 ? (labourDelta / labourForecast) * 100 : 0;
-        const flashProfitDelta = flashProfitActual - flashProfitForecast;
-        const flashProfitDeltaPct = flashProfitForecast > 0 ? (flashProfitDelta / flashProfitForecast) * 100 : 0;
+        const flashProfitDelta = flashProfitActual != null && flashProfitForecast != null ? flashProfitActual - flashProfitForecast : null;
+        const flashProfitDeltaPct = flashProfitDelta != null && flashProfitForecast != null && flashProfitForecast > 0 ? (flashProfitDelta / flashProfitForecast) * 100 : null;
 
         // Labour hours
         const hourlyRate = labourHoursActual > 0 ? labourActual / labourHoursActual : 20;
@@ -235,7 +235,7 @@ export function useInstantPLData({
           cogsForecastPct,
           cogsDelta,
           cogsDeltaPct,
-          cogsIsBetter: cogsActualPct < cogsForecastPct,
+          cogsIsBetter: cogsActualPct != null && cogsForecastPct != null && cogsActualPct < cogsForecastPct,
           labourActual,
           labourForecast,
           labourActualPct,
@@ -251,8 +251,8 @@ export function useInstantPLData({
           flashProfitForecastPct,
           flashProfitDelta,
           flashProfitDeltaPct,
-          flashProfitIsBetter: flashProfitActual >= flashProfitForecast,
-          isProfitOverTarget: flashProfitActualPct >= 40,
+          flashProfitIsBetter: flashProfitActual != null && flashProfitForecast != null && flashProfitActual >= flashProfitForecast,
+          isProfitOverTarget: flashProfitActualPct != null && flashProfitActualPct >= 40,
           isSalesAboveForecast: salesActual >= salesForecast * 1.10,
           isCogsBelow: false, // Calculated after all locations
           isUnderPlannedLabour: labourActual <= labourForecast,
@@ -262,11 +262,12 @@ export function useInstantPLData({
       });
 
       // Calculate average COGS % and update isCogsBelow
-      const avgCogsPct = locationMetrics.length > 0
-        ? locationMetrics.reduce((sum, l) => sum + l.cogsActualPct, 0) / locationMetrics.length
-        : 0;
+      const validCogs = locationMetrics.filter(l => l.cogsActualPct != null);
+      const avgCogsPct = validCogs.length > 0
+        ? validCogs.reduce((sum, l) => sum + l.cogsActualPct!, 0) / validCogs.length
+        : null;
       locationMetrics.forEach(loc => {
-        loc.isCogsBelow = loc.cogsActualPct < avgCogsPct;
+        loc.isCogsBelow = loc.cogsActualPct != null && avgCogsPct != null && loc.cogsActualPct < avgCogsPct;
       });
 
       return locationMetrics;
