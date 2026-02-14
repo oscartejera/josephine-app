@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { getSupabase } from "../supabaseClient.js";
 import { startContext, buildEnvelope, toMcpResult } from "../lib/response.js";
-import { writeGuard, finalizeWrite, type WriteInput } from "../lib/writeGuard.js";
+import { writeGuard, finalizeWrite, recordWriteError, type WriteInput } from "../lib/writeGuard.js";
 
 export const name = "josephine_locations_upsert";
 
 export const description =
-  "Create or update a restaurant location. Requires confirm=true, idempotencyKey, and reason.";
+  "Create or update a restaurant location. Requires confirm=true, idempotencyKey, reason, and actor.";
 
 export const inputSchema = z.object({
   confirm: z.boolean().optional().describe("Must be true to execute the write"),
@@ -32,8 +32,8 @@ export async function execute(input: Input) {
   const ctx = startContext("josephine_locations_upsert");
   const supabase = getSupabase();
 
-  // Write guard: confirm, idempotencyKey, reason, write-enabled
-  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase);
+  // Write guard: confirm, idempotencyKey, reason, actor, write-enabled, circuit breaker
+  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase, { estimatedRows: 1 });
   if (guard.action !== "execute") {
     return toMcpResult(guard.text!, guard.envelope!);
   }
@@ -53,6 +53,7 @@ export async function execute(input: Input) {
           status: "error",
           data: null,
           errors: [{ code: "NOT_FOUND", message: `Location ${input.location.id} not found.` }],
+          meta: { execution: "preview" },
         }),
       );
     }
@@ -67,6 +68,7 @@ export async function execute(input: Input) {
           status: "error",
           data: null,
           errors: [{ code: "NOT_FOUND", message: "No group/organization found." }],
+          meta: { execution: "preview" },
         }),
       );
     }
@@ -87,6 +89,7 @@ export async function execute(input: Input) {
     : await supabase.from("locations").insert(upsertData).select().single();
 
   if (error) {
+    recordWriteError("josephine_locations_upsert");
     const code = error.message.includes("permission") || error.message.includes("policy")
       ? "RLS_DENIED" as const
       : "UPSTREAM_ERROR" as const;
@@ -100,19 +103,20 @@ export async function execute(input: Input) {
           message: error.message,
           hint: code === "RLS_DENIED" ? "Ensure you're using SUPABASE_SERVICE_ROLE_KEY for write operations." : null,
         }],
+        meta: { execution: "preview" },
       }),
     );
   }
 
-  // Store idempotency record
-  await finalizeWrite(supabase, "josephine_locations_upsert", input as WriteInput, guard.requestHash!, data);
+  // Store idempotency record via GuardContext
+  await finalizeWrite(supabase, guard.guardCtx!, data);
 
   return toMcpResult(
     `Location "${data.name}" ${input.location.id ? "updated" : "created"} (${data.id}).`,
     buildEnvelope(ctx, {
       status: "ok",
       data: { location: data },
-      meta: { rowsTouched: 1, operation: input.location.id ? "update" : "insert" },
+      meta: { execution: "executed", rowsTouched: 1, operation: input.location.id ? "update" : "insert" },
     }),
   );
 }

@@ -108,6 +108,8 @@ async function main() {
   console.error(`[josephine-mcp] SUPABASE_URL: ${process.env.SUPABASE_URL ? "configured" : "MISSING"}`);
   console.error(`[josephine-mcp] SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? "configured" : "MISSING"}`);
   console.error(`[josephine-mcp] JOSEPHINE_MCP_WRITE_ENABLED: ${process.env.JOSEPHINE_MCP_WRITE_ENABLED ?? "false"}`);
+  console.error(`[josephine-mcp] JOSEPHINE_MCP_MAX_ROWS_PER_WRITE: ${process.env.JOSEPHINE_MCP_MAX_ROWS_PER_WRITE ?? "20000"}`);
+  console.error(`[josephine-mcp] JOSEPHINE_MCP_BREAKER_THRESHOLD: ${process.env.JOSEPHINE_MCP_BREAKER_THRESHOLD ?? "10"}`);
 }
 
 main().catch((err) => {

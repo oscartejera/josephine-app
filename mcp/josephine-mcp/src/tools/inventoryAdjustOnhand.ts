@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { getSupabase } from "../supabaseClient.js";
 import { startContext, buildEnvelope, toMcpResult } from "../lib/response.js";
-import { writeGuard, finalizeWrite, type WriteInput } from "../lib/writeGuard.js";
+import { writeGuard, finalizeWrite, recordWriteError, type WriteInput } from "../lib/writeGuard.js";
 
 export const name = "josephine_inventory_adjust_onhand";
 
 export const description =
   "Adjust on-hand stock for an inventory item. Creates a stock_movements record " +
   "(type='adjustment') and updates inventory_items.current_stock. " +
-  "Provide either newOnHand (absolute) or delta (relative). Requires confirm, idempotencyKey, reason.";
+  "Provide either newOnHand (absolute) or delta (relative). Requires confirm, idempotencyKey, reason, actor.";
 
 export const inputSchema = z.object({
   confirm: z.boolean().optional().describe("Must be true to execute"),
@@ -36,6 +36,7 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code: "INVALID_INPUT", message: "Provide either newOnHand (absolute) or delta (relative), not neither." }],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -46,11 +47,12 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code: "INVALID_INPUT", message: "Provide either newOnHand or delta, not both." }],
+        meta: { execution: "preview" },
       }),
     );
   }
 
-  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase);
+  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase, { estimatedRows: 2 });
   if (guard.action !== "execute") {
     return toMcpResult(guard.text!, guard.envelope!);
   }
@@ -69,6 +71,7 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code: "NOT_FOUND", message: `Inventory item ${input.itemId} not found.` }],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -90,6 +93,7 @@ export async function execute(input: Input) {
   });
 
   if (mvErr) {
+    recordWriteError("josephine_inventory_adjust_onhand");
     const code = mvErr.message.includes("policy") ? "RLS_DENIED" as const : "UPSTREAM_ERROR" as const;
     return toMcpResult(
       `Stock movement insert failed: ${mvErr.message}`,
@@ -97,6 +101,7 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code, message: mvErr.message }],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -108,6 +113,7 @@ export async function execute(input: Input) {
     .eq("id", input.itemId);
 
   if (updateErr) {
+    recordWriteError("josephine_inventory_adjust_onhand");
     return toMcpResult(
       `Item stock update failed: ${updateErr.message}`,
       buildEnvelope(ctx, {
@@ -115,6 +121,7 @@ export async function execute(input: Input) {
         data: null,
         errors: [{ code: "UPSTREAM_ERROR", message: updateErr.message }],
         warnings: ["stock_movements record was created but current_stock update failed. Manual correction needed."],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -128,14 +135,14 @@ export async function execute(input: Input) {
     unit,
   };
 
-  await finalizeWrite(supabase, "josephine_inventory_adjust_onhand", input as WriteInput, guard.requestHash!, result);
+  await finalizeWrite(supabase, guard.guardCtx!, result);
 
   return toMcpResult(
     `Stock adjusted for "${item.name}": ${previousStock} → ${newStock} ${unit} (delta: ${adjustmentDelta >= 0 ? "+" : ""}${adjustmentDelta}).`,
     buildEnvelope(ctx, {
       status: "ok",
       data: result,
-      meta: { rowsTouched: 2 },
+      meta: { execution: "executed", rowsTouched: 2 },
     }),
   );
 }

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { getSupabase } from "../supabaseClient.js";
 import { startContext, buildEnvelope, toMcpResult } from "../lib/response.js";
-import { writeGuard, finalizeWrite, type WriteInput } from "../lib/writeGuard.js";
+import { writeGuard, finalizeWrite, recordWriteError, type WriteInput } from "../lib/writeGuard.js";
 
 export const name = "josephine_settings_update";
 
 export const description =
   "Update location settings (target GP%, COL%, default COGS%, hourly cost). " +
-  "Only whitelisted keys are accepted. Requires confirm, idempotencyKey, reason.";
+  "Only whitelisted keys are accepted. Requires confirm, idempotencyKey, reason, actor.";
 
 /** Whitelist of allowed setting keys matching location_settings columns */
 const ALLOWED_KEYS = new Set([
@@ -52,6 +52,7 @@ export async function execute(input: Input) {
             hint: `Allowed keys: ${Array.from(ALLOWED_KEYS).join(", ")}`,
           },
         ],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -63,11 +64,12 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code: "INVALID_INPUT", message: "Patch object is empty. Nothing to update." }],
+        meta: { execution: "preview" },
       }),
     );
   }
 
-  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase);
+  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase, { estimatedRows: 1 });
   if (guard.action !== "execute") {
     return toMcpResult(guard.text!, guard.envelope!);
   }
@@ -88,12 +90,14 @@ export async function execute(input: Input) {
       .select()
       .single();
     if (error) {
+      recordWriteError("josephine_settings_update");
       return toMcpResult(
         `Settings update failed: ${error.message}`,
         buildEnvelope(ctx, {
           status: "error",
           data: null,
           errors: [{ code: "UPSTREAM_ERROR", message: error.message }],
+          meta: { execution: "preview" },
         }),
       );
     }
@@ -106,19 +110,21 @@ export async function execute(input: Input) {
       .select()
       .single();
     if (error) {
+      recordWriteError("josephine_settings_update");
       return toMcpResult(
         `Settings insert failed: ${error.message}`,
         buildEnvelope(ctx, {
           status: "error",
           data: null,
           errors: [{ code: "UPSTREAM_ERROR", message: error.message }],
+          meta: { execution: "preview" },
         }),
       );
     }
     result = data;
   }
 
-  await finalizeWrite(supabase, "josephine_settings_update", input as WriteInput, guard.requestHash!, result);
+  await finalizeWrite(supabase, guard.guardCtx!, result);
 
   const changedKeys = Object.keys(input.patch).join(", ");
   return toMcpResult(
@@ -126,7 +132,7 @@ export async function execute(input: Input) {
     buildEnvelope(ctx, {
       status: "ok",
       data: { settings: result },
-      meta: { rowsTouched: 1, changedKeys: Object.keys(input.patch) },
+      meta: { execution: "executed", rowsTouched: 1, changedKeys: Object.keys(input.patch) },
     }),
   );
 }

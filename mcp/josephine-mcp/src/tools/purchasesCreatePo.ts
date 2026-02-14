@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { getSupabase } from "../supabaseClient.js";
 import { startContext, buildEnvelope, toMcpResult } from "../lib/response.js";
-import { writeGuard, finalizeWrite, type WriteInput } from "../lib/writeGuard.js";
+import { writeGuard, finalizeWrite, recordWriteError, type WriteInput } from "../lib/writeGuard.js";
 
 export const name = "josephine_purchases_create_po";
 
 export const description =
   "Create a purchase order with line items. Creates records in purchase_orders and purchase_order_lines. " +
-  "Requires confirm=true, idempotencyKey, and reason.";
+  "Requires confirm=true, idempotencyKey, reason, and actor.";
 
 export const inputSchema = z.object({
   confirm: z.boolean().optional().describe("Must be true to execute"),
@@ -33,7 +33,10 @@ export async function execute(input: Input) {
   const ctx = startContext("josephine_purchases_create_po");
   const supabase = getSupabase();
 
-  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase);
+  // estimatedRows = 1 header + N lines
+  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase, {
+    estimatedRows: 1 + input.lines.length,
+  });
   if (guard.action !== "execute") {
     return toMcpResult(guard.text!, guard.envelope!);
   }
@@ -52,6 +55,7 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code: "NOT_FOUND", message: `Location ${input.locationId} not found.` }],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -70,6 +74,7 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code: "NOT_FOUND", message: `Supplier ${input.supplierId} not found.` }],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -87,6 +92,7 @@ export async function execute(input: Input) {
     .single();
 
   if (poErr || !po) {
+    recordWriteError("josephine_purchases_create_po");
     const code = poErr?.message.includes("policy") ? "RLS_DENIED" as const : "UPSTREAM_ERROR" as const;
     return toMcpResult(
       `PO creation failed: ${poErr?.message}`,
@@ -94,6 +100,7 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code, message: poErr?.message ?? "Unknown error" }],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -112,7 +119,7 @@ export async function execute(input: Input) {
     .select();
 
   if (lineErr) {
-    // PO header created but lines failed — warn about partial state
+    recordWriteError("josephine_purchases_create_po");
     return toMcpResult(
       `PO ${po.id} created but lines failed: ${lineErr.message}`,
       buildEnvelope(ctx, {
@@ -123,6 +130,7 @@ export async function execute(input: Input) {
           `PO header ${po.id} was created in 'draft' status but line insertion failed.`,
           "Delete the PO or retry line insertion manually.",
         ],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -151,14 +159,14 @@ export async function execute(input: Input) {
     },
   };
 
-  await finalizeWrite(supabase, "josephine_purchases_create_po", input as WriteInput, guard.requestHash!, result);
+  await finalizeWrite(supabase, guard.guardCtx!, result);
 
   return toMcpResult(
     `PO ${po.id} created (draft) for ${supplier.name} with ${input.lines.length} line(s). Est. cost: EUR ${Math.round(totalEstCost)}.`,
     buildEnvelope(ctx, {
       status: "ok",
       data: result,
-      meta: { rowsTouched: 1 + input.lines.length },
+      meta: { execution: "executed", rowsTouched: 1 + input.lines.length },
     }),
   );
 }

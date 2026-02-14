@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { getSupabase } from "../supabaseClient.js";
 import { startContext, buildEnvelope, toMcpResult } from "../lib/response.js";
-import { writeGuard, finalizeWrite, type WriteInput } from "../lib/writeGuard.js";
+import { writeGuard, finalizeWrite, recordWriteError, type WriteInput } from "../lib/writeGuard.js";
 
 export const name = "josephine_inventory_upsert_item";
 
 export const description =
   "Create or update an inventory item. Items are group-scoped (not location-scoped). " +
-  "Requires confirm=true, idempotencyKey, and reason.";
+  "Requires confirm=true, idempotencyKey, reason, and actor.";
 
 export const inputSchema = z.object({
   confirm: z.boolean().optional().describe("Must be true to execute"),
@@ -32,7 +32,7 @@ export async function execute(input: Input) {
   const ctx = startContext("josephine_inventory_upsert_item");
   const supabase = getSupabase();
 
-  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase);
+  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase, { estimatedRows: 1 });
   if (guard.action !== "execute") {
     return toMcpResult(guard.text!, guard.envelope!);
   }
@@ -52,6 +52,7 @@ export async function execute(input: Input) {
           status: "error",
           data: null,
           errors: [{ code: "NOT_FOUND", message: `Inventory item ${input.item.id} not found.` }],
+          meta: { execution: "preview" },
         }),
       );
     }
@@ -71,6 +72,7 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code: "INVALID_INPUT", message: "Could not resolve group_id. Provide locationId or item.id." }],
+        meta: { execution: "preview" },
       }),
     );
   }
@@ -91,6 +93,7 @@ export async function execute(input: Input) {
     : await supabase.from("inventory_items").insert(upsertData).select().single();
 
   if (error) {
+    recordWriteError("josephine_inventory_upsert_item");
     const code = error.message.includes("policy") ? "RLS_DENIED" as const : "UPSTREAM_ERROR" as const;
     return toMcpResult(
       `Inventory upsert failed: ${error.message}`,
@@ -98,18 +101,19 @@ export async function execute(input: Input) {
         status: "error",
         data: null,
         errors: [{ code, message: error.message }],
+        meta: { execution: "preview" },
       }),
     );
   }
 
-  await finalizeWrite(supabase, "josephine_inventory_upsert_item", input as WriteInput, guard.requestHash!, data);
+  await finalizeWrite(supabase, guard.guardCtx!, data);
 
   return toMcpResult(
     `Item "${data.name}" ${input.item.id ? "updated" : "created"} (${data.id}).`,
     buildEnvelope(ctx, {
       status: "ok",
       data: { item: data },
-      meta: { rowsTouched: 1, operation: input.item.id ? "update" : "insert" },
+      meta: { execution: "executed", rowsTouched: 1, operation: input.item.id ? "update" : "insert" },
     }),
   );
 }
