@@ -49,8 +49,13 @@ src/
   types/             # Shared TypeScript types
   i18n/              # i18next config and locale files (es, en, ca)
   test/              # Test setup and test files
+  ai-tools-core/     # Shared tool logic (portable Node ↔ Deno)
+    lib/             # errors, pagination, response, writeGuard, circuitBreaker, runtime
+    types.ts         # TenantContext, GuardContext, ToolClients, Execution
+    registry.ts      # TOOL_METADATA with RBAC per tool
+    index.ts         # Barrel export
 supabase/
-  functions/         # Edge Functions (21) - forecast, AI, POS sync, payroll, etc.
+  functions/         # Edge Functions (22) - forecast, AI, POS sync, payroll, ai-tools
   migrations/        # Database schema migrations
 scripts/             # Helper scripts (data seeding, simulation)
 ```
@@ -296,6 +301,119 @@ curl "https://qzrbvjklgorfoqersdpx.supabase.co/rest/v1/TABLE_NAME" \
 - `seed_josephine_demo_data`, `seed_demo_products_and_sales`, `seed_demo_labour_data` — demo seeding
 - `has_permission`, `has_role`, `is_owner`, `get_user_permissions` — RBAC checks
 - `add_loyalty_points`, `redeem_loyalty_reward` — loyalty
+
+---
+
+## AI Tools Core (`src/ai-tools-core/`)
+
+Shared tool logic portable between Node (MCP server) and Deno (Edge Functions). The MCP server re-exports from core — no duplicated logic.
+
+### Architecture
+
+```
+src/ai-tools-core/          ← Canonical source of truth
+  lib/                       ← errors, pagination, response, writeGuard, circuitBreaker, runtime
+  types.ts                   ← TenantContext, GuardContext, ToolClients, Execution
+  registry.ts                ← TOOL_METADATA with RBAC per tool
+  index.ts                   ← Barrel export
+
+mcp/josephine-mcp/src/lib/  ← Thin re-exports from core (MCP adapter)
+supabase/functions/ai-tools/ ← Edge Function dispatcher (imports core directly)
+```
+
+### Portability
+
+- **Bare specifiers** for npm packages (`@supabase/supabase-js`, not URL imports)
+- **`.ts` extensions** in internal imports (Deno requires them; Node uses `allowImportingTsExtensions`)
+- **Web Crypto** for hashing (async `sha256Hex` via `crypto.subtle`)
+- **`getEnv()`** wrapper reads `Deno.env.get()` or `process.env` transparently
+- **`deno.json` import map** in Edge Function maps bare specifiers to `esm.sh` URLs
+
+---
+
+## AI Tools Dispatcher (Edge Function)
+
+`POST /functions/v1/ai-tools` — Single endpoint exposing all 16 tools via Supabase Edge Functions with JWT auth, multi-tenant RBAC, and actor injection.
+
+### Deployment
+
+```bash
+supabase functions deploy ai-tools
+```
+
+### How It Works
+
+1. Client sends `POST` with `{ toolName, input }` + `Authorization: Bearer <jwt>`
+2. Dispatcher resolves tenant from JWT: userId, orgId, role, locationIds
+3. RBAC check via `has_permission()` RPC
+4. Location validation against tenant's allowed locations
+5. Read tools execute directly; write tools go through 9-gate writeGuard
+6. Actor injected from JWT (never from client input)
+7. Returns standard tool envelope
+
+### Environment Variables
+
+| Env Var | Default | Purpose |
+|---------|---------|---------|
+| `JOSEPHINE_AI_WRITE_ENABLED` | `false` | Hard gate for writes in Edge Function |
+| `JOSEPHINE_MCP_WRITE_ENABLED` | `false` | Hard gate for writes in MCP server |
+
+The writeGuard checks both env vars (either enables writes).
+
+### Example Requests
+
+#### Read: Sales Summary
+
+```bash
+curl -X POST "$SUPABASE_URL/functions/v1/ai-tools" \
+  -H "Authorization: Bearer <user-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{ "toolName": "josephine_sales_summary", "input": { "fromISO": "2026-02-01", "toISO": "2026-02-14" } }'
+```
+
+#### Read: Low Stock
+
+```bash
+curl -X POST "$SUPABASE_URL/functions/v1/ai-tools" \
+  -H "Authorization: Bearer <user-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{ "toolName": "josephine_inventory_low_stock", "input": { "locationId": "uuid", "thresholdMode": "par" } }'
+```
+
+#### Write: Adjust Stock (preview)
+
+```bash
+curl -X POST "$SUPABASE_URL/functions/v1/ai-tools" \
+  -H "Authorization: Bearer <user-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{ "toolName": "josephine_inventory_adjust_onhand", "input": { "locationId": "uuid", "itemId": "uuid", "newOnHand": 50, "reason": "Physical count", "idempotencyKey": "adj-tomatoes-20260214" } }'
+```
+
+#### Write: Create PO (execute)
+
+```bash
+curl -X POST "$SUPABASE_URL/functions/v1/ai-tools" \
+  -H "Authorization: Bearer <user-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{ "toolName": "josephine_purchases_create_po", "input": { "confirm": true, "idempotencyKey": "po-weekly-20260214", "reason": "Weekly restock", "locationId": "uuid", "supplierId": "uuid", "lines": [{ "itemId": "uuid", "qty": 20, "priceEstimate": 2.50 }] } }'
+```
+
+#### Write: Update Settings (execute)
+
+```bash
+curl -X POST "$SUPABASE_URL/functions/v1/ai-tools" \
+  -H "Authorization: Bearer <user-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{ "toolName": "josephine_settings_update", "input": { "confirm": true, "idempotencyKey": "settings-gp-20260214", "reason": "Adjusting target GP", "locationId": "uuid", "patch": { "target_gp_percent": 72 } } }'
+```
+
+### Security Notes
+
+- **Actor**: Derived from JWT + `get_user_primary_role()` RPC. Never from client.
+- **Multi-tenant**: orgId from `profiles.group_id`, locationIds from `user_locations`.
+- **RBAC**: `has_permission(userId, permissionKey, locationId)` RPC per tool.
+- **Circuit breaker**: In-memory per Deno isolate. Resets on cold start.
+- **Writes**: Same 9-gate writeGuard as MCP.
 
 ---
 
