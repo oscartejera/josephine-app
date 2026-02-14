@@ -296,3 +296,253 @@ curl "https://qzrbvjklgorfoqersdpx.supabase.co/rest/v1/TABLE_NAME" \
 - `seed_josephine_demo_data`, `seed_demo_products_and_sales`, `seed_demo_labour_data` — demo seeding
 - `has_permission`, `has_role`, `is_owner`, `get_user_permissions` — RBAC checks
 - `add_loyalty_points`, `redeem_loyalty_reward` — loyalty
+
+---
+
+## MCP Server: josephine-mcp
+
+A Model Context Protocol server providing safe, typed access to Josephine's Supabase backend for Claude Code and other AI agents.
+
+### 1. Quickstart
+
+```bash
+cd mcp/josephine-mcp
+npm install
+cp .env.example .env.local   # Edit with real keys
+npm run dev                   # Start via tsx (stdio)
+npm run build                 # Compile to dist/
+npm run typecheck             # tsc --noEmit
+```
+
+### 2. Environment Setup & Auto-Login
+
+The MCP server authenticates against Supabase using env vars (no interactive login).
+
+Create `mcp/josephine-mcp/.env.local` (already in .gitignore):
+
+```env
+SUPABASE_URL=https://qzrbvjklgorfoqersdpx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<from root .env.local>
+JOSEPHINE_MCP_WRITE_ENABLED=false
+```
+
+- **SUPABASE_SERVICE_ROLE_KEY** (recommended) — bypasses RLS, full access.
+- **SUPABASE_ANON_KEY** — alternative; RLS applies, writes may be denied.
+- **JOSEPHINE_MCP_WRITE_ENABLED** — hard gate for all write operations (default `false`).
+
+The server also reads from the root `.env.local` as fallback.
+
+**Never commit `.env.local` or secrets to the repo.**
+
+### 3. Testing with MCP Inspector
+
+```bash
+# Terminal 1: Start the server
+cd mcp/josephine-mcp && npm run dev
+
+# Terminal 2: Use MCP Inspector
+npx @modelcontextprotocol/inspector stdio -- npx tsx mcp/josephine-mcp/src/server.ts
+```
+
+### 4. Tool Contract (Envelope)
+
+Every tool returns a stable envelope:
+
+```json
+{
+  "status": "ok | preview | error | not_supported",
+  "requestId": "uuid",
+  "durationMs": 42,
+  "serverVersion": "0.1.0",
+  "toolVersion": "v1",
+  "data": { ... },
+  "pagination": { "limit": 25, "offset": 0, "nextCursor": "...", "hasMore": true },
+  "warnings": ["..."],
+  "errors": [{ "code": "ERROR_CODE", "message": "...", "hint": "..." }],
+  "meta": { "rowsTouched": 1, "resultSizeBytes": 234 }
+}
+```
+
+**Pagination**: All list endpoints support `limit` + `cursor` (base64-encoded offset). Max 100 per page.
+
+**Versioning**: `serverVersion` from package.json, `toolVersion` per tool (currently all `v1`).
+
+### 5. Write Safety Rules
+
+ALL write tools require three mandatory fields:
+
+| Field | Purpose |
+|-------|---------|
+| `confirm: true` | Explicit execution gate. If false/missing → returns `preview` with mutation plan. |
+| `idempotencyKey` | Unique string per logical operation (e.g. `"adj-tomatoes-20260214"`). |
+| `reason` | Human-readable justification logged to `mcp_idempotency_keys`. |
+
+**Idempotency behavior (hash + conflict + replay)**:
+- Each write computes a `request_hash` from normalized input (excluding volatile fields).
+- If `(tool_name, idempotency_key)` already exists:
+  - Same hash → **replay**: returns original result without re-executing.
+  - Different hash → **CONFLICT**: returns error asking for a new key.
+- Stored in `mcp_idempotency_keys` table with actor, reason, and result.
+- **TTL cleanup**: `DELETE FROM mcp_idempotency_keys WHERE created_at < NOW() - INTERVAL '30 days'`.
+
+### 6. WRITE ENABLE FLAG
+
+**Env var**: `JOSEPHINE_MCP_WRITE_ENABLED` (default: `false`)
+
+When `false` or missing, ALL write tools return `status: "preview"` with the mutation plan — even if `confirm: true`. No mutation is executed.
+
+To enable writes: set `JOSEPHINE_MCP_WRITE_ENABLED=true` and restart the server.
+
+This is a defense-in-depth safety gate for production environments.
+
+### 7. Tool Index
+
+| Tool | Ver | R/W | Purpose | Key Inputs | Key Outputs | Risks |
+|------|-----|-----|---------|------------|-------------|-------|
+| `josephine_locations_list` | v1 | R | List locations | limit, cursor, includeInactive | locations[] | None |
+| `josephine_sales_summary` | v1 | R | Sales KPIs for date range | fromISO, toISO, locationIds | totalNetSales, avgCheck, variance | None |
+| `josephine_sales_timeseries` | v1 | R | Sales chart data | fromISO, toISO, granularity | series[] (ts, actual, forecast) | None |
+| `josephine_inventory_low_stock` | v1 | R | Items below par | locationId, thresholdMode | items[] with deficit | None |
+| `josephine_inventory_item_history` | v1 | R | Stock movements | locationId, itemId, date range | movements[] | None |
+| `josephine_settings_get` | v1 | R | Location settings | locationId? | settings[] | None |
+| `josephine_etl_last_runs` | v1 | R | Sync run history | limit, status filter | runs[] | None |
+| `josephine_data_quality_report` | v1 | R | Audit data coherence | locationIds | checks[], allPass | None |
+| `josephine_locations_upsert` | v1 | W | Create/update location | location.name, confirm, key, reason | location record | Creates DB record |
+| `josephine_inventory_upsert_item` | v1 | W | Create/update item | item.name, confirm, key, reason | item record | Creates DB record |
+| `josephine_inventory_adjust_onhand` | v1 | W | Adjust stock | locationId, itemId, newOnHand/delta | prev→new stock | Modifies stock + movement |
+| `josephine_purchases_build_po_suggestion` | v1 | R | PO suggestion | locationId, strategy | lines[] + totals | Read-only workflow |
+| `josephine_purchases_create_po` | v1 | W | Create purchase order | supplierId, lines[], confirm, key, reason | PO + lines | Creates PO + lines |
+| `josephine_settings_update` | v1 | W | Update settings | locationId, patch, confirm, key, reason | updated settings | Whitelisted keys only |
+| `josephine_etl_trigger_sync` | v1 | W | Trigger ETL sync | source, confirm, key, reason | edge function response | Invokes edge function |
+| `josephine_sales_backfill_ingest` | v1 | W | Backfill sales | source, dates | — | NOT_SUPPORTED |
+
+### 8. Examples
+
+#### READ: Sales Summary
+
+```json
+{
+  "name": "josephine_sales_summary",
+  "arguments": {
+    "fromISO": "2026-02-01",
+    "toISO": "2026-02-14",
+    "currency": "EUR"
+  }
+}
+```
+
+#### READ: Low Stock Items
+
+```json
+{
+  "name": "josephine_inventory_low_stock",
+  "arguments": {
+    "locationId": "513b91a7-48bc-4a36-abe9-7d1765082ff4",
+    "thresholdMode": "par",
+    "limit": 10
+  }
+}
+```
+
+#### WRITE: Adjust Stock (preview — confirm missing)
+
+```json
+{
+  "name": "josephine_inventory_adjust_onhand",
+  "arguments": {
+    "locationId": "513b91a7-48bc-4a36-abe9-7d1765082ff4",
+    "itemId": "abc123",
+    "newOnHand": 50,
+    "reason": "Physical count correction",
+    "idempotencyKey": "adj-tomatoes-20260214"
+  }
+}
+```
+→ Returns `status: "preview"` because `confirm: true` is missing.
+
+#### WRITE: Adjust Stock (execute)
+
+```json
+{
+  "name": "josephine_inventory_adjust_onhand",
+  "arguments": {
+    "confirm": true,
+    "locationId": "513b91a7-48bc-4a36-abe9-7d1765082ff4",
+    "itemId": "abc123",
+    "newOnHand": 50,
+    "reason": "Physical count correction",
+    "idempotencyKey": "adj-tomatoes-20260214",
+    "actor": { "name": "Oscar", "role": "owner" }
+  }
+}
+```
+
+#### WRITE: Create Purchase Order
+
+```json
+{
+  "name": "josephine_purchases_create_po",
+  "arguments": {
+    "confirm": true,
+    "idempotencyKey": "po-supplier1-20260214",
+    "reason": "Weekly restock based on par-level analysis",
+    "locationId": "513b91a7-48bc-4a36-abe9-7d1765082ff4",
+    "supplierId": "supplier-uuid",
+    "lines": [
+      { "itemId": "item-uuid-1", "qty": 20, "priceEstimate": 2.50 },
+      { "itemId": "item-uuid-2", "qty": 10, "priceEstimate": 8.00 }
+    ]
+  }
+}
+```
+
+#### WRITE: Update Settings
+
+```json
+{
+  "name": "josephine_settings_update",
+  "arguments": {
+    "confirm": true,
+    "idempotencyKey": "settings-centro-gp-20260214",
+    "reason": "Adjusting target GP to match new menu pricing",
+    "locationId": "513b91a7-48bc-4a36-abe9-7d1765082ff4",
+    "patch": { "target_gp_percent": 72 }
+  }
+}
+```
+
+### 9. Danger Checklist
+
+- [ ] **Never set `JOSEPHINE_MCP_WRITE_ENABLED=true` in production** without understanding the implications.
+- [ ] **Always use unique idempotencyKeys** per logical operation to prevent duplicates.
+- [ ] **Review `status: "preview"` responses** before adding `confirm: true`.
+- [ ] **Check `warnings` array** — data quality flags indicate estimated vs actual data.
+- [ ] **Rollback guidance**: Write operations create records (locations, POs, stock movements). To undo:
+  - Locations: set `active: false` via `josephine_locations_upsert`.
+  - Stock adjustments: create a reverse adjustment with negative delta.
+  - Purchase orders: update status to 'draft' and delete lines manually via Supabase.
+  - Settings: restore previous values via `josephine_settings_update`.
+
+### 10. Operations
+
+**RLS_DENIED**: You're using SUPABASE_ANON_KEY. Switch to SUPABASE_SERVICE_ROLE_KEY for write operations.
+
+**Missing purchases schema**: `purchase_orders` and `purchase_order_lines` tables exist. If columns are missing, check migration `20260119231139_*.sql`.
+
+**ETL edge function fails**: Check edge function logs in Supabase Dashboard. Common issues:
+- Missing OAuth tokens in `integration_accounts`
+- Rate limiting from POS provider
+- Use `josephine_etl_last_runs` to check recent sync status
+
+**Data quality warnings**: Run `josephine_data_quality_report` to identify:
+- Missing data source rows
+- Forecast vs actuals drift
+- Unmapped order lines (need `backfill_order_lines_item_id` RPC)
+
+### 11. Tool Changelog
+
+| Date | Tool | Change | Breaking? |
+|------|------|--------|-----------|
+| 2026-02-14 | All tools | v1 initial release | N/A |
+
+All tools are currently at `v1`. Future breaking changes will bump toolVersion and be documented here.
