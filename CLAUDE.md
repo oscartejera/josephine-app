@@ -369,18 +369,24 @@ Every tool returns a stable envelope:
 
 ### 5. Write Safety Rules
 
-ALL write tools require three mandatory fields:
+ALL write tools require four mandatory fields when writes are enabled:
 
 | Field | Purpose |
 |-------|---------|
 | `confirm: true` | Explicit execution gate. If false/missing → returns `preview` with mutation plan. |
 | `idempotencyKey` | Unique string per logical operation (e.g. `"adj-tomatoes-20260214"`). |
 | `reason` | Human-readable justification logged to `mcp_idempotency_keys`. |
+| `actor` | `{ name, role }` — who is making this change. Required when `JOSEPHINE_MCP_WRITE_ENABLED=true`. |
+
+**Execution flag**: Every write response includes `meta.execution` with one of:
+- `"executed"` — mutation was performed
+- `"replay"` — idempotent replay, no new mutation
+- `"preview"` — no mutation (confirm missing, writes disabled, circuit open, etc.)
 
 **Idempotency behavior (hash + conflict + replay)**:
 - Each write computes a `request_hash` from normalized input (excluding volatile fields).
 - If `(tool_name, idempotency_key)` already exists:
-  - Same hash → **replay**: returns original result without re-executing.
+  - Same hash → **replay**: returns original result without re-executing (`meta.execution: "replay"`).
   - Different hash → **CONFLICT**: returns error asking for a new key.
 - Stored in `mcp_idempotency_keys` table with actor, reason, and result.
 - **TTL cleanup**: `DELETE FROM mcp_idempotency_keys WHERE created_at < NOW() - INTERVAL '30 days'`.
@@ -539,10 +545,131 @@ This is a defense-in-depth safety gate for production environments.
 - Forecast vs actuals drift
 - Unmapped order lines (need `backfill_order_lines_item_id` RPC)
 
-### 11. Tool Changelog
+### 11. Production Hardening (Required before enabling WRITES in prod)
+
+#### Write Guard Gate Order (9 gates)
+
+```
+1. reason        → MISSING_REASON error
+2. idempotencyKey → MISSING_IDEMPOTENCY_KEY error
+3. idempotency   → replay (same hash) / CONFLICT (different hash)
+4. circuit breaker → CIRCUIT_OPEN preview if too many errors
+5. WRITES_ENABLED → preview if false/unset
+6. actor         → MISSING_ACTOR error when writes enabled
+7. bulk-cap      → TOO_MANY_ROWS preview if estimated > max
+8. confirm       → preview if not true
+9. ✅ execute     → GuardContext produced, mutation proceeds
+```
+
+#### Environment Variables
+
+| Env Var | Default | Purpose |
+|---------|---------|---------|
+| `JOSEPHINE_MCP_WRITE_ENABLED` | `false` | Hard gate for all write operations |
+| `JOSEPHINE_MCP_MAX_ROWS_PER_WRITE` | `20000` | Bulk-cap: max estimated rows per single write request |
+| `JOSEPHINE_MCP_BREAKER_THRESHOLD` | `10` | Circuit breaker: errors to trip |
+| `JOSEPHINE_MCP_BREAKER_WINDOW_SEC` | `60` | Circuit breaker: rolling error window (seconds) |
+| `JOSEPHINE_MCP_BREAKER_COOLDOWN_SEC` | `60` | Circuit breaker: preview-only duration after tripping (seconds) |
+
+#### Actor Requirement
+
+When `JOSEPHINE_MCP_WRITE_ENABLED=true`, every write must include `actor: { name: "...", role: "..." }`. At least one of `name` or `role` must be non-empty. This is logged to `mcp_idempotency_keys.actor_json` for audit.
+
+#### Circuit Breaker (in-memory, per-tool)
+
+- If a write tool returns `UPSTREAM_ERROR` / DB errors N times within a rolling window, the breaker trips
+- While open: all calls to that tool return `status: "preview"` with `errors: [{ code: "CIRCUIT_OPEN" }]` and `meta.retryAfterSec`
+- After cooldown expires, the breaker resets and the tool can execute again
+- A successful execution resets the error counter immediately
+- State is in-memory (resets on server restart)
+
+#### Bulk-Cap Per Request
+
+- Each write tool declares its `estimatedRows` when calling `writeGuard`
+- If `estimatedRows > JOSEPHINE_MCP_MAX_ROWS_PER_WRITE`, the request is blocked with `TOO_MANY_ROWS`
+- The response includes `data.estimatedRows` and `data.maxAllowed` for the caller to adjust
+- No rate limiting per minute — writes are unlimited but bounded per request
+
+#### GuardContext (finalizeWrite bypass closure)
+
+- `finalizeWrite()` only accepts `GuardContext`, an opaque branded type produced by `writeGuard` when `action: "execute"`
+- This prevents calling `finalizeWrite` with raw input, closing the bypass gap
+- TypeScript enforces this at compile time (`__brand: "GuardContext"`)
+
+#### RLS Strategy: mcp_idempotency_keys
+
+- **Access model**: service_role only (RLS blocks anon + authenticated)
+- Explicit `DENY` policies for `anon` and `authenticated` roles
+- `service_role` bypasses RLS entirely
+- **If using SUPABASE_ANON_KEY**: idempotency checks will fail gracefully (table is inaccessible), write proceeds without idempotency protection. Use `SUPABASE_SERVICE_ROLE_KEY` for full safety.
+
+#### Test Examples (for MCP Inspector or automated tests)
+
+**Test: writeEnabled=false → preview**
+```json
+{
+  "name": "josephine_locations_upsert",
+  "arguments": {
+    "confirm": true,
+    "idempotencyKey": "test-we-off",
+    "reason": "Test write-enabled gate",
+    "actor": { "name": "QA", "role": "tester" },
+    "location": { "name": "Test Location" }
+  }
+}
+```
+Expected: `status: "preview"`, `meta.execution: "preview"`, `meta.rowsTouched: 0`, warning about JOSEPHINE_MCP_WRITE_ENABLED.
+
+**Test: missing actor → error**
+```json
+{
+  "name": "josephine_locations_upsert",
+  "arguments": {
+    "confirm": true,
+    "idempotencyKey": "test-no-actor",
+    "reason": "Test actor gate",
+    "location": { "name": "Test Location" }
+  }
+}
+```
+Expected (with WRITE_ENABLED=true): `status: "error"`, `errors[0].code: "MISSING_ACTOR"`.
+
+**Test: replay vs executed**
+- Call 1: full write with key `"test-replay-1"` → `meta.execution: "executed"`
+- Call 2: exact same input with `"test-replay-1"` → `meta.execution: "replay"`, `meta.replay: true`
+
+**Test: conflict**
+- Call with key `"test-replay-1"` but different payload → `status: "error"`, `errors[0].code: "CONFLICT"`
+
+**Test: bulk-cap (set `JOSEPHINE_MCP_MAX_ROWS_PER_WRITE=1`)**
+```json
+{
+  "name": "josephine_purchases_create_po",
+  "arguments": {
+    "confirm": true,
+    "idempotencyKey": "test-bulk",
+    "reason": "Test bulk-cap",
+    "actor": { "name": "QA", "role": "tester" },
+    "locationId": "...",
+    "supplierId": "...",
+    "lines": [
+      { "itemId": "...", "qty": 1 },
+      { "itemId": "...", "qty": 1 }
+    ]
+  }
+}
+```
+Expected: `status: "preview"`, `errors[0].code: "TOO_MANY_ROWS"`, `data.estimatedRows: 3` (1 header + 2 lines).
+
+**Test: circuit breaker open**
+- Trigger 10+ errors on `josephine_etl_trigger_sync` (e.g., point to non-existent edge function)
+- Next call → `status: "preview"`, `errors[0].code: "CIRCUIT_OPEN"`, `meta.retryAfterSec`
+
+### 12. Tool Changelog
 
 | Date | Tool | Change | Breaking? |
 |------|------|--------|-----------|
 | 2026-02-14 | All tools | v1 initial release | N/A |
+| 2026-02-14 | All write tools | Add `meta.execution` flag, actor requirement, GuardContext, circuit breaker, bulk-cap | No (additive) |
 
 All tools are currently at `v1`. Future breaking changes will bump toolVersion and be documented here.

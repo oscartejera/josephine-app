@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { getSupabase } from "../supabaseClient.js";
 import { startContext, buildEnvelope, toMcpResult } from "../lib/response.js";
-import { writeGuard, type WriteInput } from "../lib/writeGuard.js";
+import { writeGuard, finalizeWrite, recordWriteError, type WriteInput } from "../lib/writeGuard.js";
 
 export const name = "josephine_etl_trigger_sync";
 
 export const description =
   "Trigger an ETL sync via existing Supabase edge functions. " +
   "Supported sources: 'square-sync', 'process-raw-events', 'run_etl'. " +
-  "Requires confirm, idempotencyKey, reason.";
+  "Requires confirm, idempotencyKey, reason, actor.";
 
 const SUPPORTED_FUNCTIONS = new Set([
   "square-sync",
@@ -45,11 +45,12 @@ export async function execute(input: Input) {
             hint: `Supported: ${Array.from(SUPPORTED_FUNCTIONS).join(", ")}`,
           },
         ],
+        meta: { execution: "preview" },
       }),
     );
   }
 
-  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase);
+  const guard = await writeGuard(ctx, input as WriteInput, input as Record<string, unknown>, supabase, { estimatedRows: 1 });
   if (guard.action !== "execute") {
     return toMcpResult(guard.text!, guard.envelope!);
   }
@@ -63,15 +64,19 @@ export async function execute(input: Input) {
   });
 
   if (error) {
+    recordWriteError("josephine_etl_trigger_sync");
     return toMcpResult(
       `ETL trigger failed: ${error.message}`,
       buildEnvelope(ctx, {
         status: "error",
         data: null,
         errors: [{ code: "UPSTREAM_ERROR", message: error.message }],
+        meta: { execution: "preview" },
       }),
     );
   }
+
+  await finalizeWrite(supabase, guard.guardCtx!, { source: input.source, response: data });
 
   return toMcpResult(
     `ETL sync '${input.source}' triggered successfully.`,
@@ -82,7 +87,7 @@ export async function execute(input: Input) {
         locationId: input.locationId ?? null,
         response: data,
       },
-      meta: { rowsTouched: 0 },
+      meta: { execution: "executed", rowsTouched: 0 },
     }),
   );
 }
