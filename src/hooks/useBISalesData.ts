@@ -198,14 +198,60 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
 
       if (!ts || !ts.kpis) return emptyData();
 
-      // ── KPIs from timeseries RPC ─────────────────────────────
-      const kpis = ts.kpis;
-      const totalNetSales = Number(kpis.actual_sales) || 0;
-      const totalForecast = Number(kpis.forecast_sales) || 0;
-      const totalOrders = Number(kpis.actual_orders) || 0;
-      const forecastOrders = Number(kpis.forecast_orders) || 0;
-      const avgCheckSize = Number(kpis.avg_check_actual) || 0;
-      const forecastAvgCheckSize = Number(kpis.avg_check_forecast) || avgCheckSize * 0.95;
+      // ── Hourly → daily fallback ──────────────────────────────
+      // When pos_daily_finance has no data for the resolved data_source
+      // (common in demo mode), aggregate hourly (facts_sales_15m) into
+      // daily buckets so the chart and KPIs still work.
+      const hourlyRows = (ts.hourly || []) as Record<string, unknown>[];
+      let dailyRows = (ts.daily || []) as Record<string, unknown>[];
+
+      const rpcKpisEmpty =
+        (Number(ts.kpis.actual_sales) || 0) === 0 &&
+        (Number(ts.kpis.actual_orders) || 0) === 0;
+
+      if (dailyRows.length === 0 && hourlyRows.length > 0) {
+        // Aggregate hourly into daily buckets
+        const buckets = new Map<string, { actual_sales: number; actual_orders: number; forecast_sales: number; forecast_orders: number }>();
+        hourlyRows.forEach((h) => {
+          const d = new Date(h.ts_hour as string);
+          const dayKey = format(d, 'yyyy-MM-dd');
+          const prev = buckets.get(dayKey) || { actual_sales: 0, actual_orders: 0, forecast_sales: 0, forecast_orders: 0 };
+          prev.actual_sales += Number(h.actual_sales) || 0;
+          prev.actual_orders += Number(h.actual_orders) || 0;
+          prev.forecast_sales += Number(h.forecast_sales) || 0;
+          prev.forecast_orders += Number(h.forecast_orders) || 0;
+          buckets.set(dayKey, prev);
+        });
+        dailyRows = Array.from(buckets.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, v]) => ({ date, ...v }));
+      }
+
+      // ── KPIs from timeseries RPC (or re-computed from aggregated daily) ──
+      let totalNetSales: number;
+      let totalForecast: number;
+      let totalOrders: number;
+      let forecastOrders: number;
+
+      if (rpcKpisEmpty && dailyRows.length > 0) {
+        // RPC KPIs came back empty — compute from daily (which may have
+        // been derived from hourly above)
+        totalNetSales = dailyRows.reduce((s, d) => s + (Number(d.actual_sales) || 0), 0);
+        totalForecast = dailyRows.reduce((s, d) => s + (Number(d.forecast_sales) || 0), 0);
+        totalOrders   = dailyRows.reduce((s, d) => s + (Number(d.actual_orders) || 0), 0);
+        forecastOrders = dailyRows.reduce((s, d) => s + (Number(d.forecast_orders) || 0), 0);
+      } else {
+        const kpis = ts.kpis;
+        totalNetSales = Number(kpis.actual_sales) || 0;
+        totalForecast = Number(kpis.forecast_sales) || 0;
+        totalOrders = Number(kpis.actual_orders) || 0;
+        forecastOrders = Number(kpis.forecast_orders) || 0;
+      }
+
+      const avgCheckSize = totalOrders > 0 ? totalNetSales / totalOrders : 0;
+      const forecastAvgCheckSize = forecastOrders > 0
+        ? totalForecast / forecastOrders
+        : avgCheckSize * 0.95;
 
       const salesToDateDelta = totalForecast > 0
         ? ((totalNetSales - totalForecast) / totalForecast) * 100
@@ -221,14 +267,14 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       // ── Chart data from hourly or daily arrays ───────────────
       const chartData: ChartDataPoint[] = [];
 
-      if (isSingleDay && ts.hourly?.length > 0) {
-        (ts.hourly as Record<string, unknown>[])
+      if (isSingleDay && hourlyRows.length > 0) {
+        hourlyRows
           .filter((h) => {
-            const hour = new Date(h.ts_hour).getHours();
+            const hour = new Date(h.ts_hour as string).getHours();
             return hour >= 10 && hour <= 21;
           })
           .forEach((h) => {
-            const hour = new Date(h.ts_hour);
+            const hour = new Date(h.ts_hour as string);
             const actualSales = Number(h.actual_sales) || 0;
             const forecastSales = Number(h.forecast_sales) || 0;
             const actualOrd = Number(h.actual_orders) || 0;
@@ -241,8 +287,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
               avgCheckForecast: forecastAvgCheckSize,
             });
           });
-      } else if (ts.daily?.length > 0) {
-        (ts.daily as Record<string, unknown>[]).forEach((d) => {
+      } else if (dailyRows.length > 0) {
+        dailyRows.forEach((d) => {
           const actualSales = Number(d.actual_sales) || 0;
           const forecastSales = Number(d.forecast_sales) || 0;
           const actualOrd = Number(d.actual_orders) || 0;

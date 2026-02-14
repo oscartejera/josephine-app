@@ -117,6 +117,18 @@ export default function Sales() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="p-6 space-y-6 max-w-[1800px]">
+        <h1 className="text-3xl font-bold">Sales</h1>
+        <Card className="p-8 flex flex-col items-center justify-center text-center gap-3">
+          <p className="text-lg font-medium text-destructive">Failed to load sales data</p>
+          <p className="text-sm text-muted-foreground">Please try refreshing the page or changing the date range.</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 max-w-[1800px]">
       {/* Header */}
