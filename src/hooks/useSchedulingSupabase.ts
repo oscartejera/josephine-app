@@ -333,26 +333,30 @@ async function fetchShifts(
   });
 }
 
-// Fetch forecast metrics for a location and week
+// Fetch forecast metrics for a location and week (reads forecast_daily_unified contract view)
 async function fetchForecastMetrics(
   locationId: string,
   weekStartISO: string,
   weekEndISO: string
 ): Promise<Record<string, { forecast_sales: number; planned_labor_cost: number; planned_labor_hours: number }>> {
   const { data, error } = await supabase
-    .from('forecast_daily_metrics')
-    .select('date, forecast_sales, planned_labor_cost, planned_labor_hours')
+    .from('forecast_daily_unified' as any)
+    .select('day, forecast_sales, planned_labor_cost, planned_labor_hours')
     .eq('location_id', locationId)
-    .gte('date', weekStartISO)
-    .lte('date', weekEndISO);
-  
+    .gte('day', weekStartISO)
+    .lte('day', weekEndISO);
+
   if (error) throw error;
-  
+
   const byDate: Record<string, any> = {};
-  (data || []).forEach(row => {
-    byDate[row.date] = row;
+  ((data as any[]) || []).forEach(row => {
+    byDate[row.day] = {
+      forecast_sales: Number(row.forecast_sales) || 0,
+      planned_labor_cost: Number(row.planned_labor_cost) || 0,
+      planned_labor_hours: Number(row.planned_labor_hours) || 0,
+    };
   });
-  
+
   return byDate;
 }
 

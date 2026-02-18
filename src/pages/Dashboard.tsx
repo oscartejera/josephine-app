@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardKpis, buildQueryContext, type DashboardKpis, EMPTY_DASHBOARD_KPIS } from '@/data';
+import { supabase } from '@/integrations/supabase/client';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { NarrativeInsightsPanel } from '@/components/dashboard/NarrativeInsightsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
@@ -30,7 +32,8 @@ function calculateDelta(current: number, previous: number): { value: number; pos
 }
 
 export default function Dashboard() {
-  const { selectedLocationId, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete, dataSource } = useApp();
+  const { selectedLocationId, accessibleLocations, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete, dataSource } = useApp();
+  const { profile } = useAuth();
   const [metrics, setMetrics] = useState<ComparisonMetrics>({
     current: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 },
     previous: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 }
@@ -38,63 +41,68 @@ export default function Dashboard() {
   const [topItems, setTopItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Build location IDs from selection
+  const locationIds = useMemo(() => {
+    if (!selectedLocationId || selectedLocationId === 'all') {
+      return accessibleLocations.map(l => l.id);
+    }
+    return [selectedLocationId];
+  }, [selectedLocationId, accessibleLocations]);
+
   useEffect(() => {
     fetchData();
-  }, [selectedLocationId, customDateRange, dataSource]);
+  }, [selectedLocationId, customDateRange, dataSource, profile?.group_id]);
 
   const getPreviousPeriod = (from: Date, to: Date): { from: Date; to: Date } => {
     const periodLength = to.getTime() - from.getTime();
-    const previousTo = new Date(from.getTime() - 1); // 1ms before current from
+    const previousTo = new Date(from.getTime() - 1);
     const previousFrom = new Date(previousTo.getTime() - periodLength);
     return { from: previousFrom, to: previousTo };
   };
 
-  const fetchPeriodMetrics = async (from: Date, to: Date, locationId: string | null): Promise<Metrics> => {
-    const fromDate = from.toISOString().split('T')[0];
-    const toDate = to.toISOString().split('T')[0];
-
-    // Get sales via unified view (normalizes data_source → 'demo'|'pos')
-    const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
-    let query = supabase.from('v_pos_daily_finance_unified').select('gross_sales, net_sales, orders_count').eq('data_source_unified', dsUnified);
-    if (locationId && locationId !== 'all') {
-      query = query.eq('location_id', locationId);
+  const fetchPeriodMetrics = async (from: Date, to: Date): Promise<Metrics> => {
+    const orgId = profile?.group_id;
+    if (!orgId || locationIds.length === 0) {
+      return { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 };
     }
-    query = query.gte('date', fromDate).lte('date', toDate);
-    const { data: dailyFinance } = await query;
 
-    const sales = dailyFinance?.reduce((sum, d) => sum + (Number(d.gross_sales) || 0), 0) || 0;
-    const orders = dailyFinance?.reduce((sum, d) => sum + (Number(d.orders_count) || 0), 0) || 0;
-    const avgTicket = orders > 0 ? sales / orders : 0;
+    const ctx = buildQueryContext(orgId, locationIds, dataSource);
+    const range = {
+      from: from.toISOString().split('T')[0],
+      to: to.toISOString().split('T')[0],
+    };
 
-    // Get labor cost from labour_daily
-    let laborQuery = supabase.from('labour_daily').select('labour_cost');
-    if (locationId && locationId !== 'all') {
-      laborQuery = laborQuery.eq('location_id', locationId);
-    }
-    laborQuery = laborQuery.gte('date', fromDate).lte('date', toDate);
-    const { data: labourData } = await laborQuery;
-    const laborCost = labourData?.reduce((sum, d) => sum + (Number(d.labour_cost) || 0), 0) || 0;
+    const kpis = await getDashboardKpis(ctx, range);
 
-    return { sales, covers: orders, avgTicket, laborCost, cogsPercent: 30 };
+    return {
+      sales: kpis.grossSales,
+      covers: kpis.ordersCount,
+      avgTicket: kpis.avgCheck,
+      laborCost: kpis.laborCost,
+      cogsPercent: 30,
+    };
   };
 
   const fetchData = async () => {
+    if (!profile?.group_id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { from, to } = getDateRangeValues();
     const { from: prevFrom, to: prevTo } = getPreviousPeriod(from, to);
-    
+
     // Fetch current and previous period metrics in parallel
     const [currentMetrics, previousMetrics] = await Promise.all([
-      fetchPeriodMetrics(from, to, selectedLocationId),
-      fetchPeriodMetrics(prevFrom, prevTo, selectedLocationId)
+      fetchPeriodMetrics(from, to),
+      fetchPeriodMetrics(prevFrom, prevTo)
     ]);
 
     setMetrics({ current: currentMetrics, previous: previousMetrics });
 
-    // Get top items
-    let linesQuery = supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total');
-    const { data: lines } = await linesQuery.limit(500);
-    
+    // Top items still uses ticket_lines (transactional detail, not a mart view)
+    const { data: lines } = await supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total').limit(500);
+
     const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number }>();
     lines?.forEach(line => {
       const existing = itemMap.get(line.item_name) || { name: line.item_name, category: line.category_name || 'Sin categoría', quantity: 0, sales: 0 };
@@ -102,7 +110,7 @@ export default function Dashboard() {
       existing.sales += Number(line.gross_line_total) || 0;
       itemMap.set(line.item_name, existing);
     });
-    
+
     const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
     setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item, margin: Math.floor(55 + Math.random() * 20) })));
 
