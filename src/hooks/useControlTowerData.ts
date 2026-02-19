@@ -1,11 +1,11 @@
 /**
  * useControlTowerData - Fetches real-time KPIs for the Insights landing page.
- * Reuses get_sales_timeseries_unified + get_top_products_unified RPCs.
+ * Reuses getSalesTimeseriesRpc + getTopProductsRpc from data layer.
  */
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildQueryContext, getSalesTimeseriesRpc, getTopProductsRpc } from '@/data';
 import { format, subDays, startOfMonth } from 'date-fns';
 
 export interface ControlTowerKPIs {
@@ -33,7 +33,7 @@ const emptyKPIs: ControlTowerKPIs = {
 };
 
 export function useControlTowerData() {
-  const { locations, group } = useApp();
+  const { locations, group, dataSource } = useApp();
   const { session } = useAuth();
   const orgId = group?.id;
   const locationIds = locations.map(l => l.id);
@@ -43,54 +43,30 @@ export function useControlTowerData() {
     enabled: !!orgId && locationIds.length > 0 && !!session,
     staleTime: 60000,
     queryFn: async (): Promise<ControlTowerKPIs> => {
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
       const today = new Date();
       const todayStr = format(today, 'yyyy-MM-dd');
       const yesterdayStr = format(subDays(today, 1), 'yyyy-MM-dd');
       const mtdStartStr = format(startOfMonth(today), 'yyyy-MM-dd');
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: any; error: { message: string } | null }>;
-      const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
-
       // Fire today + yesterday + MTD + top products in parallel
       const [todayRes, yesterdayRes, mtdRes, topRes] = await Promise.all([
-        rpc('get_sales_timeseries_unified', {
-          p_org_id: orgId,
-          p_location_ids: locationIds,
-          p_from: todayStr,
-          p_to: todayStr,
-        }),
-        rpc('get_sales_timeseries_unified', {
-          p_org_id: orgId,
-          p_location_ids: locationIds,
-          p_from: yesterdayStr,
-          p_to: yesterdayStr,
-        }),
-        rpc('get_sales_timeseries_unified', {
-          p_org_id: orgId,
-          p_location_ids: locationIds,
-          p_from: mtdStartStr,
-          p_to: todayStr,
-        }),
-        rpc('get_top_products_unified', {
-          p_org_id: orgId,
-          p_location_ids: locationIds,
-          p_from: mtdStartStr,
-          p_to: todayStr,
-          p_limit: 1,
-        }),
+        getSalesTimeseriesRpc(ctx, { from: todayStr, to: todayStr }),
+        getSalesTimeseriesRpc(ctx, { from: yesterdayStr, to: yesterdayStr }),
+        getSalesTimeseriesRpc(ctx, { from: mtdStartStr, to: todayStr }),
+        getTopProductsRpc(ctx, { from: mtdStartStr, to: todayStr }, 1),
       ]);
 
-      const salesToday = Number(todayRes.data?.kpis?.actual_sales) || 0;
-      const salesYesterday = Number(yesterdayRes.data?.kpis?.actual_sales) || 0;
-      const salesMTD = Number(mtdRes.data?.kpis?.actual_sales) || 0;
-      const ordersToday = Number(todayRes.data?.kpis?.actual_orders) || 0;
-      const avgCheck = Number(todayRes.data?.kpis?.avg_check_actual) || 0;
+      const salesToday = Number(todayRes?.kpis?.actual_sales) || 0;
+      const salesYesterday = Number(yesterdayRes?.kpis?.actual_sales) || 0;
+      const salesMTD = Number(mtdRes?.kpis?.actual_sales) || 0;
+      const ordersToday = Number(todayRes?.kpis?.actual_orders) || 0;
+      const avgCheck = Number(todayRes?.kpis?.avg_check_actual) || 0;
       const salesDeltaPct = salesYesterday > 0
         ? ((salesToday - salesYesterday) / salesYesterday) * 100
         : 0;
 
-      const topItem = topRes.data?.items?.[0];
+      const topItem = topRes?.items?.[0];
 
       return {
         salesToday,

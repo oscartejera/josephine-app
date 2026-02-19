@@ -1,15 +1,17 @@
 /**
- * useSalesTimeseries — thin wrapper for get_sales_timeseries_unified RPC.
+ * useSalesTimeseries — thin wrapper for get_sales_timeseries_unified RPC
+ * via data layer.
  *
  * Returns hourly, daily, kpis, busy_hours — all resolved server-side
  * (data source is determined by the RPC via resolve_data_source).
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { buildQueryContext, getSalesTimeseriesRpc, type SalesTimeseriesRpcResult } from '@/data';
 import { format } from 'date-fns';
 
-// ── Response types ────────────────────────────────────────────
+// Re-export sub-types from data layer for backward compatibility
+export type SalesTimeseriesResult = SalesTimeseriesRpcResult;
 
 export interface TimeseriesHourly {
   ts_hour: string;
@@ -46,17 +48,6 @@ export interface BusyHour {
   forecast_sales: number;
 }
 
-export interface SalesTimeseriesResult {
-  data_source: string;
-  mode: string;
-  reason: string;
-  last_synced_at: string | null;
-  hourly: TimeseriesHourly[];
-  daily: TimeseriesDaily[];
-  kpis: TimeseriesKPIs;
-  busy_hours: BusyHour[];
-}
-
 // ── Hook params ───────────────────────────────────────────────
 
 interface UseSalesTimeseriesParams {
@@ -85,21 +76,14 @@ export function useSalesTimeseries({
       format(to, 'yyyy-MM-dd'),
     ],
     queryFn: async (): Promise<SalesTimeseriesResult> => {
-      // RPC not yet in auto-generated types
-      type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-      const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
-      const { data, error } = await rpc(
-        'get_sales_timeseries_unified',
-        {
-          p_org_id: orgId,
-          p_location_ids: locationIds,
-          p_from: format(from, 'yyyy-MM-dd'),
-          p_to: format(to, 'yyyy-MM-dd'),
-        },
-      );
+      const ctx = buildQueryContext(orgId, locationIds, 'pos');
+      const range = {
+        from: format(from, 'yyyy-MM-dd'),
+        to: format(to, 'yyyy-MM-dd'),
+      };
 
-      if (error) throw error;
-      return data as SalesTimeseriesResult;
+      const result = await getSalesTimeseriesRpc(ctx, range);
+      return result as SalesTimeseriesResult;
     },
     enabled: enabled && !!orgId && locationIds.length > 0,
     staleTime: 30_000,
