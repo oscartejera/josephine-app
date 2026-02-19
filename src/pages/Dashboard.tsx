@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDashboardKpis, buildQueryContext, type DashboardKpis, EMPTY_DASHBOARD_KPIS } from '@/data';
-import { supabase } from '@/integrations/supabase/client';
+import { getDashboardKpis, getProductSalesDaily, buildQueryContext, type DashboardKpis, EMPTY_DASHBOARD_KPIS } from '@/data';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { NarrativeInsightsPanel } from '@/components/dashboard/NarrativeInsightsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
@@ -100,19 +99,25 @@ export default function Dashboard() {
 
     setMetrics({ current: currentMetrics, previous: previousMetrics });
 
-    // Top items still uses ticket_lines (transactional detail, not a mart view)
-    const { data: lines } = await supabase.from('ticket_lines').select('item_name, category_name, quantity, gross_line_total').limit(500);
+    // Top items from product_sales_daily_unified contract view
+    const orgId = profile?.group_id;
+    if (orgId) {
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
+      const range = { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
+      const productRows = await getProductSalesDaily(ctx, range);
 
-    const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number }>();
-    lines?.forEach(line => {
-      const existing = itemMap.get(line.item_name) || { name: line.item_name, category: line.category_name || 'Sin categoría', quantity: 0, sales: 0 };
-      existing.quantity += Number(line.quantity) || 0;
-      existing.sales += Number(line.gross_line_total) || 0;
-      itemMap.set(line.item_name, existing);
-    });
+      const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number; margin: number }>();
+      productRows.forEach(row => {
+        const existing = itemMap.get(row.productId) || { name: row.productName, category: row.productCategory || 'Sin categoría', quantity: 0, sales: 0, margin: 0 };
+        existing.quantity += row.unitsSold;
+        existing.sales += row.netSales;
+        existing.margin = row.marginPct;
+        itemMap.set(row.productId, existing);
+      });
 
-    const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
-    setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item, margin: Math.floor(55 + Math.random() * 20) })));
+      const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
+      setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item })));
+    }
 
     setLoading(false);
   };
