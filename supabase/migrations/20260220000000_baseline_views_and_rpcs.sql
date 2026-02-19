@@ -1,8 +1,8 @@
 -- ============================================================
--- PR1: Contract Views, RPCs & Indexes
--- Makes the new DB compatible with the frontend data layer.
--- NO table alterations. NO stub tables. Pure views + functions.
--- Idempotent: CREATE OR REPLACE / IF NOT EXISTS throughout.
+-- BASELINE: Contract Views, RPCs & Indexes
+-- Single idempotent migration replacing all previous 104 files.
+-- NO CREATE TABLE — tables already exist in production.
+-- NO seed data, extensions, or cron jobs.
 -- ============================================================
 
 -- ============================================================
@@ -10,7 +10,6 @@
 -- AppContext.tsx queries supabase.from('groups').select('id,name')
 -- ============================================================
 
--- Drop legacy TABLE groups if it exists (replaced by orgs + this VIEW)
 DROP TABLE IF EXISTS public.groups CASCADE;
 
 CREATE OR REPLACE VIEW groups AS
@@ -19,15 +18,12 @@ SELECT id, name FROM orgs;
 GRANT SELECT ON groups TO anon, authenticated;
 
 -- ============================================================
--- SECTION 1: Contract Views (7)
+-- SECTION 1: Contract Views (9)
 -- ============================================================
 
 -- ------------------------------------------------------------
 -- 1.1  sales_daily_unified
 -- Source: daily_sales LEFT JOIN time_entries (for labor)
--- Columns match exactly: DB_APP_CONTRACT.md §1.1
--- data_source = 'simulated' for all demo rows (frontend maps
--- 'simulated' via toLegacyDataSource when querying)
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE VIEW sales_daily_unified AS
@@ -73,9 +69,7 @@ GRANT SELECT ON sales_daily_unified TO anon, authenticated;
 
 -- ------------------------------------------------------------
 -- 1.2  sales_hourly_unified
--- Source: cdm_orders (may be empty — that is fine, view exists
--- with correct schema so PostgREST doesn't 404)
--- Columns match: DB_APP_CONTRACT.md §1.2
+-- Source: cdm_orders + locations
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE VIEW sales_hourly_unified AS
@@ -106,8 +100,7 @@ GRANT SELECT ON sales_hourly_unified TO anon, authenticated;
 
 -- ------------------------------------------------------------
 -- 1.3  product_sales_daily_unified
--- Source: cdm_order_lines + cdm_items/menu_items (may be empty)
--- Columns match: DB_APP_CONTRACT.md §1.3
+-- Source: cdm_orders + cdm_order_lines + menu_items/cdm_items
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE VIEW product_sales_daily_unified AS
@@ -139,9 +132,9 @@ GROUP BY o.org_id, o.location_id,
 GRANT SELECT ON product_sales_daily_unified TO anon, authenticated;
 
 -- ------------------------------------------------------------
--- 1.4  labour_daily_unified
--- Source: time_entries (actuals) FULL OUTER JOIN shifts (scheduled)
--- Columns match: DB_APP_CONTRACT.md §1.4
+-- 1.4  labour_daily_unified (PR3 version: real hourly_cost)
+-- Source: time_entries FULL OUTER JOIN shifts
+-- Uses employees.hourly_cost with 14.50 fallback
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE VIEW labour_daily_unified AS
@@ -160,32 +153,36 @@ SELECT
        THEN ((COALESCE(a.actual_hours, 0) - s.scheduled_hours) / s.scheduled_hours * 100)::numeric
        ELSE 0 END AS hours_variance_pct
 FROM (
-  -- Actuals: aggregate time_entries per day
+  -- Actuals: aggregate time_entries per day with real hourly_cost
   SELECT
     te.org_id,
     te.location_id,
     (te.clock_in AT TIME ZONE COALESCE(loc.timezone, 'Europe/Madrid'))::date AS day,
     SUM(EXTRACT(EPOCH FROM (te.clock_out - te.clock_in)) / 3600.0)          AS actual_hours,
-    SUM(EXTRACT(EPOCH FROM (te.clock_out - te.clock_in)) / 3600.0) * 14.50  AS actual_cost
+    SUM(EXTRACT(EPOCH FROM (te.clock_out - te.clock_in)) / 3600.0
+        * COALESCE(e.hourly_cost, 14.50))                                   AS actual_cost
   FROM time_entries te
   JOIN locations loc ON loc.id = te.location_id
+  LEFT JOIN employees e ON e.id = te.employee_id
   WHERE te.clock_out IS NOT NULL
   GROUP BY te.org_id, te.location_id,
            (te.clock_in AT TIME ZONE COALESCE(loc.timezone, 'Europe/Madrid'))::date
 ) a
 FULL OUTER JOIN (
-  -- Scheduled: aggregate shifts + assignments per day
+  -- Scheduled: aggregate shifts + assignments per day with real hourly_cost
   SELECT
     sch.org_id,
     sh.location_id,
     (sh.start_at AT TIME ZONE COALESCE(loc.timezone, 'Europe/Madrid'))::date AS day,
     SUM(EXTRACT(EPOCH FROM (sh.end_at - sh.start_at)) / 3600.0)             AS scheduled_hours,
-    SUM(EXTRACT(EPOCH FROM (sh.end_at - sh.start_at)) / 3600.0) * 14.50     AS scheduled_cost,
+    SUM(EXTRACT(EPOCH FROM (sh.end_at - sh.start_at)) / 3600.0
+        * COALESCE(e.hourly_cost, 14.50))                                    AS scheduled_cost,
     COUNT(DISTINCT sa.employee_id)::integer                                   AS scheduled_headcount
   FROM shifts sh
   JOIN schedules sch ON sch.id = sh.schedule_id
   JOIN locations loc ON loc.id = sh.location_id
   LEFT JOIN shift_assignments sa ON sa.shift_id = sh.id
+  LEFT JOIN employees e ON e.id = sa.employee_id
   GROUP BY sch.org_id, sh.location_id,
            (sh.start_at AT TIME ZONE COALESCE(loc.timezone, 'Europe/Madrid'))::date
 ) s ON a.org_id = s.org_id AND a.location_id = s.location_id AND a.day = s.day;
@@ -194,9 +191,7 @@ GRANT SELECT ON labour_daily_unified TO anon, authenticated;
 
 -- ------------------------------------------------------------
 -- 1.5  forecast_daily_unified
--- Source: forecast_points + forecast_runs (latest finished per loc)
--- Labour estimated at 28% COL, 14.50 EUR/h avg rate
--- Columns match: DB_APP_CONTRACT.md §1.5
+-- Source: forecast_points + forecast_runs (latest finished)
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE VIEW forecast_daily_unified AS
@@ -236,11 +231,8 @@ LEFT JOIN avg_checks ac ON ac.org_id = fp.org_id AND ac.location_id = fp.locatio
 GRANT SELECT ON forecast_daily_unified TO anon, authenticated;
 
 -- ------------------------------------------------------------
--- 1.6  budget_daily_unified
--- Source: budget_days + budget_metrics (pivot rows->columns)
--- Seeded data uses layer='base'; production may use 'final'.
--- We COALESCE(final, base) so both work.
--- Columns match: DB_APP_CONTRACT.md §1.6
+-- 1.6  budget_daily_unified (PR3 version: with budget_drivers)
+-- Source: budget_days + budget_metrics + budget_drivers
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE VIEW budget_daily_unified AS
@@ -271,12 +263,20 @@ SELECT
   CASE WHEN COALESCE(MAX(CASE WHEN bm.metric = 'sales_net' THEN bm.value END), 0) > 0
     THEN (COALESCE(MAX(CASE WHEN bm.metric = 'cogs'        THEN bm.value END), 0)
          / MAX(CASE WHEN bm.metric = 'sales_net' THEN bm.value END) * 100)::numeric
-    ELSE 0 END AS budget_cogs_pct
+    ELSE 0 END AS budget_cogs_pct,
+  -- budget_drivers columns
+  COALESCE(MAX(drv.target_covers), 0)::numeric           AS target_covers,
+  COALESCE(MAX(drv.target_avg_check), 0)::numeric        AS target_avg_check,
+  COALESCE(MAX(drv.target_cogs_pct), 0)::numeric         AS target_cogs_pct,
+  COALESCE(MAX(drv.target_labour_hours), 0)::numeric     AS target_labour_hours,
+  COALESCE(MAX(drv.target_hourly_rate), 0)::numeric      AS target_hourly_rate
 FROM budget_days bd
 JOIN budget_versions bv ON bv.id = bd.budget_version_id
 LEFT JOIN budget_metrics bm
   ON bm.budget_day_id = bd.id
-  AND bm.layer IN ('final', 'base')          -- prefer final, fall back to base
+  AND bm.layer IN ('final', 'base')
+LEFT JOIN budget_drivers drv
+  ON drv.budget_day_id = bd.id
 WHERE bv.status IN ('published', 'frozen')
 GROUP BY bd.org_id, bd.location_id, bd.day;
 
@@ -285,7 +285,6 @@ GRANT SELECT ON budget_daily_unified TO anon, authenticated;
 -- ------------------------------------------------------------
 -- 1.7  cogs_daily
 -- Source: stock_movements (waste + sale_estimate)
--- Columns match: DB_APP_CONTRACT.md §1.7
 -- ------------------------------------------------------------
 
 CREATE OR REPLACE VIEW cogs_daily AS
@@ -300,6 +299,55 @@ GROUP BY sm.location_id,
   (sm.created_at AT TIME ZONE COALESCE(l.timezone, 'Europe/Madrid'))::date;
 
 GRANT SELECT ON cogs_daily TO anon, authenticated;
+
+-- ------------------------------------------------------------
+-- 1.8  inventory_position_unified (PR4)
+-- Source: inventory_items + inventory_item_location + locations
+-- ------------------------------------------------------------
+
+CREATE OR REPLACE VIEW inventory_position_unified AS
+SELECT
+  l.org_id,
+  ii.id                                                   AS item_id,
+  il.location_id,
+  ii.name,
+  ii.category_name,
+  ii.unit,
+  COALESCE(il.on_hand, 0)::numeric                        AS on_hand,
+  COALESCE(ii.par_level, 0)::numeric                       AS par_level,
+  COALESCE(il.reorder_point, 0)::numeric                   AS reorder_point,
+  COALESCE(il.safety_stock, 0)::numeric                    AS safety_stock,
+  COALESCE(ii.last_cost, 0)::numeric                       AS last_cost,
+  GREATEST(COALESCE(ii.par_level, 0) - COALESCE(il.on_hand, 0), 0)::numeric AS deficit
+FROM inventory_items ii
+JOIN inventory_item_location il ON il.item_id = ii.id
+JOIN locations l ON l.id = il.location_id;
+
+GRANT SELECT ON inventory_position_unified TO anon, authenticated;
+
+-- ------------------------------------------------------------
+-- 1.9  low_stock_unified (PR4)
+-- Source: low_stock_alerts + inventory_items
+-- ------------------------------------------------------------
+
+CREATE OR REPLACE VIEW low_stock_unified AS
+SELECT
+  lsa.id                                                   AS alert_id,
+  lsa.item_id,
+  lsa.location_id,
+  lsa.org_id,
+  ii.name                                                  AS item_name,
+  ii.unit,
+  COALESCE(lsa.on_hand, 0)::numeric                        AS on_hand,
+  COALESCE(lsa.reorder_point, 0)::numeric                  AS reorder_point,
+  GREATEST(COALESCE(lsa.reorder_point, 0) - COALESCE(lsa.on_hand, 0), 0)::numeric AS deficit,
+  lsa.status,
+  lsa.created_at
+FROM low_stock_alerts lsa
+JOIN inventory_items ii ON ii.id = lsa.item_id
+WHERE lsa.status != 'closed';
+
+GRANT SELECT ON low_stock_unified TO anon, authenticated;
 
 
 -- ============================================================
@@ -855,7 +903,7 @@ $$;
 -- SECTION 6: Other RPCs (4)
 -- ============================================================
 
--- 6.1  get_forecast_items_mix_unified (stub -- no CDM product data)
+-- 6.1  get_forecast_items_mix_unified (stub)
 CREATE OR REPLACE FUNCTION get_forecast_items_mix_unified(
   p_org_id uuid,
   p_location_ids uuid[],
@@ -919,7 +967,7 @@ BEGIN
 END;
 $$;
 
--- 6.3  add_loyalty_points (stub -- loyalty tables not yet created)
+-- 6.3  add_loyalty_points (stub)
 CREATE OR REPLACE FUNCTION add_loyalty_points(
   p_member_id uuid,
   p_points integer,
@@ -944,7 +992,7 @@ AS $$ SELECT '{"ok":true,"stub":true}'::jsonb; $$;
 
 
 -- ============================================================
--- SECTION 7: Indexes
+-- SECTION 7: Indexes (IF NOT EXISTS)
 -- ============================================================
 
 CREATE INDEX IF NOT EXISTS idx_daily_sales_org_loc_day
