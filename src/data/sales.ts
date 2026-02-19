@@ -262,3 +262,55 @@ export async function getTopProductsRpc(
 
   return data as TopProductsRpcResult | null;
 }
+
+/**
+ * Call get_instant_pnl_unified RPC.
+ * Returns per-location P&L snapshot with sales, labour, COGS estimation flags.
+ */
+export async function getInstantPnlRpc(
+  ctx: QueryContext,
+  range: DateRange
+): Promise<Record<string, unknown> | null> {
+  assertContext(ctx);
+  if (hasNoLocations(ctx)) return null;
+
+  const { data, error } = await (supabase.rpc as any)('get_instant_pnl_unified', {
+    p_org_id: ctx.orgId,
+    p_location_ids: ctx.locationIds,
+    p_from: range.from,
+    p_to: range.to,
+  });
+
+  if (error) {
+    console.error('[data/sales] getInstantPnlRpc error:', error.message);
+    throw error;
+  }
+
+  return data as Record<string, unknown> | null;
+}
+
+/**
+ * Call menu_engineering_summary RPC.
+ * Returns product classification (star/plow_horse/puzzle/dog) with margin and popularity.
+ */
+export async function getMenuEngineeringSummaryRpc(
+  ctx: QueryContext,
+  range: DateRange,
+  locationId?: string | null
+): Promise<Record<string, unknown>[]> {
+  assertContext(ctx);
+
+  const { data, error } = await (supabase.rpc as any)('menu_engineering_summary', {
+    p_date_from: range.from,
+    p_date_to: range.to,
+    p_location_id: locationId || null,
+    p_data_source: ctx.dataSource,
+  });
+
+  if (error) {
+    console.error('[data/sales] getMenuEngineeringSummaryRpc error:', error.message);
+    throw error;
+  }
+
+  return (data || []) as Record<string, unknown>[];
+}

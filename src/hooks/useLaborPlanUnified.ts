@@ -11,8 +11,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApp } from '@/contexts/AppContext';
+import { buildQueryContext, getLaborPlanRpc } from '@/data';
 
 export interface LaborPlanMetadata {
   data_source: 'pos' | 'demo';
@@ -67,6 +68,7 @@ export function useLaborPlanUnified(
   to: string,
 ) {
   const { profile } = useAuth();
+  const { dataSource } = useApp();
   const orgId = profile?.group_id;
 
   return useQuery<LaborPlanData | null>({
@@ -74,18 +76,8 @@ export function useLaborPlanUnified(
     queryFn: async () => {
       if (!orgId || locationIds.length === 0) return null;
 
-      const { data, error } = await supabase.rpc('get_labor_plan_unified', {
-        p_org_id: orgId,
-        p_location_ids: locationIds,
-        p_from: from,
-        p_to: to,
-      });
-
-      if (error) {
-        console.error('get_labor_plan_unified error:', error.message);
-        return null;
-      }
-
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
+      const data = await getLaborPlanRpc(ctx, { from, to });
       return data as unknown as LaborPlanData;
     },
     enabled: !!orgId && locationIds.length > 0,

@@ -40,7 +40,7 @@ export {
 export { buildQueryContext, assertContext, hasNoLocations, toLegacyDataSource } from './client';
 
 // Sales
-export { getDashboardKpis, getSalesTrends, getProductSalesDaily, getSalesTimeseriesRpc, getTopProductsRpc } from './sales';
+export { getDashboardKpis, getSalesTrends, getProductSalesDaily, getSalesTimeseriesRpc, getTopProductsRpc, getInstantPnlRpc, getMenuEngineeringSummaryRpc } from './sales';
 
 // Forecast
 export { getForecastDaily, getForecastVsActual } from './forecast';
@@ -49,7 +49,7 @@ export { getForecastDaily, getForecastVsActual } from './forecast';
 export { getBudgetDaily, getBudgetVsActual } from './budget';
 
 // Labour
-export { getLabourDaily, getLabourSummary, getLabourKpisRpc, getLabourTimeseriesRpc, getLabourLocationsRpc } from './labour';
+export { getLabourDaily, getLabourSummary, getLabourKpisRpc, getLabourTimeseriesRpc, getLabourLocationsRpc, getLaborPlanRpc } from './labour';
 
 // Inventory
 export { getLowStockAlerts, createPurchaseOrderDraftFromAlerts } from './inventory';

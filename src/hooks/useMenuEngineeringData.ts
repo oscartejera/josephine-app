@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { buildQueryContext, getMenuEngineeringSummaryRpc } from '@/data';
 
 export type Classification = 'star' | 'plow_horse' | 'puzzle' | 'dog';
 export type DatePreset = 'last7' | 'last30' | 'custom';
@@ -37,6 +39,8 @@ export interface MenuEngineeringStats {
 
 export function useMenuEngineeringData() {
   const { accessibleLocations, dataSource, loading: appLoading } = useApp();
+  const { profile } = useAuth();
+  const orgId = profile?.group_id;
 
   // State
   const [items, setItems] = useState<MenuEngineeringItem[]>([]);
@@ -80,14 +84,8 @@ export function useMenuEngineeringData() {
     try {
       const { from, to } = getDateRange();
 
-      const { data, error: rpcError } = await supabase.rpc('menu_engineering_summary', {
-        p_date_from: from,
-        p_date_to: to,
-        p_location_id: selectedLocationId || null,
-        p_data_source: dataSource,
-      });
-
-      if (rpcError) throw rpcError;
+      const ctx = buildQueryContext(orgId, [], dataSource);
+      const data = await getMenuEngineeringSummaryRpc(ctx, { from, to }, selectedLocationId);
 
       if (!data || data.length === 0) {
         setItems([]);

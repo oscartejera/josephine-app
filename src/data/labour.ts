@@ -158,3 +158,29 @@ export async function getLabourLocationsRpc(
   }
   return (data || []) as Record<string, unknown>[];
 }
+
+/**
+ * Call get_labor_plan_unified RPC.
+ * Returns workforce planning data: metadata, hourly array, daily array, and flags.
+ */
+export async function getLaborPlanRpc(
+  ctx: QueryContext,
+  range: DateRange
+): Promise<Record<string, unknown> | null> {
+  assertContext(ctx);
+  if (hasNoLocations(ctx)) return null;
+
+  const { data, error } = await (supabase.rpc as any)('get_labor_plan_unified', {
+    p_org_id: ctx.orgId,
+    p_location_ids: ctx.locationIds,
+    p_from: range.from,
+    p_to: range.to,
+  });
+
+  if (error) {
+    console.error('[data/labour] getLaborPlanRpc error:', error.message);
+    return null;
+  }
+
+  return data as Record<string, unknown> | null;
+}

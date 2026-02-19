@@ -9,9 +9,9 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildQueryContext, getInstantPnlRpc } from '@/data';
 
 // ============= TYPES =============
 
@@ -136,7 +136,7 @@ export function useInstantPLData({
   filterMode,
   activeChips
 }: UseInstantPLDataParams): InstantPLData {
-  const { locations } = useApp();
+  const { locations, dataSource } = useApp();
   const { profile } = useAuth();
   const orgId = profile?.group_id;
 
@@ -158,18 +158,9 @@ export function useInstantPLData({
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Call unified RPC — resolves data_source internally
-      const { data: rpcResult, error } = await supabase.rpc('get_instant_pnl_unified', {
-        p_org_id: orgId,
-        p_location_ids: locationIds,
-        p_from: fromDate,
-        p_to: toDate
-      });
-
-      if (error) {
-        console.error('get_instant_pnl_unified RPC error:', error.message);
-        throw error;
-      }
+      // Call via data layer wrapper
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
+      const rpcResult = await getInstantPnlRpc(ctx, { from: fromDate, to: toDate });
 
       const result = rpcResult as RPCResponse;
       const rpcLocations = result?.locations || [];
