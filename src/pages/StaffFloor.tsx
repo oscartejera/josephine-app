@@ -1,8 +1,6 @@
 import { useParams } from 'react-router-dom';
-import { useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { usePOSData } from '@/hooks/usePOSData';
-import { useTableKDSStatus } from '@/hooks/useTableKDSStatus';
 import { POSTableCard } from '@/components/pos/POSTableCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -12,17 +10,7 @@ export default function StaffFloor() {
   
   const location = locations.find(l => l.id === locationId);
   
-  const { floorMaps, tables, openTickets, loading, refetch } = usePOSData(locationId || '');
-  
-  // Create ticket-table mappings for KDS status
-  const ticketTableMappings = useMemo(() => {
-    return openTickets.map(ticket => ({
-      ticketId: ticket.id,
-      tableId: ticket.pos_table_id,
-    }));
-  }, [openTickets]);
-  
-  const { getTableStatus } = useTableKDSStatus(locationId || '', ticketTableMappings);
+  const { floorMaps, tables, loading, refetch } = usePOSData(locationId || '');
 
   if (!locationId) {
     return (
@@ -62,21 +50,16 @@ export default function StaffFloor() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {floorTables.map((table) => {
-              const kdsInfo = getTableStatus(table.id);
-              return (
+            {floorTables.map((table) => (
                 <POSTableCard
                   key={table.id}
                   table={table}
                   isSelected={false}
                   onClick={() => {
-                    // Staff can view table status - simplified interaction
                     refetch();
                   }}
-                  kdsInfo={kdsInfo}
                 />
-              );
-            })}
+            ))}
           </div>
         )}
       </div>

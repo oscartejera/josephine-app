@@ -13,13 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield, RefreshCw, Database, AlertTriangle, Loader2, Printer, Truck } from 'lucide-react';
+import { Building2, Users, Target, Download, Plus, Save, CreditCard, Trash2, CheckCircle2, Shield, RefreshCw, Database, AlertTriangle, Loader2, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UsersRolesManager } from '@/components/settings/UsersRolesManager';
 import { TeamManager } from '@/components/settings/TeamManager';
-import { ProductKDSManager } from '@/components/settings/ProductKDSManager';
 import { PaymentHistoryManager } from '@/components/settings/PaymentHistoryManager';
-import { PrinterConfigManager } from '@/components/settings/PrinterConfigManager';
 import { LocationManager } from '@/components/settings/LocationManager';
 import { SupplierIntegrationManager } from '@/components/settings/SupplierIntegrationManager';
 import { BookingSettingsManager } from '@/components/settings/BookingSettingsManager';
@@ -275,8 +273,6 @@ export default function SettingsPage() {
           <TabsTrigger value="loyalty">{t('settings.loyalty')}</TabsTrigger>
           <TabsTrigger value="objectives">{t('settings.objectives')}</TabsTrigger>
           <TabsTrigger value="suppliers">{t('settings.suppliers')}</TabsTrigger>
-          <TabsTrigger value="kds">{t('settings.kdsDestinations')}</TabsTrigger>
-          <TabsTrigger value="printers">{t('settings.printers')}</TabsTrigger>
           <TabsTrigger value="payment">{t('settings.paymentMethods')}</TabsTrigger>
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
@@ -446,14 +442,6 @@ export default function SettingsPage() {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="kds">
-          <ProductKDSManager />
-        </TabsContent>
-
-        <TabsContent value="printers">
-          <PrinterConfigManager />
         </TabsContent>
 
         <TabsContent value="transactions">
