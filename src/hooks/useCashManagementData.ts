@@ -1,7 +1,8 @@
-// Migrated to unified view: v_pos_daily_finance_unified
+// Migrated to sales_daily_unified contract view
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { toLegacyDataSource } from '@/data';
 import { format, subDays, differenceInDays } from 'date-fns';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -91,8 +92,7 @@ export function useCashManagementData(
   selectedLocations: string[]
 ) {
   const { locations, loading: appLoading, dataSource } = useApp();
-  // Map AppContext dataSource ('pos'|'simulated') to unified view value ('pos'|'demo')
-  const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
+  const dsLegacy = toLegacyDataSource(dataSource);
   const [isLoading, setIsLoading] = useState(true);
   const [metrics, setMetrics] = useState<CashManagementMetrics>(defaultMetrics);
   const [dailyData, setDailyData] = useState<CashDailyData[]>([]);
@@ -127,9 +127,9 @@ export function useCashManagementData(
 
       // Fetch current period from unified view
       let query = supabase
-        .from('v_pos_daily_finance_unified' as any)
+        .from('sales_daily_unified' as any)
         .select('date, location_id, net_sales, gross_sales, orders_count, payments_cash, payments_card, payments_other, refunds_amount, refunds_count, discounts_amount, comps_amount, voids_amount')
-        .eq('data_source_unified', dsUnified)
+        .eq('data_source', dsLegacy)
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -148,9 +148,9 @@ export function useCashManagementData(
 
       // Fetch previous period from unified view
       let prevQuery = supabase
-        .from('v_pos_daily_finance_unified' as any)
+        .from('sales_daily_unified' as any)
         .select('date, location_id, net_sales, gross_sales, orders_count, payments_cash, payments_card, payments_other, refunds_amount, refunds_count, discounts_amount, comps_amount, voids_amount')
-        .eq('data_source_unified', dsUnified)
+        .eq('data_source', dsLegacy)
         .gte('date', prevFrom)
         .lte('date', prevTo);
 

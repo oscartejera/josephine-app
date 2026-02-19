@@ -37,7 +37,7 @@ export {
 } from './types';
 
 // Client helpers
-export { buildQueryContext, assertContext, hasNoLocations } from './client';
+export { buildQueryContext, assertContext, hasNoLocations, toLegacyDataSource } from './client';
 
 // Sales
 export { getDashboardKpis, getSalesTrends, getProductSalesDaily, getSalesTimeseriesRpc, getTopProductsRpc } from './sales';
