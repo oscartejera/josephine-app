@@ -5,7 +5,7 @@
 
 -- 1. org_settings table
 CREATE TABLE IF NOT EXISTS org_settings (
-  org_id    uuid PRIMARY KEY REFERENCES groups(id) ON DELETE CASCADE,
+  org_id    uuid PRIMARY KEY REFERENCES orgs(id) ON DELETE CASCADE,
   data_source_mode   text NOT NULL DEFAULT 'auto'
     CHECK (data_source_mode IN ('auto', 'manual')),
   manual_data_source  text

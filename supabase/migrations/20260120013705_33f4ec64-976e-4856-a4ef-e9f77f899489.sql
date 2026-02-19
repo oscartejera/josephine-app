@@ -16,7 +16,7 @@ $$ LANGUAGE plpgsql;
 -- Stock counts (periodic inventory counts per location)
 CREATE TABLE public.stock_counts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   location_id UUID NOT NULL REFERENCES public.locations(id) ON DELETE CASCADE,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,

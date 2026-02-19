@@ -9,7 +9,7 @@ DO $$ BEGIN CREATE TYPE public.payment_method AS ENUM ('card', 'cash', 'other');
 DO $$ BEGIN CREATE TYPE public.po_status AS ENUM ('draft', 'sent', 'received'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- CORE TABLES
-CREATE TABLE IF NOT EXISTS public.groups (
+CREATE TABLE IF NOT EXISTS public.orgs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.groups (
 
 CREATE TABLE IF NOT EXISTS public.locations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   city TEXT,
   timezone TEXT DEFAULT 'Europe/Madrid',
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.locations (
 
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  group_id UUID REFERENCES public.groups(id) ON DELETE SET NULL,
+  group_id UUID REFERENCES public.orgs(id) ON DELETE SET NULL,
   full_name TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS public.timesheets (
 -- INVENTORY & PROCUREMENT TABLES
 CREATE TABLE IF NOT EXISTS public.suppliers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT,
   phone TEXT,
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS public.suppliers (
 
 CREATE TABLE IF NOT EXISTS public.inventory_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   unit TEXT DEFAULT 'kg',
   par_level NUMERIC(10,3),
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS public.inventory_items (
 
 CREATE TABLE IF NOT EXISTS public.recipes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   menu_item_name TEXT NOT NULL,
   selling_price NUMERIC(10,2),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS public.recipe_ingredients (
 CREATE TABLE IF NOT EXISTS public.purchase_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   supplier_id UUID NOT NULL REFERENCES public.suppliers(id) ON DELETE CASCADE,
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   location_id UUID REFERENCES public.locations(id) ON DELETE SET NULL,
   status public.po_status DEFAULT 'draft',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -291,7 +291,7 @@ AS $$
 $$;
 
 -- ENABLE RLS ON ALL TABLES (safe to re-run)
-ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orgs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
@@ -315,8 +315,8 @@ ALTER TABLE public.location_settings ENABLE ROW LEVEL SECURITY;
 -- RLS POLICIES (drop if exists + create for idempotency)
 
 -- Groups
-DROP POLICY IF EXISTS "Users can view own group" ON public.groups;
-CREATE POLICY "Users can view own group" ON public.groups
+DROP POLICY IF EXISTS "Users can view own group" ON public.orgs;
+CREATE POLICY "Users can view own group" ON public.orgs
   FOR SELECT USING (id = public.get_user_group_id());
 
 -- Locations

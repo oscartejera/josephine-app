@@ -138,10 +138,10 @@ declare
   v_labour_count int := 0;
 begin
   -- 0) Obtener o crear grupo
-  select id into v_group_id from public.groups limit 1;
+  select id into v_group_id from public.orgs limit 1;
 
   if v_group_id is null then
-    insert into public.groups (name)
+    insert into public.orgs (name)
     values ('Josephine Demo')
     returning id into v_group_id;
   end if;

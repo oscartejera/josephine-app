@@ -52,16 +52,16 @@ DECLARE
   v_loop_daily_sales NUMERIC;
 BEGIN
   -- Obtener el primer grupo existente (o crear uno demo)
-  SELECT id INTO v_group_id FROM groups LIMIT 1;
+  SELECT id INTO v_group_id FROM orgs LIMIT 1;
   
   IF v_group_id IS NULL THEN
-    INSERT INTO groups (name, created_at) 
+    INSERT INTO orgs (name, created_at) 
     VALUES ('Josephine Restaurant Group', NOW())
     RETURNING id INTO v_group_id;
   END IF;
 
   -- Obtener org_id para cdm_items
-  SELECT id INTO v_org_id FROM groups LIMIT 1;
+  SELECT id INTO v_org_id FROM orgs LIMIT 1;
   IF v_org_id IS NULL THEN
     v_org_id := v_group_id;
   END IF;

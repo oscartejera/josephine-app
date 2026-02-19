@@ -18,7 +18,7 @@ CREATE TYPE public.token_provider AS ENUM ('certificate_p12', 'certificate_local
 -- 3. LEGAL ENTITIES TABLE
 CREATE TABLE public.legal_entities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   razon_social TEXT NOT NULL,
   nif TEXT NOT NULL,
   domicilio_fiscal TEXT NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE public.employment_contracts (
 -- 8. PAYROLL CONCEPTS
 CREATE TABLE public.payroll_concepts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   code TEXT NOT NULL,
   name TEXT NOT NULL,
   type public.concept_type NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE public.payroll_concepts (
 -- 9. CONVENIO RULES
 CREATE TABLE public.convenio_rules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   convenio_code TEXT NOT NULL,
   rule_json JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -124,7 +124,7 @@ CREATE TABLE public.payroll_inputs (
 -- 11. PAYROLL RUNS
 CREATE TABLE public.payroll_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   legal_entity_id UUID NOT NULL REFERENCES public.legal_entities(id) ON DELETE CASCADE,
   period_year INTEGER NOT NULL,
   period_month INTEGER NOT NULL CHECK (period_month BETWEEN 1 AND 12),
@@ -187,7 +187,7 @@ CREATE TABLE public.compliance_tokens (
 -- 16. PAYROLL AUDIT LOG
 CREATE TABLE public.payroll_audit (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   actor_user_id UUID NOT NULL REFERENCES auth.users(id),
   action TEXT NOT NULL,
   payload_json JSONB NOT NULL DEFAULT '{}',
@@ -197,7 +197,7 @@ CREATE TABLE public.payroll_audit (
 -- 17. PAYROLL SETTINGS
 CREATE TABLE public.payroll_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   setting_type TEXT NOT NULL,
   setting_json JSONB NOT NULL DEFAULT '{}',
   valid_from DATE NOT NULL,
