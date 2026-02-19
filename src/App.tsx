@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DemoModeProvider } from "@/contexts/DemoModeContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { RouteErrorBoundary } from "@/components/ui/RouteErrorBoundary";
 
 // Pages - Nory-style AI Ops only
 import Login from "@/pages/Login";
@@ -75,7 +76,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function ProtectedLayout() {
   return (
     <AppProvider>
-      <DashboardLayout />
+      <RouteErrorBoundary>
+        <DashboardLayout />
+      </RouteErrorBoundary>
     </AppProvider>
   );
 }
@@ -166,7 +169,7 @@ function AppRoutes() {
       </Route>
 
       {/* Team (Employee Portal) */}
-      <Route element={<ProtectedRoute><AppProvider><TeamLayout /></AppProvider></ProtectedRoute>}>
+      <Route element={<ProtectedRoute><AppProvider><RouteErrorBoundary><TeamLayout /></RouteErrorBoundary></AppProvider></ProtectedRoute>}>
         <Route path="/team" element={<TeamHome />} />
         <Route path="/team/schedule" element={<TeamSchedule />} />
         <Route path="/team/clock" element={<TeamClock />} />

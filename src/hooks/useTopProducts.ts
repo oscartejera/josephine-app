@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { buildQueryContext, getTopProductsRpc } from '@/data';
 import { subDays, format } from 'date-fns';
@@ -38,10 +39,10 @@ const getPresetDates = (preset: 'last7' | 'last30' | 'custom'): { from: Date; to
 };
 
 export function useTopProducts() {
-  const { group, locations } = useApp();
+  const { group, locations, dataSource } = useApp();
   const orgId = group?.id;
-  const [products, setProducts] = useState<TopProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Filter state
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [datePreset, setDatePreset] = useState<'last7' | 'last30' | 'custom'>('last7');
   const [customDateFrom, setCustomDateFrom] = useState<Date>(subDays(new Date(), 7));
@@ -55,30 +56,26 @@ export function useTopProducts() {
     return getPresetDates(datePreset);
   }, [datePreset, customDateFrom, customDateTo]);
 
-  const fetchTopProducts = useCallback(async () => {
-    if (!orgId) return;
+  const { from: dateFrom, to: dateTo } = getDateRange();
+  const fromStr = format(dateFrom, 'yyyy-MM-dd');
+  const toStr = format(dateTo, 'yyyy-MM-dd');
 
-    setLoading(true);
-    try {
-      const { from, to } = getDateRange();
-      const locationIds = selectedLocationId
-        ? [selectedLocationId]
-        : locations.map(l => l.id);
+  const locationIds = selectedLocationId
+    ? [selectedLocationId]
+    : locations.map(l => l.id);
 
-      // Call via data layer
-      const ctx = buildQueryContext(orgId, locationIds, 'pos');
-      const range = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
-      const data = await getTopProductsRpc(ctx, range, 20);
+  const { data: rawProducts, isLoading, refetch } = useQuery({
+    queryKey: ['top-products', orgId, locationIds, fromStr, toStr],
+    queryFn: async () => {
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
+      const result = await getTopProductsRpc(ctx, { from: fromStr, to: toStr }, 20);
 
-      const items = data?.items || [];
-      const totalSales = Number(data?.total_sales) || 0;
+      const items = result?.items || [];
 
-      // Map unified response to TopProduct interface
-      const mapped: TopProduct[] = items.map((item: Record<string, unknown>) => {
+      return items.map((item: Record<string, unknown>) => {
         const sales = Number(item.sales) || 0;
         const qty = Number(item.qty) || 0;
         const share = Number(item.share) || 0;
-        // Estimate COGS at ~28% (same as seeded data) since unified RPC doesn't return it
         const estimatedCogs = sales * 0.28;
         const gp = sales - estimatedCogs;
 
@@ -93,36 +90,24 @@ export function useTopProducts() {
           gp,
           gp_pct: sales > 0 ? (gp / sales) * 100 : 0,
           badge_label: share >= 10 ? 'Top seller' : null,
-        };
+        } as TopProduct;
       });
+    },
+    enabled: !!orgId && locationIds.length > 0,
+    staleTime: 60_000,
+  });
 
-      // Client-side sort by orderBy
-      if (orderBy === 'gp_eur') {
-        mapped.sort((a, b) => b.gp - a.gp);
-      } else if (orderBy === 'gp_pct') {
-        mapped.sort((a, b) => b.gp_pct - a.gp_pct);
-      }
-      // Default 'share' is already sorted by sales DESC from RPC
-
-      setProducts(mapped);
-    } catch (error) {
-      console.error('Error fetching top products:', error);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, selectedLocationId, orderBy, getDateRange, locations]);
-
-  // Fetch products when filters change
-  useEffect(() => {
-    if (orgId) {
-      fetchTopProducts();
-    }
-  }, [fetchTopProducts, orgId]);
+  // Client-side sort
+  const products = useMemo(() => {
+    const list = rawProducts || [];
+    if (orderBy === 'gp_eur') return [...list].sort((a, b) => b.gp - a.gp);
+    if (orderBy === 'gp_pct') return [...list].sort((a, b) => b.gp_pct - a.gp_pct);
+    return list;
+  }, [rawProducts, orderBy]);
 
   return {
     products,
-    loading,
+    loading: isLoading,
     locations,
     selectedLocationId,
     setSelectedLocationId,
@@ -134,6 +119,6 @@ export function useTopProducts() {
     setCustomDateTo,
     orderBy,
     setOrderBy,
-    refetch: fetchTopProducts
+    refetch,
   };
 }

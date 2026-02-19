@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { buildQueryContext, getTopProductsRpc } from '@/data';
 import { subDays, format } from 'date-fns';
@@ -11,37 +11,26 @@ export interface CategorySales {
 }
 
 export function useCategorySales() {
-  const { group, selectedLocationId, locations } = useApp();
+  const { group, selectedLocationId, locations, dataSource } = useApp();
   const orgId = group?.id;
-  const [categories, setCategories] = useState<CategorySales[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalSales, setTotalSales] = useState(0);
 
-  const fetchCategorySales = useCallback(async () => {
-    if (!orgId) {
-      setLoading(false);
-      return;
-    }
+  const locationIds =
+    selectedLocationId && selectedLocationId !== 'all'
+      ? [selectedLocationId]
+      : locations.map(l => l.id);
 
-    setLoading(true);
-    try {
-      const from = subDays(new Date(), 30);
-      const to = new Date();
+  const from = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const to = format(new Date(), 'yyyy-MM-dd');
 
-      // Build location IDs
-      const locationIds = selectedLocationId && selectedLocationId !== 'all'
-        ? [selectedLocationId]
-        : locations.map(l => l.id);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['category-sales', orgId, locationIds, from, to],
+    queryFn: async () => {
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
+      const result = await getTopProductsRpc(ctx, { from, to }, 100);
 
-      // Call via data layer
-      const ctx = buildQueryContext(orgId, locationIds, 'pos');
-      const range = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
-      const data = await getTopProductsRpc(ctx, range, 100);
+      const items = result?.items || [];
+      const total = Number(result?.total_sales) || 0;
 
-      const items = data?.items || [];
-      const total = Number(data?.total_sales) || 0;
-
-      // Aggregate items by category
       const categoryMap = new Map<string, { sales: number; units: number }>();
 
       items.forEach((item: Record<string, unknown>) => {
@@ -52,8 +41,7 @@ export function useCategorySales() {
         categoryMap.set(category, existing);
       });
 
-      // Convert to array with percentages
-      const categoriesArray: CategorySales[] = Array.from(categoryMap.entries())
+      const categories: CategorySales[] = Array.from(categoryMap.entries())
         .map(([category, data]) => ({
           category,
           sales: data.sales,
@@ -62,23 +50,16 @@ export function useCategorySales() {
         }))
         .sort((a, b) => b.sales - a.sales);
 
-      setCategories(categoriesArray);
-      setTotalSales(total);
-    } catch (error) {
-      console.error('Error fetching category sales:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, selectedLocationId, locations]);
-
-  useEffect(() => {
-    fetchCategorySales();
-  }, [fetchCategorySales]);
+      return { categories, totalSales: total };
+    },
+    enabled: !!orgId && locationIds.length > 0,
+    staleTime: 60_000,
+  });
 
   return {
-    categories,
-    loading,
-    totalSales,
-    refetch: fetchCategorySales
+    categories: data?.categories || [],
+    loading: isLoading,
+    totalSales: data?.totalSales || 0,
+    refetch,
   };
 }
