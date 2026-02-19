@@ -38,7 +38,7 @@ export {
 export { buildQueryContext, assertContext, hasNoLocations } from './client';
 
 // Sales
-export { getDashboardKpis, getSalesTrends } from './sales';
+export { getDashboardKpis, getSalesTrends, getProductSalesDaily } from './sales';
 
 // Forecast
 export { getForecastDaily, getForecastVsActual } from './forecast';

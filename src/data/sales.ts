@@ -12,6 +12,7 @@ import {
   type DashboardKpis,
   type SalesDailyRow,
   type SalesHourlyRow,
+  type ProductSalesDailyRow,
   EMPTY_DASHBOARD_KPIS,
 } from './types';
 
@@ -122,6 +123,53 @@ export async function getSalesTrends(
     dataSource: r.data_source,
   }));
 }
+
+// ─── getProductSalesDaily ───────────────────────────────────────────────────
+
+/**
+ * Product-level daily sales from `product_sales_daily_unified` contract view.
+ * Returns per-product rows with name, category, COGS, and margin.
+ */
+export async function getProductSalesDaily(
+  ctx: QueryContext,
+  range: DateRange
+): Promise<ProductSalesDailyRow[]> {
+  assertContext(ctx);
+  if (hasNoLocations(ctx)) return [];
+
+  const dsLegacy = toLegacyDataSource(ctx.dataSource);
+
+  let query = supabase
+    .from('product_sales_daily_unified' as any)
+    .select('org_id, location_id, day, product_id, product_name, product_category, units_sold, net_sales, cogs, gross_profit, margin_pct, data_source')
+    .eq('data_source', dsLegacy)
+    .order('day', { ascending: true });
+
+  query = applyFilters(query, ctx.locationIds, range, 'day');
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('[data/sales] getProductSalesDaily error:', error.message);
+    return [];
+  }
+
+  return (data || []).map((r: any) => ({
+    orgId: r.org_id,
+    locationId: r.location_id,
+    day: r.day,
+    productId: r.product_id,
+    productName: r.product_name || 'Unknown',
+    productCategory: r.product_category || 'Other',
+    unitsSold: Number(r.units_sold) || 0,
+    netSales: Number(r.net_sales) || 0,
+    cogs: Number(r.cogs) || 0,
+    grossProfit: Number(r.gross_profit) || 0,
+    marginPct: Number(r.margin_pct) || 0,
+    dataSource: r.data_source,
+  }));
+}
+
+// ─── getSalesHourlyTrends (internal) ────────────────────────────────────────
 
 async function getSalesHourlyTrends(
   ctx: QueryContext,
