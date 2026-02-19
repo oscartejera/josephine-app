@@ -121,6 +121,13 @@ export function useInventoryData(
     return `${fromStr}-${toStr}-${locsStr}-${locations.length}-${dataSource}`;
   }, [dateRange.from, dateRange.to, selectedLocations, locations.length, dataSource]);
 
+  // Safety: if app finished loading but there are no locations, stop loading
+  useEffect(() => {
+    if (!appLoading && locations.length === 0) {
+      setIsLoading(false);
+    }
+  }, [appLoading, locations.length]);
+
   // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;

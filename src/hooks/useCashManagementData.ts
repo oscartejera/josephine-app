@@ -104,6 +104,13 @@ export function useCashManagementData(
     return locations.map(l => l.id);
   }, [selectedLocations, locations]);
 
+  // Safety: if app finished loading but there are no locations, stop loading
+  useEffect(() => {
+    if (!appLoading && locations.length === 0) {
+      setIsLoading(false);
+    }
+  }, [appLoading, locations.length]);
+
   const fetchData = useCallback(async () => {
     if (!dateRange.from || !dateRange.to || appLoading) return;
 

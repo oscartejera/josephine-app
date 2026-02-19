@@ -118,6 +118,13 @@ export function useWasteData(
     return selectedLocations;
   }, [selectedLocations, locations]);
 
+  // Safety: if app finished loading but there are no locations, stop loading
+  useEffect(() => {
+    if (!appLoading && locations.length === 0) {
+      setIsLoading(false);
+    }
+  }, [appLoading, locations.length]);
+
   const fetchData = useCallback(async () => {
     // Guard: don't fetch while app context is loading or if no locations
     if (appLoading || locations.length === 0) return;

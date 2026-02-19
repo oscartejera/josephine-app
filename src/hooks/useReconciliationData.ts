@@ -56,6 +56,13 @@ export function useReconciliationData(
   const fetchedRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
+  // Safety: if app finished loading but there are no locations, stop loading
+  useEffect(() => {
+    if (!appLoading && locations.length === 0) {
+      setIsLoading(false);
+    }
+  }, [appLoading, locations.length]);
+
   // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;
