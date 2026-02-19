@@ -5,31 +5,37 @@
 -- Check if user has payroll access
 CREATE OR REPLACE FUNCTION public.has_payroll_role()
 RETURNS BOOLEAN
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid() 
-    AND role IN ('owner_admin', 'payroll_admin', 'payroll_operator')
-  )
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    JOIN public.roles r ON r.id = ur.role_id
+    WHERE ur.user_id = auth.uid()
+    AND r.name IN ('owner_admin', 'payroll_admin', 'payroll_operator')
+  );
+END;
 $$;
 
 -- Check if user is payroll admin
 CREATE OR REPLACE FUNCTION public.is_payroll_admin()
 RETURNS BOOLEAN
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid() 
-    AND role IN ('owner_admin', 'payroll_admin')
-  )
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    JOIN public.roles r ON r.id = ur.role_id
+    WHERE ur.user_id = auth.uid()
+    AND r.name IN ('owner_admin', 'payroll_admin')
+  );
+END;
 $$;
 
 -- =====================================================

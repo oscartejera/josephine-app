@@ -34,9 +34,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role public.app_role NOT NULL,
-  UNIQUE (user_id, role)
+  user_id UUID NOT NULL,
+  role_id UUID,
+  location_id UUID REFERENCES public.locations(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS public.user_locations (
@@ -235,28 +236,34 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.has_role(_role public.app_role)
 RETURNS BOOLEAN
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid() AND role = _role
-  )
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    JOIN public.roles r ON r.id = ur.role_id
+    WHERE ur.user_id = auth.uid() AND r.name = _role::text
+  );
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.is_admin_or_ops()
 RETURNS BOOLEAN
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid() AND role IN ('owner_admin', 'ops_manager')
-  )
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    JOIN public.roles r ON r.id = ur.role_id
+    WHERE ur.user_id = auth.uid() AND r.name IN ('owner_admin', 'ops_manager')
+  );
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.can_access_location(_location_id UUID)
