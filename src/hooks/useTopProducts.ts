@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { buildQueryContext, getTopProductsRpc } from '@/data';
 import { subDays, format } from 'date-fns';
 
 export type OrderByOption = 'share' | 'gp_eur' | 'gp_pct';
@@ -65,21 +65,10 @@ export function useTopProducts() {
         ? [selectedLocationId]
         : locations.map(l => l.id);
 
-      // Use unified RPC — data source resolved server-side
-      type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-      const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
-      const { data, error } = await rpc('get_top_products_unified', {
-        p_org_id: orgId,
-        p_location_ids: locationIds,
-        p_from: format(from, 'yyyy-MM-dd'),
-        p_to: format(to, 'yyyy-MM-dd'),
-        p_limit: 20,
-      });
-
-      if (error) {
-        console.error('Error in get_top_products_unified RPC:', error);
-        throw error;
-      }
+      // Call via data layer
+      const ctx = buildQueryContext(orgId, locationIds, 'pos');
+      const range = { from: format(from, 'yyyy-MM-dd'), to: format(to, 'yyyy-MM-dd') };
+      const data = await getTopProductsRpc(ctx, range, 20);
 
       const items = data?.items || [];
       const totalSales = Number(data?.total_sales) || 0;
