@@ -210,7 +210,7 @@ export function useInventoryData(
         setIsLoading(false);
       }
     }
-  }, [cacheKey, dateRange.from, dateRange.to, selectedLocations, locations, appLoading, dataSource, dsUnified]);
+  }, [cacheKey, dateRange.from, dateRange.to, selectedLocations, locations, appLoading, dataSource, dsLegacy]);
 
   // Trigger fetch when dependencies change
   useEffect(() => {

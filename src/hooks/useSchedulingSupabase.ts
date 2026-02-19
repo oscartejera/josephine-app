@@ -410,11 +410,11 @@ async function checkForecastExists(locationId: string): Promise<boolean> {
   const futureDate = format(addDays(new Date(), 30), 'yyyy-MM-dd');
   
   const { count, error } = await supabase
-    .from('forecast_daily_metrics')
-    .select('id', { count: 'exact', head: true })
+    .from('forecast_daily_unified' as any)
+    .select('day', { count: 'exact', head: true })
     .eq('location_id', locationId)
-    .gte('date', today)
-    .lte('date', futureDate);
+    .gte('day', today)
+    .lte('day', futureDate);
   
   if (error) {
     console.warn('Error checking forecast:', error);
