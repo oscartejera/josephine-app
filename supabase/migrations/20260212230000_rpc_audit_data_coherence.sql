@@ -440,7 +440,7 @@ GRANT EXECUTE ON FUNCTION audit_data_coherence(uuid, uuid[], int)
 -- Via Supabase REST API:
 --
 -- curl -X POST \
---   "https://qzrbvjklgorfoqersdpx.supabase.co/rest/v1/rpc/audit_data_coherence" \
+--   "https://qixipveebfhurbarksib.supabase.co/rest/v1/rpc/audit_data_coherence" \
 --   -H "apikey: <service_role_key>" \
 --   -H "Authorization: Bearer <service_role_key>" \
 --   -H "Content-Type: application/json" \

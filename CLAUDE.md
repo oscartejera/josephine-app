@@ -143,8 +143,8 @@ No manual setup needed. Everything is automated.
 
 ### Supabase Access
 
-- **Project:** `qzrbvjklgorfoqersdpx`
-- **URL:** `https://qzrbvjklgorfoqersdpx.supabase.co`
+- **Project:** `qixipveebfhurbarksib`
+- **URL:** `https://qixipveebfhurbarksib.supabase.co`
 - **Anon key:** Available in `.env.local` (created by hook)
 - **Service role key:** Available in `.env.local` (created by hook) - bypasses RLS for admin queries
 - Claude has full DB read/write access via the service_role key and the Supabase REST API
@@ -154,7 +154,7 @@ No manual setup needed. Everything is automated.
 To query/modify the database directly, use curl with the service_role key:
 ```bash
 # Read example
-curl "https://qzrbvjklgorfoqersdpx.supabase.co/rest/v1/TABLE_NAME" \
+curl "https://qixipveebfhurbarksib.supabase.co/rest/v1/TABLE_NAME" \
   -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
   -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
 
@@ -439,7 +439,7 @@ The MCP server authenticates against Supabase using env vars (no interactive log
 Create `mcp/josephine-mcp/.env.local` (already in .gitignore):
 
 ```env
-SUPABASE_URL=https://qzrbvjklgorfoqersdpx.supabase.co
+SUPABASE_URL=https://qixipveebfhurbarksib.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<from root .env.local>
 JOSEPHINE_MCP_WRITE_ENABLED=false
 ```

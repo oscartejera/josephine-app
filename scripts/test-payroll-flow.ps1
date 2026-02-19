@@ -1,9 +1,9 @@
 $ErrorActionPreference = "Continue"
 $h = @{
-  "Authorization"="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6cmJ2amtsZ29yZm9xZXJzZHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxNjgzMjMsImV4cCI6MjA0OTc0NDMyM30.HCkVnQC6SdPVfKfI2S-OLVPM-Kx_TP1EFMcmCCbhkds"
-  "apikey"="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6cmJ2amtsZ29yZm9xZXJzZHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxNjgzMjMsImV4cCI6MjA0OTc0NDMyM30.HCkVnQC6SdPVfKfI2S-OLVPM-Kx_TP1EFMcmCCbhkds"
+  "Authorization"="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwODk4OTMsImV4cCI6MjA4NjY2NTg5M30.twpFHzJqDL-M37THYNs1oC23ZktjGTYodcSJkxHUyR8"
+  "apikey"="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwODk4OTMsImV4cCI6MjA4NjY2NTg5M30.twpFHzJqDL-M37THYNs1oC23ZktjGTYodcSJkxHUyR8"
 }
-$u = "https://qzrbvjklgorfoqersdpx.supabase.co/functions/v1/payroll_api"
+$u = "https://qixipveebfhurbarksib.supabase.co/functions/v1/payroll_api"
 
 # Real IDs from the database
 $groupId = "e54e12d7-018e-434e-a166-d041a97854c2"

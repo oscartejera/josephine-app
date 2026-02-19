@@ -76,10 +76,10 @@ DECLARE
 BEGIN
   -- Fallback to hardcoded values if app settings not available
   IF v_supabase_url IS NULL OR v_supabase_url = '' THEN
-    v_supabase_url := 'https://qzrbvjklgorfoqersdpx.supabase.co';
+    v_supabase_url := 'https://qixipveebfhurbarksib.supabase.co';
   END IF;
   IF v_service_key IS NULL OR v_service_key = '' THEN
-    v_service_key := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6cmJ2amtsZ29yZm9xZXJzZHB4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDI5NDYwMywiZXhwIjoyMDg1ODcwNjAzfQ.UgpxcrpVnrxaOlQHCcs4-5c4LABnHvFAysCbTrFLy3c';
+    v_service_key := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTA4OTg5MywiZXhwIjoyMDg2NjY1ODkzfQ.12A4ocHkOX86VnVA2nRm4oxZVL6jEHYE02-rJlVj9Qg';
   END IF;
 
   FOR v_location IN

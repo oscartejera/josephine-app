@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-PROJECT_REF="qzrbvjklgorfoqersdpx"
+PROJECT_REF="qixipveebfhurbarksib"
 
 if [ -z "${1:-}" ] && [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
   echo "Usage: ./scripts/deploy-functions.sh <SUPABASE_ACCESS_TOKEN>"

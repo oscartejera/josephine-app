@@ -31,7 +31,7 @@ SELECT extensions.http_post(
 ```bash
 # Desde terminal (reemplaza con tus valores)
 curl -X POST \
-  https://gbddbubzvhmgnwyowucd.supabase.co/functions/v1/seed_josephine_18m \
+  https://qixipveebfhurbarksib.supabase.co/functions/v1/seed_josephine_18m \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json"
 ```

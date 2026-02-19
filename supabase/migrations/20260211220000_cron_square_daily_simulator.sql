@@ -27,7 +27,7 @@ BEGIN
       'square-daily-simulator',
       '*/15 8-21 * * *',
       E'SELECT net.http_post(\n'
-      || E'  url := ''https://qzrbvjklgorfoqersdpx.supabase.co/functions/v1/square-daily-simulator'',\n'
+      || E'  url := ''https://qixipveebfhurbarksib.supabase.co/functions/v1/square-daily-simulator'',\n'
       || E'  headers := jsonb_build_object(\n'
       || E'    ''Authorization'', ''Bearer '' || current_setting(''app.settings.service_role_key'', true),\n'
       || E'    ''Content-Type'', ''application/json''\n'

@@ -170,7 +170,7 @@ Día de pago (1, 15, fin de mes): +5%
 
 ```bash
 curl -X POST \
-  https://gbddbubzvhmgnwyowucd.supabase.co/functions/v1/generate_forecast_v4 \
+  https://qixipveebfhurbarksib.supabase.co/functions/v1/generate_forecast_v4 \
   -H "Authorization: Bearer [tu-service-key]" \
   -H "Content-Type: application/json" \
   -d '{"horizon_days": 90}'
