@@ -1,7 +1,8 @@
-// Migrated to unified view: v_pos_daily_finance_unified
+// Migrated to sales_daily_unified contract view
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
+import { toLegacyDataSource } from '@/data';
 import { format, subDays, differenceInDays } from 'date-fns';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -101,8 +102,7 @@ export function useBudgetsData(
   compareMode: CompareMode = 'budget'
 ) {
   const { locations, loading: appLoading, dataSource } = useApp();
-  // Map AppContext dataSource ('pos'|'simulated') to unified view value ('pos'|'demo')
-  const dsUnified = dataSource === 'pos' ? 'pos' : 'demo';
+  const dsLegacy = toLegacyDataSource(dataSource);
   const [isLoading, setIsLoading] = useState(true);
   const [metrics, setMetrics] = useState<BudgetMetrics>(defaultMetrics);
   const [dailyData, setDailyData] = useState<BudgetDailyData[]>([]);
@@ -113,6 +113,13 @@ export function useBudgetsData(
     if (selectedLocations.length > 0) return selectedLocations;
     return locations.map(l => l.id);
   }, [selectedLocations, locations]);
+
+  // Safety: if app finished loading but there are no locations, stop loading
+  useEffect(() => {
+    if (!appLoading && locations.length === 0) {
+      setIsLoading(false);
+    }
+  }, [appLoading, locations.length]);
 
   const fetchData = useCallback(async () => {
     if (!dateRange.from || !dateRange.to || appLoading) return;
@@ -136,11 +143,11 @@ export function useBudgetsData(
 
       const { data: budgetData, error: budgetError } = await budgetQuery;
 
-      // Fetch actuals - sales from unified view
+      // Fetch actuals - sales from contract view
       let salesQuery = supabase
-        .from('v_pos_daily_finance_unified' as any)
+        .from('sales_daily_unified' as any)
         .select('date, location_id, net_sales')
-        .eq('data_source_unified', dsUnified)
+        .eq('data_source', dsLegacy)
         .gte('date', fromDate)
         .lte('date', toDate);
 
@@ -356,7 +363,7 @@ export function useBudgetsData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, effectiveLocationIds, locations, appLoading, compareMode, dataSource, dsUnified]);
+  }, [dateRange, effectiveLocationIds, locations, appLoading, compareMode, dataSource, dsLegacy]);
 
   useEffect(() => {
     if (!appLoading) {
