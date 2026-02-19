@@ -30,7 +30,7 @@ CREATE POLICY "Users can manage printer config for accessible locations"
 -- Table for PrintNode API credentials per group
 CREATE TABLE public.printnode_credentials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE UNIQUE,
+  group_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE UNIQUE,
   api_key_encrypted TEXT NOT NULL,
   is_active BOOLEAN DEFAULT true,
   last_verified_at TIMESTAMPTZ,

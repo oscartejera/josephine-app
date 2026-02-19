@@ -5,7 +5,7 @@
 -- Loyalty program settings per group
 CREATE TABLE IF NOT EXISTS public.loyalty_settings (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   is_enabled boolean NOT NULL DEFAULT false,
   points_per_euro numeric NOT NULL DEFAULT 1,
   welcome_bonus integer NOT NULL DEFAULT 50,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.loyalty_settings (
 -- Loyalty members (customers)
 CREATE TABLE IF NOT EXISTS public.loyalty_members (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   email text,
   phone text,
   name text NOT NULL,
@@ -43,7 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_loyalty_members_phone ON public.loyalty_members(p
 -- Loyalty rewards catalog
 CREATE TABLE IF NOT EXISTS public.loyalty_rewards (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   name text NOT NULL,
   description text,
   points_cost integer NOT NULL CHECK (points_cost > 0),

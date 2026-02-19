@@ -2,7 +2,7 @@
 CREATE TABLE public.report_subscriptions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
-  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   location_id uuid REFERENCES public.locations(id) ON DELETE CASCADE,
   report_type text NOT NULL CHECK (report_type IN ('daily_sales', 'weekly_summary', 'kpi_alerts')),
   is_enabled boolean DEFAULT true,
@@ -16,7 +16,7 @@ CREATE TABLE public.report_subscriptions (
 CREATE TABLE public.report_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   report_type text NOT NULL,
-  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   location_id uuid REFERENCES public.locations(id) ON DELETE CASCADE,
   recipient_email text NOT NULL,
   status text NOT NULL CHECK (status IN ('sent', 'failed', 'skipped')),
@@ -28,7 +28,7 @@ CREATE TABLE public.report_logs (
 -- Create table for KPI thresholds
 CREATE TABLE public.kpi_alert_thresholds (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   location_id uuid REFERENCES public.locations(id) ON DELETE CASCADE,
   kpi_name text NOT NULL,
   min_threshold numeric,
@@ -98,7 +98,7 @@ SELECT
   kpi.kpi_name,
   kpi.min_threshold,
   kpi.max_threshold
-FROM public.groups,
+FROM public.orgs,
 LATERAL (
   VALUES 
     ('labour_cost_percent', NULL::numeric, 30::numeric),

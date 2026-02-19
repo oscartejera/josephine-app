@@ -10,6 +10,9 @@
 -- AppContext.tsx queries supabase.from('groups').select('id,name')
 -- ============================================================
 
+-- Drop legacy TABLE groups if it exists (replaced by orgs + this VIEW)
+DROP TABLE IF EXISTS public.groups CASCADE;
+
 CREATE OR REPLACE VIEW groups AS
 SELECT id, name FROM orgs;
 

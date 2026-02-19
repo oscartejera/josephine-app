@@ -160,8 +160,8 @@ BEGIN
 
   -- 5. Fix profile.group_id if it doesn't match locations
   IF v_loc_group_id IS NOT NULL AND (v_profile_group_id IS NULL OR v_profile_group_id != v_loc_group_id) THEN
-    -- Ensure the group exists in the groups table
-    INSERT INTO groups (id, name)
+    -- Ensure the group exists in the orgs table
+    INSERT INTO orgs (id, name)
     VALUES (v_loc_group_id, 'Josephine')
     ON CONFLICT (id) DO NOTHING;
 

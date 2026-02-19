@@ -5,7 +5,7 @@ CREATE TABLE public.products (
   name text NOT NULL,
   category text,
   is_active boolean DEFAULT true,
-  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  group_id uuid NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
   created_at timestamptz DEFAULT now()
 );
 
