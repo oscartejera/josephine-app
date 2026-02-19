@@ -130,18 +130,26 @@ export function useBudgetsData(
       const fromDate = format(dateRange.from, 'yyyy-MM-dd');
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Fetch budgets
+      // Fetch budgets from contract view
       let budgetQuery = supabase
-        .from('budgets_daily')
-        .select('date, location_id, budget_sales, budget_labour, budget_cogs')
-        .gte('date', fromDate)
-        .lte('date', toDate);
+        .from('budget_daily_unified' as any)
+        .select('day, location_id, budget_sales, budget_labour, budget_cogs')
+        .gte('day', fromDate)
+        .lte('day', toDate);
 
       if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
         budgetQuery = budgetQuery.in('location_id', effectiveLocationIds);
       }
 
-      const { data: budgetData, error: budgetError } = await budgetQuery;
+      const { data: budgetDataRaw, error: budgetError } = await budgetQuery;
+      // Map contract view columns to legacy names
+      const budgetData = (budgetDataRaw || []).map((r: any) => ({
+        date: r.day,
+        location_id: r.location_id,
+        budget_sales: r.budget_sales,
+        budget_labour: r.budget_labour,
+        budget_cogs: r.budget_cogs,
+      }));
 
       // Fetch actuals - sales from contract view
       let salesQuery = supabase
@@ -157,18 +165,25 @@ export function useBudgetsData(
 
       const { data: salesData } = await salesQuery;
 
-      // Fetch labour
+      // Fetch labour from contract view
       let labourQuery = supabase
-        .from('labour_daily')
-        .select('date, location_id, labour_cost, labour_hours')
-        .gte('date', fromDate)
-        .lte('date', toDate);
+        .from('labour_daily_unified' as any)
+        .select('day, location_id, actual_cost, actual_hours')
+        .gte('day', fromDate)
+        .lte('day', toDate);
 
       if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
         labourQuery = labourQuery.in('location_id', effectiveLocationIds);
       }
 
-      const { data: labourData } = await labourQuery;
+      const { data: labourDataRaw } = await labourQuery;
+      // Map contract view columns to legacy names
+      const labourData = (labourDataRaw || []).map((r: any) => ({
+        date: r.day,
+        location_id: r.location_id,
+        labour_cost: r.actual_cost,
+        labour_hours: r.actual_hours,
+      }));
 
       // Fetch COGS
       let cogsQuery = supabase

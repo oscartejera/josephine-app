@@ -7,8 +7,11 @@ import { NarrativeInsightsPanel } from '@/components/dashboard/NarrativeInsights
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { OnboardingWizard } from '@/components/onboarding';
-import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame } from 'lucide-react';
+import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle } from 'lucide-react';
 import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
 
 interface Metrics {
@@ -31,7 +34,7 @@ function calculateDelta(current: number, previous: number): { value: number; pos
 }
 
 export default function Dashboard() {
-  const { selectedLocationId, accessibleLocations, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete, dataSource } = useApp();
+  const { selectedLocationId, accessibleLocations, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete, dataSource, loading: appLoading } = useApp();
   const { profile } = useAuth();
   const [metrics, setMetrics] = useState<ComparisonMetrics>({
     current: { sales: 0, covers: 0, avgTicket: 0, laborCost: 0, cogsPercent: 30 },
@@ -39,6 +42,7 @@ export default function Dashboard() {
   });
   const [topItems, setTopItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Build location IDs from selection
   const locationIds = useMemo(() => {
@@ -88,38 +92,45 @@ export default function Dashboard() {
       return;
     }
     setLoading(true);
-    const { from, to } = getDateRangeValues();
-    const { from: prevFrom, to: prevTo } = getPreviousPeriod(from, to);
+    setFetchError(null);
 
-    // Fetch current and previous period metrics in parallel
-    const [currentMetrics, previousMetrics] = await Promise.all([
-      fetchPeriodMetrics(from, to),
-      fetchPeriodMetrics(prevFrom, prevTo)
-    ]);
+    try {
+      const { from, to } = getDateRangeValues();
+      const { from: prevFrom, to: prevTo } = getPreviousPeriod(from, to);
 
-    setMetrics({ current: currentMetrics, previous: previousMetrics });
+      // Fetch current and previous period metrics in parallel
+      const [currentMetrics, previousMetrics] = await Promise.all([
+        fetchPeriodMetrics(from, to),
+        fetchPeriodMetrics(prevFrom, prevTo)
+      ]);
 
-    // Top items from product_sales_daily_unified contract view
-    const orgId = profile?.group_id;
-    if (orgId) {
-      const ctx = buildQueryContext(orgId, locationIds, dataSource);
-      const range = { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
-      const productRows = await getProductSalesDaily(ctx, range);
+      setMetrics({ current: currentMetrics, previous: previousMetrics });
 
-      const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number; margin: number }>();
-      productRows.forEach(row => {
-        const existing = itemMap.get(row.productId) || { name: row.productName, category: row.productCategory || 'Sin categoría', quantity: 0, sales: 0, margin: 0 };
-        existing.quantity += row.unitsSold;
-        existing.sales += row.netSales;
-        existing.margin = row.marginPct;
-        itemMap.set(row.productId, existing);
-      });
+      // Top items from product_sales_daily_unified contract view
+      const orgId = profile?.group_id;
+      if (orgId) {
+        const ctx = buildQueryContext(orgId, locationIds, dataSource);
+        const range = { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
+        const productRows = await getProductSalesDaily(ctx, range);
 
-      const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
-      setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item })));
+        const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number; margin: number }>();
+        productRows.forEach(row => {
+          const existing = itemMap.get(row.productId) || { name: row.productName, category: row.productCategory || 'Sin categoría', quantity: 0, sales: 0, margin: 0 };
+          existing.quantity += row.unitsSold;
+          existing.sales += row.netSales;
+          existing.margin = row.marginPct;
+          itemMap.set(row.productId, existing);
+        });
+
+        const sortedItems = Array.from(itemMap.values()).sort((a, b) => b.sales - a.sales).slice(0, 10);
+        setTopItems(sortedItems.map((item, i) => ({ rank: i + 1, ...item })));
+      }
+    } catch (err) {
+      console.error('[Dashboard] fetchData error:', err);
+      setFetchError(err instanceof Error ? err.message : 'Error al cargar datos');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const current = metrics.current;
@@ -171,6 +182,70 @@ export default function Dashboard() {
   // Show onboarding wizard for new users
   if (needsOnboarding) {
     return <OnboardingWizard onComplete={setOnboardingComplete} />;
+  }
+
+  // Show loading skeleton while app context is initializing
+  if (appLoading || (loading && !fetchError)) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-display font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-64 rounded-lg" />
+      </div>
+    );
+  }
+
+  // Show error fallback if data fetch failed
+  if (fetchError) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-display font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle className="h-10 w-10 text-destructive mb-3" />
+            <p className="text-lg font-medium">Error al cargar el dashboard</p>
+            <p className="text-sm text-muted-foreground mt-1">{fetchError}</p>
+            <Button variant="outline" className="mt-4" onClick={() => fetchData()}>
+              Reintentar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show CTA if no locations are configured
+  if (!appLoading && accessibleLocations.length === 0 && profile?.group_id) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-display font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <MapPin className="h-10 w-10 text-muted-foreground mb-3" />
+            <p className="text-lg font-medium">No hay locales configurados</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Crea tu primer local para empezar a ver datos en el dashboard.
+            </p>
+            <Button className="mt-4" onClick={() => window.location.href = '/settings'}>
+              Configurar local
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
