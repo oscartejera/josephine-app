@@ -246,6 +246,64 @@ export interface Payslip {
   otherDeductions: number;
 }
 
+// ─── Sales RPC Result Types ────────────────────────────────────────────────
+
+/** Raw result from get_sales_timeseries_unified RPC */
+export interface SalesTimeseriesRpcResult {
+  data_source: string;
+  mode: string;
+  reason: string;
+  last_synced_at: string | null;
+  kpis: {
+    actual_sales: number;
+    forecast_sales: number;
+    actual_orders: number;
+    forecast_orders: number;
+    avg_check_actual: number;
+    avg_check_forecast: number;
+  };
+  hourly: Array<{
+    ts_hour: string;
+    actual_sales: number;
+    actual_orders: number;
+    forecast_sales: number;
+    forecast_orders: number;
+    lower: number;
+    upper: number;
+  }>;
+  daily: Array<{
+    date: string;
+    actual_sales: number;
+    actual_orders: number;
+    forecast_sales: number;
+    forecast_orders: number;
+    lower: number;
+    upper: number;
+  }>;
+  busy_hours: Array<{
+    date: string;
+    hour: number;
+    forecast_sales: number;
+  }>;
+}
+
+/** Raw result from get_top_products_unified RPC */
+export interface TopProductsRpcResult {
+  data_source: string;
+  mode: string;
+  reason: string;
+  last_synced_at: string | null;
+  total_sales: number;
+  items: Array<{
+    product_id: string;
+    name: string;
+    category: string;
+    sales: number;
+    qty: number;
+    share: number;
+  }>;
+}
+
 // ─── Empty result helpers ───────────────────────────────────────────────────
 
 export const EMPTY_DASHBOARD_KPIS: DashboardKpis = {

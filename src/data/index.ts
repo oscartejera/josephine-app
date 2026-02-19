@@ -12,6 +12,8 @@ export type {
   DashboardKpis,
   SalesDailyRow,
   SalesHourlyRow,
+  SalesTimeseriesRpcResult,
+  TopProductsRpcResult,
   ForecastDailyRow,
   ForecastVsActualRow,
   BudgetDailyRow,
@@ -38,7 +40,7 @@ export {
 export { buildQueryContext, assertContext, hasNoLocations } from './client';
 
 // Sales
-export { getDashboardKpis, getSalesTrends, getProductSalesDaily } from './sales';
+export { getDashboardKpis, getSalesTrends, getProductSalesDaily, getSalesTimeseriesRpc, getTopProductsRpc } from './sales';
 
 // Forecast
 export { getForecastDaily, getForecastVsActual } from './forecast';

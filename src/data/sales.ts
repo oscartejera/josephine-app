@@ -13,6 +13,8 @@ import {
   type SalesDailyRow,
   type SalesHourlyRow,
   type ProductSalesDailyRow,
+  type SalesTimeseriesRpcResult,
+  type TopProductsRpcResult,
   EMPTY_DASHBOARD_KPIS,
 } from './types';
 
@@ -203,4 +205,60 @@ async function getSalesHourlyTrends(
     refunds: Number(r.refunds) || 0,
     dataSource: r.data_source,
   }));
+}
+
+// ─── RPC Wrappers ───────────────────────────────────────────────────────────
+
+/**
+ * Call get_sales_timeseries_unified RPC.
+ * Resolves data source server-side via resolve_data_source(org_id).
+ */
+export async function getSalesTimeseriesRpc(
+  ctx: QueryContext,
+  range: DateRange
+): Promise<SalesTimeseriesRpcResult | null> {
+  assertContext(ctx);
+  if (hasNoLocations(ctx)) return null;
+
+  const { data, error } = await (supabase.rpc as any)('get_sales_timeseries_unified', {
+    p_org_id: ctx.orgId,
+    p_location_ids: ctx.locationIds,
+    p_from: range.from,
+    p_to: range.to,
+  });
+
+  if (error) {
+    console.error('[data/sales] getSalesTimeseriesRpc error:', error.message);
+    throw error;
+  }
+
+  return data as SalesTimeseriesRpcResult | null;
+}
+
+/**
+ * Call get_top_products_unified RPC.
+ * Resolves data source server-side via resolve_data_source(org_id).
+ */
+export async function getTopProductsRpc(
+  ctx: QueryContext,
+  range: DateRange,
+  limit = 20
+): Promise<TopProductsRpcResult | null> {
+  assertContext(ctx);
+  if (hasNoLocations(ctx)) return null;
+
+  const { data, error } = await (supabase.rpc as any)('get_top_products_unified', {
+    p_org_id: ctx.orgId,
+    p_location_ids: ctx.locationIds,
+    p_from: range.from,
+    p_to: range.to,
+    p_limit: limit,
+  });
+
+  if (error) {
+    console.error('[data/sales] getTopProductsRpc error:', error.message);
+    throw error;
+  }
+
+  return data as TopProductsRpcResult | null;
 }

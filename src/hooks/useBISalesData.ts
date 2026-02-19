@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildQueryContext, getSalesTimeseriesRpc, getTopProductsRpc } from '@/data';
 import { format, isSameDay, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -171,31 +172,14 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const fromStr = format(dateRange.from, 'yyyy-MM-dd');
       const toStr = format(dateRange.to, 'yyyy-MM-dd');
 
-      // Call both unified RPCs in parallel — data source resolved server-side
-      // RPCs not yet in auto-generated types, typed cast required
-      type RpcFn = (name: string, params: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
-      const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
-      const [timeseriesResult, topProductsResult] = await Promise.all([
-        rpc('get_sales_timeseries_unified', {
-          p_org_id: orgId,
-          p_location_ids: effectiveLocationIds,
-          p_from: fromStr,
-          p_to: toStr,
-        }),
-        rpc('get_top_products_unified', {
-          p_org_id: orgId,
-          p_location_ids: effectiveLocationIds,
-          p_from: fromStr,
-          p_to: toStr,
-          p_limit: 20,
-        }),
+      // Call both unified RPCs in parallel via data layer
+      const ctx = buildQueryContext(orgId, effectiveLocationIds, 'pos');
+      const range = { from: fromStr, to: toStr };
+
+      const [ts, tp] = await Promise.all([
+        getSalesTimeseriesRpc(ctx, range),
+        getTopProductsRpc(ctx, range, 20),
       ]);
-
-      if (timeseriesResult.error) throw timeseriesResult.error;
-      if (topProductsResult.error) throw topProductsResult.error;
-
-      const ts = timeseriesResult.data;
-      const tp = topProductsResult.data;
 
       if (!ts || !ts.kpis) return emptyData();
 
