@@ -49,7 +49,7 @@ export { getForecastDaily, getForecastVsActual } from './forecast';
 export { getBudgetDaily, getBudgetVsActual } from './budget';
 
 // Labour
-export { getLabourDaily, getLabourSummary } from './labour';
+export { getLabourDaily, getLabourSummary, getLabourKpisRpc, getLabourTimeseriesRpc, getLabourLocationsRpc } from './labour';
 
 // Inventory
 export { getLowStockAlerts, createPurchaseOrderDraftFromAlerts } from './inventory';

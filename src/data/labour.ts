@@ -4,7 +4,7 @@
  * Reads from `labour_daily_unified` contract view.
  */
 
-import { supabase, assertContext, hasNoLocations, applyFilters } from './client';
+import { supabase, assertContext, hasNoLocations, applyFilters, toLegacyDataSource } from './client';
 import {
   type QueryContext,
   type DateRange,
@@ -83,4 +83,78 @@ export async function getLabourSummary(
       : 0,
     daily,
   };
+}
+
+// ─── RPC Wrappers ───────────────────────────────────────────────────────────
+
+/**
+ * Call get_labour_kpis RPC. Returns aggregated labour KPIs.
+ */
+export async function getLabourKpisRpc(
+  ctx: QueryContext,
+  range: DateRange,
+  locationId?: string | null
+): Promise<Record<string, unknown>> {
+  assertContext(ctx);
+
+  const { data, error } = await (supabase.rpc as any)('get_labour_kpis', {
+    date_from: range.from,
+    date_to: range.to,
+    selected_location_id: locationId || null,
+    p_data_source: toLegacyDataSource(ctx.dataSource),
+  });
+
+  if (error) {
+    console.error('[data/labour] getLabourKpisRpc error:', error.message);
+    throw error;
+  }
+  return data as Record<string, unknown>;
+}
+
+/**
+ * Call get_labour_timeseries RPC. Returns daily labour timeseries.
+ */
+export async function getLabourTimeseriesRpc(
+  ctx: QueryContext,
+  range: DateRange,
+  locationId?: string | null
+): Promise<Record<string, unknown>[]> {
+  assertContext(ctx);
+
+  const { data, error } = await (supabase.rpc as any)('get_labour_timeseries', {
+    date_from: range.from,
+    date_to: range.to,
+    selected_location_id: locationId || null,
+    p_data_source: toLegacyDataSource(ctx.dataSource),
+  });
+
+  if (error) {
+    console.error('[data/labour] getLabourTimeseriesRpc error:', error.message);
+    throw error;
+  }
+  return (data || []) as Record<string, unknown>[];
+}
+
+/**
+ * Call get_labour_locations_table RPC. Returns per-location labour breakdown.
+ */
+export async function getLabourLocationsRpc(
+  ctx: QueryContext,
+  range: DateRange,
+  locationId?: string | null
+): Promise<Record<string, unknown>[]> {
+  assertContext(ctx);
+
+  const { data, error } = await (supabase.rpc as any)('get_labour_locations_table', {
+    date_from: range.from,
+    date_to: range.to,
+    selected_location_id: locationId || null,
+    p_data_source: toLegacyDataSource(ctx.dataSource),
+  });
+
+  if (error) {
+    console.error('[data/labour] getLabourLocationsRpc error:', error.message);
+    throw error;
+  }
+  return (data || []) as Record<string, unknown>[];
 }

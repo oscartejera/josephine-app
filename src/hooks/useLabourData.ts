@@ -4,9 +4,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
+import { buildQueryContext, getLabourKpisRpc, getLabourTimeseriesRpc, getLabourLocationsRpc } from '@/data';
 
 export type MetricMode = 'percentage' | 'amount' | 'hours';
 
@@ -83,23 +83,19 @@ interface UseLabourDataParams {
 }
 
 export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
-  const { dataSource, loading: appLoading } = useApp();
+  const { dataSource, loading: appLoading, group } = useApp();
   const dateFrom = format(dateRange.from, 'yyyy-MM-dd');
   const dateTo = format(dateRange.to, 'yyyy-MM-dd');
+  const orgId = group?.id;
 
   // Fetch KPIs
   const kpisQuery = useQuery({
     queryKey: ['labour-kpis', dateFrom, dateTo, locationId, dataSource],
-    enabled: !appLoading && !!dataSource,
+    enabled: !appLoading && !!dataSource && !!orgId,
     queryFn: async (): Promise<LabourKpis> => {
-      const { data, error } = await supabase.rpc('get_labour_kpis', {
-        date_from: dateFrom,
-        date_to: dateTo,
-        selected_location_id: locationId || null,
-        p_data_source: dataSource,
-      });
-
-      if (error) throw error;
+      const ctx = buildQueryContext(orgId, [], dataSource);
+      const range = { from: dateFrom, to: dateTo };
+      const data = await getLabourKpisRpc(ctx, range, locationId);
       return data as unknown as LabourKpis;
     },
   });
@@ -107,34 +103,24 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
   // Fetch timeseries for chart
   const timeseriesQuery = useQuery({
     queryKey: ['labour-timeseries', dateFrom, dateTo, locationId, dataSource],
-    enabled: !appLoading && !!dataSource,
+    enabled: !appLoading && !!dataSource && !!orgId,
     queryFn: async (): Promise<LabourTimeseriesRow[]> => {
-      const { data, error } = await supabase.rpc('get_labour_timeseries', {
-        date_from: dateFrom,
-        date_to: dateTo,
-        selected_location_id: locationId || null,
-        p_data_source: dataSource,
-      });
-
-      if (error) throw error;
-      return (data || []) as unknown as LabourTimeseriesRow[];
+      const ctx = buildQueryContext(orgId, [], dataSource);
+      const range = { from: dateFrom, to: dateTo };
+      const data = await getLabourTimeseriesRpc(ctx, range, locationId);
+      return data as unknown as LabourTimeseriesRow[];
     },
   });
 
   // Fetch locations table
   const locationsQuery = useQuery({
     queryKey: ['labour-locations', dateFrom, dateTo, locationId, dataSource],
-    enabled: !appLoading && !!dataSource,
+    enabled: !appLoading && !!dataSource && !!orgId,
     queryFn: async (): Promise<LabourLocationRow[]> => {
-      const { data, error } = await supabase.rpc('get_labour_locations_table', {
-        date_from: dateFrom,
-        date_to: dateTo,
-        selected_location_id: locationId || null,
-        p_data_source: dataSource,
-      });
-
-      if (error) throw error;
-      return (data || []) as unknown as LabourLocationRow[];
+      const ctx = buildQueryContext(orgId, [], dataSource);
+      const range = { from: dateFrom, to: dateTo };
+      const data = await getLabourLocationsRpc(ctx, range, locationId);
+      return data as unknown as LabourLocationRow[];
     },
   });
 
