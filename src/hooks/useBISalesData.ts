@@ -114,7 +114,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const orgId = group?.id;
-  const effectiveLocationIds = locationIds.length > 0 ? locationIds : locations.map(l => l.id);
+  const validLocationIds = locationIds.filter(id => id != null);
+  const effectiveLocationIds = validLocationIds.length > 0 ? validLocationIds : locations.map(l => l.id);
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 

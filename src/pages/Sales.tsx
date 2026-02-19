@@ -56,11 +56,11 @@ export default function Sales() {
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
   const [productsDisplayCount, setProductsDisplayCount] = useState(10);
 
-  const { selectedLocationId, accessibleLocations } = useApp();
+  const { selectedLocationId, accessibleLocations, loading: appLoading } = useApp();
 
   // Map global location to locationIds array for the hook
   const locationIds = useMemo(() => {
-    if (selectedLocationId === 'all') return [];
+    if (!selectedLocationId || selectedLocationId === 'all') return [];
     return [selectedLocationId];
   }, [selectedLocationId]);
 
@@ -102,7 +102,7 @@ export default function Sales() {
     topProducts: products.slice(0, 5).map(p => ({ name: p.name, value: p.value, percentage: p.percentage })),
   }), [kpis, channels, categories, products]);
 
-  if (isLoading) {
+  if (appLoading || isLoading) {
     return (
       <div className="p-6 space-y-6 max-w-[1800px]">
         <div className="flex items-center justify-between">
