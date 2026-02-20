@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildQueryContext, getSalesTimeseriesRpc, getTopProductsRpc } from '@/data';
+import { getKpiRangeSummary } from '@/data/kpi';
 import { format, isSameDay, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -238,12 +239,39 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         ? totalForecast / forecastOrders
         : avgCheckSize * 0.95;
 
-      const salesToDateDelta = totalForecast > 0
-        ? ((totalNetSales - totalForecast) / totalForecast) * 100
-        : 0;
-      const avgCheckSizeDelta = forecastAvgCheckSize > 0
-        ? ((avgCheckSize - forecastAvgCheckSize) / forecastAvgCheckSize) * 100
-        : 0;
+      // Delta computation: use previous period when requested
+      let salesToDateDelta: number;
+      let avgCheckSizeDelta: number;
+
+      if (compareMode === 'previous_period' && orgId) {
+        try {
+          const ctx = buildQueryContext(orgId, effectiveLocationIds, 'pos');
+          const kpiData = await getKpiRangeSummary(ctx, fromStr, toStr);
+          const prevSales = kpiData?.previous?.net_sales ?? 0;
+          const prevAvgCheck = kpiData?.previous?.avg_check ?? 0;
+          salesToDateDelta = prevSales > 0
+            ? ((totalNetSales - prevSales) / prevSales) * 100
+            : 0;
+          avgCheckSizeDelta = prevAvgCheck > 0
+            ? ((avgCheckSize - prevAvgCheck) / prevAvgCheck) * 100
+            : 0;
+        } catch {
+          // Fallback to forecast comparison
+          salesToDateDelta = totalForecast > 0
+            ? ((totalNetSales - totalForecast) / totalForecast) * 100
+            : 0;
+          avgCheckSizeDelta = forecastAvgCheckSize > 0
+            ? ((avgCheckSize - forecastAvgCheckSize) / forecastAvgCheckSize) * 100
+            : 0;
+        }
+      } else {
+        salesToDateDelta = totalForecast > 0
+          ? ((totalNetSales - totalForecast) / totalForecast) * 100
+          : 0;
+        avgCheckSizeDelta = forecastAvgCheckSize > 0
+          ? ((avgCheckSize - forecastAvgCheckSize) / forecastAvgCheckSize) * 100
+          : 0;
+      }
 
       // ── Channel breakdown — requires POS channel data (not available) ──
       const channelBreakdown: { channel: string; value: number; percentage: number }[] = [];
