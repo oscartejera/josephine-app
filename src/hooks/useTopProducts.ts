@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { buildQueryContext, getTopProductsRpc } from '@/data';
+import { supabase } from '@/integrations/supabase/client';
 import { subDays, format } from 'date-fns';
 
 export type OrderByOption = 'share' | 'gp_eur' | 'gp_pct';
@@ -16,6 +17,7 @@ export interface TopProduct {
   cogs: number;
   gp: number;
   gp_pct: number;
+  cogs_source: 'recipe' | 'estimated';
   badge_label: string | null;
 }
 
@@ -68,27 +70,56 @@ export function useTopProducts() {
     queryKey: ['top-products', orgId, locationIds, fromStr, toStr],
     queryFn: async () => {
       const ctx = buildQueryContext(orgId, locationIds, dataSource);
-      const result = await getTopProductsRpc(ctx, { from: fromStr, to: toStr }, 20);
 
-      const items = result?.items || [];
+      // Fetch top products from RPC (for ranking/share) and mart view (for COGS)
+      const [rpcResult, martResult] = await Promise.all([
+        getTopProductsRpc(ctx, { from: fromStr, to: toStr }, 20),
+        supabase
+          .from('mart_sales_category_daily' as any)
+          .select('product_id, product_name, category, units_sold, net_sales, cogs, cogs_source')
+          .eq('org_id', orgId)
+          .gte('date', fromStr)
+          .lte('date', toStr)
+          .then(({ data }) => data || []),
+      ]);
+
+      // Aggregate mart data by product
+      const martMap = new Map<string, { cogs: number; units: number; sales: number; cogsSource: string }>();
+      (martResult as any[]).forEach((row: any) => {
+        const pid = row.product_id;
+        const existing = martMap.get(pid) || { cogs: 0, units: 0, sales: 0, cogsSource: 'estimated' };
+        existing.cogs += Number(row.cogs) || 0;
+        existing.units += Number(row.units_sold) || 0;
+        existing.sales += Number(row.net_sales) || 0;
+        if (row.cogs_source === 'recipe') existing.cogsSource = 'recipe';
+        martMap.set(pid, existing);
+      });
+
+      const items = rpcResult?.items || [];
 
       return items.map((item: Record<string, unknown>) => {
+        const productId = item.product_id as string;
         const sales = Number(item.sales) || 0;
         const qty = Number(item.qty) || 0;
         const share = Number(item.share) || 0;
-        const estimatedCogs = sales * 0.28;
-        const gp = sales - estimatedCogs;
+
+        // Use mart COGS if available, fallback to mart aggregated data
+        const martData = martMap.get(productId);
+        const cogs = martData?.cogs ?? 0;
+        const cogsSource = (martData?.cogsSource ?? 'estimated') as 'recipe' | 'estimated';
+        const gp = sales - cogs;
 
         return {
-          product_id: item.product_id as string,
+          product_id: productId,
           product_name: item.name as string,
           category: (item.category as string) || 'Sin categoría',
           units: qty,
           sales,
           sales_share_pct: share,
-          cogs: estimatedCogs,
+          cogs,
           gp,
           gp_pct: sales > 0 ? (gp / sales) * 100 : 0,
+          cogs_source: cogsSource,
           badge_label: share >= 10 ? 'Top seller' : null,
         } as TopProduct;
       });
