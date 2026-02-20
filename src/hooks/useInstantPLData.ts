@@ -100,9 +100,6 @@ interface UseInstantPLDataParams {
   activeChips: ChipFilter[];
 }
 
-// ============= SEEDED RANDOM FOR DEMO DATA =============
-import { SeededRandom, hashString } from '@/lib/seededRandom';
-
 // ============= RPC RESPONSE TYPES =============
 interface RPCLocationRow {
   locationId: string;
@@ -169,19 +166,11 @@ export function useInstantPLData({
       const locationMetrics: LocationPLMetrics[] = rpcLocations.map((loc: RPCLocationRow) => {
         const salesActual = loc.salesActual || 0;
         const salesForecast = loc.salesForecast || 0;
-        let labourActual = loc.labourActual || 0;
-        let labourHoursActual = loc.labourHoursActual || 0;
+        const labourActual = loc.labourActual || 0;
+        const labourHoursActual = loc.labourHoursActual || 0;
         const labourForecast = loc.labourForecast || 0;
-        const estimatedLabour = loc.estimated_labour;
-
-        // If no labour data, estimate based on typical 22% ratio
-        if (labourActual === 0 && salesActual > 0) {
-          const dateKey = format(dateRange.from, 'yyyy-MM-dd') + loc.locationId;
-          const rng = new SeededRandom(hashString(dateKey));
-          const labourRatio = rng.between(0.18, 0.26);
-          labourActual = Math.round(salesActual * labourRatio);
-          labourHoursActual = Math.round(labourActual / 20);
-        }
+        // Mark labour as estimated when actual is 0 but sales exist
+        const estimatedLabour = loc.estimated_labour || (labourActual === 0 && salesActual > 0);
 
         // COGS: null = not configured (no recipe costs / COGS feed)
         const cogsActual: number | null = null;
