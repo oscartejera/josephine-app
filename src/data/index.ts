@@ -27,6 +27,8 @@ export type {
   PayrollRun,
   PayrollRunDraftParams,
   Payslip,
+  KpiPeriodSummary,
+  KpiRangeSummary,
 } from './types';
 
 export {
@@ -62,6 +64,9 @@ export {
   listPayslips,
   getMyPayslips,
 } from './payroll';
+
+// KPI Contract
+export { getKpiRangeSummary, getKpiDaily } from './kpi';
 
 // Guards (React hooks — only import in components)
 export { useQueryContext } from './guards';
