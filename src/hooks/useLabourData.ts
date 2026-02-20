@@ -77,6 +77,44 @@ export interface LabourLocationRow {
   is_summary: boolean;
 }
 
+/** Sanitize a numeric value: replace NaN/Infinity with null */
+function safeNum(v: unknown): number | null {
+  const n = Number(v);
+  if (!isFinite(n)) return null;
+  return n;
+}
+
+/** Sanitize KPI response: guard divide-by-zero producing NaN/Infinity */
+function sanitizeKpis(raw: Record<string, unknown>): LabourKpis {
+  const sales = Number(raw.actual_sales) || 0;
+  const hours = Number(raw.actual_labor_hours) || 0;
+  const cost = Number(raw.actual_labor_cost) || 0;
+
+  return {
+    actual_sales: sales,
+    forecast_sales: Number(raw.forecast_sales) || 0,
+    actual_labor_cost: cost,
+    planned_labor_cost: Number(raw.planned_labor_cost) || 0,
+    actual_labor_hours: hours,
+    planned_labor_hours: Number(raw.planned_labor_hours) || 0,
+    actual_orders: Number(raw.actual_orders) || 0,
+    forecast_orders: Number(raw.forecast_orders) || 0,
+    // COL%: null when sales = 0 (not Infinity)
+    actual_col_pct: sales > 0 ? (safeNum(raw.actual_col_pct) ?? (cost / sales) * 100) : 0,
+    planned_col_pct: safeNum(raw.planned_col_pct) ?? 0,
+    // SPLH: null when hours = 0
+    actual_splh: hours > 0 ? (safeNum(raw.actual_splh) ?? sales / hours) : 0,
+    planned_splh: safeNum(raw.planned_splh) ?? 0,
+    actual_oplh: safeNum(raw.actual_oplh) ?? 0,
+    planned_oplh: safeNum(raw.planned_oplh) ?? 0,
+    sales_delta_pct: safeNum(raw.sales_delta_pct) ?? 0,
+    col_delta_pct: safeNum(raw.col_delta_pct) ?? 0,
+    hours_delta_pct: safeNum(raw.hours_delta_pct) ?? 0,
+    splh_delta_pct: safeNum(raw.splh_delta_pct) ?? 0,
+    oplh_delta_pct: safeNum(raw.oplh_delta_pct) ?? 0,
+  };
+}
+
 interface UseLabourDataParams {
   dateRange: LabourDateRange;
   locationId?: string | null;
@@ -96,7 +134,7 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
       const ctx = buildQueryContext(orgId, [], dataSource);
       const range = { from: dateFrom, to: dateTo };
       const data = await getLabourKpisRpc(ctx, range, locationId);
-      return data as unknown as LabourKpis;
+      return sanitizeKpis(data);
     },
   });
 
