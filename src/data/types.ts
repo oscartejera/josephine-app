@@ -304,6 +304,29 @@ export interface TopProductsRpcResult {
   }>;
 }
 
+// ─── KPI Contract DTOs ─────────────────────────────────────────────────────
+
+export interface KpiPeriodSummary {
+  net_sales: number;
+  orders_count: number;
+  covers: number;
+  avg_check: number;
+  labour_cost: number | null;
+  labour_hours?: number | null;
+  cogs: number;
+  col_percent: number | null;
+  gp_percent: number | null;
+  cogs_source_mixed?: boolean;
+  labour_source_mixed?: boolean;
+}
+
+export interface KpiRangeSummary {
+  current: KpiPeriodSummary;
+  previous: KpiPeriodSummary;
+  period: { from: string; to: string; days: number };
+  previousPeriod: { from: string; to: string };
+}
+
 // ─── Empty result helpers ───────────────────────────────────────────────────
 
 export const EMPTY_DASHBOARD_KPIS: DashboardKpis = {
