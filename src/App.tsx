@@ -18,6 +18,7 @@ import Insights from "@/pages/Insights";
 import Sales from "@/pages/Sales";
 import Labour from "@/pages/Labour";
 import AdminTools from "@/pages/AdminTools";
+import DataHealth from "@/pages/DataHealth";
 import InstantPL from "@/pages/InstantPL";
 import Reviews from "@/pages/Reviews";
 import ReviewsAll from "@/pages/ReviewsAll";
@@ -165,6 +166,7 @@ function AppRoutes() {
         {/* Settings */}
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/admin/tools" element={<AdminTools />} />
+        <Route path="/admin/data-health" element={<DataHealth />} />
         <Route path="/debug/data-coherence" element={<DebugDataCoherence />} />
       </Route>
 

@@ -106,6 +106,68 @@ interface KpiRangeSummary {
 | **Menu Engineering** | `useMenuEngineeringData` | `getMenuEngineeringSummaryRpc` + `mart_sales_category_daily` | Enriches COGS from mart view when RPC returns 0. Recomputes classification with real margins. |
 | **Inventory** | `useInventoryData` | Direct Supabase queries | Removed arbitrary multipliers (`* 0.6`, `* 0.7`, `* 1.05`, `* 0.85`). Uses actual values. |
 
+## Materialized Views
+
+Heavy mart views are now materialized for performance. Lightweight base views (`sales_daily_unified`, `labour_daily_unified`, `cogs_daily`) remain as regular views.
+
+### MV Architecture
+
+| MV | Unique Index | Wrapper View |
+|----|-------------|-------------|
+| `product_sales_daily_unified_mv` | `(org_id, location_id, day, product_id)` | `product_sales_daily_unified` |
+| `sales_hourly_unified_mv` | `(org_id, location_id, hour_bucket)` | `sales_hourly_unified` |
+| `mart_kpi_daily_mv` | `(org_id, location_id, date)` | `mart_kpi_daily` |
+| `mart_sales_category_daily_mv` | `(org_id, location_id, date, product_id)` | `mart_sales_category_daily` |
+
+Original view names are preserved as thin wrappers (`SELECT * FROM <name>_mv`), so all existing queries and RPCs work unchanged.
+
+### Refresh Mechanism
+
+- **Function**: `ops.refresh_all_mvs(p_triggered_by)` — SECURITY DEFINER owned by `mv_owner` role
+- **Edge Function**: `refresh_marts` — authenticated via `x-cron-secret` header
+- **Vercel Cron**: `*/15 * * * *` — calls Edge Function every 15 minutes
+- **Manual**: Admin panel "Refrescar MVs" button on `/admin/data-health`
+- **Logging**: `ops.mv_refresh_log` table tracks every refresh (status, duration, views refreshed)
+
+### ops Schema
+
+| Table | Purpose |
+|-------|---------|
+| `ops.mv_refresh_log` | Refresh audit log (id, started_at, finished_at, duration_ms, status, error_message) |
+
+## Reconciliation Data Layer
+
+Stock count reconciliation data now flows through the standard data layer (`src/data/`) instead of querying Supabase directly.
+
+### SQL
+
+| Object | Type | Purpose |
+|--------|------|---------|
+| `mart_stock_count_headers` | VIEW | Enriched stock_counts with location name + aggregated metrics |
+| `mart_stock_count_lines_enriched` | VIEW | Lines with item name, unit, unit_cost, variance_value |
+| `rpc_reconciliation_summary` | RPC | Aggregated reconciliation data (headers + lines + totals) |
+
+### Data Layer
+
+| Module | Function | Purpose |
+|--------|----------|---------|
+| `src/data/reconciliation.ts` | `getReconciliationSummary(ctx, range, status?)` | Calls `rpc_reconciliation_summary` |
+| `src/hooks/useReconciliationData.ts` | `useReconciliationData(dateRange, locations, status)` | React Query wrapper — no demo fallback |
+
+No demo/random data in reconciliation. When no stock counts exist, returns empty `lines: []` and UI shows real empty state.
+
+## Data Health Page
+
+Admin page at `/admin/data-health` showing 5 health cards:
+
+1. **Materialized Views** — last refresh status, duration, trigger source
+2. **POS Sync** — last order timestamp, 7-day order count
+3. **KPI Coverage** — location-days with data in last 30d
+4. **Inventory** — items with recipes, par levels, costs
+5. **Stock Counts** — total counts, last 30d activity
+
+RPC: `rpc_data_health(p_org_id)` returns all 5 sections as JSON.
+
 ## Assumptions
 
 1. If no recipes exist → use `location_settings.default_cogs_percent` (fallback: 30%)
