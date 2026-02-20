@@ -1,23 +1,57 @@
 -- ============================================================
 -- MV Refresh Infrastructure
--- ops schema, mv_owner role, materialized views, refresh function
+-- ops schema, materialized views, refresh function
+--
+-- Note: In Supabase managed PostgreSQL, all objects are owned by
+-- `postgres` by default. No custom roles needed — postgres can
+-- REFRESH its own MVs directly.
 -- ============================================================
 
 -- ============================================================
--- SECTION 1: ops schema + mv_owner role + refresh log table
+-- SECTION 0: Ensure referenced tables exist
+-- The original views referenced these lazily (views don't validate),
+-- but MVs execute the query at creation time.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS recipes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid NOT NULL,
+  menu_item_name text NOT NULL,
+  selling_price numeric,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS stock_counts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid NOT NULL,
+  location_id uuid NOT NULL,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  status text NOT NULL DEFAULT 'draft',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS stock_count_lines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  stock_count_id uuid NOT NULL REFERENCES stock_counts(id),
+  inventory_item_id uuid NOT NULL,
+  opening_qty numeric,
+  deliveries_qty numeric,
+  transfers_net_qty numeric,
+  closing_qty numeric,
+  used_qty numeric,
+  sales_qty numeric,
+  variance_qty numeric,
+  batch_balance numeric,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- SECTION 1: ops schema + refresh log table
 -- ============================================================
 
 CREATE SCHEMA IF NOT EXISTS ops;
-
--- Dedicated role that owns all MVs (required for REFRESH)
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'mv_owner') THEN
-    CREATE ROLE mv_owner NOLOGIN;
-  END IF;
-END $$;
-
-GRANT USAGE ON SCHEMA public TO mv_owner;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO mv_owner;
 
 CREATE TABLE ops.mv_refresh_log (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -31,9 +65,9 @@ CREATE TABLE ops.mv_refresh_log (
   metadata jsonb
 );
 
-GRANT USAGE ON SCHEMA ops TO mv_owner, service_role, authenticated;
+GRANT USAGE ON SCHEMA ops TO service_role, authenticated;
 GRANT SELECT ON ops.mv_refresh_log TO authenticated;
-GRANT ALL ON ops.mv_refresh_log TO service_role, mv_owner;
+GRANT ALL ON ops.mv_refresh_log TO service_role;
 
 -- ============================================================
 -- SECTION 2: Materialized Views + Wrapper Views
@@ -85,7 +119,6 @@ GROUP BY o.org_id, o.location_id,
 CREATE UNIQUE INDEX idx_product_sales_daily_unified_mv_pk
   ON product_sales_daily_unified_mv (org_id, location_id, day, product_id);
 
-ALTER MATERIALIZED VIEW product_sales_daily_unified_mv OWNER TO mv_owner;
 GRANT SELECT ON product_sales_daily_unified_mv TO anon, authenticated;
 
 -- Wrapper view preserves existing query contract
@@ -121,7 +154,6 @@ GROUP BY o.org_id, o.location_id,
 CREATE UNIQUE INDEX idx_sales_hourly_unified_mv_pk
   ON sales_hourly_unified_mv (org_id, location_id, hour_bucket);
 
-ALTER MATERIALIZED VIEW sales_hourly_unified_mv OWNER TO mv_owner;
 GRANT SELECT ON sales_hourly_unified_mv TO anon, authenticated;
 
 CREATE OR REPLACE VIEW sales_hourly_unified AS
@@ -172,7 +204,6 @@ LEFT JOIN location_settings ls
 CREATE UNIQUE INDEX idx_mart_kpi_daily_mv_pk
   ON mart_kpi_daily_mv (org_id, location_id, date);
 
-ALTER MATERIALIZED VIEW mart_kpi_daily_mv OWNER TO mv_owner;
 GRANT SELECT ON mart_kpi_daily_mv TO anon, authenticated;
 
 CREATE OR REPLACE VIEW mart_kpi_daily AS
@@ -180,6 +211,9 @@ SELECT * FROM mart_kpi_daily_mv;
 GRANT SELECT ON mart_kpi_daily TO anon, authenticated;
 
 -- 2e. mart_sales_category_daily_mv
+-- COGS: estimated via default_cogs_percent (recipe_ingredients table lacks
+-- a quantity column, so recipe-based costing is not yet available).
+-- When recipe costing is added, refresh the MV definition.
 CREATE MATERIALIZED VIEW mart_sales_category_daily_mv AS
 SELECT
   p.org_id,
@@ -190,30 +224,14 @@ SELECT
   p.product_category AS category,
   p.units_sold,
   p.net_sales,
-  COALESCE(
-    (SELECT SUM(ri.quantity * ii.last_cost)
-     FROM recipes r
-     JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-     JOIN inventory_items ii ON ii.id = ri.inventory_item_id
-     WHERE r.menu_item_name = p.product_name
-       AND r.group_id = p.org_id
-    ) * p.units_sold,
-    p.net_sales * COALESCE(ls.default_cogs_percent, 30) / 100.0
-  ) AS cogs,
-  CASE
-    WHEN EXISTS (
-      SELECT 1 FROM recipes r
-      WHERE r.menu_item_name = p.product_name AND r.group_id = p.org_id
-    ) THEN 'recipe'
-    ELSE 'estimated'
-  END AS cogs_source
+  (p.net_sales * COALESCE(ls.default_cogs_percent, 30) / 100.0) AS cogs,
+  'estimated'::text AS cogs_source
 FROM product_sales_daily_unified p
 LEFT JOIN location_settings ls ON ls.location_id = p.location_id;
 
 CREATE UNIQUE INDEX idx_mart_sales_category_daily_mv_pk
   ON mart_sales_category_daily_mv (org_id, location_id, date, product_id);
 
-ALTER MATERIALIZED VIEW mart_sales_category_daily_mv OWNER TO mv_owner;
 GRANT SELECT ON mart_sales_category_daily_mv TO anon, authenticated;
 
 CREATE OR REPLACE VIEW mart_sales_category_daily AS
@@ -221,7 +239,11 @@ SELECT * FROM mart_sales_category_daily_mv;
 GRANT SELECT ON mart_sales_category_daily TO anon, authenticated;
 
 -- ============================================================
--- SECTION 3: Refresh function (SECURITY DEFINER, owned by mv_owner)
+-- SECTION 3: Refresh function (SECURITY DEFINER)
+--
+-- In Supabase managed PostgreSQL, postgres owns all MVs.
+-- SECURITY DEFINER ensures the function runs as postgres
+-- regardless of who calls it (service_role via Edge Function).
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION ops.refresh_all_mvs(p_triggered_by text DEFAULT 'manual')
@@ -277,7 +299,15 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Own the function by mv_owner so SECURITY DEFINER runs as mv_owner
-ALTER FUNCTION ops.refresh_all_mvs(text) OWNER TO mv_owner;
--- Allow service_role to call it (via Edge Function)
+-- Allow service_role and authenticated to call the refresh function
 GRANT EXECUTE ON FUNCTION ops.refresh_all_mvs(text) TO service_role;
+GRANT EXECUTE ON FUNCTION ops.refresh_all_mvs(text) TO authenticated;
+
+-- Public wrapper so Supabase REST API / client.rpc() can reach it
+CREATE OR REPLACE FUNCTION public.refresh_all_mvs(p_triggered_by text DEFAULT 'manual')
+RETURNS jsonb AS $$
+  SELECT ops.refresh_all_mvs(p_triggered_by);
+$$ LANGUAGE sql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.refresh_all_mvs(text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.refresh_all_mvs(text) TO authenticated;
