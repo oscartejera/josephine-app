@@ -326,20 +326,22 @@ export function useInventoryData(
     const theoreticalCOGS = (cogsRows || []).reduce((sum, r) => sum + (r.cogs_amount || 0), 0);
 
     const totalWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
-    const actualCOGS = theoreticalCOGS + totalWaste * 0.6;
+    // Actual COGS = theoretical + waste (no arbitrary multiplier)
+    const actualCOGS = theoreticalCOGS + totalWaste;
 
     const theoreticalGP = totalSales - theoreticalCOGS;
     const actualGP = totalSales - actualCOGS;
     const gapCOGS = actualCOGS - theoreticalCOGS;
 
+    // Accounted waste = waste events; unaccounted = gap beyond waste events
     const accountedWaste = totalWaste;
-    const unaccountedWaste = Math.max(0, gapCOGS - accountedWaste) * 0.7;
-    const surplus = Math.max(0, gapCOGS - accountedWaste - unaccountedWaste);
+    const unaccountedWaste = Math.max(0, gapCOGS - accountedWaste);
+    const surplus = 0;
 
     setMetrics({
       totalSales,
-      assignedSales: totalSales * 0.85,
-      unassignedSales: totalSales * 0.15,
+      assignedSales: totalSales,
+      unassignedSales: 0,
       theoreticalCOGS,
       theoreticalCOGSPercent: totalSales > 0 ? (theoreticalCOGS / totalSales) * 100 : 0,
       actualCOGS,
@@ -373,7 +375,7 @@ export function useInventoryData(
 
       const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
       existing.theoretical += row.cogs || 0;
-      existing.actual += (row.cogs || 0) * 1.05; // Actual = theoretical + 5% variance
+      existing.actual += row.cogs || 0;
       categoryMap.set(mappedCat, existing);
     });
 
@@ -452,7 +454,7 @@ export function useInventoryData(
       const locSales = salesByLoc.get(loc.id) || 0;
       const locTheoreticalCOGS = cogsByLoc.get(loc.id) || 0;
       const locWaste = (wasteByLoc.get(loc.id)?.accounted || 0);
-      const locActualCOGS = locTheoreticalCOGS + locWaste * 0.6;
+      const locActualCOGS = locTheoreticalCOGS + locWaste;
       const locVariance = locActualCOGS - locTheoreticalCOGS;
       
       return {
