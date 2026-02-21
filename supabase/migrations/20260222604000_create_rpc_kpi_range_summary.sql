@@ -83,7 +83,9 @@ BEGIN
     'labour_hours', CASE WHEN l.total_hours > 0 THEN l.total_hours ELSE null END,
     'cogs', c.total_cogs,
     'col_percent', CASE WHEN s.total_sales > 0 THEN ROUND((l.total_cost / s.total_sales) * 100, 1) ELSE null END,
-    'gp_percent', CASE WHEN s.total_sales > 0 THEN ROUND(((s.total_sales - c.total_cogs) / s.total_sales) * 100, 1) ELSE null END
+    'gp_percent', CASE WHEN s.total_sales > 0 THEN ROUND(((s.total_sales - c.total_cogs) / s.total_sales) * 100, 1) ELSE null END,
+    'cogs_source_mixed', false,
+    'labour_source_mixed', false
   )
   INTO v_current
   FROM sales s, labour l, cogs c;
