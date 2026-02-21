@@ -84,10 +84,10 @@ const generateMockItems = () => {
     const categoryList = categories[type];
     const category = categoryList[i % categoryList.length];
     const supplier = suppliers[i % suppliers.length];
-    
+
     const basePrice = type === 'Food' ? 15 + Math.random() * 40 :
-                      type === 'Beverage' ? 8 + Math.random() * 30 :
-                      5 + Math.random() * 25;
+      type === 'Beverage' ? 8 + Math.random() * 30 :
+        5 + Math.random() * 25;
 
     items.push({
       id: String(id++),
@@ -137,16 +137,16 @@ export default function InventoryItems() {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Map to UI format
-        const mapped = data.map(item => ({
+        // Map to UI format (cast to any for columns not in generated types)
+        const mapped = (data as any[]).map((item: any) => ({
           id: item.id,
           name: item.name,
           type: item.type || 'Food',
-          category: item.category_name || 'Other',
-          supplier: 'Demo Supplier', // TODO: Join with suppliers
-          orderUnit: item.order_unit || 'kg',
-          orderQty: item.order_unit_qty || 1,
-          price: item.price || 0,
+          category: item.category_name || item.category || 'Other',
+          supplier: 'Demo Supplier',
+          orderUnit: item.order_unit || item.unit || 'kg',
+          orderQty: item.pack_size || 1,
+          price: item.price || item.last_cost || 0,
           vatRate: item.vat_rate || 10,
         }));
         setItems(mapped);
@@ -204,7 +204,7 @@ export default function InventoryItems() {
   // Export to PDF
   const handleExportPDF = () => {
     toast.info('Generating PDF...');
-    
+
     // Simple CSV export for now (PDF library would add ~200KB)
     const headers = ['Name', 'Type', 'Category', 'Supplier', 'Order Unit', 'Price', 'VAT Rate'];
     const rows = filteredItems.map(item => [
@@ -249,7 +249,7 @@ export default function InventoryItems() {
             <Plus className="h-4 w-4 mr-2" />
             Add item
           </Button>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -284,11 +284,13 @@ export default function InventoryItems() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="Pescados y Mariscos">Pescados y Mariscos</SelectItem>
-            <SelectItem value="Charcutería">Charcutería</SelectItem>
-            <SelectItem value="Secos">Secos</SelectItem>
-            <SelectItem value="Cervezas">Cervezas</SelectItem>
-            <SelectItem value="Vinos">Vinos</SelectItem>
+            <SelectItem value="Carnes">Carnes</SelectItem>
+            <SelectItem value="Pescados">Pescados</SelectItem>
+            <SelectItem value="Verduras">Verduras</SelectItem>
+            <SelectItem value="Lácteos">Lácteos</SelectItem>
+            <SelectItem value="Despensa">Despensa</SelectItem>
+            <SelectItem value="Aceites">Aceites</SelectItem>
+            <SelectItem value="Bebidas">Bebidas</SelectItem>
             <SelectItem value="Limpieza">Limpieza</SelectItem>
           </SelectContent>
         </Select>
@@ -377,22 +379,22 @@ export default function InventoryItems() {
           <div className="text-sm text-muted-foreground">
             {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length}
           </div>
-          
+
           <div className="flex items-center gap-1">
             {currentPage > 1 && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8"
                 onClick={handlePrevPage}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
             )}
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
+
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8"
               onClick={handleNextPage}
               disabled={currentPage >= totalPages}
