@@ -50,6 +50,8 @@ const SquareOAuthCallback = lazy(() => import("@/pages/integrations/SquareOAuthC
 const InventoryItems = lazy(() => import("@/pages/inventory-setup/InventoryItems"));
 const RecipesPage = lazy(() => import("@/pages/inventory-setup/RecipesPage"));
 const RecipeDetailPage = lazy(() => import("@/pages/inventory-setup/RecipeDetailPage"));
+const WasteEntryPage = lazy(() => import("@/pages/operations/WasteEntryPage"));
+const StockAuditPage = lazy(() => import("@/pages/operations/StockAuditPage"));
 const DebugDataCoherence = lazy(() => import("@/pages/DebugDataCoherence"));
 
 // Team (Employee Portal) — lazy loaded
@@ -188,6 +190,10 @@ function AppRoutes() {
           <Route path="/inventory-setup/items" element={<InventoryItems />} />
           <Route path="/inventory-setup/recipes" element={<RecipesPage />} />
           <Route path="/inventory-setup/recipes/:id" element={<RecipeDetailPage />} />
+
+          {/* Operations */}
+          <Route path="/operations/waste-entry" element={<WasteEntryPage />} />
+          <Route path="/operations/stock-audit" element={<StockAuditPage />} />
 
           {/* Settings */}
           <Route path="/settings" element={<SettingsPage />} />

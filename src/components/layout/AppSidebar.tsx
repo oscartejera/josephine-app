@@ -28,6 +28,7 @@ import {
   MapPin,
   Check,
   ClipboardList,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -380,6 +381,33 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           >
             <ClipboardList className="h-4 w-4 shrink-0" />
             {!collapsed && <span>Escandallos</span>}
+          </Button>
+
+          {/* Operaciones */}
+          <Button
+            variant={location.pathname === '/operations/waste-entry' ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname === '/operations/waste-entry' && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/operations/waste-entry')}
+          >
+            <Trash2 className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Mermas</span>}
+          </Button>
+
+          <Button
+            variant={location.pathname === '/operations/stock-audit' ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname === '/operations/stock-audit' && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/operations/stock-audit')}
+          >
+            <ClipboardCheck className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Auditoría Stock</span>}
           </Button>
 
           {/* Integrations */}

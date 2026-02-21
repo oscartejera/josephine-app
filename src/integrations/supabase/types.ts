@@ -1708,6 +1708,69 @@ export type Database = {
           },
         ]
       }
+      inventory_counts: {
+        Row: {
+          count_date: string
+          counted_by: string | null
+          created_at: string | null
+          id: string
+          item_id: string
+          location_id: string
+          notes: string | null
+          org_id: string
+          stock_actual: number
+          stock_expected: number
+          unit_cost: number | null
+          variance: number
+          variance_pct: number
+        }
+        Insert: {
+          count_date?: string
+          counted_by?: string | null
+          created_at?: string | null
+          id?: string
+          item_id: string
+          location_id: string
+          notes?: string | null
+          org_id: string
+          stock_actual?: number
+          stock_expected?: number
+          unit_cost?: number | null
+          variance?: number
+          variance_pct?: number
+        }
+        Update: {
+          count_date?: string
+          counted_by?: string | null
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          location_id?: string
+          notes?: string | null
+          org_id?: string
+          stock_actual?: number
+          stock_expected?: number
+          unit_cost?: number | null
+          variance?: number
+          variance_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_counts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_item_location: {
         Row: {
           item_id: string
@@ -5649,6 +5712,19 @@ export type Database = {
         Args: { p_org_id: string; p_reason?: string }
         Returns: string
       }
+      get_dead_stock: {
+        Args: { p_days?: number; p_location_id?: string; p_org_id: string }
+        Returns: {
+          category: string
+          days_idle: number
+          item_id: string
+          item_name: string
+          last_cost: number
+          last_movement_at: string
+          on_hand: number
+          stock_value: number
+        }[]
+      }
       get_forecast_items_mix_unified: {
         Args: {
           p_from: string
@@ -5747,6 +5823,26 @@ export type Database = {
           location_name: string
           role_id: string
           role_name: string
+        }[]
+      }
+      get_variance_summary: {
+        Args: {
+          p_from_date?: string
+          p_location_id?: string
+          p_org_id: string
+          p_to_date?: string
+        }
+        Returns: {
+          category: string
+          count_date: string
+          financial_loss: number
+          item_id: string
+          item_name: string
+          stock_actual: number
+          stock_expected: number
+          unit_cost: number
+          variance: number
+          variance_pct: number
         }[]
       }
       hourly_profile_pct_sum: {
