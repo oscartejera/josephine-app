@@ -1436,7 +1436,12 @@ async function main() {
   }
 
   await batchUpsert('forecast_runs', forecastRuns, { onConflict: 'id' });
-  await batchUpsert('forecast_points', forecastPoints, { batchSize: 500, onConflict: 'forecast_run_id,org_id,location_id,day' });
+  // forecast_points has no unique constraint — use plain insert
+  {
+    const { error, count } = await supabase.from('forecast_points').insert(forecastPoints, { count: 'exact' });
+    if (error) console.error(`  forecast_points error: ${error.message}`);
+    else console.log(`  forecast_points: ${count ?? forecastPoints.length}/${forecastPoints.length} rows`);
+  }
   await batchUpsert('forecast_daily_metrics', forecastMetricRows, { batchSize: 500 });
 
   console.log('');
