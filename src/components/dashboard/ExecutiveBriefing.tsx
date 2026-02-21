@@ -61,6 +61,7 @@ function generateLocalBriefing(
                 type: 'warning',
                 message: `Ventas ${salesVar.toFixed(0)}% por debajo del presupuesto`,
             });
+            recommendations.push(`Evalúa acciones comerciales en ${loc.name}: promociones, eventos o ajustes de carta para recuperar ventas.`);
         }
 
         if (labourVar > 10) {
@@ -69,6 +70,11 @@ function generateLocalBriefing(
                 type: 'warning',
                 message: `Coste laboral +${labourVar.toFixed(0)}% sobre presupuesto`,
             });
+            if (labourVar > 30) {
+                recommendations.push(`⚠️ ${loc.name}: coste laboral +${labourVar.toFixed(0)}% sobre presupuesto. Revisa horas extra, turnos innecesarios y ajusta la planificación semanal urgentemente.`);
+            } else {
+                recommendations.push(`${loc.name}: revisa las horas programadas vs demanda prevista. Considera ajustar turnos para reducir el sobrecoste laboral del +${labourVar.toFixed(0)}%.`);
+            }
         }
     });
 
@@ -226,8 +232,8 @@ export function ExecutiveBriefing() {
                     <div className="space-y-1.5">
                         {briefing.alerts.slice(0, 3).map((alert, i) => (
                             <div key={i} className={`flex items-start gap-2 text-xs px-2.5 py-1.5 rounded ${alert.type === 'critical'
-                                    ? 'bg-red-50 text-red-700 border border-red-100'
-                                    : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                ? 'bg-red-50 text-red-700 border border-red-100'
+                                : 'bg-amber-50 text-amber-700 border border-amber-100'
                                 }`}>
                                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                                 <span><strong>{alert.location}:</strong> {alert.message}</span>
