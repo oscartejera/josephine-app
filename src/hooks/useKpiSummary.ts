@@ -30,5 +30,6 @@ export function useKpiSummary(from: string, to: string) {
     },
     enabled: !!orgId && !!from && !!to && locationIds.length > 0,
     staleTime: 5 * 60 * 1000,
+    retry: false, // Don't retry on 404 — show inline error immediately
   });
 }
