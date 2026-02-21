@@ -29,16 +29,16 @@ BEGIN
           v_emp.emp_id,
           v_emp.location_id,
           v_dow,
-          CASE
-            WHEN v_dow IN (0) THEN '10:00' -- Sunday: later start
-            ELSE '09:00'                    -- Mon-Sat: standard
-          END,
-          CASE
-            WHEN v_dow IN (5, 6) THEN '01:00' -- Fri/Sat: late close
-            WHEN v_dow = 0 THEN '22:00'       -- Sunday: early close
-            ELSE '23:30'                       -- Mon-Thu: standard
-          END,
-          true -- Available by default
+          (CASE
+            WHEN v_dow IN (0) THEN '10:00'
+            ELSE '09:00'
+          END)::time,
+          (CASE
+            WHEN v_dow IN (5, 6) THEN '01:00'
+            WHEN v_dow = 0 THEN '22:00'
+            ELSE '23:30'
+          END)::time,
+          true
         );
       END IF;
     END LOOP;
