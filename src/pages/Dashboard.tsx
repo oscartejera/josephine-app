@@ -143,27 +143,8 @@ export default function Dashboard() {
     );
   }
 
-  // Show error fallback if data fetch failed
-  if (isError) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-2xl font-display font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
-        </div>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertCircle className="h-10 w-10 text-destructive mb-3" />
-            <p className="text-lg font-medium">Error al cargar el dashboard</p>
-            <p className="text-sm text-muted-foreground mt-1">{kpiError instanceof Error ? kpiError.message : 'Error al cargar datos'}</p>
-            <Button variant="outline" className="mt-4" onClick={() => refetch()}>
-              Reintentar
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // KPI error is now non-blocking — show inline warning instead of full-page error
+  const kpiHasError = isError;
 
   // Show CTA if no locations are configured
   if (!appLoading && accessibleLocations.length === 0 && profile?.group_id) {
@@ -198,6 +179,22 @@ export default function Dashboard() {
 
       {/* Executive Briefing — AI Morning Summary */}
       <ExecutiveBriefing />
+
+      {/* Inline KPI error warning (non-blocking) */}
+      {kpiHasError && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="flex items-center gap-3 py-3">
+            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-800">KPIs temporalmente no disponibles</p>
+              <p className="text-xs text-amber-600">{kpiError instanceof Error ? kpiError.message : 'Error al cargar indicadores'}</p>
+            </div>
+            <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetch()}>
+              Reintentar
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
