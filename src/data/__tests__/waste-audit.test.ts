@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 /**
- * Integration tests for WISK waste + stock audit data flows.
+ * Integration tests for waste + stock audit data flows.
  *
  * Flow 1: Log waste → verify stock_movements insert + unit_cost frozen
  * Flow 2: Submit physical count → verify inventory_counts insert + variance calc
@@ -187,7 +187,7 @@ describe('E2E Flow: Physical Count with Variance Calculation', () => {
 // ─── Flow 3: Reason Code Validation ──────────────────────────────────────────
 
 describe('Waste Reason Codes', () => {
-    it('defines all 8 WISK reason codes', () => {
+    it('defines all 8 standard reason codes', () => {
         const expectedReasons = [
             'spillage', 'expiry', 'kitchen_error', 'courtesy',
             'theft', 'broken', 'end_of_day', 'other'

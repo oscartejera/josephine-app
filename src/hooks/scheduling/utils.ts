@@ -66,7 +66,7 @@ export function fixEncoding(name: string): string {
         .replace(/Ã'/g, 'Ñ');
 }
 
-// Nory-style department mapping: Kitchen, Front of House, Bar, Management
+// Professional department mapping: Kitchen, Front of House, Bar, Management
 export function getDepartment(roleName: string): string {
     const r = (roleName || '').toLowerCase();
     // Kitchen (BOH)

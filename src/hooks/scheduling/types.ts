@@ -109,7 +109,7 @@ export interface ScheduleData {
     timeOffConflicts: number;
     // Missing payroll flag
     missingPayrollCount: number;
-    // Nory-style metrics
+    // Efficiency metrics
     splh: number;   // Sales Per Labor Hour
     oplh: number;   // Orders Per Labor Hour (estimated)
     scheduledColPercent: number; // COL% based on scheduled shifts (not forecast)

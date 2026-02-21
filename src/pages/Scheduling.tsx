@@ -4,6 +4,7 @@ import { startOfWeek, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import { ArrowRightLeft, AlertTriangle } from 'lucide-react';
 import { useSchedulingSupabase, ViewMode, Shift, resolveLocationId } from '@/hooks/useSchedulingSupabase';
+import { useScheduleEfficiency } from '@/hooks/useScheduleEfficiency';
 import { useApp } from '@/contexts/AppContext';
 import {
   SchedulingHeader,
@@ -53,16 +54,16 @@ function generatePlaceholderKPIs(weekStart: Date) {
 
 export default function Scheduling() {
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const { selectedLocationId, accessibleLocations } = useApp();
-  
+
   // Parse URL params - location comes from global context now
   const locationIdParam = selectedLocationId !== 'all' ? selectedLocationId : searchParams.get('location');
   const startParam = searchParams.get('start');
-  const weekStart = startParam 
+  const weekStart = startParam
     ? startOfWeek(parseISO(startParam), { weekStartsOn: 1 })
     : startOfWeek(new Date(), { weekStartsOn: 1 });
-  
+
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('departments');
   const [isCreating, setIsCreating] = useState(false);
@@ -74,10 +75,10 @@ export default function Scheduling() {
     shift: Shift;
     employeeName: string;
   } | null>(null);
-  
+
   // Track if we've already resolved location to avoid infinite loops
   const [locationResolved, setLocationResolved] = useState(false);
-  
+
   // First, fetch locations to resolve the location param
   const {
     data,
@@ -98,7 +99,7 @@ export default function Scheduling() {
     approveSwapRequest,
     rejectSwapRequest,
   } = useSchedulingSupabase(null, weekStart); // Initial call to get locations
-  
+
   // Resolve location ID - prefer global context, fallback to URL param or first location
   const resolvedLocationId = useMemo(() => {
     if (locations.length === 0) return null;
@@ -109,10 +110,20 @@ export default function Scheduling() {
     // Otherwise resolve from URL param or default to first
     return resolveLocationId(locationIdParam, locations);
   }, [locations, locationIdParam, selectedLocationId]);
-  
+
   // Get the actual scheduling data with the resolved location
   const schedulingData = useSchedulingSupabase(resolvedLocationId, weekStart);
-  
+
+  // Efficiency engine
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const { data: efficiency } = useScheduleEfficiency(
+    resolvedLocationId,
+    weekStart,
+    weekEnd,
+    !!resolvedLocationId && (resolvedLocationId ? schedulingData.hasSchedule : false)
+  );
+
   // Use resolved data
   const actualData = resolvedLocationId ? schedulingData.data : data;
   const actualHasSchedule = resolvedLocationId ? schedulingData.hasSchedule : hasSchedule;
@@ -128,13 +139,13 @@ export default function Scheduling() {
   const actualCreateSwapRequest = resolvedLocationId ? schedulingData.createSwapRequest : createSwapRequest;
   const actualApproveSwapRequest = resolvedLocationId ? schedulingData.approveSwapRequest : approveSwapRequest;
   const actualRejectSwapRequest = resolvedLocationId ? schedulingData.rejectSwapRequest : rejectSwapRequest;
-  
+
   // Resolve location ID and update URL when locations are loaded
   useEffect(() => {
     if (locations.length === 0 || locationResolved) return;
-    
+
     const newResolvedId = resolveLocationId(locationIdParam, locations);
-    
+
     if (newResolvedId && newResolvedId !== locationIdParam) {
       // URL has legacy/invalid location, redirect to UUID
       const params = new URLSearchParams(searchParams);
@@ -152,78 +163,78 @@ export default function Scheduling() {
       setLocationResolved(true);
     }
   }, [locations, locationIdParam, searchParams, setSearchParams, locationResolved]);
-  
+
   // Reset resolution flag when location param changes externally
   useEffect(() => {
     setLocationResolved(false);
   }, [locationIdParam]);
-  
+
   const currentLocationId = resolvedLocationId || '';
-  
+
   // Placeholder KPIs for empty state
   const placeholderKPIs = useMemo(() => generatePlaceholderKPIs(weekStart), [weekStart]);
-  
+
   // Handlers
   const handleWeekChange = useCallback((newWeekStart: Date) => {
     const params = new URLSearchParams(searchParams);
     params.set('start', newWeekStart.toISOString().split('T')[0]);
     setSearchParams(params);
   }, [searchParams, setSearchParams]);
-  
+
   const handleLocationChange = useCallback((newLocationId: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('location', newLocationId);
     setSearchParams(params);
   }, [searchParams, setSearchParams]);
-  
+
   const handleCreateSchedule = useCallback(async () => {
     setIsCreating(true);
     await actualCreateSchedule();
     setIsCreating(false);
     setShowToast(true);
   }, [actualCreateSchedule]);
-  
+
   const handleAccept = useCallback(() => {
     actualAcceptSchedule();
     setShowToast(false);
     toast.success('Schedule accepted');
   }, [actualAcceptSchedule]);
-  
+
   const handleUndo = useCallback(() => {
     actualUndoSchedule();
     setShowToast(false);
     toast.info('Schedule reverted');
   }, [actualUndoSchedule]);
-  
+
   const handlePublish = useCallback(async (emailBody: string) => {
     await actualPublishSchedule(emailBody);
     toast.success('Schedule published and notifications sent to all employees');
   }, [actualPublishSchedule]);
-  
+
   const handleInitiateSwap = useCallback((shift: Shift, employeeName: string) => {
     setSwapDialogData({ shift, employeeName });
   }, []);
-  
+
   const handleSubmitSwap = useCallback((targetShift: Shift, reason?: string) => {
     if (!swapDialogData) return;
     actualCreateSwapRequest(swapDialogData.shift, targetShift, reason);
     toast.success('Swap request sent for approval');
   }, [swapDialogData, actualCreateSwapRequest]);
-  
+
   const handleApproveSwap = useCallback((requestId: string) => {
     actualApproveSwapRequest(requestId);
     toast.success('Swap approved - shifts have been exchanged');
   }, [actualApproveSwapRequest]);
-  
+
   const handleRejectSwap = useCallback((requestId: string) => {
     actualRejectSwapRequest(requestId);
     toast.info('Swap request rejected');
   }, [actualRejectSwapRequest]);
-  
+
   // Get available shifts to swap with (other employees' shifts)
   const availableSwapShifts = useMemo(() => {
     if (!actualData || !swapDialogData) return [];
-    
+
     return actualData.shifts
       .filter(s => s.employeeId !== swapDialogData.shift.employeeId && !s.isOpen)
       .map(shift => ({
@@ -232,9 +243,9 @@ export default function Scheduling() {
       }))
       .filter(item => item.employee);
   }, [actualData, swapDialogData]);
-  
+
   const currentLocation = locations.find(l => l.id === currentLocationId) || locations[0];
-  
+
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
@@ -256,27 +267,28 @@ export default function Scheduling() {
         totalVarianceCost={actualData?.totalVarianceCost}
         splh={actualData?.splh}
         oplh={actualData?.oplh}
+        efficiency={efficiency}
       />
-      
+
       {/* Missing payroll warning */}
       {actualHasSchedule && actualData && actualData.missingPayrollCount > 0 && (
         <Alert variant="default" className="border-amber-200 bg-amber-50">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
-            Faltan datos de nómina para {actualData.missingPayrollCount} empleados. 
+            Faltan datos de nómina para {actualData.missingPayrollCount} empleados.
             <a href="/settings" className="underline ml-1 font-medium">
               Completa Settings → Payroll
             </a>
           </AlertDescription>
         </Alert>
       )}
-      
+
       {/* Controls row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ViewModeDropdown value={viewMode} onChange={setViewMode} />
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Swap requests button */}
           {actualHasSchedule && (
@@ -289,8 +301,8 @@ export default function Scheduling() {
               <ArrowRightLeft className="h-4 w-4 mr-2" />
               Swap Requests
               {actualPendingSwapRequests.length > 0 && (
-                <Badge 
-                  variant="destructive" 
+                <Badge
+                  variant="destructive"
                   className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
                 >
                   {actualPendingSwapRequests.length}
@@ -298,7 +310,7 @@ export default function Scheduling() {
               )}
             </Button>
           )}
-          
+
           {actualData && (
             <div className="text-sm text-muted-foreground">
               {actualData.employees.length} employees · {actualData.totalHours}h scheduled
@@ -306,31 +318,31 @@ export default function Scheduling() {
           )}
         </div>
       </div>
-      
+
       {/* Popular Shifts + Grid */}
       {actualHasSchedule && actualData && (
         <PopularShifts />
       )}
-      
+
       {actualHasSchedule && actualData ? (
-        <ScheduleGrid 
-          data={actualData} 
-          viewMode={viewMode} 
+        <ScheduleGrid
+          data={actualData}
+          viewMode={viewMode}
           positions={positions}
-          onMoveShift={actualMoveShift} 
+          onMoveShift={actualMoveShift}
           onAddShift={actualAddShift}
           onInitiateSwap={handleInitiateSwap}
         />
       ) : (
         <EmptyScheduleState weekStart={weekStart} dailyKPIs={placeholderKPIs} />
       )}
-      
+
       {/* Create schedule modal */}
       <CreateScheduleModal
         isOpen={isCreating}
         onComplete={() => setIsCreating(false)}
       />
-      
+
       {/* Accept/Undo toast */}
       <ScheduleToast
         isVisible={showToast}
@@ -338,7 +350,7 @@ export default function Scheduling() {
         onAccept={handleAccept}
         onUndo={handleUndo}
       />
-      
+
       {/* Publish modal */}
       <PublishModal
         isOpen={showPublishModal}
@@ -346,7 +358,7 @@ export default function Scheduling() {
         onConfirm={handlePublish}
         locationName={currentLocation?.name || 'Location'}
       />
-      
+
       {/* Swap shift dialog */}
       {swapDialogData && (
         <SwapShiftDialog
@@ -358,7 +370,7 @@ export default function Scheduling() {
           availableShifts={availableSwapShifts}
         />
       )}
-      
+
       {/* Swap requests panel */}
       <SwapRequestsPanel
         isOpen={showSwapPanel}
@@ -367,7 +379,7 @@ export default function Scheduling() {
         onApprove={handleApproveSwap}
         onReject={handleRejectSwap}
       />
-      
+
       {/* Schedule Settings Sheet */}
       <ScheduleSettingsSheet
         isOpen={showSettings}

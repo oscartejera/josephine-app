@@ -5651,6 +5651,14 @@ export type Database = {
       }
       bootstrap_demo: { Args: never; Returns: Json }
       bootstrap_demo_operational: { Args: { p_org_id: string }; Returns: Json }
+      calculate_schedule_efficiency: {
+        Args: {
+          p_location_id: string
+          p_week_end: string
+          p_week_start: string
+        }
+        Returns: Json
+      }
       claim_next_job: {
         Args: {
           p_provider?: Database["public"]["Enums"]["integration_provider"]

@@ -9,16 +9,16 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title: 'Analyzing orders forecast',
-    description: 'Our AI looks at past data (like OPLH) to forecast hourly orders, so you always know what to expect.',
+    title: 'Analizando pronóstico de ventas y SPLH histórico',
+    description: 'Josephine AI analiza datos de ventas pasadas y el forecast para proyectar la demanda por franja horaria.',
   },
   {
-    title: 'Checking optimal staffing levels',
-    description: 'It assigns the right people at the right time, keeping things smooth and efficient.',
+    title: 'Calculando niveles de dotación óptimos por estación',
+    description: 'Asigna a las personas adecuadas en el momento correcto, optimizando eficiencia y cobertura.',
   },
   {
-    title: 'Comparing with previous schedules',
-    description: 'No stress! It follows your labor rules, availability constraints, and regulations automatically.',
+    title: 'Verificando restricciones de disponibilidad y contratos',
+    description: 'Respeta automáticamente las normas laborales, la disponibilidad del equipo y las regulaciones vigentes.',
   },
 ];
 
@@ -30,44 +30,44 @@ interface CreateScheduleModalProps {
 export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  
+
   useEffect(() => {
     if (!isOpen) {
       setCurrentStep(0);
       setCompletedSteps([]);
       return;
     }
-    
+
     const stepDurations = [1400, 1600, 1500];
     let timeouts: NodeJS.Timeout[] = [];
-    
+
     let totalDelay = 0;
     stepDurations.forEach((duration, index) => {
       totalDelay += duration;
-      
+
       const timeout = setTimeout(() => {
         setCompletedSteps(prev => [...prev, index]);
         if (index < STEPS.length - 1) {
           setCurrentStep(index + 1);
         }
       }, totalDelay);
-      
+
       timeouts.push(timeout);
     });
-    
+
     // Complete after all steps
     const completeTimeout = setTimeout(() => {
       onComplete();
     }, totalDelay + 500);
     timeouts.push(completeTimeout);
-    
+
     return () => {
       timeouts.forEach(t => clearTimeout(t));
     };
   }, [isOpen, onComplete]);
-  
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
@@ -77,7 +77,7 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
         exit={{ opacity: 0 }}
         className="absolute inset-0 bg-background/80 backdrop-blur-sm"
       />
-      
+
       {/* Modal */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -93,15 +93,15 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
             <span className="text-sm font-medium text-primary">Powered by Josephine AI</span>
           </div>
         </div>
-        
+
         {/* Logo animation */}
         <div className="flex justify-center mb-8">
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.1, 1],
               rotate: [0, 5, -5, 0],
             }}
-            transition={{ 
+            transition={{
               duration: 2,
               repeat: Infinity,
               ease: "easeInOut"
@@ -111,30 +111,28 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
             <Sparkles className="h-8 w-8 text-primary-foreground" />
           </motion.div>
         </div>
-        
+
         {/* Steps */}
         <div className="space-y-4">
           {STEPS.map((step, index) => {
             const isCompleted = completedSteps.includes(index);
             const isCurrent = currentStep === index && !isCompleted;
-            
+
             return (
               <motion.div
                 key={index}
                 initial={{ opacity: 0.5 }}
-                animate={{ 
+                animate={{
                   opacity: isCurrent || isCompleted ? 1 : 0.5,
                 }}
-                className={`flex gap-4 p-4 rounded-xl transition-colors ${
-                  isCurrent ? 'bg-primary/5 border border-primary/20' : 
-                  isCompleted ? 'bg-muted/50' : ''
-                }`}
+                className={`flex gap-4 p-4 rounded-xl transition-colors ${isCurrent ? 'bg-primary/5 border border-primary/20' :
+                    isCompleted ? 'bg-muted/50' : ''
+                  }`}
               >
                 {/* Step indicator */}
-                <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                  isCompleted ? 'bg-[hsl(var(--success))]' :
-                  isCurrent ? 'bg-primary' : 'bg-muted'
-                }`}>
+                <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${isCompleted ? 'bg-[hsl(var(--success))]' :
+                    isCurrent ? 'bg-primary' : 'bg-muted'
+                  }`}>
                   {isCompleted ? (
                     <Check className="h-4 w-4 text-white" />
                   ) : isCurrent ? (
@@ -147,12 +145,11 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
                     <div className="w-2 h-2 bg-muted-foreground/30 rounded-full" />
                   )}
                 </div>
-                
+
                 {/* Step content */}
                 <div className="flex-1">
-                  <h3 className={`font-medium text-sm ${
-                    isCompleted || isCurrent ? 'text-foreground' : 'text-muted-foreground'
-                  }`}>
+                  <h3 className={`font-medium text-sm ${isCompleted || isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                    }`}>
                     {step.title}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Loader2, Clock, TrendingUp, DollarSign } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Loader2, Clock, TrendingUp, DollarSign, AlertTriangle, Lightbulb } from 'lucide-react';
 import { format, addWeeks, subWeeks, endOfWeek, getWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +42,13 @@ interface SchedulingHeaderProps {
   totalVarianceCost?: number;
   splh?: number;
   oplh?: number;
+  // Efficiency engine data
+  efficiency?: {
+    over_budget: boolean;
+    budget_variance_pct: number;
+    target_cost: number;
+    insights: Array<{ type: string; severity: string; message: string }>;
+  } | null;
 }
 
 export function SchedulingHeader({
@@ -62,14 +69,15 @@ export function SchedulingHeader({
   splh,
   oplh,
   onOpenSettings,
+  efficiency,
 }: SchedulingHeaderProps) {
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const weekLabel = `${format(weekStart, 'd')} - ${format(weekEnd, 'd MMM')}`;
   const weekNum = getWeek(weekStart, { weekStartsOn: 1 });
-  
-  const colOnTarget = scheduledColPercent !== undefined && targetColPercent !== undefined 
+
+  const colOnTarget = scheduledColPercent !== undefined && targetColPercent !== undefined
     && scheduledColPercent <= targetColPercent + 2;
-  
+
   return (
     <div className="space-y-4">
       {/* Breadcrumb */}
@@ -86,8 +94,8 @@ export function SchedulingHeader({
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      
-      {/* Main header row — exact Nory layout */}
+
+      {/* Main header row — budget KPI strip */}
       {/* "Week 7 / Projected €24,100  32% / €8,200 / 513h  Target 32% / €7,712" */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -113,26 +121,26 @@ export function SchedulingHeader({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          
-          {/* KPI strip — Nory exact format */}
+
+          {/* KPI strip */}
           <div className="flex items-center gap-1.5 text-sm">
             {/* Week N */}
             <span className="text-muted-foreground">Week {weekNum}</span>
-            
+
             {hasSchedule && projectedSales !== undefined && projectedSales > 0 && (
               <>
                 {/* / Projected €{SUM(forecast_sales)} */}
                 <span className="text-muted-foreground">/</span>
                 <span className="text-muted-foreground">Projected</span>
                 <span className="font-semibold">€{Math.round(projectedSales).toLocaleString()}</span>
-                
+
                 {/* {shiftsCost / projectedSales * 100}% / €{SUM(planned_cost)} / {SUM(planned_hours)}h */}
                 {scheduledColPercent !== undefined && totalShiftsCost !== undefined && totalShiftsHours !== undefined && totalShiftsHours > 0 && (
                   <span className={cn("font-semibold ml-3", colOnTarget ? 'text-emerald-600' : 'text-amber-600')}>
                     {scheduledColPercent}% / €{Math.round(totalShiftsCost).toLocaleString()} / {Math.round(totalShiftsHours)}h
                   </span>
                 )}
-                
+
                 {/* Target {location_settings.target_col_percent}% / €{projectedSales * target / 100} */}
                 {targetColPercent !== undefined && (
                   <span className="text-muted-foreground ml-3">
@@ -143,14 +151,14 @@ export function SchedulingHeader({
             )}
           </div>
         </div>
-        
+
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           {/* Status badge */}
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
             Draft
           </Badge>
-          
+
           <Button
             onClick={onCreateSchedule}
             disabled={isCreating}
@@ -169,11 +177,11 @@ export function SchedulingHeader({
               </>
             )}
           </Button>
-          
+
           <Button variant="outline">
             Templates
           </Button>
-          
+
           <Button
             onClick={onPublish}
             disabled={!hasSchedule}
@@ -181,7 +189,7 @@ export function SchedulingHeader({
           >
             Publish
           </Button>
-          
+
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -198,7 +206,7 @@ export function SchedulingHeader({
           </DropdownMenu>
         </div>
       </div>
-      
+
       {/* SPLH / OPLH metrics bar — only when schedule exists */}
       {hasSchedule && splh !== undefined && splh > 0 && (
         <div className="flex items-center gap-4 text-xs">
@@ -214,7 +222,7 @@ export function SchedulingHeader({
               Sales Per Labor Hour — €{projectedSales?.toLocaleString()} / {Math.round(totalShiftsHours || 0)}h
             </TooltipContent>
           </Tooltip>
-          
+
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-100 rounded-md cursor-default">
@@ -227,7 +235,7 @@ export function SchedulingHeader({
               Orders Per Labor Hour (estimated from avg check €25)
             </TooltipContent>
           </Tooltip>
-          
+
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 border border-border rounded-md cursor-default">
@@ -242,6 +250,54 @@ export function SchedulingHeader({
               Total scheduled labor hours for the week
             </TooltipContent>
           </Tooltip>
+        </div>
+      )}
+
+      {/* Budget Progress Bar — projected labor budget */}
+      {hasSchedule && totalShiftsCost !== undefined && totalShiftsCost > 0 && (
+        <div className="space-y-2">
+          {/* Progress bar */}
+          {(() => {
+            const target = efficiency?.target_cost || (projectedSales ? projectedSales * (targetColPercent || 22) / 100 : 0);
+            const pct = target > 0 ? Math.min((totalShiftsCost / target) * 100, 120) : 0;
+            const barColor = pct <= 95 ? 'bg-emerald-500' : pct <= 105 ? 'bg-amber-500' : 'bg-red-500';
+            const textColor = pct <= 95 ? 'text-emerald-600' : pct <= 105 ? 'text-amber-600' : 'text-red-600';
+            return (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[140px]">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  <span>Presupuesto Laboral</span>
+                </div>
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full transition-all duration-500", barColor)} style={{ width: `${Math.min(pct, 100)}%` }} />
+                </div>
+                <span className={cn("text-xs font-mono font-bold min-w-[80px] text-right", textColor)}>
+                  €{Math.round(totalShiftsCost).toLocaleString()} / €{Math.round(target).toLocaleString()}
+                </span>
+                <span className={cn("text-xs font-bold", textColor)}>
+                  {Math.round(pct)}%
+                </span>
+              </div>
+            );
+          })()}
+
+          {/* Actionable insights */}
+          {efficiency?.insights && efficiency.insights.length > 0 && (
+            <div className="space-y-1">
+              {efficiency.insights.slice(0, 2).map((insight, i) => (
+                <div key={i} className={cn(
+                  "flex items-start gap-2 text-xs px-3 py-2 rounded-md",
+                  insight.severity === 'critical' ? 'bg-red-50 text-red-700 border border-red-100' :
+                    insight.severity === 'warning' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                      'bg-blue-50 text-blue-700 border border-blue-100'
+                )}>
+                  {insight.severity === 'critical' ? <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" /> :
+                    <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0" />}
+                  <span>{insight.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

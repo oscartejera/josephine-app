@@ -194,7 +194,7 @@ export function useSchedulingSupabase(
     // Count employees missing payroll (no hourly_cost)
     const missingPayrollCount = employees.filter(e => e.hourlyRate === null).length;
 
-    // Nory-style metrics
+    // Efficiency metrics
     const splh = totalShiftsHours > 0
       ? Math.round((projectedSales / totalShiftsHours) * 100) / 100
       : 0;
@@ -235,7 +235,7 @@ export function useSchedulingSupabase(
       // Actual totals for past days
       totalActualSales,
       totalActualLaborCost,
-      // Nory-style metrics
+      // Efficiency metrics
       splh,
       oplh,
       scheduledColPercent,

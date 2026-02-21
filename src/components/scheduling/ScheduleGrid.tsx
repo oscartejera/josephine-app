@@ -58,7 +58,7 @@ interface CreateShiftTarget {
   dateStr: string;
 }
 
-// Nory-style color coding by role/department
+// Role-based color coding by department
 function getShiftColors(role: string): string {
   const r = role.toLowerCase();
   if (r === 'chef' || r === 'cocinero/a' || r === 'sous chef' || r === 'prep cook') {
@@ -79,15 +79,15 @@ function getShiftColors(role: string): string {
   return 'bg-primary/5 border-primary/20 text-foreground';
 }
 
-function ShiftCard({ 
-  shift, 
+function ShiftCard({
+  shift,
   isDragging,
   onDragStart,
   onDragEnd,
   draggable = true,
   onSwapClick,
   employeeName,
-}: { 
+}: {
   shift: Shift;
   isDragging?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
@@ -101,7 +101,7 @@ function ShiftCard({
     : getShiftColors(shift.role);
 
   const cardContent = (
-    <div 
+    <div
       className={cn(
         "px-2 py-1.5 rounded-md text-xs border cursor-grab active:cursor-grabbing transition-all",
         colorClass,
@@ -123,7 +123,7 @@ function ShiftCard({
       </div>
     </div>
   );
-  
+
   if (onSwapClick) {
     return (
       <ContextMenu>
@@ -139,7 +139,7 @@ function ShiftCard({
       </ContextMenu>
     );
   }
-  
+
   return cardContent;
 }
 
@@ -162,7 +162,7 @@ function DayOffCell() {
 function TimeOffCell({ type }: { type?: string }) {
   const icon = type === 'sick' ? '🤒' : type === 'vacation' ? '✈️' : '📋';
   const label = type === 'sick' ? 'Sick leave' : type === 'vacation' ? 'Vacation' : 'Time off';
-  
+
   return (
     <div className="flex items-center gap-1 px-2 py-1.5 bg-purple-50 rounded-md text-xs text-purple-600 border border-purple-200">
       <span>{icon} {label}</span>
@@ -189,14 +189,14 @@ function EmptyCell({ onClick }: { onClick: () => void }) {
   );
 }
 
-function DropZone({ 
-  isOver, 
+function DropZone({
+  isOver,
   canDrop,
   children,
   onDragOver,
   onDragLeave,
   onDrop,
-}: { 
+}: {
   isOver: boolean;
   canDrop: boolean;
   children: React.ReactNode;
@@ -226,7 +226,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
   const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);
   const [salesSort, setSalesSort] = useState<'none' | 'asc' | 'desc'>('none');
   const [colSort, setColSort] = useState<'none' | 'asc' | 'desc'>('none');
-  
+
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => ({
       date: addDays(data.weekStart, i),
@@ -235,11 +235,11 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
       dateStr: format(addDays(data.weekStart, i), 'yyyy-MM-dd'),
     }));
   }, [data.weekStart]);
-  
+
   const rows = useMemo((): GridRow[] => {
     // Group by view mode
     const grouping: Record<string, Employee[]> = {};
-    
+
     data.employees.forEach(emp => {
       let key: string;
       switch (viewMode) {
@@ -257,35 +257,35 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           key = emp.id;
           break;
       }
-      
+
       if (!grouping[key]) {
         grouping[key] = [];
       }
       grouping[key].push(emp);
     });
-    
+
     // Helper: create an employee GridRow (supports multiple shifts per day)
     const makeEmployeeRow = (emp: Employee): GridRow => {
       const shifts = days.map(day => {
         return data.shifts.filter(s => s.employeeId === emp.id && s.date === day.dateStr);
       });
-      
+
       const unavailableDays = days
         .map((_, i) => emp.availability[i.toString()] === 'unavailable' ? i : -1)
         .filter(i => i >= 0);
-      
+
       const dayOffDays = days
         .map((_, i) => emp.availability[i.toString()] === 'day_off' ? i : -1)
         .filter(i => i >= 0);
-      
+
       const timeOffDays = days
         .map((_, i) => emp.availability[i.toString()] === 'time_off' ? i : -1)
         .filter(i => i >= 0);
-      
+
       const preferredOffDays = days
         .map((_, i) => emp.availability[i.toString()] === 'preferred' ? i : -1)
         .filter(i => i >= 0);
-      
+
       const timeOffTypes: Record<number, string> = {};
       if (emp.timeOffInfo) {
         days.forEach((_, i) => {
@@ -295,7 +295,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           }
         });
       }
-      
+
       return {
         id: emp.id,
         type: 'employee',
@@ -317,10 +317,10 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
       return data.employees.map(makeEmployeeRow);
     } else {
       // Grouped views: header row per group + individual employee rows
-      // This shows all shifts clearly (like Nory) instead of 1 collapsed row
+      // This shows all shifts clearly (expanded view) instead of 1 collapsed row
       const result: GridRow[] = [];
-      
-      // Sort groups: Nory-style order (Management, Kitchen, Front of House, Bar)
+
+      // Sort groups: standard order (Management, Kitchen, Front of House, Bar)
       const deptOrder: Record<string, number> = { 'Management': 0, 'Kitchen': 1, 'Front of House': 2, 'Bar': 3 };
       const sortedGroups = Object.entries(grouping).sort(([a], [b]) => {
         if (viewMode === 'departments') {
@@ -328,10 +328,10 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
         }
         return a.localeCompare(b);
       });
-      
+
       for (const [group, groupEmployees] of sortedGroups) {
         const totalHours = groupEmployees.reduce((sum, e) => sum + e.weeklyHours, 0);
-        
+
         // Group header row
         result.push({
           id: `header-${group}`,
@@ -346,24 +346,24 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           timeOffTypes: {},
           preferredOffDays: [],
         });
-        
+
         // Individual employee rows under the header
         for (const emp of groupEmployees) {
           result.push(makeEmployeeRow(emp));
         }
       }
-      
+
       return result;
     }
   }, [data, viewMode, days]);
-  
+
   // Open shifts row (supports multiple open shifts per day)
   const openShiftsRow: GridRow = {
     id: 'open-shifts',
     label: 'Open shifts',
     sublabel: `${data.openShifts.length} shifts`,
     hours: data.openShifts.reduce((sum, s) => sum + s.hours, 0),
-    shifts: days.map(day => 
+    shifts: days.map(day =>
       data.openShifts.filter(s => s.date === day.dateStr)
     ),
     unavailableDays: [],
@@ -372,9 +372,9 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
     timeOffTypes: {},
     preferredOffDays: [],
   };
-  
+
   const weatherIcons = [Sun, Cloud, Sun, CloudRain, Sun, Sun, Cloud];
-  
+
   // Drag handlers
   const handleDragStart = useCallback((e: React.DragEvent, shift: Shift, employeeId: string) => {
     const dragPayload: DragData = {
@@ -387,12 +387,12 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
     e.dataTransfer.setData('application/json', JSON.stringify(dragPayload));
     e.dataTransfer.effectAllowed = 'move';
   }, []);
-  
+
   const handleDragEnd = useCallback(() => {
     setDragData(null);
     setDropTarget(null);
   }, []);
-  
+
   const handleDragOver = useCallback((e: React.DragEvent, employeeId: string, dayIndex: number, unavailable: boolean, dayOff: boolean) => {
     e.preventDefault();
     if (unavailable || dayOff) {
@@ -402,44 +402,44 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
     e.dataTransfer.dropEffect = 'move';
     setDropTarget({ employeeId, dayIndex });
   }, []);
-  
+
   const handleDragLeave = useCallback(() => {
     setDropTarget(null);
   }, []);
-  
+
   const handleDrop = useCallback((e: React.DragEvent, toEmployeeId: string, dayIndex: number, row: GridRow) => {
     e.preventDefault();
     setDropTarget(null);
-    
+
     if (row.unavailableDays.includes(dayIndex) || row.dayOffDays.includes(dayIndex)) {
       toast.error("Cannot assign shift - employee is unavailable");
       return;
     }
-    
+
     try {
       const payload = JSON.parse(e.dataTransfer.getData('application/json')) as DragData;
       const toDate = days[dayIndex].dateStr;
-      
+
       // Check if dropping to same position
       if (payload.fromEmployeeId === toEmployeeId && payload.fromDate === toDate) {
         return;
       }
-      
+
       // Call the move handler
       if (onMoveShift) {
         onMoveShift(payload.shiftId, toEmployeeId, toDate);
-        
+
         const employee = data.employees.find(e => e.id === toEmployeeId);
         const employeeName = employee?.name || 'employee';
         const dayName = days[dayIndex].dayName;
-        
+
         toast.success(`Shift moved to ${employeeName} on ${dayName}`);
       }
     } catch (err) {
       console.error('Drop error:', err);
     }
   }, [days, onMoveShift, data.employees]);
-  
+
   // Click handler for empty cells
   const handleEmptyCellClick = useCallback((employeeId: string, employeeName: string, dayIndex: number) => {
     const day = days[dayIndex];
@@ -450,17 +450,17 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
       dateStr: day.dateStr,
     });
   }, [days]);
-  
+
   // Handler for creating shift
   const handleCreateShift = useCallback((shiftData: { startTime: string; endTime: string; role: string }) => {
     if (!createShiftTarget || !onAddShift) return;
-    
+
     // Calculate hours
     const [startH, startM] = shiftData.startTime.split(':').map(Number);
     const [endH, endM] = shiftData.endTime.split(':').map(Number);
     let hours = (endH * 60 + endM - startH * 60 - startM) / 60;
     if (hours <= 0) hours += 24;
-    
+
     onAddShift({
       employeeId: createShiftTarget.employeeId,
       date: createShiftTarget.dateStr,
@@ -470,16 +470,16 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
       role: shiftData.role,
       plannedCost: null, // Will be calculated by DB trigger when saved
     });
-    
+
     toast.success(`New shift created for ${createShiftTarget.employeeName}`);
     setCreateShiftTarget(null);
   }, [createShiftTarget, onAddShift]);
-  
+
   // Enable interactions for all views — grouped views now show individual employee rows
   const isSwapEnabled = !!onInitiateSwap;
   const isDraggingEnabled = !!onMoveShift;
   const isCreatingEnabled = !!onAddShift;
-  
+
   return (
     <>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -490,7 +490,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           </div>
           {days.map((day, i) => {
             const WeatherIcon = weatherIcons[i];
-            
+
             return (
               <div key={day.dateStr} className="p-3 border-r border-border last:border-r-0">
                 <div className="flex items-center justify-between">
@@ -504,11 +504,11 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
             );
           })}
         </div>
-        
+
         {/* Sales row with Actual vs Forecast tooltip */}
         <TooltipProvider>
           <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
-            <button 
+            <button
               onClick={() => {
                 setSalesSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
                 setColSort('none');
@@ -527,7 +527,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
               const minSales = Math.min(...salesValues);
               const isHighest = salesSort !== 'none' && kpi.sales === maxSales;
               const isLowest = salesSort !== 'none' && kpi.sales === minSales;
-              
+
               // Actual vs Forecast for past days
               const isPastDay = kpi.isPastDay;
               const actualSales = kpi.actualSales;
@@ -535,11 +535,11 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
               const salesVariance = kpi.salesVarianceVsForecast;
               const salesVariancePct = kpi.salesVarianceVsForecastPct;
               const varianceIsPositive = (salesVariance || 0) > 0;
-              
+
               return (
                 <Tooltip key={`sales-${day.dateStr}`}>
                   <TooltipTrigger asChild>
-                    <div 
+                    <div
                       className={cn(
                         "p-2 px-3 border-r border-border last:border-r-0 text-sm font-medium transition-colors cursor-default",
                         isHighest && salesSort === 'desc' && "bg-emerald-50 text-emerald-700",
@@ -550,7 +550,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                       <div className="flex items-center gap-1">
                         <span>€{(hasActual ? actualSales : kpi.sales).toLocaleString()}</span>
                         {hasActual && Math.abs(salesVariancePct || 0) > 5 && (
-                          varianceIsPositive 
+                          varianceIsPositive
                             ? <TrendingUp className="h-3 w-3 text-green-500" />
                             : <TrendingDown className="h-3 w-3 text-amber-500" />
                         )}
@@ -577,11 +577,11 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
             })}
           </div>
         </TooltipProvider>
-        
+
         {/* Cost / COL % row with variance tooltip */}
         <TooltipProvider>
           <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/20">
-            <button 
+            <button
               onClick={() => {
                 setColSort(prev => prev === 'none' ? 'desc' : prev === 'desc' ? 'asc' : 'none');
                 setSalesSort('none');
@@ -601,18 +601,18 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
               const isHighest = colSort !== 'none' && kpi.colPercent === maxCol;
               const isLowest = colSort !== 'none' && kpi.colPercent === minCol;
               const isHigh = kpi.colPercent > 35;
-              
+
               // Variance data - check if extended KPI fields exist
               const hasVariance = 'varianceCost' in kpi && kpi.varianceCost !== 0;
               const varianceIsPositive = (kpi as any).varianceCost > 0;
               const varianceAbs = Math.abs((kpi as any).varianceCost || 0);
               const shiftsCost = (kpi as any).shiftsCost || 0;
               const forecastCost = (kpi as any).forecastLaborCost || kpi.cost;
-              
+
               return (
                 <Tooltip key={`col-${day.dateStr}`}>
                   <TooltipTrigger asChild>
-                    <div 
+                    <div
                       className={cn(
                         "p-2 px-3 border-r border-border last:border-r-0 transition-colors cursor-default",
                         isHighest && colSort === 'desc' && "bg-destructive/10",
@@ -623,14 +623,14 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                       <div className="flex items-center gap-1">
                         <span className={cn(
                           "text-sm font-medium",
-                          isHighest && colSort === 'desc' ? "text-destructive" : 
-                          isLowest && colSort === 'asc' ? "text-emerald-700" :
-                          isHigh ? "text-destructive" : "text-muted-foreground"
+                          isHighest && colSort === 'desc' ? "text-destructive" :
+                            isLowest && colSort === 'asc' ? "text-emerald-700" :
+                              isHigh ? "text-destructive" : "text-muted-foreground"
                         )}>
                           {kpi.colPercent > 0 ? `${kpi.colPercent.toFixed(1)}%` : '-'}
                         </span>
                         {hasVariance && varianceAbs > 50 && (
-                          varianceIsPositive 
+                          varianceIsPositive
                             ? <TrendingUp className="h-3 w-3 text-red-500" />
                             : <TrendingDown className="h-3 w-3 text-green-500" />
                         )}
@@ -660,7 +660,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
             })}
           </div>
         </TooltipProvider>
-        
+
         {/* Open shifts row */}
         <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-amber-50/30">
           <div className="p-3 border-r border-border">
@@ -675,7 +675,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
             </div>
           ))}
         </div>
-        
+
         {/* Employee/group rows */}
         <ScrollArea className="max-h-[600px]">
           {rows.map((row) => {
@@ -701,11 +701,11 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                 </div>
               );
             }
-            
+
             // Regular employee rows
             return (
-              <div 
-                key={row.id} 
+              <div
+                key={row.id}
                 className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors"
               >
                 {/* Row label */}
@@ -730,8 +730,8 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                     </div>
                   </div>
                 </div>
-                
-                {/* Shift cells — supports multiple shifts per day (Nory-style) */}
+
+                {/* Shift cells — supports multiple shifts per day (multi-shift) */}
                 {row.shifts.map((dayShifts, dayIndex) => {
                   const isUnavailable = row.unavailableDays.includes(dayIndex);
                   const isDayOff = row.dayOffDays.includes(dayIndex);
@@ -740,7 +740,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                   const isOver = dropTarget?.employeeId === row.id && dropTarget?.dayIndex === dayIndex;
                   const canDrop = !isUnavailable && !isDayOff && !isTimeOff;
                   const hasShifts = dayShifts.length > 0;
-                  
+
                   if (isDraggingEnabled) {
                     return (
                       <DropZone
@@ -760,7 +760,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                         ) : hasShifts ? (
                           <div className="space-y-1">
                             {dayShifts.map(shift => (
-                              <ShiftCard 
+                              <ShiftCard
                                 key={shift.id}
                                 shift={shift}
                                 isDragging={dragData?.shiftId === shift.id}
@@ -776,10 +776,10 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                       </DropZone>
                     );
                   }
-                  
+
                   return (
-                    <div 
-                      key={dayIndex} 
+                    <div
+                      key={dayIndex}
                       className="p-2 border-r border-border last:border-r-0 min-h-[60px]"
                     >
                       {isUnavailable ? (
@@ -802,7 +802,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
             );
           })}
         </ScrollArea>
-        
+
         {/* Hints */}
         {(isDraggingEnabled || isCreatingEnabled) && (
           <div className="px-4 py-2 bg-muted/30 border-t border-border text-xs text-muted-foreground flex gap-4">
@@ -811,7 +811,7 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
           </div>
         )}
       </div>
-      
+
       {/* Create Shift Dialog */}
       {createShiftTarget && (
         <CreateShiftDialog

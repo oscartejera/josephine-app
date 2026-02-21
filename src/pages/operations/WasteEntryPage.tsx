@@ -148,7 +148,7 @@ export default function WasteEntryPage() {
                         <Trash2 className="h-6 w-6 text-red-500" />
                         Registrar Merma
                     </h1>
-                    <p className="text-muted-foreground">Interfaz rápida estilo WISK</p>
+                    <p className="text-muted-foreground">Registro optimizado de merma</p>
                 </div>
                 {(locations?.length ?? 0) > 1 && (
                     <Select value={locationId} onValueChange={setLocationId}>
