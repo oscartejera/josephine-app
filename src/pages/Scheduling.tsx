@@ -124,21 +124,22 @@ export default function Scheduling() {
     !!resolvedLocationId && (resolvedLocationId ? schedulingData.hasSchedule : false)
   );
 
-  // Use resolved data
-  const actualData = resolvedLocationId ? schedulingData.data : data;
-  const actualHasSchedule = resolvedLocationId ? schedulingData.hasSchedule : hasSchedule;
-  const actualIsLoading = isLoading || (resolvedLocationId ? schedulingData.isLoading : false);
-  const actualCreateSchedule = resolvedLocationId ? schedulingData.createSchedule : createSchedule;
-  const actualUndoSchedule = resolvedLocationId ? schedulingData.undoSchedule : undoSchedule;
-  const actualAcceptSchedule = resolvedLocationId ? schedulingData.acceptSchedule : acceptSchedule;
-  const actualPublishSchedule = resolvedLocationId ? schedulingData.publishSchedule : publishSchedule;
-  const actualMoveShift = resolvedLocationId ? schedulingData.moveShift : moveShift;
-  const actualAddShift = resolvedLocationId ? schedulingData.addShift : addShift;
-  const actualSwapRequests = resolvedLocationId ? schedulingData.swapRequests : swapRequests;
-  const actualPendingSwapRequests = resolvedLocationId ? schedulingData.pendingSwapRequests : pendingSwapRequests;
-  const actualCreateSwapRequest = resolvedLocationId ? schedulingData.createSwapRequest : createSwapRequest;
-  const actualApproveSwapRequest = resolvedLocationId ? schedulingData.approveSwapRequest : approveSwapRequest;
-  const actualRejectSwapRequest = resolvedLocationId ? schedulingData.rejectSwapRequest : rejectSwapRequest;
+  // Use resolved data — ALWAYS prefer schedulingData (which has the real locationId)
+  // The first hook (null) is ONLY for fetching the locations list.
+  const actualData = schedulingData.data;
+  const actualHasSchedule = schedulingData.hasSchedule;
+  const actualIsLoading = isLoading || schedulingData.isLoading;
+  const actualCreateSchedule = schedulingData.createSchedule;
+  const actualUndoSchedule = schedulingData.undoSchedule;
+  const actualAcceptSchedule = schedulingData.acceptSchedule;
+  const actualPublishSchedule = schedulingData.publishSchedule;
+  const actualMoveShift = schedulingData.moveShift;
+  const actualAddShift = schedulingData.addShift;
+  const actualSwapRequests = schedulingData.swapRequests;
+  const actualPendingSwapRequests = schedulingData.pendingSwapRequests;
+  const actualCreateSwapRequest = schedulingData.createSwapRequest;
+  const actualApproveSwapRequest = schedulingData.approveSwapRequest;
+  const actualRejectSwapRequest = schedulingData.rejectSwapRequest;
 
   // Resolve location ID and update URL when locations are loaded
   useEffect(() => {
