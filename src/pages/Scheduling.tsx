@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { startOfWeek, parseISO } from 'date-fns';
+import { startOfWeek, parseISO, format, isThisWeek } from 'date-fns';
 import { toast } from 'sonner';
 import { ArrowRightLeft, AlertTriangle } from 'lucide-react';
 import { useSchedulingSupabase, ViewMode, Shift, resolveLocationId } from '@/hooks/useSchedulingSupabase';
@@ -174,18 +174,31 @@ export default function Scheduling() {
   // Placeholder KPIs for empty state
   const placeholderKPIs = useMemo(() => generatePlaceholderKPIs(weekStart), [weekStart]);
 
-  // Handlers
+  // Handlers — use functional updater to avoid stale-closure bugs
   const handleWeekChange = useCallback((newWeekStart: Date) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('start', newWeekStart.toISOString().split('T')[0]);
-    setSearchParams(params);
-  }, [searchParams, setSearchParams]);
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      params.set('start', format(newWeekStart, 'yyyy-MM-dd'));
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const handleGoToToday = useCallback(() => {
+    const today = startOfWeek(new Date(), { weekStartsOn: 1 });
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      params.set('start', format(today, 'yyyy-MM-dd'));
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const handleLocationChange = useCallback((newLocationId: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('location', newLocationId);
-    setSearchParams(params);
-  }, [searchParams, setSearchParams]);
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      params.set('location', newLocationId);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const handleCreateSchedule = useCallback(async () => {
     setIsCreating(true);
@@ -252,6 +265,7 @@ export default function Scheduling() {
       <SchedulingHeader
         weekStart={weekStart}
         onWeekChange={handleWeekChange}
+        onGoToToday={handleGoToToday}
         onCreateSchedule={handleCreateSchedule}
         onPublish={() => setShowPublishModal(true)}
         onOpenSettings={() => setShowSettings(true)}

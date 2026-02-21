@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 interface SchedulingHeaderProps {
   weekStart: Date;
   onWeekChange: (date: Date) => void;
+  onGoToToday?: () => void;
   onCreateSchedule: () => void;
   onPublish: () => void;
   onOpenSettings?: () => void;
@@ -54,6 +55,7 @@ interface SchedulingHeaderProps {
 export function SchedulingHeader({
   weekStart,
   onWeekChange,
+  onGoToToday,
   onCreateSchedule,
   onPublish,
   hasSchedule,
@@ -74,6 +76,17 @@ export function SchedulingHeader({
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const weekLabel = `${format(weekStart, 'd')} - ${format(weekEnd, 'd MMM')}`;
   const weekNum = getWeek(weekStart, { weekStartsOn: 1 });
+  const isCurrentWeek = (() => {
+    const now = new Date();
+    const currentWeekStart = new Date(now);
+    const day = currentWeekStart.getDay();
+    const diff = currentWeekStart.getDate() - day + (day === 0 ? -6 : 1);
+    currentWeekStart.setDate(diff);
+    currentWeekStart.setHours(0, 0, 0, 0);
+    const ws = new Date(weekStart);
+    ws.setHours(0, 0, 0, 0);
+    return ws.getTime() === currentWeekStart.getTime();
+  })();
 
   const colOnTarget = scheduledColPercent !== undefined && targetColPercent !== undefined
     && scheduledColPercent <= targetColPercent + 2;
@@ -120,6 +133,16 @@ export function SchedulingHeader({
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
+            {!isCurrentWeek && onGoToToday && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs ml-1"
+                onClick={onGoToToday}
+              >
+                Hoy
+              </Button>
+            )}
           </div>
 
           {/* KPI strip */}
