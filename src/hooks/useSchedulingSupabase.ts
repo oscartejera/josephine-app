@@ -26,6 +26,107 @@ import {
   generateForecast,
 } from './scheduling/queries';
 
+// ── Shift Assignment Algorithm ──────────────────────────────
+interface ShiftAssignment {
+  employeeId: string;
+  role: string;
+  startTime: string;
+  endTime: string;
+  hours: number;
+  hourlyCost: number;
+}
+
+/**
+ * Distributes target hours across available employees using split-shift patterns.
+ * Morning: 09:00-17:00 (8h), Evening: 16:00-00:00 (8h), Mid: 11:00-19:00 (8h)
+ * Respects employee availability windows when data is present.
+ */
+function calculateShiftAssignments(
+  employees: Array<{ id: string; full_name: string; role_name: string | null; hourly_cost: number | null }>,
+  targetHours: number,
+  dayOfWeek: number,
+  availMap: Map<string, Map<number, { start: string; end: string }>>
+): ShiftAssignment[] {
+  const assignments: ShiftAssignment[] = [];
+  let remainingHours = targetHours;
+
+  // Standard shift templates based on time of day
+  const shiftTemplates = [
+    { start: '09:00', end: '17:00', hours: 8, label: 'morning' },
+    { start: '16:00', end: '00:00', hours: 8, label: 'evening' },
+    { start: '11:00', end: '19:00', hours: 8, label: 'mid' },
+    { start: '10:00', end: '14:00', hours: 4, label: 'short-am' },
+    { start: '18:00', end: '22:00', hours: 4, label: 'short-pm' },
+  ];
+
+  // Adjust for weekends
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  if (isWeekend) {
+    shiftTemplates[0] = { start: '10:00', end: '18:00', hours: 8, label: 'morning' };
+  }
+
+  // Round-robin through employees
+  let empIndex = 0;
+  let templateIndex = 0;
+
+  while (remainingHours > 0 && templateIndex < shiftTemplates.length * 2) {
+    const template = shiftTemplates[templateIndex % shiftTemplates.length];
+    const emp = employees[empIndex % employees.length];
+
+    // Check if this employee already has a shift assigned today
+    const alreadyAssigned = assignments.some(a => a.employeeId === emp.id);
+    if (alreadyAssigned) {
+      empIndex++;
+      if (empIndex >= employees.length * 2) {
+        // Everyone is assigned, try next template
+        templateIndex++;
+        empIndex = 0;
+      }
+      continue;
+    }
+
+    // Check availability window
+    const empAvail = availMap.get(emp.id);
+    if (empAvail && empAvail.has(dayOfWeek)) {
+      const avail = empAvail.get(dayOfWeek)!;
+      // Simple check: employee's availability start should be <= shift start
+      if (avail.start > template.start && template.label === 'morning') {
+        // Skip morning shift, try next template
+        empIndex++;
+        templateIndex++;
+        continue;
+      }
+    }
+
+    // Calculate actual hours (may be partial)
+    const hoursForShift = Math.min(template.hours, remainingHours);
+
+    // Adjust end time if partial
+    let endTime = template.end;
+    if (hoursForShift < template.hours) {
+      const startHour = parseInt(template.start.split(':')[0]);
+      const endHour = startHour + hoursForShift;
+      endTime = `${String(endHour % 24).padStart(2, '0')}:00`;
+    }
+
+    assignments.push({
+      employeeId: emp.id,
+      role: emp.role_name || 'Team Member',
+      startTime: template.start,
+      endTime: endTime,
+      hours: hoursForShift,
+      hourlyCost: emp.hourly_cost || 12,
+    });
+
+    remainingHours -= hoursForShift;
+    empIndex++;
+    templateIndex++;
+  }
+
+  return assignments;
+}
+
+
 
 export function useSchedulingSupabase(
   locationId: string | null,
@@ -253,81 +354,230 @@ export function useSchedulingSupabase(
     }
 
     try {
-      console.log('[createSchedule] Calling generate_schedule for', locationId, weekStartISO);
+      console.log('[createSchedule] Starting client-side generation for', locationId, weekStartISO);
 
-      // First ensure forecast exists
-      const hasForecast = await checkForecastExists(locationId);
-      if (!hasForecast) {
-        toast.info('Generando forecast primero...');
-        const forecastSuccess = await generateForecast(locationId);
-        if (!forecastSuccess) {
-          toast.error('Error generando forecast');
-          return;
-        }
-        await refetchForecast();
+      // ── Step 1: Gather raw materials ──────────────────────────
+      const weekEndDate = new Date(weekStart);
+      weekEndDate.setDate(weekEndDate.getDate() + 6);
+      const weekEndISO = format(weekEndDate, 'yyyy-MM-dd');
+
+      // Fetch forecast for the week
+      const { data: forecastRows } = await supabase
+        .from('forecast_daily_metrics')
+        .select('date, forecast_sales, planned_labor_hours')
+        .eq('location_id', locationId)
+        .gte('date', weekStartISO)
+        .lte('date', weekEndISO);
+
+      // Fetch active employees for this location
+      const { data: empRows } = await supabase
+        .from('employees')
+        .select('id, full_name, role_name, hourly_cost')
+        .eq('location_id', locationId)
+        .eq('active', true);
+
+      // Fetch availability
+      const { data: availRows } = await supabase
+        .from('employee_availability')
+        .select('employee_id, day_of_week, start_time, end_time, is_available')
+        .eq('location_id', locationId)
+        .eq('is_available', true);
+
+      // Fetch target settings
+      const { data: settings } = await supabase
+        .from('location_settings')
+        .select('splh_goal, target_col_percent')
+        .eq('location_id', locationId)
+        .maybeSingle();
+
+      const splhGoal = settings?.splh_goal || 50;
+      const targetCol = settings?.target_col_percent || 30;
+
+      // ── Step 2: Diagnostic checks ─────────────────────────────
+      const diagWarnings: string[] = [];
+
+      if (!forecastRows || forecastRows.length === 0) {
+        diagWarnings.push('0 horas: No hay ventas proyectadas cargadas para esta semana.');
       }
 
-      const { data: result, error } = await supabase.functions.invoke('generate_schedule', {
-        body: {
-          location_id: locationId,
-          week_start: weekStartISO
-        }
+      if (!empRows || empRows.length === 0) {
+        diagWarnings.push('0 horas: No hay empleados activos asignados a este local.');
+        toast.error(diagWarnings.join(' '));
+        return;
+      }
+
+      if (!availRows || availRows.length === 0) {
+        diagWarnings.push('0 horas: No hay empleados con disponibilidad registrada. Usando horario comercial por defecto.');
+      }
+
+      // ── Step 3: Build availability index ──────────────────────
+      // Map: employee_id -> Set of day_of_week where available
+      const availMap = new Map<string, Map<number, { start: string; end: string }>>();
+      (availRows || []).forEach(a => {
+        if (!availMap.has(a.employee_id)) availMap.set(a.employee_id, new Map());
+        availMap.get(a.employee_id)!.set(a.day_of_week, {
+          start: a.start_time,
+          end: a.end_time,
+        });
       });
 
-      if (error) {
-        console.error('[createSchedule] Edge function error:', error);
-        toast.error(`Error generando turnos: ${error.message}`);
+      // ── Step 4: Generate shifts per day ───────────────────────
+      const shiftsToInsert: Array<{
+        employee_id: string;
+        location_id: string;
+        shift_date: string;
+        start_time: string;
+        end_time: string;
+        planned_hours: number;
+        planned_cost: number;
+        role: string;
+        status: string;
+      }> = [];
+
+      let totalHours = 0;
+      let totalCost = 0;
+      let totalForecastSales = 0;
+
+      // For each day of the week
+      for (let d = 0; d < 7; d++) {
+        const dayDate = new Date(weekStart);
+        dayDate.setDate(dayDate.getDate() + d);
+        const dayISO = format(dayDate, 'yyyy-MM-dd');
+        const dayOfWeek = dayDate.getDay(); // 0=Sun, 1=Mon, ...
+
+        // Get forecast for this day
+        const forecast = forecastRows?.find(f => f.date === dayISO);
+        const forecastSales = forecast?.forecast_sales || 0;
+        const plannedHours = forecast?.planned_labor_hours || 0;
+        totalForecastSales += forecastSales;
+
+        // Calculate target hours from SPLH goal
+        // Target hours = forecast_sales / splh_goal
+        let targetHoursForDay = forecastSales > 0 ? Math.round(forecastSales / splhGoal) : 0;
+
+        // Fallback: if no forecast, use baseline of 2 staff minimum for 8 hours
+        if (targetHoursForDay === 0 && forecastSales === 0) {
+          targetHoursForDay = 16; // 2 people × 8 hours as baseline
+        }
+
+        // Budget cap: target_col_percent of forecast sales / avg hourly rate
+        const avgHourlyCost = empRows.reduce((sum, e) => sum + (e.hourly_cost || 12), 0) / empRows.length;
+        const maxBudgetHours = forecastSales > 0
+          ? Math.floor((forecastSales * targetCol / 100) / avgHourlyCost)
+          : targetHoursForDay;
+
+        // Use the lower of target vs budget
+        const hoursToAllocate = Math.min(targetHoursForDay, maxBudgetHours);
+
+        if (hoursToAllocate <= 0) {
+          diagWarnings.push(`${dayISO}: El presupuesto (Target COL% ${targetCol}%) es demasiado bajo para cubrir un turno mínimo.`);
+          continue;
+        }
+
+        // Get available employees for this day
+        const availableEmps = empRows.filter(emp => {
+          const empAvail = availMap.get(emp.id);
+          // If no availability data, assume available (fallback)
+          if (!empAvail || empAvail.size === 0) return true;
+          return empAvail.has(dayOfWeek);
+        });
+
+        if (availableEmps.length === 0) {
+          diagWarnings.push(`${dayISO}: No hay empleados disponibles.`);
+          continue;
+        }
+
+        // Determine standard shift patterns
+        // Morning: 09:00-17:00, Evening: 16:00-00:00, Full: 10:00-18:00
+        const shifts = calculateShiftAssignments(
+          availableEmps,
+          hoursToAllocate,
+          dayOfWeek,
+          availMap
+        );
+
+        shifts.forEach(shift => {
+          const hours = shift.hours;
+          const cost = hours * (shift.hourlyCost || 12);
+          shiftsToInsert.push({
+            employee_id: shift.employeeId,
+            location_id: locationId,
+            shift_date: dayISO,
+            start_time: shift.startTime,
+            end_time: shift.endTime,
+            planned_hours: hours,
+            planned_cost: cost,
+            role: shift.role || 'Team Member',
+            status: 'draft',
+          });
+          totalHours += hours;
+          totalCost += cost;
+        });
+      }
+
+      // ── Step 5: Insert shifts into database ───────────────────
+      if (shiftsToInsert.length === 0) {
+        const reason = diagWarnings.length > 0
+          ? diagWarnings[0]
+          : '0 horas: No se pudieron asignar turnos. Verifica forecast y disponibilidad.';
+        toast.error(reason);
         return;
       }
 
-      if (result?.error) {
-        console.error('[createSchedule] Result error:', result.error);
-        toast.error(result.error);
+      // Delete existing draft shifts for this week first
+      await supabase
+        .from('planned_shifts')
+        .delete()
+        .eq('location_id', locationId)
+        .eq('status', 'draft')
+        .gte('shift_date', weekStartISO)
+        .lte('shift_date', weekEndISO);
+
+      // Insert new shifts
+      const { error: insertError } = await supabase
+        .from('planned_shifts')
+        .insert(shiftsToInsert as any);
+
+      if (insertError) {
+        console.error('[createSchedule] Insert error:', insertError);
+        toast.error(`Error insertando turnos: ${insertError.message}`);
         return;
       }
 
-      console.log('[createSchedule] Success:', result);
-
-      // Log summary to console
-      if (result?.summary) {
-        console.log('=== SCHEDULE SUMMARY ===');
-        console.log(`Total Cost: €${result.summary.totalCost}`);
-        console.log(`Forecast Sales: €${result.summary.totalForecastSales}`);
-        console.log(`COL%: ${result.summary.colPercent}% (Target: ${result.summary.targetColPercent}%)`);
-        console.log(`ACS (28d): €${result.summary.acs28d}`);
-        console.log(`Avg Dwell Time: ${result.summary.avgDwellTime} min`);
-        console.log(`Shifts by role:`, result.summary.shiftsByRole);
-        console.log('========================');
-      }
-
-      // Refetch shifts from DB
+      // ── Step 6: Refresh UI ────────────────────────────────────
       await refetchShifts();
-
-      // Reset local overrides and show schedule
       setShiftOverrides({});
       setNewShifts([]);
       setHasSchedule(true);
 
-      const colStatus = result.summary?.colPercent <= result.summary?.targetColPercent
-        ? '✓'
-        : `⚠ (objetivo ${result.summary?.targetColPercent}%)`;
+      const colPercent = totalForecastSales > 0
+        ? ((totalCost / totalForecastSales) * 100).toFixed(1)
+        : '—';
+      const colStatus = Number(colPercent) <= targetCol ? '✓' : `⚠ (objetivo ${targetCol}%)`;
 
       toast.success(
-        `Creados ${result.shifts_created} turnos • COL% ${result.summary?.colPercent}% ${colStatus}`,
+        `Creados ${shiftsToInsert.length} turnos (${totalHours}h) • COL% ${colPercent}% ${colStatus}`,
         { duration: 5000 }
       );
 
-      if (result.warnings?.length > 0) {
-        console.warn('[createSchedule] Warnings:', result.warnings);
-        // Show first warning as toast
-        toast.warning(result.warnings[0], { duration: 4000 });
+      if (diagWarnings.length > 0) {
+        console.warn('[createSchedule] Warnings:', diagWarnings);
+        toast.warning(diagWarnings[0], { duration: 4000 });
       }
+
+      console.log('[createSchedule] Complete:', {
+        shifts: shiftsToInsert.length,
+        totalHours,
+        totalCost,
+        totalForecastSales,
+        colPercent,
+      });
 
     } catch (err) {
       console.error('[createSchedule] Exception:', err);
       toast.error('Error al generar el horario');
     }
-  }, [locationId, weekStartISO, refetchShifts, refetchForecast]);
+  }, [locationId, weekStartISO, weekStart, refetchShifts]);
 
   const undoSchedule = useCallback(() => {
     setHasSchedule(false);
