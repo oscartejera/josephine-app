@@ -15,15 +15,15 @@ export function useRecipes() {
             if (!group?.id) return [];
 
             // Fetch recipes with ingredient count
-            const { data, error } = await (supabase
-                .from('recipes' as any)
+            const { data, error } = await supabase
+                .from('recipes')
                 .select(`
           id, group_id, menu_item_name, selling_price, category,
           yield_qty, yield_unit, notes, is_sub_recipe, created_at,
-          recipe_ingredients(id)
+          recipe_ingredients(inventory_item_id)
         `)
                 .eq('group_id', group.id)
-                .order('menu_item_name') as any);
+                .order('menu_item_name');
 
             if (error) throw error;
 
@@ -32,11 +32,11 @@ export function useRecipes() {
                 (data || []).map(async (r: any) => {
                     let foodCost = 0;
                     try {
-                        const { data: costData } = await (supabase
-                            .rpc('get_recipe_food_cost', { p_recipe_id: r.id }) as any);
+                        const { data: costData } = await supabase
+                            .rpc('get_recipe_food_cost', { p_recipe_id: r.id });
                         foodCost = costData ?? 0;
                     } catch {
-                        // RPC may not exist yet in dev
+                        // RPC may not be available
                     }
                     const sellingPrice = r.selling_price ?? 0;
                     return {
@@ -73,8 +73,8 @@ export function useRecipes() {
             notes?: string;
         }) => {
             if (!group?.id) throw new Error('No group');
-            const { data, error } = await (supabase
-                .from('recipes' as any)
+            const { data, error } = await supabase
+                .from('recipes')
                 .insert({
                     group_id: group.id,
                     menu_item_name: recipe.menu_item_name,
@@ -86,7 +86,7 @@ export function useRecipes() {
                     notes: recipe.notes ?? null,
                 })
                 .select('id')
-                .single() as any);
+                .single();
             if (error) throw error;
             return data;
         },
@@ -103,10 +103,10 @@ export function useRecipes() {
             is_sub_recipe: boolean;
             notes: string | null;
         }>) => {
-            const { error } = await (supabase
-                .from('recipes' as any)
+            const { error } = await supabase
+                .from('recipes')
                 .update(updates)
-                .eq('id', id) as any);
+                .eq('id', id);
             if (error) throw error;
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: RECIPES_KEY }),
@@ -114,10 +114,10 @@ export function useRecipes() {
 
     const deleteRecipe = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await (supabase
-                .from('recipes' as any)
+            const { error } = await supabase
+                .from('recipes')
                 .delete()
-                .eq('id', id) as any);
+                .eq('id', id);
             if (error) throw error;
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: RECIPES_KEY }),

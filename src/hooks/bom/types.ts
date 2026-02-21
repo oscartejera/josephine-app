@@ -20,11 +20,11 @@ export interface RecipeSummary extends Recipe {
 }
 
 export interface RecipeIngredient {
-    id: string;
-    recipe_id: string;
-    inventory_item_id: string | null;
+    // Composite PK: menu_item_id + inventory_item_id
+    menu_item_id: string;
+    inventory_item_id: string;
     sub_recipe_id: string | null;
-    quantity: number;
+    qty_base_units: number;
     qty_gross: number;
     qty_net: number;
     unit: string;

@@ -90,7 +90,7 @@ export default function RecipeDetailPage() {
     const handleAddIngredient = async () => {
         try {
             await addIngredient.mutateAsync({
-                inventory_item_id: ingredientType === 'item' ? selectedItemId : undefined,
+                inventory_item_id: ingredientType === 'item' ? selectedItemId : selectedSubRecipeId,
                 sub_recipe_id: ingredientType === 'sub_recipe' ? selectedSubRecipeId : undefined,
                 qty_gross: parseFloat(addQty) || 0,
                 yield_pct: parseFloat(addYieldPct) || 100,
@@ -256,7 +256,7 @@ export default function RecipeDetailPage() {
                                 recipe.ingredients.map(ing => {
                                     const lineCost = ing.qty_gross * (ing.last_cost ?? 0);
                                     return (
-                                        <TableRow key={ing.id}>
+                                        <TableRow key={ing.inventory_item_id}>
                                             <TableCell className="font-medium">
                                                 <div className="flex items-center gap-2">
                                                     {ing.item_name || ing.sub_recipe_name || '—'}
@@ -281,7 +281,7 @@ export default function RecipeDetailPage() {
                                                 <Button
                                                     variant="ghost" size="icon"
                                                     className="text-destructive hover:text-destructive"
-                                                    onClick={() => handleRemoveIngredient(ing.id)}
+                                                    onClick={() => handleRemoveIngredient(ing.inventory_item_id)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

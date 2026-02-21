@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -14,29 +14,480 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          author_id: string | null
+          body: string | null
+          created_at: string
+          id: string
+          location_id: string | null
+          org_id: string
+          pinned: boolean
+          title: string
+          type: string
+        }
+        Insert: {
+          author_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          org_id: string
+          pinned?: boolean
+          title: string
+          type?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          org_id?: string
+          pinned?: boolean
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      budget_audit: {
+        Row: {
+          action: string
+          budget_day_id: string | null
+          budget_version_id: string
+          created_at: string
+          created_by: string | null
+          diff: Json
+          id: string
+          org_id: string
+        }
+        Insert: {
+          action: string
+          budget_day_id?: string | null
+          budget_version_id: string
+          created_at?: string
+          created_by?: string | null
+          diff?: Json
+          id?: string
+          org_id: string
+        }
+        Update: {
+          action?: string
+          budget_day_id?: string | null
+          budget_version_id?: string
+          created_at?: string
+          created_by?: string | null
+          diff?: Json
+          id?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_audit_budget_day_id_fkey"
+            columns: ["budget_day_id"]
+            isOneToOne: false
+            referencedRelation: "budget_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_audit_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_audit_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_audit_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_day_profiles: {
+        Row: {
+          budget_day_id: string
+          profile_id: string
+        }
+        Insert: {
+          budget_day_id: string
+          profile_id: string
+        }
+        Update: {
+          budget_day_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_day_profiles_budget_day_id_fkey"
+            columns: ["budget_day_id"]
+            isOneToOne: false
+            referencedRelation: "budget_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_day_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "budget_hourly_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_days: {
+        Row: {
+          budget_version_id: string
+          channel_id: string | null
+          day: string
+          event_name: string | null
+          id: string
+          is_event: boolean
+          is_holiday: boolean
+          location_id: string | null
+          notes: string | null
+          org_id: string
+        }
+        Insert: {
+          budget_version_id: string
+          channel_id?: string | null
+          day: string
+          event_name?: string | null
+          id?: string
+          is_event?: boolean
+          is_holiday?: boolean
+          location_id?: string | null
+          notes?: string | null
+          org_id: string
+        }
+        Update: {
+          budget_version_id?: string
+          channel_id?: string | null
+          day?: string
+          event_name?: string | null
+          id?: string
+          is_event?: boolean
+          is_holiday?: boolean
+          location_id?: string | null
+          notes?: string | null
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_days_budget_version_id_fkey"
+            columns: ["budget_version_id"]
+            isOneToOne: false
+            referencedRelation: "budget_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_drivers: {
+        Row: {
+          budget_day_id: string
+          mix_bev_pct: number | null
+          mix_food_pct: number | null
+          target_avg_check: number | null
+          target_cogs_pct: number | null
+          target_comps_pct: number | null
+          target_covers: number | null
+          target_discounts_pct: number | null
+          target_hourly_rate: number | null
+          target_labour_hours: number | null
+          target_overtime_hours: number | null
+          target_refunds_pct: number | null
+          target_shrink_pct: number | null
+          target_waste_pct: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          budget_day_id: string
+          mix_bev_pct?: number | null
+          mix_food_pct?: number | null
+          target_avg_check?: number | null
+          target_cogs_pct?: number | null
+          target_comps_pct?: number | null
+          target_covers?: number | null
+          target_discounts_pct?: number | null
+          target_hourly_rate?: number | null
+          target_labour_hours?: number | null
+          target_overtime_hours?: number | null
+          target_refunds_pct?: number | null
+          target_shrink_pct?: number | null
+          target_waste_pct?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          budget_day_id?: string
+          mix_bev_pct?: number | null
+          mix_food_pct?: number | null
+          target_avg_check?: number | null
+          target_cogs_pct?: number | null
+          target_comps_pct?: number | null
+          target_covers?: number | null
+          target_discounts_pct?: number | null
+          target_hourly_rate?: number | null
+          target_labour_hours?: number | null
+          target_overtime_hours?: number | null
+          target_refunds_pct?: number | null
+          target_shrink_pct?: number | null
+          target_waste_pct?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_drivers_budget_day_id_fkey"
+            columns: ["budget_day_id"]
+            isOneToOne: true
+            referencedRelation: "budget_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_hourly_profile_points: {
+        Row: {
+          hour_of_day: number
+          pct_of_day: number
+          profile_id: string
+        }
+        Insert: {
+          hour_of_day: number
+          pct_of_day: number
+          profile_id: string
+        }
+        Update: {
+          hour_of_day?: number
+          pct_of_day?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_hourly_profile_points_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "budget_hourly_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_hourly_profiles: {
+        Row: {
+          channel_id: string | null
+          created_at: string
+          day_of_week: number | null
+          id: string
+          location_id: string | null
+          name: string
+          org_id: string
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          location_id?: string | null
+          name: string
+          org_id: string
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          location_id?: string | null
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_hourly_profiles_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_hourly_profiles_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_hourly_profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_hourly_profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_metrics: {
+        Row: {
+          budget_day_id: string
+          layer: Database["public"]["Enums"]["budget_layer"]
+          metric: Database["public"]["Enums"]["budget_metric"]
+          source: string
+          updated_at: string
+          updated_by: string | null
+          value: number
+        }
+        Insert: {
+          budget_day_id: string
+          layer?: Database["public"]["Enums"]["budget_layer"]
+          metric: Database["public"]["Enums"]["budget_metric"]
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Update: {
+          budget_day_id?: string
+          layer?: Database["public"]["Enums"]["budget_layer"]
+          metric?: Database["public"]["Enums"]["budget_metric"]
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_metrics_budget_day_id_fkey"
+            columns: ["budget_day_id"]
+            isOneToOne: false
+            referencedRelation: "budget_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_date: string
+          frozen_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_id: string
+          published_at: string | null
+          scope: Database["public"]["Enums"]["budget_scope"]
+          start_date: string
+          status: Database["public"]["Enums"]["budget_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          frozen_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_id: string
+          published_at?: string | null
+          scope?: Database["public"]["Enums"]["budget_scope"]
+          start_date: string
+          status?: Database["public"]["Enums"]["budget_status"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          frozen_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string
+          published_at?: string | null
+          scope?: Database["public"]["Enums"]["budget_scope"]
+          start_date?: string
+          status?: Database["public"]["Enums"]["budget_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets_daily: {
         Row: {
-          budget_cogs: number
-          budget_labour: number
-          budget_sales: number
+          budget_cogs: number | null
+          budget_labour: number | null
+          budget_sales: number | null
           created_at: string
           date: string
           id: string
           location_id: string
         }
         Insert: {
-          budget_cogs?: number
-          budget_labour?: number
-          budget_sales?: number
+          budget_cogs?: number | null
+          budget_labour?: number | null
+          budget_sales?: number | null
           created_at?: string
           date: string
           id?: string
           location_id: string
         }
         Update: {
-          budget_cogs?: number
-          budget_labour?: number
-          budget_sales?: number
+          budget_cogs?: number | null
+          budget_labour?: number | null
+          budget_sales?: number | null
           created_at?: string
           date?: string
           id?: string
@@ -54,7 +505,7 @@ export type Database = {
       }
       cash_counts_daily: {
         Row: {
-          cash_counted: number
+          cash_counted: number | null
           created_at: string
           date: string
           id: string
@@ -62,7 +513,7 @@ export type Database = {
           notes: string | null
         }
         Insert: {
-          cash_counted?: number
+          cash_counted?: number | null
           created_at?: string
           date: string
           id?: string
@@ -70,7 +521,7 @@ export type Database = {
           notes?: string | null
         }
         Update: {
-          cash_counted?: number
+          cash_counted?: number | null
           created_at?: string
           date?: string
           id?: string
@@ -87,71 +538,323 @@ export type Database = {
           },
         ]
       }
-      cogs_daily: {
+      cdm_items: {
         Row: {
-          cogs_amount: number
-          created_at: string
-          date: string
+          category: string | null
+          external_id: string | null
           id: string
-          location_id: string
+          integration_account_id: string | null
+          is_active: boolean
+          metadata: Json
+          name: string
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"] | null
         }
         Insert: {
-          cogs_amount?: number
-          created_at?: string
-          date: string
+          category?: string | null
+          external_id?: string | null
           id?: string
-          location_id: string
+          integration_account_id?: string | null
+          is_active?: boolean
+          metadata?: Json
+          name: string
+          org_id: string
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
         }
         Update: {
-          cogs_amount?: number
-          created_at?: string
-          date?: string
+          category?: string | null
+          external_id?: string | null
           id?: string
-          location_id?: string
+          integration_account_id?: string | null
+          is_active?: boolean
+          metadata?: Json
+          name?: string
+          org_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
         }
         Relationships: [
           {
-            foreignKeyName: "cogs_daily_location_id_fkey"
+            foreignKeyName: "cdm_items_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cdm_order_lines: {
+        Row: {
+          discount: number
+          gross: number
+          id: string
+          integration_account_id: string | null
+          item_id: string | null
+          metadata: Json
+          name: string
+          net: number
+          order_id: string
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"] | null
+          qty: number
+          tax: number
+        }
+        Insert: {
+          discount?: number
+          gross?: number
+          id?: string
+          integration_account_id?: string | null
+          item_id?: string | null
+          metadata?: Json
+          name: string
+          net?: number
+          order_id: string
+          org_id: string
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+          qty?: number
+          tax?: number
+        }
+        Update: {
+          discount?: number
+          gross?: number
+          id?: string
+          integration_account_id?: string | null
+          item_id?: string | null
+          metadata?: Json
+          name?: string
+          net?: number
+          order_id?: string
+          org_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+          qty?: number
+          tax?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_order_lines_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_order_lines_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cdm_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "cdm_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_order_lines_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_order_lines_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cdm_orders: {
+        Row: {
+          closed_at: string | null
+          comps: number
+          discounts: number
+          external_id: string | null
+          gross_sales: number | null
+          id: string
+          integration_account_id: string | null
+          location_id: string | null
+          metadata: Json
+          net_sales: number
+          opened_at: string | null
+          org_id: string
+          payments_total: number
+          provider: Database["public"]["Enums"]["integration_provider"] | null
+          refunds: number
+          tax: number
+          tips: number
+          voids: number
+        }
+        Insert: {
+          closed_at?: string | null
+          comps?: number
+          discounts?: number
+          external_id?: string | null
+          gross_sales?: number | null
+          id?: string
+          integration_account_id?: string | null
+          location_id?: string | null
+          metadata?: Json
+          net_sales?: number
+          opened_at?: string | null
+          org_id: string
+          payments_total?: number
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+          refunds?: number
+          tax?: number
+          tips?: number
+          voids?: number
+        }
+        Update: {
+          closed_at?: string | null
+          comps?: number
+          discounts?: number
+          external_id?: string | null
+          gross_sales?: number | null
+          id?: string
+          integration_account_id?: string | null
+          location_id?: string | null
+          metadata?: Json
+          net_sales?: number
+          opened_at?: string | null
+          org_id?: string
+          payments_total?: number
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+          refunds?: number
+          tax?: number
+          tips?: number
+          voids?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cdm_payments: {
+        Row: {
+          amount: number
+          id: string
+          integration_account_id: string | null
+          metadata: Json
+          method: string
+          order_id: string
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"] | null
+        }
+        Insert: {
+          amount?: number
+          id?: string
+          integration_account_id?: string | null
+          metadata?: Json
+          method: string
+          order_id: string
+          org_id: string
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+        }
+        Update: {
+          amount?: number
+          id?: string
+          integration_account_id?: string | null
+          metadata?: Json
+          method?: string
+          order_id?: string
+          org_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_payments_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "cdm_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
       }
       compliance_submissions: {
         Row: {
-          agency: Database["public"]["Enums"]["compliance_agency"]
           created_at: string
           id: string
-          payload_file_url: string | null
           payroll_run_id: string
-          response_json: Json | null
-          status: Database["public"]["Enums"]["compliance_status"]
-          submission_type: string
-          submitted_at: string | null
+          status: string | null
+          submission_type: string | null
         }
         Insert: {
-          agency: Database["public"]["Enums"]["compliance_agency"]
           created_at?: string
           id?: string
-          payload_file_url?: string | null
           payroll_run_id: string
-          response_json?: Json | null
-          status?: Database["public"]["Enums"]["compliance_status"]
-          submission_type: string
-          submitted_at?: string | null
+          status?: string | null
+          submission_type?: string | null
         }
         Update: {
-          agency?: Database["public"]["Enums"]["compliance_agency"]
           created_at?: string
           id?: string
-          payload_file_url?: string | null
           payroll_run_id?: string
-          response_json?: Json | null
-          status?: Database["public"]["Enums"]["compliance_status"]
-          submission_type?: string
-          submitted_at?: string | null
+          status?: string | null
+          submission_type?: string | null
         }
         Relationships: [
           {
@@ -163,277 +866,153 @@ export type Database = {
           },
         ]
       }
-      compliance_tokens: {
+      daily_sales: {
         Row: {
-          created_at: string
-          encrypted_blob: string
-          expires_at: string | null
-          id: string
-          legal_entity_id: string
-          provider: Database["public"]["Enums"]["token_provider"]
-        }
-        Insert: {
-          created_at?: string
-          encrypted_blob: string
-          expires_at?: string | null
-          id?: string
-          legal_entity_id: string
-          provider: Database["public"]["Enums"]["token_provider"]
-        }
-        Update: {
-          created_at?: string
-          encrypted_blob?: string
-          expires_at?: string | null
-          id?: string
-          legal_entity_id?: string
-          provider?: Database["public"]["Enums"]["token_provider"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "compliance_tokens_legal_entity_id_fkey"
-            columns: ["legal_entity_id"]
-            isOneToOne: false
-            referencedRelation: "legal_entities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      convenio_rules: {
-        Row: {
-          convenio_code: string
-          created_at: string
-          group_id: string
-          id: string
-          rule_json: Json
-        }
-        Insert: {
-          convenio_code: string
-          created_at?: string
-          group_id: string
-          id?: string
-          rule_json?: Json
-        }
-        Update: {
-          convenio_code?: string
-          created_at?: string
-          group_id?: string
-          id?: string
-          rule_json?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "convenio_rules_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customer_profile_tags: {
-        Row: {
-          created_at: string
-          customer_profile_id: string | null
-          id: string
-          tag_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          customer_profile_id?: string | null
-          id?: string
-          tag_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          customer_profile_id?: string | null
-          id?: string
-          tag_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customer_profile_tags_customer_profile_id_fkey"
-            columns: ["customer_profile_id"]
-            isOneToOne: false
-            referencedRelation: "customer_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customer_profile_tags_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "customer_tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customer_profiles: {
-        Row: {
-          created_at: string
-          email: string | null
-          group_id: string | null
-          id: string
-          last_visit_at: string | null
-          name: string
-          notes: string | null
-          phone: string | null
-          total_spent: number | null
-          total_visits: number | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email?: string | null
-          group_id?: string | null
-          id?: string
-          last_visit_at?: string | null
-          name: string
-          notes?: string | null
-          phone?: string | null
-          total_spent?: number | null
-          total_visits?: number | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string | null
-          group_id?: string | null
-          id?: string
-          last_visit_at?: string | null
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          total_spent?: number | null
-          total_visits?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customer_profiles_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customer_tags: {
-        Row: {
-          color: string
-          created_at: string
-          description: string | null
-          group_id: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          description?: string | null
-          group_id?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          description?: string | null
-          group_id?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customer_tags_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      email_otp_codes: {
-        Row: {
-          code: string
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          verified: boolean | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          email: string
-          expires_at: string
-          id?: string
-          verified?: boolean | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          verified?: boolean | null
-        }
-        Relationships: []
-      }
-      employee_clock_records: {
-        Row: {
-          clock_in: string
-          clock_in_lat: number | null
-          clock_in_lng: number | null
-          clock_out: string | null
-          clock_out_lat: number | null
-          clock_out_lng: number | null
-          created_at: string
-          employee_id: string
-          id: string
+          comps: number
+          day: string
+          discounts: number
+          gross_sales: number
           location_id: string
-          notes: string | null
-          source: string
+          net_sales: number
+          orders_count: number
+          org_id: string
+          payments_total: number
+          refunds: number
+          tax: number
+          tips: number
           updated_at: string
+          voids: number
         }
         Insert: {
-          clock_in?: string
-          clock_in_lat?: number | null
-          clock_in_lng?: number | null
-          clock_out?: string | null
-          clock_out_lat?: number | null
-          clock_out_lng?: number | null
-          created_at?: string
-          employee_id: string
-          id?: string
+          comps?: number
+          day: string
+          discounts?: number
+          gross_sales?: number
           location_id: string
-          notes?: string | null
-          source?: string
+          net_sales?: number
+          orders_count?: number
+          org_id: string
+          payments_total?: number
+          refunds?: number
+          tax?: number
+          tips?: number
           updated_at?: string
+          voids?: number
         }
         Update: {
-          clock_in?: string
-          clock_in_lat?: number | null
-          clock_in_lng?: number | null
-          clock_out?: string | null
-          clock_out_lat?: number | null
-          clock_out_lng?: number | null
-          created_at?: string
-          employee_id?: string
-          id?: string
+          comps?: number
+          day?: string
+          discounts?: number
+          gross_sales?: number
           location_id?: string
-          notes?: string | null
-          source?: string
+          net_sales?: number
+          orders_count?: number
+          org_id?: string
+          payments_total?: number
+          refunds?: number
+          tax?: number
+          tips?: number
           updated_at?: string
+          voids?: number
         }
         Relationships: [
           {
-            foreignKeyName: "employee_clock_records_employee_id_fkey"
+            foreignKeyName: "daily_sales_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          employee_id: string
+          end_time: string
+          id: string
+          is_available: boolean
+          location_id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          employee_id: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          location_id: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          employee_id?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          location_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_availability_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "employee_clock_records_location_id_fkey"
+            foreignKeyName: "employee_availability_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
@@ -444,34 +1023,28 @@ export type Database = {
       employee_legal: {
         Row: {
           created_at: string
-          domicilio: string | null
           employee_id: string
-          fecha_nacimiento: string | null
           iban: string | null
           id: string
-          legal_entity_id: string
+          legal_entity_id: string | null
           nif: string | null
           nss: string | null
         }
         Insert: {
           created_at?: string
-          domicilio?: string | null
           employee_id: string
-          fecha_nacimiento?: string | null
           iban?: string | null
           id?: string
-          legal_entity_id: string
+          legal_entity_id?: string | null
           nif?: string | null
           nss?: string | null
         }
         Update: {
           created_at?: string
-          domicilio?: string | null
           employee_id?: string
-          fecha_nacimiento?: string | null
           iban?: string | null
           id?: string
-          legal_entity_id?: string
+          legal_entity_id?: string | null
           nif?: string | null
           nss?: string | null
         }
@@ -492,62 +1065,48 @@ export type Database = {
           },
         ]
       }
-      employee_payroll: {
+      employee_locations: {
         Row: {
-          contract_type: string
           created_at: string
           employee_id: string
-          gross_annual: number | null
-          gross_monthly: number | null
-          hourly_override: number | null
-          id: string
+          is_primary: boolean
           location_id: string
-          pay_type: string
-          payments_per_year: number
-          updated_at: string
-          weekly_hours: number
+          primary_role_id: string | null
         }
         Insert: {
-          contract_type?: string
           created_at?: string
           employee_id: string
-          gross_annual?: number | null
-          gross_monthly?: number | null
-          hourly_override?: number | null
-          id?: string
+          is_primary?: boolean
           location_id: string
-          pay_type?: string
-          payments_per_year?: number
-          updated_at?: string
-          weekly_hours?: number
+          primary_role_id?: string | null
         }
         Update: {
-          contract_type?: string
           created_at?: string
           employee_id?: string
-          gross_annual?: number | null
-          gross_monthly?: number | null
-          hourly_override?: number | null
-          id?: string
+          is_primary?: boolean
           location_id?: string
-          pay_type?: string
-          payments_per_year?: number
-          updated_at?: string
-          weekly_hours?: number
+          primary_role_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "employee_payroll_employee_id_fkey"
+            foreignKeyName: "employee_locations_employee_id_fkey"
             columns: ["employee_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "employee_payroll_location_id_fkey"
+            foreignKeyName: "employee_locations_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_locations_primary_role_id_fkey"
+            columns: ["primary_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
@@ -556,34 +1115,46 @@ export type Database = {
         Row: {
           active: boolean | null
           created_at: string
-          external_id: string | null
+          email: string | null
           full_name: string
           hourly_cost: number | null
           id: string
-          location_id: string
+          location_id: string | null
+          org_id: string
+          phone: string | null
+          profile_user_id: string | null
           role_name: string | null
+          status: Database["public"]["Enums"]["employment_status"]
           user_id: string | null
         }
         Insert: {
           active?: boolean | null
           created_at?: string
-          external_id?: string | null
+          email?: string | null
           full_name: string
           hourly_cost?: number | null
           id?: string
-          location_id: string
+          location_id?: string | null
+          org_id: string
+          phone?: string | null
+          profile_user_id?: string | null
           role_name?: string | null
+          status?: Database["public"]["Enums"]["employment_status"]
           user_id?: string | null
         }
         Update: {
           active?: boolean | null
           created_at?: string
-          external_id?: string | null
+          email?: string | null
           full_name?: string
           hourly_cost?: number | null
           id?: string
-          location_id?: string
+          location_id?: string | null
+          org_id?: string
+          phone?: string | null
+          profile_user_id?: string | null
           role_name?: string | null
+          status?: Database["public"]["Enums"]["employment_status"]
           user_id?: string | null
         }
         Relationships: [
@@ -594,68 +1165,65 @@ export type Database = {
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "employees_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_profile_user_id_fkey"
+            columns: ["profile_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       employment_contracts: {
         Row: {
-          active: boolean
-          base_salary_monthly: number
-          category: string
-          contract_type: string
-          convenio_code: string | null
+          active: boolean | null
+          base_salary_monthly: number | null
+          contract_type: string | null
           created_at: string
           employee_id: string
-          end_date: string | null
-          extra_pays: Database["public"]["Enums"]["extra_pay_mode"]
-          group_ss: string
           hourly_rate: number | null
           id: string
-          irpf_mode: Database["public"]["Enums"]["irpf_mode"]
           irpf_rate: number | null
-          jornada_pct: number
-          legal_entity_id: string
-          location_id: string | null
-          start_date: string
+          jornada_pct: number | null
+          legal_entity_id: string | null
         }
         Insert: {
-          active?: boolean
-          base_salary_monthly: number
-          category: string
-          contract_type: string
-          convenio_code?: string | null
+          active?: boolean | null
+          base_salary_monthly?: number | null
+          contract_type?: string | null
           created_at?: string
           employee_id: string
-          end_date?: string | null
-          extra_pays?: Database["public"]["Enums"]["extra_pay_mode"]
-          group_ss: string
           hourly_rate?: number | null
           id?: string
-          irpf_mode?: Database["public"]["Enums"]["irpf_mode"]
           irpf_rate?: number | null
-          jornada_pct?: number
-          legal_entity_id: string
-          location_id?: string | null
-          start_date: string
+          jornada_pct?: number | null
+          legal_entity_id?: string | null
         }
         Update: {
-          active?: boolean
-          base_salary_monthly?: number
-          category?: string
-          contract_type?: string
-          convenio_code?: string | null
+          active?: boolean | null
+          base_salary_monthly?: number | null
+          contract_type?: string | null
           created_at?: string
           employee_id?: string
-          end_date?: string | null
-          extra_pays?: Database["public"]["Enums"]["extra_pay_mode"]
-          group_ss?: string
           hourly_rate?: number | null
           id?: string
-          irpf_mode?: Database["public"]["Enums"]["irpf_mode"]
           irpf_rate?: number | null
-          jornada_pct?: number
-          legal_entity_id?: string
-          location_id?: string | null
-          start_date?: string
+          jornada_pct?: number | null
+          legal_entity_id?: string | null
         }
         Relationships: [
           {
@@ -672,256 +1240,160 @@ export type Database = {
             referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "employment_contracts_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
         ]
       }
-      fiscal_invoices: {
+      event_processing_errors: {
         Row: {
-          base_amount: number
-          created_at: string | null
-          customer_name: string | null
-          document_url: string | null
-          group_id: string
+          created_at: string
+          entity: string | null
+          error: string
+          external_id: string | null
           id: string
-          invoice_date: string
-          invoice_number: string
-          location_id: string | null
-          purchase_order_id: string | null
-          status: string | null
-          supplier_name: string | null
-          tax_amount: number
-          tax_rate: number
-          ticket_id: string | null
-          total_amount: number
-          type: string
+          org_id: string
+          payload: Json | null
+          provider: Database["public"]["Enums"]["integration_provider"]
+          raw_event_id: string | null
         }
         Insert: {
-          base_amount: number
-          created_at?: string | null
-          customer_name?: string | null
-          document_url?: string | null
-          group_id: string
+          created_at?: string
+          entity?: string | null
+          error: string
+          external_id?: string | null
           id?: string
-          invoice_date: string
-          invoice_number: string
-          location_id?: string | null
-          purchase_order_id?: string | null
-          status?: string | null
-          supplier_name?: string | null
-          tax_amount: number
-          tax_rate?: number
-          ticket_id?: string | null
-          total_amount: number
-          type: string
+          org_id: string
+          payload?: Json | null
+          provider: Database["public"]["Enums"]["integration_provider"]
+          raw_event_id?: string | null
         }
         Update: {
-          base_amount?: number
-          created_at?: string | null
-          customer_name?: string | null
-          document_url?: string | null
-          group_id?: string
+          created_at?: string
+          entity?: string | null
+          error?: string
+          external_id?: string | null
           id?: string
-          invoice_date?: string
-          invoice_number?: string
-          location_id?: string | null
-          purchase_order_id?: string | null
-          status?: string | null
-          supplier_name?: string | null
-          tax_amount?: number
-          tax_rate?: number
-          ticket_id?: string | null
-          total_amount?: number
-          type?: string
+          org_id?: string
+          payload?: Json | null
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          raw_event_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fiscal_invoices_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "event_processing_errors_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fiscal_invoices_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: "event_processing_errors_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "locations"
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fiscal_invoices_purchase_order_id_fkey"
-            columns: ["purchase_order_id"]
+            foreignKeyName: "event_processing_errors_raw_event_id_fkey"
+            columns: ["raw_event_id"]
             isOneToOne: false
-            referencedRelation: "purchase_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fiscal_invoices_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
+            referencedRelation: "raw_events"
             referencedColumns: ["id"]
           },
         ]
       }
-      fiscal_model303: {
+      event_replay_jobs: {
         Row: {
-          base_10: number | null
-          base_21: number | null
-          base_4: number | null
-          confirmation_code: string | null
-          fiscal_period_id: string | null
-          generated_at: string | null
-          group_id: string
+          attempts: number
+          created_at: string
+          finished_at: string | null
           id: string
-          iva_10: number | null
-          iva_21: number | null
-          iva_4: number | null
-          result: number | null
-          submitted_at: string | null
-          total_repercutido: number | null
-          total_soportado: number | null
+          last_error: string | null
+          max_attempts: number
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          raw_event_id: string
+          run_after: string
+          status: string
         }
         Insert: {
-          base_10?: number | null
-          base_21?: number | null
-          base_4?: number | null
-          confirmation_code?: string | null
-          fiscal_period_id?: string | null
-          generated_at?: string | null
-          group_id: string
+          attempts?: number
+          created_at?: string
+          finished_at?: string | null
           id?: string
-          iva_10?: number | null
-          iva_21?: number | null
-          iva_4?: number | null
-          result?: number | null
-          submitted_at?: string | null
-          total_repercutido?: number | null
-          total_soportado?: number | null
+          last_error?: string | null
+          max_attempts?: number
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          raw_event_id: string
+          run_after?: string
+          status?: string
         }
         Update: {
-          base_10?: number | null
-          base_21?: number | null
-          base_4?: number | null
-          confirmation_code?: string | null
-          fiscal_period_id?: string | null
-          generated_at?: string | null
-          group_id?: string
+          attempts?: number
+          created_at?: string
+          finished_at?: string | null
           id?: string
-          iva_10?: number | null
-          iva_21?: number | null
-          iva_4?: number | null
-          result?: number | null
-          submitted_at?: string | null
-          total_repercutido?: number | null
-          total_soportado?: number | null
+          last_error?: string | null
+          max_attempts?: number
+          org_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          raw_event_id?: string
+          run_after?: string
+          status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fiscal_model303_fiscal_period_id_fkey"
-            columns: ["fiscal_period_id"]
-            isOneToOne: false
-            referencedRelation: "fiscal_periods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fiscal_model303_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "event_replay_jobs_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      fiscal_periods: {
-        Row: {
-          created_at: string | null
-          group_id: string
-          id: string
-          quarter: number
-          status: string | null
-          submitted_at: string | null
-          year: number
-        }
-        Insert: {
-          created_at?: string | null
-          group_id: string
-          id?: string
-          quarter: number
-          status?: string | null
-          submitted_at?: string | null
-          year: number
-        }
-        Update: {
-          created_at?: string | null
-          group_id?: string
-          id?: string
-          quarter?: number
-          status?: string | null
-          submitted_at?: string | null
-          year?: number
-        }
-        Relationships: [
           {
-            foreignKeyName: "fiscal_periods_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "event_replay_jobs_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "groups"
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_replay_jobs_raw_event_id_fkey"
+            columns: ["raw_event_id"]
+            isOneToOne: false
+            referencedRelation: "raw_events"
             referencedColumns: ["id"]
           },
         ]
       }
       forecast_daily_metrics: {
         Row: {
-          confidence: number | null
           created_at: string
           date: string
-          forecast_orders: number
-          forecast_sales: number
-          generated_at: string | null
+          forecast_orders: number | null
+          forecast_sales: number | null
           id: string
           location_id: string
-          mape: number | null
-          model_version: string | null
-          mse: number | null
-          planned_labor_cost: number
-          planned_labor_hours: number
+          planned_labor_cost: number | null
+          planned_labor_hours: number | null
         }
         Insert: {
-          confidence?: number | null
           created_at?: string
           date: string
-          forecast_orders?: number
-          forecast_sales?: number
-          generated_at?: string | null
+          forecast_orders?: number | null
+          forecast_sales?: number | null
           id?: string
           location_id: string
-          mape?: number | null
-          model_version?: string | null
-          mse?: number | null
-          planned_labor_cost?: number
-          planned_labor_hours?: number
+          planned_labor_cost?: number | null
+          planned_labor_hours?: number | null
         }
         Update: {
-          confidence?: number | null
           created_at?: string
           date?: string
-          forecast_orders?: number
-          forecast_sales?: number
-          generated_at?: string | null
+          forecast_orders?: number | null
+          forecast_sales?: number | null
           id?: string
           location_id?: string
-          mape?: number | null
-          model_version?: string | null
-          mse?: number | null
-          planned_labor_cost?: number
-          planned_labor_hours?: number
+          planned_labor_cost?: number | null
+          planned_labor_hours?: number | null
         }
         Relationships: [
           {
@@ -933,236 +1405,517 @@ export type Database = {
           },
         ]
       }
-      forecast_hourly_metrics: {
+      forecast_points: {
         Row: {
-          confidence: number
-          created_at: string | null
-          date: string
-          factors: Json | null
-          forecast_covers: number
-          forecast_orders: number
-          forecast_sales: number
-          generated_at: string | null
-          hour: number
-          id: string
+          day: string
+          forecast_run_id: string
           location_id: string
-          model_version: string | null
+          org_id: string
+          yhat: number
+          yhat_lower: number | null
+          yhat_upper: number | null
         }
         Insert: {
-          confidence?: number
-          created_at?: string | null
-          date: string
-          factors?: Json | null
-          forecast_covers?: number
-          forecast_orders?: number
-          forecast_sales?: number
-          generated_at?: string | null
-          hour: number
-          id?: string
+          day: string
+          forecast_run_id: string
           location_id: string
-          model_version?: string | null
+          org_id: string
+          yhat: number
+          yhat_lower?: number | null
+          yhat_upper?: number | null
         }
         Update: {
-          confidence?: number
-          created_at?: string | null
-          date?: string
-          factors?: Json | null
-          forecast_covers?: number
-          forecast_orders?: number
-          forecast_sales?: number
-          generated_at?: string | null
-          hour?: number
-          id?: string
+          day?: string
+          forecast_run_id?: string
           location_id?: string
-          model_version?: string | null
+          org_id?: string
+          yhat?: number
+          yhat_lower?: number | null
+          yhat_upper?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "forecast_hourly_metrics_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: "forecast_points_forecast_run_id_fkey"
+            columns: ["forecast_run_id"]
             isOneToOne: false
-            referencedRelation: "locations"
+            referencedRelation: "forecast_runs"
             referencedColumns: ["id"]
           },
         ]
       }
-      forecast_model_runs: {
+      forecast_runs: {
         Row: {
-          algorithm: string
-          confidence: number | null
-          created_at: string
-          data_points: number | null
-          generated_at: string
-          history_end: string
-          history_start: string
+          created_by: string | null
+          error: string | null
+          finished_at: string | null
           horizon_days: number
           id: string
           location_id: string
-          mape: number | null
-          model_version: string
-          mse: number | null
-          seasonality_dow: Json | null
-          seasonality_woy: Json | null
-          trend_intercept: number | null
-          trend_slope: number | null
+          metric: string
+          org_id: string
+          requested_at: string
+          started_at: string | null
+          status: string
+          train_end: string
+          train_start: string
         }
         Insert: {
-          algorithm?: string
-          confidence?: number | null
-          created_at?: string
-          data_points?: number | null
-          generated_at?: string
-          history_end: string
-          history_start: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
           horizon_days?: number
           id?: string
           location_id: string
-          mape?: number | null
-          model_version: string
-          mse?: number | null
-          seasonality_dow?: Json | null
-          seasonality_woy?: Json | null
-          trend_intercept?: number | null
-          trend_slope?: number | null
+          metric: string
+          org_id: string
+          requested_at?: string
+          started_at?: string | null
+          status?: string
+          train_end: string
+          train_start: string
         }
         Update: {
-          algorithm?: string
-          confidence?: number | null
-          created_at?: string
-          data_points?: number | null
-          generated_at?: string
-          history_end?: string
-          history_start?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
           horizon_days?: number
           id?: string
           location_id?: string
-          mape?: number | null
-          model_version?: string
-          mse?: number | null
-          seasonality_dow?: Json | null
-          seasonality_woy?: Json | null
-          trend_intercept?: number | null
-          trend_slope?: number | null
+          metric?: string
+          org_id?: string
+          requested_at?: string
+          started_at?: string | null
+          status?: string
+          train_end?: string
+          train_start?: string
         }
         Relationships: [
           {
-            foreignKeyName: "forecast_model_runs_location_id_fkey"
+            foreignKeyName: "forecast_runs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forecast_runs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forecast_runs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_accounts: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          external_account_id: string | null
+          id: string
+          integration_id: string
+          metadata: Json
+          org_id: string | null
+          provider: Database["public"]["Enums"]["integration_provider"] | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          external_account_id?: string | null
+          id?: string
+          integration_id: string
+          metadata?: Json
+          org_id?: string | null
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          external_account_id?: string | null
+          id?: string
+          integration_id?: string
+          metadata?: Json
+          org_id?: string | null
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_accounts_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_secrets: {
+        Row: {
+          access_token: string | null
+          integration_account_id: string
+          refresh_token: string | null
+          rotated_at: string
+          token_expires_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          integration_account_id: string
+          refresh_token?: string | null
+          rotated_at?: string
+          token_expires_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          integration_account_id?: string
+          refresh_token?: string | null
+          rotated_at?: string
+          token_expires_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_secrets_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: true
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_sync_runs: {
+        Row: {
+          created_at: string
+          cursor: Json | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          integration_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["sync_status"]
+        }
+        Insert: {
+          created_at?: string
+          cursor?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          integration_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["sync_status"]
+        }
+        Update: {
+          created_at?: string
+          cursor?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          integration_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["sync_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_sync_runs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          metadata: Json
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          metadata?: Json
+          org_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integrations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_categories_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_categories_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_item_location: {
+        Row: {
+          item_id: string
+          location_id: string
+          on_hand: number
+          reorder_point: number
+          safety_stock: number
+          updated_at: string
+        }
+        Insert: {
+          item_id: string
+          location_id: string
+          on_hand?: number
+          reorder_point?: number
+          safety_stock?: number
+          updated_at?: string
+        }
+        Update: {
+          item_id?: string
+          location_id?: string
+          on_hand?: number
+          reorder_point?: number
+          safety_stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_item_location_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_item_location_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
-      }
-      groups: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
       }
       inventory_items: {
         Row: {
-          category: string | null
+          base_unit: string
+          category_id: string | null
           created_at: string
           current_stock: number | null
-          group_id: string
+          group_id: string | null
           id: string
+          is_active: boolean
           last_cost: number | null
+          main_supplier_id: string | null
+          metadata: Json
           name: string
+          order_unit: string
+          org_id: string
+          pack_size: number | null
           par_level: number | null
+          price: number
+          type: Database["public"]["Enums"]["item_type"]
           unit: string | null
+          vat_rate: number
         }
         Insert: {
-          category?: string | null
+          base_unit?: string
+          category_id?: string | null
           created_at?: string
           current_stock?: number | null
-          group_id: string
+          group_id?: string | null
           id?: string
+          is_active?: boolean
           last_cost?: number | null
+          main_supplier_id?: string | null
+          metadata?: Json
           name: string
+          order_unit: string
+          org_id: string
+          pack_size?: number | null
           par_level?: number | null
+          price?: number
+          type?: Database["public"]["Enums"]["item_type"]
           unit?: string | null
+          vat_rate?: number
         }
         Update: {
-          category?: string | null
+          base_unit?: string
+          category_id?: string | null
           created_at?: string
           current_stock?: number | null
-          group_id?: string
+          group_id?: string | null
           id?: string
+          is_active?: boolean
           last_cost?: number | null
+          main_supplier_id?: string | null
+          metadata?: Json
           name?: string
+          order_unit?: string
+          org_id?: string
+          pack_size?: number | null
           par_level?: number | null
+          price?: number
+          type?: Database["public"]["Enums"]["item_type"]
           unit?: string | null
+          vat_rate?: number
         }
         Relationships: [
           {
-            foreignKeyName: "inventory_items_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "inventory_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_main_supplier_id_fkey"
+            columns: ["main_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
       }
-      kpi_alert_thresholds: {
+      jobs: {
         Row: {
-          created_at: string | null
-          group_id: string
+          attempts: number
+          created_at: string
+          finished_at: string | null
+          heartbeat_at: string | null
           id: string
-          is_enabled: boolean | null
-          kpi_name: string
-          location_id: string | null
-          max_threshold: number | null
-          min_threshold: number | null
-          updated_at: string | null
+          job_type: Database["public"]["Enums"]["job_type"]
+          last_error: string | null
+          lease_seconds: number
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          org_id: string
+          payload: Json
+          priority: number
+          provider: Database["public"]["Enums"]["integration_provider"] | null
+          run_after: string
+          status: Database["public"]["Enums"]["job_status"]
         }
         Insert: {
-          created_at?: string | null
-          group_id: string
+          attempts?: number
+          created_at?: string
+          finished_at?: string | null
+          heartbeat_at?: string | null
           id?: string
-          is_enabled?: boolean | null
-          kpi_name: string
-          location_id?: string | null
-          max_threshold?: number | null
-          min_threshold?: number | null
-          updated_at?: string | null
+          job_type: Database["public"]["Enums"]["job_type"]
+          last_error?: string | null
+          lease_seconds?: number
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          org_id: string
+          payload?: Json
+          priority?: number
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+          run_after?: string
+          status?: Database["public"]["Enums"]["job_status"]
         }
         Update: {
-          created_at?: string | null
-          group_id?: string
+          attempts?: number
+          created_at?: string
+          finished_at?: string | null
+          heartbeat_at?: string | null
           id?: string
-          is_enabled?: boolean | null
-          kpi_name?: string
-          location_id?: string | null
-          max_threshold?: number | null
-          min_threshold?: number | null
-          updated_at?: string | null
+          job_type?: Database["public"]["Enums"]["job_type"]
+          last_error?: string | null
+          lease_seconds?: number
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          org_id?: string
+          payload?: Json
+          priority?: number
+          provider?: Database["public"]["Enums"]["integration_provider"] | null
+          run_after?: string
+          status?: Database["public"]["Enums"]["job_status"]
         }
         Relationships: [
           {
-            foreignKeyName: "kpi_alert_thresholds_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "jobs_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "kpi_alert_thresholds_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: "jobs_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "locations"
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -1172,24 +1925,24 @@ export type Database = {
           created_at: string
           date: string
           id: string
-          labour_cost: number
-          labour_hours: number
+          labour_cost: number | null
+          labour_hours: number | null
           location_id: string
         }
         Insert: {
           created_at?: string
           date: string
           id?: string
-          labour_cost?: number
-          labour_hours?: number
+          labour_cost?: number | null
+          labour_hours?: number | null
           location_id: string
         }
         Update: {
           created_at?: string
           date?: string
           id?: string
-          labour_cost?: number
-          labour_hours?: number
+          labour_cost?: number | null
+          labour_hours?: number | null
           location_id?: string
         }
         Relationships: [
@@ -1206,28 +1959,28 @@ export type Database = {
         Row: {
           cnae: string | null
           created_at: string
-          domicilio_fiscal: string
+          domicilio_fiscal: string | null
           group_id: string
           id: string
-          nif: string
+          nif: string | null
           razon_social: string
         }
         Insert: {
           cnae?: string | null
           created_at?: string
-          domicilio_fiscal: string
+          domicilio_fiscal?: string | null
           group_id: string
           id?: string
-          nif: string
-          razon_social: string
+          nif?: string | null
+          razon_social?: string
         }
         Update: {
           cnae?: string | null
           created_at?: string
-          domicilio_fiscal?: string
+          domicilio_fiscal?: string | null
           group_id?: string
           id?: string
-          nif?: string
+          nif?: string | null
           razon_social?: string
         }
         Relationships: [
@@ -1238,35 +1991,89 @@ export type Database = {
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "legal_entities_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_memberships: {
+        Row: {
+          created_at: string
+          location_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          location_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          location_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_memberships_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       location_settings: {
         Row: {
+          closing_time: string | null
           created_at: string
+          currency: string | null
           default_cogs_percent: number | null
           default_hourly_cost: number | null
-          id: string
           location_id: string
+          opening_time: string | null
+          splh_goal: number | null
+          target_col_pct: number | null
           target_col_percent: number | null
+          target_gp_pct: number | null
           target_gp_percent: number | null
+          timezone: string | null
         }
         Insert: {
+          closing_time?: string | null
           created_at?: string
+          currency?: string | null
           default_cogs_percent?: number | null
           default_hourly_cost?: number | null
-          id?: string
           location_id: string
+          opening_time?: string | null
+          splh_goal?: number | null
+          target_col_pct?: number | null
           target_col_percent?: number | null
+          target_gp_pct?: number | null
           target_gp_percent?: number | null
+          timezone?: string | null
         }
         Update: {
+          closing_time?: string | null
           created_at?: string
+          currency?: string | null
           default_cogs_percent?: number | null
           default_hourly_cost?: number | null
-          id?: string
           location_id?: string
+          opening_time?: string | null
+          splh_goal?: number | null
+          target_col_pct?: number | null
           target_col_percent?: number | null
+          target_gp_pct?: number | null
           target_gp_percent?: number | null
+          timezone?: string | null
         }
         Relationships: [
           {
@@ -1280,41 +2087,116 @@ export type Database = {
       }
       locations: {
         Row: {
-          active: boolean | null
+          active: boolean
+          address: string | null
           city: string | null
           created_at: string
-          currency: string | null
-          group_id: string
+          group_id: string | null
           id: string
           name: string
-          timezone: string | null
+          org_id: string
+          timezone: string
         }
         Insert: {
-          active?: boolean | null
+          active?: boolean
+          address?: string | null
           city?: string | null
           created_at?: string
-          currency?: string | null
-          group_id: string
+          group_id?: string | null
           id?: string
           name: string
-          timezone?: string | null
+          org_id: string
+          timezone?: string
         }
         Update: {
-          active?: boolean | null
+          active?: boolean
+          address?: string | null
           city?: string | null
           created_at?: string
-          currency?: string | null
-          group_id?: string
+          group_id?: string | null
           id?: string
           name?: string
-          timezone?: string | null
+          org_id?: string
+          timezone?: string
         }
         Relationships: [
           {
-            foreignKeyName: "locations_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "locations_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "locations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      low_stock_alerts: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          id: string
+          item_id: string
+          location_id: string
+          on_hand: number
+          org_id: string
+          reorder_point: number
+          status: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          location_id: string
+          on_hand: number
+          org_id: string
+          reorder_point: number
+          status?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          location_id?: string
+          on_hand?: number
+          org_id?: string
+          reorder_point?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "low_stock_alerts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "low_stock_alerts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "low_stock_alerts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "low_stock_alerts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -1325,39 +2207,36 @@ export type Database = {
           email: string | null
           group_id: string
           id: string
-          lifetime_points: number
+          lifetime_points: number | null
           name: string
           notes: string | null
           phone: string | null
-          points_balance: number
-          tier: string
-          updated_at: string
+          points_balance: number | null
+          tier: string | null
         }
         Insert: {
           created_at?: string
           email?: string | null
           group_id: string
           id?: string
-          lifetime_points?: number
-          name: string
+          lifetime_points?: number | null
+          name?: string
           notes?: string | null
           phone?: string | null
-          points_balance?: number
-          tier?: string
-          updated_at?: string
+          points_balance?: number | null
+          tier?: string | null
         }
         Update: {
           created_at?: string
           email?: string | null
           group_id?: string
           id?: string
-          lifetime_points?: number
+          lifetime_points?: number | null
           name?: string
           notes?: string | null
           phone?: string | null
-          points_balance?: number
-          tier?: string
-          updated_at?: string
+          points_balance?: number | null
+          tier?: string | null
         }
         Relationships: [
           {
@@ -1367,72 +2246,11 @@ export type Database = {
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      loyalty_redemptions: {
-        Row: {
-          applied_at: string | null
-          code: string | null
-          id: string
-          location_id: string | null
-          member_id: string
-          points_used: number
-          redeemed_at: string
-          reward_id: string
-          status: string
-          ticket_id: string | null
-        }
-        Insert: {
-          applied_at?: string | null
-          code?: string | null
-          id?: string
-          location_id?: string | null
-          member_id: string
-          points_used: number
-          redeemed_at?: string
-          reward_id: string
-          status?: string
-          ticket_id?: string | null
-        }
-        Update: {
-          applied_at?: string | null
-          code?: string | null
-          id?: string
-          location_id?: string | null
-          member_id?: string
-          points_used?: number
-          redeemed_at?: string
-          reward_id?: string
-          status?: string
-          ticket_id?: string | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "loyalty_redemptions_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: "loyalty_members_group_id_fkey"
+            columns: ["group_id"]
             isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_redemptions_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "loyalty_members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_redemptions_reward_id_fkey"
-            columns: ["reward_id"]
-            isOneToOne: false
-            referencedRelation: "loyalty_rewards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loyalty_redemptions_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -1440,48 +2258,48 @@ export type Database = {
       loyalty_rewards: {
         Row: {
           created_at: string
-          current_redemptions: number
+          current_redemptions: number | null
           description: string | null
           group_id: string
           id: string
-          is_active: boolean
+          is_active: boolean | null
           max_redemptions: number | null
           name: string
           points_cost: number
           product_id: string | null
-          reward_type: string
+          reward_type: string | null
           valid_from: string | null
           valid_until: string | null
           value: number | null
         }
         Insert: {
           created_at?: string
-          current_redemptions?: number
+          current_redemptions?: number | null
           description?: string | null
           group_id: string
           id?: string
-          is_active?: boolean
+          is_active?: boolean | null
           max_redemptions?: number | null
-          name: string
-          points_cost: number
+          name?: string
+          points_cost?: number
           product_id?: string | null
-          reward_type?: string
+          reward_type?: string | null
           valid_from?: string | null
           valid_until?: string | null
           value?: number | null
         }
         Update: {
           created_at?: string
-          current_redemptions?: number
+          current_redemptions?: number | null
           description?: string | null
           group_id?: string
           id?: string
-          is_active?: boolean
+          is_active?: boolean | null
           max_redemptions?: number | null
           name?: string
           points_cost?: number
           product_id?: string | null
-          reward_type?: string
+          reward_type?: string | null
           valid_from?: string | null
           valid_until?: string | null
           value?: number | null
@@ -1492,6 +2310,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_rewards_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
           {
@@ -1508,38 +2333,45 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
-          is_enabled: boolean
-          points_per_euro: number
-          tier_rules: Json
+          is_enabled: boolean | null
+          points_per_euro: number | null
+          tier_rules: Json | null
           updated_at: string
-          welcome_bonus: number
+          welcome_bonus: number | null
         }
         Insert: {
           created_at?: string
           group_id: string
           id?: string
-          is_enabled?: boolean
-          points_per_euro?: number
-          tier_rules?: Json
+          is_enabled?: boolean | null
+          points_per_euro?: number | null
+          tier_rules?: Json | null
           updated_at?: string
-          welcome_bonus?: number
+          welcome_bonus?: number | null
         }
         Update: {
           created_at?: string
           group_id?: string
           id?: string
-          is_enabled?: boolean
-          points_per_euro?: number
-          tier_rules?: Json
+          is_enabled?: boolean | null
+          points_per_euro?: number | null
+          tier_rules?: Json | null
           updated_at?: string
-          welcome_bonus?: number
+          welcome_bonus?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "loyalty_settings_group_id_fkey"
             columns: ["group_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -1561,9 +2393,9 @@ export type Database = {
           id?: string
           location_id?: string | null
           member_id: string
-          points: number
+          points?: number
           ticket_id?: string | null
-          type: string
+          type?: string
         }
         Update: {
           created_at?: string
@@ -1590,191 +2422,249 @@ export type Database = {
             referencedRelation: "loyalty_members"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      menu_item_mappings: {
+        Row: {
+          cdm_item_id: string
+          menu_item_id: string
+          org_id: string
+        }
+        Insert: {
+          cdm_item_id: string
+          menu_item_id: string
+          org_id: string
+        }
+        Update: {
+          cdm_item_id?: string
+          menu_item_id?: string
+          org_id?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "loyalty_transactions_ticket_id_fkey"
-            columns: ["ticket_id"]
+            foreignKeyName: "menu_item_mappings_cdm_item_id_fkey"
+            columns: ["cdm_item_id"]
             isOneToOne: false
-            referencedRelation: "tickets"
+            referencedRelation: "cdm_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_mappings_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_mappings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_mappings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
       }
-      menu_engineering_actions: {
+      menu_items: {
         Row: {
-          action_type: string
-          classification: string
+          category: string | null
           created_at: string
-          date_from: string
-          date_to: string
-          estimated_impact_eur: number | null
           id: string
-          location_id: string | null
-          notes: string | null
-          product_id: string | null
+          is_active: boolean
+          name: string
+          org_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          org_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_states: {
+        Row: {
+          code_verifier: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          redirect_uri: string | null
+          state: string
+          used_at: string | null
+        }
+        Insert: {
+          code_verifier?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          redirect_uri?: string | null
+          state: string
+          used_at?: string | null
+        }
+        Update: {
+          code_verifier?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          org_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          redirect_uri?: string | null
+          state?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_states_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_states_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_memberships: {
+        Row: {
+          created_at: string
+          org_id: string
+          role: Database["public"]["Enums"]["org_role"]
           user_id: string
         }
         Insert: {
-          action_type: string
-          classification: string
           created_at?: string
-          date_from: string
-          date_to: string
-          estimated_impact_eur?: number | null
-          id?: string
-          location_id?: string | null
-          notes?: string | null
-          product_id?: string | null
+          org_id: string
+          role?: Database["public"]["Enums"]["org_role"]
           user_id: string
         }
         Update: {
-          action_type?: string
-          classification?: string
           created_at?: string
-          date_from?: string
-          date_to?: string
-          estimated_impact_eur?: number | null
-          id?: string
-          location_id?: string | null
-          notes?: string | null
-          product_id?: string | null
+          org_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "menu_engineering_actions_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "menu_engineering_actions_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payments: {
-        Row: {
-          amount: number
-          created_at: string
-          id: string
-          method: Database["public"]["Enums"]["payment_method"] | null
-          paid_at: string
-          stripe_payment_intent_id: string | null
-          ticket_id: string
-          tip_amount: number | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          method?: Database["public"]["Enums"]["payment_method"] | null
-          paid_at?: string
-          stripe_payment_intent_id?: string | null
-          ticket_id: string
-          tip_amount?: number | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          method?: Database["public"]["Enums"]["payment_method"] | null
-          paid_at?: string
-          stripe_payment_intent_id?: string | null
-          ticket_id?: string
-          tip_amount?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payroll_audit: {
-        Row: {
-          action: string
-          actor_user_id: string
-          created_at: string
-          group_id: string
-          id: string
-          payload_json: Json
-        }
-        Insert: {
-          action: string
-          actor_user_id: string
-          created_at?: string
-          group_id: string
-          id?: string
-          payload_json?: Json
-        }
-        Update: {
-          action?: string
-          actor_user_id?: string
-          created_at?: string
-          group_id?: string
-          id?: string
-          payload_json?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payroll_audit_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "org_memberships_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "org_memberships_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      payroll_concepts: {
+      org_settings: {
         Row: {
-          code: string
-          cotizable_ss: boolean
-          created_at: string
-          group_id: string
-          id: string
-          is_default: boolean
-          name: string
-          taxable_irpf: boolean
-          type: Database["public"]["Enums"]["concept_type"]
+          data_source_mode: Database["public"]["Enums"]["data_source_mode"]
+          demo_fallback_after_hours: number
+          org_id: string
+          updated_at: string
+          updated_by: string | null
         }
         Insert: {
-          code: string
-          cotizable_ss?: boolean
-          created_at?: string
-          group_id: string
-          id?: string
-          is_default?: boolean
-          name: string
-          taxable_irpf?: boolean
-          type: Database["public"]["Enums"]["concept_type"]
+          data_source_mode?: Database["public"]["Enums"]["data_source_mode"]
+          demo_fallback_after_hours?: number
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Update: {
-          code?: string
-          cotizable_ss?: boolean
+          data_source_mode?: Database["public"]["Enums"]["data_source_mode"]
+          demo_fallback_after_hours?: number
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orgs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_demo: boolean
+          name: string
+        }
+        Insert: {
           created_at?: string
-          group_id?: string
+          created_by?: string | null
           id?: string
-          is_default?: boolean
+          is_demo?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_demo?: boolean
           name?: string
-          taxable_irpf?: boolean
-          type?: Database["public"]["Enums"]["concept_type"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "payroll_concepts_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       payroll_inputs: {
         Row: {
@@ -1782,45 +2672,39 @@ export type Database = {
           created_at: string
           deductions_json: Json | null
           employee_id: string
-          hours_holiday: number
-          hours_night: number
-          hours_overtime: number
-          hours_regular: number
+          hours_holiday: number | null
+          hours_night: number | null
+          hours_overtime: number | null
+          hours_regular: number | null
           id: string
-          location_id: string | null
           period_month: number
           period_year: number
-          tips_json: Json | null
         }
         Insert: {
           bonuses_json?: Json | null
           created_at?: string
           deductions_json?: Json | null
           employee_id: string
-          hours_holiday?: number
-          hours_night?: number
-          hours_overtime?: number
-          hours_regular?: number
+          hours_holiday?: number | null
+          hours_night?: number | null
+          hours_overtime?: number | null
+          hours_regular?: number | null
           id?: string
-          location_id?: string | null
           period_month: number
           period_year: number
-          tips_json?: Json | null
         }
         Update: {
           bonuses_json?: Json | null
           created_at?: string
           deductions_json?: Json | null
           employee_id?: string
-          hours_holiday?: number
-          hours_night?: number
-          hours_overtime?: number
-          hours_regular?: number
+          hours_holiday?: number | null
+          hours_night?: number | null
+          hours_overtime?: number | null
+          hours_regular?: number | null
           id?: string
-          location_id?: string | null
           period_month?: number
           period_year?: number
-          tips_json?: Json | null
         }
         Relationships: [
           {
@@ -1830,54 +2714,59 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "payroll_inputs_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
         ]
       }
       payroll_location_settings: {
         Row: {
-          accident_rate_employer: number
-          contingencias_comunes_employer: number
+          accident_rate_employer: number | null
+          contingencias_comunes_employee: number | null
+          contingencias_comunes_employer: number | null
           created_at: string
-          desempleo_employer_indefinido: number
-          desempleo_employer_temporal: number
-          fogasa_employer: number
-          formacion_employer: number
-          id: string
+          desempleo_employee: number | null
+          desempleo_employer_indefinido: number | null
+          desempleo_employer_temporal: number | null
+          fogasa_employer: number | null
+          formacion_employee: number | null
+          formacion_employer: number | null
+          irpf_employee: number | null
           location_id: string
-          mei_employer: number
-          updated_at: string
+          mei_employee: number | null
+          mei_employer: number | null
+          payments_per_year: number | null
         }
         Insert: {
-          accident_rate_employer?: number
-          contingencias_comunes_employer?: number
+          accident_rate_employer?: number | null
+          contingencias_comunes_employee?: number | null
+          contingencias_comunes_employer?: number | null
           created_at?: string
-          desempleo_employer_indefinido?: number
-          desempleo_employer_temporal?: number
-          fogasa_employer?: number
-          formacion_employer?: number
-          id?: string
+          desempleo_employee?: number | null
+          desempleo_employer_indefinido?: number | null
+          desempleo_employer_temporal?: number | null
+          fogasa_employer?: number | null
+          formacion_employee?: number | null
+          formacion_employer?: number | null
+          irpf_employee?: number | null
           location_id: string
-          mei_employer?: number
-          updated_at?: string
+          mei_employee?: number | null
+          mei_employer?: number | null
+          payments_per_year?: number | null
         }
         Update: {
-          accident_rate_employer?: number
-          contingencias_comunes_employer?: number
+          accident_rate_employer?: number | null
+          contingencias_comunes_employee?: number | null
+          contingencias_comunes_employer?: number | null
           created_at?: string
-          desempleo_employer_indefinido?: number
-          desempleo_employer_temporal?: number
-          fogasa_employer?: number
-          formacion_employer?: number
-          id?: string
+          desempleo_employee?: number | null
+          desempleo_employer_indefinido?: number | null
+          desempleo_employer_temporal?: number | null
+          fogasa_employer?: number | null
+          formacion_employee?: number | null
+          formacion_employer?: number | null
+          irpf_employee?: number | null
           location_id?: string
-          mei_employer?: number
-          updated_at?: string
+          mei_employee?: number | null
+          mei_employer?: number | null
+          payments_per_year?: number | null
         }
         Relationships: [
           {
@@ -1896,10 +2785,10 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
-          legal_entity_id: string
+          legal_entity_id: string | null
           period_month: number
           period_year: number
-          status: Database["public"]["Enums"]["payroll_status"]
+          status: string
         }
         Insert: {
           approved_at?: string | null
@@ -1907,10 +2796,10 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
-          legal_entity_id: string
+          legal_entity_id?: string | null
           period_month: number
           period_year: number
-          status?: Database["public"]["Enums"]["payroll_status"]
+          status?: string
         }
         Update: {
           approved_at?: string | null
@@ -1918,10 +2807,10 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
-          legal_entity_id?: string
+          legal_entity_id?: string | null
           period_month?: number
           period_year?: number
-          status?: Database["public"]["Enums"]["payroll_status"]
+          status?: string
         }
         Relationships: [
           {
@@ -1929,6 +2818,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_runs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
           {
@@ -1940,68 +2836,30 @@ export type Database = {
           },
         ]
       }
-      payroll_settings: {
-        Row: {
-          created_at: string
-          group_id: string
-          id: string
-          setting_json: Json
-          setting_type: string
-          valid_from: string
-          valid_to: string | null
-        }
-        Insert: {
-          created_at?: string
-          group_id: string
-          id?: string
-          setting_json?: Json
-          setting_type: string
-          valid_from: string
-          valid_to?: string | null
-        }
-        Update: {
-          created_at?: string
-          group_id?: string
-          id?: string
-          setting_json?: Json
-          setting_type?: string
-          valid_from?: string
-          valid_to?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payroll_settings_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payslip_lines: {
         Row: {
           amount: number
           concept_code: string
-          concept_name: string
+          description: string | null
           id: string
           payslip_id: string
-          type: Database["public"]["Enums"]["concept_type"]
+          type: string
         }
         Insert: {
-          amount: number
+          amount?: number
           concept_code: string
-          concept_name: string
+          description?: string | null
           id?: string
           payslip_id: string
-          type: Database["public"]["Enums"]["concept_type"]
+          type?: string
         }
         Update: {
           amount?: number
           concept_code?: string
-          concept_name?: string
+          description?: string | null
           id?: string
           payslip_id?: string
-          type?: Database["public"]["Enums"]["concept_type"]
+          type?: string
         }
         Relationships: [
           {
@@ -2015,43 +2873,40 @@ export type Database = {
       }
       payslips: {
         Row: {
+          created_at: string
           employee_id: string
           employee_ss: number
           employer_ss: number
-          generated_at: string
           gross_pay: number
           id: string
           irpf_withheld: number
           net_pay: number
           other_deductions: number
           payroll_run_id: string
-          pdf_url: string | null
         }
         Insert: {
+          created_at?: string
           employee_id: string
           employee_ss?: number
           employer_ss?: number
-          generated_at?: string
           gross_pay?: number
           id?: string
           irpf_withheld?: number
           net_pay?: number
           other_deductions?: number
           payroll_run_id: string
-          pdf_url?: string | null
         }
         Update: {
+          created_at?: string
           employee_id?: string
           employee_ss?: number
           employer_ss?: number
-          generated_at?: string
           gross_pay?: number
           id?: string
           irpf_withheld?: number
           net_pay?: number
           other_deductions?: number
           payroll_run_id?: string
-          pdf_url?: string | null
         }
         Relationships: [
           {
@@ -2070,69 +2925,45 @@ export type Database = {
           },
         ]
       }
-      permissions: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          key: string
-          module: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          key: string
-          module: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          key?: string
-          module?: string
-        }
-        Relationships: []
-      }
       planned_shifts: {
         Row: {
           created_at: string
           employee_id: string
-          end_time: string
+          end_time: string | null
           id: string
           location_id: string
           planned_cost: number | null
-          planned_hours: number
+          planned_hours: number | null
           role: string | null
           shift_date: string
-          start_time: string
-          status: string
+          start_time: string | null
+          status: string | null
         }
         Insert: {
           created_at?: string
           employee_id: string
-          end_time: string
+          end_time?: string | null
           id?: string
           location_id: string
           planned_cost?: number | null
-          planned_hours: number
+          planned_hours?: number | null
           role?: string | null
           shift_date: string
-          start_time: string
-          status?: string
+          start_time?: string | null
+          status?: string | null
         }
         Update: {
           created_at?: string
           employee_id?: string
-          end_time?: string
+          end_time?: string | null
           id?: string
           location_id?: string
           planned_cost?: number | null
-          planned_hours?: number
+          planned_hours?: number | null
           role?: string | null
           shift_date?: string
-          start_time?: string
-          status?: string
+          start_time?: string | null
+          status?: string | null
         }
         Relationships: [
           {
@@ -2151,148 +2982,60 @@ export type Database = {
           },
         ]
       }
-      pos_cash_sessions: {
-        Row: {
-          cash_difference: number | null
-          closed_at: string | null
-          closed_by: string | null
-          closing_cash: number | null
-          expected_cash: number | null
-          id: string
-          location_id: string
-          notes: string | null
-          opened_at: string | null
-          opened_by: string
-          opening_cash: number
-          status: string
-        }
-        Insert: {
-          cash_difference?: number | null
-          closed_at?: string | null
-          closed_by?: string | null
-          closing_cash?: number | null
-          expected_cash?: number | null
-          id?: string
-          location_id: string
-          notes?: string | null
-          opened_at?: string | null
-          opened_by: string
-          opening_cash?: number
-          status?: string
-        }
-        Update: {
-          cash_difference?: number | null
-          closed_at?: string | null
-          closed_by?: string | null
-          closing_cash?: number | null
-          expected_cash?: number | null
-          id?: string
-          location_id?: string
-          notes?: string | null
-          opened_at?: string | null
-          opened_by?: string
-          opening_cash?: number
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pos_cash_sessions_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pos_connections: {
-        Row: {
-          config_json: Json | null
-          created_at: string
-          id: string
-          last_sync_at: string | null
-          location_id: string
-          provider: Database["public"]["Enums"]["pos_provider"]
-          status: Database["public"]["Enums"]["pos_status"] | null
-        }
-        Insert: {
-          config_json?: Json | null
-          created_at?: string
-          id?: string
-          last_sync_at?: string | null
-          location_id: string
-          provider: Database["public"]["Enums"]["pos_provider"]
-          status?: Database["public"]["Enums"]["pos_status"] | null
-        }
-        Update: {
-          config_json?: Json | null
-          created_at?: string
-          id?: string
-          last_sync_at?: string | null
-          location_id?: string
-          provider?: Database["public"]["Enums"]["pos_provider"]
-          status?: Database["public"]["Enums"]["pos_status"] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pos_connections_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pos_daily_finance: {
         Row: {
-          comps_amount: number
+          comps_amount: number | null
           created_at: string
+          data_source: string | null
           date: string
-          discounts_amount: number
-          gross_sales: number
+          discounts_amount: number | null
+          gross_sales: number | null
           id: string
           location_id: string
-          net_sales: number
-          orders_count: number
-          payments_card: number
-          payments_cash: number
-          payments_other: number
-          refunds_amount: number
-          refunds_count: number
-          voids_amount: number
+          net_sales: number | null
+          orders_count: number | null
+          payments_card: number | null
+          payments_cash: number | null
+          payments_other: number | null
+          refunds_amount: number | null
+          refunds_count: number | null
+          voids_amount: number | null
         }
         Insert: {
-          comps_amount?: number
+          comps_amount?: number | null
           created_at?: string
+          data_source?: string | null
           date: string
-          discounts_amount?: number
-          gross_sales?: number
+          discounts_amount?: number | null
+          gross_sales?: number | null
           id?: string
           location_id: string
-          net_sales?: number
-          orders_count?: number
-          payments_card?: number
-          payments_cash?: number
-          payments_other?: number
-          refunds_amount?: number
-          refunds_count?: number
-          voids_amount?: number
+          net_sales?: number | null
+          orders_count?: number | null
+          payments_card?: number | null
+          payments_cash?: number | null
+          payments_other?: number | null
+          refunds_amount?: number | null
+          refunds_count?: number | null
+          voids_amount?: number | null
         }
         Update: {
-          comps_amount?: number
+          comps_amount?: number | null
           created_at?: string
+          data_source?: string | null
           date?: string
-          discounts_amount?: number
-          gross_sales?: number
+          discounts_amount?: number | null
+          gross_sales?: number | null
           id?: string
           location_id?: string
-          net_sales?: number
-          orders_count?: number
-          payments_card?: number
-          payments_cash?: number
-          payments_other?: number
-          refunds_amount?: number
-          refunds_count?: number
-          voids_amount?: number
+          net_sales?: number | null
+          orders_count?: number | null
+          payments_card?: number | null
+          payments_cash?: number | null
+          payments_other?: number | null
+          refunds_amount?: number | null
+          refunds_count?: number | null
+          voids_amount?: number | null
         }
         Relationships: [
           {
@@ -2309,31 +3052,31 @@ export type Database = {
           created_at: string
           date: string
           id: string
-          labor_cost: number
-          labor_hours: number
+          labor_cost: number | null
+          labor_hours: number | null
           location_id: string
-          net_sales: number
-          orders: number
+          net_sales: number | null
+          orders: number | null
         }
         Insert: {
           created_at?: string
           date: string
           id?: string
-          labor_cost?: number
-          labor_hours?: number
+          labor_cost?: number | null
+          labor_hours?: number | null
           location_id: string
-          net_sales?: number
-          orders?: number
+          net_sales?: number | null
+          orders?: number | null
         }
         Update: {
           created_at?: string
           date?: string
           id?: string
-          labor_cost?: number
-          labor_hours?: number
+          labor_cost?: number | null
+          labor_hours?: number | null
           location_id?: string
-          net_sales?: number
-          orders?: number
+          net_sales?: number | null
+          orders?: number | null
         }
         Relationships: [
           {
@@ -2347,31 +3090,28 @@ export type Database = {
       }
       pos_floor_maps: {
         Row: {
-          config_json: Json
-          created_at: string | null
+          config_json: Json | null
+          created_at: string
           id: string
           is_active: boolean | null
           location_id: string
           name: string
-          updated_at: string | null
         }
         Insert: {
-          config_json?: Json
-          created_at?: string | null
+          config_json?: Json | null
+          created_at?: string
           id?: string
           is_active?: boolean | null
           location_id: string
           name?: string
-          updated_at?: string | null
         }
         Update: {
-          config_json?: Json
-          created_at?: string | null
+          config_json?: Json | null
+          created_at?: string
           id?: string
           is_active?: boolean | null
           location_id?: string
           name?: string
-          updated_at?: string | null
         }
         Relationships: [
           {
@@ -2383,196 +3123,47 @@ export type Database = {
           },
         ]
       }
-      pos_modifier_options: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_default: boolean | null
-          modifier_id: string
-          name: string
-          price_delta: number | null
-          sort_order: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          modifier_id: string
-          name: string
-          price_delta?: number | null
-          sort_order?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          modifier_id?: string
-          name?: string
-          price_delta?: number | null
-          sort_order?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pos_modifier_options_modifier_id_fkey"
-            columns: ["modifier_id"]
-            isOneToOne: false
-            referencedRelation: "pos_product_modifiers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pos_print_queue: {
-        Row: {
-          acknowledged_at: string | null
-          created_at: string | null
-          destination: string
-          id: string
-          items_json: Json
-          last_error: string | null
-          location_id: string
-          print_attempts: number | null
-          printed_at: string | null
-          printnode_job_id: string | null
-          status: string
-          ticket_id: string
-        }
-        Insert: {
-          acknowledged_at?: string | null
-          created_at?: string | null
-          destination: string
-          id?: string
-          items_json?: Json
-          last_error?: string | null
-          location_id: string
-          print_attempts?: number | null
-          printed_at?: string | null
-          printnode_job_id?: string | null
-          status?: string
-          ticket_id: string
-        }
-        Update: {
-          acknowledged_at?: string | null
-          created_at?: string | null
-          destination?: string
-          id?: string
-          items_json?: Json
-          last_error?: string | null
-          location_id?: string
-          print_attempts?: number | null
-          printed_at?: string | null
-          printnode_job_id?: string | null
-          status?: string
-          ticket_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pos_print_queue_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pos_print_queue_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pos_product_modifiers: {
-        Row: {
-          created_at: string | null
-          id: string
-          modifier_type: string
-          name: string
-          product_id: string
-          required: boolean | null
-          sort_order: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          modifier_type?: string
-          name: string
-          product_id: string
-          required?: boolean | null
-          sort_order?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          modifier_type?: string
-          name?: string
-          product_id?: string
-          required?: boolean | null
-          sort_order?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pos_product_modifiers_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pos_tables: {
         Row: {
-          created_at: string | null
-          current_ticket_id: string | null
+          created_at: string
           floor_map_id: string
-          height: number
+          height: number | null
           id: string
-          position_x: number
-          position_y: number
-          seats: number
-          shape: string
-          status: string
-          table_number: string
-          updated_at: string | null
-          width: number
+          position_x: number | null
+          position_y: number | null
+          seats: number | null
+          shape: string | null
+          status: string | null
+          table_number: number
+          width: number | null
         }
         Insert: {
-          created_at?: string | null
-          current_ticket_id?: string | null
+          created_at?: string
           floor_map_id: string
-          height?: number
+          height?: number | null
           id?: string
-          position_x?: number
-          position_y?: number
-          seats?: number
-          shape?: string
-          status?: string
-          table_number: string
-          updated_at?: string | null
-          width?: number
+          position_x?: number | null
+          position_y?: number | null
+          seats?: number | null
+          shape?: string | null
+          status?: string | null
+          table_number?: number
+          width?: number | null
         }
         Update: {
-          created_at?: string | null
-          current_ticket_id?: string | null
+          created_at?: string
           floor_map_id?: string
-          height?: number
+          height?: number | null
           id?: string
-          position_x?: number
-          position_y?: number
-          seats?: number
-          shape?: string
-          status?: string
-          table_number?: string
-          updated_at?: string | null
-          width?: number
+          position_x?: number | null
+          position_y?: number | null
+          seats?: number | null
+          shape?: string | null
+          status?: string | null
+          table_number?: number
+          width?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "pos_tables_current_ticket_id_fkey"
-            columns: ["current_ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "pos_tables_floor_map_id_fkey"
             columns: ["floor_map_id"]
@@ -2582,177 +3173,109 @@ export type Database = {
           },
         ]
       }
-      printer_config: {
+      procurement_recommendations: {
         Row: {
-          auto_print: boolean | null
-          created_at: string | null
-          destination: string
-          id: string
-          is_active: boolean | null
-          location_id: string
-          paper_width: number | null
-          printer_name: string
-          printnode_printer_id: string
-          updated_at: string | null
+          item_id: string
+          projected_days_of_cover: number | null
+          recommended_qty_packs: number
+          run_id: string
+          why: string | null
         }
         Insert: {
-          auto_print?: boolean | null
-          created_at?: string | null
-          destination: string
-          id?: string
-          is_active?: boolean | null
-          location_id: string
-          paper_width?: number | null
-          printer_name: string
-          printnode_printer_id: string
-          updated_at?: string | null
+          item_id: string
+          projected_days_of_cover?: number | null
+          recommended_qty_packs: number
+          run_id: string
+          why?: string | null
         }
         Update: {
-          auto_print?: boolean | null
-          created_at?: string | null
-          destination?: string
-          id?: string
-          is_active?: boolean | null
-          location_id?: string
-          paper_width?: number | null
-          printer_name?: string
-          printnode_printer_id?: string
-          updated_at?: string | null
+          item_id?: string
+          projected_days_of_cover?: number | null
+          recommended_qty_packs?: number
+          run_id?: string
+          why?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "printer_config_location_id_fkey"
+            foreignKeyName: "procurement_recommendations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_recommendations_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_runs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          horizon_days: number
+          id: string
+          include_safety_stock: boolean
+          location_id: string
+          org_id: string
+          rationale: Json
+          round_to_packs: boolean
+          supplier_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          horizon_days?: number
+          id?: string
+          include_safety_stock?: boolean
+          location_id: string
+          org_id: string
+          rationale?: Json
+          round_to_packs?: boolean
+          supplier_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          horizon_days?: number
+          id?: string
+          include_safety_stock?: boolean
+          location_id?: string
+          org_id?: string
+          rationale?: Json
+          round_to_packs?: boolean
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_runs_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      printnode_credentials: {
-        Row: {
-          api_key_encrypted: string
-          created_at: string | null
-          group_id: string
-          id: string
-          is_active: boolean | null
-          last_verified_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          api_key_encrypted: string
-          created_at?: string | null
-          group_id: string
-          id?: string
-          is_active?: boolean | null
-          last_verified_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          api_key_encrypted?: string
-          created_at?: string | null
-          group_id?: string
-          id?: string
-          is_active?: boolean | null
-          last_verified_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "printnode_credentials_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: true
+            foreignKeyName: "procurement_runs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      product_locations: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          location_id: string
-          price_override: number | null
-          product_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          location_id: string
-          price_override?: number | null
-          product_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          location_id?: string
-          price_override?: number | null
-          product_id?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "product_locations_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: "procurement_runs_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "locations"
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_locations_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "procurement_runs_supplier_id_fkey"
+            columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      product_sales_daily: {
-        Row: {
-          cogs: number
-          created_at: string | null
-          date: string
-          id: string
-          location_id: string
-          net_sales: number
-          product_id: string
-          units_sold: number
-        }
-        Insert: {
-          cogs?: number
-          created_at?: string | null
-          date: string
-          id?: string
-          location_id: string
-          net_sales?: number
-          product_id: string
-          units_sold?: number
-        }
-        Update: {
-          cogs?: number
-          created_at?: string | null
-          date?: string
-          id?: string
-          location_id?: string
-          net_sales?: number
-          product_id?: string
-          units_sold?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_sales_daily_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_sales_daily_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -2760,11 +3283,10 @@ export type Database = {
       products: {
         Row: {
           category: string | null
-          created_at: string | null
-          description: string | null
-          group_id: string
+          cost_price: number | null
+          created_at: string
+          group_id: string | null
           id: string
-          image_url: string | null
           is_active: boolean | null
           kds_destination: string | null
           location_id: string | null
@@ -2774,11 +3296,10 @@ export type Database = {
         }
         Insert: {
           category?: string | null
-          created_at?: string | null
-          description?: string | null
-          group_id: string
+          cost_price?: number | null
+          created_at?: string
+          group_id?: string | null
           id?: string
-          image_url?: string | null
           is_active?: boolean | null
           kds_destination?: string | null
           location_id?: string | null
@@ -2788,11 +3309,10 @@ export type Database = {
         }
         Update: {
           category?: string | null
-          created_at?: string | null
-          description?: string | null
-          group_id?: string
+          cost_price?: number | null
+          created_at?: string
+          group_id?: string | null
           id?: string
-          image_url?: string | null
           is_active?: boolean | null
           kds_destination?: string | null
           location_id?: string | null
@@ -2809,6 +3329,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "products_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "products_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
@@ -2819,29 +3346,76 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
+          email: string | null
           full_name: string | null
           group_id: string | null
-          id: string
+          id: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          group_id?: string | null
+          id?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          group_id?: string | null
+          id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      provider_location_map: {
+        Row: {
+          created_at: string
+          location_id: string
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          provider_location_id: string
         }
         Insert: {
           created_at?: string
-          full_name?: string | null
-          group_id?: string | null
-          id: string
+          location_id: string
+          org_id: string
+          provider: Database["public"]["Enums"]["integration_provider"]
+          provider_location_id: string
         }
         Update: {
           created_at?: string
-          full_name?: string | null
-          group_id?: string | null
-          id?: string
+          location_id?: string
+          org_id?: string
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          provider_location_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "provider_location_map_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_location_map_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_location_map_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -2849,32 +3423,41 @@ export type Database = {
       purchase_order_lines: {
         Row: {
           id: string
-          inventory_item_id: string
+          inventory_item_id: string | null
+          item_id: string
+          line_value: number
+          pack_price: number
           purchase_order_id: string
-          quantity: number
-          tax_rate: number | null
-          unit_cost: number | null
+          qty_packs: number
+          quantity: number | null
+          unit_price: number | null
         }
         Insert: {
           id?: string
-          inventory_item_id: string
+          inventory_item_id?: string | null
+          item_id: string
+          line_value?: number
+          pack_price?: number
           purchase_order_id: string
-          quantity: number
-          tax_rate?: number | null
-          unit_cost?: number | null
+          qty_packs?: number
+          quantity?: number | null
+          unit_price?: number | null
         }
         Update: {
           id?: string
-          inventory_item_id?: string
+          inventory_item_id?: string | null
+          item_id?: string
+          line_value?: number
+          pack_price?: number
           purchase_order_id?: string
-          quantity?: number
-          tax_rate?: number | null
-          unit_cost?: number | null
+          qty_packs?: number
+          quantity?: number | null
+          unit_price?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_order_lines_inventory_item_id_fkey"
-            columns: ["inventory_item_id"]
+            foreignKeyName: "purchase_order_lines_item_id_fkey"
+            columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "inventory_items"
             referencedColumns: ["id"]
@@ -2891,56 +3474,66 @@ export type Database = {
       purchase_orders: {
         Row: {
           created_at: string
-          external_order_id: string | null
-          group_id: string
+          created_by: string | null
+          delivery_date: string | null
           id: string
-          location_id: string | null
-          response_message: string | null
-          response_status: string | null
-          sent_at: string | null
-          sent_method: string | null
-          status: Database["public"]["Enums"]["po_status"] | null
+          location_id: string
+          min_order_value: number | null
+          notes: string | null
+          order_date: string
+          org_id: string
+          status: Database["public"]["Enums"]["purchase_order_status"]
           supplier_id: string
+          total_value: number
         }
         Insert: {
           created_at?: string
-          external_order_id?: string | null
-          group_id: string
+          created_by?: string | null
+          delivery_date?: string | null
           id?: string
-          location_id?: string | null
-          response_message?: string | null
-          response_status?: string | null
-          sent_at?: string | null
-          sent_method?: string | null
-          status?: Database["public"]["Enums"]["po_status"] | null
+          location_id: string
+          min_order_value?: number | null
+          notes?: string | null
+          order_date?: string
+          org_id: string
+          status?: Database["public"]["Enums"]["purchase_order_status"]
           supplier_id: string
+          total_value?: number
         }
         Update: {
           created_at?: string
-          external_order_id?: string | null
-          group_id?: string
+          created_by?: string | null
+          delivery_date?: string | null
           id?: string
-          location_id?: string | null
-          response_message?: string | null
-          response_status?: string | null
-          sent_at?: string | null
-          sent_method?: string | null
-          status?: Database["public"]["Enums"]["po_status"] | null
+          location_id?: string
+          min_order_value?: number | null
+          notes?: string | null
+          order_date?: string
+          org_id?: string
+          status?: Database["public"]["Enums"]["purchase_order_status"]
           supplier_id?: string
+          total_value?: number
         }
         Relationships: [
-          {
-            foreignKeyName: "purchase_orders_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "purchase_orders_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
           {
@@ -2952,24 +3545,102 @@ export type Database = {
           },
         ]
       }
-      recipe_ingredients: {
+      raw_events: {
         Row: {
+          attempts: number
+          event_type: string
+          external_event_id: string | null
           id: string
-          inventory_item_id: string
-          quantity: number
-          recipe_id: string
+          org_id: string
+          payload: Json
+          payload_hash: string | null
+          processed_at: string | null
+          processing_error: string | null
+          provider: Database["public"]["Enums"]["integration_provider"]
+          received_at: string
+          signature_valid: boolean | null
+          status: string
         }
         Insert: {
+          attempts?: number
+          event_type: string
+          external_event_id?: string | null
           id?: string
-          inventory_item_id: string
-          quantity: number
-          recipe_id: string
+          org_id: string
+          payload: Json
+          payload_hash?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          provider: Database["public"]["Enums"]["integration_provider"]
+          received_at?: string
+          signature_valid?: boolean | null
+          status?: string
         }
         Update: {
+          attempts?: number
+          event_type?: string
+          external_event_id?: string | null
           id?: string
+          org_id?: string
+          payload?: Json
+          payload_hash?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          provider?: Database["public"]["Enums"]["integration_provider"]
+          received_at?: string
+          signature_valid?: boolean | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raw_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raw_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_ingredients: {
+        Row: {
+          inventory_item_id: string
+          menu_item_id: string
+          qty_base_units: number
+          qty_gross: number | null
+          qty_net: number | null
+          sort_order: number | null
+          sub_recipe_id: string | null
+          unit: string | null
+          yield_pct: number | null
+        }
+        Insert: {
+          inventory_item_id: string
+          menu_item_id: string
+          qty_base_units: number
+          qty_gross?: number | null
+          qty_net?: number | null
+          sort_order?: number | null
+          sub_recipe_id?: string | null
+          unit?: string | null
+          yield_pct?: number | null
+        }
+        Update: {
           inventory_item_id?: string
-          quantity?: number
-          recipe_id?: string
+          menu_item_id?: string
+          qty_base_units?: number
+          qty_gross?: number | null
+          qty_net?: number | null
+          sort_order?: number | null
+          sub_recipe_id?: string | null
+          unit?: string | null
+          yield_pct?: number | null
         }
         Relationships: [
           {
@@ -2980,8 +3651,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
-            columns: ["recipe_id"]
+            foreignKeyName: "recipe_ingredients_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_sub_recipe_id_fkey"
+            columns: ["sub_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_sub_recipe_id_fkey"
+            columns: ["sub_recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
@@ -2990,699 +3675,560 @@ export type Database = {
       }
       recipes: {
         Row: {
+          category: string | null
           created_at: string
           group_id: string
           id: string
+          is_sub_recipe: boolean | null
           menu_item_name: string
+          notes: string | null
           selling_price: number | null
+          yield_qty: number | null
+          yield_unit: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
           group_id: string
           id?: string
+          is_sub_recipe?: boolean | null
           menu_item_name: string
+          notes?: string | null
           selling_price?: number | null
+          yield_qty?: number | null
+          yield_unit?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string
           group_id?: string
           id?: string
+          is_sub_recipe?: boolean | null
           menu_item_name?: string
+          notes?: string | null
           selling_price?: number | null
+          yield_qty?: number | null
+          yield_unit?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "recipes_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      report_logs: {
-        Row: {
-          error_message: string | null
-          group_id: string
-          id: string
-          location_id: string | null
-          recipient_email: string
-          report_data: Json | null
-          report_type: string
-          sent_at: string | null
-          status: string
-        }
-        Insert: {
-          error_message?: string | null
-          group_id: string
-          id?: string
-          location_id?: string | null
-          recipient_email: string
-          report_data?: Json | null
-          report_type: string
-          sent_at?: string | null
-          status: string
-        }
-        Update: {
-          error_message?: string | null
-          group_id?: string
-          id?: string
-          location_id?: string | null
-          recipient_email?: string
-          report_data?: Json | null
-          report_type?: string
-          sent_at?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "report_logs_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "report_logs_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      report_subscriptions: {
-        Row: {
-          created_at: string | null
-          email_override: string | null
-          group_id: string
-          id: string
-          is_enabled: boolean | null
-          location_id: string | null
-          report_type: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          email_override?: string | null
-          group_id: string
-          id?: string
-          is_enabled?: boolean | null
-          location_id?: string | null
-          report_type: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          email_override?: string | null
-          group_id?: string
-          id?: string
-          is_enabled?: boolean | null
-          location_id?: string | null
-          report_type?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "report_subscriptions_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "report_subscriptions_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reservation_deposits: {
-        Row: {
-          amount: number
-          applied_to_ticket_id: string | null
-          created_at: string
-          id: string
-          notes: string | null
-          paid_at: string | null
-          payment_method: string
-          refunded_at: string | null
-          reservation_id: string | null
-          status: string
-          stripe_payment_intent_id: string | null
-        }
-        Insert: {
-          amount: number
-          applied_to_ticket_id?: string | null
-          created_at?: string
-          id?: string
-          notes?: string | null
-          paid_at?: string | null
-          payment_method: string
-          refunded_at?: string | null
-          reservation_id?: string | null
-          status?: string
-          stripe_payment_intent_id?: string | null
-        }
-        Update: {
-          amount?: number
-          applied_to_ticket_id?: string | null
-          created_at?: string
-          id?: string
-          notes?: string | null
-          paid_at?: string | null
-          payment_method?: string
-          refunded_at?: string | null
-          reservation_id?: string | null
-          status?: string
-          stripe_payment_intent_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reservation_deposits_applied_to_ticket_id_fkey"
-            columns: ["applied_to_ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservation_deposits_reservation_id_fkey"
-            columns: ["reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reservation_settings: {
-        Row: {
-          auto_confirm: boolean | null
-          cancellation_deadline_hours: number | null
-          cancellation_policy_text: string | null
-          confirmation_message: string | null
-          created_at: string
-          default_reservation_duration: number | null
-          deposit_amount_per_person: number | null
-          deposit_policy_text: string | null
-          enable_table_doubling: boolean | null
-          google_place_id: string | null
-          google_reserve_enabled: boolean | null
-          id: string
-          location_id: string | null
-          max_covers_per_slot: number | null
-          max_turns_per_table: number | null
-          reminder_hours_before: number | null
-          reminder_message: string | null
-          require_deposit: boolean | null
-          send_confirmation_email: boolean | null
-          send_confirmation_sms: boolean | null
-          send_reminder: boolean | null
-          slot_duration_minutes: number | null
-          turn_buffer_minutes: number | null
-          updated_at: string
-        }
-        Insert: {
-          auto_confirm?: boolean | null
-          cancellation_deadline_hours?: number | null
-          cancellation_policy_text?: string | null
-          confirmation_message?: string | null
-          created_at?: string
-          default_reservation_duration?: number | null
-          deposit_amount_per_person?: number | null
-          deposit_policy_text?: string | null
-          enable_table_doubling?: boolean | null
-          google_place_id?: string | null
-          google_reserve_enabled?: boolean | null
-          id?: string
-          location_id?: string | null
-          max_covers_per_slot?: number | null
-          max_turns_per_table?: number | null
-          reminder_hours_before?: number | null
-          reminder_message?: string | null
-          require_deposit?: boolean | null
-          send_confirmation_email?: boolean | null
-          send_confirmation_sms?: boolean | null
-          send_reminder?: boolean | null
-          slot_duration_minutes?: number | null
-          turn_buffer_minutes?: number | null
-          updated_at?: string
-        }
-        Update: {
-          auto_confirm?: boolean | null
-          cancellation_deadline_hours?: number | null
-          cancellation_policy_text?: string | null
-          confirmation_message?: string | null
-          created_at?: string
-          default_reservation_duration?: number | null
-          deposit_amount_per_person?: number | null
-          deposit_policy_text?: string | null
-          enable_table_doubling?: boolean | null
-          google_place_id?: string | null
-          google_reserve_enabled?: boolean | null
-          id?: string
-          location_id?: string | null
-          max_covers_per_slot?: number | null
-          max_turns_per_table?: number | null
-          reminder_hours_before?: number | null
-          reminder_message?: string | null
-          require_deposit?: boolean | null
-          send_confirmation_email?: boolean | null
-          send_confirmation_sms?: boolean | null
-          send_reminder?: boolean | null
-          slot_duration_minutes?: number | null
-          turn_buffer_minutes?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reservation_settings_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: true
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reservation_turns: {
+      reviews: {
         Row: {
           created_at: string
-          day_of_week: number[] | null
-          end_time: string
-          id: string
-          is_active: boolean | null
-          location_id: string | null
-          max_covers: number | null
-          name: string
-          start_time: string
-        }
-        Insert: {
-          created_at?: string
-          day_of_week?: number[] | null
-          end_time: string
-          id?: string
-          is_active?: boolean | null
-          location_id?: string | null
-          max_covers?: number | null
-          name: string
-          start_time: string
-        }
-        Update: {
-          created_at?: string
-          day_of_week?: number[] | null
-          end_time?: string
-          id?: string
-          is_active?: boolean | null
-          location_id?: string | null
-          max_covers?: number | null
-          name?: string
-          start_time?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reservation_turns_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reservation_waitlist: {
-        Row: {
-          converted_reservation_id: string | null
-          created_at: string
-          customer_profile_id: string | null
-          guest_email: string | null
-          guest_name: string
-          guest_phone: string | null
-          id: string
-          location_id: string | null
-          notes: string | null
-          notified_at: string | null
-          party_size: number
-          preferred_date: string
-          preferred_time_end: string | null
-          preferred_time_start: string | null
-          status: string
-        }
-        Insert: {
-          converted_reservation_id?: string | null
-          created_at?: string
-          customer_profile_id?: string | null
-          guest_email?: string | null
-          guest_name: string
-          guest_phone?: string | null
-          id?: string
-          location_id?: string | null
-          notes?: string | null
-          notified_at?: string | null
-          party_size: number
-          preferred_date: string
-          preferred_time_end?: string | null
-          preferred_time_start?: string | null
-          status?: string
-        }
-        Update: {
-          converted_reservation_id?: string | null
-          created_at?: string
-          customer_profile_id?: string | null
-          guest_email?: string | null
-          guest_name?: string
-          guest_phone?: string | null
-          id?: string
-          location_id?: string | null
-          notes?: string | null
-          notified_at?: string | null
-          party_size?: number
-          preferred_date?: string
-          preferred_time_end?: string | null
-          preferred_time_start?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reservation_waitlist_converted_reservation_id_fkey"
-            columns: ["converted_reservation_id"]
-            isOneToOne: false
-            referencedRelation: "reservations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservation_waitlist_customer_profile_id_fkey"
-            columns: ["customer_profile_id"]
-            isOneToOne: false
-            referencedRelation: "customer_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservation_waitlist_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reservations: {
-        Row: {
-          assigned_server_id: string | null
-          confirmation_sent_at: string | null
-          created_at: string
-          created_by: string | null
-          customer_profile_id: string | null
-          deposit_amount: number | null
-          deposit_paid: boolean | null
-          deposit_required: boolean | null
-          duration_minutes: number | null
-          group_id: string | null
-          guest_email: string | null
-          guest_name: string
-          guest_phone: string | null
           id: string
           location_id: string
-          notes: string | null
-          party_size: number
-          pos_table_id: string | null
-          reconfirmed_at: string | null
-          reminder_sent_at: string | null
-          reservation_date: string
-          reservation_time: string
-          satisfaction_sent_at: string | null
-          source: string | null
-          special_requests: string | null
-          status: string
-          turn_id: string | null
-          updated_at: string
+          org_id: string
+          platform: string
+          rating: number
+          review_date: string
+          review_text: string | null
+          reviewer_name: string | null
+          sentiment: string | null
         }
         Insert: {
-          assigned_server_id?: string | null
-          confirmation_sent_at?: string | null
           created_at?: string
-          created_by?: string | null
-          customer_profile_id?: string | null
-          deposit_amount?: number | null
-          deposit_paid?: boolean | null
-          deposit_required?: boolean | null
-          duration_minutes?: number | null
-          group_id?: string | null
-          guest_email?: string | null
-          guest_name: string
-          guest_phone?: string | null
           id?: string
           location_id: string
-          notes?: string | null
-          party_size?: number
-          pos_table_id?: string | null
-          reconfirmed_at?: string | null
-          reminder_sent_at?: string | null
-          reservation_date: string
-          reservation_time: string
-          satisfaction_sent_at?: string | null
-          source?: string | null
-          special_requests?: string | null
-          status?: string
-          turn_id?: string | null
-          updated_at?: string
+          org_id: string
+          platform?: string
+          rating: number
+          review_date?: string
+          review_text?: string | null
+          reviewer_name?: string | null
+          sentiment?: string | null
         }
         Update: {
-          assigned_server_id?: string | null
-          confirmation_sent_at?: string | null
           created_at?: string
-          created_by?: string | null
-          customer_profile_id?: string | null
-          deposit_amount?: number | null
-          deposit_paid?: boolean | null
-          deposit_required?: boolean | null
-          duration_minutes?: number | null
-          group_id?: string | null
-          guest_email?: string | null
-          guest_name?: string
-          guest_phone?: string | null
           id?: string
           location_id?: string
-          notes?: string | null
-          party_size?: number
-          pos_table_id?: string | null
-          reconfirmed_at?: string | null
-          reminder_sent_at?: string | null
-          reservation_date?: string
-          reservation_time?: string
-          satisfaction_sent_at?: string | null
-          source?: string | null
-          special_requests?: string | null
-          status?: string
-          turn_id?: string | null
-          updated_at?: string
+          org_id?: string
+          platform?: string
+          rating?: number
+          review_date?: string
+          review_text?: string | null
+          reviewer_name?: string | null
+          sentiment?: string | null
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          department_id: string | null
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          department_id?: string | null
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          department_id?: string | null
+          id?: string
+          name?: string
+          org_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reservations_assigned_server_id_fkey"
-            columns: ["assigned_server_id"]
+            foreignKeyName: "roles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_channels: {
+        Row: {
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_channels_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_channels_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          location_id: string
+          org_id: string
+          status: Database["public"]["Enums"]["shift_status"]
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id: string
+          org_id: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id?: string
+          org_id?: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          employee_id: string
+          shift_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          employee_id: string
+          shift_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          employee_id?: string
+          shift_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_assignments_employee_id_fkey"
+            columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reservations_customer_profile_id_fkey"
-            columns: ["customer_profile_id"]
+            foreignKeyName: "shift_assignments_shift_id_fkey"
+            columns: ["shift_id"]
             isOneToOne: false
-            referencedRelation: "customer_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservations_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservations_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservations_pos_table_id_fkey"
-            columns: ["pos_table_id"]
-            isOneToOne: false
-            referencedRelation: "pos_tables"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reservations_turn_id_fkey"
-            columns: ["turn_id"]
-            isOneToOne: false
-            referencedRelation: "reservation_turns"
+            referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
         ]
       }
-      reviews: {
+      shift_swaps: {
         Row: {
-          ai_draft: string | null
-          ai_tone: string | null
-          author_avatar_url: string | null
-          author_name: string
-          created_at: string
-          external_id: string | null
+          decided_at: string | null
+          decided_by: string | null
+          from_employee_id: string
           id: string
-          is_verified: boolean | null
-          language: string | null
           location_id: string
-          platform: string
-          rating: number
-          response_date: string | null
-          response_status: string | null
-          response_text: string | null
-          review_date: string
-          review_text: string | null
-          sentiment: string | null
-          tags: string[] | null
-          updated_at: string
+          manager_note: string | null
+          requested_at: string
+          shift_id: string
+          status: Database["public"]["Enums"]["swap_status"]
+          to_employee_id: string | null
         }
         Insert: {
-          ai_draft?: string | null
-          ai_tone?: string | null
-          author_avatar_url?: string | null
-          author_name: string
-          created_at?: string
-          external_id?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          from_employee_id: string
           id?: string
-          is_verified?: boolean | null
-          language?: string | null
           location_id: string
-          platform: string
-          rating: number
-          response_date?: string | null
-          response_status?: string | null
-          response_text?: string | null
-          review_date: string
-          review_text?: string | null
-          sentiment?: string | null
-          tags?: string[] | null
-          updated_at?: string
+          manager_note?: string | null
+          requested_at?: string
+          shift_id: string
+          status?: Database["public"]["Enums"]["swap_status"]
+          to_employee_id?: string | null
         }
         Update: {
-          ai_draft?: string | null
-          ai_tone?: string | null
-          author_avatar_url?: string | null
-          author_name?: string
-          created_at?: string
-          external_id?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          from_employee_id?: string
           id?: string
-          is_verified?: boolean | null
-          language?: string | null
           location_id?: string
-          platform?: string
-          rating?: number
-          response_date?: string | null
-          response_status?: string | null
-          response_text?: string | null
-          review_date?: string
-          review_text?: string | null
-          sentiment?: string | null
-          tags?: string[] | null
-          updated_at?: string
+          manager_note?: string | null
+          requested_at?: string
+          shift_id?: string
+          status?: Database["public"]["Enums"]["swap_status"]
+          to_employee_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "reviews_location_id_fkey"
+            foreignKeyName: "shift_swaps_from_employee_id_fkey"
+            columns: ["from_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_swaps_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      role_permissions: {
-        Row: {
-          permission_id: string
-          role_id: string
-        }
-        Insert: {
-          permission_id: string
-          role_id: string
-        }
-        Update: {
-          permission_id?: string
-          role_id?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "role_permissions_permission_id_fkey"
-            columns: ["permission_id"]
+            foreignKeyName: "shift_swaps_shift_id_fkey"
+            columns: ["shift_id"]
             isOneToOne: false
-            referencedRelation: "permissions"
+            referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "role_permissions_role_id_fkey"
+            foreignKeyName: "shift_swaps_to_employee_id_fkey"
+            columns: ["to_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          end_at: string
+          id: string
+          location_id: string
+          notes: string | null
+          required_headcount: number
+          role_id: string | null
+          schedule_id: string
+          start_at: string
+        }
+        Insert: {
+          end_at: string
+          id?: string
+          location_id: string
+          notes?: string | null
+          required_headcount?: number
+          role_id?: string | null
+          schedule_id: string
+          start_at: string
+        }
+        Update: {
+          end_at?: string
+          id?: string
+          location_id?: string
+          notes?: string | null
+          required_headcount?: number
+          role_id?: string | null
+          schedule_id?: string
+          start_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_role_id_fkey"
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "roles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "shifts_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "schedules"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      roles: {
+      staging_square_catalog_items: {
         Row: {
-          created_at: string | null
-          description: string | null
+          error: string | null
           id: string
-          is_system: boolean | null
-          name: string
+          integration_account_id: string
+          merged_at: string | null
+          object_type: string
+          org_id: string
+          payload: Json
+          received_at: string
+          square_catalog_id: string
+          status: Database["public"]["Enums"]["staging_status"]
+          version: number | null
         }
         Insert: {
-          created_at?: string | null
-          description?: string | null
+          error?: string | null
           id?: string
-          is_system?: boolean | null
-          name: string
+          integration_account_id: string
+          merged_at?: string | null
+          object_type: string
+          org_id: string
+          payload: Json
+          received_at?: string
+          square_catalog_id: string
+          status?: Database["public"]["Enums"]["staging_status"]
+          version?: number | null
         }
         Update: {
-          created_at?: string | null
-          description?: string | null
+          error?: string | null
           id?: string
-          is_system?: boolean | null
-          name?: string
-        }
-        Relationships: []
-      }
-      social_security_accounts: {
-        Row: {
-          ccc: string
-          created_at: string
-          id: string
-          legal_entity_id: string
-          provincia: string | null
-        }
-        Insert: {
-          ccc: string
-          created_at?: string
-          id?: string
-          legal_entity_id: string
-          provincia?: string | null
-        }
-        Update: {
-          ccc?: string
-          created_at?: string
-          id?: string
-          legal_entity_id?: string
-          provincia?: string | null
+          integration_account_id?: string
+          merged_at?: string | null
+          object_type?: string
+          org_id?: string
+          payload?: Json
+          received_at?: string
+          square_catalog_id?: string
+          status?: Database["public"]["Enums"]["staging_status"]
+          version?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "social_security_accounts_legal_entity_id_fkey"
-            columns: ["legal_entity_id"]
+            foreignKeyName: "staging_square_catalog_items_integration_account_id_fkey"
+            columns: ["integration_account_id"]
             isOneToOne: false
-            referencedRelation: "legal_entities"
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_square_catalog_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_square_catalog_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staging_square_orders: {
+        Row: {
+          error: string | null
+          id: string
+          integration_account_id: string
+          merged_at: string | null
+          org_id: string
+          payload: Json
+          received_at: string
+          square_location_id: string | null
+          square_order_id: string
+          square_updated_at: string | null
+          status: Database["public"]["Enums"]["staging_status"]
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          integration_account_id: string
+          merged_at?: string | null
+          org_id: string
+          payload: Json
+          received_at?: string
+          square_location_id?: string | null
+          square_order_id: string
+          square_updated_at?: string | null
+          status?: Database["public"]["Enums"]["staging_status"]
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          integration_account_id?: string
+          merged_at?: string | null
+          org_id?: string
+          payload?: Json
+          received_at?: string
+          square_location_id?: string | null
+          square_order_id?: string
+          square_updated_at?: string | null
+          status?: Database["public"]["Enums"]["staging_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staging_square_orders_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_square_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_square_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staging_square_payments: {
+        Row: {
+          error: string | null
+          id: string
+          integration_account_id: string
+          merged_at: string | null
+          org_id: string
+          payload: Json
+          received_at: string
+          square_created_at: string | null
+          square_location_id: string | null
+          square_order_id: string | null
+          square_payment_id: string
+          status: Database["public"]["Enums"]["staging_status"]
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          integration_account_id: string
+          merged_at?: string | null
+          org_id: string
+          payload: Json
+          received_at?: string
+          square_created_at?: string | null
+          square_location_id?: string | null
+          square_order_id?: string | null
+          square_payment_id: string
+          status?: Database["public"]["Enums"]["staging_status"]
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          integration_account_id?: string
+          merged_at?: string | null
+          org_id?: string
+          payload?: Json
+          received_at?: string
+          square_created_at?: string | null
+          square_location_id?: string | null
+          square_order_id?: string | null
+          square_payment_id?: string
+          status?: Database["public"]["Enums"]["staging_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staging_square_payments_integration_account_id_fkey"
+            columns: ["integration_account_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_square_payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staging_square_payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -3732,10 +4278,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "stock_count_lines_inventory_item_id_fkey"
-            columns: ["inventory_item_id"]
+            foreignKeyName: "stock_count_lines_stock_count_id_fkey"
+            columns: ["stock_count_id"]
             isOneToOne: false
-            referencedRelation: "inventory_items"
+            referencedRelation: "mart_stock_count_headers"
             referencedColumns: ["id"]
           },
           {
@@ -3778,252 +4324,142 @@ export type Database = {
           status?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          item_id: string
+          location_id: string
+          movement_type: Database["public"]["Enums"]["stock_movement_type"]
+          org_id: string
+          qty_delta: number
+          reason: string | null
+          source_ref: string | null
+          unit_cost: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id: string
+          location_id: string
+          movement_type: Database["public"]["Enums"]["stock_movement_type"]
+          org_id: string
+          qty_delta: number
+          reason?: string | null
+          source_ref?: string | null
+          unit_cost?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id?: string
+          location_id?: string
+          movement_type?: Database["public"]["Enums"]["stock_movement_type"]
+          org_id?: string
+          qty_delta?: number
+          reason?: string | null
+          source_ref?: string | null
+          unit_cost?: number | null
+        }
         Relationships: [
           {
-            foreignKeyName: "stock_counts_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "stock_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_counts_location_id_fkey"
-            columns: ["location_id"]
+            foreignKeyName: "stock_movements_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "locations"
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
       }
       suppliers: {
         Row: {
-          api_endpoint: string | null
-          api_format: string | null
-          coverage: string | null
           created_at: string
-          customer_id: string | null
+          cutoff_time: string | null
+          delivers_days: number[]
           email: string | null
-          group_id: string
+          group_id: string | null
           id: string
           integration_type: string | null
           is_template: boolean | null
+          metadata: Json
+          min_order_value: number | null
           name: string
-          order_email: string | null
-          order_whatsapp: string | null
-          phone: string | null
-          regions: string[] | null
-          website: string | null
+          org_id: string
         }
         Insert: {
-          api_endpoint?: string | null
-          api_format?: string | null
-          coverage?: string | null
           created_at?: string
-          customer_id?: string | null
+          cutoff_time?: string | null
+          delivers_days?: number[]
           email?: string | null
-          group_id: string
+          group_id?: string | null
           id?: string
           integration_type?: string | null
           is_template?: boolean | null
+          metadata?: Json
+          min_order_value?: number | null
           name: string
-          order_email?: string | null
-          order_whatsapp?: string | null
-          phone?: string | null
-          regions?: string[] | null
-          website?: string | null
+          org_id: string
         }
         Update: {
-          api_endpoint?: string | null
-          api_format?: string | null
-          coverage?: string | null
           created_at?: string
-          customer_id?: string | null
+          cutoff_time?: string | null
+          delivers_days?: number[]
           email?: string | null
-          group_id?: string
+          group_id?: string | null
           id?: string
           integration_type?: string | null
           is_template?: boolean | null
+          metadata?: Json
+          min_order_value?: number | null
           name?: string
-          order_email?: string | null
-          order_whatsapp?: string | null
-          phone?: string | null
-          regions?: string[] | null
-          website?: string | null
+          org_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "suppliers_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "suppliers_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      tax_accounts: {
-        Row: {
-          aeat_delegacion: string | null
-          created_at: string
-          id: string
-          legal_entity_id: string
-        }
-        Insert: {
-          aeat_delegacion?: string | null
-          created_at?: string
-          id?: string
-          legal_entity_id: string
-        }
-        Update: {
-          aeat_delegacion?: string | null
-          created_at?: string
-          id?: string
-          legal_entity_id?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "tax_accounts_legal_entity_id_fkey"
-            columns: ["legal_entity_id"]
+            foreignKeyName: "suppliers_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "legal_entities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ticket_line_modifiers: {
-        Row: {
-          created_at: string | null
-          id: string
-          modifier_name: string
-          option_name: string
-          price_delta: number | null
-          ticket_line_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          modifier_name: string
-          option_name: string
-          price_delta?: number | null
-          ticket_line_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          modifier_name?: string
-          option_name?: string
-          price_delta?: number | null
-          ticket_line_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_line_modifiers_ticket_line_id_fkey"
-            columns: ["ticket_line_id"]
-            isOneToOne: false
-            referencedRelation: "ticket_lines"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ticket_lines: {
-        Row: {
-          category_name: string | null
-          comped: boolean | null
-          course: number | null
-          created_at: string
-          destination: string | null
-          discount_line_total: number | null
-          external_line_id: string | null
-          gross_line_total: number | null
-          id: string
-          is_rush: boolean | null
-          item_external_id: string | null
-          item_name: string
-          notes: string | null
-          prep_started_at: string | null
-          prep_status: string | null
-          product_id: string | null
-          quantity: number | null
-          ready_at: string | null
-          sent_at: string | null
-          sent_to_kitchen: boolean | null
-          tax_rate: number | null
-          ticket_id: string
-          unit_price: number | null
-          voided: boolean | null
-        }
-        Insert: {
-          category_name?: string | null
-          comped?: boolean | null
-          course?: number | null
-          created_at?: string
-          destination?: string | null
-          discount_line_total?: number | null
-          external_line_id?: string | null
-          gross_line_total?: number | null
-          id?: string
-          is_rush?: boolean | null
-          item_external_id?: string | null
-          item_name: string
-          notes?: string | null
-          prep_started_at?: string | null
-          prep_status?: string | null
-          product_id?: string | null
-          quantity?: number | null
-          ready_at?: string | null
-          sent_at?: string | null
-          sent_to_kitchen?: boolean | null
-          tax_rate?: number | null
-          ticket_id: string
-          unit_price?: number | null
-          voided?: boolean | null
-        }
-        Update: {
-          category_name?: string | null
-          comped?: boolean | null
-          course?: number | null
-          created_at?: string
-          destination?: string | null
-          discount_line_total?: number | null
-          external_line_id?: string | null
-          gross_line_total?: number | null
-          id?: string
-          is_rush?: boolean | null
-          item_external_id?: string | null
-          item_name?: string
-          notes?: string | null
-          prep_started_at?: string | null
-          prep_status?: string | null
-          product_id?: string | null
-          quantity?: number | null
-          ready_at?: string | null
-          sent_at?: string | null
-          sent_to_kitchen?: boolean | null
-          tax_rate?: number | null
-          ticket_id?: string
-          unit_price?: number | null
-          voided?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_lines_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_lines_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
       }
       tickets: {
         Row: {
-          cash_session_id: string | null
-          channel: Database["public"]["Enums"]["ticket_channel"] | null
+          channel: string | null
           closed_at: string | null
           covers: number | null
           created_at: string
@@ -4033,19 +4469,13 @@ export type Database = {
           id: string
           location_id: string
           net_total: number | null
-          notes: string | null
-          opened_at: string
-          pos_table_id: string | null
-          server_id: string | null
-          service_type: string | null
-          status: Database["public"]["Enums"]["ticket_status"] | null
+          opened_at: string | null
+          status: string | null
           table_name: string | null
           tax_total: number | null
-          tip_total: number | null
         }
         Insert: {
-          cash_session_id?: string | null
-          channel?: Database["public"]["Enums"]["ticket_channel"] | null
+          channel?: string | null
           closed_at?: string | null
           covers?: number | null
           created_at?: string
@@ -4055,19 +4485,13 @@ export type Database = {
           id?: string
           location_id: string
           net_total?: number | null
-          notes?: string | null
-          opened_at?: string
-          pos_table_id?: string | null
-          server_id?: string | null
-          service_type?: string | null
-          status?: Database["public"]["Enums"]["ticket_status"] | null
+          opened_at?: string | null
+          status?: string | null
           table_name?: string | null
           tax_total?: number | null
-          tip_total?: number | null
         }
         Update: {
-          cash_session_id?: string | null
-          channel?: Database["public"]["Enums"]["ticket_channel"] | null
+          channel?: string | null
           closed_at?: string | null
           covers?: number | null
           created_at?: string
@@ -4077,24 +4501,12 @@ export type Database = {
           id?: string
           location_id?: string
           net_total?: number | null
-          notes?: string | null
-          opened_at?: string
-          pos_table_id?: string | null
-          server_id?: string | null
-          service_type?: string | null
-          status?: Database["public"]["Enums"]["ticket_status"] | null
+          opened_at?: string | null
+          status?: string | null
           table_name?: string | null
           tax_total?: number | null
-          tip_total?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "tickets_cash_session_id_fkey"
-            columns: ["cash_session_id"]
-            isOneToOne: false
-            referencedRelation: "pos_cash_sessions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tickets_location_id_fkey"
             columns: ["location_id"]
@@ -4102,18 +4514,75 @@ export type Database = {
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      time_entries: {
+        Row: {
+          approved: boolean
+          approved_at: string | null
+          approved_by: string | null
+          clock_in: string
+          clock_out: string | null
+          created_at: string
+          employee_id: string
+          id: string
+          location_id: string
+          org_id: string
+          source: string
+        }
+        Insert: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          clock_in: string
+          clock_out?: string | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          location_id: string
+          org_id: string
+          source?: string
+        }
+        Update: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          location_id?: string
+          org_id?: string
+          source?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "tickets_pos_table_id_fkey"
-            columns: ["pos_table_id"]
+            foreignKeyName: "time_entries_employee_id_fkey"
+            columns: ["employee_id"]
             isOneToOne: false
-            referencedRelation: "pos_tables"
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tickets_server_id_fkey"
-            columns: ["server_id"]
+            foreignKeyName: "time_entries_location_id_fkey"
+            columns: ["location_id"]
             isOneToOne: false
-            referencedRelation: "employees"
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -4121,7 +4590,7 @@ export type Database = {
       timesheets: {
         Row: {
           approved: boolean | null
-          clock_in: string
+          clock_in: string | null
           clock_out: string | null
           created_at: string
           employee_id: string
@@ -4132,7 +4601,7 @@ export type Database = {
         }
         Insert: {
           approved?: boolean | null
-          clock_in: string
+          clock_in?: string | null
           clock_out?: string | null
           created_at?: string
           employee_id: string
@@ -4143,7 +4612,7 @@ export type Database = {
         }
         Update: {
           approved?: boolean | null
-          clock_in?: string
+          clock_in?: string | null
           clock_out?: string | null
           created_at?: string
           employee_id?: string
@@ -4169,49 +4638,23 @@ export type Database = {
           },
         ]
       }
-      user_locations: {
-        Row: {
-          created_at: string
-          id: string
-          location_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          location_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          location_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_locations_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_roles: {
         Row: {
+          created_at: string
           id: string
           location_id: string | null
           role_id: string | null
           user_id: string
         }
         Insert: {
+          created_at?: string
           id?: string
           location_id?: string | null
           role_id?: string | null
           user_id: string
         }
         Update: {
+          created_at?: string
           id?: string
           location_id?: string | null
           role_id?: string | null
@@ -4238,7 +4681,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          inventory_item_id: string
+          inventory_item_id: string | null
           location_id: string
           quantity: number
           reason: string | null
@@ -4247,16 +4690,16 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          inventory_item_id: string
+          inventory_item_id?: string | null
           location_id: string
-          quantity: number
+          quantity?: number
           reason?: string | null
           waste_value?: number | null
         }
         Update: {
           created_at?: string
           id?: string
-          inventory_item_id?: string
+          inventory_item_id?: string | null
           location_id?: string
           quantity?: number
           reason?: string | null
@@ -4279,104 +4722,54 @@ export type Database = {
           },
         ]
       }
-      waste_items: {
+    }
+    Views: {
+      budget_daily_unified: {
         Row: {
-          created_at: string | null
-          group_id: string
-          id: string
-          ingredient_category: string | null
-          is_active: boolean | null
-          item_type: string
-          name: string
-          product_id: string | null
-          unit: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          group_id: string
-          id?: string
-          ingredient_category?: string | null
-          is_active?: boolean | null
-          item_type: string
-          name: string
-          product_id?: string | null
-          unit?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          group_id?: string
-          id?: string
-          ingredient_category?: string | null
-          is_active?: boolean | null
-          item_type?: string
-          name?: string
-          product_id?: string | null
-          unit?: string | null
+          budget_cogs: number | null
+          budget_cogs_pct: number | null
+          budget_col_pct: number | null
+          budget_labour: number | null
+          budget_margin_pct: number | null
+          budget_profit: number | null
+          budget_sales: number | null
+          day: string | null
+          location_id: string | null
+          org_id: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "waste_items_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "budget_days_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "waste_items_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "products"
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
       }
-      waste_logs: {
+      cogs_daily: {
         Row: {
-          created_at: string | null
-          date: string
-          id: string
-          item_id: string
-          location_id: string
-          notes: string | null
-          quantity: number
-          reason: string
-          user_id: string | null
-          value: number
-        }
-        Insert: {
-          created_at?: string | null
-          date: string
-          id?: string
-          item_id: string
-          location_id: string
-          notes?: string | null
-          quantity?: number
-          reason: string
-          user_id?: string | null
-          value?: number
-        }
-        Update: {
-          created_at?: string | null
-          date?: string
-          id?: string
-          item_id?: string
-          location_id?: string
-          notes?: string | null
-          quantity?: number
-          reason?: string
-          user_id?: string | null
-          value?: number
+          cogs_amount: number | null
+          date: string | null
+          location_id: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "waste_logs_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "waste_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "waste_logs_location_id_fkey"
+            foreignKeyName: "stock_movements_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
@@ -4384,11 +4777,437 @@ export type Database = {
           },
         ]
       }
-    }
-    Views: {
+      forecast_daily_unified: {
+        Row: {
+          data_source: string | null
+          day: string | null
+          forecast_avg_check: number | null
+          forecast_orders: number | null
+          forecast_sales: number | null
+          forecast_sales_lower: number | null
+          forecast_sales_upper: number | null
+          location_id: string | null
+          org_id: string | null
+          planned_labor_cost: number | null
+          planned_labor_hours: number | null
+        }
+        Relationships: []
+      }
+      groups: {
+        Row: {
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          id?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
+      labour_daily_unified: {
+        Row: {
+          actual_cost: number | null
+          actual_hours: number | null
+          cost_variance: number | null
+          day: string | null
+          hours_variance: number | null
+          hours_variance_pct: number | null
+          location_id: string | null
+          org_id: string | null
+          scheduled_cost: number | null
+          scheduled_headcount: number | null
+          scheduled_hours: number | null
+        }
+        Relationships: []
+      }
+      mart_kpi_daily: {
+        Row: {
+          avg_check: number | null
+          cogs: number | null
+          cogs_source: string | null
+          col_percent: number | null
+          covers: number | null
+          date: string | null
+          gp_percent: number | null
+          labour_cost: number | null
+          labour_hours: number | null
+          labour_source: string | null
+          location_id: string | null
+          net_sales: number | null
+          orders_count: number | null
+          org_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_sales_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mart_kpi_daily_mv: {
+        Row: {
+          avg_check: number | null
+          cogs: number | null
+          cogs_source: string | null
+          col_percent: number | null
+          covers: number | null
+          date: string | null
+          gp_percent: number | null
+          labour_cost: number | null
+          labour_hours: number | null
+          labour_source: string | null
+          location_id: string | null
+          net_sales: number | null
+          orders_count: number | null
+          org_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_sales_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mart_sales_category_daily: {
+        Row: {
+          category: string | null
+          cogs: number | null
+          cogs_source: string | null
+          date: string | null
+          location_id: string | null
+          net_sales: number | null
+          org_id: string | null
+          product_id: string | null
+          product_name: string | null
+          units_sold: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mart_sales_category_daily_mv: {
+        Row: {
+          category: string | null
+          cogs: number | null
+          cogs_source: string | null
+          date: string | null
+          location_id: string | null
+          net_sales: number | null
+          org_id: string | null
+          product_id: string | null
+          product_name: string | null
+          units_sold: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mart_stock_count_headers: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          group_id: string | null
+          id: string | null
+          line_count: number | null
+          location_id: string | null
+          location_name: string | null
+          start_date: string | null
+          status: string | null
+          total_variance_qty: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
+      mart_stock_count_lines_enriched: {
+        Row: {
+          batch_balance: number | null
+          closing_qty: number | null
+          count_status: string | null
+          deliveries_qty: number | null
+          end_date: string | null
+          group_id: string | null
+          id: string | null
+          inventory_item_id: string | null
+          item_name: string | null
+          location_id: string | null
+          opening_qty: number | null
+          sales_qty: number | null
+          start_date: string | null
+          stock_count_id: string | null
+          transfers_net_qty: number | null
+          unit: string | null
+          unit_cost: number | null
+          used_qty: number | null
+          variance_qty: number | null
+          variance_value: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_lines_stock_count_id_fkey"
+            columns: ["stock_count_id"]
+            isOneToOne: false
+            referencedRelation: "mart_stock_count_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_stock_count_id_fkey"
+            columns: ["stock_count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mv_sales_daily: {
+        Row: {
+          day: string | null
+          discounts: number | null
+          gross_sales: number | null
+          location_id: string | null
+          net_sales: number | null
+          orders_count: number | null
+          org_id: string | null
+          tax: number | null
+          tips: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mv_sales_hourly: {
+        Row: {
+          discounts: number | null
+          gross_sales: number | null
+          hour_ts: string | null
+          location_id: string | null
+          net_sales: number | null
+          orders_count: number | null
+          org_id: string | null
+          tax: number | null
+          tips: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_sales_daily_unified: {
+        Row: {
+          cogs: number | null
+          data_source: string | null
+          day: string | null
+          gross_profit: number | null
+          location_id: string | null
+          margin_pct: number | null
+          net_sales: number | null
+          org_id: string | null
+          product_category: string | null
+          product_id: string | null
+          product_name: string | null
+          units_sold: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_sales_daily_unified_mv: {
+        Row: {
+          cogs: number | null
+          data_source: string | null
+          day: string | null
+          gross_profit: number | null
+          location_id: string | null
+          margin_pct: number | null
+          net_sales: number | null
+          org_id: string | null
+          product_category: string | null
+          product_id: string | null
+          product_name: string | null
+          units_sold: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_summary: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          food_cost: number | null
+          food_cost_pct: number | null
+          group_id: string | null
+          id: string | null
+          ingredient_count: number | null
+          is_sub_recipe: boolean | null
+          menu_item_name: string | null
+          selling_price: number | null
+          yield_qty: number | null
+          yield_unit: string | null
+        }
+        Relationships: []
+      }
       sales_daily_unified: {
         Row: {
+          avg_check: number | null
           comps_amount: number | null
+          data_source: string | null
           date: string | null
           discounts_amount: number | null
           gross_sales: number | null
@@ -4397,12 +5216,348 @@ export type Database = {
           location_id: string | null
           net_sales: number | null
           orders_count: number | null
+          org_id: string | null
           payments_card: number | null
           payments_cash: number | null
           payments_other: number | null
           refunds_amount: number | null
           refunds_count: number | null
           voids_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_sales_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_sales_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_hourly_unified: {
+        Row: {
+          avg_check: number | null
+          covers: number | null
+          data_source: string | null
+          day: string | null
+          discounts: number | null
+          gross_sales: number | null
+          hour_bucket: string | null
+          hour_of_day: number | null
+          location_id: string | null
+          net_sales: number | null
+          orders_count: number | null
+          org_id: string | null
+          refunds: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_hourly_unified_mv: {
+        Row: {
+          avg_check: number | null
+          covers: number | null
+          data_source: string | null
+          day: string | null
+          discounts: number | null
+          gross_sales: number | null
+          hour_bucket: string | null
+          hour_of_day: number | null
+          location_id: string | null
+          net_sales: number | null
+          orders_count: number | null
+          org_id: string | null
+          refunds: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_actuals_daily_cogs_estimate: {
+        Row: {
+          cogs_est: number | null
+          day: string | null
+          location_id: string | null
+          org_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_actuals_daily_labour: {
+        Row: {
+          day: string | null
+          labour_hours: number | null
+          location_id: string | null
+          org_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_actuals_daily_sales: {
+        Row: {
+          comps: number | null
+          day: string | null
+          discounts: number | null
+          location_id: string | null
+          org_id: string | null
+          refunds: number | null
+          sales_net: number | null
+          tips: number | null
+          voids: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_actuals_sales_hourly: {
+        Row: {
+          day: string | null
+          hour_of_day: number | null
+          location_id: string | null
+          org_id: string | null
+          sales_net_hour: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cdm_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cdm_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_budget_metric_final: {
+        Row: {
+          channel_id: string | null
+          day: string | null
+          location_id: string | null
+          metric: Database["public"]["Enums"]["budget_metric"] | null
+          org_id: string | null
+          value_final: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_days_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_budget_sales_hourly: {
+        Row: {
+          budget_sales_net_hour: number | null
+          day: string | null
+          hour_of_day: number | null
+          location_id: string | null
+          org_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_days_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_days_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_budget_vs_actual_daily: {
+        Row: {
+          a_cogs_est: number | null
+          a_gp_value_est: number | null
+          b_cogs: number | null
+          b_gp_value: number | null
+          b_labour_hours: number | null
+          b_sales_net: number | null
+          day: string | null
+          labour_hours: number | null
+          location_id: string | null
+          org_id: string | null
+          sales_net: number | null
+          var_cogs_est: number | null
+          var_labour_hours: number | null
+          var_sales_net: number | null
+        }
+        Relationships: []
+      }
+      v_budget_vs_actual_hourly: {
+        Row: {
+          budget_sales_net_hour: number | null
+          day: string | null
+          hour_of_day: number | null
+          location_id: string | null
+          org_id: string | null
+          sales_net_hour: number | null
+          var_sales_net_hour: number | null
         }
         Relationships: []
       }
@@ -4415,54 +5570,119 @@ export type Database = {
           p_member_id: string
           p_points: number
           p_ticket_id?: string
-          p_type: string
+          p_type?: string
+        }
+        Returns: Json
+      }
+      assert_hourly_profile_sums_to_one: {
+        Args: { p_profile_id: string }
+        Returns: undefined
+      }
+      assert_hourly_profile_valid: {
+        Args: { p_profile_id: string }
+        Returns: undefined
+      }
+      audit_data_coherence: {
+        Args: { p_location_ids: string[]; p_org_id: string }
+        Returns: Json
+      }
+      bootstrap_demo: { Args: never; Returns: Json }
+      bootstrap_demo_operational: { Args: { p_org_id: string }; Returns: Json }
+      claim_next_job: {
+        Args: {
+          p_provider?: Database["public"]["Enums"]["integration_provider"]
         }
         Returns: {
+          attempts: number
           created_at: string
-          email: string | null
-          group_id: string
+          finished_at: string | null
+          heartbeat_at: string | null
           id: string
-          lifetime_points: number
-          name: string
-          notes: string | null
-          phone: string | null
-          points_balance: number
-          tier: string
-          updated_at: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          last_error: string | null
+          lease_seconds: number
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          org_id: string
+          payload: Json
+          priority: number
+          provider: Database["public"]["Enums"]["integration_provider"] | null
+          run_after: string
+          status: Database["public"]["Enums"]["job_status"]
         }
         SetofOptions: {
           from: "*"
-          to: "loyalty_members"
+          to: "jobs"
           isOneToOne: true
           isSetofReturn: false
         }
       }
-      calculate_loyalty_tier: {
-        Args: { p_lifetime_points: number }
+      create_budget_version_with_days: {
+        Args: {
+          p_channel_ids?: string[]
+          p_end: string
+          p_location_ids?: string[]
+          p_name: string
+          p_org_id: string
+          p_start: string
+        }
         Returns: string
       }
-      can_access_location:
-        | { Args: { _location_id: string }; Returns: boolean }
-        | { Args: { _location_id: string; _user_id: string }; Returns: boolean }
-      check_kpi_alerts: {
-        Args: { p_date?: string; p_group_id: string }
+      create_oauth_state: {
+        Args: {
+          p_org_id: string
+          p_provider: Database["public"]["Enums"]["integration_provider"]
+          p_redirect_uri: string
+        }
         Returns: Json
       }
-      cleanup_expired_otps: { Args: never; Returns: undefined }
-      compute_hourly_cost: { Args: { p_employee_id: string }; Returns: number }
-      forecast_needs_refresh: {
-        Args: { p_location_id: string }
-        Returns: boolean
+      deduct_recipe_from_inventory: {
+        Args: { p_location_id: string; p_qty?: number; p_recipe_id: string }
+        Returns: undefined
       }
-      get_accessible_location_ids: { Args: never; Returns: string[] }
-      get_daily_sales_summary: {
-        Args: { p_date?: string; p_group_id: string; p_location_id?: string }
+      enqueue_event_replay: {
+        Args: { p_raw_event_id: string }
+        Returns: string
+      }
+      enqueue_square_sync: {
+        Args: { p_org_id: string; p_reason?: string }
+        Returns: string
+      }
+      get_forecast_items_mix_unified: {
+        Args: {
+          p_from: string
+          p_horizon_days?: number
+          p_limit?: number
+          p_location_ids: string[]
+          p_org_id: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_instant_pnl_unified: {
+        Args: {
+          p_from: string
+          p_location_ids: string[]
+          p_org_id: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      get_labor_plan_unified: {
+        Args: {
+          p_from: string
+          p_location_ids: string[]
+          p_org_id: string
+          p_to: string
+        }
         Returns: Json
       }
       get_labour_kpis: {
         Args: {
           date_from: string
           date_to: string
+          p_data_source?: string
           selected_location_id?: string
         }
         Returns: Json
@@ -4471,120 +5691,57 @@ export type Database = {
         Args: {
           date_from: string
           date_to: string
+          p_data_source?: string
           selected_location_id?: string
         }
-        Returns: {
-          col_actual_pct: number
-          col_delta_pct: number
-          col_projected_pct: number
-          hours_actual: number
-          hours_projected: number
-          is_summary: boolean
-          labor_cost_actual: number
-          labor_cost_projected: number
-          location_id: string
-          location_name: string
-          oplh_actual: number
-          oplh_delta_pct: number
-          oplh_projected: number
-          sales_actual: number
-          sales_delta_pct: number
-          sales_projected: number
-          splh_actual: number
-          splh_delta_pct: number
-          splh_projected: number
-        }[]
+        Returns: Json
       }
       get_labour_timeseries: {
         Args: {
           date_from: string
           date_to: string
+          p_data_source?: string
           selected_location_id?: string
         }
-        Returns: {
-          actual_col_pct: number
-          actual_hours: number
-          actual_labor_cost: number
-          actual_oplh: number
-          actual_orders: number
-          actual_sales: number
-          actual_splh: number
-          date: string
-          forecast_orders: number
-          forecast_sales: number
-          planned_col_pct: number
-          planned_hours: number
-          planned_labor_cost: number
-          planned_oplh: number
-          planned_splh: number
-        }[]
+        Returns: Json
       }
-      get_latest_forecast_run: {
-        Args: { p_location_id: string }
-        Returns: {
-          algorithm: string
-          confidence: number | null
-          created_at: string
-          data_points: number | null
-          generated_at: string
-          history_end: string
-          history_start: string
-          horizon_days: number
-          id: string
-          location_id: string
-          mape: number | null
-          model_version: string
-          mse: number | null
-          seasonality_dow: Json | null
-          seasonality_woy: Json | null
-          trend_intercept: number | null
-          trend_slope: number | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "forecast_model_runs"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      get_top_products: {
+      get_recipe_food_cost: { Args: { p_recipe_id: string }; Returns: number }
+      get_sales_timeseries_unified: {
         Args: {
-          p_date_from?: string
-          p_date_to?: string
-          p_location_id?: string
-          p_order_by?: string
+          p_from: string
+          p_location_ids: string[]
+          p_org_id: string
+          p_to: string
         }
-        Returns: {
-          badge_label: string
-          category: string
-          cogs: number
-          gp: number
-          gp_pct: number
-          product_id: string
-          product_name: string
-          sales: number
-          sales_share_pct: number
-          units: number
-        }[]
+        Returns: Json
+      }
+      get_top_products_unified: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_location_ids: string[]
+          p_org_id: string
+          p_to: string
+        }
+        Returns: Json
       }
       get_user_accessible_locations: {
-        Args: { _user_id?: string }
+        Args: { _user_id: string }
         Returns: string[]
       }
-      get_user_group_id: { Args: never; Returns: string }
-      get_user_has_global_scope:
-        | { Args: never; Returns: boolean }
-        | { Args: { _user_id: string }; Returns: boolean }
+      get_user_has_global_scope: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       get_user_permissions: {
-        Args: { _location_id?: string; _user_id?: string }
+        Args: { _user_id: string }
         Returns: {
           module: string
           permission_key: string
         }[]
       }
-      get_user_primary_role: { Args: { _user_id: string }; Returns: string }
       get_user_roles_with_scope: {
-        Args: { _user_id?: string }
+        Args: { _user_id: string }
         Returns: {
           location_id: string
           location_name: string
@@ -4592,51 +5749,72 @@ export type Database = {
           role_name: string
         }[]
       }
-      get_weekly_sales_summary: {
-        Args: { p_group_id: string; p_week_start?: string }
+      hourly_profile_pct_sum: {
+        Args: { p_profile_id: string }
+        Returns: number
+      }
+      is_location_member: {
+        Args: { p_location_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_org_admin: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
+      job_heartbeat: {
+        Args: { p_job_id: string; p_locked_by?: string }
+        Returns: undefined
+      }
+      location_role_of: {
+        Args: { p_location_id: string; p_user_id: string }
+        Returns: Database["public"]["Enums"]["org_role"]
+      }
+      map_square_location: {
+        Args: { p_org_id: string; p_square_location_id: string }
+        Returns: string
+      }
+      menu_engineering_summary: {
+        Args: {
+          p_data_source?: string
+          p_date_from: string
+          p_date_to: string
+          p_location_id?: string
+        }
         Returns: Json
       }
-      has_payroll_role: { Args: never; Returns: boolean }
-      has_permission: {
-        Args: {
-          _location_id?: string
-          _permission_key: string
-          _user_id: string
-        }
-        Returns: boolean
+      merge_square_all: {
+        Args: { p_limit_each?: number; p_org_id: string }
+        Returns: Json
       }
-      has_role: {
-        Args: { _role: Database["public"]["Enums"]["app_role"] }
-        Returns: boolean
+      merge_square_catalog_to_cdm: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: number
       }
-      is_admin_or_ops:
-        | { Args: never; Returns: boolean }
-        | { Args: { _user_id: string }; Returns: boolean }
-      is_owner: { Args: { _user_id?: string }; Returns: boolean }
-      is_owner_or_admin: { Args: { _user_id?: string }; Returns: boolean }
-      is_payroll_admin: { Args: never; Returns: boolean }
-      menu_engineering_summary: {
-        Args: { p_date_from: string; p_date_to: string; p_location_id?: string }
-        Returns: {
-          action_tag: string
-          badges: string[]
-          category: string
-          classification: string
-          cogs: number
-          margin_pct: number
-          margin_threshold: number
-          name: string
-          pop_threshold: number
-          popularity_share: number
-          product_id: string
-          profit_eur: number
-          profit_per_sale: number
-          sales: number
-          sales_share: number
-          total_sales_period: number
-          total_units_period: number
-          units: number
-        }[]
+      merge_square_orders_to_cdm: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: number
+      }
+      merge_square_payments_to_cdm: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: number
+      }
+      org_role_of: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: Database["public"]["Enums"]["org_role"]
+      }
+      payload_hash_hex: { Args: { input: string }; Returns: string }
+      recalc_budget_day: {
+        Args: { p_budget_day_id: string }
+        Returns: undefined
+      }
+      recalc_budget_version: {
+        Args: { p_budget_version_id: string }
+        Returns: number
       }
       redeem_loyalty_reward: {
         Args: {
@@ -4644,73 +5822,110 @@ export type Database = {
           p_member_id: string
           p_reward_id: string
         }
-        Returns: {
-          applied_at: string | null
-          code: string | null
-          id: string
-          location_id: string | null
-          member_id: string
-          points_used: number
-          redeemed_at: string
-          reward_id: string
-          status: string
-          ticket_id: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "loyalty_redemptions"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      seed_demo_labour_data: {
-        Args: { p_days?: number; p_locations?: number }
         Returns: Json
       }
-      seed_demo_products_and_sales: {
-        Args: { p_group_id: string }
+      refresh_all_mvs: { Args: { p_triggered_by?: string }; Returns: Json }
+      refresh_mv_sales_hourly: {
+        Args: {
+          p_from: string
+          p_location_id: string
+          p_org_id: string
+          p_to: string
+        }
         Returns: undefined
       }
-      seed_roles_and_permissions: { Args: never; Returns: undefined }
-      seed_sales_for_existing_products: {
-        Args: { p_group_id: string }
+      refresh_sales_rollups: {
+        Args: { p_concurrently?: boolean }
         Returns: undefined
       }
-      seed_waste_for_pos_products: {
-        Args: { p_group_id: string }
+      request_forecast: {
+        Args: {
+          p_horizon_days?: number
+          p_location_id: string
+          p_train_days?: number
+        }
+        Returns: string
+      }
+      requeue_stale_jobs: { Args: { p_limit?: number }; Returns: number }
+      resolve_data_source: { Args: { p_org_id: string }; Returns: Json }
+      rpc_data_health: { Args: { p_org_id: string }; Returns: Json }
+      rpc_reconciliation_summary: {
+        Args: {
+          p_from: string
+          p_location_ids: string[]
+          p_org_id: string
+          p_status?: string
+          p_to: string
+        }
+        Returns: Json
+      }
+      upsert_budget_metric: {
+        Args: {
+          p_budget_day_id: string
+          p_layer: Database["public"]["Enums"]["budget_layer"]
+          p_metric: Database["public"]["Enums"]["budget_metric"]
+          p_source: string
+          p_value: number
+        }
         Returns: undefined
       }
     }
     Enums: {
-      app_role:
-        | "owner_admin"
-        | "ops_manager"
-        | "location_manager"
-        | "viewer"
-        | "payroll_admin"
-        | "payroll_operator"
-      compliance_agency: "TGSS" | "AEAT" | "SEPE"
-      compliance_status: "draft" | "signed" | "sent" | "accepted" | "rejected"
-      concept_type: "earning" | "deduction"
-      extra_pay_mode: "prorrateada" | "no_prorrateada"
-      irpf_mode: "manual" | "tabla"
-      payment_method: "card" | "cash" | "other"
-      payroll_status:
+      budget_layer: "base" | "override" | "final"
+      budget_metric:
+        | "sales_gross"
+        | "sales_net"
+        | "covers"
+        | "tickets"
+        | "discounts"
+        | "comps"
+        | "voids"
+        | "refunds"
+        | "tips"
+        | "cogs"
+        | "cogs_food"
+        | "cogs_bev"
+        | "waste"
+        | "shrinkage"
+        | "labour_cost"
+        | "labour_hours"
+        | "labour_overtime_hours"
+        | "gp_value"
+        | "gp_pct"
+      budget_scope: "location" | "org"
+      budget_status: "draft" | "published" | "frozen" | "archived"
+      data_source_mode: "auto" | "manual_demo" | "manual_pos"
+      employment_status: "active" | "inactive" | "terminated"
+      integration_provider:
+        | "square"
+        | "lightspeed"
+        | "oracle_simphony"
+        | "toast"
+      item_type: "food" | "beverage" | "other"
+      job_status: "queued" | "running" | "succeeded" | "failed" | "dead"
+      job_type:
+        | "square_sync_pull"
+        | "square_webhook_process"
+        | "rebuild_aggregates"
+      org_role: "owner" | "manager" | "staff"
+      purchase_order_status:
         | "draft"
-        | "validated"
-        | "calculated"
-        | "approved"
-        | "submitted"
-        | "paid"
-      po_status: "draft" | "sent" | "received"
-      pos_provider: "revo" | "glop" | "square" | "lightspeed" | "csv"
-      pos_status: "connected" | "disconnected" | "error" | "syncing"
-      ticket_channel: "dinein" | "takeaway" | "delivery" | "unknown"
-      ticket_status: "open" | "closed"
-      token_provider:
-        | "certificate_p12"
-        | "certificate_local_agent"
-        | "oauth_provider"
+        | "sent"
+        | "confirmed"
+        | "delivered"
+        | "cancelled"
+      shift_status: "draft" | "published" | "cancelled"
+      staging_status: "new" | "merged" | "failed"
+      stock_movement_type:
+        | "count"
+        | "purchase"
+        | "waste"
+        | "transfer_in"
+        | "transfer_out"
+        | "sale_estimate"
+        | "adjustment"
+      swap_status: "requested" | "approved" | "rejected" | "cancelled"
+      sync_status: "queued" | "running" | "success" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4838,38 +6053,66 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: [
-        "owner_admin",
-        "ops_manager",
-        "location_manager",
-        "viewer",
-        "payroll_admin",
-        "payroll_operator",
+      budget_layer: ["base", "override", "final"],
+      budget_metric: [
+        "sales_gross",
+        "sales_net",
+        "covers",
+        "tickets",
+        "discounts",
+        "comps",
+        "voids",
+        "refunds",
+        "tips",
+        "cogs",
+        "cogs_food",
+        "cogs_bev",
+        "waste",
+        "shrinkage",
+        "labour_cost",
+        "labour_hours",
+        "labour_overtime_hours",
+        "gp_value",
+        "gp_pct",
       ],
-      compliance_agency: ["TGSS", "AEAT", "SEPE"],
-      compliance_status: ["draft", "signed", "sent", "accepted", "rejected"],
-      concept_type: ["earning", "deduction"],
-      extra_pay_mode: ["prorrateada", "no_prorrateada"],
-      irpf_mode: ["manual", "tabla"],
-      payment_method: ["card", "cash", "other"],
-      payroll_status: [
+      budget_scope: ["location", "org"],
+      budget_status: ["draft", "published", "frozen", "archived"],
+      data_source_mode: ["auto", "manual_demo", "manual_pos"],
+      employment_status: ["active", "inactive", "terminated"],
+      integration_provider: [
+        "square",
+        "lightspeed",
+        "oracle_simphony",
+        "toast",
+      ],
+      item_type: ["food", "beverage", "other"],
+      job_status: ["queued", "running", "succeeded", "failed", "dead"],
+      job_type: [
+        "square_sync_pull",
+        "square_webhook_process",
+        "rebuild_aggregates",
+      ],
+      org_role: ["owner", "manager", "staff"],
+      purchase_order_status: [
         "draft",
-        "validated",
-        "calculated",
-        "approved",
-        "submitted",
-        "paid",
+        "sent",
+        "confirmed",
+        "delivered",
+        "cancelled",
       ],
-      po_status: ["draft", "sent", "received"],
-      pos_provider: ["revo", "glop", "square", "lightspeed", "csv"],
-      pos_status: ["connected", "disconnected", "error", "syncing"],
-      ticket_channel: ["dinein", "takeaway", "delivery", "unknown"],
-      ticket_status: ["open", "closed"],
-      token_provider: [
-        "certificate_p12",
-        "certificate_local_agent",
-        "oauth_provider",
+      shift_status: ["draft", "published", "cancelled"],
+      staging_status: ["new", "merged", "failed"],
+      stock_movement_type: [
+        "count",
+        "purchase",
+        "waste",
+        "transfer_in",
+        "transfer_out",
+        "sale_estimate",
+        "adjustment",
       ],
+      swap_status: ["requested", "approved", "rejected", "cancelled"],
+      sync_status: ["queued", "running", "success", "failed"],
     },
   },
 } as const

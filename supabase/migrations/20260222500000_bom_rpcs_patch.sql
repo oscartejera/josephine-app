@@ -1,12 +1,13 @@
 -- ============================================================
--- BOM Upgrade: Sub-recipes, Yield Management, Food Cost RPCs
--- MarketMan-style Bill of Materials
+-- BOM Complete Patch: ALL DDLs + RPCs + View
+-- Covers everything from 20260222400000 that was rolled back
+-- Uses actual column names: menu_item_id (not recipe_id),
+-- qty_base_units (not quantity)
 -- ============================================================
 
 -- ============================================================
 -- SECTION 1: Upgrade recipes table
 -- ============================================================
-
 ALTER TABLE recipes
   ADD COLUMN IF NOT EXISTS category text DEFAULT 'Main',
   ADD COLUMN IF NOT EXISTS yield_qty numeric DEFAULT 1,
@@ -16,12 +17,9 @@ ALTER TABLE recipes
 
 -- ============================================================
 -- SECTION 2: Upgrade recipe_ingredients table
--- Add sub-recipe + yield columns
--- Note: inventory_item_id stays NOT NULL due to primary key constraint.
--- For sub-recipe rows, inventory_item_id will point to a dummy
--- sentinel item, and sub_recipe_id will identify the real source.
+-- Note: inventory_item_id stays NOT NULL (part of PK)
+-- sub_recipe_id is nullable — when set, the ingredient IS a sub-recipe
 -- ============================================================
-
 ALTER TABLE recipe_ingredients
   ADD COLUMN IF NOT EXISTS sub_recipe_id uuid REFERENCES recipes(id) ON DELETE CASCADE,
   ADD COLUMN IF NOT EXISTS qty_gross numeric DEFAULT 0,
@@ -30,22 +28,18 @@ ALTER TABLE recipe_ingredients
   ADD COLUMN IF NOT EXISTS yield_pct numeric DEFAULT 100,
   ADD COLUMN IF NOT EXISTS sort_order integer DEFAULT 0;
 
--- Back-fill qty_gross from existing quantity column
+-- Back-fill qty_gross from existing qty_base_units column
 UPDATE recipe_ingredients
-  SET qty_gross = quantity, qty_net = quantity
-  WHERE qty_gross = 0 AND quantity > 0;
+  SET qty_gross = qty_base_units, qty_net = qty_base_units
+  WHERE qty_gross = 0 AND qty_base_units > 0;
 
--- Index for fast lookups
-CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe_id
-  ON recipe_ingredients(recipe_id);
-CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_sub_recipe_id
-  ON recipe_ingredients(sub_recipe_id);
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_ri_menu_item_id ON recipe_ingredients(menu_item_id);
+CREATE INDEX IF NOT EXISTS idx_ri_sub_recipe_id ON recipe_ingredients(sub_recipe_id);
 
 -- ============================================================
 -- SECTION 3: RPC — get_recipe_food_cost (recursive)
--- Returns the total cost for one yield_qty of a recipe
 -- ============================================================
-
 CREATE OR REPLACE FUNCTION get_recipe_food_cost(p_recipe_id uuid)
 RETURNS numeric
 LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -59,35 +53,29 @@ BEGIN
       ri.inventory_item_id,
       ri.sub_recipe_id,
       ri.qty_gross,
-      ri.yield_pct,
       COALESCE(ii.last_cost, 0) AS unit_cost,
       sr.yield_qty AS sub_yield_qty
     FROM recipe_ingredients ri
     LEFT JOIN inventory_items ii ON ii.id = ri.inventory_item_id
     LEFT JOIN recipes sr ON sr.id = ri.sub_recipe_id
-    WHERE ri.recipe_id = p_recipe_id
+    WHERE ri.menu_item_id = p_recipe_id
   LOOP
     IF v_row.sub_recipe_id IS NOT NULL THEN
-      -- Sub-recipe: recursive call, scaled by qty_gross / sub_recipe yield
       v_total := v_total + (
         v_row.qty_gross / GREATEST(COALESCE(v_row.sub_yield_qty, 1), 0.001)
         * get_recipe_food_cost(v_row.sub_recipe_id)
       );
     ELSE
-      -- Direct ingredient: cost = qty_gross * unit_cost
       v_total := v_total + (v_row.qty_gross * v_row.unit_cost);
     END IF;
   END LOOP;
-
   RETURN ROUND(v_total, 4);
 END;
 $$;
 
 -- ============================================================
 -- SECTION 4: RPC — deduct_recipe_from_inventory (cascading)
--- Deducts physical ingredients from inventory_item_location
 -- ============================================================
-
 CREATE OR REPLACE FUNCTION deduct_recipe_from_inventory(
   p_recipe_id uuid,
   p_location_id uuid,
@@ -101,44 +89,29 @@ DECLARE
   v_recipe_yield numeric;
   v_scale numeric;
 BEGIN
-  -- Get recipe yield
   SELECT COALESCE(yield_qty, 1) INTO v_recipe_yield FROM recipes WHERE id = p_recipe_id;
   v_scale := p_qty / GREATEST(v_recipe_yield, 0.001);
 
   FOR v_row IN
-    SELECT
-      ri.inventory_item_id,
-      ri.sub_recipe_id,
-      ri.qty_gross,
-      ri.yield_pct,
-      sr.yield_qty AS sub_yield_qty
+    SELECT ri.inventory_item_id, ri.sub_recipe_id, ri.qty_gross
     FROM recipe_ingredients ri
-    LEFT JOIN recipes sr ON sr.id = ri.sub_recipe_id
-    WHERE ri.recipe_id = p_recipe_id
+    WHERE ri.menu_item_id = p_recipe_id
   LOOP
     IF v_row.sub_recipe_id IS NOT NULL THEN
-      -- Recurse into sub-recipe
       PERFORM deduct_recipe_from_inventory(
-        v_row.sub_recipe_id,
-        p_location_id,
-        v_row.qty_gross * v_scale
+        v_row.sub_recipe_id, p_location_id, v_row.qty_gross * v_scale
       );
     ELSE
-      -- Deduct from inventory_item_location
       UPDATE inventory_item_location
         SET on_hand = GREATEST(on_hand - (v_row.qty_gross * v_scale), 0)
-        WHERE item_id = v_row.inventory_item_id
-          AND location_id = p_location_id;
+        WHERE item_id = v_row.inventory_item_id AND location_id = p_location_id;
 
-      -- Record stock_movement
       INSERT INTO stock_movements (
         org_id, location_id, inventory_item_id,
         movement_type, qty_delta, unit_cost, notes
       )
-      SELECT
-        l.org_id, p_location_id, v_row.inventory_item_id,
-        'sale_estimate',
-        -(v_row.qty_gross * v_scale),
+      SELECT l.org_id, p_location_id, v_row.inventory_item_id,
+        'sale_estimate', -(v_row.qty_gross * v_scale),
         COALESCE(ii.last_cost, 0),
         'BOM auto-deduction: recipe ' || p_recipe_id::text
       FROM locations l
@@ -150,10 +123,10 @@ END;
 $$;
 
 -- ============================================================
--- SECTION 5: View — recipe_summary (for list page)
+-- SECTION 5: View — recipe_summary
 -- ============================================================
-
-CREATE OR REPLACE VIEW recipe_summary AS
+DROP VIEW IF EXISTS recipe_summary;
+CREATE VIEW recipe_summary AS
 SELECT
   r.id,
   r.group_id,
@@ -164,13 +137,16 @@ SELECT
   r.yield_unit,
   r.is_sub_recipe,
   r.created_at,
-  COUNT(ri.id)::integer AS ingredient_count,
+  COALESCE(ic.cnt, 0)::integer AS ingredient_count,
   get_recipe_food_cost(r.id) AS food_cost,
   CASE WHEN COALESCE(r.selling_price, 0) > 0
     THEN ROUND(get_recipe_food_cost(r.id) / r.selling_price * 100, 1)
     ELSE 0 END AS food_cost_pct
 FROM recipes r
-LEFT JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-GROUP BY r.id;
+LEFT JOIN LATERAL (
+  SELECT COUNT(*)::integer AS cnt
+  FROM recipe_ingredients ri2
+  WHERE ri2.menu_item_id = r.id
+) ic ON true;
 
 GRANT SELECT ON recipe_summary TO anon, authenticated;
