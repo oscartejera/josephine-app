@@ -36,7 +36,7 @@ BEGIN
   ELSE
     SELECT array_agg(id) INTO v_loc_filter
     FROM locations
-    WHERE org_id = p_org_id AND active = true;
+    WHERE group_id = p_org_id AND active = true;
   END IF;
 
   -- If no locations, return zeros
