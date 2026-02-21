@@ -7,6 +7,8 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { NarrativeInsightsPanel } from '@/components/dashboard/NarrativeInsightsPanel';
 import { TopProductsCard } from '@/components/dashboard/TopProductsCard';
 import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
+import { ExecutiveBriefing } from '@/components/dashboard/ExecutiveBriefing';
+import { LocationHealthIndicators } from '@/components/dashboard/LocationHealthIndicators';
 import { OnboardingWizard } from '@/components/onboarding';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle } from 'lucide-react';
 import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
@@ -190,9 +192,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-display font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
+        <h1 className="text-2xl font-display font-bold">Centro de Control</h1>
+        <p className="text-muted-foreground">Panel ejecutivo — Josephine Intelligence</p>
       </div>
+
+      {/* Executive Briefing — AI Morning Summary */}
+      <ExecutiveBriefing />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
@@ -246,9 +251,10 @@ export default function Dashboard() {
       {/* Top 10 Products - full width */}
       <TopProductsCard />
 
-      {/* AI Narrative and Low Stock */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* AI Narrative, Health Indicators, and Low Stock */}
+      <div className="grid lg:grid-cols-3 gap-6">
         <NarrativeInsightsPanel metrics={narrativeMetrics} />
+        <LocationHealthIndicators />
         <LowStockWidget />
       </div>
     </div>

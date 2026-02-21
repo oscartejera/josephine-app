@@ -1,14 +1,14 @@
 /**
- * LabourHeader - Nory-style header with breadcrumbs, date picker, toggles
+ * LabourHeader - Professional header with breadcrumbs, date picker, toggles
  */
 
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -100,8 +100,8 @@ export function LabourHeader({
               size="sm"
               className={cn(
                 "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                metricMode === 'percentage' 
-                  ? "bg-white shadow-sm text-gray-900" 
+                metricMode === 'percentage'
+                  ? "bg-white shadow-sm text-gray-900"
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setMetricMode('percentage')}
@@ -113,8 +113,8 @@ export function LabourHeader({
               size="sm"
               className={cn(
                 "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                metricMode === 'amount' 
-                  ? "bg-white shadow-sm text-gray-900" 
+                metricMode === 'amount'
+                  ? "bg-white shadow-sm text-gray-900"
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setMetricMode('amount')}
@@ -126,8 +126,8 @@ export function LabourHeader({
               size="sm"
               className={cn(
                 "h-7 px-3 rounded-md text-xs font-medium transition-all",
-                metricMode === 'hours' 
-                  ? "bg-white shadow-sm text-gray-900" 
+                metricMode === 'hours'
+                  ? "bg-white shadow-sm text-gray-900"
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setMetricMode('hours')}
@@ -137,7 +137,7 @@ export function LabourHeader({
           </div>
 
           {/* Ask Josephine */}
-          <Button 
+          <Button
             onClick={onAskJosephine}
             variant="outline"
           >

@@ -61,7 +61,7 @@ export function WasteTrendChart({
     );
   }
 
-  // Convert data to show count per day (like Nory shows the number of logs trend)
+  // Convert data to show count per day (shows the number of logs trend)
   const chartData = trendData.map(d => ({
     ...d,
     dateLabel: format(parseISO(d.date), 'EEE')
@@ -81,20 +81,20 @@ export function WasteTrendChart({
         <div className="h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-              <XAxis 
-                dataKey="dateLabel" 
-                axisLine={false} 
-                tickLine={false} 
+              <XAxis
+                dataKey="dateLabel"
+                axisLine={false}
+                tickLine={false}
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
+              <YAxis
+                axisLine={false}
+                tickLine={false}
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                 domain={[0, yAxisMax]}
                 tickCount={5}
               />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
@@ -106,7 +106,7 @@ export function WasteTrendChart({
                   REASON_LABELS[name as WasteReason] || name
                 ]}
               />
-              <Legend 
+              <Legend
                 wrapperStyle={{ paddingTop: '8px', fontSize: '11px' }}
                 formatter={(value) => (
                   <span style={{ color: 'hsl(var(--muted-foreground))', marginLeft: '2px' }}>
@@ -131,7 +131,7 @@ export function WasteTrendChart({
           </ResponsiveContainer>
         </div>
 
-        {/* Reason table - Nory style */}
+        {/* Reason table */}
         <div className="mt-4 border-t border-border">
           <Table>
             <TableHeader>
@@ -145,8 +145,8 @@ export function WasteTrendChart({
                 <TableRow key={item.reason} className="hover:bg-muted/30">
                   <TableCell className="py-2.5">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2.5 h-2.5 rounded-sm" 
+                      <div
+                        className="w-2.5 h-2.5 rounded-sm"
                         style={{ backgroundColor: REASON_COLORS[item.reason] }}
                       />
                       <span className="text-sm">{REASON_LABELS[item.reason]}</span>

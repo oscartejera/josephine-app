@@ -1,11 +1,11 @@
 import { ChevronDown, Sparkles, MoreHorizontal, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
   Popover,
@@ -87,8 +87,8 @@ export function BISalesHeader({
   const locationsLabel = selectedLocations.length === 0 || selectedLocations.length === locations.length
     ? 'All locations'
     : selectedLocations.length === 1
-    ? locations.find(l => l.id === selectedLocations[0])?.name || 'Location'
-    : `${selectedLocations.length} locations`;
+      ? locations.find(l => l.id === selectedLocations[0])?.name || 'Location'
+      : `${selectedLocations.length} locations`;
 
   return (
     <div className="space-y-4">
@@ -123,7 +123,7 @@ export function BISalesHeader({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Date Range Picker - Nory-like */}
+          {/* Date Range Picker */}
           <div className="ml-4">
             <DateRangePickerNoryLike
               value={dateRange}
@@ -159,12 +159,12 @@ export function BISalesHeader({
         <div className="flex items-center gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className={cn(
                   "gap-1.5 cursor-default transition-colors",
-                  isConnected 
-                    ? "text-success border-success/30 bg-success/5" 
+                  isConnected
+                    ? "text-success border-success/30 bg-success/5"
                     : "text-muted-foreground border-border"
                 )}
               >
@@ -192,8 +192,8 @@ export function BISalesHeader({
               )}
             </TooltipContent>
           </Tooltip>
-          
-          <Button 
+
+          <Button
             onClick={onAskJosephine}
             className="bg-gradient-primary text-white gap-2"
           >
@@ -215,7 +215,7 @@ export function BISalesHeader({
           <PopoverContent className="w-64 p-3" align="start">
             <div className="space-y-2">
               <div className="flex items-center gap-2 pb-2 border-b">
-                <Checkbox 
+                <Checkbox
                   id="all-locations"
                   checked={selectedLocations.length === 0 || selectedLocations.length === locations.length}
                   onCheckedChange={selectAllLocations}
@@ -226,7 +226,7 @@ export function BISalesHeader({
               </div>
               {locations.map(loc => (
                 <div key={loc.id} className="flex items-center gap-2">
-                  <Checkbox 
+                  <Checkbox
                     id={loc.id}
                     checked={selectedLocations.includes(loc.id) || selectedLocations.length === 0}
                     onCheckedChange={() => toggleLocation(loc.id)}

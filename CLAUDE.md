@@ -107,6 +107,21 @@ Context API for auth/app state, Zustand for UI state (notifications)
 - Testing Library for component tests
 - Setup file mocks `window.matchMedia`
 
+#### Unit / Integration Tests (Vitest)
+```bash
+npx vitest run src/data/__tests__/schedule-efficiency.test.ts  # SPLH + budget validation
+npx vitest run src/data/__tests__/waste-audit.test.ts          # Waste + stock audit flows
+```
+
+#### E2E Tests (Playwright)
+```bash
+# Auth bypass: tests/auth.setup.ts injects mock Supabase session into localStorage
+# Set SUPABASE_TEST_EMAIL + SUPABASE_TEST_PASSWORD for real login, or use mock bypass
+npx playwright test tests/global-sanity.spec.ts
+```
+
+The auth bypass works by injecting a `sb-{project_ref}-auth-token` key into localStorage before navigation. The Supabase client picks this up on reload, bypassing the login screen.
+
 ## Key Architecture Notes
 
 - **Demo Mode:** Toggle between real Supabase data and simulated mock data via DemoModeContext

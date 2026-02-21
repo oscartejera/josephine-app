@@ -1,5 +1,5 @@
 /**
- * LabourKPICards - 4 KPI cards matching Nory design
+ * LabourKPICards - 4 KPI cards with professional design
  * Sales, Projected Sales, Actual COL, Projected COL
  */
 
@@ -17,8 +17,8 @@ interface LabourKPICardsProps {
 }
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-ES', { 
-    style: 'currency', 
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
@@ -43,12 +43,12 @@ function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: DeltaBad
   // For COL, lower is better (inverted)
   const isPositive = inverted ? value <= 0 : value >= 0;
   const arrow = value >= 0 ? '▲' : '▼';
-  
+
   return (
     <span className={cn(
       "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-      isPositive 
-        ? "bg-[hsl(var(--bi-badge-positive))] text-[hsl(var(--bi-badge-positive-text))]" 
+      isPositive
+        ? "bg-[hsl(var(--bi-badge-positive))] text-[hsl(var(--bi-badge-positive-text))]"
         : "bg-[hsl(var(--bi-badge-negative))] text-[hsl(var(--bi-badge-negative-text))]"
     )}>
       <span className="text-[10px]">{arrow}</span>
@@ -133,7 +133,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
             <h3 className="text-sm font-normal text-gray-700">Sales</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          
+
           <div className="space-y-1">
             <div className="text-3xl font-bold text-gray-900">{formatCurrency(kpis.actual_sales)}</div>
             <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
               <span className="text-gray-600">Actual vs Forecast</span>
             </div>
             <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
-              <div 
+              <div
                 className="h-full absolute left-0 top-0 bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all"
                 style={{ width: `${Math.min((kpis.actual_sales / kpis.forecast_sales) * 100, 100)}%` }}
               ></div>
@@ -168,7 +168,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
             <h3 className="text-sm font-normal text-gray-700">{getActualLabel()}</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          
+
           <div className="space-y-1">
             <div className="text-3xl font-bold text-gray-900">{getActualColValue()}</div>
             <div className="flex items-center gap-2">
@@ -184,14 +184,14 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
                 <span className="text-gray-600">COL% Target: 28%</span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
-                <div 
+                <div
                   className="h-full absolute left-0 top-0 transition-all"
-                  style={{ 
+                  style={{
                     width: `${Math.min((kpis.actual_col_pct / 35) * 100, 100)}%`,
                     background: kpis.actual_col_pct <= 28 ? 'linear-gradient(to right, #10b981, #059669)' : 'linear-gradient(to right, #f59e0b, #d97706)'
                   }}
                 ></div>
-                <div 
+                <div
                   className="h-full absolute border-l-2 border-gray-400"
                   style={{ left: '80%' }}
                 ></div>
@@ -212,7 +212,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
             <h3 className="text-sm font-normal text-gray-700">SPLH</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          
+
           <div className="space-y-1">
             <div className="text-3xl font-bold text-gray-900">€{kpis.actual_splh.toFixed(0)}</div>
             <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
               <span className="text-gray-600">Productivity</span>
             </div>
             <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
-              <div 
+              <div
                 className="h-full absolute left-0 top-0 bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all"
                 style={{ width: `${Math.min((kpis.actual_splh / (kpis.planned_splh * 1.2)) * 100, 100)}%` }}
               ></div>
@@ -247,7 +247,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
             <h3 className="text-sm font-normal text-gray-700">OPLH</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
-          
+
           <div className="space-y-1">
             <div className="text-3xl font-bold text-gray-900">{kpis.actual_oplh.toFixed(1)}</div>
             <div className="flex items-center gap-2">
@@ -262,7 +262,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
               <span className="text-gray-600">Orders efficiency</span>
             </div>
             <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden relative">
-              <div 
+              <div
                 className="h-full absolute left-0 top-0 bg-gradient-to-r from-amber-500 to-amber-600 transition-all"
                 style={{ width: `${Math.min((kpis.actual_oplh / (kpis.planned_oplh * 1.2)) * 100, 100)}%` }}
               ></div>

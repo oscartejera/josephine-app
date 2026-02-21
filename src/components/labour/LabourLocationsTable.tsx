@@ -1,5 +1,5 @@
 /**
- * LabourLocationsTable - Table with 2-level headers like Nory
+ * LabourLocationsTable - Table with 2-level headers
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -15,8 +15,8 @@ interface LabourLocationsTableProps {
 }
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-ES', { 
-    style: 'currency', 
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
@@ -43,12 +43,12 @@ interface DeltaChipProps {
 function DeltaChip({ value, inverted = false }: DeltaChipProps) {
   const isPositive = inverted ? value <= 0 : value >= 0;
   const arrow = value >= 0 ? '↑' : '↓';
-  
+
   return (
     <span className={cn(
       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium",
-      isPositive 
-        ? "bg-[hsl(var(--bi-badge-positive))] text-[hsl(var(--bi-badge-positive-text))]" 
+      isPositive
+        ? "bg-[hsl(var(--bi-badge-positive))] text-[hsl(var(--bi-badge-positive-text))]"
         : "bg-[hsl(var(--bi-badge-negative))] text-[hsl(var(--bi-badge-negative-text))]"
     )}>
       {arrow} {Math.abs(value).toFixed(1)}%
@@ -149,8 +149,8 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
             </thead>
             <tbody>
               {locations.map((row) => (
-                <tr 
-                  key={row.location_id} 
+                <tr
+                  key={row.location_id}
                   className="border-b border-border hover:bg-muted/30 cursor-pointer transition-colors"
                   onClick={() => handleRowClick(row.location_id)}
                 >
@@ -189,7 +189,7 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
                   </td>
                 </tr>
               ))}
-              
+
               {/* Summary row */}
               {summary && (
                 <tr className="bg-muted/50 font-semibold">

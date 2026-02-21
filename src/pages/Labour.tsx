@@ -1,5 +1,5 @@
 /**
- * Labour - Complete Labour page with Nory-style design
+ * Labour - Complete Labour page with professional KPI design
  * Uses optimized RPCs for data fetching
  */
 
@@ -40,7 +40,7 @@ export default function Labour() {
 
   // Validate location ID
   const validLocationId = isValidUUID(locationId) ? locationId : null;
-  
+
   // Find location name if we have a location ID
   const locationInfo = useMemo(() => {
     if (!validLocationId) return null;
@@ -49,14 +49,14 @@ export default function Labour() {
   }, [validLocationId, accessibleLocations]);
 
   // Fetch data
-  const { 
-    kpis, 
-    timeseries, 
-    locations, 
-    isLoading, 
+  const {
+    kpis,
+    timeseries,
+    locations,
+    isLoading,
     isError,
     isEmpty,
-    refetch 
+    refetch
   } = useLabourData({
     dateRange,
     locationId: validLocationId,
@@ -102,25 +102,25 @@ export default function Labour() {
   return (
     <div className="space-y-6">
       {/* Header */}
-        <LabourHeader
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          metricMode={metricMode}
-          setMetricMode={setMetricMode}
-          compareMode={compareMode}
-          setCompareMode={setCompareMode}
-          locationId={validLocationId}
-          locationName={locationInfo?.name}
-          onAskJosephine={() => setShowJosephine(true)}
-        />
+      <LabourHeader
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        metricMode={metricMode}
+        setMetricMode={setMetricMode}
+        compareMode={compareMode}
+        setCompareMode={setCompareMode}
+        locationId={validLocationId}
+        locationName={locationInfo?.name}
+        onAskJosephine={() => setShowJosephine(true)}
+      />
 
-        {/* Ask Josephine Panel */}
-        <AskJosephineLabourPanel
-          open={showJosephine}
-          onClose={() => setShowJosephine(false)}
-          kpis={kpis}
-          locations={locations}
-        />
+      {/* Ask Josephine Panel */}
+      <AskJosephineLabourPanel
+        open={showJosephine}
+        onClose={() => setShowJosephine(false)}
+        kpis={kpis}
+        locations={locations}
+      />
 
       {/* KPI Cards */}
       <LabourKPICards

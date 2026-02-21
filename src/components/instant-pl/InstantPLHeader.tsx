@@ -1,14 +1,14 @@
 /**
- * InstantPLHeader - Nory-like header for Instant P&L page
+ * InstantPLHeader - Professional header for Instant P&L page
  */
 
 import { ChevronRight, MoreHorizontal, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  DateRangePickerNoryLike, 
-  DateRangeValue, 
-  DateMode, 
-  ChartGranularity 
+import {
+  DateRangePickerNoryLike,
+  DateRangeValue,
+  DateMode,
+  ChartGranularity
 } from '@/components/bi/DateRangePickerNoryLike';
 import {
   Select,
@@ -58,9 +58,9 @@ export function InstantPLHeader({
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
             <span className="font-medium">Instant P&L</span>
           </nav>
-          
+
           <div className="h-5 w-px bg-border mx-1" />
-          
+
           {/* Date Picker */}
           <DateRangePickerNoryLike
             value={dateRange}
@@ -68,9 +68,9 @@ export function InstantPLHeader({
             onChange={onDateChange}
             onModeChange={onDateModeChange}
           />
-          
+
           <div className="h-5 w-px bg-border mx-1" />
-          
+
           {/* Compare dropdown */}
           <Select defaultValue="forecast">
             <SelectTrigger className="h-8 w-[160px] text-sm border-border/60">
@@ -83,7 +83,7 @@ export function InstantPLHeader({
             </SelectContent>
           </Select>
         </div>
-        
+
         {/* Right side: Best/Worst/All + Actions */}
         <div className="flex items-center gap-3">
           {/* Best/Worst/All toggle with green checkmark */}
@@ -109,14 +109,14 @@ export function InstantPLHeader({
               );
             })}
           </div>
-          
+
           {/* Actions button */}
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
       </div>
-      
+
       {/* Row 2: Title + Last updated */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Instant P&L</h1>

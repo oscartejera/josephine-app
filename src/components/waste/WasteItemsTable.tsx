@@ -53,26 +53,26 @@ export function WasteItemsTable({
 
   const filteredItems = useMemo(() => {
     let result = [...items];
-    
+
     // Filter by reason
     if (reasonFilter !== 'all') {
       result = result.filter(item => item.topReason === reasonFilter);
     }
-    
+
     // Filter by search
     if (search) {
       const lowerSearch = search.toLowerCase();
-      result = result.filter(item => 
+      result = result.filter(item =>
         item.itemName.toLowerCase().includes(lowerSearch)
       );
     }
-    
+
     result.sort((a, b) => {
       const aVal = a[sortBy];
       const bVal = b[sortBy];
       return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
     });
-    
+
     return result;
   }, [items, search, reasonFilter, sortBy, sortOrder]);
 
@@ -135,19 +135,19 @@ export function WasteItemsTable({
                 ))}
               </SelectContent>
             </Select>
-            
+
             {/* Clear filter button */}
             {reasonFilter !== 'all' && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-9 w-9"
                 onClick={() => setReasonFilter('all')}
               >
                 <X className="h-4 w-4" />
               </Button>
             )}
-            
+
             {/* Search */}
             <div className="relative w-full sm:w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -192,7 +192,7 @@ export function WasteItemsTable({
             <TableBody>
               {filteredItems.map((item) => {
                 const percentOfTotal = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-                
+
                 return (
                   <TableRow key={item.itemId} className="hover:bg-muted/30">
                     <TableCell className="py-3 font-medium text-sm">
@@ -208,8 +208,8 @@ export function WasteItemsTable({
                       {item.type === 'ingredient' ? 'Ingredient' : 'Menu item'}
                     </TableCell>
                     <TableCell className="py-3">
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className="text-[11px] font-normal bg-primary/10 text-primary border-0 px-2 py-0.5"
                       >
                         {REASON_LABELS[item.topReason]}
@@ -217,9 +217,9 @@ export function WasteItemsTable({
                     </TableCell>
                     <TableCell className="py-3">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Progress bar - Nory style light purple */}
+                        {/* Progress bar - light purple */}
                         <div className="w-16 h-2 bg-muted rounded-sm overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-primary/30 rounded-sm transition-all"
                             style={{ width: `${Math.min(item.percentOfSales * 5, 100)}%` }}
                           />

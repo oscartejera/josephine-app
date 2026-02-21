@@ -1,5 +1,5 @@
 /**
- * LabourChart - Labour over time chart matching Nory design
+ * LabourChart - Labour over time chart with professional design
  * Bars: COL% Actual vs Planned (or Amount/Hours based on mode)
  * Lines: SPLH or OPLH (toggle)
  * Click on bar for hourly drill-down
@@ -114,7 +114,7 @@ function CustomTooltip({ active, payload, label, metricMode, chartMode }: Custom
           ))}
         </div>
       </div>
-      
+
       {/* SPLH/OPLH Section */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -277,7 +277,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   // Handle chart click for drill-down
   const handleChartClick = (data: any) => {
     if (!data || !data.activePayload || !data.activePayload[0]) return;
-    
+
     const dayData = data.activePayload[0].payload;
     const drillDownData = generateHourlyData(dayData);
     setSelectedDayData(drillDownData);
@@ -341,7 +341,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
     <Card className="p-6 bg-white">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-base font-semibold text-gray-900">Labour over time</h3>
-        
+
         {/* SPLH / OPLH Toggle */}
         <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
           <Button
@@ -349,8 +349,8 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
             size="sm"
             className={cn(
               "h-7 px-3 rounded-md text-xs font-medium transition-all",
-              chartMode === 'splh' 
-                ? "bg-white shadow-sm text-gray-900" 
+              chartMode === 'splh'
+                ? "bg-white shadow-sm text-gray-900"
                 : "text-gray-600 hover:text-gray-900"
             )}
             onClick={() => setChartMode('splh')}
@@ -362,8 +362,8 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
             size="sm"
             className={cn(
               "h-7 px-3 rounded-md text-xs font-medium transition-all",
-              chartMode === 'oplh' 
-                ? "bg-white shadow-sm text-gray-900" 
+              chartMode === 'oplh'
+                ? "bg-white shadow-sm text-gray-900"
                 : "text-gray-600 hover:text-gray-900"
             )}
             onClick={() => setChartMode('oplh')}
@@ -375,28 +375,28 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
 
       <div className="h-[360px]">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart 
-            data={chartData} 
+          <ComposedChart
+            data={chartData}
             margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
             barGap={2}
             barCategoryGap="15%"
             onClick={handleChartClick}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-            <XAxis 
-              dataKey="date" 
+            <XAxis
+              dataKey="date"
               tick={{ fontSize: 12, fill: '#6b7280' }}
               axisLine={{ stroke: '#e5e7eb' }}
               tickLine={false}
             />
-            <YAxis 
+            <YAxis
               yAxisId="left"
               tick={{ fontSize: 12, fill: '#6b7280' }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(value) => `${value}${barConfig.unit === '€' ? '€' : barConfig.unit}`}
             />
-            <YAxis 
+            <YAxis
               yAxisId="right"
               orientation="right"
               tick={{ fontSize: 12, fill: '#6b7280' }}
@@ -404,39 +404,39 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
               tickLine={false}
               tickFormatter={(value) => `€${value}`}
             />
-            <Tooltip 
+            <Tooltip
               content={<CustomTooltip metricMode={metricMode} chartMode={chartMode} />}
             />
-            <Legend 
+            <Legend
               verticalAlign="bottom"
               height={36}
               iconType="rect"
               iconSize={10}
               wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}
             />
-            
+
             {/* Bars for COL/Cost/Hours */}
-            <Bar 
+            <Bar
               yAxisId="left"
-              dataKey={barConfig.actualKey} 
+              dataKey={barConfig.actualKey}
               name={barConfig.actualName}
               fill={CHART_COLORS.actual}
               radius={[3, 3, 0, 0]}
               maxBarSize={40}
               cursor="pointer"
             />
-            <Bar 
+            <Bar
               yAxisId="left"
-              dataKey={barConfig.plannedKey} 
+              dataKey={barConfig.plannedKey}
               name={barConfig.plannedName}
               fill={CHART_COLORS.planned}
               radius={[3, 3, 0, 0]}
               maxBarSize={40}
               cursor="pointer"
             />
-            
+
             {/* Lines for SPLH/OPLH */}
-            <Line 
+            <Line
               yAxisId="right"
               type="monotone"
               dataKey={lineConfig.actualKey}
@@ -445,7 +445,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
               strokeWidth={2.5}
               dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
             />
-            <Line 
+            <Line
               yAxisId="right"
               type="monotone"
               dataKey={lineConfig.plannedKey}

@@ -32,7 +32,7 @@ export function InventoryWasteOverview({
   isLoading = false,
   currency = '€'
 }: InventoryWasteOverviewProps) {
-  // Nory-like blue tones
+  // Professional blue tones
   const accountedColor = 'hsl(199, 70%, 50%)';
   const unaccountedColor = 'hsl(199, 50%, 75%)';
 
@@ -89,22 +89,22 @@ export function InventoryWasteOverview({
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} barGap={8} barCategoryGap="25%">
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
               />
-              <YAxis 
+              <YAxis
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={(value) => `${currency}${(value / 1000).toFixed(0)}k`}
               />
-              <Tooltip 
+              <Tooltip
                 formatter={(value: number) => `${currency}${value.toLocaleString('es-ES', { minimumFractionDigits: 0 })}`}
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)'

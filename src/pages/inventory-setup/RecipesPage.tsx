@@ -87,7 +87,7 @@ export default function RecipesPage() {
                         <ChefHat className="h-6 w-6" />
                         Escandallos
                     </h1>
-                    <p className="text-muted-foreground">Recetas, sub-recetas y food cost — estilo MarketMan</p>
+                    <p className="text-muted-foreground">Recetas, sub-recetas y food cost — gestión profesional</p>
                 </div>
                 <Button onClick={() => setShowCreateDialog(true)}>
                     <Plus className="h-4 w-4 mr-2" />

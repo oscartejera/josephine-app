@@ -1,7 +1,7 @@
 /**
  * Demo Data Generator for Josephine
  * Generates coherent, realistic data for Inventory and Waste modules
- * Mimics Nory's data patterns and ensures consistency across views
+ * Generates consistent demo data patterns across views
  * Uses deterministic seeding for reproducible data
  */
 
@@ -210,13 +210,13 @@ export class DemoDataGenerator {
 
   // Extend the generated range if needed
   extendRange(fromDate: Date, toDate: Date): void {
-    const newFrom = this.generatedFromDate && fromDate >= this.generatedFromDate 
-      ? this.generatedFromDate 
+    const newFrom = this.generatedFromDate && fromDate >= this.generatedFromDate
+      ? this.generatedFromDate
       : fromDate;
-    const newTo = this.generatedToDate && toDate <= this.generatedToDate 
-      ? this.generatedToDate 
+    const newTo = this.generatedToDate && toDate <= this.generatedToDate
+      ? this.generatedToDate
       : toDate;
-    
+
     // Only regenerate if range actually needs to expand
     if (newFrom !== this.generatedFromDate || newTo !== this.generatedToDate) {
       this.generate(newFrom, newTo);
@@ -238,42 +238,42 @@ export class DemoDataGenerator {
 
   private generateDailyMetrics(fromDate: Date, toDate: Date): void {
     const days = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    
+
     for (const location of this.locations) {
       const metrics: DailyMetrics[] = [];
-      
+
       for (let d = 0; d < days; d++) {
         const date = subDays(toDate, days - 1 - d);
         const dayOfWeek = date.getDay();
-        
+
         // Weekend boost
         const weekendMultiplier = (dayOfWeek === 0 || dayOfWeek === 6) ? 1.2 : 1.0;
-        
+
         // Base sales with some variation
         const baseSales = this.rng.between(location.dailySalesRange[0], location.dailySalesRange[1]);
         const sales = Math.round(baseSales * weekendMultiplier);
-        
+
         // Theoretical COGS (target percentages)
         const theoreticalFood = sales * this.rng.between(0.22, 0.28);
         const theoreticalBeverage = sales * this.rng.between(0.04, 0.08);
         const theoreticalMisc = sales * this.rng.between(0.005, 0.02);
-        
+
         // Actual COGS (slightly higher than theoretical)
         const actualFood = theoreticalFood * this.rng.between(1.02, 1.12);
         const actualBeverage = theoreticalBeverage * this.rng.between(1.01, 1.08);
         const actualMisc = theoreticalMisc * this.rng.between(1.0, 1.15);
-        
+
         // Waste calculations
         const accountedWaste = sales * this.rng.between(0.002, 0.008);
         const unaccountedWaste = sales * this.rng.between(0.001, 0.012);
-        
+
         // Waste by reason (must sum to accountedWaste)
         const endOfDayPct = this.rng.between(0.55, 0.75);
         const brokenPct = this.rng.between(0.10, 0.20);
         const expiredPct = this.rng.between(0.05, 0.15);
         const theftPct = this.rng.between(0.0, 0.05);
         const otherPct = 1 - endOfDayPct - brokenPct - expiredPct - theftPct;
-        
+
         const wasteByReason = {
           end_of_day: accountedWaste * endOfDayPct,
           broken: accountedWaste * brokenPct,
@@ -281,7 +281,7 @@ export class DemoDataGenerator {
           theft: accountedWaste * theftPct,
           other: accountedWaste * Math.max(0, otherPct)
         };
-        
+
         // Waste by category (must sum to accountedWaste)
         const categoryDistribution = {
           Fresh: this.rng.between(0.15, 0.30),
@@ -292,13 +292,13 @@ export class DemoDataGenerator {
           'Dry Goods': this.rng.between(0.05, 0.12),
           Product: this.rng.between(0.05, 0.15)
         };
-        
+
         const catTotal = Object.values(categoryDistribution).reduce((a, b) => a + b, 0);
         const wasteByCategory: Record<string, number> = {};
         for (const [cat, pct] of Object.entries(categoryDistribution)) {
           wasteByCategory[cat] = accountedWaste * (pct / catTotal);
         }
-        
+
         metrics.push({
           date,
           locationId: location.id,
@@ -311,22 +311,22 @@ export class DemoDataGenerator {
           wasteByCategory
         });
       }
-      
+
       this.dailyMetrics.set(location.id, metrics);
     }
   }
 
   private generateTickets(_fromDate: Date, _toDate: Date): void {
     this.tickets = [];
-    
+
     for (const location of this.locations) {
       const metrics = this.dailyMetrics.get(location.id) || [];
-      
+
       for (const day of metrics) {
         // Generate 50-150 tickets per day to reach the daily sales
         const ticketCount = this.rng.intBetween(50, 150);
         const avgTicket = day.sales / ticketCount;
-        
+
         // Channel distribution
         const channels: ('dinein' | 'takeaway' | 'delivery')[] = ['dinein', 'takeaway', 'delivery'];
         const channelWeights = [
@@ -334,22 +334,22 @@ export class DemoDataGenerator {
           this.rng.between(0.05, 0.20),
           this.rng.between(0.10, 0.35)
         ];
-        
+
         let remainingSales = day.sales;
-        
+
         for (let t = 0; t < ticketCount; t++) {
           const isLast = t === ticketCount - 1;
-          const ticketAmount = isLast 
-            ? remainingSales 
+          const ticketAmount = isLast
+            ? remainingSales
             : Math.max(5, Math.round(avgTicket * this.rng.between(0.3, 2.0)));
-          
+
           remainingSales -= ticketAmount;
-          
+
           // Random time during the day (11:00 - 23:00)
           const hour = this.rng.intBetween(11, 23);
           const minute = this.rng.intBetween(0, 59);
           const closedAt = addHours(startOfDay(day.date), hour + minute / 60);
-          
+
           this.tickets.push({
             id: this.generateUUID(),
             locationId: location.id,
@@ -364,17 +364,17 @@ export class DemoDataGenerator {
 
   private generateWasteEvents(_fromDate: Date, _toDate: Date): void {
     this.wasteEvents = [];
-    
+
     for (const location of this.locations) {
       const metrics = this.dailyMetrics.get(location.id) || [];
       const locationEmployees = this.employees.filter(e => e.locationId === location.id);
-      
+
       for (const day of metrics) {
         // Generate 3-12 waste events per day
         const eventCount = this.rng.intBetween(3, 12);
         let remainingWaste = day.accountedWaste;
-        
-        const reasons: ('broken' | 'end_of_day' | 'expired' | 'theft' | 'other')[] = 
+
+        const reasons: ('broken' | 'end_of_day' | 'expired' | 'theft' | 'other')[] =
           ['end_of_day', 'broken', 'expired', 'theft', 'other'];
         const reasonWeights = [
           day.wasteByReason.end_of_day,
@@ -383,28 +383,28 @@ export class DemoDataGenerator {
           day.wasteByReason.theft,
           day.wasteByReason.other
         ];
-        
+
         for (let e = 0; e < eventCount; e++) {
           const isLast = e === eventCount - 1;
           const item = this.rng.pick(WASTE_ITEMS);
           const reason = this.rng.weightedPick(reasons, reasonWeights);
-          
+
           // Calculate waste value
           const avgEventValue = remainingWaste / (eventCount - e);
-          const eventValue = isLast 
-            ? remainingWaste 
+          const eventValue = isLast
+            ? remainingWaste
             : Math.max(0.5, avgEventValue * this.rng.between(0.3, 2.0));
-          
+
           remainingWaste -= eventValue;
-          
+
           // Calculate quantity from value and cost
           const quantity = Math.max(0.1, eventValue / item.avgCost);
-          
+
           // Random time during the day
           const hour = this.rng.intBetween(11, 23);
           const minute = this.rng.intBetween(0, 59);
           const occurredAt = addHours(startOfDay(day.date), hour + minute / 60);
-          
+
           this.wasteEvents.push({
             id: this.generateUUID(),
             locationId: location.id,
@@ -483,7 +483,7 @@ export class DemoDataGenerator {
   // ============= AGGREGATED DATA GETTERS =============
 
   getInventoryMetrics(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
@@ -496,7 +496,7 @@ export class DemoDataGenerator {
     for (const location of filteredLocations) {
       const metrics = this.dailyMetrics.get(location.id) || [];
       const filtered = metrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       for (const day of filtered) {
         totalSales += day.sales;
         theoreticalCOGS.food += day.theoreticalCOGS.food;
@@ -546,14 +546,14 @@ export class DemoDataGenerator {
     let beverage = { actual: 0, theoretical: 0 };
     let misc = { actual: 0, theoretical: 0 };
 
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
     for (const location of filteredLocations) {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       for (const day of filtered) {
         food.actual += day.actualCOGS.food;
         food.theoretical += day.theoreticalCOGS.food;
@@ -590,7 +590,7 @@ export class DemoDataGenerator {
   }
 
   getWasteByCategory(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
@@ -612,14 +612,14 @@ export class DemoDataGenerator {
     for (const location of filteredLocations) {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       for (const day of filtered) {
         // Distribute accounted waste by category
         for (const [cat, value] of Object.entries(day.wasteByCategory)) {
           const mappedCat = categoryMapping[cat] || 'Miscellaneous';
           accounted[mappedCat] += value;
         }
-        
+
         // Distribute unaccounted proportionally to COGS
         const totalActual = day.actualCOGS.food + day.actualCOGS.beverage + day.actualCOGS.misc;
         if (totalActual > 0) {
@@ -638,14 +638,14 @@ export class DemoDataGenerator {
   }
 
   getWasteByLocation(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
     return filteredLocations.map((location, idx) => {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       let sales = 0;
       let accounted = 0;
       let unaccounted = 0;
@@ -672,14 +672,14 @@ export class DemoDataGenerator {
   }
 
   getLocationPerformance(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
     return filteredLocations.map((location, idx) => {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       let sales = 0;
       let theoreticalCOGS = 0;
       let actualCOGS = 0;
@@ -716,18 +716,18 @@ export class DemoDataGenerator {
 
   getWasteMetrics(fromDate: Date, toDate: Date, locationIds: string[]) {
     const inventoryMetrics = this.getInventoryMetrics(fromDate, toDate, locationIds);
-    
+
     return {
       totalSales: inventoryMetrics.totalSales,
       totalAccountedWaste: inventoryMetrics.accountedWaste,
-      wastePercentOfSales: inventoryMetrics.totalSales > 0 
-        ? (inventoryMetrics.accountedWaste / inventoryMetrics.totalSales) * 100 
+      wastePercentOfSales: inventoryMetrics.totalSales > 0
+        ? (inventoryMetrics.accountedWaste / inventoryMetrics.totalSales) * 100
         : 0
     };
   }
 
   getWasteTrendByReason(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
@@ -736,7 +736,7 @@ export class DemoDataGenerator {
     for (const location of filteredLocations) {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       for (const day of filtered) {
         const dateKey = format(day.date, 'yyyy-MM-dd');
         const existing = trendData.get(dateKey) || {
@@ -746,11 +746,11 @@ export class DemoDataGenerator {
           theft: 0,
           other: 0
         };
-        
+
         for (const [reason, value] of Object.entries(day.wasteByReason)) {
           existing[reason] = (existing[reason] || 0) + value;
         }
-        
+
         trendData.set(dateKey, existing);
       }
     }
@@ -764,7 +764,7 @@ export class DemoDataGenerator {
   }
 
   getWasteByReasonValue(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
@@ -779,7 +779,7 @@ export class DemoDataGenerator {
     for (const location of filteredLocations) {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       for (const day of filtered) {
         for (const [reason, value] of Object.entries(day.wasteByReason)) {
           totals[reason].value += value;
@@ -796,7 +796,7 @@ export class DemoDataGenerator {
   }
 
   getWasteByIngredientCategory(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
@@ -805,7 +805,7 @@ export class DemoDataGenerator {
     for (const location of filteredLocations) {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
-      
+
       for (const day of filtered) {
         for (const [category, value] of Object.entries(day.wasteByCategory)) {
           totals[category] = (totals[category] || 0) + value;
@@ -823,7 +823,7 @@ export class DemoDataGenerator {
   }
 
   getWasteLeaderboard(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
@@ -834,7 +834,7 @@ export class DemoDataGenerator {
       const dailyMetrics = this.dailyMetrics.get(location.id) || [];
       const filtered = dailyMetrics.filter(m => m.date >= fromDate && m.date <= toDate);
       const locationEmployees = this.employees.filter(e => e.locationId === location.id);
-      
+
       if (locationEmployees.length === 0) continue;
 
       let totalWaste = 0;
@@ -849,7 +849,7 @@ export class DemoDataGenerator {
       locationEmployees.forEach((emp, idx) => {
         const share = totalWaste * (weights[idx] / totalWeight);
         const logs = Math.ceil(share / 15); // Approximate logs
-        
+
         employeeWaste.set(emp.id, {
           logs,
           value: share,
@@ -875,11 +875,11 @@ export class DemoDataGenerator {
   }
 
   getWasteItems(fromDate: Date, toDate: Date, locationIds: string[]) {
-    const filteredLocations = locationIds.length > 0 
+    const filteredLocations = locationIds.length > 0
       ? this.locations.filter(l => locationIds.includes(l.id))
       : this.locations;
 
-    const filteredEvents = this.wasteEvents.filter(e => 
+    const filteredEvents = this.wasteEvents.filter(e =>
       filteredLocations.some(l => l.id === e.locationId) &&
       e.occurredAt >= fromDate &&
       e.occurredAt <= toDate
@@ -900,11 +900,11 @@ export class DemoDataGenerator {
         type: event.type,
         reasons: {}
       };
-      
+
       existing.quantity += event.quantity;
       existing.value += event.valueEur;
       existing.reasons[event.reason] = (existing.reasons[event.reason] || 0) + event.valueEur;
-      
+
       itemAggregates.set(event.itemName, existing);
     }
 
@@ -938,7 +938,7 @@ export function getDemoGenerator(fromDate: Date, toDate: Date): DemoDataGenerato
   // Extend range with padding for broader coverage
   const paddedFrom = subDays(fromDate, 30);
   const paddedTo = subDays(toDate, -30);
-  
+
   if (!generatorInstance) {
     generatorInstance = new DemoDataGenerator();
     // Generate 4+ years of historical data by default (covers most use cases)
@@ -951,7 +951,7 @@ export function getDemoGenerator(fromDate: Date, toDate: Date): DemoDataGenerato
       generatorInstance.extendRange(paddedFrom, paddedTo);
     }
   }
-  
+
   return generatorInstance;
 }
 

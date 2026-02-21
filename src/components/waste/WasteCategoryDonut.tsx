@@ -71,9 +71,9 @@ export function WasteCategoryDonut({
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium text-foreground">Waste by ingredient category</CardTitle>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="h-7 text-xs gap-1.5 font-normal"
             >
               Category
@@ -104,7 +104,7 @@ export function WasteCategoryDonut({
                   <Cell key={entry.category} fill={entry.fill} />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
@@ -117,7 +117,7 @@ export function WasteCategoryDonut({
           </ResponsiveContainer>
         </div>
 
-        {/* Category table - Nory style */}
+        {/* Category table */}
         <div className="mt-2 border-t border-border">
           <Table>
             <TableHeader>
@@ -132,8 +132,8 @@ export function WasteCategoryDonut({
                 <TableRow key={item.category} className="hover:bg-muted/30">
                   <TableCell className="py-2.5">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2.5 h-2.5 rounded-sm" 
+                      <div
+                        className="w-2.5 h-2.5 rounded-sm"
                         style={{ backgroundColor: item.fill }}
                       />
                       <span className="text-sm">{item.category}</span>
