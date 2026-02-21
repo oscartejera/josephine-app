@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Package, Truck, CheckCircle2, Clock, AlertCircle, RotateCcw, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface OrderHistoryItem {
   id: string;
@@ -30,90 +31,88 @@ export interface OrderHistoryItem {
   total: number;
 }
 
-// Generate mock order history
-function generateMockOrders(): OrderHistoryItem[] {
-  const statuses: OrderHistoryItem['status'][] = ['delivered', 'delivered', 'delivered', 'shipped', 'confirmed', 'pending'];
-  const suppliers = [
-    { id: 'macro', name: 'Macro' },
-    { id: 'sysco', name: 'Sysco' },
-    { id: 'bidfood', name: 'Bidfood' },
-  ];
-
-  const sampleItems = [
-    { skuId: 'sku-001', name: 'Chicken Breast', packSize: '1×5kg', unitPrice: 42.50 },
-    { skuId: 'sku-010', name: 'Whole Milk', packSize: '12×1L', unitPrice: 14.40 },
-    { skuId: 'sku-020', name: 'Onions Brown', packSize: '1×10kg', unitPrice: 8.50 },
-    { skuId: 'sku-021', name: 'Tomatoes Vine', packSize: '1×5kg', unitPrice: 12.00 },
-    { skuId: 'sku-030', name: 'Pasta Penne', packSize: '1×5kg', unitPrice: 8.00 },
-    { skuId: 'sku-040', name: 'Coca-Cola Classic', packSize: '24×330ml', unitPrice: 16.80 },
-    { skuId: 'sku-050', name: 'Burger Buns', packSize: '48 units', unitPrice: 12.00 },
-    { skuId: 'sku-060', name: 'Mayonnaise', packSize: '1×5L', unitPrice: 12.00 },
-  ];
-
-  const orders: OrderHistoryItem[] = [];
-  const now = new Date();
-
-  for (let i = 0; i < 12; i++) {
-    const orderDate = new Date(now);
-    orderDate.setDate(orderDate.getDate() - (i * 3 + Math.floor(Math.random() * 2)));
-    
-    const deliveryDate = new Date(orderDate);
-    deliveryDate.setDate(deliveryDate.getDate() + 1 + Math.floor(Math.random() * 2));
-
-    const supplier = suppliers[i % suppliers.length];
-    const status = statuses[Math.min(i, statuses.length - 1)];
-    
-    // Random 3-6 items per order
-    const numItems = 3 + Math.floor(Math.random() * 4);
-    const orderItems = [];
-    const usedIndices = new Set<number>();
-    
-    for (let j = 0; j < numItems; j++) {
-      let idx: number;
-      do {
-        idx = Math.floor(Math.random() * sampleItems.length);
-      } while (usedIndices.has(idx));
-      usedIndices.add(idx);
-      
-      const item = sampleItems[idx];
-      const packs = 1 + Math.floor(Math.random() * 5);
-      orderItems.push({ ...item, packs });
-    }
-
-    const subtotal = orderItems.reduce((sum, item) => sum + item.packs * item.unitPrice, 0);
-    const deliveryFee = subtotal >= 50 ? 0 : 15;
-    const tax = subtotal * 0.21;
-
-    orders.push({
-      id: `order-${i + 1}`,
-      orderNumber: `PO-${2025}${String(i + 100).padStart(4, '0')}`,
-      supplierId: supplier.id,
-      supplierName: supplier.name,
-      orderDate,
-      deliveryDate,
-      status,
-      items: orderItems,
-      subtotal,
-      deliveryFee,
-      tax,
-      total: subtotal + deliveryFee + tax,
-    });
-  }
-
-  return orders;
+// Map DB status to UI status
+function mapStatus(dbStatus: string): OrderHistoryItem['status'] {
+  const statusMap: Record<string, OrderHistoryItem['status']> = {
+    draft: 'pending',
+    sent: 'confirmed',
+    confirmed: 'confirmed',
+    delivered: 'delivered',
+    cancelled: 'cancelled',
+  };
+  return statusMap[dbStatus] || 'pending';
 }
-
-const MOCK_ORDERS = generateMockOrders();
 
 interface OrderHistoryPanelProps {
   onReorder?: (items: { skuId: string; packs: number }[]) => void;
 }
 
 export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
-  const [orders] = useState<OrderHistoryItem[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchOrders() {
+      setIsLoading(true);
+      const { data: poData, error } = await supabase
+        .from('purchase_orders')
+        .select(`
+          id, status, order_date, delivery_date, total_value,
+          supplier_id,
+          suppliers (name),
+          purchase_order_lines (
+            id, item_id, qty_packs, pack_price, line_value,
+            inventory_items (name, order_unit)
+          )
+        `)
+        .order('order_date', { ascending: false })
+        .limit(20);
+
+      if (error || !poData) {
+        console.error('Error fetching purchase orders:', error?.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const mapped: OrderHistoryItem[] = poData.map((po, idx) => {
+        const lines = (po.purchase_order_lines || []) as any[];
+        const items = lines.map((line) => ({
+          skuId: line.item_id || line.id,
+          name: line.inventory_items?.name || 'Unknown item',
+          packSize: `1×${line.inventory_items?.order_unit || 'unit'}`,
+          packs: line.qty_packs || 0,
+          unitPrice: line.pack_price || 0,
+        }));
+
+        const subtotal = items.reduce((sum, item) => sum + item.packs * item.unitPrice, 0);
+        const deliveryFee = subtotal >= 100 ? 0 : 10;
+        const tax = subtotal * 0.21;
+
+        return {
+          id: po.id,
+          orderNumber: `PO-${String(idx + 1).padStart(4, '0')}`,
+          supplierId: po.supplier_id || '',
+          supplierName: (po.suppliers as any)?.name || 'Unknown',
+          orderDate: new Date(po.order_date || Date.now()),
+          deliveryDate: new Date(po.delivery_date || po.order_date || Date.now()),
+          status: mapStatus(po.status || 'draft'),
+          items,
+          subtotal,
+          deliveryFee,
+          tax,
+          total: subtotal + deliveryFee + tax,
+        };
+      });
+
+      setOrders(mapped);
+      setIsLoading(false);
+    }
+
+    fetchOrders();
+  }, []);
 
   const getStatusBadge = (status: OrderHistoryItem['status']) => {
     switch (status) {
@@ -164,7 +163,12 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {orders.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm">Loading orders...</p>
+          </div>
+        ) : orders.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Package className="h-12 w-12 mx-auto mb-4 opacity-40" />
             <p className="font-medium">No orders yet</p>
@@ -175,7 +179,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
             {orders.map((order) => (
               <div key={order.id} className="border rounded-lg overflow-hidden">
                 {/* Order header row */}
-                <div 
+                <div
                   className="flex items-center justify-between p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleExpand(order.id)}
                 >
@@ -302,7 +306,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                 )}
               </DialogDescription>
             </DialogHeader>
-            
+
             {selectedOrder && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">

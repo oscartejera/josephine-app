@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, subDays, differenceInHours, parseISO } from 'date-fns';
+import { format, subDays, eachDayOfInterval } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types
-export type Platform = 'all' | 'google' | 'tripadvisor' | 'deliveroo' | 'justeat';
+export type Platform = 'all' | 'google' | 'tripadvisor' | 'thefork';
 export type ReplyStatus = 'draft' | 'published';
 
 export interface OwnerReply {
@@ -74,203 +74,141 @@ interface UseReviewsDataParams {
   locationId: string;
 }
 
-// Use centralized SeededRandom
-import { SeededRandom, hashString } from '@/lib/seededRandom';
-
+// Real locations from the database (populated by seed)
 const LOCATIONS = [
-  { id: 'cpu', name: 'CPU' },
-  { id: 'westside', name: 'Westside' },
-  { id: 'eastside', name: 'Eastside' },
-  { id: 'southside', name: 'Southside' },
-  { id: 'westend', name: 'Westend' },
-  { id: 'hq', name: 'HQ' },
+  { id: 'f9f0637c-69ae-468f-bce8-0d519aea702e', name: 'La Taberna Malasana' },
+  { id: 'b3b22500-44e7-5b2e-bcc7-09e065e691c9', name: 'La Taberna Centro' },
+  { id: '15548064-dc05-5f5a-8244-1fdc53e5a59a', name: 'La Taberna Chamberi' },
+  { id: 'dcb020c2-4846-5e80-96f4-1eef86febeef', name: 'La Taberna Salamanca' },
 ];
 
-const PLATFORMS: Exclude<Platform, 'all'>[] = ['google', 'tripadvisor', 'deliveroo', 'justeat'];
+const PLATFORMS: Exclude<Platform, 'all'>[] = ['google', 'tripadvisor', 'thefork'];
 
 const PLATFORM_LABELS: Record<Exclude<Platform, 'all'>, string> = {
   google: 'From Google',
   tripadvisor: 'From TripAdvisor',
-  deliveroo: 'From Deliveroo',
-  justeat: 'From Just Eat',
+  thefork: 'From TheFork',
 };
 
-const REVIEWER_NAMES = [
-  'Cian Bailey', 'Emma Thompson', 'James Wilson', 'Sophie Chen', 'Michael Brown',
-  'Olivia Davis', 'William Jones', 'Isabella Martinez', 'Alexander Garcia', 'Mia Robinson',
-  'Daniel Lee', 'Charlotte White', 'Matthew Harris', 'Amelia Clark', 'Ethan Lewis',
-  'Ava Walker', 'Benjamin Hall', 'Harper Allen', 'Lucas Young', 'Evelyn King',
-];
+// Map DB platform names to lowercase keys
+function normalizePlatform(dbPlatform: string): Exclude<Platform, 'all'> {
+  const map: Record<string, Exclude<Platform, 'all'>> = {
+    'Google': 'google',
+    'google': 'google',
+    'TripAdvisor': 'tripadvisor',
+    'tripadvisor': 'tripadvisor',
+    'TheFork': 'thefork',
+    'thefork': 'thefork',
+  };
+  return map[dbPlatform] || 'google';
+}
 
-const REVIEW_TEXTS_POSITIVE = [
-  'Amazing food and excellent service! Will definitely come back.',
-  'Best dining experience in the city. The staff was incredibly attentive.',
-  'The food was delicious and the atmosphere was perfect for our celebration.',
-  'Outstanding quality. Every dish was cooked to perfection.',
-  'Wonderful experience from start to finish. Highly recommend!',
-  'Great value for money. The portions were generous and tasty.',
-  'The chef really knows how to bring out the flavours. Loved it!',
-  'Perfect spot for a date night. Romantic ambiance and great food.',
-];
+function getLocationName(locationId: string): string {
+  return LOCATIONS.find(l => l.id === locationId)?.name || 'Unknown';
+}
 
-const REVIEW_TEXTS_NEUTRAL = [
-  'Food was good, but the wait time was a bit long.',
-  'Decent meal overall. Nothing spectacular but solid.',
-  'Nice place, though it was quite crowded on a Saturday.',
-  'The main course was great, but dessert was average.',
-];
-
-const REVIEW_TEXTS_NEGATIVE = [
-  'Disappointed with the service. Had to wait 30 minutes for our order.',
-  'Food was cold when it arrived. Not what I expected.',
-  'Too expensive for what you get. Won\'t be returning.',
-];
-
-const DRAFT_REPLIES = [
-  'Thank you so much for your wonderful feedback! We\'re thrilled that you enjoyed your experience with us.',
-  'We really appreciate you taking the time to share your thoughts. Your feedback helps us improve!',
-  'Thank you for visiting us! We\'re glad you had a positive experience and hope to see you again soon.',
-  'We appreciate your honest feedback and will take your comments on board to improve our service.',
-];
-
-function generateMockReviews(params: UseReviewsDataParams): { summary: ReviewsSummary; reviews: Review[] } {
+async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: ReviewsSummary; reviews: Review[] }> {
   const { startDate, endDate, platform, locationId } = params;
-  const seedStr = `${format(startDate, 'yyyy-MM-dd')}-${format(endDate, 'yyyy-MM-dd')}-${platform}-${locationId}`;
-  const rng = new SeededRandom(hashString(seedStr));
-  
-  const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-  const reviewCount = rng.intBetween(Math.min(10, days * 2), Math.min(120, days * 8));
-  
-  // Filter locations
-  const filteredLocations = locationId === 'all' 
-    ? LOCATIONS 
-    : LOCATIONS.filter(l => l.id === locationId);
-  
-  // Filter platforms
-  const filteredPlatforms = platform === 'all' 
-    ? PLATFORMS 
-    : [platform as Exclude<Platform, 'all'>];
-  
-  // Generate reviews
-  const reviews: Review[] = [];
-  let totalRating = 0;
-  let repliedCount = 0;
-  let totalResponseTimeHours = 0;
-  
-  const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-  
-  for (let i = 0; i < reviewCount; i++) {
-    const location = rng.pick(filteredLocations);
-    const platformChoice = rng.pick(filteredPlatforms);
-    const authorName = rng.pick(REVIEWER_NAMES);
-    
-    // Weighted rating generation (skewed towards positive)
-    const ratingRoll = rng.next();
-    let rating: 1 | 2 | 3 | 4 | 5;
-    if (ratingRoll < 0.55) rating = 5;
-    else if (ratingRoll < 0.75) rating = 4;
-    else if (ratingRoll < 0.85) rating = 3;
-    else if (ratingRoll < 0.92) rating = 2;
-    else rating = 1;
-    
-    starCounts[rating]++;
-    totalRating += rating;
-    
-    // Review text based on rating
-    let text: string;
-    if (rating >= 4) text = rng.pick(REVIEW_TEXTS_POSITIVE);
-    else if (rating === 3) text = rng.pick(REVIEW_TEXTS_NEUTRAL);
-    else text = rng.pick(REVIEW_TEXTS_NEGATIVE);
-    
-    // Random date within range
-    const daysAgo = rng.intBetween(0, days - 1);
-    const hoursAgo = rng.intBetween(1, 23);
-    const reviewDate = subDays(endDate, daysAgo);
-    reviewDate.setHours(hoursAgo);
-    
-    // Owner reply (55-75% response rate)
-    let owner_reply: OwnerReply | undefined;
-    const hasReply = rng.next() < rng.between(0.55, 0.75);
-    if (hasReply) {
-      repliedCount++;
-      const replyHoursLater = rng.intBetween(1, 48);
-      totalResponseTimeHours += replyHoursLater;
-      const replyDate = new Date(reviewDate.getTime() + replyHoursLater * 60 * 60 * 1000);
-      owner_reply = {
-        text: rng.pick(DRAFT_REPLIES),
-        created_at: replyDate.toISOString(),
-        status: rng.next() > 0.3 ? 'published' : 'draft',
-      };
-    }
-    
-    reviews.push({
-      id: `review-${i}-${hashString(authorName + location.id)}`,
-      platform: platformChoice,
-      location_id: location.id,
-      location_name: location.name,
-      author_name: authorName,
-      author_avatar_letter: authorName.charAt(0).toUpperCase(),
-      rating,
-      created_at: reviewDate.toISOString(),
-      text,
-      owner_reply,
-      source_label: PLATFORM_LABELS[platformChoice],
-    });
+
+  let query = supabase
+    .from('reviews')
+    .select('*')
+    .gte('review_date', format(startDate, 'yyyy-MM-dd'))
+    .lte('review_date', format(endDate, "yyyy-MM-dd'T'23:59:59"));
+
+  if (platform !== 'all') {
+    // Map UI platform to DB platform name
+    const dbPlatformMap: Record<string, string> = {
+      google: 'Google',
+      tripadvisor: 'TripAdvisor',
+      thefork: 'TheFork',
+    };
+    const dbPlatform = dbPlatformMap[platform];
+    if (dbPlatform) query = query.eq('platform', dbPlatform);
   }
-  
-  // Sort reviews by date (newest first)
-  reviews.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  
-  // Calculate summary
+
+  if (locationId !== 'all') {
+    query = query.eq('location_id', locationId);
+  }
+
+  query = query.order('review_date', { ascending: false }).limit(500);
+
+  const { data: dbReviews, error } = await query;
+  if (error) throw new Error(error.message);
+
+  const rows = dbReviews || [];
+
+  // Map DB rows to Review type
+  const reviews: Review[] = rows.map((r) => {
+    const plat = normalizePlatform(r.platform || 'Google');
+    return {
+      id: r.id,
+      platform: plat,
+      location_id: r.location_id,
+      location_name: getLocationName(r.location_id),
+      author_name: r.reviewer_name || 'Anonymous',
+      author_avatar_letter: (r.reviewer_name || 'A').charAt(0).toUpperCase(),
+      rating: Math.min(5, Math.max(1, r.rating || 3)) as 1 | 2 | 3 | 4 | 5,
+      created_at: r.review_date || r.created_at,
+      text: r.review_text || '',
+      source_label: PLATFORM_LABELS[plat] || `From ${r.platform}`,
+    };
+  });
+
+  // Compute summary
+  const reviewCount = reviews.length;
+  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
   const rating_avg = reviewCount > 0 ? totalRating / reviewCount : 0;
-  const response_rate = reviewCount > 0 ? (repliedCount / reviewCount) * 100 : 0;
-  const avg_response_time_hours = repliedCount > 0 ? totalResponseTimeHours / repliedCount : 0;
-  
+
   // Star breakdown
+  const starCounts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  reviews.forEach(r => { starCounts[r.rating] = (starCounts[r.rating] || 0) + 1; });
   const star_breakdown: StarBreakdown[] = ([5, 4, 3, 2, 1] as const).map(stars => ({
     stars,
-    count: starCounts[stars],
-    pct: reviewCount > 0 ? (starCounts[stars] / reviewCount) * 100 : 0,
+    count: starCounts[stars] || 0,
+    pct: reviewCount > 0 ? ((starCounts[stars] || 0) / reviewCount) * 100 : 0,
   }));
-  
-  // Rating over time
-  const rating_over_time: RatingOverTimePoint[] = [];
-  for (let d = 0; d < Math.min(days, 14); d++) {
-    const date = subDays(endDate, days - 1 - d);
-    const dayRng = new SeededRandom(hashString(format(date, 'yyyy-MM-dd') + seedStr));
-    rating_over_time.push({
-      date: format(date, 'yyyy-MM-dd'),
-      rating_avg: dayRng.between(4.2, 4.9),
-    });
-  }
-  
+
+  // Rating over time (daily averages for last 14 days of range)
+  const days = eachDayOfInterval({ start: subDays(endDate, 13), end: endDate });
+  const rating_over_time: RatingOverTimePoint[] = days.map(day => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    const dayReviews = reviews.filter(r => r.created_at?.startsWith(dayStr));
+    const avg = dayReviews.length > 0
+      ? dayReviews.reduce((s, r) => s + r.rating, 0) / dayReviews.length
+      : 0;
+    return { date: dayStr, rating_avg: avg || rating_avg };
+  });
+
   // Rating by location
   const rating_by_location: LocationRatingData[] = LOCATIONS.map(loc => {
-    const locRng = new SeededRandom(hashString(loc.id + seedStr));
-    const locReviews = reviews.filter(r => r.id.includes(loc.id) || locRng.next() > 0.5);
-    const locTotalRatings = locRng.intBetween(5, 35);
-    const locReplied = locRng.intBetween(2, locTotalRatings);
-    
+    const locReviews = reviews.filter(r => r.location_id === loc.id);
+    const locTotal = locReviews.length;
+    const locAvg = locTotal > 0 ? locReviews.reduce((s, r) => s + r.rating, 0) / locTotal : 0;
+    const pos = locReviews.filter(r => r.rating >= 4).length;
+    const neutral = locReviews.filter(r => r.rating === 3).length;
+    const neg = locReviews.filter(r => r.rating <= 2).length;
+
     return {
       location_id: loc.id,
       location_name: loc.name,
-      rating_avg: locRng.between(4.0, 4.95),
-      total_ratings: locTotalRatings,
-      response_rate: (locReplied / locTotalRatings) * 100,
+      rating_avg: locAvg,
+      total_ratings: locTotal,
+      response_rate: 0, // No reply data in DB yet
       distribution: {
-        pos: locRng.between(60, 90),
-        neutral: locRng.between(5, 20),
-        neg: locRng.between(2, 15),
+        pos: locTotal > 0 ? (pos / locTotal) * 100 : 0,
+        neutral: locTotal > 0 ? (neutral / locTotal) * 100 : 0,
+        neg: locTotal > 0 ? (neg / locTotal) * 100 : 0,
       },
     };
   });
-  
+
   return {
     summary: {
       rating_avg,
       ratings_in_period: reviewCount,
-      response_rate,
-      avg_response_time_hours,
+      response_rate: 0,
+      avg_response_time_hours: 0,
       rating_over_time,
       star_breakdown,
       rating_by_location,
@@ -281,17 +219,13 @@ function generateMockReviews(params: UseReviewsDataParams): { summary: ReviewsSu
 
 export function useReviewsData(params: UseReviewsDataParams): ReviewsData {
   const { startDate, endDate, platform, locationId } = params;
-  
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['reviews', format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'), platform, locationId],
-    queryFn: async () => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return generateMockReviews(params);
-    },
+    queryFn: () => fetchReviews(params),
     staleTime: 5 * 60 * 1000,
   });
-  
+
   return {
     summary: data?.summary ?? {
       rating_avg: 0,

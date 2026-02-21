@@ -33,8 +33,8 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
     setTimeout(() => {
       const responses: Record<string, string> = {
         'why': `Based on your sales data (€${Math.round(salesData.totals?.sales || 36066).toLocaleString()}), the ${salesData.totals?.variance > 0 ? 'increase' : 'decrease'} is due to ${salesData.totals?.variance > 0 ? 'weekend traffic boost and strong dine-in performance' : 'mid-week lull and weather impact'}.`,
-        'forecast': `Forecast for next 7 days shows trending ${Math.random() > 0.5 ? 'up' : 'steady'}. Recommend ${Math.random() > 0.5 ? '+2 staff for weekend rush' : 'maintaining current staffing levels'}.`,
-        'recommendation': `Top recommendation: ${Math.random() > 0.5 ? 'Promote high-margin Paella (42% GP) during dinner service' : 'Stock up on weekend beer inventory (+30% usual demand)'}.`,
+        'forecast': `Forecast for next 7 days shows trending up. Recommend +2 staff for weekend rush.`,
+        'recommendation': `Top recommendation: Promote high-margin dishes during dinner service to improve GP%.`,
       };
 
       const matchedKey = Object.keys(responses).find(key => 
