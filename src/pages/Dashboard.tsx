@@ -115,7 +115,7 @@ export default function Dashboard() {
       gpPercent,
       gpDelta: gpDelta?.value || 0,
       locationName: selectedLocName,
-      periodLabel: 'periodo actual vs anterior',
+      periodLabel: 'actual vs forecast',
       topProducts: topItems.map(item => ({ name: item.name, sales: item.sales, margin: item.margin })),
     };
   }, [loading, netSales, salesDelta, coversDelta, avgTicketDelta, laborDelta, colPercent, colDelta, gpPercent, gpDelta, topItems, selectedLocName]);
@@ -203,45 +203,45 @@ export default function Dashboard() {
           value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
           icon={DollarSign}
           variant="success"
-          trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: 'vs anterior' } : undefined}
+          trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: 'vs forecast' } : undefined}
         />
         <MetricCard
           title="GP%"
           value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
           icon={Percent}
           variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
-          trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: 'vs anterior' } : undefined}
+          trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: 'vs forecast' } : undefined}
         />
         <MetricCard
           title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
           value={`€${cogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
           icon={Receipt}
-          trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: 'vs anterior' } : undefined}
+          trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: 'vs forecast' } : undefined}
         />
         <MetricCard
           title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
           value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
           icon={Users}
-          trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: 'vs anterior' } : undefined}
+          trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: 'vs forecast' } : undefined}
         />
         <MetricCard
           title="COL%"
           value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
           icon={TrendingUp}
           variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
-          trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: 'vs anterior' } : undefined}
+          trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: 'vs forecast' } : undefined}
         />
         <MetricCard
           title="Covers"
           value={ordersCount}
           icon={Users}
-          trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: 'vs anterior' } : undefined}
+          trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: 'vs forecast' } : undefined}
         />
         <MetricCard
           title="Avg Ticket"
           value={`€${Number(avgCheck).toFixed(2)}`}
           icon={Flame}
-          trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: 'vs anterior' } : undefined}
+          trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: 'vs forecast' } : undefined}
         />
       </div>
 
