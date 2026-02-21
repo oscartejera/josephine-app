@@ -48,6 +48,8 @@ const Integrations = lazy(() => import("@/pages/Integrations"));
 const SquareIntegration = lazy(() => import("@/pages/integrations/SquareIntegration"));
 const SquareOAuthCallback = lazy(() => import("@/pages/integrations/SquareOAuthCallback"));
 const InventoryItems = lazy(() => import("@/pages/inventory-setup/InventoryItems"));
+const RecipesPage = lazy(() => import("@/pages/inventory-setup/RecipesPage"));
+const RecipeDetailPage = lazy(() => import("@/pages/inventory-setup/RecipeDetailPage"));
 const DebugDataCoherence = lazy(() => import("@/pages/DebugDataCoherence"));
 
 // Team (Employee Portal) — lazy loaded
@@ -184,6 +186,8 @@ function AppRoutes() {
 
           {/* Inventory Setup */}
           <Route path="/inventory-setup/items" element={<InventoryItems />} />
+          <Route path="/inventory-setup/recipes" element={<RecipesPage />} />
+          <Route path="/inventory-setup/recipes/:id" element={<RecipeDetailPage />} />
 
           {/* Settings */}
           <Route path="/settings" element={<SettingsPage />} />

@@ -22,12 +22,13 @@ import {
   Wallet,
   PiggyBank,
   Monitor,
-    QrCode,
-    Plug2,
-    UserCircle,
-    MapPin,
-    Check
-  } from 'lucide-react';
+  QrCode,
+  Plug2,
+  UserCircle,
+  MapPin,
+  Check,
+  ClipboardList,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
@@ -91,8 +92,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const { canViewSidebarItem, primaryRole, isOwner } = usePermissions();
   const { accessibleLocations, selectedLocationId, setSelectedLocationId, canShowAllLocations } = useApp();
 
-  const selectedLocationLabel = selectedLocationId === 'all' 
-    ? 'All locations' 
+  const selectedLocationLabel = selectedLocationId === 'all'
+    ? 'All locations'
     : accessibleLocations.find(l => l.id === selectedLocationId)?.name || 'All locations';
 
   // Filter nav items by permission
@@ -107,9 +108,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
   // Check if insights section should be visible
   const showInsights = canViewSidebarItem('insights') || visibleInsightsChildren.length > 0;
-  const isInsightsRoute = location.pathname.startsWith('/insights') || 
-    location.pathname.startsWith('/inventory') || 
-    location.pathname.startsWith('/waste') || 
+  const isInsightsRoute = location.pathname.startsWith('/insights') ||
+    location.pathname.startsWith('/inventory') ||
+    location.pathname.startsWith('/waste') ||
     location.pathname.startsWith('/menu-engineering');
 
   const [insightsExpanded, setInsightsExpanded] = useState(() => {
@@ -119,9 +120,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   });
 
   const [workforceExpanded, setWorkforceExpanded] = useState(false);
-  const isWorkforceRoute = location.pathname.startsWith('/scheduling') || 
-                           location.pathname.startsWith('/availability') ||
-                           location.pathname.startsWith('/payroll');
+  const isWorkforceRoute = location.pathname.startsWith('/scheduling') ||
+    location.pathname.startsWith('/availability') ||
+    location.pathname.startsWith('/payroll');
 
   useEffect(() => {
     if (isInsightsRoute) {
@@ -274,7 +275,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               </CollapsibleTrigger>
               <CollapsibleContent id="insights-content" className="space-y-1 mt-1">
                 {visibleInsightsChildren.map((item) => {
-                  const isActive = location.pathname === item.path || 
+                  const isActive = location.pathname === item.path ||
                     (item.path === '/insights/reviews' && location.pathname.startsWith('/insights/reviews'));
                   return (
                     <Button
@@ -367,6 +368,20 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             {!collapsed && <span>Inventory Setup</span>}
           </Button>
 
+          {/* Escandallos (BOM) */}
+          <Button
+            variant={location.pathname.startsWith('/inventory-setup/recipes') ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname.startsWith('/inventory-setup/recipes') && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/inventory-setup/recipes')}
+          >
+            <ClipboardList className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Escandallos</span>}
+          </Button>
+
           {/* Integrations */}
           <Button
             variant={location.pathname.startsWith('/integrations') ? "secondary" : "ghost"}
@@ -383,7 +398,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
           {/* Other nav items - filtered by permission */}
           {visibleNavItems.filter(item => item.path !== '/dashboard').map((item) => {
-            const isActive = location.pathname === item.path || 
+            const isActive = location.pathname === item.path ||
               location.pathname.startsWith(item.path + '/');
             const isHighlight = 'highlight' in item && item.highlight;
             return (
