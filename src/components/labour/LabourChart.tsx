@@ -232,8 +232,10 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
     const totalPlannedHours = dayData.planned_hours || 0;
 
     const hourlyData = operatingHours.map((slot) => {
-      const actualSales = Math.round(totalSales * slot.weight * (0.9 + Math.random() * 0.2));
-      const actualHours = totalHours * slot.weight * (0.9 + Math.random() * 0.2);
+      // Deterministic noise based on slot index — no Math.random
+      const noise = 0.9 + (Math.sin(idx * 2.1 + 0.5) + 1) * 0.1;
+      const actualSales = Math.round(totalSales * slot.weight * noise);
+      const actualHours = totalHours * slot.weight * noise;
       const plannedHours = totalPlannedHours * slot.weight;
       const actualSPLH = actualHours > 0 ? actualSales / actualHours : 0;
       const plannedSPLH = plannedHours > 0 ? (actualSales * 0.98) / plannedHours : 0;

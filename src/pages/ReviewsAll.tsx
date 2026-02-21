@@ -138,8 +138,7 @@ export default function ReviewsAll() {
                 <SelectItem value="all">All Platforms</SelectItem>
                 <SelectItem value="google">Google</SelectItem>
                 <SelectItem value="tripadvisor">TripAdvisor</SelectItem>
-                <SelectItem value="deliveroo">Deliveroo</SelectItem>
-                <SelectItem value="justeat">Just Eat</SelectItem>
+                <SelectItem value="thefork">TheFork</SelectItem>
               </SelectContent>
             </Select>
 

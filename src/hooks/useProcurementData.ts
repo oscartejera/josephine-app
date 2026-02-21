@@ -103,11 +103,14 @@ const FALLBACK_SKUS: Omit<IngredientSku, 'forecastDailyUsage' | 'wasteFactor' | 
 
 // ============= Utility Functions =============
 
-function generateForecastUsage(days: number = 30): number[] {
-  const baseUsage = Math.floor(Math.random() * 6) + 2;
-  return Array.from({ length: days }, () => {
-    const variance = (Math.random() - 0.5) * 4;
-    return Math.max(1, Math.round(baseUsage + variance));
+function generateForecastUsage(days: number = 30, seed: string = ''): number[] {
+  // Deterministic forecast based on seed — no Math.random
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
+  const baseUsage = 2 + ((h >>> 0) % 6);
+  return Array.from({ length: days }, (_, i) => {
+    const v = Math.sin(h + i * 0.7) * 2;
+    return Math.max(1, Math.round(baseUsage + v));
   });
 }
 
@@ -320,7 +323,7 @@ export function useProcurementData() {
             packSize = `12 units`;
           }
 
-          const basePrice = item.last_cost || (Math.random() * 30 + 5);
+          const basePrice = item.last_cost || 10;
           const unitPrice = Number((basePrice * packSizeUnits).toFixed(2));
           
           return {
@@ -336,7 +339,7 @@ export function useProcurementData() {
             onHandUnits: item.current_stock || 0,
             parLevelUnits: item.par_level || packSizeUnits * 5,
             onOrderUnits: onOrderMap.get(item.id) || 0,
-            forecastDailyUsage: generateForecastUsage(30),
+            forecastDailyUsage: generateForecastUsage(30, item.id || item.name),
             paused: false,
             wasteFactor,
             yieldFactor: 1.0,
@@ -369,7 +372,7 @@ export function useProcurementData() {
     // Fallback to demo data
     return FALLBACK_SKUS.map(sku => ({
       ...sku,
-      forecastDailyUsage: generateForecastUsage(30),
+      forecastDailyUsage: generateForecastUsage(30, sku.id),
       wasteFactor: getCategoryWasteFactor(sku.category),
       yieldFactor: 1.0,
       safetyStockPct: 0.15,
