@@ -52,14 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [realAccessibleLocationIds, setRealAccessibleLocationIds] = useState<string[]>([]);
-
-  // Real RBAC: Check actual roles
-  const [realIsOwner, setRealIsOwner] = useState(false);
-  const [realHasGlobalScope, setRealHasGlobalScope] = useState(false);
-  const isOwner = realIsOwner;
-  const hasGlobalScope = realHasGlobalScope;
-  const accessibleLocationIds = realAccessibleLocationIds;
+  const [accessibleLocationIds, setAccessibleLocationIds] = useState<string[]>([]);
+  const [isOwner, setIsOwner] = useState(false);
+  const [hasGlobalScope, setHasGlobalScope] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -82,17 +77,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       setRoles(rolesResult.data ? (rolesResult.data as UserRole[]) : []);
-      setRealIsOwner(ownerResult.data === true);
-      setRealHasGlobalScope(globalResult.data === true);
-      setRealAccessibleLocationIds(locationsResult.data ? (locationsResult.data as string[]) : []);
+      setIsOwner(ownerResult.data === true);
+      setHasGlobalScope(globalResult.data === true);
+      setAccessibleLocationIds(locationsResult.data ? (locationsResult.data as string[]) : []);
       setPermissions(permsResult.data ? (permsResult.data as Permission[]) : []);
     } catch (error) {
       console.error('Error fetching user data:', error);
       setRoles([]);
       setPermissions([]);
-      setRealAccessibleLocationIds([]);
-      setRealIsOwner(false);
-      setRealHasGlobalScope(false);
+      setAccessibleLocationIds([]);
+      setIsOwner(false);
+      setHasGlobalScope(false);
     }
   }, []);
 
@@ -132,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
           setRoles([]);
           setPermissions([]);
-          setRealAccessibleLocationIds([]);
+          setAccessibleLocationIds([]);
         }
         setLoading(false);
       }
@@ -187,12 +182,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return permissions.some(p => p.permission_key === permissionKey);
   }, [user, isOwner, permissions]);
 
-  // Action permission check (same logic)
-  const hasActionPermission = useCallback((permissionKey: string, locationId?: string | null): boolean => {
-    if (!user) return false;
-    if (isOwner) return true;
-    return permissions.some(p => p.permission_key === permissionKey);
-  }, [user, isOwner, permissions]);
+  // Action permission check (alias for hasPermission)
+  const hasActionPermission = hasPermission;
 
   // Check if user has any of the permissions
   const hasAnyPermission = useCallback((permissionKeys: string[]): boolean => {

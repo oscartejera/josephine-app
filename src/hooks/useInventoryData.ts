@@ -9,84 +9,13 @@ import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
 
-interface InventoryMetrics {
-  totalSales: number;
-  assignedSales: number;
-  unassignedSales: number;
-  theoreticalCOGS: number;
-  theoreticalCOGSPercent: number;
-  actualCOGS: number;
-  actualCOGSPercent: number;
-  theoreticalGP: number;
-  theoreticalGPPercent: number;
-  actualGP: number;
-  actualGPPercent: number;
-  gapCOGS: number;
-  gapCOGSPercent: number;
-  gapGP: number;
-  gapGPPercent: number;
-  accountedWaste: number;
-  unaccountedWaste: number;
-  surplus: number;
-}
+// Re-export types for backward compatibility
+export type { InventoryMetrics, CategoryBreakdown, WasteByCategory, WasteByLocation, LocationPerformance } from './inventory/types';
 
-interface CategoryBreakdown {
-  category: string;
-  actualPercent: number;
-  actualAmount: number;
-  theoreticalPercent: number;
-  theoreticalAmount: number;
-}
+// Internal imports
+import type { InventoryMetrics, CategoryBreakdown, WasteByCategory, WasteByLocation, LocationPerformance } from './inventory/types';
+import { defaultMetrics } from './inventory/types';
 
-interface WasteByCategory {
-  category: string;
-  accounted: number;
-  unaccounted: number;
-}
-
-interface WasteByLocation {
-  locationId: string;
-  locationName: string;
-  accountedPercent: number;
-  accountedAmount: number;
-  unaccountedPercent: number;
-  unaccountedAmount: number;
-  hasStockCount: boolean;
-}
-
-interface LocationPerformance {
-  locationId: string;
-  locationName: string;
-  sales: number;
-  theoreticalValue: number;
-  theoreticalPercent: number;
-  actualValue: number;
-  actualPercent: number;
-  variancePercent: number;
-  varianceAmount: number;
-  hasStockCount?: boolean;
-}
-
-const defaultMetrics: InventoryMetrics = {
-  totalSales: 0,
-  assignedSales: 0,
-  unassignedSales: 0,
-  theoreticalCOGS: 0,
-  theoreticalCOGSPercent: 0,
-  actualCOGS: 0,
-  actualCOGSPercent: 0,
-  theoreticalGP: 0,
-  theoreticalGPPercent: 0,
-  actualGP: 0,
-  actualGPPercent: 0,
-  gapCOGS: 0,
-  gapCOGSPercent: 0,
-  gapGP: 0,
-  gapGPPercent: 0,
-  accountedWaste: 0,
-  unaccountedWaste: 0,
-  surplus: 0
-};
 
 export function useInventoryData(
   dateRange: DateRangeValue,
@@ -161,7 +90,7 @@ export function useInventoryData(
 
       // Determine which location IDs to use
       let effectiveLocationIds = selectedLocations;
-      
+
       // If no selected locations, use all from context
       if (effectiveLocationIds.length === 0 && locations.length > 0) {
         effectiveLocationIds = locations.map(l => l.id);
@@ -218,7 +147,7 @@ export function useInventoryData(
     if (appLoading) {
       return;
     }
-    
+
     fetchData();
   }, [fetchData, appLoading]);
 
@@ -237,11 +166,11 @@ export function useInventoryData(
         },
         (payload) => {
           console.log('Inventory realtime update:', payload);
-          
+
           // Reset cache key to force refetch
           fetchedRef.current = '';
           fetchData();
-          
+
           const eventType = payload.eventType;
           if (eventType === 'UPDATE') {
             toast.info('Stock updated', {
@@ -272,8 +201,8 @@ export function useInventoryData(
   }, [fetchData, session]);
 
   const processRealData = async (
-    tickets: any[], 
-    fromDateStr: string, 
+    tickets: any[],
+    fromDateStr: string,
     toDateStr: string,
     effectiveLocationIds: string[]
   ) => {
@@ -321,7 +250,7 @@ export function useInventoryData(
 
     // Calculate metrics from real data
     const totalSales = tickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
-    
+
     // Theoretical COGS from cogs_daily table
     const theoreticalCOGS = (cogsRows || []).reduce((sum, r) => sum + (r.cogs_amount || 0), 0);
 
@@ -370,8 +299,8 @@ export function useInventoryData(
       const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink')
         ? 'Beverage'
         : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
-        ? 'Food'
-        : 'Miscellaneous';
+          ? 'Food'
+          : 'Miscellaneous';
 
       const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
       existing.theoretical += row.cogs || 0;
@@ -437,7 +366,7 @@ export function useInventoryData(
       const data = wasteByLoc.get(loc.id) || { accounted: 0, unaccounted: 0 };
       const locSales = salesByLoc.get(loc.id) || 0;
       const locUnaccounted = locSales > 0 ? locSales * 0.005 : 0;
-      
+
       return {
         locationId: loc.id,
         locationName: loc.name,
@@ -456,7 +385,7 @@ export function useInventoryData(
       const locWaste = (wasteByLoc.get(loc.id)?.accounted || 0);
       const locActualCOGS = locTheoreticalCOGS + locWaste;
       const locVariance = locActualCOGS - locTheoreticalCOGS;
-      
+
       return {
         locationId: loc.id,
         locationName: loc.name,
