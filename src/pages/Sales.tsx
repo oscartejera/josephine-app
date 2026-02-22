@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/table';
 import { AskJosephineSalesDrawer } from '@/components/sales';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { startOfMonth, endOfMonth, format, subDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApp } from '@/contexts/AppContext';
 import { useBISalesData, type CompareMode, type GranularityMode } from '@/hooks/useBISalesData';
@@ -51,8 +51,8 @@ const VarianceIndicator = ({ value }: { value: number }) => {
 
 export default function Sales() {
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [startDate, setStartDate] = useState(startOfMonth(new Date()));
-  const [endDate, setEndDate] = useState(endOfMonth(new Date()));
+  const [startDate, setStartDate] = useState(subDays(new Date(), 29));
+  const [endDate, setEndDate] = useState(new Date());
   const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
   const [productsDisplayCount, setProductsDisplayCount] = useState(10);

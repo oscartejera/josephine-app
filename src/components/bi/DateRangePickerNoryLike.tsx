@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
-import { 
-  format, 
-  addDays, 
-  subDays, 
-  addWeeks, 
-  subWeeks, 
-  addMonths, 
+import {
+  format,
+  addDays,
+  subDays,
+  addWeeks,
+  subWeeks,
+  addMonths,
   subMonths,
   startOfWeek,
   endOfWeek,
@@ -91,11 +91,11 @@ export function DateRangePickerNoryLike({
       newFrom = today;
       newTo = today;
     } else if (newMode === 'weekly') {
-      newFrom = startOfWeek(today, { weekStartsOn: 1 });
-      newTo = endOfWeek(today, { weekStartsOn: 1 });
+      newFrom = subDays(today, 6);
+      newTo = today;
     } else {
-      newFrom = startOfMonth(today);
-      newTo = endOfMonth(today);
+      newFrom = subDays(today, 29);
+      newTo = today;
     }
 
     onModeChange?.(newMode);
@@ -182,9 +182,9 @@ export function DateRangePickerNoryLike({
     <div className={cn("flex items-center gap-2", className)}>
       {/* Navigation: < [calendar popover] > */}
       <div className="inline-flex items-center gap-0.5">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="h-8 w-8 rounded-lg hover:bg-muted/80"
           onClick={navigatePrevious}
           aria-label="Previous period"
@@ -206,8 +206,8 @@ export function DateRangePickerNoryLike({
               <span className="text-sm">{formatDateRange()}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent 
-            className="w-auto p-0 border-border/60 shadow-lg" 
+          <PopoverContent
+            className="w-auto p-0 border-border/60 shadow-lg"
             align="center"
             sideOffset={4}
           >
@@ -246,9 +246,9 @@ export function DateRangePickerNoryLike({
           </PopoverContent>
         </Popover>
 
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="h-8 w-8 rounded-lg hover:bg-muted/80"
           onClick={navigateNext}
           aria-label="Next period"
