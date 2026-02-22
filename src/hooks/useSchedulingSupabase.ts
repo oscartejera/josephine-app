@@ -220,8 +220,13 @@ export function useSchedulingSupabase(
 
   const isLoading = employeesLoading || shiftsLoading || forecastLoading || forecastGenerating;
 
-  // Build schedule data - show data if we have shifts OR hasSchedule flag
+  // Auto-detect existing shifts in DB and set hasSchedule accordingly
   const hasShiftsInDB = dbShifts.length > 0;
+  useEffect(() => {
+    if (hasShiftsInDB && !hasSchedule) {
+      setHasSchedule(true);
+    }
+  }, [hasShiftsInDB, hasSchedule]);
 
   const data = useMemo((): ScheduleData | null => {
     if (!locationId || (!hasSchedule && !hasShiftsInDB)) return null;
