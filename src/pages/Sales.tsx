@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,6 +56,7 @@ export default function Sales() {
   const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
   const [productsDisplayCount, setProductsDisplayCount] = useState(10);
+  const { t } = useTranslation();
 
   const { selectedLocationId, accessibleLocations, loading: appLoading } = useApp();
 
@@ -120,10 +122,10 @@ export default function Sales() {
   if (isError) {
     return (
       <div className="p-6 space-y-6 max-w-[1800px]">
-        <h1 className="text-3xl font-bold">Sales</h1>
+        <h1 className="text-3xl font-bold">{t('sales.title')}</h1>
         <Card className="p-8 flex flex-col items-center justify-center text-center gap-3">
-          <p className="text-lg font-medium text-destructive">Failed to load sales data</p>
-          <p className="text-sm text-muted-foreground">Please try refreshing the page or changing the date range.</p>
+          <p className="text-lg font-medium text-destructive">{t('sales.failedToLoad')}</p>
+          <p className="text-sm text-muted-foreground">{t('sales.tryRefreshing')}</p>
         </Card>
       </div>
     );
@@ -134,7 +136,7 @@ export default function Sales() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">Sales</h1>
+          <h1 className="text-3xl font-bold">{t('sales.title')}</h1>
           {isConnected && (
             <span className="flex items-center gap-1.5 text-xs text-emerald-600">
               <span className="relative flex h-2 w-2">
@@ -157,13 +159,13 @@ export default function Sales() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="forecast">vs Forecast</SelectItem>
-              <SelectItem value="previous_period">vs Last Period</SelectItem>
-              <SelectItem value="previous_year">vs Last Year</SelectItem>
+              <SelectItem value="forecast">{t('common.vsForecast')}</SelectItem>
+              <SelectItem value="previous_period">{t('common.vsLastPeriod')}</SelectItem>
+              <SelectItem value="previous_year">{t('common.vsLastYear')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={() => setAskJosephineOpen(true)}>
-            Ask Josephine
+            {t('sales.askJosephine')}
           </Button>
         </div>
       </div>
@@ -174,7 +176,7 @@ export default function Sales() {
         <Card className="p-5 bg-white">
           <div className="space-y-4">
             <div className="flex items-start justify-between">
-              <h3 className="text-sm font-normal text-gray-700">Sales to date</h3>
+              <h3 className="text-sm font-normal text-gray-700">{t('sales.salesToDate')}</h3>
               <span className="text-xs text-gray-500">{dateLabel}</span>
             </div>
             <div className="space-y-1">
@@ -183,7 +185,7 @@ export default function Sales() {
               </div>
               <div className="flex items-center gap-2">
                 <VarianceIndicator value={kpis?.salesToDateDelta || 0} />
-                <span className="text-xs text-gray-500">vs forecast</span>
+                <span className="text-xs text-gray-500">{t('common.vsForecast')}</span>
               </div>
             </div>
             {/* Channel breakdown — only if POS provides channel data */}
@@ -220,7 +222,7 @@ export default function Sales() {
         <Card className="p-5 bg-white">
           <div className="space-y-4">
             <div className="flex items-start justify-between">
-              <h3 className="text-sm font-normal text-gray-700">Average check size</h3>
+              <h3 className="text-sm font-normal text-gray-700">{t('sales.avgCheckSize')}</h3>
               <span className="text-xs text-gray-500">{dateLabel}</span>
             </div>
             <div className="space-y-1">
@@ -229,15 +231,15 @@ export default function Sales() {
               </div>
               <div className="flex items-center gap-2">
                 <VarianceIndicator value={kpis?.avgCheckSizeDelta || 0} />
-                <span className="text-xs text-gray-500">vs forecast</span>
+                <span className="text-xs text-gray-500">{t('common.vsForecast')}</span>
               </div>
             </div>
             {/* ACS by channel */}
             <div className="space-y-2.5 pt-2">
               <div className="grid grid-cols-3 gap-4 text-xs">
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-600" /><span className="text-gray-700">Dine-in</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-400" /><span className="text-gray-700">Pick-up</span></div>
-                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-200" /><span className="text-gray-700">Delivery</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-600" /><span className="text-gray-700">{t('sales.dineIn')}</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-400" /><span className="text-gray-700">{t('sales.pickUp')}</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-200" /><span className="text-gray-700">{t('sales.delivery')}</span></div>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm font-medium text-gray-900">
                 {(kpis?.acsBreakdown || []).map(ch => (
@@ -252,7 +254,7 @@ export default function Sales() {
         <Card className="p-5 bg-white">
           <div className="space-y-4">
             <div className="flex items-start justify-between">
-              <h3 className="text-sm font-normal text-gray-700">Dwell time</h3>
+              <h3 className="text-sm font-normal text-gray-700">{t('sales.dwellTime')}</h3>
               <span className="text-xs text-gray-500">{dateLabel}</span>
             </div>
             <div className="text-3xl font-bold text-gray-900">42mins</div>
@@ -263,16 +265,16 @@ export default function Sales() {
       {/* Chart */}
       <Card className="p-6">
         <Tabs defaultValue="sales">
-          <TabsList><TabsTrigger value="sales">Sales</TabsTrigger></TabsList>
+          <TabsList><TabsTrigger value="sales">{t('sales.title')}</TabsTrigger></TabsList>
           <TabsContent value="sales" className="mt-6">
-            <h3 className="text-base font-semibold mb-4">Sales v Forecast</h3>
+            <h3 className="text-base font-semibold mb-4">{t('sales.salesVsForecast')}</h3>
             <div className="h-[360px]">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={chartData} barGap={2} barCategoryGap="15%">
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} />
-                    <YAxis yAxisId="left" tickFormatter={(v) => `€${(v/1000).toFixed(0)}K`} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="left" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}K`} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `€${v.toFixed(0)}`} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                     <Tooltip content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
@@ -280,22 +282,22 @@ export default function Sales() {
                       return (
                         <div className="bg-white border rounded-lg shadow-xl p-3 text-sm">
                           <p className="font-semibold mb-2">{d.label}</p>
-                          <p>Actual: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.actual)}</strong></p>
-                          <p>Forecast: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.forecast)}</strong></p>
-                          <p>Avg Check: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.avgCheckSize)}</strong></p>
+                          <p>{t('common.actual')}: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.actual)}</strong></p>
+                          <p>{t('common.forecast')}: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.forecast)}</strong></p>
+                          <p>{t('sales.avgCheck')}: <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(d.avgCheckSize)}</strong></p>
                         </div>
                       );
                     }} />
                     <Legend verticalAlign="bottom" height={36} iconType="rect" iconSize={10} wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
-                    <Bar yAxisId="left" dataKey="actual" fill={COLORS.actual} name="Actual" radius={[3,3,0,0]} maxBarSize={50} />
-                    <Bar yAxisId="left" dataKey="forecast" fill={COLORS.forecast} name="Forecast" radius={[3,3,0,0]} maxBarSize={50} />
+                    <Bar yAxisId="left" dataKey="actual" fill={COLORS.actual} name="Actual" radius={[3, 3, 0, 0]} maxBarSize={50} />
+                    <Bar yAxisId="left" dataKey="forecast" fill={COLORS.forecast} name="Forecast" radius={[3, 3, 0, 0]} maxBarSize={50} />
                     <Line yAxisId="right" type="monotone" dataKey="avgCheckSize" stroke={COLORS.avgCheck} strokeWidth={2.5} name="Avg Check" dot={{ r: 4, fill: COLORS.avgCheck, strokeWidth: 0 }} />
                     <Line yAxisId="right" type="monotone" dataKey="avgCheckForecast" stroke={COLORS.avgCheckForecast} strokeWidth={2.5} name="Avg Check Forecast" dot={{ r: 4, fill: COLORS.avgCheckForecast, strokeWidth: 0 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
-                  No sales data for this period
+                  {t('sales.noSalesData')}
                 </div>
               )}
             </div>
@@ -306,15 +308,15 @@ export default function Sales() {
       {/* Channel Breakdown */}
       {channels.length > 0 && (
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Channel Breakdown</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('sales.channelBreakdown')}</h3>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Channel</TableHead>
-                <TableHead>Actual</TableHead>
-                <TableHead>Projected</TableHead>
-                <TableHead>Avg Check</TableHead>
-                <TableHead>Orders</TableHead>
+                <TableHead>{t('sales.channel')}</TableHead>
+                <TableHead>{t('common.actual')}</TableHead>
+                <TableHead>{t('sales.projected')}</TableHead>
+                <TableHead>{t('sales.avgCheck')}</TableHead>
+                <TableHead>{t('sales.orders')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -346,7 +348,7 @@ export default function Sales() {
       <div className="grid grid-cols-2 gap-6">
         {/* Categories */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Sales per Category</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('sales.salesPerCategory')}</h3>
           <div className="h-[200px] mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categories} layout="vertical">
@@ -359,16 +361,16 @@ export default function Sales() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Category</TableHead>
-                <TableHead>Ratio</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead>{t('common.category')}</TableHead>
+                <TableHead>{t('sales.ratio')}</TableHead>
+                <TableHead>{t('common.amount')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {categories.map(cat => (
                 <TableRow key={cat.category}>
                   <TableCell className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.actual}} />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.actual }} />
                     {cat.category}
                   </TableCell>
                   <TableCell>{cat.ratio}%</TableCell>
@@ -381,7 +383,7 @@ export default function Sales() {
 
         {/* Products */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Top Products</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('sales.topProducts')}</h3>
           <div className="space-y-3">
             {products.slice(0, productsDisplayCount).map(product => (
               <div key={product.name}>
@@ -398,7 +400,7 @@ export default function Sales() {
               </div>
             ))}
             {products.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No product data available</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t('sales.noProductData')}</p>
             )}
           </div>
         </Card>

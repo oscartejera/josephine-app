@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -49,38 +50,28 @@ const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
 
 // Insights children
 const insightsChildren = [
-  { icon: TrendingUp, label: 'Sales', path: '/insights/sales', key: 'sales' as const },
-  { icon: Users, label: 'Labour', path: '/insights/labour', key: 'labour' as const },
-  { icon: BarChart3, label: 'Instant P&L', path: '/insights/instant-pl', key: 'instant_pl' as const },
-  { icon: Star, label: 'Reviews', path: '/insights/reviews', key: 'reviews' as const },
-  { icon: Package, label: 'Inventory', path: '/insights/inventory', key: 'inventory' as const },
-  { icon: Trash2, label: 'Waste', path: '/insights/waste', key: 'waste' as const },
-  { icon: ChefHat, label: 'Menu Engineering', path: '/insights/menu-engineering', key: 'menu_engineering' as const },
-  { icon: Wallet, label: 'Cash Management', path: '/insights/cash-management', key: 'settings' as const },
-  { icon: PiggyBank, label: 'Budgets', path: '/insights/budgets', key: 'settings' as const },
+  { icon: TrendingUp, i18nKey: 'nav.sales', path: '/insights/sales', key: 'sales' as const },
+  { icon: Users, i18nKey: 'nav.labour', path: '/insights/labour', key: 'labour' as const },
+  { icon: BarChart3, i18nKey: 'nav.instantPL', path: '/insights/instant-pl', key: 'instant_pl' as const },
+  { icon: Star, i18nKey: 'nav.reviews', path: '/insights/reviews', key: 'reviews' as const },
+  { icon: Package, i18nKey: 'nav.inventory', path: '/insights/inventory', key: 'inventory' as const },
+  { icon: Trash2, i18nKey: 'nav.waste', path: '/insights/waste', key: 'waste' as const },
+  { icon: ChefHat, i18nKey: 'nav.menuEngineering', path: '/insights/menu-engineering', key: 'menu_engineering' as const },
+  { icon: Wallet, i18nKey: 'nav.cashManagement', path: '/insights/cash-management', key: 'settings' as const },
+  { icon: PiggyBank, i18nKey: 'nav.budgets', path: '/insights/budgets', key: 'settings' as const },
 ];
 
 // Workforce children
 const workforceChildren = [
-  { icon: CalendarDays, label: 'Schedule', path: '/scheduling', key: 'scheduling' as const },
-  { icon: Clock, label: 'Availability', path: '/availability', key: 'availability' as const },
-  { icon: Calculator, label: 'Payroll', path: '/payroll', key: 'payroll' as const },
+  { icon: CalendarDays, i18nKey: 'nav.schedule', path: '/scheduling', key: 'scheduling' as const },
+  { icon: Clock, i18nKey: 'nav.availability', path: '/availability', key: 'availability' as const },
+  { icon: Calculator, i18nKey: 'nav.payroll', path: '/payroll', key: 'payroll' as const },
 ];
 
 // Main nav items
 const navItems = [
-  { icon: LayoutDashboard, label: 'Control Tower', path: '/dashboard', key: 'dashboard' as const },
+  { icon: LayoutDashboard, i18nKey: 'nav.controlTower', path: '/dashboard', key: 'dashboard' as const },
 ];
-
-const roleLabels: Record<string, string> = {
-  owner: 'Propietario',
-  admin: 'Administrador',
-  ops_manager: 'Gerente Ops',
-  store_manager: 'Gerente Local',
-  finance: 'Finanzas',
-  hr_payroll: 'RRHH',
-  employee: 'Empleado',
-};
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -89,13 +80,14 @@ interface AppSidebarProps {
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { signOut, profile } = useAuth();
   const { canViewSidebarItem, primaryRole, isOwner } = usePermissions();
   const { accessibleLocations, selectedLocationId, setSelectedLocationId, canShowAllLocations } = useApp();
 
   const selectedLocationLabel = selectedLocationId === 'all'
-    ? 'All locations'
-    : accessibleLocations.find(l => l.id === selectedLocationId)?.name || 'All locations';
+    ? t('common.allLocations')
+    : accessibleLocations.find(l => l.id === selectedLocationId)?.name || t('common.allLocations');
 
   // Filter nav items by permission
   const visibleNavItems = useMemo(() => {
@@ -244,7 +236,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               onClick={() => navigate('/dashboard')}
             >
               <LayoutDashboard className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Control Tower</span>}
+              {!collapsed && <span>{t('nav.controlTower')}</span>}
             </Button>
           )}
 
@@ -265,7 +257,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   <LineChart className="h-4 w-4 shrink-0" />
                   {!collapsed && (
                     <>
-                      <span className="flex-1 text-left">Insights</span>
+                      <span className="flex-1 text-left">{t('nav.insights')}</span>
                       <ChevronDown className={cn(
                         "h-4 w-4 shrink-0 transition-transform duration-200",
                         insightsExpanded && "rotate-180"
@@ -289,7 +281,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                       onClick={() => navigate(item.path)}
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
-                      <span>{item.label}</span>
+                      <span>{t(item.i18nKey)}</span>
                     </Button>
                   );
                 })}
@@ -311,7 +303,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 <Users className="h-4 w-4 shrink-0" />
                 {!collapsed && (
                   <>
-                    <span className="flex-1 text-left">Workforce</span>
+                    <span className="flex-1 text-left">{t('nav.workforce')}</span>
                     <ChevronDown className={cn(
                       "h-4 w-4 shrink-0 transition-transform duration-200",
                       workforceExpanded && "rotate-180"
@@ -334,7 +326,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                     onClick={() => navigate(item.path)}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
-                    <span>{item.label}</span>
+                    <span>{t(item.i18nKey)}</span>
                   </Button>
                 );
               })}
@@ -352,7 +344,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={() => navigate('/procurement')}
           >
             <ShoppingCart className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Purchases</span>}
+            {!collapsed && <span>{t('nav.purchases')}</span>}
           </Button>
 
           {/* Inventory Setup */}
@@ -366,7 +358,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={() => navigate('/inventory-setup/items')}
           >
             <Package className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Inventory Setup</span>}
+            {!collapsed && <span>{t('nav.inventorySetup')}</span>}
           </Button>
 
           {/* Escandallos (BOM) */}
@@ -380,7 +372,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={() => navigate('/inventory-setup/recipes')}
           >
             <ClipboardList className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Escandallos</span>}
+            {!collapsed && <span>{t('nav.escandallos')}</span>}
           </Button>
 
           {/* Operaciones */}
@@ -394,7 +386,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={() => navigate('/operations/waste-entry')}
           >
             <Trash2 className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Mermas</span>}
+            {!collapsed && <span>{t('nav.waste')}</span>}
           </Button>
 
           <Button
@@ -407,7 +399,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={() => navigate('/operations/stock-audit')}
           >
             <ClipboardCheck className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Auditoría Stock</span>}
+            {!collapsed && <span>{t('inventory.stockCount')}</span>}
           </Button>
 
           {/* Integrations */}
@@ -421,7 +413,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={() => navigate('/integrations')}
           >
             <Plug2 className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Integrations</span>}
+            {!collapsed && <span>{t('nav.integrations')}</span>}
           </Button>
 
           {/* Other nav items - filtered by permission */}
@@ -442,7 +434,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 onClick={() => navigate(item.path)}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && <span>{t(item.i18nKey)}</span>}
               </Button>
             );
           })}
@@ -458,7 +450,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={() => navigate('/team')}
           >
             <UserCircle className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Portal de Equipo</span>}
+            {!collapsed && <span>{t('settings.team')}</span>}
           </Button>
 
           {/* Settings - only show if has permission */}
@@ -473,7 +465,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               onClick={() => navigate('/settings')}
             >
               <Settings className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Settings</span>}
+              {!collapsed && <span>{t('nav.settings')}</span>}
             </Button>
           )}
         </nav>
@@ -483,10 +475,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       <div className="border-t border-border p-4">
         {!collapsed && profile && (
           <div className="mb-3 px-2">
-            <p className="text-sm font-medium truncate">{profile.full_name || 'Usuario'}</p>
+            <p className="text-sm font-medium truncate">{profile.full_name || t('common.name')}</p>
             <div className="flex items-center gap-1.5">
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
-                {roleLabels[primaryRole || ''] || 'Usuario'}
+                {t(`roles.${primaryRole || 'employee'}`)}
               </Badge>
             </div>
           </div>
@@ -500,7 +492,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span>Cerrar sesión</span>}
+          {!collapsed && <span>{t('nav.logout')}</span>}
         </Button>
       </div>
     </aside>

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import type { LabourDateRange, MetricMode } from '@/hooks/useLabourData';
 
@@ -41,6 +42,7 @@ export function LabourHeader({
   onAskJosephine
 }: LabourHeaderProps) {
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const { t } = useTranslation();
 
   const getCompareModeLabel = (mode: CompareMode) => {
     switch (mode) {
@@ -64,7 +66,7 @@ export function LabourHeader({
   return (
     <div className="space-y-4">
       {/* Title */}
-      <h1 className="text-3xl font-bold text-gray-900">Labour</h1>
+      <h1 className="text-3xl font-bold text-gray-900">{t('labour.title')}</h1>
 
       {/* Controls row */}
       <div className="flex items-center justify-between">
@@ -86,10 +88,10 @@ export function LabourHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setCompareMode?.('forecast')}>vs Forecast</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCompareMode?.('last_week')}>vs Last Week</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCompareMode?.('last_month')}>vs Last Month</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCompareMode?.('last_year')}>vs Last Year</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('forecast')}>{t('common.vsForecast')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('last_week')}>{t('common.vsLastPeriod')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('last_month')}>{t('common.vsLastPeriod')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCompareMode?.('last_year')}>{t('common.vsLastYear')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -141,7 +143,7 @@ export function LabourHeader({
             onClick={onAskJosephine}
             variant="outline"
           >
-            ✨ Ask Josephine
+            ✨ {t('sales.askJosephine')}
           </Button>
         </div>
       </div>

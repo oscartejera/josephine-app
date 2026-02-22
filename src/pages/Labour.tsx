@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { useLabourData, type MetricMode, type LabourDateRange } from '@/hooks/useLabourData';
@@ -26,6 +27,7 @@ function isValidUUID(id: string | undefined): boolean {
 export default function Labour() {
   const { locationId } = useParams<{ locationId?: string }>();
   const { accessibleLocations, loading: appLoading } = useApp();
+  const { t } = useTranslation();
 
   // Initial date range: current month
   const initialDateRange = useMemo(() => ({
@@ -80,8 +82,8 @@ export default function Labour() {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Invalid Location</h2>
-          <p className="text-muted-foreground">The location ID is not valid.</p>
+          <h2 className="text-xl font-semibold mb-2">{t('common.invalidLocation')}</h2>
+          <p className="text-muted-foreground">{t('common.invalidLocationMsg')}</p>
         </div>
       </div>
     );
@@ -92,8 +94,8 @@ export default function Labour() {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You don't have access to this location.</p>
+          <h2 className="text-xl font-semibold mb-2">{t('common.accessDenied')}</h2>
+          <p className="text-muted-foreground">{t('common.accessDeniedMsg')}</p>
         </div>
       </div>
     );

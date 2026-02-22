@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getProductSalesDaily, buildQueryContext } from '@/data';
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const { selectedLocationId, accessibleLocations, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete, dataSource, loading: appLoading } = useApp();
   const { profile } = useAuth();
   const [topItems, setTopItems] = useState<any[]>([]);
+  const { t } = useTranslation();
 
   // Build location IDs from selection
   const locationIds = useMemo(() => {
@@ -53,7 +55,7 @@ export default function Dashboard() {
     getProductSalesDaily(ctx, { from: fromStr, to: toStr }).then(productRows => {
       const itemMap = new Map<string, { name: string; category: string; quantity: number; sales: number; margin: number }>();
       productRows.forEach(row => {
-        const existing = itemMap.get(row.productId) || { name: row.productName, category: row.productCategory || 'Sin categoría', quantity: 0, sales: 0, margin: 0 };
+        const existing = itemMap.get(row.productId) || { name: row.productName, category: row.productCategory || t('common.noData'), quantity: 0, sales: 0, margin: 0 };
         existing.quantity += row.unitsSold;
         existing.sales += row.netSales;
         existing.margin = row.marginPct;
@@ -130,7 +132,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-2xl font-display font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
           <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
@@ -151,7 +153,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-2xl font-display font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
           <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
         </div>
         <Card>
@@ -173,7 +175,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-display font-bold">Centro de Control</h1>
+        <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
         <p className="text-muted-foreground">Panel ejecutivo — Josephine Intelligence</p>
       </div>
 
@@ -199,49 +201,49 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <MetricCard
-          title="Ventas"
+          title={t('dashboard.netSales')}
           value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
           icon={DollarSign}
           variant="success"
-          trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: 'vs forecast' } : undefined}
+          trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: t('common.vsForecast') } : undefined}
         />
         <MetricCard
           title="GP%"
           value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
           icon={Percent}
           variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
-          trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: 'vs forecast' } : undefined}
+          trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: t('common.vsForecast') } : undefined}
         />
         <MetricCard
           title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
           value={`€${cogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
           icon={Receipt}
-          trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: 'vs forecast' } : undefined}
+          trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: t('common.vsForecast') } : undefined}
         />
         <MetricCard
           title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
           value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
           icon={Users}
-          trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: 'vs forecast' } : undefined}
+          trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
         />
         <MetricCard
           title="COL%"
           value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
           icon={TrendingUp}
           variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
-          trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: 'vs forecast' } : undefined}
+          trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: t('common.vsForecast') } : undefined}
         />
         <MetricCard
-          title="Covers"
+          title={t('dashboard.covers')}
           value={ordersCount}
           icon={Users}
-          trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: 'vs forecast' } : undefined}
+          trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: t('common.vsForecast') } : undefined}
         />
         <MetricCard
-          title="Avg Ticket"
+          title={t('dashboard.avgTicket')}
           value={`€${Number(avgCheck).toFixed(2)}`}
           icon={Flame}
-          trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: 'vs forecast' } : undefined}
+          trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: t('common.vsForecast') } : undefined}
         />
       </div>
 

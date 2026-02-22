@@ -1,5 +1,6 @@
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 interface WasteHeaderProps {
@@ -21,15 +22,16 @@ export function WasteHeader({
   selectedLocations,
   setSelectedLocations,
 }: WasteHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
       {/* Breadcrumbs and controls row */}
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Insights</span>
+        <span className="text-muted-foreground">{t('nav.insights')}</span>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        <span className="font-medium">Waste</span>
+        <span className="font-medium">{t('waste.title')}</span>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        
+
         {/* Date Range Picker */}
         <DateRangePickerNoryLike
           value={dateRange}
@@ -42,7 +44,7 @@ export function WasteHeader({
       {/* Title and location selector */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-foreground">
-          Accounted Waste
+          {t('waste.totalAccountedWaste')}
         </h1>
 
         <div className="flex items-center gap-2">

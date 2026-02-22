@@ -34,7 +34,7 @@ export default function SettingsPage() {
           <TabsTrigger value="objectives">{t('settings.objectives')}</TabsTrigger>
           <TabsTrigger value="suppliers">{t('settings.suppliers')}</TabsTrigger>
           <TabsTrigger value="payment">{t('settings.paymentMethods')}</TabsTrigger>
-          <TabsTrigger value="transactions">Transacciones</TabsTrigger>
+          <TabsTrigger value="transactions">{t('common.transactions')}</TabsTrigger>
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
           <TabsTrigger value="datasource">{t('settings.dataSource', 'Fuente de Datos')}</TabsTrigger>
         </TabsList>
