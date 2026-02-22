@@ -67,9 +67,9 @@ export const REASON_LABELS: Record<WasteReason, string> = {
 // Normalize reason from various formats to standard WasteReason
 function normalizeReason(rawReason: string | null | undefined): WasteReason {
   if (!rawReason) return 'other';
-  
+
   const lower = rawReason.toLowerCase().trim();
-  
+
   // Map various formats to standard reasons
   if (lower === 'broken' || lower === 'rotura' || lower === 'dañado' || lower === 'deterioro') {
     return 'broken';
@@ -162,7 +162,7 @@ export function useWasteData(
       }
 
       const { data: wasteEvents } = await wasteQuery;
-      
+
       const totalAccountedWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
       const wastePercentOfSales = totalSales > 0 ? (totalAccountedWaste / totalSales) * 100 : 0;
 
@@ -175,7 +175,7 @@ export function useWasteData(
       // Calculate trend data by day
       const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
       const trendMap = new Map<string, WasteTrendData>();
-      
+
       days.forEach(day => {
         const dateStr = format(day, 'yyyy-MM-dd');
         trendMap.set(dateStr, {
@@ -274,10 +274,10 @@ export function useWasteData(
       setLeaderboard(leaderboardData.sort((a, b) => b.totalValue - a.totalValue));
 
       // Calculate items table
-      const itemMap = new Map<string, { 
-        itemName: string; 
-        quantity: number; 
-        value: number; 
+      const itemMap = new Map<string, {
+        itemName: string;
+        quantity: number;
+        value: number;
         reasonValues: Map<WasteReason, number>;
       }>();
 
@@ -285,19 +285,19 @@ export function useWasteData(
         const itemId = event.inventory_item_id || 'unknown';
         const itemName = event.inventory_items?.name || 'Unknown Item';
         const reason = normalizeReason(event.reason);
-        
-        const existing = itemMap.get(itemId) || { 
-          itemName, 
-          quantity: 0, 
-          value: 0, 
-          reasonValues: new Map() 
+
+        const existing = itemMap.get(itemId) || {
+          itemName,
+          quantity: 0,
+          value: 0,
+          reasonValues: new Map()
         };
         existing.quantity += event.quantity || 0;
         existing.value += event.waste_value || 0;
-        
+
         const reasonVal = existing.reasonValues.get(reason) || 0;
         existing.reasonValues.set(reason, reasonVal + (event.waste_value || 0));
-        
+
         itemMap.set(itemId, existing);
       });
 
@@ -330,7 +330,7 @@ export function useWasteData(
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, locationIds, locations, dsUnified, appLoading]);
+  }, [dateRange, locationIds, locations, dsLegacy, appLoading]);
 
   // Initial data fetch
   useEffect(() => {
@@ -353,7 +353,7 @@ export function useWasteData(
         (payload) => {
           console.log('Waste event realtime update:', payload);
           fetchData();
-          
+
           if (payload.eventType === 'INSERT') {
             toast.success('New waste logged', {
               description: 'Waste data has been updated.',

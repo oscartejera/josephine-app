@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, CalendarIcon, AlertTriangle, Package } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTopProducts, OrderByOption } from '@/hooks/useTopProducts';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -41,6 +42,7 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
     orderBy,
     setOrderBy,
   } = useTopProducts();
+  const { t } = useTranslation();
 
   const showEmptyState = !loading && products.length === 0;
 
@@ -50,9 +52,9 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Top 10 Productos
+            {t('dashboard.topProducts')}
           </CardTitle>
-          
+
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Location Filter */}
@@ -61,10 +63,10 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
               onValueChange={(value) => setSelectedLocationId(value === 'all' ? null : value)}
             >
               <SelectTrigger className="w-[160px] h-9 text-sm">
-                <SelectValue placeholder="Ubicación" />
+                <SelectValue placeholder={t('common.location')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
                 {locations.map((loc: Location) => (
                   <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                 ))}
@@ -80,9 +82,9 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="last7">Últimos 7 días</SelectItem>
-                <SelectItem value="last30">Últimos 30 días</SelectItem>
-                <SelectItem value="custom">Personalizado</SelectItem>
+                <SelectItem value="last7">{t('common.lastWeek')}</SelectItem>
+                <SelectItem value="last30">{t('common.lastMonth')}</SelectItem>
+                <SelectItem value="custom">{t('common.custom')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -142,7 +144,7 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {loading ? (
           <div className="space-y-2">
@@ -153,9 +155,9 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
         ) : showEmptyState ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hay datos de productos</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('sales.noProductData')}</h3>
             <p className="text-muted-foreground max-w-sm">
-              No se encontraron ventas de productos para el periodo y ubicacion seleccionados.
+              {t('sales.noSalesData')}
             </p>
           </div>
         ) : (
@@ -164,10 +166,10 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead className="text-right">Uds</TableHead>
-                  <TableHead className="text-right">Ventas</TableHead>
-                  <TableHead className="text-right">% Sales</TableHead>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead className="text-right">{t('common.quantity')}</TableHead>
+                  <TableHead className="text-right">{t('sales.title')}</TableHead>
+                  <TableHead className="text-right">% {t('sales.title')}</TableHead>
                   <TableHead className="text-right">COGS</TableHead>
                   <TableHead className="text-right">GP</TableHead>
                   <TableHead className="text-right">GP%</TableHead>
@@ -202,7 +204,7 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
                       {formatCurrency(product.gp)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Badge 
+                      <Badge
                         variant={product.gp_pct >= 65 ? "default" : product.gp_pct >= 50 ? "secondary" : "destructive"}
                         className="tabular-nums"
                       >
