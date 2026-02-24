@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 function useLocations() {
     const { group } = useApp();
     return useQuery({
-        queryKey: ['locations-list'],
+        queryKey: ['locations-list', group?.id],
         queryFn: async () => {
             if (!group?.id) return [];
             const { data } = await supabase
@@ -35,7 +35,7 @@ function useLocations() {
 function useInventoryItemsForWaste() {
     const { group } = useApp();
     return useQuery({
-        queryKey: ['items-for-waste'],
+        queryKey: ['items-for-waste', group?.id],
         queryFn: async () => {
             if (!group?.id) return [];
             const { data } = await supabase
