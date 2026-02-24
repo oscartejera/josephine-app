@@ -247,6 +247,7 @@ NOTIFY pgrst, 'reload schema';
 
 -- ---------------------------------------------------------------------------
 -- 6. Rewrite get_instant_pnl_unified RPC (use same data sources as Sales/Dashboard)
+--    COGS: ratio from product_sales_daily_unified applied to sales_daily_unified
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.get_instant_pnl_unified(
@@ -270,21 +271,17 @@ BEGIN
       l.name AS location_name,
       COALESCE(s.net_sales, 0)::numeric       AS actual_sales,
       COALESCE(f.forecast_sales, 0)::numeric   AS forecast_sales,
-      COALESCE(cg.cogs, 0)::numeric            AS actual_cogs,
-      CASE WHEN COALESCE(s.net_sales, 0) > 0
-        THEN ROUND(COALESCE(f.forecast_sales, 0) * (COALESCE(cg.cogs, 0) / s.net_sales), 2)
-        ELSE ROUND(COALESCE(f.forecast_sales, 0) * 0.32, 2)
-      END::numeric                             AS forecast_cogs,
+      ROUND(COALESCE(s.net_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)::numeric AS actual_cogs,
+      ROUND(COALESCE(f.forecast_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)::numeric AS forecast_cogs,
       COALESCE(lab.actual_cost, 0)::numeric    AS actual_labour,
       COALESCE(lab.actual_hours, 0)::numeric   AS actual_labour_hours,
       COALESCE(f.planned_labor_cost, 0)::numeric AS forecast_labour,
       COALESCE(f.planned_labor_hours, 0)::numeric AS forecast_labour_hours,
-      (COALESCE(s.net_sales, 0) - COALESCE(cg.cogs, 0) - COALESCE(lab.actual_cost, 0))::numeric AS actual_gp,
+      (COALESCE(s.net_sales, 0)
+        - ROUND(COALESCE(s.net_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)
+        - COALESCE(lab.actual_cost, 0))::numeric AS actual_gp,
       (COALESCE(f.forecast_sales, 0)
-        - CASE WHEN COALESCE(s.net_sales, 0) > 0
-            THEN ROUND(COALESCE(f.forecast_sales, 0) * (COALESCE(cg.cogs, 0) / s.net_sales), 2)
-            ELSE ROUND(COALESCE(f.forecast_sales, 0) * 0.32, 2)
-          END
+        - ROUND(COALESCE(f.forecast_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)
         - COALESCE(f.planned_labor_cost, 0))::numeric AS forecast_gp,
       true AS estimated_cogs,
       CASE WHEN COALESCE(lab.actual_cost, 0) = 0 AND COALESCE(s.net_sales, 0) > 0
@@ -312,8 +309,9 @@ BEGIN
       GROUP BY 1
     ) lab ON lab.location_id = l.id
     LEFT JOIN (
-      SELECT location_id, SUM(cogs) AS cogs
-      FROM product_sales_daily_unified_mv
+      SELECT location_id,
+        CASE WHEN SUM(net_sales) > 0 THEN SUM(cogs) / SUM(net_sales) ELSE 0.32 END AS cogs_pct
+      FROM product_sales_daily_unified
       WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
       GROUP BY 1
     ) cg ON cg.location_id = l.id
@@ -326,7 +324,8 @@ BEGIN
     'reason', v_ds->>'reason',
     'last_synced_at', v_ds->>'last_synced_at',
     'locations', v_locs,
-    'flags', jsonb_build_object('estimated_cogs', true, 'cogs_note', 'COGS from category-based MV estimates')
+    'flags', jsonb_build_object('estimated_cogs', true, 'cogs_note', 'COGS from product mix ratio')
   );
 END;
 $function$;
+
