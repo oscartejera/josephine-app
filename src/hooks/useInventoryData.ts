@@ -206,34 +206,24 @@ export function useInventoryData(
     toDateStr: string,
     effectiveLocationIds: string[]
   ) => {
-    // Fetch COGS from cogs_daily (seeded as ~28% of net_sales)
-    let cogsQuery = supabase
-      .from('cogs_daily')
-      .select('date, location_id, cogs_amount')
-      .gte('date', fromDateStr)
-      .lte('date', toDateStr);
-
-    if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
-      cogsQuery = cogsQuery.in('location_id', effectiveLocationIds);
-    }
-
-    const { data: cogsRows } = await cogsQuery;
-
-    // Fetch product sales for category breakdown
+    // ── Fetch product sales for COGS ratio + category breakdown ──
+    // Column is 'day' (not 'date') in product_sales_daily_unified
     let prodQuery = supabase
       .from('product_sales_daily_unified' as any)
-      .select('date, location_id, product_id, product_name, product_category, net_sales, cogs')
-      .eq('data_source', dsLegacy)
-      .gte('date', fromDateStr)
-      .lte('date', toDateStr);
+      .select('day, location_id, product_id, product_name, product_category, net_sales, cogs')
+      .gte('day', fromDateStr)
+      .lte('day', toDateStr);
 
     if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
       prodQuery = prodQuery.in('location_id', effectiveLocationIds);
     }
 
-    const { data: productSales } = await prodQuery;
+    const { data: productSales, error: prodError } = await prodQuery;
+    if (prodError) {
+      console.warn('[inventory] product_sales_daily_unified query error:', prodError.message);
+    }
 
-    // Fetch waste events (simple select — no FK join to avoid PostgREST schema cache issues)
+    // ── Fetch waste events ──
     let wasteQuery = supabase
       .from('waste_events')
       .select('id, location_id, waste_value, reason, created_at, inventory_item_id')
@@ -251,24 +241,30 @@ export function useInventoryData(
 
     if (!isMountedRef.current) return;
 
-    // Calculate metrics from real data
+    // ── Calculate global metrics ──
     const totalSales = tickets.reduce((sum, t) => sum + (t.net_total || t.gross_total || 0), 0);
 
-    // Theoretical COGS from cogs_daily table
-    const theoreticalCOGS = (cogsRows || []).reduce((sum, r) => sum + (r.cogs_amount || 0), 0);
+    // COGS: derive from product_sales_daily_unified ratio (same source as Dashboard)
+    const totalProductSales = (productSales || []).reduce((sum, r: any) => sum + (Number(r.net_sales) || 0), 0);
+    const totalProductCogs = (productSales || []).reduce((sum, r: any) => sum + (Number(r.cogs) || 0), 0);
+    const cogsRatio = totalProductSales > 0 ? totalProductCogs / totalProductSales : 0.32;
 
+    // Theoretical COGS = Sales × COGS ratio (what COGS should be without waste)
+    const theoreticalCOGS = totalSales * cogsRatio;
+
+    // Waste
     const totalWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
-    // Actual COGS = theoretical + waste (no arbitrary multiplier)
+    // Actual COGS = theoretical + waste
     const actualCOGS = theoreticalCOGS + totalWaste;
 
+    // GP = Sales - COGS
     const theoreticalGP = totalSales - theoreticalCOGS;
     const actualGP = totalSales - actualCOGS;
-    const gapCOGS = actualCOGS - theoreticalCOGS;
+    const gapCOGS = actualCOGS - theoreticalCOGS;   // = totalWaste
 
-    // Accounted waste = waste events; unaccounted = gap beyond waste events
     const accountedWaste = totalWaste;
-    const unaccountedWaste = Math.max(0, gapCOGS - accountedWaste);
-    const surplus = 0;
+    const unaccountedWaste = 0;
+    const surplus = gapCOGS < 0 ? Math.abs(gapCOGS) : 0;
 
     setMetrics({
       totalSales,
@@ -291,7 +287,7 @@ export function useInventoryData(
       surplus
     });
 
-    // Category breakdown: distribute total COGS proportionally by category sales share
+    // ── Category breakdown ──
     const categoryMap = new Map<string, { actual: number; theoretical: number }>();
     ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
       categoryMap.set(cat, { actual: 0, theoretical: 0 });
@@ -303,27 +299,32 @@ export function useInventoryData(
       if (lower === 'bebidas' || lower === 'beverage' || lower.includes('drink') || lower.includes('wine') || lower.includes('beer')) {
         return 'Beverage';
       }
-      if (['entrantes', 'carnes', 'pescados', 'pastas', 'postres', 'food', 'plato'].some(k => lower.includes(k))) {
+      if (['entrantes', 'carnes', 'pescados', 'pastas', 'postres', 'food', 'plato', 'principales'].some(k => lower.includes(k))) {
         return 'Food';
       }
       return 'Miscellaneous';
     };
 
-    // First accumulate product sales per bucket to get category share
+    // Accumulate COGS per bucket from product_sales_daily_unified
     const categorySalesMap = new Map<string, number>();
-    let totalProductSales = 0;
+    const categoryCOGSMap = new Map<string, number>();
     (productSales || []).forEach((row: any) => {
       const mappedCat = mapToBucket(row.product_category);
       const sales = Number(row.net_sales) || 0;
+      const cogs = Number(row.cogs) || 0;
       categorySalesMap.set(mappedCat, (categorySalesMap.get(mappedCat) || 0) + sales);
-      totalProductSales += sales;
+      categoryCOGSMap.set(mappedCat, (categoryCOGSMap.get(mappedCat) || 0) + cogs);
     });
 
-    // Distribute the total cogs_daily COGS proportionally by category sales share
-    categorySalesMap.forEach((catSales, bucket) => {
-      const share = totalProductSales > 0 ? catSales / totalProductSales : 0;
-      const catCogs = theoreticalCOGS * share;
-      categoryMap.set(bucket, { actual: catCogs, theoretical: catCogs });
+    // Distribute COGS proportionally using sales × per-category COGS ratio
+    categorySalesMap.forEach((catProductSales, bucket) => {
+      const catCogs = categoryCOGSMap.get(bucket) || 0;
+      const catRatio = catProductSales > 0 ? catCogs / catProductSales : 0.32;
+      // Apply ratio to actual sales (from sales_daily_unified) proportionally
+      const catSalesShare = totalProductSales > 0 ? catProductSales / totalProductSales : 0;
+      const catActualSales = totalSales * catSalesShare;
+      const catTheoreticalCOGS = catActualSales * catRatio;
+      categoryMap.set(bucket, { actual: catTheoreticalCOGS, theoretical: catTheoreticalCOGS });
     });
 
     setCategoryBreakdown(Array.from(categoryMap.entries()).map(([category, data]) => ({
@@ -334,13 +335,12 @@ export function useInventoryData(
       theoreticalAmount: data.theoretical
     })));
 
-    // Waste by category — distribute proportionally using the same category sales shares
+    // ── Waste by category ──
     const wasteByCat = new Map<string, { accounted: number; unaccounted: number }>();
     ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
       wasteByCat.set(cat, { accounted: 0, unaccounted: 0 });
     });
 
-    // Distribute total waste across categories based on product sales mix
     categorySalesMap.forEach((catSales, bucket) => {
       const share = totalProductSales > 0 ? catSales / totalProductSales : 0;
       const existing = wasteByCat.get(bucket) || { accounted: 0, unaccounted: 0 };
@@ -348,30 +348,34 @@ export function useInventoryData(
       wasteByCat.set(bucket, existing);
     });
 
-    const totalAccounted = Array.from(wasteByCat.values()).reduce((s, v) => s + v.accounted, 0);
-    if (totalAccounted > 0 && unaccountedWaste > 0) {
-      wasteByCat.forEach((val) => {
-        val.unaccounted = unaccountedWaste * (val.accounted / totalAccounted);
-      });
-    }
-
     setWasteByCategory(Array.from(wasteByCat.entries()).map(([category, data]) => ({
       category,
       accounted: data.accounted,
       unaccounted: data.unaccounted
     })));
 
-    // Waste by location
-    const wasteByLoc = new Map<string, { accounted: number; unaccounted: number }>();
+    // ── Per-location sales, COGS, waste maps ──
     const salesByLoc = new Map<string, number>();
-    const cogsByLoc = new Map<string, number>();
+    const cogsByLoc = new Map<string, number>();     // from product view
+    const cogsPctByLoc = new Map<string, number>();  // COGS ratio per location
+    const wasteByLoc = new Map<string, { accounted: number; unaccounted: number }>();
 
     tickets.forEach(t => {
       salesByLoc.set(t.location_id, (salesByLoc.get(t.location_id) || 0) + (t.net_total || t.gross_total || 0));
     });
 
-    (cogsRows || []).forEach(r => {
-      cogsByLoc.set(r.location_id, (cogsByLoc.get(r.location_id) || 0) + (r.cogs_amount || 0));
+    // Per-location COGS from product view
+    const locProductSalesMap = new Map<string, number>();
+    const locProductCOGSMap = new Map<string, number>();
+    (productSales || []).forEach((row: any) => {
+      const lid = row.location_id;
+      locProductSalesMap.set(lid, (locProductSalesMap.get(lid) || 0) + (Number(row.net_sales) || 0));
+      locProductCOGSMap.set(lid, (locProductCOGSMap.get(lid) || 0) + (Number(row.cogs) || 0));
+    });
+
+    locProductSalesMap.forEach((lpSales, lid) => {
+      const lpCogs = locProductCOGSMap.get(lid) || 0;
+      cogsPctByLoc.set(lid, lpSales > 0 ? lpCogs / lpSales : 0.32);
     });
 
     (wasteEvents || []).forEach((w: any) => {
@@ -380,40 +384,45 @@ export function useInventoryData(
       wasteByLoc.set(w.location_id, existing);
     });
 
+    // ── Waste by location ──
     setWasteByLocation(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
       const data = wasteByLoc.get(loc.id) || { accounted: 0, unaccounted: 0 };
       const locSales = salesByLoc.get(loc.id) || 0;
-      const locUnaccounted = locSales > 0 ? locSales * 0.005 : 0;
 
       return {
         locationId: loc.id,
         locationName: loc.name,
         accountedPercent: locSales > 0 ? (data.accounted / locSales) * 100 : 0,
         accountedAmount: data.accounted,
-        unaccountedPercent: locSales > 0 ? (locUnaccounted / locSales) * 100 : 0,
-        unaccountedAmount: locUnaccounted,
+        unaccountedPercent: 0,
+        unaccountedAmount: 0,
         hasStockCount: false
       };
     }));
 
-    // Location performance using cogs_daily per location
+    // ── Location Performance (GP-based) ──
     setLocationPerformance(locations.filter(l => effectiveLocationIds.includes(l.id)).map(loc => {
       const locSales = salesByLoc.get(loc.id) || 0;
-      const locTheoreticalCOGS = cogsByLoc.get(loc.id) || 0;
-      const locWaste = (wasteByLoc.get(loc.id)?.accounted || 0);
+      const locCOGSPct = cogsPctByLoc.get(loc.id) || cogsRatio;
+      const locTheoreticalCOGS = locSales * locCOGSPct;
+      const locWaste = wasteByLoc.get(loc.id)?.accounted || 0;
       const locActualCOGS = locTheoreticalCOGS + locWaste;
-      const locVariance = locActualCOGS - locTheoreticalCOGS;
+
+      // GP = Sales - COGS
+      const theoreticalGPLoc = locSales - locTheoreticalCOGS;
+      const actualGPLoc = locSales - locActualCOGS;
+      const variance = actualGPLoc - theoreticalGPLoc;
 
       return {
         locationId: loc.id,
         locationName: loc.name,
         sales: locSales,
-        theoreticalValue: locTheoreticalCOGS,
-        theoreticalPercent: locSales > 0 ? (locTheoreticalCOGS / locSales) * 100 : 0,
-        actualValue: locActualCOGS,
-        actualPercent: locSales > 0 ? (locActualCOGS / locSales) * 100 : 0,
-        variancePercent: locSales > 0 ? (locVariance / locSales) * 100 : 0,
-        varianceAmount: locVariance,
+        theoreticalValue: theoreticalGPLoc,
+        theoreticalPercent: locSales > 0 ? (theoreticalGPLoc / locSales) * 100 : 0,
+        actualValue: actualGPLoc,
+        actualPercent: locSales > 0 ? (actualGPLoc / locSales) * 100 : 0,
+        variancePercent: locSales > 0 ? (variance / locSales) * 100 : 0,
+        varianceAmount: variance,
         hasStockCount: false
       };
     }));
