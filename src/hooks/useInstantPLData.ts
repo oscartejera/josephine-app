@@ -162,20 +162,19 @@ export function useInstantPLData({
       const result = rpcResult as unknown as RPCResponse;
       const rpcLocations = result?.locations || [];
 
-      // Map RPC rows to full LocationPLMetrics (add COGS estimation + deltas)
+      // Map RPC rows to full LocationPLMetrics (add deltas)
       const locationMetrics: LocationPLMetrics[] = rpcLocations.map((loc: any) => {
-        // RPC returns snake_case keys
+        // RPC returns snake_case keys — all from unified views (Sales page + Dashboard sources)
         const salesActual = loc.actual_sales || 0;
         const salesForecast = loc.forecast_sales || 0;
         const labourActual = loc.actual_labour || 0;
-        const labourHoursActual = loc.labour_hours_actual || 0;
+        const labourHoursActual = loc.actual_labour_hours || 0;
         const labourForecast = loc.forecast_labour || 0;
-        // Mark labour as estimated when actual is 0 but sales exist
         const estimatedLabour = loc.estimated_labour || (labourActual === 0 && salesActual > 0);
 
-        // COGS from RPC (actual_cogs from stock_movements or estimated)
+        // COGS from RPC (product_sales_daily_unified_mv — same as Dashboard)
         const cogsActual: number | null = loc.actual_cogs != null ? Number(loc.actual_cogs) : null;
-        const cogsForecast: number | null = salesForecast > 0 ? salesForecast * 0.32 : null;
+        const cogsForecast: number | null = loc.forecast_cogs != null ? Number(loc.forecast_cogs) : null;
 
         // Calculate percentages
         const cogsActualPct = cogsActual != null && salesActual > 0 ? (cogsActual / salesActual) * 100 : null;
@@ -199,9 +198,9 @@ export function useInstantPLData({
         const flashProfitDelta = flashProfitActual != null && flashProfitForecast != null ? flashProfitActual - flashProfitForecast : null;
         const flashProfitDeltaPct = flashProfitDelta != null && flashProfitForecast != null && flashProfitForecast > 0 ? (flashProfitDelta / flashProfitForecast) * 100 : null;
 
-        // Labour hours
-        const hourlyRate = labourHoursActual > 0 ? labourActual / labourHoursActual : 20;
-        const labourHoursForecastCalc = hourlyRate > 0 ? labourForecast / hourlyRate : 0;
+        // Labour hours (forecast from RPC directly)
+        const labourHoursForecastCalc = loc.forecast_labour_hours || (labourHoursActual > 0 && labourForecast > 0
+          ? labourForecast / (labourActual / labourHoursActual) : 0);
 
         return {
           locationId: loc.location_id,

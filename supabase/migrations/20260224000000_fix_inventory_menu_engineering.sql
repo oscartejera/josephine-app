@@ -243,3 +243,90 @@ $function$;
 -- ---------------------------------------------------------------------------
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ---------------------------------------------------------------------------
+-- 6. Rewrite get_instant_pnl_unified RPC (use same data sources as Sales/Dashboard)
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.get_instant_pnl_unified(
+  p_org_id uuid,
+  p_location_ids uuid[],
+  p_from date,
+  p_to date
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE SECURITY DEFINER
+AS $function$
+DECLARE v_ds jsonb; v_locs jsonb;
+BEGIN
+  v_ds := resolve_data_source(p_org_id);
+
+  SELECT COALESCE(jsonb_agg(row_to_json(r)::jsonb), '[]'::jsonb) INTO v_locs
+  FROM (
+    SELECT
+      l.id AS location_id,
+      l.name AS location_name,
+      COALESCE(s.net_sales, 0)::numeric       AS actual_sales,
+      COALESCE(f.forecast_sales, 0)::numeric   AS forecast_sales,
+      COALESCE(cg.cogs, 0)::numeric            AS actual_cogs,
+      CASE WHEN COALESCE(s.net_sales, 0) > 0
+        THEN ROUND(COALESCE(f.forecast_sales, 0) * (COALESCE(cg.cogs, 0) / s.net_sales), 2)
+        ELSE ROUND(COALESCE(f.forecast_sales, 0) * 0.32, 2)
+      END::numeric                             AS forecast_cogs,
+      COALESCE(lab.actual_cost, 0)::numeric    AS actual_labour,
+      COALESCE(lab.actual_hours, 0)::numeric   AS actual_labour_hours,
+      COALESCE(f.planned_labor_cost, 0)::numeric AS forecast_labour,
+      COALESCE(f.planned_labor_hours, 0)::numeric AS forecast_labour_hours,
+      (COALESCE(s.net_sales, 0) - COALESCE(cg.cogs, 0) - COALESCE(lab.actual_cost, 0))::numeric AS actual_gp,
+      (COALESCE(f.forecast_sales, 0)
+        - CASE WHEN COALESCE(s.net_sales, 0) > 0
+            THEN ROUND(COALESCE(f.forecast_sales, 0) * (COALESCE(cg.cogs, 0) / s.net_sales), 2)
+            ELSE ROUND(COALESCE(f.forecast_sales, 0) * 0.32, 2)
+          END
+        - COALESCE(f.planned_labor_cost, 0))::numeric AS forecast_gp,
+      true AS estimated_cogs,
+      CASE WHEN COALESCE(lab.actual_cost, 0) = 0 AND COALESCE(s.net_sales, 0) > 0
+        THEN true ELSE false END AS estimated_labour
+    FROM locations l
+    LEFT JOIN (
+      SELECT location_id, SUM(net_sales) AS net_sales
+      FROM sales_daily_unified
+      WHERE org_id = p_org_id AND date BETWEEN p_from AND p_to
+      GROUP BY 1
+    ) s ON s.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id,
+        SUM(forecast_sales) AS forecast_sales,
+        SUM(planned_labor_cost) AS planned_labor_cost,
+        SUM(planned_labor_hours) AS planned_labor_hours
+      FROM forecast_daily_unified
+      WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
+      GROUP BY 1
+    ) f ON f.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, SUM(actual_cost) AS actual_cost, SUM(actual_hours) AS actual_hours
+      FROM labour_daily_unified
+      WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
+      GROUP BY 1
+    ) lab ON lab.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, SUM(cogs) AS cogs
+      FROM product_sales_daily_unified_mv
+      WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
+      GROUP BY 1
+    ) cg ON cg.location_id = l.id
+    WHERE l.id = ANY(p_location_ids) AND l.active = true
+  ) r;
+
+  RETURN jsonb_build_object(
+    'data_source', v_ds->>'data_source',
+    'mode', v_ds->>'mode',
+    'reason', v_ds->>'reason',
+    'last_synced_at', v_ds->>'last_synced_at',
+    'locations', v_locs,
+    'flags', jsonb_build_object('estimated_cogs', true, 'cogs_note', 'COGS from category-based MV estimates')
+  );
+END;
+$function$;
