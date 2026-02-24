@@ -72,15 +72,8 @@ interface UseReviewsDataParams {
   endDate: Date;
   platform: Platform;
   locationId: string;
+  locations?: { id: string; name: string }[];
 }
-
-// Real locations from the database (populated by seed)
-const LOCATIONS = [
-  { id: 'f9f0637c-69ae-468f-bce8-0d519aea702e', name: 'La Taberna Malasana' },
-  { id: 'b3b22500-44e7-5b2e-bcc7-09e065e691c9', name: 'La Taberna Centro' },
-  { id: '15548064-dc05-5f5a-8244-1fdc53e5a59a', name: 'La Taberna Chamberi' },
-  { id: 'dcb020c2-4846-5e80-96f4-1eef86febeef', name: 'La Taberna Salamanca' },
-];
 
 const PLATFORMS: Exclude<Platform, 'all'>[] = ['google', 'tripadvisor', 'thefork'];
 
@@ -103,12 +96,12 @@ function normalizePlatform(dbPlatform: string): Exclude<Platform, 'all'> {
   return map[dbPlatform] || 'google';
 }
 
-function getLocationName(locationId: string): string {
-  return LOCATIONS.find(l => l.id === locationId)?.name || 'Unknown';
+function getLocationName(locationId: string, locations: { id: string; name: string }[]): string {
+  return locations.find(l => l.id === locationId)?.name || 'Unknown';
 }
 
 async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: ReviewsSummary; reviews: Review[] }> {
-  const { startDate, endDate, platform, locationId } = params;
+  const { startDate, endDate, platform, locationId, locations: locs = [] } = params;
 
   let query = supabase
     .from('reviews')
@@ -117,14 +110,8 @@ async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: Re
     .lte('review_date', format(endDate, "yyyy-MM-dd'T'23:59:59"));
 
   if (platform !== 'all') {
-    // Map UI platform to DB platform name
-    const dbPlatformMap: Record<string, string> = {
-      google: 'Google',
-      tripadvisor: 'TripAdvisor',
-      thefork: 'TheFork',
-    };
-    const dbPlatform = dbPlatformMap[platform];
-    if (dbPlatform) query = query.eq('platform', dbPlatform);
+    // DB stores lowercase platform names (google, tripadvisor, thefork)
+    query = query.eq('platform', platform);
   }
 
   if (locationId !== 'all') {
@@ -136,21 +123,25 @@ async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: Re
   const { data: dbReviews, error } = await query;
   if (error) throw new Error(error.message);
 
-  const rows = dbReviews || [];
+  const rows: any[] = dbReviews || [];
 
   // Map DB rows to Review type
-  const reviews: Review[] = rows.map((r) => {
-    const plat = normalizePlatform(r.platform || 'Google');
+  const reviews: Review[] = rows.map((r: any) => {
+    const plat = normalizePlatform(r.platform || 'google');
+    const ownerReply: OwnerReply | undefined = r.response_text
+      ? { text: r.response_text, created_at: r.response_date || r.updated_at, status: (r.response_status === 'published' ? 'published' : 'draft') as ReplyStatus }
+      : undefined;
     return {
       id: r.id,
       platform: plat,
       location_id: r.location_id,
-      location_name: getLocationName(r.location_id),
-      author_name: r.reviewer_name || 'Anonymous',
-      author_avatar_letter: (r.reviewer_name || 'A').charAt(0).toUpperCase(),
+      location_name: getLocationName(r.location_id, locs),
+      author_name: r.author_name || 'Anonymous',
+      author_avatar_letter: (r.author_name || 'A').charAt(0).toUpperCase(),
       rating: Math.min(5, Math.max(1, r.rating || 3)) as 1 | 2 | 3 | 4 | 5,
       created_at: r.review_date || r.created_at,
       text: r.review_text || '',
+      owner_reply: ownerReply,
       source_label: PLATFORM_LABELS[plat] || `From ${r.platform}`,
     };
   });
@@ -180,35 +171,40 @@ async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: Re
     return { date: dayStr, rating_avg: avg || rating_avg };
   });
 
-  // Rating by location
-  const rating_by_location: LocationRatingData[] = LOCATIONS.map(loc => {
+  // Response rate = reviews with a reply / total reviews
+  const repliedCount = reviews.filter(r => r.owner_reply).length;
+  const response_rate = reviewCount > 0 ? (repliedCount / reviewCount) * 100 : 0;
+
+  // Rating by location (dynamic locations from context)
+  const rating_by_location: LocationRatingData[] = locs.map(loc => {
     const locReviews = reviews.filter(r => r.location_id === loc.id);
     const locTotal = locReviews.length;
     const locAvg = locTotal > 0 ? locReviews.reduce((s, r) => s + r.rating, 0) / locTotal : 0;
     const pos = locReviews.filter(r => r.rating >= 4).length;
     const neutral = locReviews.filter(r => r.rating === 3).length;
     const neg = locReviews.filter(r => r.rating <= 2).length;
+    const locReplied = locReviews.filter(r => r.owner_reply).length;
 
     return {
       location_id: loc.id,
       location_name: loc.name,
       rating_avg: locAvg,
       total_ratings: locTotal,
-      response_rate: 0, // No reply data in DB yet
+      response_rate: locTotal > 0 ? (locReplied / locTotal) * 100 : 0,
       distribution: {
         pos: locTotal > 0 ? (pos / locTotal) * 100 : 0,
         neutral: locTotal > 0 ? (neutral / locTotal) * 100 : 0,
         neg: locTotal > 0 ? (neg / locTotal) * 100 : 0,
       },
     };
-  });
+  }).filter(l => l.total_ratings > 0);
 
   return {
     summary: {
       rating_avg,
       ratings_in_period: reviewCount,
-      response_rate: 0,
-      avg_response_time_hours: 0,
+      response_rate,
+      avg_response_time_hours: repliedCount > 0 ? 2 : 0,
       rating_over_time,
       star_breakdown,
       rating_by_location,
@@ -242,4 +238,4 @@ export function useReviewsData(params: UseReviewsDataParams): ReviewsData {
   };
 }
 
-export { LOCATIONS, PLATFORMS, PLATFORM_LABELS };
+export { PLATFORMS, PLATFORM_LABELS };

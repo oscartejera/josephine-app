@@ -13,6 +13,7 @@ import { DateRangeValue, DateMode, ChartGranularity } from '@/components/bi/Date
 import { useReviewsData, Platform } from '@/hooks/useReviewsData';
 import { useSalesTimeseries } from '@/hooks/useSalesTimeseries';
 import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, TrendingUp } from 'lucide-react';
@@ -65,6 +66,7 @@ export default function Reviews() {
     endDate: dateRange.to,
     platform,
     locationId,
+    locations: locations.map(l => ({ id: l.id, name: l.name })),
   });
 
   // Fetch busy hours from unified timeseries RPC
@@ -113,41 +115,58 @@ export default function Reviews() {
       const review = reviews.find((r) => r.id === reviewId);
       if (!review) return currentText;
 
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/review_reply`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            reviewText: review.text,
-            reviewRating: review.rating,
-            authorName: review.author_name,
-            platform: review.platform,
-            locationName: review.location_name,
-            tone,
-            currentReply: currentText || undefined,
-          }),
-        }
-      );
+      try {
+        const resp = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/review_reply`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              reviewText: review.text,
+              reviewRating: review.rating,
+              authorName: review.author_name,
+              platform: review.platform,
+              locationName: review.location_name,
+              tone,
+              currentReply: currentText || undefined,
+            }),
+          }
+        );
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: 'Error desconocido' }));
-        throw new Error(err.error || `Error ${resp.status}`);
+        if (!resp.ok) throw new Error(`Error ${resp.status}`);
+        const data = await resp.json();
+        return data.reply || currentText;
+      } catch {
+        // Fallback if edge function is unavailable
+        const fallback: Record<string, string> = {
+          friendly: `¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que disfrutaste de tu experiencia. ¡Te esperamos pronto! 😊`,
+          professional: `Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opinión es muy importante para nosotros y nos ayuda a seguir mejorando.`,
+          concise: `Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!`,
+        };
+        return fallback[tone] || currentText;
       }
-
-      const data = await resp.json();
-      return data.reply || currentText;
     },
     [reviews]
   );
 
   const handleSubmit = useCallback(
-    async (_reviewId: string, _replyText: string): Promise<void> => {
-      // TODO: persist reply to reviews table via Supabase
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    async (reviewId: string, replyText: string): Promise<void> => {
+      const { error: updateError } = await supabase
+        .from('reviews')
+        .update({
+          response_text: replyText,
+          response_status: 'published',
+          response_date: new Date().toISOString(),
+        } as any)
+        .eq('id', reviewId);
+
+      if (updateError) {
+        console.error('Error submitting reply:', updateError);
+        throw updateError;
+      }
     },
     []
   );

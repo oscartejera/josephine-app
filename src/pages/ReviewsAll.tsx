@@ -14,11 +14,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ReviewCard } from '@/components/reviews/ReviewCard';
-import { useReviewsData, Platform, LOCATIONS } from '@/hooks/useReviewsData';
+import { useReviewsData, Platform } from '@/hooks/useReviewsData';
+import { useApp } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ReviewsAll() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { locations } = useApp();
 
   const getInitialDateRange = (): DateRangeValue => {
     const startParam = searchParams.get('start_date');
@@ -62,6 +65,7 @@ export default function ReviewsAll() {
     endDate: dateRange.to,
     platform,
     locationId,
+    locations: locations.map(l => ({ id: l.id, name: l.name })),
   });
 
   const handleDateChange = useCallback(
@@ -74,24 +78,65 @@ export default function ReviewsAll() {
 
   const handleRefine = useCallback(
     async (
-      _reviewId: string,
+      reviewId: string,
       tone: 'friendly' | 'professional' | 'concise',
       currentText: string
     ): Promise<string> => {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const toneResponses: Record<string, string> = {
-        friendly: `Hey there! Thanks so much for taking the time to leave us a review. We really appreciate your feedback! 😊`,
-        professional: `Thank you for your valued feedback. We appreciate you taking the time to share your experience with us.`,
-        concise: `Thanks for the feedback! We appreciate it.`,
-      };
-      return toneResponses[tone] || currentText;
+      const review = reviews.find((r) => r.id === reviewId);
+      if (!review) return currentText;
+
+      try {
+        const resp = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/review_reply`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              reviewText: review.text,
+              reviewRating: review.rating,
+              authorName: review.author_name,
+              platform: review.platform,
+              locationName: review.location_name,
+              tone,
+              currentReply: currentText || undefined,
+            }),
+          }
+        );
+
+        if (!resp.ok) throw new Error(`Error ${resp.status}`);
+        const data = await resp.json();
+        return data.reply || currentText;
+      } catch {
+        // Fallback if edge function is unavailable
+        const fallback: Record<string, string> = {
+          friendly: `¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que disfrutaste de tu experiencia. ¡Te esperamos pronto! 😊`,
+          professional: `Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opinión es muy importante para nosotros y nos ayuda a seguir mejorando.`,
+          concise: `Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!`,
+        };
+        return fallback[tone] || currentText;
+      }
     },
-    []
+    [reviews]
   );
 
   const handleSubmit = useCallback(
-    async (_reviewId: string, _replyText: string): Promise<void> => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+    async (reviewId: string, replyText: string): Promise<void> => {
+      const { error: updateError } = await supabase
+        .from('reviews')
+        .update({
+          response_text: replyText,
+          response_status: 'published',
+          response_date: new Date().toISOString(),
+        } as any)
+        .eq('id', reviewId);
+
+      if (updateError) {
+        console.error('Error submitting reply:', updateError);
+        throw updateError;
+      }
     },
     []
   );
@@ -148,7 +193,7 @@ export default function ReviewsAll() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
-                {LOCATIONS.map((loc) => (
+                {locations.map((loc) => (
                   <SelectItem key={loc.id} value={loc.id}>
                     {loc.name}
                   </SelectItem>
