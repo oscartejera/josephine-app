@@ -110,8 +110,14 @@ async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: Re
     .lte('review_date', format(endDate, "yyyy-MM-dd'T'23:59:59"));
 
   if (platform !== 'all') {
-    // DB stores lowercase platform names (google, tripadvisor, thefork)
-    query = query.eq('platform', platform);
+    // DB stores Capitalized platform names (Google, TripAdvisor, TheFork)
+    const dbPlatformMap: Record<string, string> = {
+      google: 'Google',
+      tripadvisor: 'TripAdvisor',
+      thefork: 'TheFork',
+    };
+    const dbPlatform = dbPlatformMap[platform];
+    if (dbPlatform) query = query.eq('platform', dbPlatform);
   }
 
   if (locationId !== 'all') {
@@ -127,17 +133,17 @@ async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: Re
 
   // Map DB rows to Review type
   const reviews: Review[] = rows.map((r: any) => {
-    const plat = normalizePlatform(r.platform || 'google');
+    const plat = normalizePlatform(r.platform || 'Google');
     const ownerReply: OwnerReply | undefined = r.response_text
-      ? { text: r.response_text, created_at: r.response_date || r.updated_at, status: (r.response_status === 'published' ? 'published' : 'draft') as ReplyStatus }
+      ? { text: r.response_text, created_at: r.response_date || r.created_at, status: (r.response_status === 'published' ? 'published' : 'draft') as ReplyStatus }
       : undefined;
     return {
       id: r.id,
       platform: plat,
       location_id: r.location_id,
       location_name: getLocationName(r.location_id, locs),
-      author_name: r.author_name || 'Anonymous',
-      author_avatar_letter: (r.author_name || 'A').charAt(0).toUpperCase(),
+      author_name: r.reviewer_name || 'Anonymous',
+      author_avatar_letter: (r.reviewer_name || 'A').charAt(0).toUpperCase(),
       rating: Math.min(5, Math.max(1, r.rating || 3)) as 1 | 2 | 3 | 4 | 5,
       created_at: r.review_date || r.created_at,
       text: r.review_text || '',
