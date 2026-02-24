@@ -27,30 +27,32 @@ function formatCurrency(value: number, compact = false): string {
 }
 
 // Format percentage
-function formatPct(value: number): string {
+function formatPct(value: number | null | undefined): string {
+  if (value == null) return '—';
   return `${value.toFixed(1)}%`;
 }
 
 // Format hours
-function formatHours(value: number): string {
+function formatHours(value: number | null | undefined): string {
+  if (value == null) return '—';
   return `${value.toFixed(1)}h`;
 }
 
 // Delta badge component
-function DeltaBadge({ 
-  value, 
-  isBetter, 
-  isPercentage = true 
-}: { 
-  value: number; 
+function DeltaBadge({
+  value,
+  isBetter,
+  isPercentage = true
+}: {
+  value: number;
   isBetter: boolean;
   isPercentage?: boolean;
 }) {
   const isPositive = value > 0;
-  const displayValue = isPercentage 
-    ? `${isPositive ? '↑' : '↓'} ${Math.abs(value).toFixed(1)}%`
-    : `${isPositive ? '↑' : '↓'} ${formatCurrency(Math.abs(value), true)}`;
-  
+  const displayValue = isPercentage
+    ? `${isPositive ? '↑' : '↓'} ${Math.abs(value ?? 0).toFixed(1)}%`
+    : `${isPositive ? '↑' : '↓'} ${formatCurrency(Math.abs(value ?? 0), true)}`;
+
   return (
     <span
       className={cn(
@@ -107,7 +109,7 @@ function MetricRow({
       </p>
     </>
   );
-  
+
   if (tooltipContent) {
     return (
       <Tooltip>
@@ -122,7 +124,7 @@ function MetricRow({
       </Tooltip>
     );
   }
-  
+
   return (
     <div className="py-2.5 border-b border-border/40 last:border-b-0">
       {innerContent}
@@ -130,14 +132,14 @@ function MetricRow({
   );
 }
 
-export function LocationPLCard({ 
-  data, 
-  viewMode, 
+export function LocationPLCard({
+  data,
+  viewMode,
   isSelected = false,
-  onClick 
+  onClick
 }: LocationPLCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  
+
   // Compute display values based on view mode
   const getSalesDisplay = () => ({
     actualPrimary: formatCurrency(data.salesActual),
@@ -145,7 +147,7 @@ export function LocationPLCard({
     forecastPrimary: formatCurrency(data.salesForecast),
     forecastSecondary: undefined
   });
-  
+
   const getCogsDisplay = () => {
     if (data.cogsActual == null) {
       return {
@@ -170,7 +172,7 @@ export function LocationPLCard({
       forecastSecondary: formatPct(data.cogsForecastPct ?? 0)
     };
   };
-  
+
   const getLabourDisplay = () => {
     if (viewMode === 'hours') {
       return {
@@ -195,7 +197,7 @@ export function LocationPLCard({
       forecastSecondary: formatPct(data.labourForecastPct)
     };
   };
-  
+
   const getFlashProfitDisplay = () => {
     // Flash Profit is data-driven: requires COGS to be meaningful
     if (data.flashProfitActual == null) {
@@ -221,19 +223,19 @@ export function LocationPLCard({
       forecastSecondary: formatPct(data.flashProfitForecastPct ?? 0)
     };
   };
-  
+
   const salesDisplay = getSalesDisplay();
   const cogsDisplay = getCogsDisplay();
   const labourDisplay = getLabourDisplay();
   const flashProfitDisplay = getFlashProfitDisplay();
-  
+
   return (
     <div
       className={cn(
         "flex-shrink-0 w-[260px] bg-card rounded-xl border transition-all cursor-pointer",
         isHovered ? "shadow-lg" : "shadow-sm",
-        isSelected 
-          ? "border-primary ring-1 ring-primary/30" 
+        isSelected
+          ? "border-primary ring-1 ring-primary/30"
           : "border-border/60 hover:border-border"
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -244,7 +246,7 @@ export function LocationPLCard({
       <div className="px-4 py-3 border-b border-border/40">
         <h3 className="font-semibold text-sm">{data.locationName}</h3>
       </div>
-      
+
       {/* Metrics */}
       <div className="px-4">
         <MetricRow
@@ -256,7 +258,7 @@ export function LocationPLCard({
           delta={data.salesDeltaPct}
           isBetter={data.salesDelta >= 0}
         />
-        
+
         <MetricRow
           label="CoGS"
           actualPrimary={cogsDisplay.actualPrimary}
@@ -267,7 +269,7 @@ export function LocationPLCard({
           isBetter={data.cogsIsBetter}
           tooltipContent={`Average CoGS across all locations. Lower is better.`}
         />
-        
+
         <MetricRow
           label={viewMode === 'hours' ? 'Labour Hours' : 'Cost of Labour'}
           actualPrimary={labourDisplay.actualPrimary}
@@ -278,7 +280,7 @@ export function LocationPLCard({
           isBetter={data.labourIsBetter}
           tooltipContent={`Labour cost compared to forecast. Under planned is better.`}
         />
-        
+
         <MetricRow
           label="Flash Profit"
           actualPrimary={flashProfitDisplay.actualPrimary}
@@ -289,7 +291,7 @@ export function LocationPLCard({
           isBetter={data.flashProfitIsBetter}
         />
       </div>
-      
+
       {/* Bottom padding */}
       <div className="h-3" />
     </div>

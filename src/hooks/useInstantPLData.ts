@@ -159,22 +159,23 @@ export function useInstantPLData({
       const ctx = buildQueryContext(orgId, locationIds, dataSource);
       const rpcResult = await getInstantPnlRpc(ctx, { from: fromDate, to: toDate });
 
-      const result = rpcResult as RPCResponse;
+      const result = rpcResult as unknown as RPCResponse;
       const rpcLocations = result?.locations || [];
 
       // Map RPC rows to full LocationPLMetrics (add COGS estimation + deltas)
-      const locationMetrics: LocationPLMetrics[] = rpcLocations.map((loc: RPCLocationRow) => {
-        const salesActual = loc.salesActual || 0;
-        const salesForecast = loc.salesForecast || 0;
-        const labourActual = loc.labourActual || 0;
-        const labourHoursActual = loc.labourHoursActual || 0;
-        const labourForecast = loc.labourForecast || 0;
+      const locationMetrics: LocationPLMetrics[] = rpcLocations.map((loc: any) => {
+        // RPC returns snake_case keys
+        const salesActual = loc.actual_sales || 0;
+        const salesForecast = loc.forecast_sales || 0;
+        const labourActual = loc.actual_labour || 0;
+        const labourHoursActual = loc.labour_hours_actual || 0;
+        const labourForecast = loc.forecast_labour || 0;
         // Mark labour as estimated when actual is 0 but sales exist
         const estimatedLabour = loc.estimated_labour || (labourActual === 0 && salesActual > 0);
 
-        // COGS: null = not configured (no recipe costs / COGS feed)
-        const cogsActual: number | null = null;
-        const cogsForecast: number | null = null;
+        // COGS from RPC (actual_cogs from stock_movements or estimated)
+        const cogsActual: number | null = loc.actual_cogs != null ? Number(loc.actual_cogs) : null;
+        const cogsForecast: number | null = salesForecast > 0 ? salesForecast * 0.32 : null;
 
         // Calculate percentages
         const cogsActualPct = cogsActual != null && salesActual > 0 ? (cogsActual / salesActual) * 100 : null;
@@ -203,8 +204,8 @@ export function useInstantPLData({
         const labourHoursForecastCalc = hourlyRate > 0 ? labourForecast / hourlyRate : 0;
 
         return {
-          locationId: loc.locationId,
-          locationName: loc.locationName,
+          locationId: loc.location_id,
+          locationName: loc.location_name,
           salesActual,
           salesForecast,
           salesDelta,
@@ -236,7 +237,7 @@ export function useInstantPLData({
           isSalesAboveForecast: salesActual >= salesForecast * 1.10,
           isCogsBelow: false, // Calculated after all locations
           isUnderPlannedLabour: labourActual <= labourForecast,
-          estimatedCogs: true,
+          estimatedCogs: loc.estimated_cogs ?? true,
           estimatedLabour: estimatedLabour,
         };
       });

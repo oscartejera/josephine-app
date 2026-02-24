@@ -143,7 +143,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   const [selectedDayData, setSelectedDayData] = useState<any>(null);
 
   // Detect single-day (Today mode) → show hourly breakdown
-  const isSingleDayView = data.length === 1 || (data.length > 1 && isSameDay(new Date(data[0].date), new Date(data[data.length - 1].date)));
+  const isSingleDayView = data.length === 1 || (data.length > 1 && data[0].date && data[data.length - 1].date && isSameDay(new Date(data[0].date), new Date(data[data.length - 1].date)));
 
   // Transform data for chart - hourly for single day, daily for ranges
   // MUST be before any conditional return to respect React hooks rules
@@ -199,10 +199,12 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
       });
     }
 
-    return data.map(row => ({
-      ...row,
-      date: format(new Date(row.date), 'dd MMM'),
-    }));
+    return data
+      .filter(row => row.date && !isNaN(new Date(row.date).getTime()))
+      .map(row => ({
+        ...row,
+        date: format(new Date(row.date), 'dd MMM'),
+      }));
   }, [data, isSingleDayView]);
 
   if (isLoading || chartData.length === 0) {
@@ -231,7 +233,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
     const totalHours = dayData.actual_hours || 0;
     const totalPlannedHours = dayData.planned_hours || 0;
 
-    const hourlyData = operatingHours.map((slot) => {
+    const hourlyData = operatingHours.map((slot, idx) => {
       // Deterministic noise based on slot index — no Math.random
       const noise = 0.9 + (Math.sin(idx * 2.1 + 0.5) + 1) * 0.1;
       const actualSales = Math.round(totalSales * slot.weight * noise);
