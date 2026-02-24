@@ -85,21 +85,10 @@ export function useMenuEngineeringData() {
 
     try {
       const { from, to } = getDateRange();
-
       const ctx = buildQueryContext(orgId, [], dataSource);
-      const [rpcData, martResult] = await Promise.all([
-        getMenuEngineeringSummaryRpc(ctx, { from, to }, selectedLocationId),
-        // Fetch COGS from mart_sales_category_daily for real margins
-        supabase
-          .from('mart_sales_category_daily' as any)
-          .select('product_id, product_name, units_sold, net_sales, cogs, cogs_source')
-          .eq('org_id', orgId)
-          .gte('date', from)
-          .lte('date', to)
-          .then(({ data: d }) => d || []),
-      ]);
 
-      const data = rpcData;
+      // RPC now returns complete data: real categories, COGS, margins, K-S classification
+      const data = await getMenuEngineeringSummaryRpc(ctx, { from, to }, selectedLocationId);
 
       if (!data || data.length === 0) {
         setItems([]);
@@ -108,70 +97,36 @@ export function useMenuEngineeringData() {
         return;
       }
 
-      // Build COGS lookup from mart view (aggregated by product)
-      const martCogsMap = new Map<string, { cogs: number; source: CogsSource }>();
-      (martResult as any[]).forEach((r: any) => {
-        const pid = String(r.product_id);
-        const existing = martCogsMap.get(pid) || { cogs: 0, source: 'none' as CogsSource };
-        existing.cogs += Number(r.cogs) || 0;
-        if (r.cogs_source === 'recipe') existing.source = 'recipe';
-        else if (existing.source === 'none') existing.source = 'estimated';
-        martCogsMap.set(pid, existing);
-      });
+      // Map RPC results to typed items — RPC handles all calculations
+      const mappedItems: MenuEngineeringItem[] = data.map((row: Record<string, unknown>) => ({
+        product_id: row.product_id as string,
+        name: row.name as string,
+        category: row.category as string,
+        units: Number(row.units) || 0,
+        sales: Number(row.sales) || 0,
+        cogs: Number(row.cogs) || 0,
+        profit_eur: Number(row.profit_eur) || 0,
+        margin_pct: Number(row.margin_pct) || 0,
+        profit_per_sale: Number(row.profit_per_sale) || 0,
+        popularity_share: Number(row.popularity_share) || 0,
+        sales_share: Number(row.sales_share) || 0,
+        classification: (row.classification as Classification) || 'dog',
+        action_tag: (row.action_tag as string) || 'Revisar',
+        badges: (row.badges as string[]) || [],
+      }));
 
-      // Map to typed items, enriching COGS from mart view
-      const mappedItems: MenuEngineeringItem[] = data.map((row: Record<string, unknown>) => {
-        const productId = row.product_id as string;
-        const sales = Number(row.sales) || 0;
-        const units = Number(row.units) || 0;
-
-        // Use mart COGS if RPC returned 0
-        const rpcCogs = Number(row.cogs) || 0;
-        const martData = martCogsMap.get(productId);
-        const cogs = rpcCogs > 0 ? rpcCogs : (martData?.cogs ?? 0);
-        const profitEur = sales - cogs;
-        const marginPct = sales > 0 ? (profitEur / sales) * 100 : 0;
-        const profitPerSale = units > 0 ? profitEur / units : 0;
-
-        return {
-          product_id: productId,
-          name: row.name as string,
-          category: row.category as string,
-          units,
-          sales,
-          cogs,
-          profit_eur: profitEur,
-          margin_pct: marginPct,
-          profit_per_sale: profitPerSale,
-          popularity_share: Number(row.popularity_share) || 0,
-          sales_share: Number(row.sales_share) || 0,
-          classification: (row.classification as Classification) || 'dog',
-          action_tag: row.action_tag as string || 'Revisar',
-          badges: (row.badges as string[]) || [],
-        };
-      });
-
-      // Recompute classification with real margins
+      // Calculate stats from classified items
       const totalUnits = mappedItems.reduce((s, i) => s + i.units, 0);
-      const avgMargin = mappedItems.length > 0
-        ? mappedItems.reduce((s, i) => s + i.margin_pct, 0) / mappedItems.length
-        : 0;
-      const popThreshold = totalUnits > 0 && mappedItems.length > 0
+      const totalSales = mappedItems.reduce((s, i) => s + i.sales, 0);
+
+      // Kasavana-Smith thresholds (matching the RPC logic)
+      const popThreshold = mappedItems.length > 0
         ? (1 / mappedItems.length) * 0.7 * 100
         : 0;
+      const marginThreshold = totalUnits > 0
+        ? mappedItems.reduce((s, i) => s + i.profit_per_sale * i.units, 0) / totalUnits
+        : 0;
 
-      mappedItems.forEach(item => {
-        const isPopular = totalUnits > 0 && (item.units / totalUnits) * 100 >= popThreshold;
-        const isHighMargin = item.margin_pct >= avgMargin;
-
-        if (isPopular && isHighMargin) item.classification = 'star';
-        else if (isPopular && !isHighMargin) item.classification = 'plow_horse';
-        else if (!isPopular && isHighMargin) item.classification = 'puzzle';
-        else item.classification = 'dog';
-      });
-
-      // Calculate stats with real data
-      const totalSales = mappedItems.reduce((s, i) => s + i.sales, 0);
       const statsData: MenuEngineeringStats = {
         stars: mappedItems.filter(i => i.classification === 'star').length,
         plowHorses: mappedItems.filter(i => i.classification === 'plow_horse').length,
@@ -180,7 +135,7 @@ export function useMenuEngineeringData() {
         totalUnits,
         totalSales,
         popThreshold,
-        marginThreshold: avgMargin,
+        marginThreshold,
       };
 
       setItems(mappedItems);
@@ -228,7 +183,7 @@ export function useMenuEngineeringData() {
     if (!user) throw new Error('Not authenticated');
 
     const { error: insertError } = await supabase
-      .from('menu_engineering_actions')
+      .from('menu_engineering_actions' as any)
       .insert({
         user_id: user.id,
         location_id: selectedLocationId || null,

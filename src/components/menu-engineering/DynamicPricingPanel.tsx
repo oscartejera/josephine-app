@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import type { MenuEngineeringItem, MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
 
 interface PricingSuggestion {
@@ -36,6 +37,100 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
   const [error, setError] = useState<string | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
 
+  /** Rule-based pricing engine (Kasavana-Smith best practices) */
+  const generateLocalSuggestions = useCallback((menuItems: MenuEngineeringItem[]): PricingSuggestion[] => {
+    const results: PricingSuggestion[] = [];
+
+    // Sort by impact potential: plow horses first (high volume × small % = big €)
+    const plowHorses = menuItems
+      .filter(i => i.classification === 'plow_horse')
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 2);
+    const puzzles = menuItems
+      .filter(i => i.classification === 'puzzle')
+      .sort((a, b) => b.profit_per_sale - a.profit_per_sale)
+      .slice(0, 2);
+    const stars = menuItems
+      .filter(i => i.classification === 'star')
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 1);
+    const dogs = menuItems
+      .filter(i => i.classification === 'dog')
+      .sort((a, b) => a.margin_pct - b.margin_pct)
+      .slice(0, 1);
+
+    // Plow Horses → raise price 5% (high demand absorbs increase)
+    for (const item of plowHorses) {
+      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
+      const pctChange = 5;
+      const suggestedPrice = avgPrice * 1.05;
+      const monthlyImpact = Math.round(item.sales * 0.05);
+      results.push({
+        product: item.name,
+        current_price: Math.round(avgPrice * 100) / 100,
+        suggested_price: Math.round(suggestedPrice * 100) / 100,
+        change_pct: pctChange,
+        reason: `Alta demanda (${item.popularity_share.toFixed(1)}%), margen ${item.margin_pct.toFixed(0)}%. Puede absorber subida.`,
+        estimated_impact_eur: monthlyImpact,
+        priority: monthlyImpact > 300 ? 'high' : monthlyImpact > 100 ? 'medium' : 'low',
+      });
+    }
+
+    // Puzzles → decrease price 8% to gain volume
+    for (const item of puzzles) {
+      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
+      const pctChange = -8;
+      const suggestedPrice = avgPrice * 0.92;
+      const estimatedExtraUnits = Math.round(item.units * 0.15); // elasticity ~1.8
+      const monthlyImpact = Math.round(estimatedExtraUnits * item.profit_per_sale * 0.7);
+      results.push({
+        product: item.name,
+        current_price: Math.round(avgPrice * 100) / 100,
+        suggested_price: Math.round(suggestedPrice * 100) / 100,
+        change_pct: pctChange,
+        reason: `Margen alto (${item.margin_pct.toFixed(0)}%) pero baja demanda. Reducir para ganar volumen.`,
+        estimated_impact_eur: monthlyImpact > 0 ? monthlyImpact : 50,
+        priority: 'medium',
+      });
+    }
+
+    // Stars → micro-increase 2% (protect the cash cow)
+    for (const item of stars) {
+      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
+      const pctChange = 2;
+      const suggestedPrice = avgPrice * 1.02;
+      const monthlyImpact = Math.round(item.sales * 0.02);
+      results.push({
+        product: item.name,
+        current_price: Math.round(avgPrice * 100) / 100,
+        suggested_price: Math.round(suggestedPrice * 100) / 100,
+        change_pct: pctChange,
+        reason: `Estrella: popular y rentable. Microajuste seguro sin perder volumen.`,
+        estimated_impact_eur: monthlyImpact,
+        priority: monthlyImpact > 100 ? 'medium' : 'low',
+      });
+    }
+
+    // Dogs → flag for removal/reinvention
+    for (const item of dogs) {
+      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
+      results.push({
+        product: item.name,
+        current_price: Math.round(avgPrice * 100) / 100,
+        suggested_price: 0,
+        change_pct: -100,
+        reason: `Baja demanda y margen. Considerar eliminar o reinventar el plato.`,
+        estimated_impact_eur: Math.round(Math.abs(item.profit_eur) * 0.5),
+        priority: 'low',
+      });
+    }
+
+    return results.sort((a, b) => {
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+  }, []);
+
   const generateSuggestions = useCallback(async () => {
     if (!stats || items.length === 0) return;
 
@@ -43,43 +138,59 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
     setError(null);
 
     try {
-      const resp = await fetch(PRICING_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          items: items.map((i) => ({
-            name: i.name,
-            category: i.category,
-            units: i.units,
-            sales: i.sales,
-            cogs: i.cogs,
-            margin_pct: i.margin_pct,
-            classification: i.classification,
-            popularity_share: i.popularity_share,
-          })),
-          totalSales: stats.totalSales,
-          totalUnits: stats.totalUnits,
-          locationName,
-        }),
-      });
+      // Try Edge Function first (uses GPT-4o when OPENAI_API_KEY is configured)
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: 'Error desconocido' }));
-        throw new Error(err.error || `Error ${resp.status}`);
+      if (token) {
+        try {
+          const resp = await fetch(PRICING_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({
+              items: items.map((i) => ({
+                name: i.name,
+                category: i.category,
+                units: i.units,
+                sales: i.sales,
+                cogs: i.cogs,
+                margin_pct: i.margin_pct,
+                classification: i.classification,
+                popularity_share: i.popularity_share,
+              })),
+              totalSales: stats.totalSales,
+              totalUnits: stats.totalUnits,
+              locationName,
+            }),
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.suggestions?.length > 0) {
+              setSuggestions(data.suggestions);
+              setHasGenerated(true);
+              return;
+            }
+          }
+        } catch {
+          // Edge Function unavailable — fall through to local engine
+        }
       }
 
-      const data = await resp.json();
-      setSuggestions(data.suggestions || []);
+      // Fallback: rule-based Kasavana-Smith pricing engine
+      const localSuggestions = generateLocalSuggestions(items);
+      setSuggestions(localSuggestions);
       setHasGenerated(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al generar sugerencias');
     } finally {
       setIsLoading(false);
     }
-  }, [items, stats, locationName]);
+  }, [items, stats, locationName, generateLocalSuggestions]);
 
   const totalImpact = suggestions.reduce((sum, s) => sum + s.estimated_impact_eur, 0);
 
