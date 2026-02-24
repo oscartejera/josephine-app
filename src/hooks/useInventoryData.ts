@@ -222,7 +222,7 @@ export function useInventoryData(
     // Fetch product sales for category breakdown
     let prodQuery = supabase
       .from('product_sales_daily_unified' as any)
-      .select('date, location_id, product_id, net_sales, cogs, products(name, category)')
+      .select('date, location_id, product_id, product_name, product_category, net_sales, cogs')
       .eq('data_source', dsLegacy)
       .gte('date', fromDateStr)
       .lte('date', toDateStr);
@@ -233,10 +233,10 @@ export function useInventoryData(
 
     const { data: productSales } = await prodQuery;
 
-    // Fetch waste events
+    // Fetch waste events (simple select — no FK join to avoid PostgREST schema cache issues)
     let wasteQuery = supabase
       .from('waste_events')
-      .select('id, location_id, waste_value, reason, created_at, inventory_items(name, category_name)')
+      .select('id, location_id, waste_value, reason, created_at, inventory_item_id')
       .gte('created_at', `${fromDateStr}T00:00:00`)
       .lte('created_at', `${toDateStr}T23:59:59`);
 
@@ -244,7 +244,10 @@ export function useInventoryData(
       wasteQuery = wasteQuery.in('location_id', effectiveLocationIds);
     }
 
-    const { data: wasteEvents } = await wasteQuery;
+    const { data: wasteEvents, error: wasteError } = await wasteQuery;
+    if (wasteError) {
+      console.warn('[inventory] waste_events query error:', wasteError.message);
+    }
 
     if (!isMountedRef.current) return;
 
@@ -288,24 +291,39 @@ export function useInventoryData(
       surplus
     });
 
-    // Category breakdown from product_sales_daily joined with products
+    // Category breakdown: distribute total COGS proportionally by category sales share
     const categoryMap = new Map<string, { actual: number; theoretical: number }>();
     ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
       categoryMap.set(cat, { actual: 0, theoretical: 0 });
     });
 
-    (productSales || []).forEach((row: any) => {
-      const cat = row.products?.category || 'Food';
-      const mappedCat = cat.toLowerCase().includes('beverage') || cat.toLowerCase().includes('drink')
-        ? 'Beverage'
-        : cat.toLowerCase().includes('food') || cat.toLowerCase().includes('plato')
-          ? 'Food'
-          : 'Miscellaneous';
+    // Map Spanish restaurant categories to Food/Beverage buckets
+    const mapToBucket = (cat: string): string => {
+      const lower = (cat || '').toLowerCase();
+      if (lower === 'bebidas' || lower === 'beverage' || lower.includes('drink') || lower.includes('wine') || lower.includes('beer')) {
+        return 'Beverage';
+      }
+      if (['entrantes', 'carnes', 'pescados', 'pastas', 'postres', 'food', 'plato'].some(k => lower.includes(k))) {
+        return 'Food';
+      }
+      return 'Miscellaneous';
+    };
 
-      const existing = categoryMap.get(mappedCat) || { actual: 0, theoretical: 0 };
-      existing.theoretical += row.cogs || 0;
-      existing.actual += row.cogs || 0;
-      categoryMap.set(mappedCat, existing);
+    // First accumulate product sales per bucket to get category share
+    const categorySalesMap = new Map<string, number>();
+    let totalProductSales = 0;
+    (productSales || []).forEach((row: any) => {
+      const mappedCat = mapToBucket(row.product_category);
+      const sales = Number(row.net_sales) || 0;
+      categorySalesMap.set(mappedCat, (categorySalesMap.get(mappedCat) || 0) + sales);
+      totalProductSales += sales;
+    });
+
+    // Distribute the total cogs_daily COGS proportionally by category sales share
+    categorySalesMap.forEach((catSales, bucket) => {
+      const share = totalProductSales > 0 ? catSales / totalProductSales : 0;
+      const catCogs = theoreticalCOGS * share;
+      categoryMap.set(bucket, { actual: catCogs, theoretical: catCogs });
     });
 
     setCategoryBreakdown(Array.from(categoryMap.entries()).map(([category, data]) => ({
@@ -316,18 +334,18 @@ export function useInventoryData(
       theoreticalAmount: data.theoretical
     })));
 
-    // Waste by category
+    // Waste by category — distribute proportionally using the same category sales shares
     const wasteByCat = new Map<string, { accounted: number; unaccounted: number }>();
     ['Food', 'Beverage', 'Miscellaneous'].forEach(cat => {
       wasteByCat.set(cat, { accounted: 0, unaccounted: 0 });
     });
 
-    (wasteEvents || []).forEach((w: any) => {
-      const cat = w.inventory_items?.category_name || 'food';
-      const mappedCat = cat === 'beverage' ? 'Beverage' : cat === 'food' ? 'Food' : 'Miscellaneous';
-      const existing = wasteByCat.get(mappedCat) || { accounted: 0, unaccounted: 0 };
-      existing.accounted += w.waste_value || 0;
-      wasteByCat.set(mappedCat, existing);
+    // Distribute total waste across categories based on product sales mix
+    categorySalesMap.forEach((catSales, bucket) => {
+      const share = totalProductSales > 0 ? catSales / totalProductSales : 0;
+      const existing = wasteByCat.get(bucket) || { accounted: 0, unaccounted: 0 };
+      existing.accounted = totalWaste * share;
+      wasteByCat.set(bucket, existing);
     });
 
     const totalAccounted = Array.from(wasteByCat.values()).reduce((s, v) => s + v.accounted, 0);
