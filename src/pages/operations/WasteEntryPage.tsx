@@ -36,15 +36,16 @@ function useInventoryItemsForWaste() {
     const { group } = useApp();
     return useQuery({
         queryKey: ['items-for-waste'],
-        queryFn: async () => {
+        queryFn: async (): Promise<{ id: string; name: string; unit: string; last_cost: number; current_stock: number }[]> => {
             if (!group?.id) return [];
+            // Use group_id (production column) — cast needed since generated types are stale
             const { data } = await supabase
                 .from('inventory_items')
-                .select('id, name, base_unit, unit, last_cost, current_stock, category_id')
-                .eq('org_id', group.id)
+                .select('id, name, unit, last_cost, current_stock')
+                .eq('group_id' as any, group.id)
                 .eq('is_active', true)
                 .order('name');
-            return data ?? [];
+            return (data as any[]) ?? [];
         },
         enabled: !!group?.id,
     });
@@ -120,7 +121,7 @@ export default function WasteEntryPage() {
                 unit_cost: unitCost,
                 notes: notes || undefined,
             });
-            toast({ title: '✅ Merma registrada', description: `${selectedItem?.name} — ${quantity} ${selectedItem?.base_unit ?? 'ud'}` });
+            toast({ title: '✅ Merma registrada', description: `${selectedItem?.name} — ${quantity} ${selectedItem?.unit ?? 'ud'}` });
             // Reset
             setStep(1);
             setSelectedItemId('');
@@ -209,7 +210,7 @@ export default function WasteEntryPage() {
                                 >
                                     <div>
                                         <span className="font-medium">{item.name}</span>
-                                        <span className="text-muted-foreground ml-2 text-sm">({item.base_unit})</span>
+                                        <span className="text-muted-foreground ml-2 text-sm">({item.unit})</span>
                                     </div>
                                     <div className="text-right text-sm">
                                         <div className="font-mono">€{(item.last_cost ?? 0).toFixed(2)}</div>
@@ -280,7 +281,7 @@ export default function WasteEntryPage() {
                         {/* Display */}
                         <div className="text-center py-4 bg-muted/50 rounded-xl">
                             <div className="text-5xl font-bold font-mono">{numpadValue}</div>
-                            <div className="text-muted-foreground mt-1">{selectedItem?.base_unit ?? 'unidades'}</div>
+                            <div className="text-muted-foreground mt-1">{selectedItem?.unit ?? 'unidades'}</div>
                             <div className="text-lg font-medium text-red-500 mt-2">−€{totalCost.toFixed(2)}</div>
                         </div>
 
@@ -357,7 +358,7 @@ export default function WasteEntryPage() {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Cantidad</span>
-                                <span className="font-mono font-bold">{quantity} {selectedItem?.base_unit ?? 'ud'}</span>
+                                <span className="font-mono font-bold">{quantity} {selectedItem?.unit ?? 'ud'}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Coste unitario</span>

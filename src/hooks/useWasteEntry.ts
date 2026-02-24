@@ -42,31 +42,37 @@ export function useWasteEntry() {
         mutationFn: async (entry: WasteEntryPayload) => {
             if (!group?.id) throw new Error('No group');
 
-            // Get unit cost from item if not provided
+            // Get unit cost and unit from item if not provided
             let unitCost = entry.unit_cost;
+            let itemUnit = 'ud';
+            const { data: item } = await supabase
+                .from('inventory_items')
+                .select('last_cost, unit')
+                .eq('id', entry.item_id)
+                .single();
             if (unitCost === undefined) {
-                const { data: item } = await supabase
-                    .from('inventory_items')
-                    .select('last_cost')
-                    .eq('id', entry.item_id)
-                    .single();
                 unitCost = item?.last_cost ?? 0;
             }
+            itemUnit = item?.unit ?? 'ud';
 
-            // Insert negative qty_delta into stock_movements
+            // Build notes: combine reason label + user notes
+            const reasonLabel = WASTE_REASONS.find(r => r.code === entry.reason)?.label ?? entry.reason;
+            const notesText = entry.notes
+                ? `${reasonLabel}: ${entry.notes}`
+                : reasonLabel;
+
+            // Insert into stock_movements (production schema)
             const { error } = await supabase
                 .from('stock_movements')
                 .insert({
-                    org_id: group.id,
                     item_id: entry.item_id,
                     location_id: entry.location_id,
                     movement_type: 'waste',
-                    qty_delta: -Math.abs(entry.quantity), // Always negative
-                    unit_cost: unitCost,
-                    reason: entry.reason,
-                    source_ref: entry.notes ?? null,
-                    created_by: user?.id ?? null,
-                });
+                    quantity: -Math.abs(entry.quantity), // Always negative for waste
+                    unit: itemUnit,
+                    cost: unitCost,
+                    notes: notesText,
+                } as any);
 
             if (error) throw error;
         },
