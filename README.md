@@ -31,6 +31,10 @@ Recommendations + Actions
 UI Dashboard
 ```
 
+## 📖 Docs
+
+- **[Demo Playbook v1.0](docs/demo-playbook-v1.md)** — Script, click path, proof points y troubleshooting para demos del auto-switch POS ↔ Demo.
+
 ## 📦 Módulos
 
 ### 🔌 Integrations
