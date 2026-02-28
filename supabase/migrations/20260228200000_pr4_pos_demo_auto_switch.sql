@@ -355,6 +355,160 @@ $$ LANGUAGE sql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION ops.refresh_all_mvs(text) TO service_role, authenticated;
 GRANT EXECUTE ON FUNCTION public.refresh_all_mvs(text) TO service_role, authenticated;
 
+-- ============================================================
+-- G) sales_daily_unified: dual-source (demo + pos) with
+--    LATERAL resolve_data_source filter
+-- ============================================================
+
+CREATE OR REPLACE VIEW public.sales_daily_unified AS
+SELECT
+  r.org_id,
+  r.location_id,
+  r.date,
+  r.gross_sales,
+  r.net_sales,
+  r.tax,
+  r.tips,
+  r.discounts,
+  r.comps,
+  r.voids,
+  r.refunds,
+  r.orders_count,
+  r.payments_total,
+  r.avg_check,
+  r.payments_cash,
+  r.payments_card,
+  r.payments_other,
+  r.refunds_amount,
+  r.refunds_count,
+  r.discounts_amount,
+  r.comps_amount,
+  r.voids_amount,
+  r.labor_cost,
+  r.labor_hours,
+  r.data_source
+FROM (
+  -- ── A) Demo dataset: pos_daily_finance ──────────────────────
+  SELECT
+    l.group_id                                             AS org_id,
+    f.location_id,
+    f.date,
+    COALESCE(f.gross_sales, 0)::numeric                    AS gross_sales,
+    COALESCE(f.net_sales, 0)::numeric                      AS net_sales,
+    0::numeric                                             AS tax,
+    0::numeric                                             AS tips,
+    COALESCE(f.discounts_amount, 0)::numeric               AS discounts,
+    COALESCE(f.comps_amount, 0)::numeric                   AS comps,
+    COALESCE(f.voids_amount, 0)::numeric                   AS voids,
+    COALESCE(f.refunds_amount, 0)::numeric                 AS refunds,
+    COALESCE(f.orders_count, 0)::integer                   AS orders_count,
+    (COALESCE(f.payments_cash, 0)
+     + COALESCE(f.payments_card, 0)
+     + COALESCE(f.payments_other, 0))::numeric             AS payments_total,
+    CASE WHEN COALESCE(f.orders_count, 0) > 0
+         THEN (f.net_sales / f.orders_count)::numeric
+         ELSE 0 END                                        AS avg_check,
+    COALESCE(f.payments_cash, 0)::numeric                  AS payments_cash,
+    COALESCE(f.payments_card, 0)::numeric                  AS payments_card,
+    COALESCE(f.payments_other, 0)::numeric                 AS payments_other,
+    COALESCE(f.refunds_amount, 0)::numeric                 AS refunds_amount,
+    COALESCE(f.refunds_count, 0)::integer                  AS refunds_count,
+    COALESCE(f.discounts_amount, 0)::numeric               AS discounts_amount,
+    COALESCE(f.comps_amount, 0)::numeric                   AS comps_amount,
+    COALESCE(f.voids_amount, 0)::numeric                   AS voids_amount,
+    COALESCE(ld.labour_cost, 0)::numeric                   AS labor_cost,
+    COALESCE(ld.labour_hours, 0)::numeric                  AS labor_hours,
+    'demo'::text                                           AS data_source
+  FROM pos_daily_finance f
+  JOIN locations l ON l.id = f.location_id
+  LEFT JOIN labour_daily ld
+    ON ld.location_id = f.location_id AND ld.date = f.date
+  WHERE f.data_source = 'demo'
+
+  UNION ALL
+
+  -- ── B) POS dataset: cdm_orders + cdm_payments ──────────────
+  SELECT
+    o_agg.org_id,
+    o_agg.location_id,
+    o_agg.date,
+    o_agg.gross_sales,
+    o_agg.net_sales,
+    o_agg.tax,
+    o_agg.tips,
+    o_agg.discounts,
+    o_agg.comps,
+    o_agg.voids,
+    o_agg.refunds,
+    o_agg.orders_count,
+    COALESCE(pay.payments_total, 0)::numeric               AS payments_total,
+    CASE WHEN o_agg.orders_count > 0
+         THEN (o_agg.net_sales / o_agg.orders_count)::numeric
+         ELSE 0 END                                        AS avg_check,
+    COALESCE(pay.payments_cash, 0)::numeric                AS payments_cash,
+    COALESCE(pay.payments_card, 0)::numeric                AS payments_card,
+    COALESCE(pay.payments_other, 0)::numeric               AS payments_other,
+    COALESCE(pay.refunds_total, 0)::numeric                AS refunds_amount,
+    COALESCE(pay.refunds_count, 0)::integer                AS refunds_count,
+    o_agg.discounts                                        AS discounts_amount,
+    o_agg.comps                                            AS comps_amount,
+    o_agg.voids                                            AS voids_amount,
+    COALESCE(ld.labour_cost, 0)::numeric                   AS labor_cost,
+    COALESCE(ld.labour_hours, 0)::numeric                  AS labor_hours,
+    'pos'::text                                            AS data_source
+  FROM (
+    -- Aggregate cdm_orders per day/location
+    SELECT
+      o.org_id,
+      o.location_id,
+      (o.closed_at)::date                                  AS date,
+      COALESCE(SUM(COALESCE(o.gross_sales, o.net_sales + COALESCE(o.tax, 0))), 0)::numeric AS gross_sales,
+      COALESCE(SUM(o.net_sales), 0)::numeric               AS net_sales,
+      COALESCE(SUM(o.tax), 0)::numeric                     AS tax,
+      COALESCE(SUM(o.tips), 0)::numeric                    AS tips,
+      COALESCE(SUM(o.discounts), 0)::numeric               AS discounts,
+      COALESCE(SUM(o.comps), 0)::numeric                   AS comps,
+      COALESCE(SUM(o.voids), 0)::numeric                   AS voids,
+      COALESCE(SUM(o.refunds), 0)::numeric                 AS refunds,
+      COUNT(*)::integer                                    AS orders_count
+    FROM cdm_orders o
+    WHERE o.closed_at IS NOT NULL
+      AND (o.provider IS NOT NULL OR o.integration_account_id IS NOT NULL)
+    GROUP BY o.org_id, o.location_id, (o.closed_at)::date
+  ) o_agg
+  LEFT JOIN (
+    -- Pre-aggregate cdm_payments per day/location
+    SELECT
+      p.org_id,
+      o2.location_id,
+      (o2.closed_at)::date                                 AS date,
+      SUM(CASE WHEN p.amount > 0 THEN p.amount ELSE 0 END)::numeric AS payments_total,
+      SUM(CASE WHEN p.amount > 0 AND lower(p.method) IN ('cash','efectivo')
+               THEN p.amount ELSE 0 END)::numeric         AS payments_cash,
+      SUM(CASE WHEN p.amount > 0 AND lower(p.method) IN ('card','visa','mastercard','amex','credit','debit','tarjeta')
+               THEN p.amount ELSE 0 END)::numeric         AS payments_card,
+      SUM(CASE WHEN p.amount > 0
+               AND lower(p.method) NOT IN ('cash','efectivo','card','visa','mastercard','amex','credit','debit','tarjeta')
+               THEN p.amount ELSE 0 END)::numeric         AS payments_other,
+      SUM(CASE WHEN p.amount < 0 THEN ABS(p.amount) ELSE 0 END)::numeric AS refunds_total,
+      COUNT(CASE WHEN p.amount < 0 THEN 1 END)::integer   AS refunds_count
+    FROM cdm_payments p
+    JOIN cdm_orders o2 ON o2.id = p.order_id
+    WHERE o2.closed_at IS NOT NULL
+      AND (o2.provider IS NOT NULL OR o2.integration_account_id IS NOT NULL)
+    GROUP BY p.org_id, o2.location_id, (o2.closed_at)::date
+  ) pay ON pay.org_id = o_agg.org_id
+       AND pay.location_id = o_agg.location_id
+       AND pay.date = o_agg.date
+  LEFT JOIN labour_daily ld
+    ON ld.location_id = o_agg.location_id AND ld.date = o_agg.date
+) r
+-- ── C) Filter by resolved data source ────────────────────────
+JOIN LATERAL resolve_data_source(r.org_id) ds ON true
+WHERE ds->>'data_source' = r.data_source;
+
+GRANT SELECT ON sales_daily_unified TO anon, authenticated;
+
 
 -- ============================================================
 -- Reload PostgREST schema cache
