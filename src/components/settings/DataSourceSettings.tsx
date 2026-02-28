@@ -11,25 +11,69 @@ import { useToast } from '@/hooks/use-toast';
 import { Database, AlertTriangle, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * The only valid values for org_settings.data_source_mode.
+ * Must match the DB enum exactly: 'auto' | 'manual_demo' | 'manual_pos'.
+ */
+type DataSourceMode = 'auto' | 'manual_demo' | 'manual_pos';
+
+/**
+ * Derive the canonical DataSourceMode from the useDataSource hook output.
+ * The hook returns mode='auto'|'manual' + reason string; we reconstruct the DB enum.
+ * Handles legacy value 'manual' → 'manual_demo' as safe default.
+ */
+function deriveMode(hookMode: string, reason: string): DataSourceMode {
+  if (hookMode === 'auto') return 'auto';
+  // manual mode — check reason to distinguish demo vs pos
+  if (reason === 'manual_pos_recent' || reason === 'manual_pos_blocked_no_sync') {
+    return 'manual_pos';
+  }
+  return 'manual_demo';
+}
+
+/** UI helper: is this a "manual" mode (either manual_demo or manual_pos)? */
+function isManual(mode: DataSourceMode): boolean {
+  return mode === 'manual_demo' || mode === 'manual_pos';
+}
+
+/** UI helper: extract the sub-choice ('demo'|'pos') from a manual mode. */
+function manualSubChoice(mode: DataSourceMode): 'demo' | 'pos' {
+  return mode === 'manual_pos' ? 'pos' : 'demo';
+}
+
 export function DataSourceSettings() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const { dataSource, mode, reason, lastSyncedAt, blocked, loading: dsLoading, refetch } = useDataSource();
   const { toast } = useToast();
 
-  const [localMode, setLocalMode] = useState<'auto' | 'manual'>(mode);
-  const [localManualSource, setLocalManualSource] = useState<'demo' | 'pos'>('demo');
+  // Internal state uses the DB enum directly
+  const [localMode, setLocalMode] = useState<DataSourceMode>('auto');
   const [saving, setSaving] = useState(false);
 
-  // Sync local state when data source state changes
+  // Sync local state when the hook resolves
   useEffect(() => {
-    setLocalMode(mode);
-    if (mode === 'manual') {
-      // Infer from reason what the manual source is
-      if (reason === 'manual_demo') setLocalManualSource('demo');
-      else setLocalManualSource('pos');
-    }
+    setLocalMode(deriveMode(mode, reason));
   }, [mode, reason]);
+
+  // ── UI event handlers ──────────────────────────────────────────────
+
+  /** Top-level selector: Auto vs Manual */
+  const handleTopLevelChange = (val: string) => {
+    if (val === 'auto') {
+      setLocalMode('auto');
+    } else {
+      // Default manual to demo
+      setLocalMode('manual_demo');
+    }
+  };
+
+  /** Sub-selector inside Manual: Demo vs POS */
+  const handleManualSourceChange = (val: string) => {
+    setLocalMode(val === 'pos' ? 'manual_pos' : 'manual_demo');
+  };
+
+  // ── Persistence ────────────────────────────────────────────────────
 
   const handleSave = async () => {
     if (!profile?.group_id) return;
@@ -37,11 +81,10 @@ export function DataSourceSettings() {
 
     try {
       const { error } = await supabase
-        .from('org_settings')
+        .from('org_settings' as any)
         .upsert({
           org_id: profile.group_id,
           data_source_mode: localMode,
-          manual_data_source: localMode === 'manual' ? localManualSource : null,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'org_id' });
 
@@ -70,6 +113,8 @@ export function DataSourceSettings() {
       setSaving(false);
     }
   };
+
+  // ── Display helpers ────────────────────────────────────────────────
 
   const formatSyncTime = (date: Date | null) => {
     if (!date) return 'Nunca';
@@ -102,11 +147,12 @@ export function DataSourceSettings() {
     loading: 'Cargando...',
   };
 
-  const hasChanged = localMode !== mode ||
-    (localMode === 'manual' && (
-      (reason === 'manual_demo' && localManualSource !== 'demo') ||
-      (reason !== 'manual_demo' && localManualSource !== 'pos')
-    ));
+  const savedMode = deriveMode(mode, reason);
+  const hasChanged = localMode !== savedMode;
+
+  // UI values derived from localMode
+  const topLevel: 'auto' | 'manual' = localMode === 'auto' ? 'auto' : 'manual';
+  const subChoice: 'demo' | 'pos' = manualSubChoice(localMode);
 
   return (
     <Card>
@@ -151,37 +197,27 @@ export function DataSourceSettings() {
         <div className="space-y-3">
           <div className="space-y-1">
             <Label>Modo de selección</Label>
-            <Select
-              value={localMode}
-              onValueChange={(val) => setLocalMode(val as 'auto' | 'manual')}
-            >
+            <Select value={topLevel} onValueChange={handleTopLevelChange}>
               <SelectTrigger className="w-[280px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="auto">
-                  Automático
-                </SelectItem>
-                <SelectItem value="manual">
-                  Manual
-                </SelectItem>
+                <SelectItem value="auto">Automático</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {localMode === 'auto'
+              {topLevel === 'auto'
                 ? 'Usa datos POS si hay una sincronización en las últimas 24h, si no datos demo.'
                 : 'Elige manualmente qué fuente de datos usar.'}
             </p>
           </div>
 
           {/* Manual source selector */}
-          {localMode === 'manual' && (
+          {isManual(localMode) && (
             <div className="space-y-1 pl-4 border-l-2 border-muted">
               <Label>Fuente de datos</Label>
-              <Select
-                value={localManualSource}
-                onValueChange={(val) => setLocalManualSource(val as 'demo' | 'pos')}
-              >
+              <Select value={subChoice} onValueChange={handleManualSourceChange}>
                 <SelectTrigger className="w-[280px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -191,7 +227,7 @@ export function DataSourceSettings() {
                 </SelectContent>
               </Select>
 
-              {localManualSource === 'pos' && !lastSyncedAt && (
+              {subChoice === 'pos' && !lastSyncedAt && (
                 <div className="flex items-start gap-2 mt-2 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                   <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                   <p className="text-xs text-amber-700 dark:text-amber-400">
@@ -201,7 +237,7 @@ export function DataSourceSettings() {
                 </div>
               )}
 
-              {localManualSource === 'pos' && lastSyncedAt && (
+              {subChoice === 'pos' && lastSyncedAt && (
                 <div className="flex items-start gap-2 mt-2 p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                   <p className="text-xs text-emerald-700 dark:text-emerald-400">
