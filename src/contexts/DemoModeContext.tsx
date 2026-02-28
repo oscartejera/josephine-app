@@ -6,7 +6,7 @@ import { useDataSource, DataSourceValue } from '@/hooks/useDataSource';
  *
  * Now driven by the centralized resolve_data_source RPC via useDataSource.
  * - dataSource='pos' → isDemoMode = false → real POS data
- * - dataSource='demo' → isDemoMode = true → simulated demo data
+ * - dataSource='demo' → isDemoMode = true → demo data
  *
  * When isDemoMode is true:
  * - All users see the same data as the admin (Oscar)

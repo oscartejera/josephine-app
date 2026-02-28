@@ -33,7 +33,7 @@ interface AppContextType {
   needsOnboarding: boolean;
   setOnboardingComplete: () => void;
   posConnected: boolean;
-  dataSource: 'pos' | 'simulated';
+  dataSource: 'pos' | 'demo';
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -44,7 +44,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Derive posConnected and dataSource from the centralized data source resolution
   const posConnected = resolvedDataSource === 'pos';
-  const dataSource: 'pos' | 'simulated' = posConnected ? 'pos' : 'simulated';
+  const dataSource: 'pos' | 'demo' = posConnected ? 'pos' : 'demo';
 
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);

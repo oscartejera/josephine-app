@@ -63,7 +63,7 @@ describe('E2E Flow: Dashboard Load', () => {
     ];
 
     const trendData = [
-      { org_id: 'org-test', location_id: 'loc-centro', date: '2026-02-01', net_sales: '500', gross_sales: '600', orders_count: '25', avg_check: '20', payments_cash: '100', payments_card: '400', payments_other: '0', refunds_amount: '5', refunds_count: '1', discounts_amount: '10', comps_amount: '0', voids_amount: '0', labor_cost: '100', labor_hours: '12', data_source: 'simulated' },
+      { org_id: 'org-test', location_id: 'loc-centro', date: '2026-02-01', net_sales: '500', gross_sales: '600', orders_count: '25', avg_check: '20', payments_cash: '100', payments_card: '400', payments_other: '0', refunds_amount: '5', refunds_count: '1', discounts_amount: '10', comps_amount: '0', voids_amount: '0', labor_cost: '100', labor_hours: '12', data_source: 'demo' },
     ];
 
     // Step 1: Load KPIs

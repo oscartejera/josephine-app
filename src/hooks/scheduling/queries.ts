@@ -132,7 +132,7 @@ export async function fetchActualSales(
     locationId: string,
     weekStartISO: string,
     weekEndISO: string,
-    dataSource: 'pos' | 'simulated' = 'simulated'
+    dataSource: 'pos' | 'demo' = 'demo'
 ): Promise<Record<string, { actualSales: number; actualLaborCost: number; actualColPercent: number }>> {
     const { data, error } = await supabase
         .from('sales_daily_unified')

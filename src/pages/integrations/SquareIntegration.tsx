@@ -391,7 +391,7 @@ export default function SquareIntegration() {
       setAccount(null);
       setSyncRuns([]);
 
-      // Invalidate all cached data so hooks re-fetch with dataSource='simulated'
+      // Invalidate all cached data so hooks re-fetch with dataSource='demo'
       queryClient.invalidateQueries();
 
       // Give React Query time to refetch, then dismiss splash
@@ -539,8 +539,8 @@ export default function SquareIntegration() {
                       <div className="flex items-center gap-3">
                         <Badge variant={
                           run.status === 'ok' ? 'default' :
-                          run.status === 'running' ? 'secondary' :
-                          'destructive'
+                            run.status === 'running' ? 'secondary' :
+                              'destructive'
                         }>
                           {run.status === 'ok' ? 'OK' : run.status === 'running' ? 'En curso' : 'Error'}
                         </Badge>

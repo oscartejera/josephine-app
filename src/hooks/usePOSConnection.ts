@@ -2,7 +2,7 @@
  * usePOSConnection - Detects if there's an active POS integration that has
  * been successfully synced at least once.
  * Returns { posConnected, provider, loading }
- * Used globally to decide whether to show real POS data or simulated demo data.
+ * Used globally to decide whether to show real POS data or demo data.
  */
 
 import { useEffect, useState } from 'react';

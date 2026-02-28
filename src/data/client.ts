@@ -26,21 +26,17 @@ export function hasNoLocations(ctx: QueryContext): boolean {
 }
 
 /**
- * Normalise the AppContext dataSource ('pos' | 'simulated') to the DB value ('pos' | 'demo').
- * The unified views use 'simulated' as data_source; the v_*_unified views expose 'demo'|'pos'.
- * Our new contract views inherit from the base tables, so we map accordingly.
+ * Normalise any data source value to the canonical 'pos' | 'demo'.
  */
-export function normaliseLegacyDataSource(ds: string): 'pos' | 'demo' {
+export function normaliseDataSource(ds: string): 'pos' | 'demo' {
   return ds === 'pos' ? 'pos' : 'demo';
 }
 
 /**
- * Map the data source to the legacy "simulated" value used in base tables
- * (pos_daily_finance.data_source, pos_daily_metrics.data_source, etc.)
+ * @deprecated Use normaliseDataSource. Kept for backward compatibility.
+ * Now returns 'demo' (not the old 'simulated') to match DB values.
  */
-export function toLegacyDataSource(ds: string): string {
-  return ds === 'pos' ? 'pos' : 'simulated';
-}
+export const toLegacyDataSource = normaliseDataSource;
 
 /**
  * Build a QueryContext from the typical AppContext + AuthContext values.
@@ -49,7 +45,7 @@ export function toLegacyDataSource(ds: string): string {
 export function buildQueryContext(
   orgId: string | null | undefined,
   locationIds: string[],
-  dataSource: 'pos' | 'simulated' | 'demo'
+  dataSource: 'pos' | 'demo'
 ): QueryContext {
   return {
     orgId: orgId || '',
