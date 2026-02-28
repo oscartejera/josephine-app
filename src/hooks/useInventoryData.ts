@@ -211,6 +211,7 @@ export function useInventoryData(
     let prodQuery = supabase
       .from('product_sales_daily_unified' as any)
       .select('day, location_id, product_id, product_name, product_category, net_sales, cogs')
+      .eq('data_source', dsLegacy)
       .gte('day', fromDateStr)
       .lte('day', toDateStr);
 

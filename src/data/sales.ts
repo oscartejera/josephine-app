@@ -177,9 +177,12 @@ async function getSalesHourlyTrends(
   ctx: QueryContext,
   range: DateRange
 ): Promise<SalesHourlyRow[]> {
+  const dsLegacy = toLegacyDataSource(ctx.dataSource);
+
   let query = supabase
     .from('sales_hourly_unified' as any)
     .select('org_id, location_id, day, hour_bucket, hour_of_day, net_sales, gross_sales, orders_count, covers, avg_check, discounts, refunds, data_source')
+    .eq('data_source', dsLegacy)
     .order('hour_bucket', { ascending: true });
 
   query = applyFilters(query, ctx.locationIds, range, 'day');
