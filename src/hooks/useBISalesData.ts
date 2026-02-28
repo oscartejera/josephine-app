@@ -112,7 +112,7 @@ function emptyData(): BISalesData {
 }
 
 export function useBISalesData({ dateRange, granularity, compareMode, locationIds }: UseBISalesDataParams) {
-  const { locations, group } = useApp();
+  const { locations, group, dataSource } = useApp();
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const orgId = group?.id;
@@ -174,7 +174,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const toStr = format(dateRange.to, 'yyyy-MM-dd');
 
       // Call both unified RPCs in parallel via data layer
-      const ctx = buildQueryContext(orgId, effectiveLocationIds, 'pos');
+      const ctx = buildQueryContext(orgId, effectiveLocationIds, dataSource);
       const range = { from: fromStr, to: toStr };
 
       const [ts, tp] = await Promise.all([
@@ -224,7 +224,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         // been derived from hourly above)
         totalNetSales = dailyRows.reduce((s, d) => s + (Number(d.actual_sales) || 0), 0);
         totalForecast = dailyRows.reduce((s, d) => s + (Number(d.forecast_sales) || 0), 0);
-        totalOrders   = dailyRows.reduce((s, d) => s + (Number(d.actual_orders) || 0), 0);
+        totalOrders = dailyRows.reduce((s, d) => s + (Number(d.actual_orders) || 0), 0);
         forecastOrders = dailyRows.reduce((s, d) => s + (Number(d.forecast_orders) || 0), 0);
       } else {
         const kpis = ts.kpis;
@@ -245,7 +245,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
 
       if (compareMode === 'previous_period' && orgId) {
         try {
-          const ctx = buildQueryContext(orgId, effectiveLocationIds, 'pos');
+          const ctx = buildQueryContext(orgId, effectiveLocationIds, dataSource);
           const kpiData = await getKpiRangeSummary(ctx, fromStr, toStr);
           const prevSales = kpiData?.previous?.net_sales ?? 0;
           const prevAvgCheck = kpiData?.previous?.avg_check ?? 0;
