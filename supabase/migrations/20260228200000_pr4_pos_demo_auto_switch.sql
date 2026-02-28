@@ -511,6 +511,127 @@ GRANT SELECT ON sales_daily_unified TO anon, authenticated;
 
 
 -- ============================================================
+-- H) forecast_daily_unified: dual-source (demo + pos heuristic)
+--    with LATERAL resolve_data_source filter
+-- ============================================================
+
+CREATE OR REPLACE VIEW public.forecast_daily_unified AS
+SELECT
+  r.org_id,
+  r.location_id,
+  r.day,
+  r.forecast_sales,
+  r.forecast_orders,
+  r.planned_labor_hours,
+  r.planned_labor_cost,
+  r.forecast_avg_check,
+  r.forecast_sales_lower,
+  r.forecast_sales_upper,
+  r.data_source
+FROM (
+  -- ── DEMO: forecast_runs + forecast_points ───────────────────
+  SELECT
+    fp.org_id,
+    fp.location_id,
+    fp.day,
+    COALESCE(fp.yhat, 0)::numeric                          AS forecast_sales,
+    ROUND(COALESCE(fp.yhat, 0) / NULLIF(25, 0))::integer  AS forecast_orders,
+    ROUND(COALESCE(fp.yhat, 0) * 0.28 / 14.50, 1)::numeric AS planned_labor_hours,
+    ROUND(COALESCE(fp.yhat, 0) * 0.28, 2)::numeric        AS planned_labor_cost,
+    25::numeric                                            AS forecast_avg_check,
+    COALESCE(fp.yhat_lower, 0)::numeric                    AS forecast_sales_lower,
+    COALESCE(fp.yhat_upper, 0)::numeric                    AS forecast_sales_upper,
+    'demo'::text                                           AS data_source
+  FROM forecast_points fp
+  JOIN (
+    SELECT DISTINCT ON (org_id, location_id)
+      id, org_id, location_id
+    FROM forecast_runs
+    WHERE status IN ('finished','completed')
+    ORDER BY org_id, location_id, finished_at DESC NULLS LAST
+  ) lr ON lr.id = fp.forecast_run_id
+
+  UNION ALL
+
+  -- ── POS: weekday-average heuristic (56-day history → 14-day horizon)
+  SELECT
+    hist.org_id,
+    hist.location_id,
+    fd.day,
+    COALESCE(dow_avg.avg_sales, hist.overall_avg_sales, 0)::numeric   AS forecast_sales,
+    COALESCE(dow_avg.avg_orders, hist.overall_avg_orders, 0)::integer AS forecast_orders,
+    ROUND(
+      COALESCE(dow_avg.avg_sales, hist.overall_avg_sales, 0)
+      * COALESCE(ls.target_col_percent, 28) / 100.0
+      / NULLIF(COALESCE(ls.default_hourly_cost, 14.50), 0), 1
+    )::numeric                                                        AS planned_labor_hours,
+    ROUND(
+      COALESCE(dow_avg.avg_sales, hist.overall_avg_sales, 0)
+      * COALESCE(ls.target_col_percent, 28) / 100.0, 2
+    )::numeric                                                        AS planned_labor_cost,
+    CASE WHEN COALESCE(dow_avg.avg_orders, hist.overall_avg_orders, 0) > 0
+         THEN ROUND(
+           COALESCE(dow_avg.avg_sales, hist.overall_avg_sales, 0)
+           / COALESCE(dow_avg.avg_orders, hist.overall_avg_orders, 1), 2
+         )::numeric
+         ELSE 0 END                                                   AS forecast_avg_check,
+    ROUND(COALESCE(dow_avg.avg_sales, hist.overall_avg_sales, 0) * 0.85, 2)::numeric AS forecast_sales_lower,
+    ROUND(COALESCE(dow_avg.avg_sales, hist.overall_avg_sales, 0) * 1.15, 2)::numeric AS forecast_sales_upper,
+    'pos'::text                                                       AS data_source
+  FROM (
+    -- Per-location overall averages from last 56 days of POS orders
+    SELECT
+      o.org_id,
+      o.location_id,
+      ROUND(AVG(day_sales), 2)   AS overall_avg_sales,
+      ROUND(AVG(day_orders))     AS overall_avg_orders
+    FROM (
+      SELECT
+        org_id, location_id,
+        (closed_at)::date AS d,
+        SUM(net_sales)    AS day_sales,
+        COUNT(*)          AS day_orders
+      FROM cdm_orders
+      WHERE closed_at IS NOT NULL
+        AND (provider IS NOT NULL OR integration_account_id IS NOT NULL)
+        AND closed_at >= (current_date - 56)
+      GROUP BY org_id, location_id, (closed_at)::date
+    ) o
+    GROUP BY o.org_id, o.location_id
+  ) hist
+  -- Generate 14 future days
+  CROSS JOIN LATERAL generate_series(
+    current_date, current_date + 13, '1 day'::interval
+  ) AS fd(day)
+  -- Weekday-specific averages
+  LEFT JOIN LATERAL (
+    SELECT
+      ROUND(AVG(day_sales), 2) AS avg_sales,
+      ROUND(AVG(day_orders))   AS avg_orders
+    FROM (
+      SELECT
+        SUM(net_sales) AS day_sales,
+        COUNT(*)       AS day_orders
+      FROM cdm_orders
+      WHERE org_id = hist.org_id
+        AND location_id = hist.location_id
+        AND closed_at IS NOT NULL
+        AND (provider IS NOT NULL OR integration_account_id IS NOT NULL)
+        AND closed_at >= (current_date - 56)
+        AND EXTRACT(DOW FROM closed_at) = EXTRACT(DOW FROM fd.day)
+      GROUP BY (closed_at)::date
+    ) wd
+  ) dow_avg ON true
+  LEFT JOIN location_settings ls ON ls.location_id = hist.location_id
+) r
+-- ── Filter by resolved data source ───────────────────────────
+JOIN LATERAL resolve_data_source(r.org_id) ds ON true
+WHERE ds->>'data_source' = r.data_source;
+
+GRANT SELECT ON forecast_daily_unified TO anon, authenticated;
+
+
+-- ============================================================
 -- Reload PostgREST schema cache
 -- ============================================================
 NOTIFY pgrst, 'reload schema';
