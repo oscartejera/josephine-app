@@ -48,10 +48,21 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    // Also process any queued refresh_mvs jobs (from sync triggers)
+    const { data: jobResult, error: jobError } = await supabase.rpc(
+      "process_refresh_mvs_jobs"
+    );
+    if (jobError) {
+      console.warn("process_refresh_mvs_jobs error:", jobError.message);
+    }
+
+    return new Response(
+      JSON.stringify({ refresh: data, jobs: jobResult }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   } catch (error: any) {
     console.error("Error in refresh_marts:", error);
     return new Response(

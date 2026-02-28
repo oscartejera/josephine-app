@@ -869,6 +869,141 @@ GRANT EXECUTE ON FUNCTION get_instant_pnl_unified(uuid, uuid[], date, date) TO a
 
 
 -- ============================================================
+-- J) Auto-refresh MVs after successful POS sync
+-- ============================================================
+
+-- J.1 Add refresh_mvs to job_type enum (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_enum
+    WHERE enumlabel = 'refresh_mvs'
+      AND enumtypid = 'job_type'::regtype
+  ) THEN
+    ALTER TYPE job_type ADD VALUE 'refresh_mvs';
+  END IF;
+END
+$$;
+
+-- J.2 Trigger function: enqueue refresh job on sync success (deduped)
+CREATE OR REPLACE FUNCTION public.trg_enqueue_refresh_mvs()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_org_id   uuid;
+  v_provider text;
+  v_existing bigint;
+BEGIN
+  -- Look up the integration to get org_id and provider
+  SELECT i.org_id, i.provider::text
+  INTO v_org_id, v_provider
+  FROM integrations i
+  WHERE i.id = NEW.integration_id;
+
+  IF v_org_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Dedup: skip if a queued refresh_mvs job exists for this org in last 10 min
+  SELECT count(*) INTO v_existing
+  FROM jobs
+  WHERE job_type = 'refresh_mvs'
+    AND org_id = v_org_id
+    AND status = 'queued'
+    AND created_at >= (now() - interval '10 minutes');
+
+  IF v_existing > 0 THEN
+    RETURN NEW;
+  END IF;
+
+  -- Insert the job
+  INSERT INTO jobs (job_type, org_id, status, priority, payload, provider)
+  VALUES (
+    'refresh_mvs',
+    v_org_id,
+    'queued',
+    50,
+    jsonb_build_object('org_id', v_org_id, 'triggered_by', 'sync_success'),
+    v_provider::integration_provider
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+-- J.3 Trigger on integration_sync_runs
+DROP TRIGGER IF EXISTS trg_sync_success_refresh_mvs ON integration_sync_runs;
+
+CREATE TRIGGER trg_sync_success_refresh_mvs
+  AFTER UPDATE OF status ON integration_sync_runs
+  FOR EACH ROW
+  WHEN (
+    NEW.status IN ('ok', 'success', 'completed')
+    AND OLD.status IS DISTINCT FROM NEW.status
+  )
+  EXECUTE FUNCTION trg_enqueue_refresh_mvs();
+
+-- J.4 Function to process queued refresh_mvs jobs
+--     Called by refresh_marts edge function or cron
+CREATE OR REPLACE FUNCTION public.process_refresh_mvs_jobs()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_job   record;
+  v_result jsonb;
+  v_count integer := 0;
+BEGIN
+  FOR v_job IN
+    SELECT id, org_id, payload
+    FROM jobs
+    WHERE job_type = 'refresh_mvs'
+      AND status = 'queued'
+      AND run_after <= now()
+    ORDER BY priority DESC, created_at ASC
+    LIMIT 5
+    FOR UPDATE SKIP LOCKED
+  LOOP
+    -- Mark running
+    UPDATE jobs SET status = 'running', locked_at = now()
+    WHERE id = v_job.id;
+
+    BEGIN
+      v_result := ops.refresh_all_mvs(
+        COALESCE(v_job.payload->>'triggered_by', 'job_worker')
+      );
+
+      UPDATE jobs SET
+        status = 'succeeded',
+        finished_at = now(),
+        payload = v_job.payload || jsonb_build_object('result', v_result)
+      WHERE id = v_job.id;
+
+      v_count := v_count + 1;
+
+    EXCEPTION WHEN OTHERS THEN
+      UPDATE jobs SET
+        status = 'failed',
+        finished_at = now(),
+        last_error = SQLERRM,
+        attempts = attempts + 1
+      WHERE id = v_job.id;
+    END;
+  END LOOP;
+
+  RETURN jsonb_build_object('processed', v_count);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION process_refresh_mvs_jobs() TO service_role;
+
+
+-- ============================================================
 -- Reload PostgREST schema cache
 -- ============================================================
 NOTIFY pgrst, 'reload schema';
