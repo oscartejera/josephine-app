@@ -128,7 +128,8 @@ SELECT
   mv.cogs,
   mv.gross_profit,
   mv.margin_pct,
-  'demo'::text AS data_source
+  'demo'::text AS data_source,
+  mv.day AS date
 FROM product_sales_daily_unified_mv mv;
 
 GRANT SELECT ON product_sales_daily_unified TO anon, authenticated;
