@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { DataSourceBadge } from '@/components/layout/DataSourceBadge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -483,6 +484,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             </div>
           </div>
         )}
+        <DataSourceBadge collapsed={collapsed} />
         <Button
           variant="ghost"
           className={cn(

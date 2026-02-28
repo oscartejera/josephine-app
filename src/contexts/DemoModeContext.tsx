@@ -25,6 +25,7 @@ interface DemoModeContextType {
   isDemoMode: boolean;
   demoLabel: string;
   dataSource: DataSourceValue;
+  dataSourceMode: 'auto' | 'manual';
   dataSourceReason: string;
   dataSourceBlocked: boolean;
   lastSyncedAt: Date | null;
@@ -34,13 +35,14 @@ const DemoModeContext = createContext<DemoModeContextType>({
   isDemoMode: DEMO_MODE_DEFAULT,
   demoLabel: 'Demo Mode: mostrando datos del Admin',
   dataSource: 'demo',
+  dataSourceMode: 'auto',
   dataSourceReason: 'loading',
   dataSourceBlocked: false,
   lastSyncedAt: null,
 });
 
 export function DemoModeProvider({ children }: { children: React.ReactNode }) {
-  const { dataSource, reason, blocked, loading, lastSyncedAt } = useDataSource();
+  const { dataSource, mode, reason, blocked, loading, lastSyncedAt } = useDataSource();
 
   // While loading, keep demo mode on (avoids flicker)
   const isDemoMode = loading ? DEMO_MODE_DEFAULT : dataSource === 'demo';
@@ -54,6 +56,7 @@ export function DemoModeProvider({ children }: { children: React.ReactNode }) {
       isDemoMode,
       demoLabel,
       dataSource: loading ? 'demo' : dataSource,
+      dataSourceMode: mode,
       dataSourceReason: reason,
       dataSourceBlocked: blocked,
       lastSyncedAt,
