@@ -632,6 +632,243 @@ GRANT SELECT ON forecast_daily_unified TO anon, authenticated;
 
 
 -- ============================================================
+-- I) RPCs rewritten to read only from unified views
+--    (data source resolution happens inside the views)
+-- ============================================================
+
+-- I.1  get_sales_timeseries_unified
+CREATE OR REPLACE FUNCTION get_sales_timeseries_unified(
+  p_org_id uuid,
+  p_location_ids uuid[],
+  p_from date,
+  p_to date
+)
+RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+AS $$
+DECLARE
+  v_ds     jsonb;
+  v_kpis   jsonb;
+  v_daily  jsonb;
+  v_hourly jsonb;
+BEGIN
+  v_ds := resolve_data_source(p_org_id);
+
+  -- KPIs from sales_daily_unified
+  SELECT jsonb_build_object(
+    'actual_sales',       COALESCE(SUM(net_sales), 0),
+    'forecast_sales',     COALESCE(SUM(fc.forecast_sales), 0),
+    'actual_orders',      COALESCE(SUM(orders_count), 0),
+    'forecast_orders',    COALESCE(SUM(fc.forecast_orders), 0),
+    'avg_check_actual',   CASE WHEN COALESCE(SUM(orders_count), 0) > 0
+                               THEN SUM(net_sales) / SUM(orders_count) ELSE 0 END,
+    'avg_check_forecast', CASE WHEN COALESCE(SUM(fc.forecast_orders), 0) > 0
+                               THEN SUM(fc.forecast_sales) / SUM(fc.forecast_orders) ELSE 0 END
+  ) INTO v_kpis
+  FROM sales_daily_unified s
+  LEFT JOIN (
+    SELECT location_id, day, forecast_sales, forecast_orders
+    FROM forecast_daily_unified
+    WHERE org_id = p_org_id AND location_id = ANY(p_location_ids)
+      AND day BETWEEN p_from AND p_to
+  ) fc ON fc.location_id = s.location_id AND fc.day = s.date
+  WHERE s.org_id = p_org_id AND s.location_id = ANY(p_location_ids)
+    AND s.date BETWEEN p_from AND p_to;
+
+  -- Daily timeseries
+  SELECT COALESCE(jsonb_agg(row_to_json(d)::jsonb ORDER BY d.date), '[]'::jsonb) INTO v_daily
+  FROM (
+    SELECT
+      s.date,
+      SUM(COALESCE(s.net_sales, 0))::numeric     AS actual_sales,
+      SUM(COALESCE(s.orders_count, 0))::integer   AS actual_orders,
+      COALESCE(SUM(fc.forecast_sales), 0)::numeric AS forecast_sales,
+      COALESCE(SUM(fc.forecast_orders), 0)::integer AS forecast_orders,
+      COALESCE(SUM(fc.forecast_sales_lower), 0)::numeric AS lower,
+      COALESCE(SUM(fc.forecast_sales_upper), 0)::numeric AS upper
+    FROM sales_daily_unified s
+    LEFT JOIN (
+      SELECT location_id, day,
+             forecast_sales, forecast_orders,
+             forecast_sales_lower, forecast_sales_upper
+      FROM forecast_daily_unified
+      WHERE org_id = p_org_id AND location_id = ANY(p_location_ids)
+        AND day BETWEEN p_from AND p_to
+    ) fc ON fc.location_id = s.location_id AND fc.day = s.date
+    WHERE s.org_id = p_org_id AND s.location_id = ANY(p_location_ids)
+      AND s.date BETWEEN p_from AND p_to
+    GROUP BY s.date
+  ) d;
+
+  -- Hourly from sales_hourly_unified
+  SELECT COALESCE(jsonb_agg(row_to_json(h)::jsonb ORDER BY h.ts_hour), '[]'::jsonb) INTO v_hourly
+  FROM (
+    SELECT
+      hour_bucket AS ts_hour,
+      SUM(net_sales)::numeric      AS actual_sales,
+      SUM(orders_count)::integer   AS actual_orders,
+      0::numeric AS forecast_sales,
+      0::integer AS forecast_orders,
+      0::numeric AS lower,
+      0::numeric AS upper
+    FROM sales_hourly_unified
+    WHERE org_id = p_org_id AND location_id = ANY(p_location_ids)
+      AND day BETWEEN p_from AND p_to
+    GROUP BY hour_bucket
+  ) h;
+
+  RETURN jsonb_build_object(
+    'data_source',    v_ds->>'data_source',
+    'mode',           v_ds->>'mode',
+    'reason',         v_ds->>'reason',
+    'last_synced_at', v_ds->>'last_synced_at',
+    'kpis',           v_kpis,
+    'daily',          v_daily,
+    'hourly',         v_hourly,
+    'busy_hours',     '[]'::jsonb
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_sales_timeseries_unified(uuid, uuid[], date, date) TO anon, authenticated;
+
+
+-- I.2  get_top_products_unified
+CREATE OR REPLACE FUNCTION get_top_products_unified(
+  p_org_id uuid,
+  p_location_ids uuid[],
+  p_from date,
+  p_to date,
+  p_limit integer DEFAULT 20
+)
+RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+AS $$
+DECLARE
+  v_ds    jsonb;
+  v_total numeric;
+  v_items jsonb;
+BEGIN
+  v_ds := resolve_data_source(p_org_id);
+
+  -- Total sales from sales_daily_unified
+  SELECT COALESCE(SUM(net_sales), 0) INTO v_total
+  FROM sales_daily_unified
+  WHERE org_id = p_org_id AND location_id = ANY(p_location_ids)
+    AND date BETWEEN p_from AND p_to;
+
+  -- Products from product_sales_daily_unified
+  SELECT COALESCE(jsonb_agg(row_to_json(p)::jsonb), '[]'::jsonb) INTO v_items
+  FROM (
+    SELECT
+      product_id::text,
+      product_name AS name,
+      product_category AS category,
+      SUM(COALESCE(net_sales, 0))::numeric AS sales,
+      SUM(COALESCE(units_sold, 0))::numeric AS qty,
+      CASE WHEN v_total > 0 THEN SUM(COALESCE(net_sales, 0)) / v_total ELSE 0 END AS share
+    FROM product_sales_daily_unified
+    WHERE org_id = p_org_id AND location_id = ANY(p_location_ids)
+      AND day BETWEEN p_from AND p_to
+    GROUP BY product_id, product_name, product_category
+    ORDER BY sales DESC
+    LIMIT p_limit
+  ) p;
+
+  RETURN jsonb_build_object(
+    'data_source',    v_ds->>'data_source',
+    'mode',           v_ds->>'mode',
+    'reason',         v_ds->>'reason',
+    'last_synced_at', v_ds->>'last_synced_at',
+    'total_sales',    v_total,
+    'items',          v_items
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_top_products_unified(uuid, uuid[], date, date, integer) TO anon, authenticated;
+
+
+-- I.3  get_instant_pnl_unified
+CREATE OR REPLACE FUNCTION public.get_instant_pnl_unified(
+  p_org_id uuid,
+  p_location_ids uuid[],
+  p_from date,
+  p_to date
+)
+RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+AS $function$
+DECLARE v_ds jsonb; v_locs jsonb;
+BEGIN
+  v_ds := resolve_data_source(p_org_id);
+
+  SELECT COALESCE(jsonb_agg(row_to_json(r)::jsonb), '[]'::jsonb) INTO v_locs
+  FROM (
+    SELECT
+      l.id AS location_id,
+      l.name AS location_name,
+      COALESCE(s.net_sales, 0)::numeric         AS actual_sales,
+      COALESCE(fc.forecast_sales, 0)::numeric   AS forecast_sales,
+      ROUND(COALESCE(s.net_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)::numeric AS actual_cogs,
+      ROUND(COALESCE(fc.forecast_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)::numeric AS forecast_cogs,
+      COALESCE(s.labor_cost, 0)::numeric        AS actual_labour,
+      COALESCE(s.labor_hours, 0)::numeric       AS actual_labour_hours,
+      COALESCE(fc.planned_labor_cost, 0)::numeric AS forecast_labour,
+      COALESCE(fc.planned_labor_hours, 0)::numeric AS forecast_labour_hours,
+      (COALESCE(s.net_sales, 0)
+        - ROUND(COALESCE(s.net_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)
+        - COALESCE(s.labor_cost, 0))::numeric   AS actual_gp,
+      (COALESCE(fc.forecast_sales, 0)
+        - ROUND(COALESCE(fc.forecast_sales, 0) * COALESCE(cg.cogs_pct, 0.32), 2)
+        - COALESCE(fc.planned_labor_cost, 0))::numeric AS forecast_gp,
+      true AS estimated_cogs,
+      CASE WHEN COALESCE(s.labor_cost, 0) = 0 AND COALESCE(s.net_sales, 0) > 0
+        THEN true ELSE false END AS estimated_labour
+    FROM locations l
+    LEFT JOIN (
+      SELECT location_id,
+             SUM(net_sales) AS net_sales,
+             SUM(labor_cost) AS labor_cost,
+             SUM(labor_hours) AS labor_hours
+      FROM sales_daily_unified
+      WHERE org_id = p_org_id AND date BETWEEN p_from AND p_to
+      GROUP BY 1
+    ) s ON s.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id,
+             SUM(forecast_sales) AS forecast_sales,
+             SUM(planned_labor_cost) AS planned_labor_cost,
+             SUM(planned_labor_hours) AS planned_labor_hours
+      FROM forecast_daily_unified
+      WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
+      GROUP BY 1
+    ) fc ON fc.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id,
+        CASE WHEN SUM(net_sales) > 0 THEN SUM(cogs) / SUM(net_sales) ELSE 0.32 END AS cogs_pct
+      FROM product_sales_daily_unified
+      WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
+      GROUP BY 1
+    ) cg ON cg.location_id = l.id
+    WHERE l.id = ANY(p_location_ids) AND l.active = true
+  ) r;
+
+  RETURN jsonb_build_object(
+    'data_source',    v_ds->>'data_source',
+    'mode',           v_ds->>'mode',
+    'reason',         v_ds->>'reason',
+    'last_synced_at', v_ds->>'last_synced_at',
+    'locations',      v_locs,
+    'flags',          jsonb_build_object('estimated_cogs', true, 'cogs_note', 'COGS from product mix ratio')
+  );
+END;
+$function$;
+
+GRANT EXECUTE ON FUNCTION get_instant_pnl_unified(uuid, uuid[], date, date) TO anon, authenticated;
+
+
+-- ============================================================
 -- Reload PostgREST schema cache
 -- ============================================================
 NOTIFY pgrst, 'reload schema';
