@@ -7,6 +7,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { buildQueryContext, getTopProductsRpc, type TopProductsRpcResult } from '@/data';
+import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
 
 // Re-export types for backward compatibility
@@ -42,6 +43,7 @@ export function useTopProductsUnified({
   limit = 20,
   enabled = true,
 }: UseTopProductsUnifiedParams) {
+  const { dataSource } = useApp();
   return useQuery({
     queryKey: [
       'top-products-unified',
@@ -52,7 +54,7 @@ export function useTopProductsUnified({
       limit,
     ],
     queryFn: async (): Promise<TopProductsUnifiedResult> => {
-      const ctx = buildQueryContext(orgId, locationIds, 'pos');
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
       const range = {
         from: format(from, 'yyyy-MM-dd'),
         to: format(to, 'yyyy-MM-dd'),

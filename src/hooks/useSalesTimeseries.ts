@@ -8,6 +8,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { buildQueryContext, getSalesTimeseriesRpc, type SalesTimeseriesRpcResult } from '@/data';
+import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
 
 // Re-export sub-types from data layer for backward compatibility
@@ -67,6 +68,7 @@ export function useSalesTimeseries({
   to,
   enabled = true,
 }: UseSalesTimeseriesParams) {
+  const { dataSource } = useApp();
   return useQuery({
     queryKey: [
       'sales-timeseries-unified',
@@ -76,7 +78,7 @@ export function useSalesTimeseries({
       format(to, 'yyyy-MM-dd'),
     ],
     queryFn: async (): Promise<SalesTimeseriesResult> => {
-      const ctx = buildQueryContext(orgId, locationIds, 'pos');
+      const ctx = buildQueryContext(orgId, locationIds, dataSource);
       const range = {
         from: format(from, 'yyyy-MM-dd'),
         to: format(to, 'yyyy-MM-dd'),
