@@ -26,7 +26,7 @@
 
 3. **Ejecuta:**
    ```bash
-   curl -X POST https://[tu-proyecto].supabase.co/functions/v1/seed_josephine_demo \
+   curl -X POST https://[tu-proyecto].functions.supabase.co/functions/v1/seed_josephine_demo \
      -H "Authorization: Bearer [tu-anon-key]" \
      -H "Content-Type: application/json" \
      -d '{"days": 60}'
