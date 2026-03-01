@@ -34,13 +34,17 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // ── 1. Verify state (CSRF) ──────────────────────────────────────────
-    const { data: integration } = await supabase
+    const { data: integration, error: integrationErr } = await supabase
       .from('integrations')
       .select('*')
       .eq('metadata->>oauth_state', state)
-      .single();
+      .maybeSingle();
 
+    if (integrationErr) {
+      console.error('State lookup error:', integrationErr.message);
+    }
     if (!integration) {
+      console.warn('No integration found for state:', state);
       throw Object.assign(new Error('expired_state'), { isExpiredState: true });
     }
 
@@ -167,13 +171,15 @@ Deno.serve(async (req) => {
       .eq('id', integration.id);
 
     // ── 6. Fire-and-forget: trigger first sync ──────────────────────────
-    fetch(`${supabaseUrl}/functions/v1/square-sync`, {
+    // Use *.functions.supabase.co domain (the correct Edge Functions host)
+    const functionsBase = supabaseUrl.replace('.supabase.co', '.functions.supabase.co');
+    fetch(`${functionsBase}/functions/v1/square-sync`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${supabaseKey}`,
       },
-      body: JSON.stringify({ org_id: orgId, lookback_days: 7 }),
+      body: JSON.stringify({ integrationId: integration.id, org_id: orgId, lookback_days: 7 }),
     }).catch((e) => {
       console.warn('Auto-sync trigger failed (non-blocking):', e.message);
     });
@@ -197,7 +203,7 @@ Deno.serve(async (req) => {
       : 'Error de conexión con Square';
     const message = isExpired
       ? 'Este enlace de autorización ya fue utilizado o ha expirado. Vuelve a conectar desde la app.'
-      : `Ha ocurrido un error al conectar con Square: ${error.message}`;
+      : 'Ha ocurrido un error al conectar con Square. Inténtalo de nuevo o contacta soporte.';
     const icon = isExpired ? '🔗' : '⚠️';
 
     return new Response(
