@@ -158,6 +158,35 @@ Deno.serve(async (req) => {
     const locationIds = squareLocations.map((l: any) => l.id);
     stats.locations = squareLocations.length;
 
+    // ── 5a-ii. Map Square locations → Josephine locations ────────────
+    // Query this org's locations and build a best-effort mapping.
+    // Strategy: match by Square location name ↔ Josephine location name.
+    // Fallback: if only 1 org location, map all Square locations to it.
+    const { data: orgLocations } = await supabase
+      .from('locations')
+      .select('id, name')
+      .eq('org_id', orgId);
+
+    const squareToJosephineLocMap = new Map<string, string>();
+    if (orgLocations && orgLocations.length > 0) {
+      for (const sqLoc of squareLocations) {
+        // Try exact name match first
+        const match = orgLocations.find(
+          (jl: any) => jl.name?.toLowerCase().trim() === sqLoc.name?.toLowerCase().trim()
+        );
+        if (match) {
+          squareToJosephineLocMap.set(sqLoc.id, match.id);
+        } else if (orgLocations.length === 1) {
+          // Single-location org: map everything to it
+          squareToJosephineLocMap.set(sqLoc.id, orgLocations[0].id);
+        } else {
+          // Fallback: use the first location
+          squareToJosephineLocMap.set(sqLoc.id, orgLocations[0].id);
+          console.warn(`No name match for Square location "${sqLoc.name}" (${sqLoc.id}), defaulting to ${orgLocations[0].name}`);
+        }
+      }
+    }
+
     if (locationIds.length === 0) {
       await finalizeRun('success', stats);
       return new Response(
@@ -280,6 +309,7 @@ Deno.serve(async (req) => {
 
         return {
           org_id: orgId,
+          location_id: squareToJosephineLocMap.get(o.location_id) || null,
           external_id: o.id,
           opened_at: o.created_at || null,
           closed_at: o.closed_at || null,
