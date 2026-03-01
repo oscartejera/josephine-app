@@ -138,13 +138,46 @@ The auth bypass works by injecting a `sb-{project_ref}-auth-token` key into loca
 - **Supabase:** Integrated with GitHub and Vercel via Supabase integration.
 - Push to branch -> Create PR -> Merge to `main` -> Vercel deploys automatically.
 
-### How Claude Should Operate
+### How Claude Should Operate — AUTO-DEPLOY RULES
 
-1. **Write code** on a feature branch
-2. **Verify before merge:** Run `npm run build` and `npm run lint` — fix any errors before proceeding
-3. **Push** the branch and **create a PR**
-4. **Merge the PR** to `main` directly (owner has authorized autonomous merging)
-5. Vercel handles deployment automatically after merge
+> **MANDATORY**: Every code change MUST be committed and pushed to `main` immediately. Every database change MUST be applied to Supabase automatically. The user has explicitly authorized this workflow.
+
+#### On every code change:
+1. **Write code** directly on `main` (no feature branches, no PRs)
+2. **Commit immediately** with a descriptive message: `git add -A && git commit -m "..."` 
+3. **Push to main**: `git push origin main`
+4. Vercel deploys automatically on push to `main`
+
+#### On every database change:
+1. **Create a migration file** in `supabase/migrations/` with timestamp naming: `YYYYMMDDHHMMSS_description.sql`
+2. **Apply the SQL directly** to the production Supabase database via the Management API:
+   ```javascript
+   // Use tmp_check.mjs pattern with SUPABASE_ACCESS_TOKEN from .env.local
+   fetch(`https://api.supabase.com/v1/projects/qixipveebfhurbarksib/database/query`, {
+     method: 'POST',
+     headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+     body: JSON.stringify({ query: sql })
+   })
+   ```
+3. **Register the migration** in `supabase_migrations.schema_migrations`:
+   ```sql
+   INSERT INTO supabase_migrations.schema_migrations (version, name) 
+   VALUES ('YYYYMMDDHHMMSS', 'description');
+   ```
+4. **Commit and push** the migration file to main (same as code changes)
+5. **Refresh materialized views** if the change affects aggregated data
+
+#### On Edge Function changes:
+1. **Deploy the function**: `npx supabase functions deploy FUNCTION_NAME --project-ref qixipveebfhurbarksib`
+2. **Commit and push** the code to main
+
+#### Summary — Never leave uncommitted work:
+- ✅ Code change → commit + push to main
+- ✅ DB migration → apply SQL + register version + commit + push
+- ✅ Edge function → deploy + commit + push
+- ❌ Never use feature branches
+- ❌ Never create PRs
+- ❌ Never leave changes without pushing
 
 ### Environment Setup (automated via session-start hook)
 
