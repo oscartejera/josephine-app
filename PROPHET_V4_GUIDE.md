@@ -170,7 +170,7 @@ Día de pago (1, 15, fin de mes): +5%
 
 ```bash
 curl -X POST \
-  https://qixipveebfhurbarksib.supabase.co/functions/v1/generate_forecast_v4 \
+  https://qixipveebfhurbarksib.functions.supabase.co/functions/v1/generate_forecast_v4 \
   -H "Authorization: Bearer [tu-service-key]" \
   -H "Content-Type: application/json" \
   -d '{"horizon_days": 90}'
@@ -185,7 +185,7 @@ SELECT cron.schedule(
   '0 2 * * *',  -- 2 AM cada día
   $$
   SELECT net.http_post(
-    url := 'https://[tu-proyecto].supabase.co/functions/v1/generate_forecast_v4',
+    url := 'https://[tu-proyecto].functions.supabase.co/functions/v1/generate_forecast_v4',
     headers := '{"Authorization": "Bearer [key]"}'::jsonb,
     body := '{"horizon_days": 90}'::jsonb
   );

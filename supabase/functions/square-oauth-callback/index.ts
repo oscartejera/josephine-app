@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (!integration) {
-      throw new Error('Invalid state – integration not found');
+      throw Object.assign(new Error('expired_state'), { isExpiredState: true });
     }
 
     const environment: string = integration.metadata?.oauth_environment || 'production';
@@ -188,17 +188,41 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('OAuth callback error:', error);
 
-    // Return a user-friendly error page (the browser is showing this directly)
     const appUrl = Deno.env.get('APP_URL') || 'https://josephine-app.vercel.app';
+    const retryUrl = `${appUrl}/integrations/square`;
+    const isExpired = (error as any)?.isExpiredState === true;
+
+    const title = isExpired
+      ? 'Enlace expirado o ya utilizado'
+      : 'Error de conexión con Square';
+    const message = isExpired
+      ? 'Este enlace de autorización ya fue utilizado o ha expirado. Vuelve a conectar desde la app.'
+      : `Ha ocurrido un error al conectar con Square: ${error.message}`;
+    const icon = isExpired ? '🔗' : '⚠️';
+
     return new Response(
       `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Error de conexión</title></head>
-<body style="font-family:system-ui;padding:2rem;max-width:600px;margin:auto">
-  <h2>⚠️ Error de conexión con Square</h2>
-  <p style="color:#666">${error.message}</p>
-  <a href="${appUrl}/integrations/square" style="color:#2563eb">Volver a intentar</a>
-</body></html>`,
-      { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${title}</title>
+  <meta http-equiv="refresh" content="5;url=${retryUrl}">
+</head>
+<body style="font-family:system-ui,-apple-system,sans-serif;padding:2rem;max-width:500px;margin:4rem auto;text-align:center">
+  <div style="font-size:3rem;margin-bottom:1rem">${icon}</div>
+  <h2 style="margin:0 0 .5rem;color:#1a1a2e">${title}</h2>
+  <p style="color:#64748b;line-height:1.5">${message}</p>
+  <p style="color:#94a3b8;font-size:.875rem;margin-top:1.5rem">
+    Redirigiendo en <span id="cd">5</span> segundos…
+  </p>
+  <a href="${retryUrl}" style="display:inline-block;margin-top:1rem;padding:.6rem 1.5rem;background:#2563eb;color:#fff;border-radius:.5rem;text-decoration:none;font-weight:500">
+    Volver a Integraciones
+  </a>
+  <script>let s=5;const el=document.getElementById('cd');setInterval(()=>{if(--s>=0)el.textContent=s;},1000);</script>
+</body>
+</html>`,
+      { status: isExpired ? 410 : 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
     );
   }
 });
