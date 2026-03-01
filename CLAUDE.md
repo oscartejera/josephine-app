@@ -142,11 +142,26 @@ The auth bypass works by injecting a `sb-{project_ref}-auth-token` key into loca
 
 > **MANDATORY**: Every code change MUST be committed and pushed to `main` immediately. Every database change MUST be applied to Supabase automatically. The user has explicitly authorized this workflow.
 
+> **MANDATORY — VERIFY BEFORE COMMIT**: Before committing AND pushing ANY change, Claude MUST open the browser, navigate to `https://josephine-ai.com`, and visually verify that the change works correctly in the UI. If it doesn't work, iterate and fix until it does. Only commit and push when the UI is confirmed working.
+
+#### Step 0 — ALWAYS: Browser verification before commit
+1. **Make the change** (code, SQL, edge function)
+2. **For DB changes**: Apply SQL to production Supabase first
+3. **For Edge Functions**: Deploy to Supabase first
+4. **For frontend changes**: Wait for Vercel preview or use `npm run dev` locally
+5. **Open the browser** using the browser tool and navigate to `https://josephine-ai.com`
+6. **Log in** as Demo Owner and navigate to the affected page(s)
+7. **Take a screenshot** and verify the change works in the UI
+8. **If it doesn't work** → go back to step 1, fix the issue, and re-verify
+9. **If it works** → proceed to commit and push
+10. **Keep iterating** until the UI confirms the change is correct — never commit broken code
+
 #### On every code change:
 1. **Write code** directly on `main` (no feature branches, no PRs)
-2. **Commit immediately** with a descriptive message: `git add -A && git commit -m "..."` 
-3. **Push to main**: `git push origin main`
-4. Vercel deploys automatically on push to `main`
+2. **Verify in browser** (Step 0 above)
+3. **Commit immediately** with a descriptive message: `git add -A && git commit -m "..."` 
+4. **Push to main**: `git push origin main`
+5. Vercel deploys automatically on push to `main`
 
 #### On every database change:
 1. **Create a migration file** in `supabase/migrations/` with timestamp naming: `YYYYMMDDHHMMSS_description.sql`
@@ -164,17 +179,23 @@ The auth bypass works by injecting a `sb-{project_ref}-auth-token` key into loca
    INSERT INTO supabase_migrations.schema_migrations (version, name) 
    VALUES ('YYYYMMDDHHMMSS', 'description');
    ```
-4. **Commit and push** the migration file to main (same as code changes)
-5. **Refresh materialized views** if the change affects aggregated data
+4. **Verify in browser** (Step 0 above) — confirm the data appears correctly in the UI
+5. **Commit and push** the migration file to main (same as code changes)
+6. **Refresh materialized views** if the change affects aggregated data
 
 #### On Edge Function changes:
 1. **Deploy the function**: `npx supabase functions deploy FUNCTION_NAME --project-ref qixipveebfhurbarksib`
-2. **Commit and push** the code to main
+2. **Verify in browser** (Step 0 above) — confirm the function works from the UI
+3. **Commit and push** the code to main
 
-#### Summary — Never leave uncommitted work:
-- ✅ Code change → commit + push to main
-- ✅ DB migration → apply SQL + register version + commit + push
-- ✅ Edge function → deploy + commit + push
+#### Summary — The golden rule:
+- 🔍 **VERIFY FIRST** → open browser, check UI, take screenshot
+- 🔁 **ITERATE** → if broken, fix and re-verify until it works
+- ✅ **THEN COMMIT** → only after visual confirmation
+- ✅ Code change → verify in browser → commit + push to main
+- ✅ DB migration → apply SQL + register version → verify in browser → commit + push
+- ✅ Edge function → deploy → verify in browser → commit + push
+- ❌ Never commit without browser verification
 - ❌ Never use feature branches
 - ❌ Never create PRs
 - ❌ Never leave changes without pushing
