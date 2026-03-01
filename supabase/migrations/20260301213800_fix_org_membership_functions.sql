@@ -45,3 +45,10 @@ AS $$
       AND m.role IN ('owner', 'admin')
   )
 $$;
+
+-- 4. Fix org_settings RLS: allow any org member to update (not just admin)
+DROP POLICY IF EXISTS org_settings_upsert_admin ON org_settings;
+CREATE POLICY org_settings_upsert_member ON org_settings
+  FOR ALL
+  USING (is_org_member(org_id, auth.uid()))
+  WITH CHECK (is_org_member(org_id, auth.uid()));
