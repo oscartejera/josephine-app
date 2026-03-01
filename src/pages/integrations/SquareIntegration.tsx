@@ -303,6 +303,9 @@ export default function SquareIntegration() {
       startProgressAnimation();
       setSearchParams({});
 
+      // Immediately invalidate queries so the badge updates Demo→POS
+      queryClient.invalidateQueries();
+
       // Fire-and-forget: trigger first sync
       if (orgId) {
         invokeEdgeFunction('square-sync', {
@@ -361,11 +364,17 @@ export default function SquareIntegration() {
         }
       }, 3000);
 
-      // Safety timeout
+      // Safety timeout — data is likely already synced; finish gracefully
       const safetyId = setTimeout(() => {
         clearInterval(poll);
-        resetSyncState();
-      }, 120_000);
+        completeProgressAnimation();
+        queryClient.invalidateQueries();
+        setTimeout(() => {
+          hideSplashScreen();
+          setSyncing(false);
+          toast.info('Datos disponibles. Puedes sincronizar manualmente si necesitas actualizar.');
+        }, 1500);
+      }, 30_000);
 
       return () => {
         clearInterval(poll);
