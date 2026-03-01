@@ -1,18 +1,35 @@
 /**
- * Square Sync Function
- * Sincronización incremental: locations, catalog, orders, payments
+ * Square Sync Edge Function
+ *
+ * Input: POST { org_id: uuid, lookback_days?: number }
+ *
+ * 1. Finds the Square integration + account + tokens
+ * 2. Creates a sync run (status='running')
+ * 3. Pulls Locations, Orders, and Payments from Square API
+ * 4. Writes raw payloads to staging tables
+ * 5. Idempotent window refresh: deletes CDM data for the lookback window, then inserts fresh
+ * 6. On success: sets integrations.metadata.last_synced_at → drives PR4 auto-switch
+ * 7. On failure: records error in integration_sync_runs
+ *
+ * DB SCHEMA (verified):
+ *   cdm_orders        (id, org_id, location_id, external_id, opened_at, closed_at,
+ *                      net_sales, tax, tips, discounts, comps, voids, refunds, payments_total,
+ *                      gross_sales, metadata, provider, integration_account_id)
+ *   cdm_order_lines   (id, org_id, order_id, item_id, name, qty, gross, net, discount, tax,
+ *                      metadata, provider, integration_account_id)
+ *   cdm_payments      (id, org_id, order_id, method, amount, metadata, provider, integration_account_id)
+ *   cdm_items         (id, org_id, external_id, name, category, is_active, metadata, provider, integration_account_id)
+ *   staging_square_orders / staging_square_payments / staging_square_catalog_items
+ *   integration_sync_runs  (id, integration_id, status, started_at, finished_at, error, cursor, created_at)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders } from '../_shared/cors.ts';
 import { SquareClient } from '../_shared/square-client.ts';
-import { decryptToken, encryptToken } from '../_shared/crypto.ts';
-import {
-  normalizeSquareLocation,
-  normalizeSquareItem,
-  normalizeSquareOrder,
-  normalizeSquarePayment
-} from '../_shared/cdm-normalizer.ts';
+
+// Limits to avoid Edge Function timeout (max ~60s for Deno Deploy)
+const MAX_ORDER_PAGES = 5;   // 5 × 100 = 500 orders max
+const MAX_PAYMENT_PAGES = 5; // 5 × 100 = 500 payments max
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -23,722 +40,410 @@ Deno.serve(async (req) => {
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  try {
-    const { accountId } = await req.json();
+  let runId: string | null = null;
+  let integrationId: string | null = null;
 
-    // Self-heal: mark any sync that has been "running" for > 5 minutes as timed out.
-    // This prevents stuck syncs from permanently blocking new ones.
+  // ── Helper: finalize run on exit ────────────────────────────────────
+  async function finalizeRun(
+    status: 'success' | 'failed',
+    stats: Record<string, number>,
+    errorMsg?: string,
+  ) {
+    if (!runId) return;
     await supabase
       .from('integration_sync_runs')
       .update({
-        status: 'error',
-        ended_at: new Date().toISOString(),
-        error_text: 'Timeout - sync did not complete within 5 minutes',
+        status,
+        finished_at: new Date().toISOString(),
+        error: errorMsg || null,
+        cursor: stats,
       })
-      .eq('integration_account_id', accountId)
-      .eq('status', 'running')
-      .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+      .eq('id', runId);
+  }
 
-    // Check for running sync (only recent ones will remain after self-heal)
-    const { data: hasRunning } = await supabase.rpc('has_running_sync', {
-      p_account_id: accountId
-    });
+  try {
+    const body = await req.json();
+    const orgId: string = body.org_id;
+    const lookbackDays: number = body.lookback_days ?? 7;
 
-    if (hasRunning) {
+    if (!orgId) {
       return new Response(
-        JSON.stringify({ message: 'Sync already running' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Missing org_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
-    // Get account
+    // ── 1. Find integration ───────────────────────────────────────────
+    const { data: integration } = await supabase
+      .from('integrations')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('provider', 'square')
+      .eq('is_enabled', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!integration) {
+      return new Response(
+        JSON.stringify({ error: 'Square not connected' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    integrationId = integration.id;
+
+    // ── 2. Find integration account ───────────────────────────────────
     const { data: account } = await supabase
       .from('integration_accounts')
-      .select('*, integration:integrations(*)')
-      .eq('id', accountId)
-      .single();
+      .select('*')
+      .eq('integration_id', integration.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (!account) {
-      throw new Error('Account not found');
+      return new Response(
+        JSON.stringify({ error: 'No integration account (OAuth not completed)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
-    // Create sync run
-    const { data: run } = await supabase
+    // ── 3. Read tokens ────────────────────────────────────────────────
+    const { data: secrets } = await supabase
+      .from('integration_secrets')
+      .select('access_token, refresh_token, token_expires_at')
+      .eq('integration_account_id', account.id)
+      .maybeSingle();
+
+    if (!secrets?.access_token) {
+      return new Response(
+        JSON.stringify({ error: 'No tokens saved (re-authenticate with Square)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // ── 4. Create sync run ────────────────────────────────────────────
+    const { data: run, error: runErr } = await supabase
       .from('integration_sync_runs')
       .insert({
-        integration_account_id: accountId,
+        integration_id: integration.id,
         status: 'running',
-        cursor: {},
-        stats: {},
+        started_at: new Date().toISOString(),
       })
-      .select()
+      .select('id')
       .single();
 
-    const orgId = account.integration.org_id;
-    const environment = account.environment as 'sandbox' | 'production';
-
-    // Decrypt access token
-    let accessToken: string;
-    try {
-      accessToken = await decryptToken(account.access_token_encrypted);
-    } catch {
-      // Fallback: token may have been stored before encryption was enabled
-      accessToken = account.access_token_encrypted;
+    if (runErr || !run) {
+      throw new Error(`Failed to create sync run: ${runErr?.message}`);
     }
+    runId = run.id;
 
-    // Check if token is expired and refresh if needed
-    if (account.token_expires_at && new Date(account.token_expires_at) <= new Date()) {
-      if (!account.refresh_token_encrypted) {
-        throw new Error('Access token expired and no refresh token available');
-      }
-
-      let refreshToken: string;
-      try {
-        refreshToken = await decryptToken(account.refresh_token_encrypted);
-      } catch {
-        refreshToken = account.refresh_token_encrypted;
-      }
-
-      const clientId = environment === 'production'
-        ? Deno.env.get('SQUARE_PRODUCTION_CLIENT_ID')
-        : Deno.env.get('SQUARE_SANDBOX_CLIENT_ID');
-      const clientSecret = environment === 'production'
-        ? Deno.env.get('SQUARE_PRODUCTION_CLIENT_SECRET')
-        : Deno.env.get('SQUARE_SANDBOX_CLIENT_SECRET');
-
-      const tokenUrl = environment === 'production'
-        ? 'https://connect.squareup.com/oauth2/token'
-        : 'https://connect.squareupsandbox.com/oauth2/token';
-
-      const refreshResp = await fetch(tokenUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: clientId,
-          client_secret: clientSecret,
-          refresh_token: refreshToken,
-          grant_type: 'refresh_token',
-        }),
-      });
-
-      if (!refreshResp.ok) {
-        const err = await refreshResp.text();
-        throw new Error(`Token refresh failed: ${err}`);
-      }
-
-      const newTokens = await refreshResp.json();
-      accessToken = newTokens.access_token;
-
-      // Encrypt and persist new tokens
-      const encryptedAccess = await encryptToken(newTokens.access_token);
-      const encryptedRefresh = newTokens.refresh_token
-        ? await encryptToken(newTokens.refresh_token)
-        : account.refresh_token_encrypted;
-
-      await supabase
-        .from('integration_accounts')
-        .update({
-          access_token_encrypted: encryptedAccess,
-          refresh_token_encrypted: encryptedRefresh,
-          token_expires_at: newTokens.expires_at || null,
-        })
-        .eq('id', accountId);
-    }
+    // ── 5. Build Square API client ────────────────────────────────────
+    const environment = (account.metadata as any)?.environment === 'sandbox'
+      ? 'sandbox' as const
+      : 'production' as const;
 
     const client = new SquareClient({
-      accessToken,
+      accessToken: secrets.access_token,
       environment,
     });
 
-    const stats = {
-      locations: 0,
-      items: 0,
-      orders: 0,
-      payments: 0,
-    };
-
-    try {
-      // 1) Sync Locations
-      const locationsResp = await client.listLocations();
-      const locations = locationsResp.locations || [];
-      
-      for (const loc of locations) {
-        const normalized = normalizeSquareLocation(loc, orgId);
-        await supabase
-          .from('cdm_locations')
-          .upsert(normalized, { onConflict: 'external_provider,external_id' });
-      }
-      stats.locations = locations.length;
-
-      // 2) Sync Catalog
-      //    Step A: fetch all categories to build id→name map
-      const categoryMap = new Map<string, string>();
-      let catCursor;
-      do {
-        const catResp = await client.listCategories(catCursor);
-        for (const obj of (catResp.objects || [])) {
-          if (obj.type === 'CATEGORY') {
-            categoryMap.set(obj.id, obj.category_data?.name || 'Other');
-          }
-        }
-        catCursor = catResp.cursor;
-      } while (catCursor);
-
-      //    Step B: fetch items via /catalog/search-catalog-items which
-      //    returns item_data.categories[] on each item.
-      const allSquareItems: any[] = [];
-      const allSquareItemIds: string[] = [];
-      let catalogCursor;
-      do {
-        const catalogResp = await client.searchCatalogItems(catalogCursor);
-        const items = catalogResp.items || [];
-
-        for (const item of items) {
-          allSquareItems.push(item);
-          allSquareItemIds.push(item.id);
-        }
-        catalogCursor = catalogResp.cursor;
-      } while (catalogCursor);
-
-      // Normalize and upsert items + variations with resolved category names
-      for (const squareItem of allSquareItems) {
-        const { item, variations } = normalizeSquareItem(squareItem, orgId, categoryMap);
-
-        // Upsert parent item
-        await supabase
-          .from('cdm_items')
-          .upsert(item, { onConflict: 'external_provider,external_id' });
-
-        // Retrieve cdm_item_id for FK in variations
-        if (variations.length > 0) {
-          const { data: cdmItem } = await supabase
-            .from('cdm_items')
-            .select('id')
-            .eq('org_id', orgId)
-            .eq('external_provider', 'square')
-            .eq('external_id', item.external_id)
-            .single();
-
-          if (cdmItem) {
-            const variationRows = variations.map((v: any) => ({
-              ...v,
-              cdm_item_id: cdmItem.id,
-            }));
-            await supabase
-              .from('cdm_item_variations')
-              .upsert(variationRows, { onConflict: 'org_id,external_variation_id' });
-          }
-        }
-      }
-      stats.items = allSquareItems.length;
-
-      // Clean up orphaned CDM items (deleted from Square catalog)
-      if (allSquareItemIds.length > 0) {
-        const { data: existingCdmItems } = await supabase
-          .from('cdm_items')
-          .select('id, external_id')
-          .eq('org_id', orgId)
-          .eq('external_provider', 'square');
-
-        const orphanIds = (existingCdmItems || [])
-          .filter(item => !allSquareItemIds.includes(item.external_id))
-          .map(item => item.id);
-
-        if (orphanIds.length > 0) {
-          for (let i = 0; i < orphanIds.length; i += 50) {
-            await supabase.from('cdm_items').delete().in('id', orphanIds.slice(i, i + 50));
-          }
-          (stats as any).items_cleaned = orphanIds.length;
-        }
-      }
-
-      // 3) Sync Orders (last 7 days)
-      const locationIds = locations.map((l: any) => l.id);
-      const beginTime = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      
-      // Build location map
-      const locationMap = new Map();
-      for (const loc of locations) {
-        const { data: cdmLoc } = await supabase
-          .from('cdm_locations')
-          .select('id')
-          .eq('external_id', loc.id)
-          .single();
-        if (cdmLoc) locationMap.set(loc.id, cdmLoc.id);
-      }
-
-      // Sync orders page by page, collecting all normalized data.
-      // After all pages are fetched, we purge old order lines ONLY for
-      // orders actually returned by Square, then batch-insert fresh lines.
-      // This prevents duplicates without losing data for orders that
-      // Square no longer returns (e.g., older than the search window).
-      const allSyncedOrderIds: string[] = [];
-      const allFreshLines: any[] = [];
-
-      let ordersCursor;
-      do {
-        const ordersResp = await client.searchOrders(locationIds, ordersCursor, beginTime);
-        const orders = ordersResp.orders || [];
-
-        if (orders.length > 0) {
-          const normalizedOrders: any[] = [];
-          const linesPerExtId = new Map<string, any[]>();
-
-          for (const order of orders) {
-            const normalized = normalizeSquareOrder(order, orgId, locationMap);
-            normalizedOrders.push(normalized.order);
-            linesPerExtId.set(normalized.order.external_id, normalized.lines);
-          }
-
-          // Batch upsert orders
-          await supabase
-            .from('cdm_orders')
-            .upsert(normalizedOrders, { onConflict: 'external_provider,external_id' });
-
-          // Fetch CDM IDs (separate SELECT is more reliable than chained .select())
-          const externalIds = normalizedOrders.map((o: any) => o.external_id);
-          const { data: upsertedOrders } = await supabase
-            .from('cdm_orders')
-            .select('id, external_id')
-            .in('external_id', externalIds);
-
-          for (const o of (upsertedOrders || [])) {
-            allSyncedOrderIds.push(o.id);
-            const lines = linesPerExtId.get(o.external_id) || [];
-            for (const line of lines) {
-              allFreshLines.push({ ...line, order_id: o.id, org_id: orgId });
-            }
-          }
-        }
-
-        stats.orders += orders.length;
-        ordersCursor = ordersResp.cursor;
-      } while (ordersCursor);
-
-      // Purge old lines only for synced orders, then insert fresh ones
-      if (allSyncedOrderIds.length > 0) {
-        for (let i = 0; i < allSyncedOrderIds.length; i += 50) {
-          await supabase
-            .from('cdm_order_lines')
-            .delete()
-            .in('order_id', allSyncedOrderIds.slice(i, i + 50));
-        }
-
-        for (let i = 0; i < allFreshLines.length; i += 500) {
-          await supabase
-            .from('cdm_order_lines')
-            .insert(allFreshLines.slice(i, i + 500));
-        }
-      }
-
-      // 4) Sync Payments (all locations)
-      for (const locId of locationIds) {
-        let paymentsCursor;
-        do {
-          const paymentsResp = await client.listPayments(locId, beginTime, paymentsCursor);
-          const payments = paymentsResp.payments || [];
-
-          for (const payment of payments) {
-            const normalized = normalizeSquarePayment(payment, orgId, locationMap);
-            await supabase
-              .from('cdm_payments')
-              .upsert(normalized, { onConflict: 'external_provider,external_id' });
-          }
-
-          stats.payments += payments.length;
-          paymentsCursor = paymentsResp.cursor;
-        } while (paymentsCursor);
-      }
-
-      // 5) Aggregate CDM orders → pos_daily_finance (data_source = 'pos')
-      // Map CDM locations to Josephine locations
-      const { data: josephineLocations } = await supabase
-        .from('locations')
-        .select('id, name, group_id')
-        .eq('active', true)
-        .limit(10);
-
-      const { data: cdmLocations } = await supabase
-        .from('cdm_locations')
-        .select('id, name, external_id')
-        .eq('org_id', orgId);
-
-      // Build CDM location → Josephine location mapping
-      // Match by name similarity or use first Josephine location as fallback
-      const cdmToJosephineMap = new Map<string, string>();
-      for (const cdmLoc of (cdmLocations || [])) {
-        // Try to find matching Josephine location by name
-        const match = (josephineLocations || []).find(jl =>
-          jl.name.toLowerCase().includes(cdmLoc.name.toLowerCase()) ||
-          cdmLoc.name.toLowerCase().includes(jl.name.toLowerCase())
-        );
-        cdmToJosephineMap.set(
-          cdmLoc.id,
-          match?.id || (josephineLocations?.[0]?.id ?? '')
-        );
-      }
-
-      // Fetch all CDM orders for aggregation (limit raised for growing data)
-      const { data: cdmOrders } = await supabase
-        .from('cdm_orders')
-        .select('id, location_id, closed_at, gross_total, net_total, status')
-        .eq('org_id', orgId)
-        .not('closed_at', 'is', null)
-        .limit(10000);
-
-      if (cdmOrders && cdmOrders.length > 0 && josephineLocations && josephineLocations.length > 0) {
-        // Group orders by date + josephine location
-        const dailyAgg = new Map<string, {
-          date: string;
-          location_id: string;
-          gross_sales: number;
-          net_sales: number;
-          orders_count: number;
-          payments_card: number;
-        }>();
-
-        for (const order of cdmOrders) {
-          const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
-          const orderDate = new Date(order.closed_at).toISOString().split('T')[0];
-          const key = `${orderDate}|${jLocId}`;
-
-          const existing = dailyAgg.get(key) || {
-            date: orderDate,
-            location_id: jLocId,
-            gross_sales: 0,
-            net_sales: 0,
-            orders_count: 0,
-            payments_card: 0,
-          };
-
-          existing.gross_sales += Number(order.gross_total || 0);
-          existing.net_sales += Number(order.net_total || order.gross_total || 0);
-          existing.orders_count += 1;
-          existing.payments_card += Number(order.net_total || order.gross_total || 0);
-          dailyAgg.set(key, existing);
-        }
-
-        // Build aggregated rows
-        const rows = Array.from(dailyAgg.values()).map(d => ({
-          date: d.date,
-          location_id: d.location_id,
-          gross_sales: d.gross_sales,
-          net_sales: d.net_sales,
-          orders_count: d.orders_count,
-          payments_cash: 0,
-          payments_card: d.payments_card,
-          payments_other: 0,
-          refunds_amount: 0,
-          refunds_count: 0,
-          discounts_amount: 0,
-          comps_amount: 0,
-          voids_amount: 0,
-          data_source: 'pos',
-        }));
-
-        if (rows.length > 0) {
-          const syncedDates = [...new Set(rows.map(r => r.date))];
-          const syncedLocationIds = [...new Set(rows.map(r => r.location_id))];
-
-          // Only delete previous POS rows — keep simulated data intact
-          // so disconnecting reverts cleanly to demo data.
-          await supabase
-            .from('pos_daily_finance')
-            .delete()
-            .eq('data_source', 'pos')
-            .in('date', syncedDates)
-            .in('location_id', syncedLocationIds);
-
-          await supabase
-            .from('pos_daily_finance')
-            .insert(rows);
-        }
-
-        (stats as any).daily_finance_rows = rows.length;
-
-        // 6) Aggregate CDM orders → pos_daily_metrics (for Labour page)
-        //    Labour RPCs read from sales_daily_unified which joins pos_daily_metrics.
-        //    Square orders provide net_sales + orders; labor_hours/cost = 0
-        //    (Square doesn't include labor data in orders).
-        const metricsRows = Array.from(dailyAgg.values()).map(d => ({
-          date: d.date,
-          location_id: d.location_id,
-          net_sales: d.net_sales,
-          orders: d.orders_count,
-          labor_hours: 0,
-          labor_cost: 0,
-          data_source: 'pos',
-        }));
-
-        if (metricsRows.length > 0) {
-          // Only delete previous POS rows — keep simulated data intact.
-          const metricsDates = [...new Set(metricsRows.map(r => r.date))];
-          await supabase
-            .from('pos_daily_metrics')
-            .delete()
-            .eq('data_source', 'pos')
-            .in('date', metricsDates)
-            .in('location_id', [...new Set(metricsRows.map(r => r.location_id))]);
-
-          await supabase
-            .from('pos_daily_metrics')
-            .insert(metricsRows);
-        }
-        (stats as any).daily_metrics_rows = metricsRows.length;
-
-        // 7) Sync CDM items → products table (for Menu Engineering)
-        //    Menu Engineering RPCs read from product_sales_daily JOIN products.
-        //    We need products to exist for EVERY location in the group.
-        const groupId = (josephineLocations as any[])[0]?.group_id;
-
-        const { data: cdmItemsList } = await supabase
-          .from('cdm_items')
-          .select('id, name, category_name, is_active')
-          .eq('org_id', orgId);
-
-        // cdm_item.id → canonical name (for item_id-based lookup in step 8)
-        const cdmItemIdToName = new Map<string, string>();
-        for (const ci of (cdmItemsList || [])) {
-          cdmItemIdToName.set(ci.id, ci.name);
-        }
-
-        // Key: "name__locationId" → product.id
-        const productKeyToId = new Map<string, string>();
-
-        if (cdmItemsList && groupId) {
-          // Fetch all existing products for this group (all locations)
-          const { data: existingProducts } = await supabase
-            .from('products')
-            .select('id, name, location_id')
-            .eq('group_id', groupId);
-
-          const existingKeys = new Set<string>();
-          for (const p of (existingProducts || [])) {
-            const key = `${p.name}__${p.location_id}`;
-            existingKeys.add(key);
-            productKeyToId.set(key, p.id);
-          }
-
-          // Build missing products: one per (cdmItem, location) that doesn't exist yet
-          const newProducts: any[] = [];
-          for (const item of cdmItemsList) {
-            for (const loc of josephineLocations) {
-              const key = `${item.name}__${loc.id}`;
-              if (!existingKeys.has(key)) {
-                newProducts.push({
-                  name: item.name,
-                  category: item.category_name || 'Other',
-                  is_active: item.is_active,
-                  group_id: groupId,
-                  location_id: loc.id,
-                });
-              }
-            }
-          }
-
-          if (newProducts.length > 0) {
-            // Insert in batches to avoid payload limits
-            for (let i = 0; i < newProducts.length; i += 500) {
-              const { data: inserted } = await supabase
-                .from('products')
-                .insert(newProducts.slice(i, i + 500))
-                .select('id, name, location_id');
-
-              for (const p of (inserted || [])) {
-                productKeyToId.set(`${p.name}__${p.location_id}`, p.id);
-              }
-            }
-          }
-        }
-        (stats as any).products_synced = productKeyToId.size;
-
-        // 8) Aggregate CDM order lines → product_sales_daily (for Menu Engineering)
-        //    Groups line items by (date, location, product) and writes daily aggregates.
-        const cdmOrderIds = cdmOrders.map((o: any) => o.id);
-
-        if (cdmOrderIds.length > 0 && productKeyToId.size > 0) {
-          // Fetch order lines in batches to avoid PostgREST URL length limit
-          // (642 UUIDs ≈ 23 KB query string, exceeds ~8 KB GET limit).
-          const LINES_BATCH = 50;
-          const allLines: any[] = [];
-          for (let i = 0; i < cdmOrderIds.length; i += LINES_BATCH) {
-            const batch = cdmOrderIds.slice(i, i + LINES_BATCH);
-            const { data: batchLines } = await supabase
-              .from('cdm_order_lines')
-              .select('order_id, name, quantity, gross_line_total, item_id')
-              .in('order_id', batch)
-              .limit(5000);
-            if (batchLines) allLines.push(...batchLines);
-          }
-
-          // Build order_id → {date, location_id} lookup
-          const orderInfoMap = new Map<string, { date: string; location_id: string }>();
-          for (const order of cdmOrders) {
-            const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
-            const orderDate = new Date(order.closed_at).toISOString().split('T')[0];
-            orderInfoMap.set(order.id, { date: orderDate, location_id: jLocId });
-          }
-
-          // Group by (date, location, product)
-          const productDailyAgg = new Map<string, {
-            date: string;
-            location_id: string;
-            product_id: string;
-            units_sold: number;
-            net_sales: number;
-            cogs: number;
-          }>();
-
-          for (const line of allLines) {
-            const orderInfo = orderInfoMap.get(line.order_id);
-            if (!orderInfo) continue;
-
-            // Prefer item_id (stable FK) over line.name (stale if renamed)
-            const resolvedName = (line.item_id && cdmItemIdToName.get(line.item_id)) || line.name;
-            const productId = productKeyToId.get(`${resolvedName}__${orderInfo.location_id}`);
-            if (!productId) continue;
-
-            const key = `${orderInfo.date}|${orderInfo.location_id}|${productId}`;
-            const existing = productDailyAgg.get(key) || {
-              date: orderInfo.date,
-              location_id: orderInfo.location_id,
-              product_id: productId,
-              units_sold: 0,
-              net_sales: 0,
-              cogs: 0,
-            };
-
-            existing.units_sold += Number(line.quantity || 0);
-            existing.net_sales += Number(line.gross_line_total || 0);
-            productDailyAgg.set(key, existing);
-          }
-
-          // Insert fresh POS rows
-          const productRows = Array.from(productDailyAgg.values()).map(d => ({
-            ...d,
-            data_source: 'pos',
-          }));
-
-          if (productRows.length > 0) {
-            // Only delete previous POS rows for synced dates/locations — keep simulated data intact.
-            const prodDates = [...new Set(productRows.map(r => r.date))];
-            const prodLocationIds = [...new Set(productRows.map(r => r.location_id))];
-            await supabase
-              .from('product_sales_daily')
-              .delete()
-              .eq('data_source', 'pos')
-              .in('date', prodDates)
-              .in('location_id', prodLocationIds);
-
-            await supabase.from('product_sales_daily').insert(productRows);
-          }
-          (stats as any).product_sales_rows = productRows.length;
-        }
-
-        // 9) Populate facts_sales_15m from CDM orders (for Prophet forecasting)
-        //    Prophet V4/V5 read from facts_sales_15m to generate forecasts.
-        //    We bucket CDM orders into 15-minute intervals.
-        const factsAgg = new Map<string, {
-          location_id: string;
-          ts_bucket: string;
-          sales_gross: number;
-          sales_net: number;
-          tickets: number;
-          covers: number;
-        }>();
-
-        for (const order of cdmOrders) {
-          const jLocId = cdmToJosephineMap.get(order.location_id) || josephineLocations[0].id;
-          const closedAt = new Date(order.closed_at);
-          // Floor to 15-minute bucket
-          closedAt.setMinutes(Math.floor(closedAt.getMinutes() / 15) * 15, 0, 0);
-          const bucket = closedAt.toISOString();
-          const key = `${bucket}|${jLocId}`;
-
-          const existing = factsAgg.get(key) || {
-            location_id: jLocId,
-            ts_bucket: bucket,
-            sales_gross: 0,
-            sales_net: 0,
-            tickets: 0,
-            covers: 0,
-          };
-
-          existing.sales_gross += Number(order.gross_total || 0);
-          existing.sales_net += Number(order.net_total || order.gross_total || 0);
-          existing.tickets += 1;
-          factsAgg.set(key, existing);
-        }
-
-        if (factsAgg.size > 0) {
-          const factsRows = Array.from(factsAgg.values()).map(r => ({
-            ...r,
-            data_source: 'pos',
-          }));
-          // Delete existing POS 15m facts for the synced date range (keep simulated)
-          const factsDates = [...new Set(factsRows.map(r => r.ts_bucket.split('T')[0]))];
-          for (const d of factsDates) {
-            await supabase
-              .from('facts_sales_15m')
-              .delete()
-              .eq('data_source', 'pos')
-              .gte('ts_bucket', `${d}T00:00:00`)
-              .lte('ts_bucket', `${d}T23:59:59`)
-              .in('location_id', [...new Set(factsRows.map(r => r.location_id))]);
-          }
-
-          await supabase.from('facts_sales_15m').insert(factsRows);
-          (stats as any).facts_15m_rows = factsRows.length;
-        }
-      }
-
-      // 10) Backfill: link cdm_order_lines.item_id via cdm_item_variations
-      //     Sets item_id on lines where external_variation_id is known but
-      //     item_id was not yet resolved.
-      const { data: backfillResult } = await supabase.rpc('backfill_order_lines_item_id', {
-        p_org_id: orgId,
-      });
-      (stats as any).lines_backfilled = backfillResult ?? 0;
-
-      // Complete sync
-      await supabase.rpc('complete_sync_run', {
-        p_run_id: run.id,
-        p_status: 'ok',
-        p_stats: stats,
-      });
-
-      // Mark integration as synced so the frontend can detect POS connection
-      // without needing to query integration_sync_runs (blocked by RLS).
-      await supabase
-        .from('integrations')
-        .update({
-          metadata: {
-            ...account.integration.metadata,
-            last_synced_at: new Date().toISOString(),
-          },
-        })
-        .eq('id', account.integration.id);
-
+    const stats = { locations: 0, orders: 0, payments: 0, items: 0, order_lines: 0 };
+    const beginTime = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000).toISOString();
+    const accountId = account.id;
+
+    // ── 5a. Fetch Locations ───────────────────────────────────────────
+    const locationsResp = await client.listLocations();
+    const squareLocations: any[] = locationsResp.locations || [];
+    const locationIds = squareLocations.map((l: any) => l.id);
+    stats.locations = squareLocations.length;
+
+    if (locationIds.length === 0) {
+      await finalizeRun('success', stats);
       return new Response(
-        JSON.stringify({ success: true, stats }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ run_id: runId, ...stats, message: 'No Square locations found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
-    } catch (syncError) {
-      // Mark run as error
-      await supabase.rpc('complete_sync_run', {
-        p_run_id: run.id,
-        p_status: 'error',
-        p_stats: stats,
-        p_error: syncError.message,
+    }
+
+    // ── 5b. Fetch Orders (paginated, capped) ──────────────────────────
+    const allSquareOrders: any[] = [];
+    let ordersCursor: string | undefined;
+    let orderPages = 0;
+    do {
+      const ordersResp = await client.searchOrders(locationIds, ordersCursor, beginTime);
+      const orders = ordersResp.orders || [];
+      allSquareOrders.push(...orders);
+      ordersCursor = ordersResp.cursor;
+      orderPages++;
+    } while (ordersCursor && orderPages < MAX_ORDER_PAGES);
+    stats.orders = allSquareOrders.length;
+
+    // ── 5c. Fetch Payments (paginated, capped) ────────────────────────
+    const allSquarePayments: any[] = [];
+    for (const locId of locationIds) {
+      let paymentsCursor: string | undefined;
+      let paymentPages = 0;
+      do {
+        const paymentsResp = await client.listPayments(locId, beginTime, paymentsCursor);
+        const payments = paymentsResp.payments || [];
+        allSquarePayments.push(...payments);
+        paymentsCursor = paymentsResp.cursor;
+        paymentPages++;
+      } while (paymentsCursor && paymentPages < MAX_PAYMENT_PAGES);
+    }
+    stats.payments = allSquarePayments.length;
+
+    // ── 6. Write to staging tables ────────────────────────────────────
+    // Orders staging
+    if (allSquareOrders.length > 0) {
+      const stagingOrders = allSquareOrders.map((o: any) => ({
+        org_id: orgId,
+        integration_account_id: accountId,
+        square_order_id: o.id,
+        square_location_id: o.location_id,
+        square_updated_at: o.updated_at || o.created_at,
+        payload: o,
+        received_at: new Date().toISOString(),
+        status: 'new',
+      }));
+      for (let i = 0; i < stagingOrders.length; i += 200) {
+        await supabase.from('staging_square_orders').insert(stagingOrders.slice(i, i + 200));
+      }
+    }
+
+    // Payments staging
+    if (allSquarePayments.length > 0) {
+      const stagingPayments = allSquarePayments.map((p: any) => ({
+        org_id: orgId,
+        integration_account_id: accountId,
+        square_payment_id: p.id,
+        square_order_id: p.order_id || null,
+        square_location_id: p.location_id,
+        square_created_at: p.created_at,
+        payload: p,
+        received_at: new Date().toISOString(),
+        status: 'new',
+      }));
+      for (let i = 0; i < stagingPayments.length; i += 200) {
+        await supabase.from('staging_square_payments').insert(stagingPayments.slice(i, i + 200));
+      }
+    }
+
+    // ── 7. Idempotent window refresh: CDM tables ──────────────────────
+    // 7a. Delete existing Square data for the lookback window
+    //     Order: lines → payments → orders (FK safety)
+    const windowStart = beginTime;
+
+    // Get IDs of orders we're about to replace
+    const { data: existingOrders } = await supabase
+      .from('cdm_orders')
+      .select('id')
+      .eq('org_id', orgId)
+      .eq('provider', 'square')
+      .gte('closed_at', windowStart);
+
+    const existingOrderIds = (existingOrders || []).map((o: any) => o.id);
+
+    if (existingOrderIds.length > 0) {
+      // Delete order lines for these orders (batch to avoid URL length limits)
+      for (let i = 0; i < existingOrderIds.length; i += 50) {
+        const batch = existingOrderIds.slice(i, i + 50);
+        await supabase.from('cdm_order_lines').delete().in('order_id', batch);
+        await supabase.from('cdm_payments').delete().in('order_id', batch);
+      }
+      // Delete the orders themselves
+      for (let i = 0; i < existingOrderIds.length; i += 50) {
+        const batch = existingOrderIds.slice(i, i + 50);
+        await supabase.from('cdm_orders').delete().in('id', batch);
+      }
+    }
+
+    // 7b. Also delete items from this provider (full refresh for catalog)
+    await supabase
+      .from('cdm_items')
+      .delete()
+      .eq('org_id', orgId)
+      .eq('provider', 'square');
+
+    // ── 7c. Insert fresh CDM orders ───────────────────────────────────
+    const squareIdToCdmId = new Map<string, string>(); // external_id → cdm_orders.id
+
+    for (let i = 0; i < allSquareOrders.length; i += 100) {
+      const batch = allSquareOrders.slice(i, i + 100);
+      const rows = batch.map((o: any) => {
+        const grossCents = o.total_money?.amount ?? 0;
+        const netCents = o.net_amounts?.total_money?.amount ?? grossCents;
+        const taxCents = o.total_tax_money?.amount ?? 0;
+        const tipCents = o.total_tip_money?.amount ?? 0;
+        const discountCents = o.total_discount_money?.amount ?? 0;
+
+        return {
+          org_id: orgId,
+          external_id: o.id,
+          opened_at: o.created_at || null,
+          closed_at: o.closed_at || null,
+          gross_sales: grossCents / 100,
+          net_sales: netCents / 100,
+          tax: taxCents / 100,
+          tips: tipCents / 100,
+          discounts: discountCents / 100,
+          comps: 0,
+          voids: 0,
+          refunds: 0,
+          payments_total: grossCents / 100,
+          provider: 'square',
+          integration_account_id: accountId,
+          metadata: { state: o.state, source: o.source?.name, location_id: o.location_id },
+        };
       });
 
-      throw syncError;
+      const { data: inserted } = await supabase
+        .from('cdm_orders')
+        .insert(rows)
+        .select('id, external_id');
+
+      for (const r of (inserted || [])) {
+        squareIdToCdmId.set(r.external_id, r.id);
+      }
     }
+
+    // ── 7d. Insert CDM order lines ────────────────────────────────────
+    const allLines: any[] = [];
+
+    for (const order of allSquareOrders) {
+      const cdmOrderId = squareIdToCdmId.get(order.id);
+      if (!cdmOrderId) continue;
+
+      for (const line of (order.line_items || [])) {
+        const grossCents = line.gross_sales_money?.amount ?? line.total_money?.amount ?? 0;
+        const netCents = line.total_money?.amount ?? grossCents;
+        const discountCents = line.total_discount_money?.amount ?? 0;
+        const taxCents = line.total_tax_money?.amount ?? 0;
+
+        allLines.push({
+          org_id: orgId,
+          order_id: cdmOrderId,
+          name: line.name || 'Unknown',
+          qty: Number(line.quantity || 0),
+          gross: grossCents / 100,
+          net: netCents / 100,
+          discount: discountCents / 100,
+          tax: taxCents / 100,
+          provider: 'square',
+          integration_account_id: accountId,
+          metadata: {
+            uid: line.uid,
+            catalog_object_id: line.catalog_object_id,
+            variation_name: line.variation_name,
+          },
+        });
+      }
+    }
+
+    stats.order_lines = allLines.length;
+    for (let i = 0; i < allLines.length; i += 200) {
+      await supabase.from('cdm_order_lines').insert(allLines.slice(i, i + 200));
+    }
+
+    // ── 7e. Insert CDM payments ───────────────────────────────────────
+    // Extract tenders from orders (more reliable than Payments API for order→payment link)
+    const allCdmPayments: any[] = [];
+
+    for (const order of allSquareOrders) {
+      const cdmOrderId = squareIdToCdmId.get(order.id);
+      if (!cdmOrderId) continue;
+
+      for (const tender of (order.tenders || [])) {
+        const amountCents = tender.amount_money?.amount ?? 0;
+        let method = 'other';
+        if (tender.type === 'CARD') method = 'card';
+        else if (tender.type === 'CASH') method = 'cash';
+        else if (tender.type === 'SQUARE_GIFT_CARD') method = 'gift_card';
+
+        allCdmPayments.push({
+          org_id: orgId,
+          order_id: cdmOrderId,
+          method,
+          amount: amountCents / 100,
+          provider: 'square',
+          integration_account_id: accountId,
+          metadata: {
+            tender_id: tender.id,
+            type: tender.type,
+            card_brand: tender.card_details?.card?.card_brand,
+          },
+        });
+      }
+    }
+
+    for (let i = 0; i < allCdmPayments.length; i += 200) {
+      await supabase.from('cdm_payments').insert(allCdmPayments.slice(i, i + 200));
+    }
+
+    // ── 7f. Insert CDM items (from order line catalog refs) ───────────
+    // Collect unique item names from line items
+    const seenItemNames = new Set<string>();
+    const cdmItems: any[] = [];
+
+    for (const order of allSquareOrders) {
+      for (const line of (order.line_items || [])) {
+        const name = line.name || 'Unknown';
+        if (seenItemNames.has(name)) continue;
+        seenItemNames.add(name);
+
+        cdmItems.push({
+          org_id: orgId,
+          external_id: line.catalog_object_id || `line-${line.uid}`,
+          name,
+          category: line.variation_name || null,
+          is_active: true,
+          provider: 'square',
+          integration_account_id: accountId,
+          metadata: { catalog_object_id: line.catalog_object_id },
+        });
+      }
+    }
+
+    stats.items = cdmItems.length;
+    for (let i = 0; i < cdmItems.length; i += 200) {
+      await supabase.from('cdm_items').insert(cdmItems.slice(i, i + 200));
+    }
+
+    // ── 8. Success: update integration metadata + finalize run ────────
+    await supabase
+      .from('integrations')
+      .update({
+        metadata: {
+          ...(integration.metadata || {}),
+          last_synced_at: new Date().toISOString(),
+        },
+      })
+      .eq('id', integration.id);
+
+    await finalizeRun('success', stats);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        run_id: runId,
+        imported_orders: stats.orders,
+        imported_order_lines: stats.order_lines,
+        imported_payments: allCdmPayments.length,
+        imported_items: stats.items,
+        locations: stats.locations,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+
   } catch (error) {
     console.error('Sync error:', error);
+
+    await finalizeRun('failed', {}, error.message);
+
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }
 });

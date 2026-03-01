@@ -1,6 +1,11 @@
 /**
  * Square Integration Page
  * Real OAuth flow + sync management with animated progress bar and splash screen.
+ *
+ * DB SCHEMA (current):
+ *   integrations:          { id, org_id, provider, is_enabled, status, metadata, created_at }
+ *   integration_accounts:  { id, integration_id, external_account_id, display_name, metadata, created_at, org_id, provider }
+ *   integration_sync_runs: { id, integration_id, status(sync_status), started_at, finished_at, error, cursor, created_at }
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -10,10 +15,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Plug2, RefreshCw, Loader2, ArrowLeft, Clock } from 'lucide-react';
+import { CheckCircle, Plug2, RefreshCw, Loader2, ArrowLeft, Clock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApp } from '@/contexts/AppContext';
 import SyncSplashScreen from '@/components/integrations/SyncSplashScreen';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -52,29 +58,39 @@ async function invokeEdgeFunction(name: string, body: Record<string, unknown>, t
   }
 }
 
+// ---------------------------------------------------------------------------
+// Types matching CURRENT DB schema
+// ---------------------------------------------------------------------------
 interface Integration {
   id: string;
-  status: string;
+  org_id: string;
   provider: string;
+  is_enabled: boolean;
+  status: string;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 
 interface IntegrationAccount {
   id: string;
   integration_id: string;
-  environment: string;
   external_account_id: string;
-  metadata: any;
+  display_name: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
+  org_id: string;
+  provider: string;
 }
 
+/** sync_status enum: 'queued' | 'running' | 'success' | 'error' */
 interface SyncRun {
   id: string;
-  started_at: string;
-  ended_at: string | null;
+  integration_id: string;
   status: string;
-  stats: any;
-  error_text: string | null;
+  started_at: string;
+  finished_at: string | null;
+  error: string | null;
+  created_at: string;
 }
 
 // Sync phases for the progress bar
@@ -86,8 +102,45 @@ const SYNC_PHASES = [
   { label: 'Procesando datos...', target: 90, durationMs: 40_000 },
 ];
 
+/** True when the sync status represents a terminal state. */
+function isSyncDone(status: string): boolean {
+  return ['success', 'error', 'failed'].includes(status);
+}
+
+/** True when the sync status is a success. */
+function isSyncSuccess(status: string): boolean {
+  return status === 'success';
+}
+
+/** Human-readable label for each status. */
+function statusLabel(status: string): string {
+  switch (status) {
+    case 'success': return 'OK';
+    case 'running': return 'En curso';
+    case 'queued': return 'En cola';
+    case 'error':
+    case 'failed': return 'Error';
+    default: return status;
+  }
+}
+
+/** Badge variant for each status. */
+function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (status) {
+    case 'success': return 'default';
+    case 'running':
+    case 'queued': return 'secondary';
+    case 'error':
+    case 'failed': return 'destructive';
+    default: return 'outline';
+  }
+}
+
 export default function SquareIntegration() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
+  const { group } = useApp();
+  const orgId = group?.id || profile?.group_id || null;
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -113,7 +166,6 @@ export default function SquareIntegration() {
   const showSplashScreen = useCallback((msg: string, maxMs = 8_000) => {
     setSplashMessage(msg);
     setShowSplash(true);
-    // Safety: always dismiss the splash after maxMs
     if (splashSafetyTimer.current) clearTimeout(splashSafetyTimer.current);
     splashSafetyTimer.current = setTimeout(() => {
       setShowSplash(false);
@@ -138,7 +190,6 @@ export default function SquareIntegration() {
       const prevTarget = phase > 0 ? SYNC_PHASES[phase - 1].target : 0;
       elapsedInPhase += 300;
 
-      // Linear interpolation within each phase
       const phaseProgress = Math.min(elapsedInPhase / durationMs, 0.95);
       current = prevTarget + (target - prevTarget) * phaseProgress;
       setSyncProgress(Math.min(Math.round(current), 90));
@@ -179,7 +230,70 @@ export default function SquareIntegration() {
     };
   }, []);
 
-  // Check for OAuth callback params
+  // ---------------------------------------------------------------------------
+  // Load integration, accounts, and sync runs using CURRENT DB schema
+  // ---------------------------------------------------------------------------
+  const loadIntegration = useCallback(async () => {
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    // 1) Find the Square integration for this org
+    const { data: integrations } = await supabase
+      .from('integrations')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('provider', 'square')
+      .in('status', ['active', 'pending'])
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (integrations && integrations.length > 0) {
+      const integ = integrations[0] as unknown as Integration;
+      setIntegration(integ);
+
+      // 2) Load accounts: integration_accounts WHERE integration_id = integ.id
+      const { data: accounts } = await supabase
+        .from('integration_accounts')
+        .select('*')
+        .eq('integration_id', integ.id)
+        .order('created_at', { ascending: false });
+
+      if (accounts && accounts.length > 0) {
+        setAccount(accounts[0] as unknown as IntegrationAccount);
+      } else {
+        setAccount(null);
+      }
+
+      // 3) Load sync runs: integration_sync_runs WHERE integration_id = integ.id
+      const { data: runs } = await supabase
+        .from('integration_sync_runs')
+        .select('*')
+        .eq('integration_id', integ.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setSyncRuns((runs || []) as unknown as SyncRun[]);
+    } else {
+      setIntegration(null);
+      setAccount(null);
+      setSyncRuns([]);
+    }
+
+    setLoading(false);
+  }, [orgId]);
+
+  // Initial load
+  useEffect(() => {
+    loadIntegration();
+  }, [loadIntegration]);
+
+  // ---------------------------------------------------------------------------
+  // OAuth callback: ?connected=true → trigger first sync + poll
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (searchParams.get('connected') === 'true') {
       toast.success('Square conectado correctamente', {
@@ -189,20 +303,47 @@ export default function SquareIntegration() {
       startProgressAnimation();
       setSearchParams({});
 
+      // Fire-and-forget: trigger first sync
+      if (orgId) {
+        invokeEdgeFunction('square-sync', {
+          org_id: orgId,
+          lookback_days: 7,
+        }, SYNC_TIMEOUT_MS).catch((err) => {
+          console.warn('Auto-sync trigger failed (will poll for result):', err.message);
+        });
+      }
+
+      // Poll integration_sync_runs until terminal state
       const poll = setInterval(async () => {
         await loadIntegration();
+
+        if (!orgId) return;
+
+        const { data: integ } = await supabase
+          .from('integrations')
+          .select('id')
+          .eq('org_id', orgId)
+          .eq('provider', 'square')
+          .limit(1)
+          .single();
+
+        if (!integ) return;
+
         const { data: runs } = await supabase
           .from('integration_sync_runs')
-          .select('status')
-          .order('started_at', { ascending: false })
+          .select('status, error')
+          .eq('integration_id', integ.id)
+          .order('created_at', { ascending: false })
           .limit(1);
+
         const latest = runs?.[0];
-        if (latest && latest.status !== 'running') {
+        if (!latest) return; // no run yet, keep polling
+
+        if (isSyncDone(latest.status)) {
           clearInterval(poll);
-          if (latest.status === 'ok') {
+          if (isSyncSuccess(latest.status)) {
             completeProgressAnimation();
             toast.success('Datos importados correctamente');
-            // Brief pause then show splash while refreshing data
             setTimeout(() => {
               showSplashScreen('Cargando tus datos de Square...');
               queryClient.invalidateQueries();
@@ -213,18 +354,25 @@ export default function SquareIntegration() {
             }, 1500);
           } else {
             resetSyncState();
-            toast.error('Error en la sincronización inicial');
+            toast.error('Error en la sincronización inicial', {
+              description: latest.error || 'Error desconocido',
+            });
           }
         }
       }, 3000);
 
       // Safety timeout
-      setTimeout(() => {
+      const safetyId = setTimeout(() => {
         clearInterval(poll);
         resetSyncState();
       }, 120_000);
-      return () => clearInterval(poll);
+
+      return () => {
+        clearInterval(poll);
+        clearTimeout(safetyId);
+      };
     }
+
     if (searchParams.get('error')) {
       toast.error('Error conectando Square', {
         description: searchParams.get('error'),
@@ -233,57 +381,15 @@ export default function SquareIntegration() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    loadIntegration();
-  }, []);
-
-  const loadIntegration = async () => {
-    setLoading(true);
-
-    const { data: integrations } = await supabase
-      .from('integrations')
-      .select('*')
-      .eq('provider', 'square')
-      .in('status', ['active', 'pending'])
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (integrations && integrations.length > 0) {
-      const integ = integrations[0] as Integration;
-      setIntegration(integ);
-
-      const { data: accounts } = await supabase
-        .from('integration_accounts')
-        .select('*')
-        .eq('integration_id', integ.id)
-        .eq('is_active', true)
-        .limit(1);
-
-      if (accounts && accounts.length > 0) {
-        setAccount(accounts[0] as IntegrationAccount);
-
-        const { data: runs } = await supabase
-          .from('integration_sync_runs')
-          .select('*')
-          .eq('integration_account_id', accounts[0].id)
-          .order('started_at', { ascending: false })
-          .limit(10);
-
-        setSyncRuns((runs || []) as SyncRun[]);
-      } else {
-        setAccount(null);
-        setSyncRuns([]);
-      }
-    } else {
-      setIntegration(null);
-      setAccount(null);
-      setSyncRuns([]);
+  // ---------------------------------------------------------------------------
+  // Connect with Square (OAuth start)
+  // ---------------------------------------------------------------------------
+  const handleConnect = async () => {
+    if (!orgId) {
+      toast.error('No se encontró la organización. Recarga la página.');
+      return;
     }
 
-    setLoading(false);
-  };
-
-  const handleConnect = async () => {
     setConnecting(true);
 
     try {
@@ -294,7 +400,7 @@ export default function SquareIntegration() {
         const { data: newInteg, error } = await supabase
           .from('integrations')
           .insert({
-            org_id: user?.id || '00000000-0000-0000-0000-000000000000',
+            org_id: orgId,
             provider: 'square',
             status: 'pending',
           })
@@ -303,7 +409,7 @@ export default function SquareIntegration() {
 
         if (error) throw new Error(error.message);
         integrationId = newInteg.id;
-        setIntegration(newInteg as Integration);
+        setIntegration(newInteg as unknown as Integration);
       }
 
       const data = await invokeEdgeFunction('square-oauth-start', {
@@ -320,13 +426,20 @@ export default function SquareIntegration() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Manual sync
+  // ---------------------------------------------------------------------------
   const handleSync = async () => {
-    if (!account) return;
+    if (!orgId) return;
     setSyncing(true);
     startProgressAnimation();
 
     try {
-      const data = await invokeEdgeFunction('square-sync', { accountId: account.id }, SYNC_TIMEOUT_MS);
+      const data = await invokeEdgeFunction(
+        'square-sync',
+        { org_id: orgId, lookback_days: 7 },
+        SYNC_TIMEOUT_MS,
+      );
 
       if (data.message === 'Sync already running') {
         stopProgressAnimation();
@@ -367,34 +480,26 @@ export default function SquareIntegration() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Disconnect
+  // ---------------------------------------------------------------------------
   const handleDisconnect = async () => {
     if (!integration) return;
 
     showSplashScreen('Desconectando Square...');
 
     try {
-      // Disable the integration
       await supabase
         .from('integrations')
         .update({ status: 'disabled' })
         .eq('id', integration.id);
 
-      // Also disable the account so usePOSConnection picks up the change
-      if (account) {
-        await supabase
-          .from('integration_accounts')
-          .update({ is_active: false })
-          .eq('id', account.id);
-      }
-
       setIntegration(null);
       setAccount(null);
       setSyncRuns([]);
 
-      // Invalidate all cached data so hooks re-fetch with dataSource='demo'
       queryClient.invalidateQueries();
 
-      // Give React Query time to refetch, then dismiss splash
       setTimeout(() => {
         hideSplashScreen();
         toast.info('Square desconectado. Mostrando datos de demostración.');
@@ -406,7 +511,15 @@ export default function SquareIntegration() {
     }
   };
 
-  const isConnected = integration?.status === 'active' && account;
+  // ---------------------------------------------------------------------------
+  // Derived state
+  // ---------------------------------------------------------------------------
+  const isConnected = integration?.status === 'active' && !!account;
+  const isConnectedNoAccount = integration?.status === 'active' && !account;
+
+  // Detect if a sync is currently in progress from DB (not user-initiated)
+  const latestRun = syncRuns[0] ?? null;
+  const isRunningFromDB = latestRun && ['queued', 'running'].includes(latestRun.status);
 
   // Splash screen overlay
   if (showSplash) {
@@ -440,7 +553,12 @@ export default function SquareIntegration() {
         {isConnected ? (
           <Badge variant="default" className="gap-2 bg-green-600">
             <CheckCircle className="h-4 w-4" />
-            Conectado ({account.environment})
+            Conectado
+          </Badge>
+        ) : isConnectedNoAccount ? (
+          <Badge variant="secondary" className="gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Conectado (sin cuenta)
           </Badge>
         ) : (
           <Button onClick={handleConnect} size="lg" disabled={connecting}>
@@ -473,7 +591,7 @@ export default function SquareIntegration() {
         </Card>
       )}
 
-      {!isConnected && (
+      {!isConnected && !isConnectedNoAccount && (
         <Card>
           <CardHeader>
             <CardTitle>Conecta tu cuenta de Square</CardTitle>
@@ -496,23 +614,34 @@ export default function SquareIntegration() {
         </Card>
       )}
 
-      {isConnected && (
+      {(isConnected || isConnectedNoAccount) && (
         <>
           <Card>
             <CardHeader>
               <CardTitle>Estado de la conexión</CardTitle>
-              <CardDescription>
-                Merchant ID: <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{account.external_account_id}</code>
-              </CardDescription>
+              {account && (
+                <CardDescription>
+                  {account.display_name && (
+                    <span className="mr-2">{account.display_name}</span>
+                  )}
+                  Merchant ID: <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{account.external_account_id}</code>
+                </CardDescription>
+              )}
+              {isConnectedNoAccount && (
+                <CardDescription className="text-amber-600">
+                  La integración está activa pero no se encontró una cuenta de Square.
+                  Intenta desconectar y volver a conectar.
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className="flex gap-3">
-              <Button onClick={handleSync} disabled={syncing}>
-                {syncing ? (
+              <Button onClick={handleSync} disabled={syncing || !!isRunningFromDB}>
+                {syncing || isRunningFromDB ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
-                {syncing ? 'Sincronizando...' : 'Sincronizar ahora'}
+                {syncing ? 'Sincronizando...' : isRunningFromDB ? 'Sincronización en curso...' : 'Sincronizar ahora'}
               </Button>
               <Button variant="destructive" size="sm" onClick={handleDisconnect}>
                 Desconectar
@@ -530,32 +659,30 @@ export default function SquareIntegration() {
             <CardContent>
               {syncRuns.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">
-                  No hay sincronizaciones aún. Haz clic en "Sincronizar ahora" para importar datos.
+                  Conectado, sin sincronizaciones todavía. Haz clic en "Sincronizar ahora" para importar datos.
                 </p>
               ) : (
                 <div className="space-y-3">
                   {syncRuns.map((run) => (
                     <div key={run.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Badge variant={
-                          run.status === 'ok' ? 'default' :
-                            run.status === 'running' ? 'secondary' :
-                              'destructive'
-                        }>
-                          {run.status === 'ok' ? 'OK' : run.status === 'running' ? 'En curso' : 'Error'}
+                        <Badge variant={statusVariant(run.status)}>
+                          {statusLabel(run.status)}
                         </Badge>
                         <span className="text-sm text-muted-foreground">
-                          {new Date(run.started_at).toLocaleString('es-ES')}
+                          {new Date(run.started_at || run.created_at).toLocaleString('es-ES')}
                         </span>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {run.stats && typeof run.stats === 'object' && Object.keys(run.stats).length > 0 && (
-                          <span>
-                            {run.stats.locations || 0} locales, {run.stats.items || 0} items, {run.stats.orders || 0} pedidos
+                        {run.finished_at && (
+                          <span className="text-xs">
+                            {Math.round(
+                              (new Date(run.finished_at).getTime() - new Date(run.started_at || run.created_at).getTime()) / 1000
+                            )}s
                           </span>
                         )}
-                        {run.error_text && (
-                          <span className="text-destructive ml-2">{run.error_text}</span>
+                        {run.error && (
+                          <span className="text-destructive ml-2">{run.error}</span>
                         )}
                       </div>
                     </div>
