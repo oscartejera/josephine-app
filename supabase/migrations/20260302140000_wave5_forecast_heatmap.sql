@@ -84,12 +84,12 @@ BEGIN
 
   -- Budget from labour_rules (optional)
   SELECT COALESCE(
-    (SELECT value::numeric FROM labour_rules
+    (SELECT rule_value::numeric FROM labour_rules
      WHERE rule_key = 'monthly_labour_budget'
        AND location_id = p_location_id
        AND org_id = p_org_id
      LIMIT 1),
-    (SELECT value::numeric FROM labour_rules
+    (SELECT rule_value::numeric FROM labour_rules
      WHERE rule_key = 'monthly_labour_budget'
        AND location_id IS NULL
        AND org_id = p_org_id
@@ -196,24 +196,24 @@ BEGIN
 
   -- Get target SPLH from labour_rules
   SELECT COALESCE(
-    (SELECT value::numeric FROM labour_rules
+    (SELECT rule_value::numeric FROM labour_rules
      WHERE rule_key = 'target_splh' AND location_id = p_location_id AND org_id = p_org_id LIMIT 1),
-    (SELECT value::numeric FROM labour_rules
+    (SELECT rule_value::numeric FROM labour_rules
      WHERE rule_key = 'target_splh' AND location_id IS NULL AND org_id = p_org_id LIMIT 1),
-    (SELECT value::numeric FROM labour_rules
+    (SELECT rule_value::numeric FROM labour_rules
      WHERE rule_key = 'target_splh' AND location_id IS NULL AND org_id IS NULL LIMIT 1),
     60
   ) INTO v_target_splh;
 
   -- Get opening/closing from labour_rules if available
   SELECT COALESCE(
-    (SELECT value::int FROM labour_rules
+    (SELECT rule_value::int FROM labour_rules
      WHERE rule_key = 'opening_hour' AND location_id = p_location_id AND org_id = p_org_id LIMIT 1),
     10
   ) INTO v_opening_hour;
 
   SELECT COALESCE(
-    (SELECT value::int FROM labour_rules
+    (SELECT rule_value::int FROM labour_rules
      WHERE rule_key = 'closing_hour' AND location_id = p_location_id AND org_id = p_org_id LIMIT 1),
     23
   ) INTO v_closing_hour;
