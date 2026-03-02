@@ -18,6 +18,8 @@ import { LabourByRole } from '@/components/labour/LabourByRole';
 import { LabourComplianceDashboard } from '@/components/labour/LabourComplianceDashboard';
 import { StaffingRecommendation } from '@/components/labour/StaffingRecommendation';
 import { EmployeeRevenueTable } from '@/components/labour/EmployeeRevenueTable';
+import { PayrollForecast } from '@/components/labour/PayrollForecast';
+import { StaffingHeatmap } from '@/components/labour/StaffingHeatmap';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -135,6 +137,12 @@ export default function Labour() {
         metricMode={metricMode}
         dateRange={dateRange}
       />
+
+      {/* Payroll Forecast + Staffing Heatmap */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PayrollForecast locationId={validLocationId} />
+        <StaffingHeatmap locationId={validLocationId} />
+      </div>
 
       {/* Triple Comparison: Planned vs Actual vs Payroll */}
       <LabourTripleComparison
