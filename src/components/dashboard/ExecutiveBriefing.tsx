@@ -127,13 +127,12 @@ export function ExecutiveBriefing() {
                 .in('location_id', locIds)
                 .eq('date', yesterday);
 
-            // Fetch yesterday's labour from planned_shifts × employees.hourly_cost
-            // (labour_daily_unified is empty — planned_shifts is the source of truth)
-            const { data: labourData } = await supabase
-                .from('planned_shifts')
-                .select('location_id, planned_hours, employee_id, employees!inner(hourly_cost)')
-                .in('location_id', locIds)
-                .eq('shift_date', yesterday);
+            // Fetch yesterday's labour cost per location
+            // Uses an RPC to compute SUM(planned_hours × hourly_cost) per location
+            const { data: labourData } = await (supabase as any).rpc('get_labour_cost_by_date', {
+                p_location_ids: locIds,
+                p_date: yesterday,
+            });
 
             // Fetch yesterday's budget
             const { data: budgetData } = await (supabase as any)
@@ -157,8 +156,7 @@ export function ExecutiveBriefing() {
 
             const labourByLoc: Record<string, number> = {};
             (labourData || []).forEach((r: any) => {
-                const cost = (r.planned_hours || 0) * ((r.employees as any)?.hourly_cost || 0);
-                labourByLoc[r.location_id] = (labourByLoc[r.location_id] || 0) + cost;
+                labourByLoc[r.location_id] = (labourByLoc[r.location_id] || 0) + (r.labour_cost || 0);
             });
 
             const budgetByLoc: Record<string, { sales: number; labour: number }> = {};

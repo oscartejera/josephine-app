@@ -9,6 +9,26 @@
 -- source of truth, matching how the Labour page calculates.
 -- ============================================================
 
+-- Helper RPC for ExecutiveBriefing: returns per-location labour cost for a date
+CREATE OR REPLACE FUNCTION get_labour_cost_by_date(
+  p_location_ids uuid[],
+  p_date date
+)
+RETURNS TABLE(location_id uuid, labour_cost numeric)
+LANGUAGE sql STABLE SECURITY DEFINER
+AS $$
+  SELECT
+    ps.location_id,
+    COALESCE(SUM(ps.planned_hours * COALESCE(e.hourly_cost, 0)), 0) AS labour_cost
+  FROM planned_shifts ps
+  JOIN employees e ON e.id = ps.employee_id
+  WHERE ps.location_id = ANY(p_location_ids)
+    AND ps.shift_date = p_date
+  GROUP BY ps.location_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_labour_cost_by_date(uuid[], date) TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.rpc_kpi_range_summary(
   p_org_id uuid,
   p_location_ids uuid[] DEFAULT NULL,
