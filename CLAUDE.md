@@ -212,11 +212,17 @@ No manual setup needed. Everything is automated.
 
 ### Supabase Access
 
+> **⚠️ IMPORTANT:** ALWAYS use project `qixipveebfhurbarksib`. This is the ONLY project for both development AND production. Never use any other project ref.
+
 - **Project:** `qixipveebfhurbarksib`
 - **URL:** `https://qixipveebfhurbarksib.supabase.co`
 - **Anon key:** Available in `.env.local` (created by hook)
 - **Service role key:** Available in `.env.local` (created by hook) - bypasses RLS for admin queries
 - Claude has full DB read/write access via the service_role key and the Supabase REST API
+- **JWT Key ID:** `95e87c5c-d734-4634-bcd8-45a5b8935685`
+- **JWKS URL:** `https://qixipveebfhurbarksib.supabase.co/auth/v1/.well-known/jwks.json`
+- **JWK:** `{"x":"7WT_TNqkoohYBN2NwIaAXHObz3XGnU2_9BiTn4ajK54","y":"gqYOGlSaUpXftFIXTIl9yGZ3ngm7Vr6rlNs2VIj5wsI","alg":"ES256","crv":"P-256","ext":true,"kid":"95e87c5c-d734-4634-bcd8-45a5b8935685","kty":"EC","key_ops":["verify"]}`
+- **Demo login:** `owner@demo.com` / `Demo1234!` (user ID: `761c2d9c-9a02-4fc6-bf00-ba1b27dea3fc`)
 
 ### Database Access Pattern
 
