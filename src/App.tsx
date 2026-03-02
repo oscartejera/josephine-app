@@ -54,6 +54,8 @@ const WasteEntryPage = lazy(() => import("@/pages/operations/WasteEntryPage"));
 const StockAuditPage = lazy(() => import("@/pages/operations/StockAuditPage"));
 const DebugDataCoherence = lazy(() => import("@/pages/DebugDataCoherence"));
 const WorkforceTeam = lazy(() => import("@/pages/WorkforceTeam"));
+const WorkforceTimesheet = lazy(() => import("@/pages/WorkforceTimesheet"));
+const WorkforceOnboarding = lazy(() => import("@/pages/WorkforceOnboarding"));
 
 // Team (Employee Portal) — lazy loaded
 const TeamHome = lazy(() => import("@/pages/team/TeamHome"));
@@ -176,6 +178,8 @@ function AppRoutes() {
 
           {/* Workforce & Operations */}
           <Route path="/workforce/team" element={<WorkforceTeam />} />
+          <Route path="/workforce/timesheet" element={<WorkforceTimesheet />} />
+          <Route path="/workforce/onboarding" element={<WorkforceOnboarding />} />
           <Route path="/scheduling" element={<Scheduling />} />
           <Route path="/availability" element={<Availability />} />
           <Route path="/procurement" element={<Procurement />} />

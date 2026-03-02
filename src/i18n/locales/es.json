@@ -101,6 +101,8 @@
     "escandallos": "Escandallos",
     "integrations": "Integraciones",
     "teamRoster": "Equipo",
+    "timesheet": "Timesheet",
+    "onboarding": "Onboarding",
     "logout": "Cerrar sesión"
   },
   "roles": {

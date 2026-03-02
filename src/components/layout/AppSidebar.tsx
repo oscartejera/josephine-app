@@ -66,6 +66,8 @@ const insightsChildren = [
 const workforceChildren = [
   { icon: Users, i18nKey: 'nav.teamRoster', path: '/workforce/team', key: 'scheduling' as const },
   { icon: CalendarDays, i18nKey: 'nav.schedule', path: '/scheduling', key: 'scheduling' as const },
+  { icon: CalendarCheck, i18nKey: 'nav.timesheet', path: '/workforce/timesheet', key: 'scheduling' as const },
+  { icon: ClipboardList, i18nKey: 'nav.onboarding', path: '/workforce/onboarding', key: 'scheduling' as const },
   { icon: Clock, i18nKey: 'nav.availability', path: '/availability', key: 'availability' as const },
   { icon: Calculator, i18nKey: 'nav.payroll', path: '/payroll', key: 'payroll' as const },
 ];
