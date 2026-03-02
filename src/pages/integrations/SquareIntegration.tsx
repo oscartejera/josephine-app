@@ -241,13 +241,12 @@ export default function SquareIntegration() {
 
     setLoading(true);
 
-    // 1) Find the Square integration for this org
+    // 1) Find the Square integration for this org (any status — so reconnect works)
     const { data: integrations } = await supabase
       .from('integrations')
       .select('*')
       .eq('org_id', orgId)
       .eq('provider', 'square')
-      .in('status', ['active', 'pending'])
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -402,17 +401,21 @@ export default function SquareIntegration() {
     setConnecting(true);
 
     try {
-      // Reuse existing pending/active integration if available
+      // Reuse existing integration (any status) or create one via upsert
       let integrationId = integration?.id;
 
       if (!integrationId) {
         const { data: newInteg, error } = await supabase
           .from('integrations')
-          .insert({
-            org_id: orgId,
-            provider: 'square',
-            status: 'pending',
-          })
+          .upsert(
+            {
+              org_id: orgId,
+              provider: 'square',
+              status: 'pending',
+              is_enabled: true,
+            },
+            { onConflict: 'org_id,provider' }
+          )
           .select()
           .single();
 
