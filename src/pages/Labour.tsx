@@ -11,6 +11,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useLabourData, type MetricMode, type LabourDateRange } from '@/hooks/useLabourData';
 import { LabourHeader, type CompareMode } from '@/components/labour/LabourHeader';
 import { LabourKPICards } from '@/components/labour/LabourKPICards';
+import { LabourTripleComparison } from '@/components/labour/LabourTripleComparison';
 import { LabourChart } from '@/components/labour/LabourChart';
 import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
 import { LabourByRole } from '@/components/labour/LabourByRole';
@@ -130,6 +131,12 @@ export default function Labour() {
         isLoading={isLoading}
         metricMode={metricMode}
         dateRange={dateRange}
+      />
+
+      {/* Triple Comparison: Planned vs Actual vs Payroll */}
+      <LabourTripleComparison
+        kpis={kpis}
+        isLoading={isLoading}
       />
 
       {/* Chart */}
