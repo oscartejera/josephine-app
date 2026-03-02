@@ -214,32 +214,106 @@ No manual setup needed. Everything is automated.
 
 > **⚠️ IMPORTANT:** ALWAYS use project `qixipveebfhurbarksib`. This is the ONLY project for both development AND production. Never use any other project ref.
 
-- **Project:** `qixipveebfhurbarksib`
+- **Project ref:** `qixipveebfhurbarksib`
 - **URL:** `https://qixipveebfhurbarksib.supabase.co`
-- **Anon key:** Available in `.env.local` (created by hook)
-- **Service role key:** Available in `.env.local` (created by hook) - bypasses RLS for admin queries
-- Claude has full DB read/write access via the service_role key and the Supabase REST API
+- **Demo org ID:** `11111111-1111-1111-1111-111111111111`
+- **Demo location IDs:** `["loc-demo-central", "loc-demo-gracia", "loc-demo-born"]`
+- **Demo login:** `owner@demo.com` / `Demo1234!` (user ID: `761c2d9c-9a02-4fc6-bf00-ba1b27dea3fc`)
 - **JWT Key ID:** `95e87c5c-d734-4634-bcd8-45a5b8935685`
 - **JWKS URL:** `https://qixipveebfhurbarksib.supabase.co/auth/v1/.well-known/jwks.json`
-- **JWK:** `{"x":"7WT_TNqkoohYBN2NwIaAXHObz3XGnU2_9BiTn4ajK54","y":"gqYOGlSaUpXftFIXTIl9yGZ3ngm7Vr6rlNs2VIj5wsI","alg":"ES256","crv":"P-256","ext":true,"kid":"95e87c5c-d734-4634-bcd8-45a5b8935685","kty":"EC","key_ops":["verify"]}`
-- **Demo login:** `owner@demo.com` / `Demo1234!` (user ID: `761c2d9c-9a02-4fc6-bf00-ba1b27dea3fc`)
+
+**All secrets live in `.env.local` (gitignored). Load them programmatically:**
+
+```javascript
+import { readFileSync } from 'fs';
+const env = readFileSync('.env.local', 'utf8');
+const SUPABASE_URL      = env.match(/VITE_SUPABASE_URL=(.+)/)[1].trim();
+const PUBLISHABLE_KEY   = env.match(/VITE_SUPABASE_PUBLISHABLE_KEY=(.+)/)[1].trim();
+const SERVICE_ROLE_KEY  = env.match(/SUPABASE_SERVICE_ROLE_KEY=(.+)/)[1].trim();
+const ACCESS_TOKEN      = env.match(/SUPABASE_ACCESS_TOKEN=(.+)/)[1].trim();
+const VERCEL_TOKEN      = env.match(/VERCEL_TOKEN=(.+)/)[1].trim();
+```
+
+#### Env vars in `.env.local`
+
+| Variable | Purpose |
+|---|---|
+| `VITE_SUPABASE_URL` | Supabase project URL (baked into Vite builds) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Lovable publishable key (used by `createClient`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Bypasses RLS — full admin access |
+| `SUPABASE_ACCESS_TOKEN` | Supabase Management API (project settings, API keys, etc.) |
+| `VERCEL_TOKEN` | Vercel API (deploys, env vars, domain management) |
+
+#### Database Access (REST API via service_role)
+
+```javascript
+// Read from a table
+const r = await fetch(`${SUPABASE_URL}/rest/v1/TABLE?select=*&limit=10`, {
+  headers: { 'apikey': SERVICE_ROLE_KEY, 'Authorization': `Bearer ${SERVICE_ROLE_KEY}` }
+});
+
+// Call an RPC
+const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/FUNCTION_NAME`, {
+  method: 'POST',
+  headers: { 'apikey': SERVICE_ROLE_KEY, 'Authorization': `Bearer ${SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ p_param: 'value' })
+});
+
+// Execute raw SQL (via pg_net or service role)
+const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+  method: 'POST',
+  headers: { 'apikey': SERVICE_ROLE_KEY, 'Authorization': `Bearer ${SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query: 'SELECT 1' })
+});
+```
+
+#### Supabase Management API
+
+```javascript
+// List projects
+await fetch('https://api.supabase.com/v1/projects', {
+  headers: { 'Authorization': `Bearer ${ACCESS_TOKEN}` }
+});
+
+// Get API keys for project
+await fetch(`https://api.supabase.com/v1/projects/qixipveebfhurbarksib/api-keys`, {
+  headers: { 'Authorization': `Bearer ${ACCESS_TOKEN}` }
+});
+```
 
 ### Vercel Access
 
-- **Vercel Token:** Available in `.env.local` as `VERCEL_TOKEN` (also saved locally)
 - **Project:** `josephine-app-main` (ID: `prj_TRsSpLrxQ78a2Tm0xX5ykXYjdCf4`)
-- Use Token with `Authorization: Bearer <token>` header against `https://api.vercel.com`
+- **Repo ID:** `1139737770`
+- **Domains:** `www.josephine-ai.com`, `josephine-ai.com`, `josephine-app-main.vercel.app`
 
-### Database Access Pattern
+#### Vercel API Patterns
 
-To query/modify the database directly, use curl with the service_role key:
-```bash
-# Read example
-curl "https://qixipveebfhurbarksib.supabase.co/rest/v1/TABLE_NAME" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+```javascript
+const vHeaders = { 'Authorization': `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' };
+const PROJECT_ID = 'prj_TRsSpLrxQ78a2Tm0xX5ykXYjdCf4';
 
-# Insert/Update via POST/PATCH to the same REST API
+// Trigger production deploy from git
+await fetch('https://api.vercel.com/v13/deployments', {
+  method: 'POST', headers: vHeaders,
+  body: JSON.stringify({ name: 'josephine-app-main', project: PROJECT_ID, target: 'production',
+    gitSource: { type: 'github', repoId: '1139737770', ref: 'main' } })
+});
+
+// Check deployment status
+await fetch(`https://api.vercel.com/v6/deployments?projectId=${PROJECT_ID}&limit=1`, { headers: vHeaders });
+
+// Set env var
+await fetch(`https://api.vercel.com/v10/projects/${PROJECT_ID}/env`, {
+  method: 'POST', headers: vHeaders,
+  body: JSON.stringify({ key: 'VAR_NAME', value: 'value', type: 'plain', target: ['production','preview','development'] })
+});
+
+// Manage domains
+await fetch(`https://api.vercel.com/v10/projects/${PROJECT_ID}/domains`, {
+  method: 'POST', headers: vHeaders,
+  body: JSON.stringify({ name: 'example.com' })
+});
 ```
 
 ### Repository
@@ -247,6 +321,7 @@ curl "https://qixipveebfhurbarksib.supabase.co/rest/v1/TABLE_NAME" \
 - **Owner:** oscartejera
 - **Repo:** oscartejera/josephine-app
 - **Main branch:** `main`
+- **Auto-deploy:** Every push to `main` triggers a Vercel production build
 
 ## Database Schema (96 tables)
 

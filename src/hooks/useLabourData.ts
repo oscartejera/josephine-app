@@ -35,6 +35,14 @@ export interface LabourKpis {
   hours_delta_pct: number;
   splh_delta_pct: number;
   oplh_delta_pct: number;
+  // Wave 1: payroll-first fields
+  labor_cost_source: 'payroll' | 'schedule';
+  schedule_labor_cost: number;
+  cost_per_cover: number;
+  cogs_total: number;
+  cogs_pct: number;
+  prime_cost_pct: number;
+  prime_cost_amount: number;
 }
 
 export interface LabourTimeseriesRow {
@@ -112,6 +120,14 @@ function sanitizeKpis(raw: Record<string, unknown>): LabourKpis {
     hours_delta_pct: safeNum(raw.hours_delta_pct) ?? 0,
     splh_delta_pct: safeNum(raw.splh_delta_pct) ?? 0,
     oplh_delta_pct: safeNum(raw.oplh_delta_pct) ?? 0,
+    // Wave 1: payroll-first fields
+    labor_cost_source: (raw.labor_cost_source as string) === 'payroll' ? 'payroll' : 'schedule',
+    schedule_labor_cost: Number(raw.schedule_labor_cost) || 0,
+    cost_per_cover: safeNum(raw.cost_per_cover) ?? 0,
+    cogs_total: Number(raw.cogs_total) || 0,
+    cogs_pct: safeNum(raw.cogs_pct) ?? 0,
+    prime_cost_pct: safeNum(raw.prime_cost_pct) ?? 0,
+    prime_cost_amount: Number(raw.prime_cost_amount) || 0,
   };
 }
 
@@ -163,10 +179,10 @@ export function useLabourData({ dateRange, locationId }: UseLabourDataParams) {
   });
 
   // Check if data is empty (for showing seed button)
-  const isEmpty = 
-    !kpisQuery.isLoading && 
-    kpisQuery.data && 
-    kpisQuery.data.actual_sales === 0 && 
+  const isEmpty =
+    !kpisQuery.isLoading &&
+    kpisQuery.data &&
+    kpisQuery.data.actual_sales === 0 &&
     kpisQuery.data.forecast_sales === 0;
 
   return {
