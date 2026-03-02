@@ -15,6 +15,8 @@ import { LabourTripleComparison } from '@/components/labour/LabourTripleComparis
 import { LabourChart } from '@/components/labour/LabourChart';
 import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
 import { LabourByRole } from '@/components/labour/LabourByRole';
+import { LabourComplianceDashboard } from '@/components/labour/LabourComplianceDashboard';
+import { StaffingRecommendation } from '@/components/labour/StaffingRecommendation';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -150,6 +152,18 @@ export default function Labour() {
       <LabourByRole
         isLoading={isLoading}
         metricMode={metricMode}
+      />
+
+      {/* Compliance Dashboard */}
+      <LabourComplianceDashboard
+        locationId={validLocationId}
+      />
+
+      {/* AI Staffing Recommendation */}
+      <StaffingRecommendation
+        locationId={validLocationId}
+        dateFrom={dateRange.from}
+        dateTo={dateRange.to}
       />
 
       {/* Locations Table */}
