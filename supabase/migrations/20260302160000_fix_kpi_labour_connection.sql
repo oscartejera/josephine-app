@@ -31,7 +31,7 @@ GRANT EXECUTE ON FUNCTION get_labour_cost_by_date(uuid[], date) TO authenticated
 
 CREATE OR REPLACE FUNCTION public.rpc_kpi_range_summary(
   p_org_id uuid,
-  p_location_ids uuid[] DEFAULT NULL,
+  p_location_ids text[] DEFAULT NULL,
   p_from date DEFAULT CURRENT_DATE - INTERVAL '7 days',
   p_to date DEFAULT CURRENT_DATE
 )
@@ -47,9 +47,9 @@ DECLARE
 BEGIN
   v_days := (p_to - p_from) + 1;
 
-  -- Resolve location filter
+  -- Resolve location filter (cast text[] to uuid[])
   IF p_location_ids IS NOT NULL AND array_length(p_location_ids, 1) > 0 THEN
-    v_loc_filter := p_location_ids;
+    v_loc_filter := p_location_ids::uuid[];
   ELSE
     SELECT array_agg(id) INTO v_loc_filter
     FROM locations
@@ -77,7 +77,7 @@ BEGIN
       COALESCE(SUM(net_sales), 0) AS total_sales,
       COALESCE(SUM(orders_count), 0) AS total_orders
     FROM sales_daily_unified
-    WHERE location_id = ANY(v_loc_filter)
+    WHERE location_id::uuid = ANY(v_loc_filter)
       AND date BETWEEN p_from AND p_to
   ),
   -- FIX: Read labour from planned_shifts × employees.hourly_cost
@@ -89,20 +89,20 @@ BEGIN
       COALESCE(SUM(ps.planned_hours), 0) AS total_hours
     FROM planned_shifts ps
     JOIN employees e ON e.id = ps.employee_id
-    WHERE ps.location_id = ANY(v_loc_filter)
+    WHERE ps.location_id::uuid = ANY(v_loc_filter)
       AND ps.shift_date BETWEEN p_from AND p_to
   ),
   cogs AS (
     SELECT COALESCE(SUM(cogs_amount), 0) AS total_cogs
     FROM cogs_daily
-    WHERE location_id = ANY(v_loc_filter)
+    WHERE location_id::uuid = ANY(v_loc_filter)
       AND date BETWEEN p_from AND p_to
   ),
   -- Also check monthly_cost_entries for manually entered COGS
   monthly_cogs AS (
     SELECT COALESCE(SUM(amount), 0) AS total_manual_cogs
     FROM monthly_cost_entries
-    WHERE location_id = ANY(v_loc_filter)
+    WHERE location_id::uuid = ANY(v_loc_filter)
       AND year = EXTRACT(YEAR FROM p_from)
       AND month = EXTRACT(MONTH FROM p_from)
   )
@@ -133,14 +133,14 @@ BEGIN
       COALESCE(SUM(planned_labor_hours), 0) AS fc_hours,
       COALESCE(SUM(planned_labor_cost), 0) AS fc_cost
     FROM forecast_daily_metrics
-    WHERE location_id = ANY(v_loc_filter)
+    WHERE location_id::uuid = ANY(v_loc_filter)
       AND date BETWEEN p_from AND p_to
   ),
   cogs AS (
     -- Use forecast COGS as ~28% of forecast sales (estimated)
     SELECT COALESCE(SUM(forecast_sales * 0.28), 0) AS fc_cogs
     FROM forecast_daily_metrics
-    WHERE location_id = ANY(v_loc_filter)
+    WHERE location_id::uuid = ANY(v_loc_filter)
       AND date BETWEEN p_from AND p_to
   )
   SELECT jsonb_build_object(
@@ -166,6 +166,8 @@ BEGIN
 END;
 $$;
 
+GRANT EXECUTE ON FUNCTION public.rpc_kpi_range_summary(uuid, uuid[], date, date) TO anon, authenticated;
+
 
 -- ============================================================
 -- Fix 2: get_instant_pnl_unified — P&L Location Cards
@@ -176,7 +178,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.get_instant_pnl_unified(
   p_org_id uuid,
-  p_location_ids uuid[],
+  p_location_ids text[],
   p_from date,
   p_to date
 )
@@ -212,10 +214,10 @@ BEGIN
         THEN true ELSE false END AS estimated_labour
     FROM locations l
     LEFT JOIN (
-      SELECT location_id,
+      SELECT location_id::uuid AS location_id,
              SUM(net_sales) AS net_sales
       FROM sales_daily_unified
-      WHERE org_id = p_org_id AND date BETWEEN p_from AND p_to
+      WHERE org_id::uuid = p_org_id AND date BETWEEN p_from AND p_to
       GROUP BY 1
     ) s ON s.location_id = l.id
     -- FIX: Labour from planned_shifts × employees.hourly_cost
@@ -225,27 +227,27 @@ BEGIN
              SUM(ps.planned_hours) AS actual_hours
       FROM planned_shifts ps
       JOIN employees e ON e.id = ps.employee_id
-      WHERE ps.location_id = ANY(p_location_ids)
+      WHERE ps.location_id::uuid = ANY(p_location_ids::uuid[])
         AND ps.shift_date BETWEEN p_from AND p_to
       GROUP BY 1
     ) lb ON lb.location_id = l.id
     LEFT JOIN (
-      SELECT location_id,
+      SELECT location_id::uuid AS location_id,
              SUM(forecast_sales) AS forecast_sales,
              SUM(planned_labor_cost) AS planned_labor_cost,
              SUM(planned_labor_hours) AS planned_labor_hours
       FROM forecast_daily_unified
-      WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
+      WHERE org_id::uuid = p_org_id AND day BETWEEN p_from AND p_to
       GROUP BY 1
     ) fc ON fc.location_id = l.id
     LEFT JOIN (
-      SELECT location_id,
+      SELECT location_id::uuid AS location_id,
         CASE WHEN SUM(net_sales) > 0 THEN SUM(cogs) / SUM(net_sales) ELSE 0.32 END AS cogs_pct
       FROM product_sales_daily_unified
-      WHERE org_id = p_org_id AND day BETWEEN p_from AND p_to
+      WHERE org_id::uuid = p_org_id AND day BETWEEN p_from AND p_to
       GROUP BY 1
     ) cg ON cg.location_id = l.id
-    WHERE l.id = ANY(p_location_ids) AND l.active = true
+    WHERE l.id::uuid = ANY(p_location_ids::uuid[]) AND l.active = true
   ) r;
 
   RETURN jsonb_build_object(
@@ -260,3 +262,5 @@ END;
 $function$;
 
 GRANT EXECUTE ON FUNCTION get_instant_pnl_unified(uuid, uuid[], date, date) TO anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

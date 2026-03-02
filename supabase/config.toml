@@ -45,3 +45,31 @@ verify_jwt = false
 
 [functions.process-raw-events]
 verify_jwt = false
+
+# AI insight functions — called from frontend with anon key (no user JWT)
+[functions.dashboard_narratives]
+verify_jwt = false
+
+[functions.sales_insights]
+verify_jwt = false
+
+[functions.labour_insights]
+verify_jwt = false
+
+[functions.pricing_suggestions]
+verify_jwt = false
+
+[functions.review_reply]
+verify_jwt = false
+
+[functions.ai-recommendations]
+verify_jwt = false
+
+[functions.ai-tools]
+verify_jwt = false
+
+[functions.payroll_api]
+verify_jwt = false
+
+[functions.refresh_marts]
+verify_jwt = false

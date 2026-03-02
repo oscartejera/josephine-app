@@ -141,6 +141,31 @@ The auth bypass works by injecting a `sb-{project_ref}-auth-token` key into loca
 - **AI Integration:** Prophet forecasting and Claude API insights both run as Supabase Edge Functions
 - **Feature Store:** Facts tables for time-series aggregation (15min, hourly, daily)
 
+### ⚠️ MANDATORY: Dual Data-Source Validation (Demo + POS)
+
+> **Every change to app logic, database schema, RPCs, or views MUST work for BOTH data sources: `demo` and `pos` (real POS data).**
+
+The application has **two parallel data pipelines** that feed the same unified views:
+
+| Layer | Demo path | POS (real) path |
+|-------|-----------|-----------------|
+| Sales source | `pos_daily_finance` (seeded demo data) | `cdm_orders` + `cdm_payments` (Square sync) |
+| Forecast source | `forecast_points` + `forecast_runs` | Weekday-average heuristic from `cdm_orders` |
+| Labour source | `labour_daily` + `planned_shifts` | Same (`planned_shifts` × `employees.hourly_cost`) |
+| Data source filter | `resolve_data_source()` returns `'demo'` | `resolve_data_source()` returns `'pos'` |
+
+**Unified views** (`sales_daily_unified`, `forecast_daily_unified`, `product_sales_daily_unified`) UNION both paths and filter by `resolve_data_source()`. RPCs that read from these views work automatically for both modes.
+
+**When modifying the app, you MUST:**
+
+1. **SQL/RPC changes**: Ensure queries use `::uuid` casts when filtering against unified views (demo columns may be `text`, POS columns are `uuid`). Always use `location_id::uuid = ANY(v_loc_filter)` pattern.
+2. **New tables/columns**: If the table feeds an RPC or view, verify the column types and names match both data paths. Use `IF EXISTS` guards when referencing optional tables (e.g., payroll tables that may not exist in demo).
+3. **Frontend changes**: Use `useDemoMode()` context if behaviour diverges between modes. Otherwise, rely on the unified views which handle the split transparently.
+4. **Testing**: After any backend change, verify the Dashboard and affected pages work when logged in as Demo Owner (`owner@demo.com`). The demo org uses `resolve_data_source() → 'demo'`; a POS-connected org would return `'pos'`.
+5. **Never break demo**: The demo mode is the **primary sales tool**. If a change only works with real POS data but breaks demo, it is a critical bug.
+
+**This will NOT crash the app** — the architecture is designed for it (unified views + `resolve_data_source`). But failing to test both paths can cause silent data gaps where one mode shows zeros.
+
 ## Workflow & Deployment
 
 ### CI/CD Pipeline
