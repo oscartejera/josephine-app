@@ -64,6 +64,7 @@ const insightsChildren = [
 
 // Workforce children
 const workforceChildren = [
+  { icon: Users, i18nKey: 'nav.teamRoster', path: '/workforce/team', key: 'scheduling' as const },
   { icon: CalendarDays, i18nKey: 'nav.schedule', path: '/scheduling', key: 'scheduling' as const },
   { icon: Clock, i18nKey: 'nav.availability', path: '/availability', key: 'availability' as const },
   { icon: Calculator, i18nKey: 'nav.payroll', path: '/payroll', key: 'payroll' as const },
@@ -114,7 +115,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   });
 
   const [workforceExpanded, setWorkforceExpanded] = useState(false);
-  const isWorkforceRoute = location.pathname.startsWith('/scheduling') ||
+  const isWorkforceRoute = location.pathname.startsWith('/workforce') ||
+    location.pathname.startsWith('/scheduling') ||
     location.pathname.startsWith('/availability') ||
     location.pathname.startsWith('/payroll');
 

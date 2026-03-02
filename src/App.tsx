@@ -53,6 +53,7 @@ const RecipeDetailPage = lazy(() => import("@/pages/inventory-setup/RecipeDetail
 const WasteEntryPage = lazy(() => import("@/pages/operations/WasteEntryPage"));
 const StockAuditPage = lazy(() => import("@/pages/operations/StockAuditPage"));
 const DebugDataCoherence = lazy(() => import("@/pages/DebugDataCoherence"));
+const WorkforceTeam = lazy(() => import("@/pages/WorkforceTeam"));
 
 // Team (Employee Portal) — lazy loaded
 const TeamHome = lazy(() => import("@/pages/team/TeamHome"));
@@ -174,6 +175,7 @@ function AppRoutes() {
           <Route path="/insights/budgets" element={<Budgets />} />
 
           {/* Workforce & Operations */}
+          <Route path="/workforce/team" element={<WorkforceTeam />} />
           <Route path="/scheduling" element={<Scheduling />} />
           <Route path="/availability" element={<Availability />} />
           <Route path="/procurement" element={<Procurement />} />
