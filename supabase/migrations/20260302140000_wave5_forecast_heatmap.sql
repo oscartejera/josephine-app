@@ -273,20 +273,33 @@ BEGIN
       ) AS day_data
     FROM (
       SELECT
-        EXTRACT(DOW FROM s.date)::int AS dow,
-        AVG(s.net_sales) AS avg_sales,
-        (SELECT AVG(staff_cnt) FROM (
-          SELECT ps.shift_date, COUNT(DISTINCT ps.employee_id) AS staff_cnt
-          FROM planned_shifts ps
-          WHERE ps.location_id = p_location_id
-            AND EXTRACT(DOW FROM ps.shift_date)::int = EXTRACT(DOW FROM s.date)::int
-            AND ps.shift_date BETWEEN v_date_from AND v_date_to
-          GROUP BY ps.shift_date
-        ) sc) AS avg_staff
-      FROM sales_daily_unified s
-      WHERE s.location_id = p_location_id
-        AND s.date BETWEEN v_date_from AND v_date_to
-      GROUP BY EXTRACT(DOW FROM s.date)::int
+        daily_agg.dow,
+        daily_agg.avg_sales,
+        COALESCE(staff_agg.avg_staff, 0) AS avg_staff
+      FROM (
+        SELECT
+          EXTRACT(DOW FROM s.date)::int AS dow,
+          AVG(s.net_sales) AS avg_sales
+        FROM sales_daily_unified s
+        WHERE s.location_id = p_location_id
+          AND s.date BETWEEN v_date_from AND v_date_to
+        GROUP BY EXTRACT(DOW FROM s.date)::int
+      ) daily_agg
+      LEFT JOIN (
+        SELECT
+          EXTRACT(DOW FROM ps.shift_date)::int AS dow,
+          AVG(day_cnt.staff_cnt) AS avg_staff
+        FROM (
+          SELECT shift_date, COUNT(DISTINCT employee_id) AS staff_cnt
+          FROM planned_shifts
+          WHERE location_id = p_location_id
+            AND shift_date BETWEEN v_date_from AND v_date_to
+          GROUP BY shift_date
+        ) day_cnt
+        CROSS JOIN LATERAL (SELECT EXTRACT(DOW FROM day_cnt.shift_date)::int AS dow_val) dw
+        JOIN planned_shifts ps ON ps.shift_date = day_cnt.shift_date AND ps.location_id = p_location_id
+        GROUP BY EXTRACT(DOW FROM ps.shift_date)::int
+      ) staff_agg ON staff_agg.dow = daily_agg.dow
     ) daily
   ) agg;
 
