@@ -224,6 +224,12 @@ No manual setup needed. Everything is automated.
 - **JWK:** `{"x":"7WT_TNqkoohYBN2NwIaAXHObz3XGnU2_9BiTn4ajK54","y":"gqYOGlSaUpXftFIXTIl9yGZ3ngm7Vr6rlNs2VIj5wsI","alg":"ES256","crv":"P-256","ext":true,"kid":"95e87c5c-d734-4634-bcd8-45a5b8935685","kty":"EC","key_ops":["verify"]}`
 - **Demo login:** `owner@demo.com` / `Demo1234!` (user ID: `761c2d9c-9a02-4fc6-bf00-ba1b27dea3fc`)
 
+### Vercel Access
+
+- **Vercel Token:** Available in `.env.local` as `VERCEL_TOKEN` (also saved locally)
+- **Project:** `josephine-app-main` (ID: `prj_TRsSpLrxQ78a2Tm0xX5ykXYjdCf4`)
+- Use Token with `Authorization: Bearer <token>` header against `https://api.vercel.com`
+
 ### Database Access Pattern
 
 To query/modify the database directly, use curl with the service_role key:
