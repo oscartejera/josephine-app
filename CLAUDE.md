@@ -4,6 +4,17 @@
 
 Always respond in **Spanish** to the user. Code, comments, and commit messages stay in English.
 
+## ⚠️ Mandatory Deploy Review (ALWAYS)
+
+After EVERY deploy/push to main, you MUST:
+1. **Check Vercel deploy status** — wait for deploy to finish
+2. **Open the production URL** (https://www.josephine-ai.com) with the browser tool
+3. **Navigate to every page affected by the change** and take a screenshot
+4. **Verify visually** that the UI renders correctly, data loads, and no errors appear
+5. **Report the results** to the user with screenshots
+
+This is NON-NEGOTIABLE. Never skip this step. The user must see proof that the deploy works correctly in the real UI.
+
 ## Project Overview
 
 Josephine is an AI-powered operations platform for restaurants. It connects to existing POS systems (Square, Lightspeed, Toast) via OAuth + webhooks and provides intelligent insights, forecasting, recommendations, and automated operations management.
