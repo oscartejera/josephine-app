@@ -17,6 +17,7 @@ import { LabourLocationsTable } from '@/components/labour/LabourLocationsTable';
 import { LabourByRole } from '@/components/labour/LabourByRole';
 import { LabourComplianceDashboard } from '@/components/labour/LabourComplianceDashboard';
 import { StaffingRecommendation } from '@/components/labour/StaffingRecommendation';
+import { EmployeeRevenueTable } from '@/components/labour/EmployeeRevenueTable';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -161,6 +162,13 @@ export default function Labour() {
 
       {/* AI Staffing Recommendation */}
       <StaffingRecommendation
+        locationId={validLocationId}
+        dateFrom={dateRange.from}
+        dateTo={dateRange.to}
+      />
+
+      {/* Employee Revenue Scores */}
+      <EmployeeRevenueTable
         locationId={validLocationId}
         dateFrom={dateRange.from}
         dateTo={dateRange.to}
