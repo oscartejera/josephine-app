@@ -2,7 +2,8 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { startOfWeek, parseISO, format, isThisWeek } from 'date-fns';
 import { toast } from 'sonner';
-import { ArrowRightLeft, AlertTriangle } from 'lucide-react';
+import { ArrowRightLeft, AlertTriangle, CalendarDays } from 'lucide-react';
+import { EventCalendarManager } from '@/components/settings/EventCalendarManager';
 import { useSchedulingSupabase, ViewMode, Shift, resolveLocationId } from '@/hooks/useSchedulingSupabase';
 import { useScheduleEfficiency } from '@/hooks/useScheduleEfficiency';
 import { useApp } from '@/contexts/AppContext';
@@ -71,6 +72,7 @@ export default function Scheduling() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showSwapPanel, setShowSwapPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showEventCalendar, setShowEventCalendar] = useState(false);
   const [swapDialogData, setSwapDialogData] = useState<{
     shift: Shift;
     employeeName: string;
@@ -402,6 +404,24 @@ export default function Scheduling() {
         locationId={currentLocationId}
         locationName={currentLocation?.name || 'Location'}
       />
+
+      {/* Event Calendar toggle button */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowEventCalendar(!showEventCalendar)}
+          className="gap-2"
+        >
+          <CalendarDays className="h-4 w-4" />
+          {showEventCalendar ? 'Ocultar' : 'Calendario de Eventos'}
+        </Button>
+      </div>
+
+      {/* Event Calendar (collapsible) */}
+      {showEventCalendar && (
+        <EventCalendarManager locationId={currentLocationId} />
+      )}
     </div>
   );
 }

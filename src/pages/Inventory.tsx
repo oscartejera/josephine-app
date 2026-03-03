@@ -2,11 +2,12 @@ import { useState, useMemo, useCallback } from 'react';
 import { startOfMonth, endOfMonth, parse } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText } from 'lucide-react';
-import { 
-  InventoryHeader, 
-  InventorySalesCard, 
-  InventoryCOGSGPCard, 
+import { FileText, ClipboardCheck } from 'lucide-react';
+import { SmartCountingFlow } from '@/components/inventory/SmartCountingFlow';
+import {
+  InventoryHeader,
+  InventorySalesCard,
+  InventoryCOGSGPCard,
   InventoryGapCard,
   InventoryBreakdownChart,
   InventoryWasteOverview,
@@ -20,7 +21,7 @@ import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNo
 export default function Inventory() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   // Stable initial date range - memoized to prevent re-computation
   const initialDateRange = useMemo((): DateRangeValue => {
     const startDate = searchParams.get('start') || searchParams.get('start_date');
@@ -47,6 +48,7 @@ export default function Inventory() {
   const [viewMode, setViewMode] = useState<ViewMode>('GP');
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [josephineOpen, setJosephineOpen] = useState(false);
+  const [smartCountOpen, setSmartCountOpen] = useState(false);
 
   const {
     isLoading,
@@ -93,15 +95,28 @@ export default function Inventory() {
 
       {/* Navigation to Reconciliation */}
       <div className="flex items-center gap-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => navigate('/inventory/reconciliation')}
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
           Reconciliation Report
         </Button>
+        <Button
+          variant="outline"
+          onClick={() => setSmartCountOpen(!smartCountOpen)}
+          className="gap-2"
+        >
+          <ClipboardCheck className="h-4 w-4" />
+          Smart Counting
+        </Button>
       </div>
+
+      {/* Smart Counting Flow (collapsible) */}
+      {smartCountOpen && (
+        <SmartCountingFlow locationId={selectedLocations[0] || null} />
+      )}
 
       {/* Top Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
