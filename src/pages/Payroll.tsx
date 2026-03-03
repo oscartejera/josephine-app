@@ -108,13 +108,17 @@ export default function Payroll() {
 
     // 3. Fetch payroll run + sandbox status
     if (activeEntity) {
-      // Sandbox check
-      const { data: tokens } = await supabase
-        .from('compliance_tokens')
-        .select('id')
-        .eq('legal_entity_id', activeEntity.id)
-        .limit(1);
-      setIsSandboxMode(!tokens || tokens.length === 0);
+      // Sandbox check — compliance_tokens table may not exist yet
+      try {
+        const { data: tokens } = await (supabase as any)
+          .from('compliance_tokens')
+          .select('id')
+          .eq('legal_entity_id', activeEntity.id)
+          .limit(1);
+        setIsSandboxMode(!tokens || tokens.length === 0);
+      } catch {
+        setIsSandboxMode(true);
+      }
 
       // Payroll run for current period
       const { data: run, error: runErr } = await supabase

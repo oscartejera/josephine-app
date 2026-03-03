@@ -141,10 +141,10 @@ export function ExecutiveBriefing() {
                 .in('location_id', locIds)
                 .eq('day', yesterday);
 
-            // Fetch waste
+            // Fetch waste (no waste_value column → compute from qty_delta × unit_cost)
             const { data: wasteData } = await supabase
                 .from('stock_movements')
-                .select('waste_value')
+                .select('qty_delta, unit_cost')
                 .in('location_id', locIds)
                 .eq('movement_type', 'waste')
                 .gte('created_at', `${yesterday}T00:00:00`)
@@ -166,7 +166,7 @@ export function ExecutiveBriefing() {
                 budgetByLoc[r.location_id].labour += r.budget_labour || 0;
             });
 
-            const wasteTotal = (wasteData || []).reduce((sum: number, r: any) => sum + Math.abs(r.waste_value || 0), 0);
+            const wasteTotal = (wasteData || []).reduce((sum: number, r: any) => sum + Math.abs((r.qty_delta || 0) * (r.unit_cost || 0)), 0);
 
             const result = generateLocalBriefing(accessibleLocations, salesByLoc, labourByLoc, budgetByLoc, wasteTotal);
             setBriefing(result);

@@ -42,7 +42,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
   // Fetch employee ID and clock records
   useEffect(() => {
     if (!user) return;
-    
+
     const fetchData = async () => {
       // Get employee ID for current user
       const { data: employee } = await supabase
@@ -54,13 +54,13 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
       if (employee) {
         setEmployeeId(employee.id);
-        
+
         // Get week range
         const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
         const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
-        
+
         // Fetch clock records for this week
-        const { data: records } = await supabase
+        const { data: records } = await (supabase as any)
           .from('employee_clock_records')
           .select('*')
           .eq('employee_id', employee.id)
@@ -106,7 +106,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('employee_clock_records')
         .insert({
           employee_id: employeeId,
@@ -137,7 +137,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('employee_clock_records')
         .update({
           clock_out: new Date().toISOString(),
@@ -148,9 +148,9 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
       if (error) throw error;
 
-      setWeekRecords(prev => 
-        prev.map(r => r.id === activeRecord.id 
-          ? { ...r, clock_out: new Date().toISOString() } 
+      setWeekRecords(prev =>
+        prev.map(r => r.id === activeRecord.id
+          ? { ...r, clock_out: new Date().toISOString() }
           : r
         )
       );
@@ -299,7 +299,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {format(new Date(record.clock_in), 'HH:mm')} - {' '}
-                        {record.clock_out 
+                        {record.clock_out
                           ? format(new Date(record.clock_out), 'HH:mm')
                           : 'En curso'}
                       </p>

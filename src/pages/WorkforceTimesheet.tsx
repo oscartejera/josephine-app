@@ -165,14 +165,18 @@ export default function WorkforceTimesheet() {
             ? accessibleLocations.map((l) => l.id)
             : [selectedLocationId];
 
-        // Fetch clock records
-        const { data: clockData } = await supabase
-            .from('employee_clock_records')
-            .select('id, employee_id, clock_in, clock_out, location_id, source')
-            .in('location_id', locationIds)
-            .gte('clock_in', weekStart.toISOString())
-            .lte('clock_in', weekEnd.toISOString())
-            .order('clock_in', { ascending: false });
+        // Fetch clock records (table may not exist yet — graceful fallback)
+        let clockData: any[] | null = null;
+        try {
+            const res = await (supabase as any)
+                .from('employee_clock_records')
+                .select('id, employee_id, clock_in, clock_out, location_id, source')
+                .in('location_id', locationIds)
+                .gte('clock_in', weekStart.toISOString())
+                .lte('clock_in', weekEnd.toISOString())
+                .order('clock_in', { ascending: false });
+            clockData = res.data;
+        } catch { /* table does not exist yet */ }
 
         // Fetch planned shifts
         const { data: shiftData } = await supabase
@@ -290,7 +294,7 @@ export default function WorkforceTimesheet() {
         if (editForm.clock_in) updates.clock_in = new Date(editForm.clock_in).toISOString();
         if (editForm.clock_out) updates.clock_out = new Date(editForm.clock_out).toISOString();
 
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('employee_clock_records')
             .update(updates)
             .eq('id', editRecord.id);
@@ -305,7 +309,7 @@ export default function WorkforceTimesheet() {
     };
 
     const handleDeleteRecord = async (id: string) => {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from('employee_clock_records')
             .delete()
             .eq('id', id);

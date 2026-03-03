@@ -80,7 +80,7 @@ export default function TeamPay() {
       setLoading(true);
 
       const [clockRes, shiftsRes] = await Promise.all([
-        supabase
+        (supabase as any)
           .from('employee_clock_records')
           .select('id, clock_in, clock_out, source')
           .eq('employee_id', employee.id)
@@ -201,11 +201,10 @@ export default function TeamPay() {
             <div
               className="bg-primary rounded-full h-3 transition-all"
               style={{
-                width: `${
-                  totalPlannedHours > 0
+                width: `${totalPlannedHours > 0
                     ? Math.min((totalActualHours / totalPlannedHours) * 100, 100)
                     : 0
-                }%`,
+                  }%`,
               }}
             />
           </div>

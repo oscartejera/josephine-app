@@ -222,7 +222,7 @@ export default function WorkforceTeam() {
 
     const fetchClockedIn = async () => {
         const locationIds = accessibleLocations.map((l) => l.id);
-        const { data } = await supabase
+        const { data } = await (supabase as any)
             .from('employee_clock_records')
             .select('id, employee_id, clock_in, clock_out, location_id')
             .in('location_id', locationIds)
