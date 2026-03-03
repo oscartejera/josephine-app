@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { ManagerLogbook } from '@/components/workforce/ManagerLogbook';
+import { EmployeeReviews } from '@/components/workforce/EmployeeReviews';
 import {
     Users,
     UserPlus,
@@ -17,6 +19,8 @@ import {
     Edit,
     Plus,
     RefreshCw,
+    BookOpen,
+    TrendingUp,
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -448,6 +452,14 @@ export default function WorkforceTeam() {
                         <Megaphone className="h-4 w-4" />
                         Anuncios
                     </TabsTrigger>
+                    <TabsTrigger value="logbook" className="gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        Logbook
+                    </TabsTrigger>
+                    <TabsTrigger value="reviews" className="gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Rendimiento
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* ═══ TAB 1: ROSTER ═══ */}
@@ -764,6 +776,16 @@ export default function WorkforceTeam() {
                             })}
                         </div>
                     )}
+                </TabsContent>
+
+                {/* ═══ TAB 4: MANAGER LOGBOOK ═══ */}
+                <TabsContent value="logbook" className="space-y-4">
+                    <ManagerLogbook locationId={selectedLocationId} />
+                </TabsContent>
+
+                {/* ═══ TAB 5: EMPLOYEE REVIEWS ═══ */}
+                <TabsContent value="reviews" className="space-y-4">
+                    <EmployeeReviews locationId={selectedLocationId} />
                 </TabsContent>
             </Tabs>
 
