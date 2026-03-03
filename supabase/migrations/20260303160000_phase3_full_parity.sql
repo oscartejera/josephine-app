@@ -37,9 +37,13 @@ CREATE INDEX IF NOT EXISTS idx_events_date_range
   WHERE is_active = true;
 
 ALTER TABLE event_calendar ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "events_select" ON event_calendar;
 CREATE POLICY "events_select" ON event_calendar FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "events_insert" ON event_calendar;
 CREATE POLICY "events_insert" ON event_calendar FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "events_update" ON event_calendar;
 CREATE POLICY "events_update" ON event_calendar FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "events_delete" ON event_calendar;
 CREATE POLICY "events_delete" ON event_calendar FOR DELETE TO authenticated USING (true);
 GRANT ALL ON event_calendar TO authenticated;
 
@@ -72,9 +76,13 @@ CREATE INDEX IF NOT EXISTS idx_training_org
   ON training_records(org_id);
 
 ALTER TABLE training_records ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "training_select" ON training_records;
 CREATE POLICY "training_select" ON training_records FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "training_insert" ON training_records;
 CREATE POLICY "training_insert" ON training_records FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "training_update" ON training_records;
 CREATE POLICY "training_update" ON training_records FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "training_delete" ON training_records;
 CREATE POLICY "training_delete" ON training_records FOR DELETE TO authenticated USING (true);
 GRANT ALL ON training_records TO authenticated;
 
@@ -111,11 +119,17 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation
 
 ALTER TABLE ai_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "conversations_select" ON ai_conversations;
 CREATE POLICY "conversations_select" ON ai_conversations FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "conversations_insert" ON ai_conversations;
 CREATE POLICY "conversations_insert" ON ai_conversations FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "conversations_update" ON ai_conversations;
 CREATE POLICY "conversations_update" ON ai_conversations FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "conversations_delete" ON ai_conversations;
 CREATE POLICY "conversations_delete" ON ai_conversations FOR DELETE TO authenticated USING (true);
+DROP POLICY IF EXISTS "messages_select" ON ai_messages;
 CREATE POLICY "messages_select" ON ai_messages FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "messages_insert" ON ai_messages;
 CREATE POLICY "messages_insert" ON ai_messages FOR INSERT TO authenticated WITH CHECK (true);
 GRANT ALL ON ai_conversations TO authenticated;
 GRANT ALL ON ai_messages TO authenticated;
