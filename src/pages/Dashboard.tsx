@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { JosephineChat } from '@/components/ai/JosephineChat';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +12,7 @@ import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { ExecutiveBriefing } from '@/components/dashboard/ExecutiveBriefing';
 import { LocationHealthIndicators } from '@/components/dashboard/LocationHealthIndicators';
 import { OnboardingWizard } from '@/components/onboarding';
-import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle } from 'lucide-react';
+import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle, Bot } from 'lucide-react';
 import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,8 @@ export default function Dashboard() {
   const { selectedLocationId, accessibleLocations, getDateRangeValues, customDateRange, needsOnboarding, setOnboardingComplete, dataSource, loading: appLoading } = useApp();
   const { profile } = useAuth();
   const [topItems, setTopItems] = useState<any[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatExpanded, setChatExpanded] = useState(false);
   const { t } = useTranslation();
 
   // Build location IDs from selection
@@ -173,89 +176,113 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
-        <p className="text-muted-foreground">Panel ejecutivo — Josephine Intelligence</p>
+    <>
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
+          <p className="text-muted-foreground">Panel ejecutivo — Josephine Intelligence</p>
+        </div>
+
+        {/* Executive Briefing — AI Morning Summary */}
+        <ExecutiveBriefing />
+
+        {/* Inline KPI error warning (non-blocking) */}
+        {kpiHasError && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="flex items-center gap-3 py-3">
+              <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">KPIs temporalmente no disponibles</p>
+                <p className="text-xs text-amber-600">{kpiError instanceof Error ? kpiError.message : 'Error al cargar indicadores'}</p>
+              </div>
+              <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetch()}>
+                Reintentar
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <MetricCard
+            title={t('dashboard.netSales')}
+            value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
+            icon={DollarSign}
+            variant="success"
+            trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: t('common.vsForecast') } : undefined}
+          />
+          <MetricCard
+            title="GP%"
+            value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
+            icon={Percent}
+            variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
+            trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: t('common.vsForecast') } : undefined}
+          />
+          <MetricCard
+            title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
+            value={`€${cogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
+            icon={Receipt}
+            trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: t('common.vsForecast') } : undefined}
+          />
+          <MetricCard
+            title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
+            value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
+            icon={Users}
+            trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
+          />
+          <MetricCard
+            title="COL%"
+            value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
+            icon={TrendingUp}
+            variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
+            trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: t('common.vsForecast') } : undefined}
+          />
+          <MetricCard
+            title={t('dashboard.covers')}
+            value={ordersCount}
+            icon={Users}
+            trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: t('common.vsForecast') } : undefined}
+          />
+          <MetricCard
+            title={t('dashboard.avgTicket')}
+            value={`€${Number(avgCheck).toFixed(2)}`}
+            icon={Flame}
+            trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: t('common.vsForecast') } : undefined}
+          />
+        </div>
+
+        {/* Top 10 Products - full width */}
+        <TopProductsCard />
+
+        {/* AI Narrative, Health Indicators, and Low Stock */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          <NarrativeInsightsPanel metrics={narrativeMetrics} />
+          <LocationHealthIndicators />
+          <LowStockWidget />
+        </div>
       </div>
 
-      {/* Executive Briefing — AI Morning Summary */}
-      <ExecutiveBriefing />
-
-      {/* Inline KPI error warning (non-blocking) */}
-      {kpiHasError && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="flex items-center gap-3 py-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800">KPIs temporalmente no disponibles</p>
-              <p className="text-xs text-amber-600">{kpiError instanceof Error ? kpiError.message : 'Error al cargar indicadores'}</p>
-            </div>
-            <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetch()}>
-              Reintentar
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Josephine AI Chat — Floating Panel */}
+      {chatOpen && (
+        <div className={`fixed z-50 ${chatExpanded ? 'inset-4' : 'bottom-20 right-4 w-[380px]'} transition-all`}>
+          <JosephineChat
+            isExpanded={chatExpanded}
+            onToggleExpand={() => setChatExpanded(!chatExpanded)}
+            onClose={() => { setChatOpen(false); setChatExpanded(false); }}
+          />
+        </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <MetricCard
-          title={t('dashboard.netSales')}
-          value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-          icon={DollarSign}
-          variant="success"
-          trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: t('common.vsForecast') } : undefined}
-        />
-        <MetricCard
-          title="GP%"
-          value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
-          icon={Percent}
-          variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
-          trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: t('common.vsForecast') } : undefined}
-        />
-        <MetricCard
-          title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
-          value={`€${cogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-          icon={Receipt}
-          trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: t('common.vsForecast') } : undefined}
-        />
-        <MetricCard
-          title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
-          value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-          icon={Users}
-          trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
-        />
-        <MetricCard
-          title="COL%"
-          value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
-          icon={TrendingUp}
-          variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
-          trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: t('common.vsForecast') } : undefined}
-        />
-        <MetricCard
-          title={t('dashboard.covers')}
-          value={ordersCount}
-          icon={Users}
-          trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: t('common.vsForecast') } : undefined}
-        />
-        <MetricCard
-          title={t('dashboard.avgTicket')}
-          value={`€${Number(avgCheck).toFixed(2)}`}
-          icon={Flame}
-          trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: t('common.vsForecast') } : undefined}
-        />
-      </div>
-
-      {/* Top 10 Products - full width */}
-      <TopProductsCard />
-
-      {/* AI Narrative, Health Indicators, and Low Stock */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <NarrativeInsightsPanel metrics={narrativeMetrics} />
-        <LocationHealthIndicators />
-        <LowStockWidget />
-      </div>
-    </div>
+      {/* Floating AI button */}
+      {!chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
+          title="Josephine AI"
+        >
+          <Bot className="h-6 w-6" />
+        </button>
+      )}
+    </>
   );
 }

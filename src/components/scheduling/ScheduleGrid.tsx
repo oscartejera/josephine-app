@@ -19,10 +19,19 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+interface WeatherDayData {
+  date: string;
+  temperature: number;
+  condition: string;
+  iconCode: string;
+  salesMultiplier: number;
+}
+
 interface ScheduleGridProps {
   data: ScheduleData;
   viewMode: ViewMode;
   positions: string[];
+  weatherData?: WeatherDayData[];
   onMoveShift?: (shiftId: string, toEmployeeId: string, toDate: string) => void;
   onAddShift?: (shift: Omit<Shift, 'id'>) => void;
   onInitiateSwap?: (shift: Shift, employeeName: string) => void;
@@ -220,7 +229,7 @@ function DropZone({
   );
 }
 
-export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
+export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
   const [dragData, setDragData] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
   const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);
@@ -373,7 +382,17 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
     preferredOffDays: [],
   };
 
-  const weatherIcons = [Sun, Cloud, Sun, CloudRain, Sun, Sun, Cloud];
+  // Weather: resolve icon from real data or fallback
+  const getWeatherIcon = (dateStr: string) => {
+    const w = weatherData?.find(d => d.date === dateStr);
+    if (!w) return { Icon: Cloud, temp: null, condition: '', multiplier: 1 };
+    const cond = w.condition.toLowerCase();
+    let Icon = Sun;
+    if (cond.includes('rain') || cond.includes('drizzle')) Icon = CloudRain;
+    else if (cond.includes('cloud') || cond.includes('overcast')) Icon = Cloud;
+    else if (cond.includes('snow') || cond.includes('thunder')) Icon = CloudRain;
+    return { Icon, temp: Math.round(w.temperature), condition: w.condition, multiplier: w.salesMultiplier };
+  };
 
   // Drag handlers
   const handleDragStart = useCallback((e: React.DragEvent, shift: Shift, employeeId: string) => {
@@ -489,7 +508,8 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
             Team
           </div>
           {days.map((day, i) => {
-            const WeatherIcon = weatherIcons[i];
+            const weather = getWeatherIcon(day.dateStr);
+            const WeatherIcon = weather.Icon;
 
             return (
               <div key={day.dateStr} className="p-3 border-r border-border last:border-r-0">
@@ -498,7 +518,12 @@ export function ScheduleGrid({ data, viewMode, positions, onMoveShift, onAddShif
                     <span className="font-medium text-sm">{day.dayName}</span>
                     <span className="text-sm text-muted-foreground">{day.dayNum}</span>
                   </div>
-                  <WeatherIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-1">
+                    <WeatherIcon className="h-4 w-4 text-muted-foreground" />
+                    {weather.temp !== null && (
+                      <span className="text-[10px] text-muted-foreground">{weather.temp}°</span>
+                    )}
+                  </div>
                 </div>
               </div>
             );

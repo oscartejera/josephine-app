@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ManagerLogbook } from '@/components/workforce/ManagerLogbook';
 import { EmployeeReviews } from '@/components/workforce/EmployeeReviews';
+import { TrainingTracker } from '@/components/workforce/TrainingTracker';
 import {
     Users,
     UserPlus,
@@ -21,6 +22,7 @@ import {
     RefreshCw,
     BookOpen,
     TrendingUp,
+    GraduationCap,
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -460,6 +462,10 @@ export default function WorkforceTeam() {
                         <TrendingUp className="h-4 w-4" />
                         Rendimiento
                     </TabsTrigger>
+                    <TabsTrigger value="training" className="gap-2">
+                        <GraduationCap className="h-4 w-4" />
+                        Formación
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* ═══ TAB 1: ROSTER ═══ */}
@@ -786,6 +792,11 @@ export default function WorkforceTeam() {
                 {/* ═══ TAB 5: EMPLOYEE REVIEWS ═══ */}
                 <TabsContent value="reviews" className="space-y-4">
                     <EmployeeReviews locationId={selectedLocationId} />
+                </TabsContent>
+
+                {/* ═══ TAB 6: TRAINING ═══ */}
+                <TabsContent value="training" className="space-y-4">
+                    <TrainingTracker locationId={selectedLocationId} />
                 </TabsContent>
             </Tabs>
 
