@@ -120,29 +120,41 @@ export default function InventoryItems() {
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+
   // Load items from Supabase
   useEffect(() => {
     loadItems();
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    const { data } = await supabase
+      .from('inventory_categories')
+      .select('id, name')
+      .order('name');
+    if (data) setCategories(data);
+  };
 
   const loadItems = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('inventory_items')
-        .select('*')
+        .select('*, inventory_categories(name)')
         .eq('is_active', true)
-        .order('name');
+        .order('name')
+        .limit(1000);
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Map to UI format (cast to any for columns not in generated types)
+        // Map to UI format with real category name from JOIN
         const mapped = (data as any[]).map((item: any) => ({
           id: item.id,
           name: item.name,
           type: item.type || 'Food',
-          category: item.category_name || item.category || 'Other',
+          category: item.inventory_categories?.name || 'Other',
           supplier: 'Demo Supplier',
           orderUnit: item.order_unit || item.unit || 'kg',
           orderQty: item.pack_size || 1,
@@ -284,14 +296,9 @@ export default function InventoryItems() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="Carnes">Carnes</SelectItem>
-            <SelectItem value="Pescados">Pescados</SelectItem>
-            <SelectItem value="Verduras">Verduras</SelectItem>
-            <SelectItem value="Lácteos">Lácteos</SelectItem>
-            <SelectItem value="Despensa">Despensa</SelectItem>
-            <SelectItem value="Aceites">Aceites</SelectItem>
-            <SelectItem value="Bebidas">Bebidas</SelectItem>
-            <SelectItem value="Limpieza">Limpieza</SelectItem>
+            {categories.map(c => (
+              <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

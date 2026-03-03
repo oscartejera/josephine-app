@@ -20,12 +20,12 @@ export function ExportTab() {
                 filename = 'sales_daily.csv';
                 break;
             case 'employees':
-                const { data: employees } = await supabase.from('employees').select('*');
+                const { data: employees } = await supabase.from('employees').select('*').limit(5000);
                 data = employees || [];
                 filename = 'employees.csv';
                 break;
             case 'inventory':
-                const { data: inventory } = await supabase.from('inventory_items').select('*');
+                const { data: inventory } = await supabase.from('inventory_items').select('*').limit(5000);
                 data = inventory || [];
                 filename = 'inventory.csv';
                 break;

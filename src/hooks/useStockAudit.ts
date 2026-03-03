@@ -66,18 +66,20 @@ export function useStockAudit(locationId: string | null) {
                 .limit(200) as any);
             if (error) throw error;
 
-            // Enrich with item names
+            // Enrich with item names + category names
             const itemIds = [...new Set((data || []).map((c: any) => c.item_id))] as string[];
             const { data: items } = await supabase
                 .from('inventory_items')
-                .select('id, name, category_id')
+                .select('id, name, category_id, inventory_categories(name)')
                 .in('id', itemIds);
 
-            const itemMap = new Map((items || []).map(i => [i.id, i]));
+            const itemMap = new Map((items || []).map((i: any) => [i.id, i]));
 
             return (data || []).map((c: any) => ({
                 ...c,
                 item_name: itemMap.get(c.item_id)?.name ?? 'Unknown',
+                category_id: itemMap.get(c.item_id)?.category_id ?? null,
+                category_name: itemMap.get(c.item_id)?.inventory_categories?.name ?? 'Other',
             }));
         },
         enabled: !!group?.id && !!locationId,

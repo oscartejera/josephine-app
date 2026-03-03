@@ -110,17 +110,29 @@ export function usePOSData(locationId: string) {
         });
       }
 
-      // Mock floor maps and tables for now
-      setFloorMaps([
-        { id: 'floor-1', name: 'Sala Principal', location_id: locationId, floor_number: 1 }
-      ]);
+      // Fetch floor maps from DB
+      const { data: floorData } = await supabase
+        .from('pos_floor_maps')
+        .select('id, name, location_id, floor_number')
+        .eq('location_id', locationId)
+        .order('floor_number', { ascending: true });
+      setFloorMaps(floorData || []);
 
-      setTables([
-        { id: 'table-1', floor_map_id: 'floor-1', name: 'Mesa 1', seats: 4, pos_x: 100, pos_y: 100, shape: 'square', status: 'available' },
-        { id: 'table-2', floor_map_id: 'floor-1', name: 'Mesa 2', seats: 2, pos_x: 250, pos_y: 100, shape: 'round', status: 'occupied' },
-        { id: 'table-3', floor_map_id: 'floor-1', name: 'Mesa 3', seats: 6, pos_x: 100, pos_y: 250, shape: 'rectangle', status: 'available' },
-        { id: 'table-4', floor_map_id: 'floor-1', name: 'Mesa 4', seats: 4, pos_x: 250, pos_y: 250, shape: 'square', status: 'reserved' },
-      ]);
+      // Fetch tables from DB
+      if (floorData && floorData.length > 0) {
+        const floorIds = floorData.map(f => f.id);
+        const { data: tableData } = await supabase
+          .from('pos_tables')
+          .select('id, floor_map_id, name, seats, pos_x, pos_y, shape, status')
+          .in('floor_map_id', floorIds);
+        setTables((tableData || []).map(t => ({
+          ...t,
+          shape: (t.shape as 'round' | 'square' | 'rectangle') || 'square',
+          status: (t.status as 'available' | 'occupied' | 'reserved') || 'available',
+        })));
+      } else {
+        setTables([]);
+      }
 
       setOpenTickets([]);
     } catch (error) {
