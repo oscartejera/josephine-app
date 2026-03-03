@@ -23,16 +23,16 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function formatPercent(value: number): string {
-  return `${value.toFixed(2)}%`;
+function formatPercent(value: number | undefined | null): string {
+  return `${(value ?? 0).toFixed(2)}%`;
 }
 
-function formatSplh(value: number): string {
-  return `€${value.toFixed(0)}`;
+function formatSplh(value: number | undefined | null): string {
+  return `€${(value ?? 0).toFixed(0)}`;
 }
 
-function formatHours(value: number): string {
-  return `${value.toFixed(1)}h`;
+function formatHours(value: number | undefined | null): string {
+  return `${(value ?? 0).toFixed(1)}h`;
 }
 
 interface DeltaChipProps {
@@ -41,8 +41,9 @@ interface DeltaChipProps {
 }
 
 function DeltaChip({ value, inverted = false }: DeltaChipProps) {
-  const isPositive = inverted ? value <= 0 : value >= 0;
-  const arrow = value >= 0 ? '↑' : '↓';
+  const safeValue = value ?? 0;
+  const isPositive = inverted ? safeValue <= 0 : safeValue >= 0;
+  const arrow = safeValue >= 0 ? '↑' : '↓';
 
   return (
     <span className={cn(
@@ -51,7 +52,7 @@ function DeltaChip({ value, inverted = false }: DeltaChipProps) {
         ? "bg-[hsl(var(--bi-badge-positive))] text-[hsl(var(--bi-badge-positive-text))]"
         : "bg-[hsl(var(--bi-badge-negative))] text-[hsl(var(--bi-badge-negative-text))]"
     )}>
-      {arrow} {Math.abs(value).toFixed(1)}%
+      {arrow} {Math.abs(safeValue).toFixed(1)}%
     </span>
   );
 }
