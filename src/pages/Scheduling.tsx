@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useWeatherForecast } from '@/hooks/useWeatherForecast';
 import { useSearchParams } from 'react-router-dom';
 import { startOfWeek, parseISO, format, isThisWeek } from 'date-fns';
 import { toast } from 'sonner';
@@ -73,6 +74,7 @@ export default function Scheduling() {
   const [showSwapPanel, setShowSwapPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showEventCalendar, setShowEventCalendar] = useState(false);
+
   const [swapDialogData, setSwapDialogData] = useState<{
     shift: Shift;
     employeeName: string;
@@ -173,6 +175,23 @@ export default function Scheduling() {
   }, [locationIdParam]);
 
   const currentLocationId = resolvedLocationId || '';
+
+  // Weather forecast for ScheduleGrid (Madrid coords default)
+  const { forecast: weatherForecast } = useWeatherForecast(
+    currentLocationId || null,
+    40.4168, // Madrid latitude
+    -3.7038  // Madrid longitude
+  );
+  const weatherData = useMemo(() =>
+    weatherForecast.map(w => ({
+      date: w.date,
+      temperature: w.temperature,
+      condition: w.condition,
+      iconCode: w.iconCode,
+      salesMultiplier: w.salesMultiplier,
+    })),
+    [weatherForecast]
+  );
 
   // Placeholder KPIs for empty state
   const placeholderKPIs = useMemo(() => generatePlaceholderKPIs(weekStart), [weekStart]);
@@ -346,6 +365,7 @@ export default function Scheduling() {
           data={actualData}
           viewMode={viewMode}
           positions={positions}
+          weatherData={weatherData}
           onMoveShift={actualMoveShift}
           onAddShift={actualAddShift}
           onInitiateSwap={handleInitiateSwap}

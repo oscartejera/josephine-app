@@ -6,12 +6,14 @@
  * - Data-driven regressor impacts (learned from historical sales)
  * - Fallback to sensible defaults when no history exists
  * - OpenWeather API integration with deterministic fallback
+ * - Dynamic event_calendar DB integration (v3: replaces hardcoded arrays)
  */
 
 // ============================================
-// FESTIVOS ESPAÑOLES 2025-2027
+// FESTIVOS ESPAÑOLES 2025-2027 (FALLBACK ONLY)
+// Used ONLY when DB query fails or event_calendar is empty
 // ============================================
-const SPANISH_HOLIDAYS = [
+const SPANISH_HOLIDAYS_FALLBACK = [
   // 2025
   '2025-01-01', '2025-01-06', '2025-04-18', '2025-04-21',
   '2025-05-01', '2025-05-02', '2025-08-15', '2025-10-12',
@@ -27,9 +29,9 @@ const SPANISH_HOLIDAYS = [
 ];
 
 // ============================================
-// EVENTOS GRANDES EN MADRID 2025-2027
+// EVENTOS GRANDES FALLBACK (used when DB unavailable)
 // ============================================
-const MADRID_EVENTS = [
+const MADRID_EVENTS_FALLBACK = [
   { date: '2025-03-15', impact: 1.3, name: 'Real Madrid Champions' },
   { date: '2025-04-20', impact: 1.3, name: 'Real Madrid Champions' },
   { date: '2025-09-20', impact: 1.3, name: 'Real Madrid Champions' },
@@ -47,6 +49,66 @@ const MADRID_EVENTS = [
   { date: '2026-07-11', impact: 1.4, name: 'Mad Cool Festival' },
   { date: '2026-05-15', impact: 1.2, name: 'San Isidro' },
 ];
+
+// ============================================
+// DYNAMIC EVENT_CALENDAR INTEGRATION
+// ============================================
+
+export interface EventCalendarEntry {
+  event_date: string;
+  event_type: string;
+  impact_multiplier: number;
+  name: string;
+}
+
+/**
+ * Prefetch all events from `event_calendar` for a date range.
+ * Call once before the forecast loop, then pass the result to getRegressors().
+ * Falls back to hardcoded arrays if DB query fails.
+ */
+export async function prefetchEvents(
+  supabase: any,
+  dateFrom: string,
+  dateTo: string
+): Promise<EventCalendarEntry[]> {
+  try {
+    const { data, error } = await supabase
+      .from('event_calendar')
+      .select('event_date, event_type, impact_multiplier, name')
+      .eq('is_active', true)
+      .gte('event_date', dateFrom)
+      .lte('event_date', dateTo)
+      .order('event_date');
+
+    if (error || !data || data.length === 0) {
+      console.log('[regressors] event_calendar empty or error, using fallback arrays');
+      return buildFallbackEvents(dateFrom, dateTo);
+    }
+
+    console.log(`[regressors] Loaded ${data.length} events from event_calendar DB`);
+    return data as EventCalendarEntry[];
+  } catch (err) {
+    console.error('[regressors] DB error, using fallback:', err);
+    return buildFallbackEvents(dateFrom, dateTo);
+  }
+}
+
+function buildFallbackEvents(dateFrom: string, dateTo: string): EventCalendarEntry[] {
+  const events: EventCalendarEntry[] = [];
+  // Convert holidays to EventCalendarEntry format
+  for (const date of SPANISH_HOLIDAYS_FALLBACK) {
+    if (date >= dateFrom && date <= dateTo) {
+      events.push({ event_date: date, event_type: 'festivo_nacional', impact_multiplier: 0.80, name: 'Festivo Nacional' });
+    }
+  }
+  // Convert Madrid events
+  for (const ev of MADRID_EVENTS_FALLBACK) {
+    if (ev.date >= dateFrom && ev.date <= dateTo) {
+      events.push({ event_date: ev.date, event_type: 'evento_local', impact_multiplier: ev.impact, name: ev.name });
+    }
+  }
+  return events;
+}
 
 // ============================================
 // DETERMINISTIC PRNG (Mulberry32)
@@ -71,24 +133,39 @@ function dateSeed(dateStr: string): number {
 }
 
 // ============================================
-// HELPER FUNCTIONS
+// HELPER FUNCTIONS (now use prefetched events)
 // ============================================
 
-export function isFestivo(dateStr: string): boolean {
-  return SPANISH_HOLIDAYS.includes(dateStr);
+const HOLIDAY_TYPES = new Set(['festivo_nacional', 'festivo_local', 'festivo_autonomico']);
+
+export function isFestivo(dateStr: string, events?: EventCalendarEntry[]): boolean {
+  if (events && events.length > 0) {
+    return events.some(e => e.event_date === dateStr && HOLIDAY_TYPES.has(e.event_type));
+  }
+  // Fallback to hardcoded
+  return SPANISH_HOLIDAYS_FALLBACK.includes(dateStr);
 }
 
-export function getEventImpact(dateStr: string): number {
-  const event = MADRID_EVENTS.find(e => e.date === dateStr);
+export function getEventImpact(dateStr: string, events?: EventCalendarEntry[]): number {
+  if (events && events.length > 0) {
+    const matching = events.filter(e => e.event_date === dateStr && !HOLIDAY_TYPES.has(e.event_type));
+    if (matching.length > 0) {
+      // Multiply all event impacts for the same day
+      return matching.reduce((acc, e) => acc * Number(e.impact_multiplier), 1.0);
+    }
+    return 1.0;
+  }
+  // Fallback to hardcoded
+  const event = MADRID_EVENTS_FALLBACK.find(e => e.date === dateStr);
   return event ? event.impact : 1.0;
 }
 
-export function isDayBeforeFestivo(dateStr: string): boolean {
+export function isDayBeforeFestivo(dateStr: string, events?: EventCalendarEntry[]): boolean {
   const date = new Date(dateStr);
   const nextDay = new Date(date);
   nextDay.setDate(nextDay.getDate() + 1);
   const nextDayStr = nextDay.toISOString().split('T')[0];
-  return SPANISH_HOLIDAYS.includes(nextDayStr);
+  return isFestivo(nextDayStr, events);
 }
 
 export function isPayday(dateStr: string): boolean {
@@ -109,18 +186,18 @@ interface WeatherData {
 
 // Madrid monthly climate normals (AEMET data)
 const MADRID_CLIMATE: Record<number, { avgTemp: number; tempStd: number; rainProb: number }> = {
-  1:  { avgTemp: 6.3,  tempStd: 3.0, rainProb: 0.27 },
-  2:  { avgTemp: 7.9,  tempStd: 3.2, rainProb: 0.25 },
-  3:  { avgTemp: 11.2, tempStd: 3.5, rainProb: 0.23 },
-  4:  { avgTemp: 13.1, tempStd: 3.0, rainProb: 0.30 },
-  5:  { avgTemp: 17.2, tempStd: 3.5, rainProb: 0.28 },
-  6:  { avgTemp: 22.5, tempStd: 3.0, rainProb: 0.12 },
-  7:  { avgTemp: 26.1, tempStd: 2.5, rainProb: 0.07 },
-  8:  { avgTemp: 25.6, tempStd: 2.5, rainProb: 0.08 },
-  9:  { avgTemp: 21.3, tempStd: 3.0, rainProb: 0.18 },
+  1: { avgTemp: 6.3, tempStd: 3.0, rainProb: 0.27 },
+  2: { avgTemp: 7.9, tempStd: 3.2, rainProb: 0.25 },
+  3: { avgTemp: 11.2, tempStd: 3.5, rainProb: 0.23 },
+  4: { avgTemp: 13.1, tempStd: 3.0, rainProb: 0.30 },
+  5: { avgTemp: 17.2, tempStd: 3.5, rainProb: 0.28 },
+  6: { avgTemp: 22.5, tempStd: 3.0, rainProb: 0.12 },
+  7: { avgTemp: 26.1, tempStd: 2.5, rainProb: 0.07 },
+  8: { avgTemp: 25.6, tempStd: 2.5, rainProb: 0.08 },
+  9: { avgTemp: 21.3, tempStd: 3.0, rainProb: 0.18 },
   10: { avgTemp: 15.1, tempStd: 3.5, rainProb: 0.28 },
-  11: { avgTemp: 9.9,  tempStd: 3.0, rainProb: 0.30 },
-  12: { avgTemp: 6.9,  tempStd: 3.0, rainProb: 0.30 },
+  11: { avgTemp: 9.9, tempStd: 3.0, rainProb: 0.30 },
+  12: { avgTemp: 6.9, tempStd: 3.0, rainProb: 0.30 },
 };
 
 export function getWeatherDeterministic(dateStr: string): WeatherData {
@@ -203,9 +280,16 @@ export interface Regressors {
   mid_week: number;
 }
 
+/**
+ * Get regressors for a date.
+ * @param dateStr - ISO date string
+ * @param weatherApiKey - OpenWeather API key (optional)
+ * @param events - Prefetched events from event_calendar (optional, avoids N+1)
+ */
 export async function getRegressors(
   dateStr: string,
-  weatherApiKey?: string
+  weatherApiKey?: string,
+  events?: EventCalendarEntry[]
 ): Promise<Regressors> {
   const date = new Date(dateStr);
   const dayOfWeek = date.getDay();
@@ -215,9 +299,9 @@ export async function getRegressors(
     : getWeatherDeterministic(dateStr);
 
   return {
-    festivo: isFestivo(dateStr) ? 1 : 0,
-    day_before_festivo: isDayBeforeFestivo(dateStr) ? 1 : 0,
-    evento_impact: getEventImpact(dateStr),
+    festivo: isFestivo(dateStr, events) ? 1 : 0,
+    day_before_festivo: isDayBeforeFestivo(dateStr, events) ? 1 : 0,
+    evento_impact: getEventImpact(dateStr, events),
     payday: isPayday(dateStr) ? 1 : 0,
     temperatura: weather.temperature,
     rain: weather.rain ? 1 : 0,

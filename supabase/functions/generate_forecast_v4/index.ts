@@ -2,6 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import {
   getRegressors,
+  prefetchEvents,
+  type EventCalendarEntry,
   calculateRegressorAdjustment,
   explainForecast,
   learnRegressorImpacts,
@@ -426,7 +428,7 @@ Deno.serve(async (req) => {
         salesValues.reduce((a, b) => a + b, 0) / salesValues.length;
       const stdDev = Math.sqrt(
         salesValues.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) /
-          salesValues.length
+        salesValues.length
       );
       const minForecast = Math.max(0, p1 * 0.5);
       const maxForecast = p99 * 1.5;
@@ -463,6 +465,16 @@ Deno.serve(async (req) => {
       const lastT = dataPoints;
       const auditForecasts: { date: string; forecast: number }[] = [];
 
+      // ── Prefetch events from event_calendar DB (single query) ────
+      const forecastEndDate = new Date(today);
+      forecastEndDate.setDate(today.getDate() + horizonDays);
+      const events: EventCalendarEntry[] = await prefetchEvents(
+        supabase,
+        todayStr,
+        forecastEndDate.toISOString().split('T')[0]
+      );
+      logs.push(`Events loaded: ${events.length} events for forecast horizon`);
+
       for (let k = 1; k <= horizonDays; k++) {
         const forecastDate = new Date(today);
         forecastDate.setDate(today.getDate() + k);
@@ -478,7 +490,7 @@ Deno.serve(async (req) => {
         const baseForecast = Math.max(0, trendValue * (1 + si));
 
         // Regressors with learned impacts
-        const regressors = await getRegressors(dateStr, weatherApiKey);
+        const regressors = await getRegressors(dateStr, weatherApiKey, events);
         const regressorAdj = calculateRegressorAdjustment(
           regressors,
           learnedImpacts
@@ -656,7 +668,7 @@ Deno.serve(async (req) => {
             confidence_interval_coverage: 'N/A (computed at forecast time)',
             recommendation: mape < 0.10 ? 'DEPLOY: Model meets accuracy targets' :
               mape < 0.20 ? 'ACCEPTABLE: Model performing within tolerance' :
-              mape < 0.35 ? 'MONITOR: Model needs improvement' : 'RETRAIN: Model accuracy too low',
+                mape < 0.35 ? 'MONITOR: Model needs improvement' : 'RETRAIN: Model accuracy too low',
           } : null,
         },
         sample_forecast: forecasts.slice(0, 7).map((f) => ({
