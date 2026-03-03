@@ -26,7 +26,7 @@ import {
   generateForecast,
 } from './scheduling/queries';
 
-// ── Shift Assignment Algorithm ──────────────────────────────
+// ── Intelligent Shift Assignment Algorithm ──────────────────
 interface ShiftAssignment {
   employeeId: string;
   role: string;
@@ -36,91 +36,225 @@ interface ShiftAssignment {
   hourlyCost: number;
 }
 
+interface SchedulingConfig {
+  openingTime: string;         // e.g. "09:00"
+  closingTime: string;         // e.g. "01:00"
+  maxHoursPerDay: number;      // e.g. 10
+  maxWeeklyHours: number;      // e.g. 40
+  demandCurve: Record<string, number>;  // hour→pct of daily sales
+  staffingRatios: Record<string, number>; // role→covers/hour capacity
+  closedDays: number[];
+}
+
+const DEFAULT_CONFIG: SchedulingConfig = {
+  openingTime: '09:00',
+  closingTime: '01:00',
+  maxHoursPerDay: 10,
+  maxWeeklyHours: 40,
+  demandCurve: {
+    '9': 0.01, '10': 0.02, '11': 0.04, '12': 0.07,
+    '13': 0.14, '14': 0.15, '15': 0.08, '16': 0.03,
+    '17': 0.03, '18': 0.04, '19': 0.05, '20': 0.10,
+    '21': 0.12, '22': 0.09, '23': 0.03,
+  },
+  staffingRatios: { Chef: 12, Server: 16, Bartender: 25, Host: 40, Manager: 999 },
+  closedDays: [],
+};
+
+// Department classification
+function getDeptForRole(role: string | null): 'BOH' | 'FOH' {
+  const r = (role || '').toLowerCase();
+  if (['cook', 'cocinero', 'cocinero/a', 'chef', 'dishwasher', 'friegaplatos', 'prep'].includes(r)) return 'BOH';
+  return 'FOH';
+}
+
+// Build daypart shift blocks from the demand curve
+interface DaypartBlock {
+  label: string;
+  start: string;
+  end: string;
+  hours: number;
+  demandWeight: number; // fraction of daily sales in this block
+}
+
+function buildDayparts(config: SchedulingConfig, dayOfWeek: number): DaypartBlock[] {
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const curve = config.demandCurve;
+  const openHour = parseInt(config.openingTime.split(':')[0]);
+  let closeHour = parseInt(config.closingTime.split(':')[0]);
+  if (closeHour <= openHour) closeHour += 24; // wrap past midnight
+
+  // Aggregate demand into 3 natural dayparts
+  let morningWt = 0, afternoonWt = 0, eveningWt = 0;
+  for (let h = openHour; h < closeHour && h < 24; h++) {
+    const wt = curve[String(h)] || 0;
+    if (h < 14) morningWt += wt;
+    else if (h < 18) afternoonWt += wt;
+    else eveningWt += wt;
+  }
+
+  // If demand curve data exists use it, else fallback to equal splits
+  const totalWt = morningWt + afternoonWt + eveningWt;
+
+  const dayparts: DaypartBlock[] = [];
+
+  if (totalWt > 0) {
+    if (morningWt > 0.01) {
+      dayparts.push({
+        label: 'morning',
+        start: isWeekend ? '10:00' : `${String(openHour).padStart(2, '0')}:00`,
+        end: '14:00',
+        hours: isWeekend ? 4 : Math.min(14 - openHour, 8),
+        demandWeight: morningWt / totalWt,
+      });
+    }
+    if (afternoonWt > 0.01) {
+      dayparts.push({
+        label: 'afternoon',
+        start: '14:00',
+        end: '18:00',
+        hours: 4,
+        demandWeight: afternoonWt / totalWt,
+      });
+    }
+    if (eveningWt > 0.01) {
+      const closeStr = closeHour >= 24
+        ? `${String(closeHour - 24).padStart(2, '0')}:00`
+        : `${String(closeHour).padStart(2, '0')}:00`;
+      dayparts.push({
+        label: 'evening',
+        start: '18:00',
+        end: closeStr,
+        hours: Math.min(closeHour - 18, 8),
+        demandWeight: eveningWt / totalWt,
+      });
+    }
+  }
+
+  // Fallback: simple split if no dayparts generated
+  if (dayparts.length === 0) {
+    dayparts.push(
+      { label: 'morning', start: isWeekend ? '10:00' : '09:00', end: '15:00', hours: isWeekend ? 5 : 6, demandWeight: 0.35 },
+      { label: 'evening', start: '17:00', end: '23:00', hours: 6, demandWeight: 0.65 },
+    );
+  }
+
+  return dayparts;
+}
+
 /**
- * Distributes target hours across available employees using split-shift patterns.
- * Morning: 09:00-17:00 (8h), Evening: 16:00-00:00 (8h), Mid: 11:00-19:00 (8h)
- * Respects employee availability windows when data is present.
+ * Intelligent shift assignment:
+ * 1. Splits the day into dayparts using the demand curve
+ * 2. Allocates target hours proportionally to each daypart
+ * 3. Within each daypart, ensures BOH + FOH coverage
+ * 4. Sorts employees by cost (cheapest first)
+ * 5. Respects availability + max daily/weekly hours
+ * 6. Allows split shifts (employee works 2 dayparts)
  */
 function calculateShiftAssignments(
   employees: Array<{ id: string; full_name: string; role_name: string | null; hourly_cost: number | null }>,
   targetHours: number,
   dayOfWeek: number,
-  availMap: Map<string, Map<number, { start: string; end: string }>>
+  availMap: Map<string, Map<number, { start: string; end: string }>>,
+  config: SchedulingConfig = DEFAULT_CONFIG,
+  weeklyHoursUsed: Map<string, number> = new Map(),
 ): ShiftAssignment[] {
   const assignments: ShiftAssignment[] = [];
-  let remainingHours = targetHours;
+  const dayparts = buildDayparts(config, dayOfWeek);
 
-  // Standard shift templates based on time of day
-  const shiftTemplates = [
-    { start: '09:00', end: '17:00', hours: 8, label: 'morning' },
-    { start: '16:00', end: '00:00', hours: 8, label: 'evening' },
-    { start: '11:00', end: '19:00', hours: 8, label: 'mid' },
-    { start: '10:00', end: '14:00', hours: 4, label: 'short-am' },
-    { start: '18:00', end: '22:00', hours: 4, label: 'short-pm' },
-  ];
+  // Track hours assigned today per employee
+  const dailyHours = new Map<string, number>();
 
-  // Adjust for weekends
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  if (isWeekend) {
-    shiftTemplates[0] = { start: '10:00', end: '18:00', hours: 8, label: 'morning' };
-  }
+  // Separate employees by department then sort by cost (ascending)
+  const bohEmps = employees.filter(e => getDeptForRole(e.role_name) === 'BOH')
+    .sort((a, b) => (a.hourly_cost || 12) - (b.hourly_cost || 12));
+  const fohEmps = employees.filter(e => getDeptForRole(e.role_name) === 'FOH')
+    .sort((a, b) => (a.hourly_cost || 12) - (b.hourly_cost || 12));
 
-  // Round-robin through employees
-  let empIndex = 0;
-  let templateIndex = 0;
+  // If all employees are in one department, treat as mixed
+  const hasBothDepts = bohEmps.length > 0 && fohEmps.length > 0;
+  const bohRatio = hasBothDepts ? 0.4 : 0.0; // 40% kitchen, 60% front
 
-  while (remainingHours > 0 && templateIndex < shiftTemplates.length * 2) {
-    const template = shiftTemplates[templateIndex % shiftTemplates.length];
-    const emp = employees[empIndex % employees.length];
+  for (const dp of dayparts) {
+    // Hours to allocate in this daypart
+    const dpHours = Math.round(targetHours * dp.demandWeight);
+    if (dpHours <= 0) continue;
 
-    // Check if this employee already has a shift assigned today
-    const alreadyAssigned = assignments.some(a => a.employeeId === emp.id);
-    if (alreadyAssigned) {
-      empIndex++;
-      if (empIndex >= employees.length * 2) {
-        // Everyone is assigned, try next template
-        templateIndex++;
-        empIndex = 0;
+    // How many people do we need for this daypart?
+    const staffNeeded = Math.max(2, Math.ceil(dpHours / dp.hours));
+    const bohNeeded = hasBothDepts ? Math.max(1, Math.round(staffNeeded * bohRatio)) : 0;
+    const fohNeeded = hasBothDepts ? Math.max(1, staffNeeded - bohNeeded) : staffNeeded;
+
+    const assignGroup = (pool: typeof employees, needed: number) => {
+      let assigned = 0;
+      for (const emp of pool) {
+        if (assigned >= needed) break;
+
+        // Check max weekly hours
+        const weeklyUsed = (weeklyHoursUsed.get(emp.id) || 0) + (dailyHours.get(emp.id) || 0);
+        if (weeklyUsed >= config.maxWeeklyHours) continue;
+
+        // Check max daily hours
+        const todayUsed = dailyHours.get(emp.id) || 0;
+        if (todayUsed >= config.maxHoursPerDay) continue;
+
+        // Check availability
+        const empAvail = availMap.get(emp.id);
+        if (empAvail && empAvail.size > 0 && !empAvail.has(dayOfWeek)) continue;
+
+        // Check availability time window if present
+        if (empAvail && empAvail.has(dayOfWeek)) {
+          const avail = empAvail.get(dayOfWeek)!;
+          const dpStartH = parseInt(dp.start.split(':')[0]);
+          const availStartH = parseInt(avail.start.split(':')[0]);
+          // Skip if employee isn't available before the daypart starts
+          if (availStartH > dpStartH + 1) continue;
+        }
+
+        // Already has a shift in this exact time slot?
+        const hasOverlap = assignments.some(a =>
+          a.employeeId === emp.id && a.startTime === dp.start
+        );
+        if (hasOverlap) continue;
+
+        // Calculate actual hours considering remaining capacity
+        const remainingWeekly = config.maxWeeklyHours - weeklyUsed;
+        const remainingDaily = config.maxHoursPerDay - todayUsed;
+        const shiftHours = Math.min(dp.hours, remainingWeekly, remainingDaily);
+
+        if (shiftHours < 2) continue; // Don't create shifts shorter than 2h
+
+        // Adjust end time if partial
+        let endTime = dp.end;
+        if (shiftHours < dp.hours) {
+          const startHour = parseInt(dp.start.split(':')[0]);
+          const endHour = startHour + shiftHours;
+          endTime = `${String(endHour % 24).padStart(2, '0')}:00`;
+        }
+
+        assignments.push({
+          employeeId: emp.id,
+          role: emp.role_name || 'Team Member',
+          startTime: dp.start,
+          endTime: endTime,
+          hours: shiftHours,
+          hourlyCost: emp.hourly_cost || 12,
+        });
+
+        dailyHours.set(emp.id, todayUsed + shiftHours);
+        assigned++;
       }
-      continue;
+    };
+
+    // Assign BOH first then FOH
+    if (hasBothDepts) {
+      assignGroup(bohEmps, bohNeeded);
+      assignGroup(fohEmps, fohNeeded);
+    } else {
+      // All employees in one pool (sorted by cost)
+      const sortedAll = [...employees].sort((a, b) => (a.hourly_cost || 12) - (b.hourly_cost || 12));
+      assignGroup(sortedAll, staffNeeded);
     }
-
-    // Check availability window
-    const empAvail = availMap.get(emp.id);
-    if (empAvail && empAvail.has(dayOfWeek)) {
-      const avail = empAvail.get(dayOfWeek)!;
-      // Simple check: employee's availability start should be <= shift start
-      if (avail.start > template.start && template.label === 'morning') {
-        // Skip morning shift, try next template
-        empIndex++;
-        templateIndex++;
-        continue;
-      }
-    }
-
-    // Calculate actual hours (may be partial)
-    const hoursForShift = Math.min(template.hours, remainingHours);
-
-    // Adjust end time if partial
-    let endTime = template.end;
-    if (hoursForShift < template.hours) {
-      const startHour = parseInt(template.start.split(':')[0]);
-      const endHour = startHour + hoursForShift;
-      endTime = `${String(endHour % 24).padStart(2, '0')}:00`;
-    }
-
-    assignments.push({
-      employeeId: emp.id,
-      role: emp.role_name || 'Team Member',
-      startTime: template.start,
-      endTime: endTime,
-      hours: hoursForShift,
-      hourlyCost: emp.hourly_cost || 12,
-    });
-
-    remainingHours -= hoursForShift;
-    empIndex++;
-    templateIndex++;
   }
 
   return assignments;
@@ -388,15 +522,27 @@ export function useSchedulingSupabase(
         .eq('location_id', locationId)
         .eq('is_available', true);
 
-      // Fetch target settings
-      const { data: settings } = await supabase
+      // Fetch target settings (full settings for smart algorithm)
+      const { data: settingsRaw } = await (supabase as any)
         .from('location_settings')
-        .select('splh_goal, target_col_percent')
+        .select('splh_goal, target_col_percent, opening_time, closing_time, closed_days, max_hours_per_day, hourly_demand_curve, staffing_ratios')
         .eq('location_id', locationId)
         .maybeSingle();
+      const settings = settingsRaw as Record<string, any> | null;
 
       const splhGoal = settings?.splh_goal || 50;
       const targetCol = settings?.target_col_percent || 30;
+
+      // Build SchedulingConfig from DB settings
+      const schedConfig: SchedulingConfig = {
+        openingTime: (settings?.opening_time || '09:00:00').substring(0, 5),
+        closingTime: (settings?.closing_time || '01:00:00').substring(0, 5),
+        maxHoursPerDay: settings?.max_hours_per_day || 10,
+        maxWeeklyHours: 40,
+        demandCurve: settings?.hourly_demand_curve || DEFAULT_CONFIG.demandCurve,
+        staffingRatios: settings?.staffing_ratios || DEFAULT_CONFIG.staffingRatios,
+        closedDays: settings?.closed_days || [],
+      };
 
       // ── Step 2: Diagnostic checks ─────────────────────────────
       const diagWarnings: string[] = [];
@@ -412,7 +558,7 @@ export function useSchedulingSupabase(
       }
 
       if (!availRows || availRows.length === 0) {
-        diagWarnings.push('0 horas: No hay empleados con disponibilidad registrada. Usando horario comercial por defecto.');
+        diagWarnings.push('Sin disponibilidad registrada — usando horario comercial por defecto.');
       }
 
       // ── Step 3: Build availability index ──────────────────────
@@ -443,12 +589,20 @@ export function useSchedulingSupabase(
       let totalCost = 0;
       let totalForecastSales = 0;
 
+      // Track weekly hours per employee across all 7 days
+      const weeklyHoursUsed = new Map<string, number>();
+
       // For each day of the week
       for (let d = 0; d < 7; d++) {
         const dayDate = new Date(weekStart);
         dayDate.setDate(dayDate.getDate() + d);
         const dayISO = format(dayDate, 'yyyy-MM-dd');
         const dayOfWeek = dayDate.getDay(); // 0=Sun, 1=Mon, ...
+
+        // Skip closed days
+        if (schedConfig.closedDays.includes(dayOfWeek)) {
+          continue;
+        }
 
         // Get forecast for this day
         const forecast = forecastRows?.find(f => f.date === dayISO);
@@ -492,13 +646,14 @@ export function useSchedulingSupabase(
           continue;
         }
 
-        // Determine standard shift patterns
-        // Morning: 09:00-17:00, Evening: 16:00-00:00, Full: 10:00-18:00
+        // ── Smart shift assignment (uses demand curve, role coverage, cost optimization) ──
         const shifts = calculateShiftAssignments(
           availableEmps,
           hoursToAllocate,
           dayOfWeek,
-          availMap
+          availMap,
+          schedConfig,
+          weeklyHoursUsed,
         );
 
         shifts.forEach(shift => {
@@ -517,6 +672,8 @@ export function useSchedulingSupabase(
           });
           totalHours += hours;
           totalCost += cost;
+          // Accumulate weekly hours for next day's constraint checking
+          weeklyHoursUsed.set(shift.employeeId, (weeklyHoursUsed.get(shift.employeeId) || 0) + hours);
         });
       }
 
