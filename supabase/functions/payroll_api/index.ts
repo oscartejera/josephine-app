@@ -21,11 +21,11 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function ensureSchema(): Promise<{ success: boolean; message: string; tables_created?: string[] }> {
   const tables_created: string[] = [];
-  
+
   // Check if core tables exist by trying to query them
   const tablesToCheck = [
     'employee_legal',
-    'employment_contracts', 
+    'employment_contracts',
     'payroll_inputs',
     'payslips',
     'compliance_submissions',
@@ -34,16 +34,16 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
     'social_security_accounts',
     'tax_accounts',
   ];
-  
+
   const missingTables: string[] = [];
-  
+
   for (const table of tablesToCheck) {
     const { error } = await supabase.from(table).select('id').limit(1);
     if (error && (error.message.includes('does not exist') || error.code === '42P01')) {
       missingTables.push(table);
     }
   }
-  
+
   // Even if tables exist, ensure columns are up-to-date and PostgREST cache is fresh
   if (missingTables.length === 0) {
     // Try to add breakdown_json if missing (PostgREST cache might not know about it)
@@ -64,9 +64,9 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
     }
     return { success: true, message: 'All tables exist', tables_created: [] };
   }
-  
+
   console.log('Missing tables:', missingTables);
-  
+
   // Use direct Postgres connection to create tables
   let sql: any;
   try {
@@ -74,10 +74,10 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
     if (!dbUrl) {
       return { success: false, message: 'SUPABASE_DB_URL not available. Tables must be created manually.' };
     }
-    
+
     const { default: postgres } = await import('https://deno.land/x/postgresjs@v3.4.4/mod.js');
     sql = postgres(dbUrl, { max: 1 });
-    
+
     // Create tables in a transaction
     await sql.begin(async (tx: any) => {
       // employee_legal: NIF, NSS, IBAN per employee per entity
@@ -94,7 +94,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           UNIQUE(employee_id, legal_entity_id)
         )
       `);
-      
+
       // employment_contracts: labor contracts per Estatuto de los Trabajadores
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS employment_contracts (
@@ -114,7 +114,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           created_at timestamptz DEFAULT now()
         )
       `);
-      
+
       // payroll_inputs: monthly variable data
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS payroll_inputs (
@@ -133,7 +133,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           UNIQUE(employee_id, period_year, period_month)
         )
       `);
-      
+
       // payslips: calculated payslips per LGSS art. 109-110
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS payslips (
@@ -150,7 +150,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           created_at timestamptz DEFAULT now()
         )
       `);
-      
+
       // compliance_submissions: TGSS/AEAT/SEPE filings
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS compliance_submissions (
@@ -164,7 +164,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           created_at timestamptz DEFAULT now()
         )
       `);
-      
+
       // compliance_tokens: digital certificates for filings
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS compliance_tokens (
@@ -176,7 +176,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           created_at timestamptz DEFAULT now()
         )
       `);
-      
+
       // payroll_audit: audit trail per LOPD/GDPR
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS payroll_audit (
@@ -187,7 +187,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           created_at timestamptz DEFAULT now()
         )
       `);
-      
+
       // social_security_accounts: CCC per entity
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS social_security_accounts (
@@ -199,7 +199,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           created_at timestamptz DEFAULT now()
         )
       `);
-      
+
       // tax_accounts: tax filing accounts
       await tx.unsafe(`
         CREATE TABLE IF NOT EXISTS tax_accounts (
@@ -210,27 +210,27 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
           created_at timestamptz DEFAULT now()
         )
       `);
-      
+
       // Enable RLS on all payroll tables
       const payrollTables = [
         'employee_legal', 'employment_contracts', 'payroll_inputs',
         'payslips', 'compliance_submissions', 'compliance_tokens',
         'payroll_audit', 'social_security_accounts', 'tax_accounts'
       ];
-      
+
       for (const table of payrollTables) {
         await tx.unsafe(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
-        
+
         // Drop and recreate policies for clean state
         await tx.unsafe(`DROP POLICY IF EXISTS "payroll_read_auth" ON ${table}`);
         await tx.unsafe(`CREATE POLICY "payroll_read_auth" ON ${table} FOR SELECT TO authenticated USING (true)`);
-        
+
         await tx.unsafe(`DROP POLICY IF EXISTS "payroll_insert_auth" ON ${table}`);
         await tx.unsafe(`CREATE POLICY "payroll_insert_auth" ON ${table} FOR INSERT TO authenticated WITH CHECK (true)`);
-        
+
         await tx.unsafe(`DROP POLICY IF EXISTS "payroll_update_auth" ON ${table}`);
         await tx.unsafe(`CREATE POLICY "payroll_update_auth" ON ${table} FOR UPDATE TO authenticated USING (true)`);
-        
+
         await tx.unsafe(`DROP POLICY IF EXISTS "payroll_delete_auth" ON ${table}`);
         await tx.unsafe(`CREATE POLICY "payroll_delete_auth" ON ${table} FOR DELETE TO authenticated USING (true)`);
 
@@ -239,10 +239,10 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
         await tx.unsafe(`CREATE POLICY "payroll_service_all" ON ${table} FOR ALL TO service_role USING (true)`);
       }
     });
-    
+
     // Notify PostgREST to reload schema cache
     await sql.unsafe(`NOTIFY pgrst, 'reload schema'`);
-    
+
     tables_created.push(...missingTables);
     return { success: true, message: `Created ${missingTables.length} tables`, tables_created };
   } catch (err) {
@@ -250,7 +250,7 @@ async function ensureSchema(): Promise<{ success: boolean; message: string; tabl
     return { success: false, message: `Error creating tables: ${err.message}` };
   } finally {
     if (sql) {
-      try { await sql.end(); } catch {}
+      try { await sql.end(); } catch { }
     }
   }
 }
@@ -370,17 +370,17 @@ function calculateIRPFRate(annualGross: number, personalSituation: number = 0): 
   // Calculate taxable base (Art. 63 LIRPF)
   // Base liquidable = rendimiento neto - reducciones
   const taxableBase = Math.max(0, annualGross - IRPF_MINIMO_PERSONAL);
-  
+
   if (taxableBase <= 0) return 0;
-  
+
   // Exención si rendimiento <= SMI (Art. 7 LIRPF + DT 33ª)
   if (annualGross <= SMI_ANNUAL * 1.5) return 0;
-  
+
   // Calculate total tax using progressive brackets (Art. 63 LIRPF)
   let totalTax = 0;
   let remainingBase = taxableBase;
   let prevLimit = 0;
-  
+
   for (const bracket of IRPF_BRACKETS) {
     const bracketSize = bracket.upTo - prevLimit;
     const taxableInBracket = Math.min(remainingBase, bracketSize);
@@ -389,10 +389,10 @@ function calculateIRPFRate(annualGross: number, personalSituation: number = 0): 
     prevLimit = bracket.upTo;
     if (remainingBase <= 0) break;
   }
-  
+
   // Effective rate (tipo efectivo de retención)
   const effectiveRate = totalTax / annualGross;
-  
+
   // Minimum retention: 2% for temporal contracts < 1 year (Art. 86.2 RIRPF)
   // 0% if below SMI threshold
   return Math.round(effectiveRate * 10000) / 10000;
@@ -413,7 +413,7 @@ function calculateSSEmployee(baseCotizacion: number, contractType: string): {
   );
   const fp = baseCotizacion * SS_RATES.employee.formacion_profesional;
   const mei = baseCotizacion * SS_RATES.employee.mei;
-  
+
   return {
     total: round2(cc + desempleo + fp + mei),
     contingencias_comunes: round2(cc),
@@ -442,7 +442,7 @@ function calculateSSEmployer(baseCotizacion: number, contractType: string): {
   const fogasa = baseCotizacion * SS_RATES.employer.fogasa;
   const fp = baseCotizacion * SS_RATES.employer.formacion_profesional;
   const mei = baseCotizacion * SS_RATES.employer.mei;
-  
+
   return {
     total: round2(cc + atep + desempleo + fogasa + fp + mei),
     contingencias_comunes: round2(cc),
@@ -471,17 +471,17 @@ async function handleSetup(_body: any) {
 
 async function handleCreateEntity(body: any) {
   const { group_id, razon_social, nif, domicilio_fiscal, cnae } = body;
-  
+
   if (!group_id || !razon_social || !nif || !domicilio_fiscal) {
     return { error: 'Faltan campos obligatorios: razón social, NIF y domicilio fiscal' };
   }
-  
+
   // Validate CIF/NIF format (Art. 2 RD 1065/2007)
   const nifRegex = /^[A-Z]\d{7}[A-Z0-9]$/i;
   if (!nifRegex.test(nif)) {
     return { error: 'Formato de NIF/CIF inválido. Debe ser letra + 7 dígitos + letra/dígito (ej: B12345678)' };
   }
-  
+
   const { data, error } = await supabase
     .from('legal_entities')
     .insert({
@@ -493,7 +493,7 @@ async function handleCreateEntity(body: any) {
     })
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error creating entity:', error);
     if (error.code === '23505') {
@@ -501,20 +501,20 @@ async function handleCreateEntity(body: any) {
     }
     return { error: `Error al crear entidad: ${error.message}` };
   }
-  
+
   return { data };
 }
 
 async function handleCreatePayrollRun(body: any) {
   const { group_id, legal_entity_id, period_year, period_month } = body;
-  
+
   if (!group_id || !legal_entity_id || !period_year || !period_month) {
     return { error: 'Faltan campos obligatorios' };
   }
-  
+
   // Ensure schema exists before creating run
   await ensureSchema();
-  
+
   // Check if run already exists
   const { data: existing } = await supabase
     .from('payroll_runs')
@@ -523,32 +523,32 @@ async function handleCreatePayrollRun(body: any) {
     .eq('period_year', period_year)
     .eq('period_month', period_month)
     .maybeSingle();
-  
+
   if (existing) {
     return { data: existing };
   }
-  
+
   const { data, error } = await supabase
     .from('payroll_runs')
     .insert({ group_id, legal_entity_id, period_year, period_month, status: 'draft' })
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error creating payroll run:', error);
     return { error: `Error al crear nómina: ${error.message}` };
   }
-  
+
   return { data };
 }
 
 async function handleSaveEmployeeLegal(body: any) {
   const { employee_id, legal_entity_id, nif, nss, iban, domicilio } = body;
-  
+
   if (!employee_id || !legal_entity_id) {
     return { error: 'Falta employee_id o legal_entity_id' };
   }
-  
+
   const { data, error } = await supabase
     .from('employee_legal')
     .upsert({
@@ -561,46 +561,46 @@ async function handleSaveEmployeeLegal(body: any) {
     }, { onConflict: 'employee_id,legal_entity_id' })
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error saving employee legal data:', error);
     return { error: `Error al guardar datos: ${error.message}` };
   }
-  
+
   return { data };
 }
 
 async function handleCreateContract(body: any) {
-  const { 
-    employee_id, legal_entity_id, location_id, 
+  const {
+    employee_id, legal_entity_id, location_id,
     contract_type, base_salary_monthly, group_ss, category,
-    jornada_pct, irpf_rate 
+    jornada_pct, irpf_rate
   } = body;
-  
+
   if (!employee_id || !legal_entity_id) {
     return { error: 'Falta employee_id o legal_entity_id' };
   }
-  
+
   // Deactivate previous contracts (Art. 49 ET - extinción del contrato anterior)
   await supabase
     .from('employment_contracts')
     .update({ active: false })
     .eq('employee_id', employee_id)
     .eq('active', true);
-  
+
   const salary = parseFloat(base_salary_monthly) || SALARY_TABLES[category] || SMI_MONTHLY_14;
-  
+
   // Validate salary >= SMI (Art. 27 ET)
   const jornada = (parseFloat(jornada_pct) || 100) / 100;
   const smiForJornada = SMI_MONTHLY_14 * jornada;
   if (salary < smiForJornada) {
     console.warn(`Salary ${salary} below SMI for jornada ${jornada}: ${smiForJornada}`);
   }
-  
+
   // Auto-calculate IRPF rate per Art. 80+ RIRPF
   const annualGross = salary * 14; // 14 pagas (12 + 2 extras)
   const autoIrpfRate = calculateIRPFRate(annualGross);
-  
+
   const { data, error } = await supabase
     .from('employment_contracts')
     .insert({
@@ -618,12 +618,12 @@ async function handleCreateContract(body: any) {
     })
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error creating contract:', error);
     return { error: `Error al crear contrato: ${error.message}` };
   }
-  
+
   return { data, auto_irpf_rate: round2(autoIrpfRate * 100) };
 }
 
@@ -635,15 +635,15 @@ async function getActiveEmployees(groupId: string): Promise<any[]> {
     .select('id, full_name, role_name, location_id')
     .eq('group_id', groupId)
     .eq('active', true);
-  
+
   if (employees && employees.length > 0) return employees;
-  
+
   // Fallback: get locations for the group, then employees at those locations
   const { data: locations } = await supabase
     .from('locations')
     .select('id')
     .eq('group_id', groupId);
-  
+
   if (locations && locations.length > 0) {
     const locationIds = locations.map((l: any) => l.id);
     const { data: locEmployees } = await supabase
@@ -651,42 +651,42 @@ async function getActiveEmployees(groupId: string): Promise<any[]> {
       .select('id, full_name, role_name, location_id')
       .in('location_id', locationIds)
       .eq('active', true);
-    
+
     if (locEmployees && locEmployees.length > 0) return locEmployees;
   }
-  
+
   // Last fallback: all active employees (single-tenant)
   const { data: allEmployees } = await supabase
     .from('employees')
     .select('id, full_name, role_name, location_id')
     .eq('active', true);
-  
+
   return allEmployees || [];
 }
 
 async function handleCalculatePayroll(body: any) {
   const { payroll_run_id } = body;
-  
+
   if (!payroll_run_id) {
     return { error: 'Falta payroll_run_id' };
   }
-  
+
   console.log('=== CALCULATE PAYROLL START ===', payroll_run_id);
-  
+
   // 1. Get the payroll run (NO JOINS - separate queries for safety)
   const { data: run, error: runError } = await supabase
     .from('payroll_runs')
     .select('*')
     .eq('id', payroll_run_id)
     .single();
-  
+
   if (runError || !run) {
     console.error('Run query error:', runError);
     return { error: `Nómina no encontrada: ${runError?.message || 'ID inválido'}` };
   }
-  
+
   console.log('Run found:', { id: run.id, status: run.status, legal_entity_id: run.legal_entity_id, group_id: run.group_id });
-  
+
   // 2. Try to get contracts (separate query, no FK joins)
   let contractsWithEmployees: any[] = [];
   try {
@@ -695,7 +695,7 @@ async function handleCalculatePayroll(body: any) {
       .select('id, employee_id, contract_type, base_salary_monthly, group_ss, category, jornada_pct, irpf_rate')
       .eq('legal_entity_id', run.legal_entity_id)
       .eq('active', true);
-    
+
     if (!contractsError && contracts && contracts.length > 0) {
       // Get employee details separately
       const empIds = contracts.map((c: any) => c.employee_id);
@@ -703,12 +703,12 @@ async function handleCalculatePayroll(body: any) {
         .from('employees')
         .select('id, full_name, role_name, location_id')
         .in('id', empIds);
-      
+
       const empMap = new Map((emps || []).map((e: any) => [e.id, e]));
       contractsWithEmployees = contracts
         .map((c: any) => ({ ...c, employee: empMap.get(c.employee_id) }))
         .filter((c: any) => c.employee);
-      
+
       console.log(`Found ${contractsWithEmployees.length} contracts with employees`);
     } else {
       console.log('No contracts found (or table missing):', contractsError?.message);
@@ -716,7 +716,7 @@ async function handleCalculatePayroll(body: any) {
   } catch (err) {
     console.warn('Contracts query failed:', err);
   }
-  
+
   // 3. Get payroll inputs (hours, bonuses) for this period
   let inputsByEmployee = new Map();
   try {
@@ -725,7 +725,7 @@ async function handleCalculatePayroll(body: any) {
       .select('*')
       .eq('period_year', run.period_year)
       .eq('period_month', run.period_month);
-    
+
     if (!inputsErr && inputs) {
       inputsByEmployee = new Map(inputs.map((i: any) => [i.employee_id, i]));
       console.log(`Found ${inputs.length} payroll inputs`);
@@ -733,17 +733,17 @@ async function handleCalculatePayroll(body: any) {
   } catch (err) {
     console.warn('Could not fetch payroll_inputs:', err);
   }
-  
+
   // 4. Calculate payslips
   let payslips: any[] = [];
-  
+
   if (contractsWithEmployees.length > 0) {
     // Calculate using actual contracts
     console.log('Calculating with contracts...');
     payslips = contractsWithEmployees.map((contract: any) => {
       const emp = contract.employee;
       const input = inputsByEmployee.get(emp.id);
-      
+
       return calculatePayslip(
         emp,
         contract.base_salary_monthly,
@@ -760,36 +760,36 @@ async function handleCalculatePayroll(body: any) {
     // Per Convenio Colectivo Hostelería Madrid, Anexo I (tablas salariales)
     console.log('No contracts - falling back to employee role-based salaries...');
     const allEmployees = await getActiveEmployees(run.group_id || '');
-    
+
     console.log(`Found ${allEmployees.length} active employees`);
-    
+
     if (allEmployees.length === 0) {
       return { error: 'No hay empleados activos en el sistema. Verifica que existen empleados con status activo.' };
     }
-    
+
     payslips = allEmployees.map((emp: any) => {
       const baseSalary = SALARY_TABLES[emp.role_name] || SMI_MONTHLY_14;
       const input = inputsByEmployee.get(emp.id);
-      
+
       console.log(`  ${emp.full_name} (${emp.role_name}): €${baseSalary}/mes`);
-      
+
       return calculatePayslip(emp, baseSalary, 'indefinido', 100, '5', input, run);
     });
   }
-  
+
   if (payslips.length === 0) {
     return { error: 'No se pudieron calcular nóminas. Verifica que hay empleados activos.' };
   }
-  
+
   console.log(`Calculated ${payslips.length} payslips. Inserting...`);
-  
+
   // 5. Delete existing payslips and insert new ones
   const { error: deleteError } = await supabase.from('payslips').delete().eq('payroll_run_id', payroll_run_id);
   if (deleteError) console.warn('Delete old payslips warning:', deleteError.message);
-  
+
   const rows = payslips.map((p: any) => p.payslipRow);
   let { error: insertError } = await supabase.from('payslips').insert(rows);
-  
+
   // If breakdown_json column not in schema cache, retry without it
   if (insertError && insertError.message.includes('breakdown_json')) {
     console.warn('breakdown_json not in cache, retrying without it...');
@@ -800,20 +800,20 @@ async function handleCalculatePayroll(body: any) {
     const retry = await supabase.from('payslips').insert(rowsWithout);
     insertError = retry.error;
   }
-  
+
   if (insertError) {
     console.error('Error inserting payslips:', insertError);
     return { error: `Error al guardar nóminas: ${insertError.message}` };
   }
-  
+
   // 6. Update payroll run status to 'calculated'
   const { error: statusError } = await supabase
     .from('payroll_runs')
     .update({ status: 'calculated' })
     .eq('id', payroll_run_id);
-  
+
   if (statusError) console.warn('Status update warning:', statusError.message);
-  
+
   // 7. Return summary with full breakdown
   const totals = payslips.reduce((acc: any, p: any) => ({
     gross_pay: acc.gross_pay + p.gross,
@@ -822,13 +822,13 @@ async function handleCalculatePayroll(body: any) {
     employer_ss: acc.employer_ss + p.employerSS,
     irpf_total: acc.irpf_total + p.irpf,
   }), { gross_pay: 0, net_pay: 0, employee_ss: 0, employer_ss: 0, irpf_total: 0 });
-  
+
   console.log('=== CALCULATE PAYROLL DONE ===', {
     employees: payslips.length,
     gross: round2(totals.gross_pay),
     net: round2(totals.net_pay),
   });
-  
+
   return {
     success: true,
     employees_calculated: payslips.length,
@@ -861,38 +861,38 @@ function calculatePayslip(
   manualIrpfRate?: number,
 ) {
   // ===== DEVENGOS (Art. 26 ET) =====
-  
+
   // 1. Salario base ajustado por jornada (Art. 26.1 ET)
   const jornada = (jornadaPct || 100) / 100;
   const baseSalary = round2(baseSalaryMonthly * jornada);
-  
+
   // 2. Prorrata pagas extras (Art. 31 ET - 2 gratificaciones extraordinarias/año)
   // Se prorratean: salario * 2 / 12
   const prorrataPagas = round2(baseSalary * 2 / 12);
-  
+
   // 3. Plus de transporte (Convenio Hostelería Madrid art. 17)
   const plusTransporte = round2(PLUS_TRANSPORTE_DIA * DIAS_LABORABLES_MES * jornada);
-  
+
   // 4. Complementos variables del input mensual
   const hoursOvertime = input?.hours_overtime || 0;
   const hoursNight = input?.hours_night || 0;
   const hoursHoliday = input?.hours_holiday || 0;
   const hoursRegular = input?.hours_regular || (HORAS_MES_TIEMPO_COMPLETO * jornada);
-  
+
   // Hourly rate = base mensual / horas mensuales convenio
   const monthlyHours = HORAS_MES_TIEMPO_COMPLETO * jornada;
   const hourlyRate = monthlyHours > 0 ? baseSalary / monthlyHours : 0;
-  
+
   // 5. Horas extra (Art. 35 ET - retribución >= hora ordinaria, convenio 175%)
   // Max 80 horas extra/año (Art. 35.2 ET)
   const overtimePay = round2(hoursOvertime * hourlyRate * RECARGO_HORAS_EXTRA);
-  
+
   // 6. Plus nocturnidad (Art. 36 ET - entre 22h y 6h)
   const nightPay = round2(hoursNight * hourlyRate * RECARGO_NOCTURNIDAD);
-  
+
   // 7. Trabajo en festivos (Convenio art. 22)
   const holidayPay = round2(hoursHoliday * hourlyRate * RECARGO_FESTIVOS);
-  
+
   // 8. Complementos salariales adicionales (bonificaciones, propinas)
   let bonuses = 0;
   if (input?.bonuses_json) {
@@ -903,9 +903,9 @@ function calculatePayslip(
       } else {
         bonuses = Object.values(b).reduce((s: number, v: any) => s + (Number(v) || 0), 0);
       }
-    } catch {}
+    } catch { }
   }
-  
+
   let tips = 0;
   if (input?.tips_json) {
     try {
@@ -915,26 +915,26 @@ function calculatePayslip(
       } else {
         tips = Object.values(t).reduce((s: number, v: any) => s + (Number(v) || 0), 0);
       }
-    } catch {}
+    } catch { }
   }
-  
+
   // ===== TOTAL DEVENGOS (BRUTO) =====
   const grossPay = round2(
-    baseSalary + prorrataPagas + plusTransporte + 
-    overtimePay + nightPay + holidayPay + 
+    baseSalary + prorrataPagas + plusTransporte +
+    overtimePay + nightPay + holidayPay +
     bonuses + tips
   );
-  
+
   // ===== BASE DE COTIZACIÓN (Art. 147 LGSS) =====
   // Base = remuneración total - conceptos excluidos (plus transporte exento hasta límites)
   // Para simplificar: base = bruto (incluyendo prorrata extras)
   const baseCotizacion = clampContributionBase(grossPay, groupSS);
-  
+
   // ===== DEDUCCIONES DEL TRABAJADOR =====
-  
+
   // 1. Seguridad Social empleado (Art. 286 LGSS + Orden Cotización)
   const ssEmployee = calculateSSEmployee(baseCotizacion, contractType);
-  
+
   // 2. IRPF retención (Art. 80+ RIRPF)
   let irpfRate: number;
   if (manualIrpfRate && manualIrpfRate > 0) {
@@ -944,7 +944,7 @@ function calculatePayslip(
     irpfRate = calculateIRPFRate(annualGross);
   }
   const irpfWithheld = round2(grossPay * irpfRate);
-  
+
   // 3. Otras deducciones (anticipos, embargos, etc.)
   let otherDeductions = 0;
   if (input?.deductions_json) {
@@ -955,16 +955,16 @@ function calculatePayslip(
       } else {
         otherDeductions = Object.values(d).reduce((s: number, v: any) => s + (Number(v) || 0), 0);
       }
-    } catch {}
+    } catch { }
   }
-  
+
   // ===== COSTE EMPRESA =====
   // SS empresa (Art. 286 LGSS + Orden Cotización)
   const ssEmployer = calculateSSEmployer(baseCotizacion, contractType);
-  
+
   // ===== LÍQUIDO (NETO) =====
   const netPay = round2(grossPay - ssEmployee.total - irpfWithheld - otherDeductions);
-  
+
   return {
     gross: grossPay,
     net: netPay,
@@ -1023,7 +1023,7 @@ function calculatePayslip(
 
 async function handleUpdatePayrollStatus(body: any) {
   const { payroll_run_id, status, user_id } = body;
-  
+
   // Flexible transitions - allows skipping steps in sandbox mode
   const validTransitions: Record<string, string[]> = {
     draft: ['validated', 'calculated'],
@@ -1032,50 +1032,50 @@ async function handleUpdatePayrollStatus(body: any) {
     approved: ['submitted', 'calculated', 'paid'],
     submitted: ['paid', 'approved'],
   };
-  
+
   const { data: run } = await supabase
     .from('payroll_runs')
     .select('status')
     .eq('id', payroll_run_id)
     .single();
-  
+
   if (!run) return { error: 'Nómina no encontrada' };
-  
+
   if (!validTransitions[run.status]?.includes(status)) {
     return { error: `Transición no válida: ${run.status} → ${status}` };
   }
-  
+
   const updatePayload: any = { status };
   if (status === 'approved') {
     updatePayload.approved_at = new Date().toISOString();
     updatePayload.approved_by = user_id;
   }
-  
+
   const { error } = await supabase
     .from('payroll_runs')
     .update(updatePayload)
     .eq('id', payroll_run_id);
-  
+
   if (error) return { error: error.message };
-  
+
   // Audit trail (LOPD/GDPR compliance)
   if (user_id) {
     await supabase.from('payroll_audit').insert({
       actor_user_id: user_id,
       action: `STATUS_${status.toUpperCase()}`,
       payload_json: { payroll_run_id, from: run.status, to: status },
-    }).then(() => {}).catch(() => {});
+    }).then(() => { }).catch(() => { });
   }
-  
+
   return { success: true, new_status: status };
 }
 
 async function handleCreateSubmission(body: any) {
   const { payroll_run_id, agency, submission_type, is_sandbox } = body;
-  
+
   // In production: would call RED Sistema (TGSS), AEAT SII, SEPE Certific@2
   // In sandbox: simulate with success response
-  
+
   const { data, error } = await supabase
     .from('compliance_submissions')
     .insert({
@@ -1083,22 +1083,22 @@ async function handleCreateSubmission(body: any) {
       agency,
       submission_type: submission_type || getDefaultSubmissionType(agency),
       status: is_sandbox ? 'accepted' : 'sent',
-      response_json: is_sandbox 
-        ? { 
-            sandbox: true, 
-            message: `Simulación ${agency} OK`,
-            timestamp: new Date().toISOString(),
-            reference: `SIM-${agency}-${Date.now()}`,
-            details: getSubmissionDetails(agency),
-          } 
+      response_json: is_sandbox
+        ? {
+          sandbox: true,
+          message: `Simulación ${agency} OK`,
+          timestamp: new Date().toISOString(),
+          reference: `SIM-${agency}-${Date.now()}`,
+          details: getSubmissionDetails(agency),
+        }
         : null,
       submitted_at: new Date().toISOString(),
     })
     .select()
     .single();
-  
+
   if (error) return { error: error.message };
-  
+
   // If all agencies submitted, update run status
   if (!is_sandbox) {
     await supabase
@@ -1106,7 +1106,7 @@ async function handleCreateSubmission(body: any) {
       .update({ status: 'submitted' })
       .eq('id', payroll_run_id);
   }
-  
+
   return { data };
 }
 
@@ -1143,72 +1143,211 @@ function getSubmissionDetails(agency: string): Record<string, string> {
 
 async function handleGenerateSEPA(body: any) {
   const { payroll_run_id } = body;
-  
-  // Get payslips (NO JOINS)
+
+  // 1. Get payslips
   const { data: payslips } = await supabase
     .from('payslips')
     .select('id, employee_id, net_pay')
     .eq('payroll_run_id', payroll_run_id);
-  
+
   if (!payslips || payslips.length === 0) {
     return { error: 'No hay nóminas calculadas' };
   }
-  
-  // Get employee names separately
+
+  // 2. Get employee names + IBANs
   const empIds = payslips.map((p: any) => p.employee_id);
   const { data: employees } = await supabase
     .from('employees')
     .select('id, full_name')
     .in('id', empIds);
   const empMap = new Map((employees || []).map((e: any) => [e.id, e]));
-  
-  // Get run and entity info separately
+
+  // Get employee legal data (IBANs) from employee_legal
+  const { data: empLegal } = await supabase
+    .from('employee_legal')
+    .select('employee_id, iban, nif')
+    .in('employee_id', empIds);
+  const legalMap = new Map((empLegal || []).map((l: any) => [l.employee_id, l]));
+
+  // 3. Get run + legal entity info
   const { data: run } = await supabase
     .from('payroll_runs')
     .select('*')
     .eq('id', payroll_run_id)
     .single();
-  
-  let entityName = 'Josephine';
+
+  let entityName = 'Josephine SL';
   let entityNif = '';
+  let companyIban = 'ES6214650340511738758688'; // User's real IBAN (ING España)
+  let companyBic = 'INGDESMMXXX';               // User's real BIC
+
   if (run?.legal_entity_id) {
     const { data: entity } = await supabase
       .from('legal_entities')
-      .select('razon_social, nif')
+      .select('razon_social, nif, iban, bic')
       .eq('id', run.legal_entity_id)
       .single();
     if (entity) {
-      entityName = entity.razon_social;
-      entityNif = entity.nif;
+      entityName = entity.razon_social || entityName;
+      entityNif = entity.nif || entityNif;
+      if (entity.iban) companyIban = entity.iban.replace(/\s/g, '');
+      if (entity.bic) companyBic = entity.bic;
     }
   }
-  
-  // Generate SEPA XML structure (ISO 20022 pain.001.001.03)
+
+  // 4. Build payment data
   const totalAmount = payslips.reduce((s: number, p: any) => s + Number(p.net_pay), 0);
-  const messageId = `JOSE-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${payroll_run_id.slice(0, 8)}`;
-  
-  const sepaData = {
-    // SEPA Credit Transfer Initiation (pain.001.001.03)
-    messageId,
-    creationDateTime: new Date().toISOString(),
-    initiatorName: entityName,
-    initiatorId: entityNif,
-    numberOfTransactions: payslips.length,
-    controlSum: round2(totalAmount),
-    paymentMethod: 'TRF', // Credit Transfer
-    serviceLevel: 'SEPA',
-    payments: payslips.map((p: any) => ({
-      endToEndId: `NOM-${p.employee_id.slice(0, 8)}-${run?.period_month}`,
-      employee: empMap.get(p.employee_id)?.full_name || 'Empleado',
+  const messageId = `JOSE-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${payroll_run_id.slice(0, 8)}`;
+  const creationDateTime = new Date().toISOString().slice(0, 19); // xs:dateTime without timezone for SEPA
+  const requestedDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+  const payments = payslips.map((p: any) => {
+    const emp = empMap.get(p.employee_id);
+    const legal = legalMap.get(p.employee_id);
+    return {
+      endToEndId: `NOM-${p.employee_id.slice(0, 8)}-${run?.period_month || 0}`,
+      employee: emp?.full_name || 'Empleado',
       amount: round2(Number(p.net_pay)),
       currency: 'EUR',
-      concept: `Nómina ${run?.period_month}/${run?.period_year}`,
+      concept: `Nomina ${run?.period_month || ''}/${run?.period_year || ''}`,
+      iban: legal?.iban?.replace(/\s/g, '') || '',
+      nif: legal?.nif || '',
+    };
+  });
+
+  // 5. Generate pain.001.001.03 XML (ISO 20022 SEPA Credit Transfer)
+  // Reference: Reglamento UE 260/2012 (SEPA) + Norma 34 Banco de España + EPC CT BS-2
+  const xmlLines: string[] = [];
+  xmlLines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  xmlLines.push('<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">');
+  xmlLines.push('  <CstmrCdtTrfInitn>');
+
+  // Group Header (GrpHdr)
+  xmlLines.push('    <GrpHdr>');
+  xmlLines.push(`      <MsgId>${escapeXml(messageId)}</MsgId>`);
+  xmlLines.push(`      <CreDtTm>${creationDateTime}</CreDtTm>`);
+  xmlLines.push(`      <NbOfTxs>${payments.length}</NbOfTxs>`);
+  xmlLines.push(`      <CtrlSum>${round2(totalAmount).toFixed(2)}</CtrlSum>`);
+  xmlLines.push('      <InitgPty>');
+  xmlLines.push(`        <Nm>${escapeXml(entityName)}</Nm>`);
+  if (entityNif) {
+    xmlLines.push('        <Id>');
+    xmlLines.push('          <OrgId>');
+    xmlLines.push('            <Othr>');
+    xmlLines.push(`              <Id>${escapeXml(entityNif)}</Id>`);
+    xmlLines.push('            </Othr>');
+    xmlLines.push('          </OrgId>');
+    xmlLines.push('        </Id>');
+  }
+  xmlLines.push('      </InitgPty>');
+  xmlLines.push('    </GrpHdr>');
+
+  // Payment Information (PmtInf)
+  xmlLines.push('    <PmtInf>');
+  xmlLines.push(`      <PmtInfId>${escapeXml(messageId)}-001</PmtInfId>`);
+  xmlLines.push('      <PmtMtd>TRF</PmtMtd>');
+  xmlLines.push('      <BtchBookg>true</BtchBookg>');
+  xmlLines.push(`      <NbOfTxs>${payments.length}</NbOfTxs>`);
+  xmlLines.push(`      <CtrlSum>${round2(totalAmount).toFixed(2)}</CtrlSum>`);
+  xmlLines.push('      <PmtTpInf>');
+  xmlLines.push('        <SvcLvl>');
+  xmlLines.push('          <Cd>SEPA</Cd>');
+  xmlLines.push('        </SvcLvl>');
+  xmlLines.push('      </PmtTpInf>');
+  xmlLines.push(`      <ReqdExctnDt>${requestedDate}</ReqdExctnDt>`);
+
+  // Debtor (Company)
+  xmlLines.push('      <Dbtr>');
+  xmlLines.push(`        <Nm>${escapeXml(entityName)}</Nm>`);
+  xmlLines.push('      </Dbtr>');
+  xmlLines.push('      <DbtrAcct>');
+  xmlLines.push('        <Id>');
+  xmlLines.push(`          <IBAN>${companyIban}</IBAN>`);
+  xmlLines.push('        </Id>');
+  xmlLines.push('        <Ccy>EUR</Ccy>');
+  xmlLines.push('      </DbtrAcct>');
+  xmlLines.push('      <DbtrAgt>');
+  xmlLines.push('        <FinInstnId>');
+  xmlLines.push(`          <BIC>${companyBic}</BIC>`);
+  xmlLines.push('        </FinInstnId>');
+  xmlLines.push('      </DbtrAgt>');
+  xmlLines.push('      <ChrgBr>SLEV</ChrgBr>'); // Shared charges per SEPA rules
+
+  // Credit Transfer Transaction Information (one per employee)
+  for (const payment of payments) {
+    xmlLines.push('      <CdtTrfTxInf>');
+    xmlLines.push('        <PmtId>');
+    xmlLines.push(`          <EndToEndId>${escapeXml(payment.endToEndId)}</EndToEndId>`);
+    xmlLines.push('        </PmtId>');
+    xmlLines.push('        <Amt>');
+    xmlLines.push(`          <InstdAmt Ccy="${payment.currency}">${payment.amount.toFixed(2)}</InstdAmt>`);
+    xmlLines.push('        </Amt>');
+
+    // Creditor (Employee)
+    xmlLines.push('        <Cdtr>');
+    xmlLines.push(`          <Nm>${escapeXml(payment.employee)}</Nm>`);
+    xmlLines.push('        </Cdtr>');
+
+    if (payment.iban) {
+      xmlLines.push('        <CdtrAcct>');
+      xmlLines.push('          <Id>');
+      xmlLines.push(`            <IBAN>${payment.iban}</IBAN>`);
+      xmlLines.push('          </Id>');
+      xmlLines.push('        </CdtrAcct>');
+    }
+
+    // Remittance info (concept)
+    xmlLines.push('        <RmtInf>');
+    xmlLines.push(`          <Ustrd>${escapeXml(payment.concept)}</Ustrd>`);
+    xmlLines.push('        </RmtInf>');
+    xmlLines.push('      </CdtTrfTxInf>');
+  }
+
+  xmlLines.push('    </PmtInf>');
+  xmlLines.push('  </CstmrCdtTrfInitn>');
+  xmlLines.push('</Document>');
+
+  const xmlContent = xmlLines.join('\n');
+
+  // 6. Return both XML (for download) and JSON summary (for UI)
+  const sepaData = {
+    messageId,
+    creationDateTime,
+    initiatorName: entityName,
+    initiatorId: entityNif,
+    debtorIban: companyIban,
+    debtorBic: companyBic,
+    numberOfTransactions: payments.length,
+    controlSum: round2(totalAmount),
+    paymentMethod: 'TRF',
+    serviceLevel: 'SEPA',
+    requestedExecutionDate: requestedDate,
+    payments: payments.map(p => ({
+      endToEndId: p.endToEndId,
+      employee: p.employee,
+      amount: p.amount,
+      currency: p.currency,
+      concept: p.concept,
+      iban: p.iban ? `${p.iban.slice(0, 4)}****${p.iban.slice(-4)}` : 'Sin IBAN',
     })),
-    // Reference to Spanish banking regulation
-    _regulation: 'Reglamento UE 260/2012 (SEPA) + Norma 34 Banco de España',
+    _regulation: 'Reglamento UE 260/2012 (SEPA) + Norma 34 Banco de España + ISO 20022 pain.001.001.03',
   };
-  
-  return { success: true, sepa: sepaData };
+
+  return {
+    success: true,
+    sepa: sepaData,
+    xml: xmlContent,
+    filename: `SEPA_Nominas_${run?.period_month || ''}_${run?.period_year || ''}_${messageId}.xml`,
+  };
+}
+
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 // ===== SEED TEST DATA =====
@@ -1216,22 +1355,22 @@ async function handleGenerateSEPA(body: any) {
 
 async function handleSeedTestData(body: any) {
   const { group_id, legal_entity_id, period_year, period_month } = body;
-  
+
   if (!group_id || !legal_entity_id) {
     return { error: 'Falta group_id o legal_entity_id' };
   }
-  
+
   await ensureSchema();
-  
+
   // Get locations for this group
   const { data: locations } = await supabase
     .from('locations')
     .select('id, name')
     .eq('group_id', group_id);
-  
+
   const locationIds = (locations || []).map((l: any) => l.id);
   const defaultLocationId = locationIds[0] || null;
-  
+
   // Check existing employees
   let existingEmployees: any[] = [];
   if (locationIds.length > 0) {
@@ -1249,7 +1388,7 @@ async function handleSeedTestData(body: any) {
       .eq('active', true);
     existingEmployees = data || [];
   }
-  
+
   // 20 realistic restaurant employees
   const testEmployees = [
     { name: 'Carlos García López', role: 'Manager', salary: 2200, group_ss: '3', irpf: 18, contract: 'indefinido', jornada: 100 },
@@ -1273,14 +1412,14 @@ async function handleSeedTestData(body: any) {
     { name: 'Sergio Blanco Peña', role: 'Kitchen Porter', salary: 1350, group_ss: '6', irpf: 8, contract: 'indefinido', jornada: 100 },
     { name: 'Marta Herrero Cano', role: 'Segundo Jefe', salary: 2000, group_ss: '4', irpf: 16, contract: 'indefinido', jornada: 100 },
   ];
-  
+
   // If we have existing employees, use them (up to 20). Otherwise, create new ones.
   let employees: any[] = existingEmployees.slice(0, 20);
-  
+
   // If we have fewer than 20, create the missing ones
   if (employees.length < 20) {
     const needed = testEmployees.slice(employees.length);
-    
+
     for (const emp of needed) {
       const { data: newEmp, error: empErr } = await supabase
         .from('employees')
@@ -1294,13 +1433,13 @@ async function handleSeedTestData(body: any) {
         })
         .select()
         .single();
-      
+
       if (!empErr && newEmp) {
         employees.push(newEmp);
       }
     }
   }
-  
+
   // Deactivate employees beyond 20 for cleaner test
   if (existingEmployees.length > 20) {
     const toDeactivate = existingEmployees.slice(20).map((e: any) => e.id);
@@ -1309,32 +1448,32 @@ async function handleSeedTestData(body: any) {
       .update({ active: false })
       .in('id', toDeactivate);
   }
-  
+
   console.log(`[Seed] Working with ${employees.length} employees`);
-  
+
   // Generate realistic NIF, NSS, IBAN for each
   const nifLetters = 'TRWAGMYFPDXBNJZSQVHLCKE';
   const seedResults = { contracts: 0, legal: 0, inputs: 0 };
-  
+
   for (let i = 0; i < employees.length; i++) {
     const emp = employees[i];
     const template = testEmployees[i] || testEmployees[0];
-    
+
     // NIF: number + letter (Spanish DNI format)
     const dniNumber = 10000000 + i * 3217891 % 90000000;
     const nif = `${dniNumber}${nifLetters[dniNumber % 23]}`;
-    
+
     // NSS: 28/XXXXXXXX/XX (Madrid format)
     const nssBase = 10000000 + i * 4567;
     const nss = `28/${String(nssBase).padStart(8, '0')}/${String((nssBase * 7) % 100).padStart(2, '0')}`;
-    
+
     // IBAN: ES + 2 check digits + 20 digits
     const iban = `ES${60 + i}2100${String(1234567890 + i * 111).slice(0, 10)}${String(i * 12345).padStart(10, '0')}`;
-    
+
     // Domicilio
     const calles = ['Gran Vía', 'Alcalá', 'Serrano', 'Fuencarral', 'Hortaleza', 'Atocha', 'Princesa', 'Bravo Murillo'];
     const domicilio = `C/ ${calles[i % calles.length]} ${10 + i * 3}, ${i % 2 === 0 ? '2ºA' : '3ºB'}, 280${String(i % 50).padStart(2, '0')} Madrid`;
-    
+
     // 1. Save legal data
     const { error: legalErr } = await supabase
       .from('employee_legal')
@@ -1346,9 +1485,9 @@ async function handleSeedTestData(body: any) {
         iban,
         domicilio,
       }, { onConflict: 'employee_id,legal_entity_id' });
-    
+
     if (!legalErr) seedResults.legal++;
-    
+
     // 2. Create/update contract
     // First deactivate existing
     await supabase
@@ -1356,7 +1495,7 @@ async function handleSeedTestData(body: any) {
       .update({ active: false })
       .eq('employee_id', emp.id)
       .eq('active', true);
-    
+
     const { error: contractErr } = await supabase
       .from('employment_contracts')
       .insert({
@@ -1372,20 +1511,20 @@ async function handleSeedTestData(body: any) {
         irpf_rate: template.irpf,
         active: true,
       });
-    
+
     if (!contractErr) seedResults.contracts++;
-    
+
     // 3. Create payroll inputs for this period (realistic hours/variables)
     if (period_year && period_month) {
       const jornadaHours = 150 * template.jornada / 100;
       const nightHours = template.role.includes('Cocin') || template.role === 'Barman' ? Math.round(Math.random() * 8 + 4) : 0;
       const overtimeHours = Math.random() > 0.7 ? Math.round(Math.random() * 6 + 2) : 0;
       const holidayHours = Math.random() > 0.8 ? 8 : 0;
-      
+
       const bonuses: any[] = [];
       if (Math.random() > 0.7) bonuses.push({ concept: 'Plus productividad', amount: Math.round(Math.random() * 80 + 20) });
       if (template.role === 'Manager' || template.role === 'Jefe de Cocina') bonuses.push({ concept: 'Plus responsabilidad', amount: 100 });
-      
+
       const { error: inputErr } = await supabase
         .from('payroll_inputs')
         .upsert({
@@ -1400,13 +1539,13 @@ async function handleSeedTestData(body: any) {
           deductions_json: [],
           tips_json: [],
         }, { onConflict: 'employee_id,period_year,period_month' });
-      
+
       if (!inputErr) seedResults.inputs++;
     }
   }
-  
+
   console.log('[Seed] Complete:', seedResults);
-  
+
   return {
     success: true,
     employees_count: employees.length,
@@ -1420,16 +1559,16 @@ async function handleSeedTestData(body: any) {
 // ===== RESET PAYROLL =====
 async function handleResetPayroll(body: any) {
   const { payroll_run_id } = body;
-  
+
   if (!payroll_run_id) {
     return { error: 'Falta payroll_run_id' };
   }
-  
+
   // Delete in order: payslips -> submissions -> inputs -> run
   await supabase.from('payslips').delete().eq('payroll_run_id', payroll_run_id);
   await supabase.from('compliance_submissions').delete().eq('payroll_run_id', payroll_run_id);
   await supabase.from('payroll_runs').delete().eq('id', payroll_run_id);
-  
+
   return { success: true, message: 'Nómina reseteada correctamente' };
 }
 
@@ -1442,9 +1581,9 @@ Deno.serve(async (req) => {
 
   try {
     const { action, ...body } = await req.json();
-    
+
     let result;
-    
+
     switch (action) {
       case 'setup':
         result = await handleSetup(body);
@@ -1492,7 +1631,7 @@ Deno.serve(async (req) => {
       default:
         result = { error: `Acción no reconocida: ${action}` };
     }
-    
+
     const status = result.error ? 400 : 200;
     return new Response(JSON.stringify(result), {
       status,

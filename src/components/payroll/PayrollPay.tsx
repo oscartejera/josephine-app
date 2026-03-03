@@ -22,6 +22,8 @@ export default function PayrollPay({
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
   const [sepaData, setSepaData] = useState<any>(null);
+  const [sepaXml, setSepaXml] = useState<string | null>(null);
+  const [sepaFilename, setSepaFilename] = useState<string>('');
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payslipCount, setPayslipCount] = useState(0);
@@ -49,9 +51,11 @@ export default function PayrollPay({
     try {
       const result = await payrollApi.generateSEPA(currentRun.id);
       setSepaData(result.sepa);
-      toast({ 
-        title: 'Fichero SEPA generado', 
-        description: `${result.sepa?.numberOfTransactions || 0} transferencias por €${result.sepa?.controlSum?.toLocaleString('es-ES') || '0'}` 
+      setSepaXml(result.xml || null);
+      setSepaFilename(result.filename || 'SEPA_nominas.xml');
+      toast({
+        title: 'Fichero SEPA generado',
+        description: `${result.sepa?.numberOfTransactions || 0} transferencias por €${result.sepa?.controlSum?.toLocaleString('es-ES') || '0'}`
       });
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error generando SEPA' });
@@ -133,7 +137,7 @@ export default function PayrollPay({
             {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             {sepaData ? 'Regenerar SEPA' : 'Generar Fichero SEPA'}
           </Button>
-          
+
           {sepaData && (
             <div className="border rounded-lg p-4 space-y-3">
               <div className="flex items-center gap-2 text-success">
@@ -145,8 +149,33 @@ export default function PayrollPay({
                 <div><span className="text-muted-foreground">Transacciones:</span> {sepaData.numberOfTransactions}</div>
                 <div><span className="text-muted-foreground">Total:</span> €{fmt(sepaData.controlSum)}</div>
                 <div><span className="text-muted-foreground">Método:</span> {sepaData.paymentMethod} ({sepaData.serviceLevel})</div>
+                <div><span className="text-muted-foreground">IBAN Ordenante:</span> {sepaData.debtorIban ? `${sepaData.debtorIban.slice(0, 4)}****${sepaData.debtorIban.slice(-4)}` : '-'}</div>
+                <div><span className="text-muted-foreground">BIC:</span> {sepaData.debtorBic || '-'}</div>
               </div>
-              
+
+              {/* Download XML button */}
+              {sepaXml && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    const blob = new Blob([sepaXml], { type: 'application/xml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = sepaFilename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar XML SEPA (pain.001.001.03)
+                </Button>
+              )}
+
               {sepaData.payments && sepaData.payments.length > 0 && (
                 <Table>
                   <TableHeader>
