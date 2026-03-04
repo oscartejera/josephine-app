@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table';
 import { AskJosephineSalesDrawer } from '@/components/sales';
 import { ForecastAccuracyCard } from '@/components/forecast/ForecastAccuracyCard';
+import { HourlyForecastChart } from '@/components/forecast/HourlyForecastChart';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import { startOfMonth, endOfMonth, format, subDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -265,6 +266,11 @@ export default function Sales() {
 
       {/* Forecast Accuracy */}
       {locationIds.length > 0 && <ForecastAccuracyCard locationIds={locationIds} />}
+
+      {/* Hourly Forecast */}
+      {locationIds.length === 1 && (
+        <HourlyForecastChart locationId={locationIds[0]} date={new Date()} />
+      )}
 
       {/* Chart */}
       <Card className="p-6">
