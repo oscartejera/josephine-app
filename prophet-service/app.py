@@ -504,43 +504,76 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
         "Authorization": f"Bearer {supabase_key}",
     }
     sales_data = []
-    page = 0
+    source_table = "unknown"
+
+    async def _fetch_paginated(client, table_url, date_col, amount_col):
+        """Fetch paginated data from a Supabase REST table."""
+        rows = []
+        pg = 0
+        while True:
+            resp = await client.get(
+                f"{table_url}&order={date_col}.asc",
+                headers={**headers_sb, "Range": f"{pg*1000}-{(pg+1)*1000-1}"},
+            )
+            if resp.status_code >= 400:
+                return None  # Table doesn't exist or access denied
+            batch = resp.json()
+            if not batch:
+                break
+            rows.extend(batch)
+            pg += 1
+            if len(batch) < 1000:
+                break
+        return rows
+
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            while True:
-                url = (
-                    f"{supabase_url}/rest/v1/facts_sales_15m"
+            # Strategy 1: facts_sales_15m (15-minute granularity)
+            url1 = (
+                f"{supabase_url}/rest/v1/facts_sales_15m"
+                f"?location_id=eq.{location_id}"
+                f"&select=ts_bucket,sales_net"
+            )
+            result = await _fetch_paginated(client, url1, "ts_bucket", "sales_net")
+            if result and len(result) > 0:
+                sales_data = result
+                source_table = "facts_sales_15m"
+                logger.info("Using facts_sales_15m: %d records", len(sales_data))
+            else:
+                # Strategy 2: tickets table
+                url2 = (
+                    f"{supabase_url}/rest/v1/tickets"
                     f"?location_id=eq.{location_id}"
-                    f"&select=ts_bucket,sales_net"
-                    f"&order=ts_bucket.asc"
+                    f"&select=opened_at,net_total"
+                    f"&net_total=gt.0"
                 )
-                resp = await client.get(
-                    url,
-                    headers={**headers_sb, "Range": f"{page*1000}-{(page+1)*1000-1}"},
-                )
-                if resp.status_code >= 400:
-                    logger.error("Supabase REST error %d: %s", resp.status_code, resp.text[:500])
-                    raise HTTPException(
-                        status_code=502,
-                        detail=f"Supabase REST error {resp.status_code}: {resp.text[:200]}"
+                result = await _fetch_paginated(client, url2, "opened_at", "net_total")
+                if result and len(result) > 0:
+                    sales_data = [{"ts_bucket": r["opened_at"], "sales_net": r["net_total"]} for r in result]
+                    source_table = "tickets"
+                    logger.info("Using tickets: %d records", len(sales_data))
+                else:
+                    # Strategy 3: pos_daily_finance
+                    url3 = (
+                        f"{supabase_url}/rest/v1/pos_daily_finance"
+                        f"?location_id=eq.{location_id}"
+                        f"&select=date,net_sales"
+                        f"&net_sales=gt.0"
                     )
-                rows = resp.json()
-                if not rows:
-                    break
-                sales_data.extend(rows)
-                page += 1
-                if len(rows) < 1000:
-                    break
-    except HTTPException:
-        raise
+                    result = await _fetch_paginated(client, url3, "date", "net_sales")
+                    if result and len(result) > 0:
+                        sales_data = [{"ts_bucket": r["date"], "sales_net": r["net_sales"]} for r in result]
+                        source_table = "pos_daily_finance"
+                        logger.info("Using pos_daily_finance: %d records", len(sales_data))
+
     except Exception as e:
         logger.error("Error fetching data from Supabase: %s", str(e))
         raise HTTPException(status_code=502, detail=f"Error fetching from Supabase: {str(e)}")
 
-    logger.info("Fetched %d sales records in %d pages", len(sales_data), page)
+    logger.info("Fetched %d sales records from %s", len(sales_data), source_table)
 
     if len(sales_data) == 0:
-        raise HTTPException(status_code=400, detail="No sales data found for this location")
+        raise HTTPException(status_code=400, detail="No sales data found for this location in any table")
 
     # ── Aggregate to daily ────────────────────────────────────────────
     daily: dict[str, float] = {}
