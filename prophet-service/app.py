@@ -1019,6 +1019,27 @@ async def forecast_hourly(req: dict, authorization: str = Header(default="")):
     }
 
 
+@app.post("/forecast_xgboost")
+async def forecast_xgboost(req: dict, authorization: str = Header(default="")):
+    """XGBoost forecasting pipeline — ensemble component for v6.
+
+    Same interface as /forecast_supabase. Called by generate_forecast_v6 Edge Function.
+    Uses 25+ engineered features, expanding window CV, and SHAP explanations.
+    """
+    if API_KEY and not authorization.endswith(API_KEY):
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    from xgboost_forecaster import create_forecast_xgboost_handler
+
+    handler = create_forecast_xgboost_handler()
+    result = handler(req)
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return result
+
+
 @app.post("/batch_forecast")
 async def batch_forecast(
     locations: list[ForecastRequest],
