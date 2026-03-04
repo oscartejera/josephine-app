@@ -7,6 +7,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { CACHE } from '@/data/cache-config';
 import { format } from 'date-fns';
 
 // ── Response types ────────────────────────────────────────────
@@ -90,6 +91,6 @@ export function useForecastItemsMix({
       return data as ForecastItemsMixResult;
     },
     enabled: enabled && !!orgId && locationIds.length > 0,
-    staleTime: 120_000,
+    ...CACHE.COMPUTED,
   });
 }

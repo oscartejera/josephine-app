@@ -75,6 +75,11 @@ function lintFile(filePath) {
     const name = basename(filePath);
     const issues = [];
 
+    // Allow intentional cleanup migrations to skip lint
+    if (content.includes('-- lint:disable-file')) {
+        return issues;
+    }
+
     for (const rule of RULES) {
         let match;
         const regex = new RegExp(rule.pattern.source, rule.pattern.flags);

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { CACHE } from '@/data/cache-config';
 import { useApp } from '@/contexts/AppContext';
 import type { RecipeSummary } from './bom/types';
 
@@ -60,6 +61,7 @@ export function useRecipes() {
             return recipes;
         },
         enabled: !!group?.id,
+        ...CACHE.CONFIG,
     });
 
     const createRecipe = useMutation({
