@@ -505,26 +505,37 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
     }
     sales_data = []
     page = 0
-    async with httpx.AsyncClient(timeout=30) as client:
-        while True:
-            url = (
-                f"{supabase_url}/rest/v1/facts_sales_15m"
-                f"?location_id=eq.{location_id}"
-                f"&select=ts_bucket,sales_net"
-                f"&order=ts_bucket.asc"
-            )
-            resp = await client.get(
-                url,
-                headers={**headers_sb, "Range": f"{page*1000}-{(page+1)*1000-1}"},
-            )
-            resp.raise_for_status()
-            rows = resp.json()
-            if not rows:
-                break
-            sales_data.extend(rows)
-            page += 1
-            if len(rows) < 1000:
-                break
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            while True:
+                url = (
+                    f"{supabase_url}/rest/v1/facts_sales_15m"
+                    f"?location_id=eq.{location_id}"
+                    f"&select=ts_bucket,sales_net"
+                    f"&order=ts_bucket.asc"
+                )
+                resp = await client.get(
+                    url,
+                    headers={**headers_sb, "Range": f"{page*1000}-{(page+1)*1000-1}"},
+                )
+                if resp.status_code >= 400:
+                    logger.error("Supabase REST error %d: %s", resp.status_code, resp.text[:500])
+                    raise HTTPException(
+                        status_code=502,
+                        detail=f"Supabase REST error {resp.status_code}: {resp.text[:200]}"
+                    )
+                rows = resp.json()
+                if not rows:
+                    break
+                sales_data.extend(rows)
+                page += 1
+                if len(rows) < 1000:
+                    break
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error fetching data from Supabase: %s", str(e))
+        raise HTTPException(status_code=502, detail=f"Error fetching from Supabase: {str(e)}")
 
     logger.info("Fetched %d sales records in %d pages", len(sales_data), page)
 
