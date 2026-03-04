@@ -5,7 +5,7 @@
  * `labour_daily_unified` contract views.
  */
 
-import { supabase, assertContext, hasNoLocations, applyFilters, toLegacyDataSource } from './client';
+import { supabase, assertContext, hasNoLocations, applyFilters, toLegacyDataSource, typedFrom } from './client';
 import { type QueryContext, type DateRange, type BudgetDailyRow, type BudgetVsActualRow } from './types';
 
 // ─── getBudgetDaily ─────────────────────────────────────────────────────────
@@ -17,8 +17,7 @@ export async function getBudgetDaily(
   assertContext(ctx);
   if (hasNoLocations(ctx)) return [];
 
-  let query = supabase
-    .from('budget_daily_unified' as any)
+  let query = typedFrom('budget_daily_unified')
     .select('org_id, location_id, day, budget_sales, budget_labour, budget_cogs, budget_profit, budget_margin_pct, budget_col_pct, budget_cogs_pct')
     .order('day', { ascending: true });
 
@@ -60,20 +59,17 @@ export async function getBudgetVsActual(
   const dsLegacy = toLegacyDataSource(ctx.dataSource);
 
   // Fetch budget, sales, labour, and cogs in parallel
-  let budgetQ = supabase
-    .from('budget_daily_unified' as any)
+  let budgetQ = typedFrom('budget_daily_unified')
     .select('day, location_id, budget_sales, budget_labour, budget_cogs')
     .order('day', { ascending: true });
   budgetQ = applyFilters(budgetQ, ctx.locationIds, range, 'day');
 
-  let salesQ = supabase
-    .from('sales_daily_unified' as any)
+  let salesQ = typedFrom('sales_daily_unified')
     .select('date, location_id, net_sales')
     .eq('data_source', dsLegacy);
   salesQ = applyFilters(salesQ, ctx.locationIds, range, 'date');
 
-  let labourQ = supabase
-    .from('labour_daily_unified' as any)
+  let labourQ = typedFrom('labour_daily_unified')
     .select('day, location_id, actual_cost');
   labourQ = applyFilters(labourQ, ctx.locationIds, range, 'day');
 

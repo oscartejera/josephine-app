@@ -7,7 +7,7 @@
  *   with idempotency check (no duplicate draft POs for same supplier+location+day).
  */
 
-import { supabase, assertContext, hasNoLocations } from './client';
+import { supabase, assertContext, hasNoLocations, typedFrom } from './client';
 import {
   type QueryContext,
   type LowStockAlert,
@@ -28,8 +28,7 @@ export async function getLowStockAlerts(
   if (hasNoLocations(ctx)) return [];
 
   // Try the contract view first (has real on_hand from inventory_item_location)
-  const { data, error } = await supabase
-    .from('inventory_position_unified' as any)
+  const { data, error } = await typedFrom('inventory_position_unified')
     .select('item_id, name, unit, on_hand, par_level, location_id, deficit')
     .eq('org_id', ctx.orgId)
     .in('location_id', ctx.locationIds)

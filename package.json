@@ -14,7 +14,10 @@
     "repair:migrations": "tsx tools/supabase/repair-migrations.ts",
     "check:migrations": "tsx tools/supabase/check-migrations.ts",
     "seed:demo": "node scripts/seed-demo-365.mjs",
-    "demo:verify": "node scripts/verify-demo.mjs"
+    "demo:verify": "node scripts/verify-demo.mjs",
+    "db:lint": "node scripts/validate-migration.mjs",
+    "db:types": "npx supabase gen types typescript --project-id qixipveebfhurbarksib > src/integrations/supabase/types.ts",
+    "docs:rpcs": "node scripts/generate-rpc-catalog.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",

@@ -5,7 +5,9 @@
  * `sales_hourly_unified` contract views created in migration 01/02.
  */
 
-import { supabase, assertContext, hasNoLocations, applyFilters, toLegacyDataSource } from './client';
+import { supabase, assertContext, hasNoLocations, applyFilters, toLegacyDataSource, typedFrom } from './client';
+import { typedRpc } from './typed-rpc';
+import { SalesTimeseriesSchema, TopProductsSchema, InstantPnlSchema, MenuEngineeringSchema } from './rpc-contracts';
 import {
   type QueryContext,
   type DateRange,
@@ -33,8 +35,7 @@ export async function getDashboardKpis(
 
   const dsLegacy = toLegacyDataSource(ctx.dataSource);
 
-  let query = supabase
-    .from('sales_daily_unified' as any)
+  let query = typedFrom('sales_daily_unified')
     .select('net_sales, gross_sales, orders_count, avg_check, payments_cash, payments_card, payments_other, refunds_amount, discounts_amount, comps_amount, voids_amount, labor_cost, labor_hours')
     .eq('data_source', dsLegacy);
 
@@ -90,8 +91,7 @@ export async function getSalesTrends(
 
   const dsLegacy = toLegacyDataSource(ctx.dataSource);
 
-  let query = supabase
-    .from('sales_daily_unified' as any)
+  let query = typedFrom('sales_daily_unified')
     .select('org_id, location_id, date, net_sales, gross_sales, orders_count, avg_check, payments_cash, payments_card, payments_other, refunds_amount, refunds_count, discounts_amount, comps_amount, voids_amount, labor_cost, labor_hours, data_source')
     .eq('data_source', dsLegacy)
     .order('date', { ascending: true });
@@ -141,8 +141,7 @@ export async function getProductSalesDaily(
 
   const dsLegacy = toLegacyDataSource(ctx.dataSource);
 
-  let query = supabase
-    .from('product_sales_daily_unified' as any)
+  let query = typedFrom('product_sales_daily_unified')
     .select('org_id, location_id, day, product_id, product_name, product_category, units_sold, net_sales, cogs, gross_profit, margin_pct, data_source')
     .eq('data_source', dsLegacy)
     .order('day', { ascending: true });
@@ -179,8 +178,7 @@ async function getSalesHourlyTrends(
 ): Promise<SalesHourlyRow[]> {
   const dsLegacy = toLegacyDataSource(ctx.dataSource);
 
-  let query = supabase
-    .from('sales_hourly_unified' as any)
+  let query = typedFrom('sales_hourly_unified')
     .select('org_id, location_id, day, hour_bucket, hour_of_day, net_sales, gross_sales, orders_count, covers, avg_check, discounts, refunds, data_source')
     .eq('data_source', dsLegacy)
     .order('hour_bucket', { ascending: true });
@@ -223,19 +221,14 @@ export async function getSalesTimeseriesRpc(
   assertContext(ctx);
   if (hasNoLocations(ctx)) return null;
 
-  const { data, error } = await (supabase.rpc as any)('get_sales_timeseries_unified', {
+  const data = await typedRpc('get_sales_timeseries_unified', SalesTimeseriesSchema, {
     p_org_id: ctx.orgId,
     p_location_ids: ctx.locationIds,
     p_from: range.from,
     p_to: range.to,
   });
 
-  if (error) {
-    console.error('[data/sales] getSalesTimeseriesRpc error:', error.message);
-    throw error;
-  }
-
-  return data as SalesTimeseriesRpcResult | null;
+  return data as SalesTimeseriesRpcResult;
 }
 
 /**
@@ -250,7 +243,7 @@ export async function getTopProductsRpc(
   assertContext(ctx);
   if (hasNoLocations(ctx)) return null;
 
-  const { data, error } = await (supabase.rpc as any)('get_top_products_unified', {
+  const data = await typedRpc('get_top_products_unified', TopProductsSchema, {
     p_org_id: ctx.orgId,
     p_location_ids: ctx.locationIds,
     p_from: range.from,
@@ -258,12 +251,7 @@ export async function getTopProductsRpc(
     p_limit: limit,
   });
 
-  if (error) {
-    console.error('[data/sales] getTopProductsRpc error:', error.message);
-    throw error;
-  }
-
-  return data as TopProductsRpcResult | null;
+  return data as TopProductsRpcResult;
 }
 
 /**
@@ -277,19 +265,12 @@ export async function getInstantPnlRpc(
   assertContext(ctx);
   if (hasNoLocations(ctx)) return null;
 
-  const { data, error } = await (supabase.rpc as any)('get_instant_pnl_unified', {
+  return typedRpc('get_instant_pnl_unified', InstantPnlSchema, {
     p_org_id: ctx.orgId,
     p_location_ids: ctx.locationIds,
     p_from: range.from,
     p_to: range.to,
   });
-
-  if (error) {
-    console.error('[data/sales] getInstantPnlRpc error:', error.message);
-    throw error;
-  }
-
-  return data as Record<string, unknown> | null;
 }
 
 /**
@@ -303,17 +284,10 @@ export async function getMenuEngineeringSummaryRpc(
 ): Promise<Record<string, unknown>[]> {
   assertContext(ctx);
 
-  const { data, error } = await (supabase.rpc as any)('menu_engineering_summary', {
+  return typedRpc('menu_engineering_summary', MenuEngineeringSchema, {
     p_date_from: range.from,
     p_date_to: range.to,
     p_location_id: locationId || null,
     p_data_source: ctx.dataSource,
   });
-
-  if (error) {
-    console.error('[data/sales] getMenuEngineeringSummaryRpc error:', error.message);
-    throw error;
-  }
-
-  return (data || []) as Record<string, unknown>[];
 }

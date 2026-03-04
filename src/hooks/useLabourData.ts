@@ -15,75 +15,12 @@ export interface LabourDateRange {
   to: Date;
 }
 
-export interface LabourKpis {
-  actual_sales: number;
-  forecast_sales: number;
-  actual_labor_cost: number;
-  planned_labor_cost: number;
-  actual_labor_hours: number;
-  planned_labor_hours: number;
-  actual_orders: number;
-  forecast_orders: number;
-  actual_col_pct: number;
-  planned_col_pct: number;
-  actual_splh: number;
-  planned_splh: number;
-  actual_oplh: number;
-  planned_oplh: number;
-  sales_delta_pct: number;
-  col_delta_pct: number;
-  hours_delta_pct: number;
-  splh_delta_pct: number;
-  oplh_delta_pct: number;
-  // Wave 1: payroll-first fields
-  labor_cost_source: 'payroll' | 'schedule';
-  schedule_labor_cost: number;
-  cost_per_cover: number;
-  cogs_total: number;
-  cogs_pct: number;
-  prime_cost_pct: number;
-  prime_cost_amount: number;
-}
+// Single source of truth: types come from rpc-contracts.ts (Zod schemas)
+import type { LabourKpisRpc, LabourTimeseriesRowRpc, LabourLocationRowRpc } from '@/data/rpc-contracts';
 
-export interface LabourTimeseriesRow {
-  date: string;
-  actual_sales: number;
-  forecast_sales: number;
-  actual_labor_cost: number;
-  planned_labor_cost: number;
-  actual_hours: number;
-  planned_hours: number;
-  actual_orders: number;
-  forecast_orders: number;
-  actual_col_pct: number;
-  planned_col_pct: number;
-  actual_splh: number;
-  planned_splh: number;
-  actual_oplh: number;
-  planned_oplh: number;
-}
-
-export interface LabourLocationRow {
-  location_id: string | null;
-  location_name: string;
-  sales_actual: number;
-  sales_projected: number;
-  sales_delta_pct: number;
-  col_actual_pct: number;
-  col_projected_pct: number;
-  col_delta_pct: number;
-  splh_actual: number;
-  splh_projected: number;
-  splh_delta_pct: number;
-  oplh_actual: number;
-  oplh_projected: number;
-  oplh_delta_pct: number;
-  labor_cost_actual: number;
-  labor_cost_projected: number;
-  hours_actual: number;
-  hours_projected: number;
-  is_summary: boolean;
-}
+export type LabourKpis = LabourKpisRpc;
+export type LabourTimeseriesRow = LabourTimeseriesRowRpc;
+export type LabourLocationRow = LabourLocationRowRpc;
 
 /** Sanitize a numeric value: replace NaN/Infinity with null */
 function safeNum(v: unknown): number | null {

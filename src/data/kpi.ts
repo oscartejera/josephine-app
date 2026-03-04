@@ -5,7 +5,9 @@
  * Single source of truth for dashboard, sales, P&L, and all KPI cards.
  */
 
-import { supabase, assertContext, hasNoLocations } from './client';
+import { supabase, assertContext, hasNoLocations, typedFrom } from './client';
+import { typedRpc } from './typed-rpc';
+import { KpiRangeSummarySchema } from './rpc-contracts';
 import { type QueryContext, type KpiRangeSummary } from './types';
 
 /**
@@ -19,17 +21,12 @@ export async function getKpiRangeSummary(
 ): Promise<KpiRangeSummary> {
   assertContext(ctx);
 
-  const { data, error } = await (supabase.rpc as any)('rpc_kpi_range_summary', {
+  const data = await typedRpc('rpc_kpi_range_summary', KpiRangeSummarySchema, {
     p_org_id: ctx.orgId,
     p_location_ids: ctx.locationIds?.length ? ctx.locationIds : null,
     p_from: from,
     p_to: to,
   });
-
-  if (error) {
-    console.error('[data/kpi] getKpiRangeSummary error:', error.message);
-    throw error;
-  }
 
   return data as KpiRangeSummary;
 }
@@ -45,8 +42,7 @@ export async function getKpiDaily(
   assertContext(ctx);
   if (hasNoLocations(ctx)) return [];
 
-  let query = supabase
-    .from('mart_kpi_daily' as any)
+  let query = typedFrom('mart_kpi_daily')
     .select('*')
     .eq('org_id', ctx.orgId)
     .gte('date', from)

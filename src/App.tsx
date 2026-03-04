@@ -9,6 +9,8 @@ import { DemoModeProvider } from "@/contexts/DemoModeContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteErrorBoundary } from "@/components/ui/RouteErrorBoundary";
+import { InsightErrorBoundary } from "@/components/InsightErrorBoundary";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 // Auth pages loaded eagerly (first screen the user sees)
 import Login from "@/pages/Login";
@@ -68,10 +70,12 @@ const TeamNews = lazy(() => import("@/pages/team/TeamNews"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,     // 5 min — data considered fresh
-      gcTime: 10 * 60 * 1000,       // 10 min — cache kept after unmount
-      retry: 1,                      // single retry on failure
+      staleTime: 2 * 60 * 1000,     // 2 min — KPIs/dashboards stay fresh
+      gcTime: 15 * 60 * 1000,       // 15 min — cache kept longer for offline resilience
+      retry: 2,                      // 2 retries for network resilience
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
       refetchOnWindowFocus: false,   // avoid refetches on tab switch
+      refetchOnReconnect: true,      // refetch when back online
     },
   },
 });
@@ -159,53 +163,53 @@ function AppRoutes() {
         <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<Dashboard />} />
 
-          {/* Insights routes */}
+          {/* Insights routes — wrapped with error boundaries */}
           <Route path="/insights" element={<Insights />} />
-          <Route path="/insights/sales" element={<Sales />} />
-          <Route path="/insights/labour" element={<Labour />} />
-          <Route path="/insights/labour/:locationId" element={<Labour />} />
-          <Route path="/insights/instant-pl" element={<InstantPL />} />
+          <Route path="/insights/sales" element={<InsightErrorBoundary pageName="Ventas"><Sales /></InsightErrorBoundary>} />
+          <Route path="/insights/labour" element={<InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary>} />
+          <Route path="/insights/labour/:locationId" element={<InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary>} />
+          <Route path="/insights/instant-pl" element={<InsightErrorBoundary pageName="P&L Instantáneo"><InstantPL /></InsightErrorBoundary>} />
           <Route path="/insights/reviews" element={<Reviews />} />
           <Route path="/insights/reviews/all" element={<ReviewsAll />} />
-          <Route path="/insights/inventory" element={<Inventory />} />
-          <Route path="/insights/inventory/location/:locationId" element={<InventoryLocation />} />
+          <Route path="/insights/inventory" element={<InsightErrorBoundary pageName="Inventario"><Inventory /></InsightErrorBoundary>} />
+          <Route path="/insights/inventory/location/:locationId" element={<InsightErrorBoundary pageName="Inventario"><InventoryLocation /></InsightErrorBoundary>} />
           <Route path="/insights/inventory/location/:locationId/reconciliation" element={<InventoryLocationReconciliation />} />
           <Route path="/insights/inventory/reconciliation" element={<InventoryReconciliation />} />
           <Route path="/insights/waste" element={<Waste />} />
-          <Route path="/insights/menu-engineering" element={<MenuEngineering />} />
-          <Route path="/insights/cash-management" element={<CashManagement />} />
-          <Route path="/insights/budgets" element={<Budgets />} />
+          <Route path="/insights/menu-engineering" element={<InsightErrorBoundary pageName="Rentabilidad del Menú"><MenuEngineering /></InsightErrorBoundary>} />
+          <Route path="/insights/cash-management" element={<InsightErrorBoundary pageName="Caja"><CashManagement /></InsightErrorBoundary>} />
+          <Route path="/insights/budgets" element={<InsightErrorBoundary pageName="Presupuestos"><Budgets /></InsightErrorBoundary>} />
 
-          {/* Workforce & Operations */}
-          <Route path="/workforce/team" element={<WorkforceTeam />} />
-          <Route path="/workforce/timesheet" element={<WorkforceTimesheet />} />
-          <Route path="/workforce/onboarding" element={<WorkforceOnboarding />} />
-          <Route path="/scheduling" element={<Scheduling />} />
-          <Route path="/availability" element={<Availability />} />
-          <Route path="/procurement" element={<Procurement />} />
-          <Route path="/procurement/cart" element={<ProcurementCart />} />
-          <Route path="/procurement/orders" element={<ProcurementOrders />} />
-          <Route path="/payroll/*" element={<Payroll />} />
+          {/* Workforce & Operations — all wrapped with error boundaries */}
+          <Route path="/workforce/team" element={<InsightErrorBoundary pageName="Equipo"><WorkforceTeam /></InsightErrorBoundary>} />
+          <Route path="/workforce/timesheet" element={<InsightErrorBoundary pageName="Fichajes"><WorkforceTimesheet /></InsightErrorBoundary>} />
+          <Route path="/workforce/onboarding" element={<InsightErrorBoundary pageName="Onboarding"><WorkforceOnboarding /></InsightErrorBoundary>} />
+          <Route path="/scheduling" element={<InsightErrorBoundary pageName="Turnos"><Scheduling /></InsightErrorBoundary>} />
+          <Route path="/availability" element={<InsightErrorBoundary pageName="Disponibilidad"><Availability /></InsightErrorBoundary>} />
+          <Route path="/procurement" element={<InsightErrorBoundary pageName="Compras"><Procurement /></InsightErrorBoundary>} />
+          <Route path="/procurement/cart" element={<InsightErrorBoundary pageName="Carrito"><ProcurementCart /></InsightErrorBoundary>} />
+          <Route path="/procurement/orders" element={<InsightErrorBoundary pageName="Pedidos"><ProcurementOrders /></InsightErrorBoundary>} />
+          <Route path="/payroll/*" element={<InsightErrorBoundary pageName="Nóminas"><Payroll /></InsightErrorBoundary>} />
 
           {/* Integrations */}
-          <Route path="/integrations" element={<Integrations />} />
-          <Route path="/integrations/square" element={<SquareIntegration />} />
+          <Route path="/integrations" element={<InsightErrorBoundary pageName="Integraciones"><Integrations /></InsightErrorBoundary>} />
+          <Route path="/integrations/square" element={<InsightErrorBoundary pageName="Square"><SquareIntegration /></InsightErrorBoundary>} />
           <Route path="/integrations/square/callback" element={<SquareOAuthCallback />} />
 
           {/* Inventory Setup */}
-          <Route path="/inventory-setup/items" element={<InventoryItems />} />
-          <Route path="/inventory-setup/recipes" element={<RecipesPage />} />
-          <Route path="/inventory-setup/recipes/:id" element={<RecipeDetailPage />} />
+          <Route path="/inventory-setup/items" element={<InsightErrorBoundary pageName="Artículos"><InventoryItems /></InsightErrorBoundary>} />
+          <Route path="/inventory-setup/recipes" element={<InsightErrorBoundary pageName="Recetas"><RecipesPage /></InsightErrorBoundary>} />
+          <Route path="/inventory-setup/recipes/:id" element={<InsightErrorBoundary pageName="Receta"><RecipeDetailPage /></InsightErrorBoundary>} />
 
           {/* Operations */}
-          <Route path="/operations/waste-entry" element={<WasteEntryPage />} />
-          <Route path="/operations/stock-audit" element={<StockAuditPage />} />
+          <Route path="/operations/waste-entry" element={<InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary>} />
+          <Route path="/operations/stock-audit" element={<InsightErrorBoundary pageName="Auditoría Stock"><StockAuditPage /></InsightErrorBoundary>} />
 
           {/* Settings */}
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/admin/tools" element={<AdminTools />} />
-          <Route path="/admin/data-health" element={<DataHealth />} />
-          <Route path="/debug/data-coherence" element={<DebugDataCoherence />} />
+          <Route path="/settings" element={<InsightErrorBoundary pageName="Ajustes"><SettingsPage /></InsightErrorBoundary>} />
+          <Route path="/admin/tools" element={<InsightErrorBoundary pageName="Admin Tools"><AdminTools /></InsightErrorBoundary>} />
+          <Route path="/admin/data-health" element={<InsightErrorBoundary pageName="Data Health"><DataHealth /></InsightErrorBoundary>} />
+          <Route path="/debug/data-coherence" element={<InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary>} />
         </Route>
 
         {/* Team (Employee Portal) */}
@@ -231,6 +235,7 @@ function App() {
         <AuthProvider>
           <DemoModeProvider>
             <BrowserRouter>
+              <OfflineBanner />
               <AppRoutes />
               <Toaster />
               <Sonner />

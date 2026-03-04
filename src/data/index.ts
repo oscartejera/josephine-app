@@ -51,7 +51,7 @@ export { getForecastDaily, getForecastVsActual } from './forecast';
 export { getBudgetDaily, getBudgetVsActual } from './budget';
 
 // Labour
-export { getLabourDaily, getLabourSummary, getLabourKpisRpc, getLabourTimeseriesRpc, getLabourLocationsRpc, getLaborPlanRpc } from './labour';
+export { getLabourKpisRpc, getLabourTimeseriesRpc, getLabourLocationsRpc, getLaborPlanRpc } from './labour';
 
 // Inventory
 export { getLowStockAlerts, createPurchaseOrderDraftFromAlerts } from './inventory';
@@ -79,3 +79,9 @@ export { getReconciliationSummary, EMPTY_RECONCILIATION_SUMMARY } from './reconc
 
 // Guards (React hooks — only import in components)
 export { useQueryContext } from './guards';
+
+// Health check
+export { checkRpcHealth, logRpcHealth, type HealthReport, type RpcHealthResult } from './health';
+
+// Typed RPC infrastructure
+export { typedRpc, typedRpcArray, RpcContractError } from './typed-rpc';

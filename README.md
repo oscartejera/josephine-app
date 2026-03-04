@@ -175,6 +175,32 @@ UI Dashboard
 ✅ **Scalable**: De 1 a 100+ locations
 ✅ **Real-time**: Sync continuo con POS
 
+## 🧑‍💻 Developer Setup
+
+```bash
+npm install        # Install dependencies
+npm run dev        # Start dev server (http://localhost:8080)
+```
+
+### NPM Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Production build |
+| `npm run test` | Run all tests |
+| `npm run db:lint` | Lint SQL migrations for safety |
+| `npm run db:types` | Regenerate TypeScript types from DB |
+
+### Architecture Docs
+
+| Doc | Description |
+|-----|-------------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, conventions, recipes |
+| [docs/data-layer.md](docs/data-layer.md) | How the typed data pipeline works |
+| [docs/erd.md](docs/erd.md) | Entity Relationship Diagram |
+| [docs/DB_APP_CONTRACT.md](docs/DB_APP_CONTRACT.md) | Complete DB↔App mapping |
+
 ---
 
 **Built with ❤️ for restaurant operators**

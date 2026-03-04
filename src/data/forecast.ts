@@ -5,7 +5,7 @@
  * getForecastVsActual joins forecast + sales for variance analysis.
  */
 
-import { supabase, assertContext, hasNoLocations, applyFilters, toLegacyDataSource } from './client';
+import { supabase, assertContext, hasNoLocations, applyFilters, toLegacyDataSource, typedFrom } from './client';
 import {
   type QueryContext,
   type DateRange,
@@ -22,8 +22,7 @@ export async function getForecastDaily(
   assertContext(ctx);
   if (hasNoLocations(ctx)) return [];
 
-  let query = supabase
-    .from('forecast_daily_unified' as any)
+  let query = typedFrom('forecast_daily_unified')
     .select('org_id, location_id, day, forecast_sales, forecast_orders, planned_labor_hours, planned_labor_cost, forecast_avg_check, forecast_sales_lower, forecast_sales_upper, data_source')
     .order('day', { ascending: true });
 
@@ -66,14 +65,12 @@ export async function getForecastVsActual(
   const dsLegacy = toLegacyDataSource(ctx.dataSource);
 
   // Fetch forecast and actual in parallel
-  let forecastQ = supabase
-    .from('forecast_daily_unified' as any)
+  let forecastQ = typedFrom('forecast_daily_unified')
     .select('day, forecast_sales, forecast_sales_lower, forecast_sales_upper')
     .order('day', { ascending: true });
   forecastQ = applyFilters(forecastQ, ctx.locationIds, range, 'day');
 
-  let actualQ = supabase
-    .from('sales_daily_unified' as any)
+  let actualQ = typedFrom('sales_daily_unified')
     .select('date, net_sales')
     .eq('data_source', dsLegacy)
     .order('date', { ascending: true });

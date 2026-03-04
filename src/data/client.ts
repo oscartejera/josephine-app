@@ -9,6 +9,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { type QueryContext, type DateRange, MissingOrgIdError, NoLocationsError } from './types';
+import type { ViewName } from './database-views';
 
 // Re-export the raw client for edge cases (auth, profiles, realtime)
 export { supabase };
@@ -71,4 +72,16 @@ export function applyFilters<T extends { eq: any; in: any; gte: any; lte: any }>
   }
   query = query.gte(dateColumn, range.from).lte(dateColumn, range.to);
   return query;
+}
+
+/**
+ * Type-safe wrapper for supabase.from() for views not in the generated types.
+ * Centralises the single `as any` cast so data files stay clean.
+ *
+ * Usage:
+ *   const { data } = await typedFrom('sales_daily_unified').select('*');
+ *   // data is typed as SalesDailyUnifiedRow[]
+ */
+export function typedFrom(viewName: ViewName) {
+  return supabase.from(viewName as any);
 }
