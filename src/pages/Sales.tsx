@@ -68,6 +68,13 @@ export default function Sales() {
     return [selectedLocationId];
   }, [selectedLocationId]);
 
+  // All location IDs for components that work across all locations (e.g. AccuracyCard)
+  const allLocationIds = useMemo(() => {
+    if (selectedLocationId && selectedLocationId !== 'all') return [selectedLocationId];
+    return (accessibleLocations || []).map((l: any) => l.id).filter(Boolean);
+  }, [selectedLocationId, accessibleLocations]);
+
+
   // Map dateMode to granularity
   const granularity: GranularityMode = dateMode === 'daily' ? 'daily' : dateMode === 'weekly' ? 'weekly' : 'monthly';
 
@@ -265,7 +272,7 @@ export default function Sales() {
       </div>
 
       {/* Forecast Accuracy */}
-      {locationIds.length > 0 && <ForecastAccuracyCard locationIds={locationIds} />}
+      {allLocationIds.length > 0 && <ForecastAccuracyCard locationIds={allLocationIds} />}
 
       {/* Hourly Forecast */}
       {locationIds.length === 1 && (
