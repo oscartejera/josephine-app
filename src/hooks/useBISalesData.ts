@@ -59,6 +59,7 @@ export interface LocationSalesData {
 
 export interface ChartDataPoint {
   label: string;
+  date?: string; // yyyy-MM-dd for ExplainDrawer click
   actual: number;
   forecastLive: number;
   forecast: number;
@@ -308,6 +309,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
           const dayDate = new Date(d.date + 'T00:00:00');
           chartData.push({
             label: format(dayDate, 'EEE, dd'),
+            date: d.date as string,
             actual: actualSales,
             forecastLive: forecastSales * 1.05,
             forecast: forecastSales,

@@ -28,35 +28,54 @@ export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }
             const from = format(subDays(new Date(), 90), 'yyyy-MM-dd');
             const to = format(new Date(), 'yyyy-MM-dd');
 
-            // Fetch daily forecast vs actual
-            const { data } = await (supabase as any)
-                .from('forecast_daily_metrics')
-                .select('date, forecast_sales, actual_sales')
-                .in('location_id', locationIds)
-                .gte('date', from)
-                .lte('date', to)
-                .not('actual_sales', 'is', null)
-                .order('date', { ascending: true });
+            // Two parallel queries: forecasts + actuals
+            const [forecastRes, actualRes] = await Promise.all([
+                supabase
+                    .from('forecast_daily_metrics')
+                    .select('date, forecast_sales')
+                    .in('location_id', locationIds)
+                    .gte('date', from)
+                    .lte('date', to)
+                    .order('date', { ascending: true }),
+                supabase
+                    .from('sales_daily_unified')
+                    .select('date, net_sales')
+                    .in('location_id', locationIds)
+                    .gte('date', from)
+                    .lte('date', to)
+                    .order('date', { ascending: true }),
+            ]);
 
-            if (!data || data.length === 0) return [];
-
-            // Aggregate by date (in case multiple locations)
-            const byDate = new Map<string, { forecast: number; actual: number }>();
-            for (const row of data) {
+            // Group forecasts by date
+            const forecastByDate = new Map<string, number>();
+            for (const row of (forecastRes.data || []) as any[]) {
                 const k = row.date;
-                const existing = byDate.get(k) || { forecast: 0, actual: 0 };
-                existing.forecast += Number(row.forecast_sales) || 0;
-                existing.actual += Number(row.actual_sales) || 0;
-                byDate.set(k, existing);
+                forecastByDate.set(k, (forecastByDate.get(k) || 0) + (Number(row.forecast_sales) || 0));
             }
 
-            return Array.from(byDate.entries()).map(([date, { forecast, actual }]) => ({
-                date,
-                label: format(new Date(date), 'dd/MM'),
-                mape: actual > 0 ? Math.abs((actual - forecast) / actual) * 100 : 0,
-                actual_sales: actual,
-                forecast_sales: forecast,
-            }));
+            // Group actuals by date
+            const actualByDate = new Map<string, number>();
+            for (const row of (actualRes.data || []) as any[]) {
+                const k = row.date;
+                actualByDate.set(k, (actualByDate.get(k) || 0) + (Number(row.net_sales) || 0));
+            }
+
+            // Join — only include dates that have BOTH forecast and actual
+            const results: AccuracyPoint[] = [];
+            for (const [date, actual] of actualByDate) {
+                const forecast = forecastByDate.get(date);
+                if (forecast && actual > 0) {
+                    results.push({
+                        date,
+                        label: format(new Date(date), 'dd/MM'),
+                        mape: Math.abs((actual - forecast) / actual) * 100,
+                        actual_sales: actual,
+                        forecast_sales: forecast,
+                    });
+                }
+            }
+
+            return results.sort((a, b) => a.date.localeCompare(b.date));
         },
     });
 
