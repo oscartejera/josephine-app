@@ -12,6 +12,7 @@ import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { ExecutiveBriefing } from '@/components/dashboard/ExecutiveBriefing';
 import { LocationHealthIndicators } from '@/components/dashboard/LocationHealthIndicators';
 import { OnboardingWizard } from '@/components/onboarding';
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { AIImpactCard } from '@/components/forecast/AIImpactCard';
 import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle, Bot } from 'lucide-react';
@@ -153,6 +154,9 @@ export default function Dashboard() {
   // KPI error is now non-blocking — show inline warning instead of full-page error
   const kpiHasError = isError;
 
+  // Onboarding checklist for returning users
+  const showChecklist = !needsOnboarding && !appLoading;
+
   // Show CTA if no locations are configured
   if (!appLoading && accessibleLocations.length === 0 && profile?.group_id) {
     return (
@@ -187,6 +191,9 @@ export default function Dashboard() {
             <ForecastConfidenceBadge compact />
           </p>
         </div>
+
+        {/* Onboarding Checklist for users who haven't completed setup */}
+        {showChecklist && <OnboardingChecklist />}
 
         {/* Executive Briefing — AI Morning Summary */}
         <ExecutiveBriefing />

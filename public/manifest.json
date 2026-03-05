@@ -1,0 +1,26 @@
+{
+    "name": "Josephine — Restaurant Intelligence",
+    "short_name": "Josephine",
+    "description": "AI-powered restaurant management. Forecast, schedule, and optimize your operations.",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#7c3aed",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/vite.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "business",
+        "food",
+        "productivity"
+    ],
+    "lang": "es",
+    "scope": "/",
+    "prefer_related_applications": false
+}

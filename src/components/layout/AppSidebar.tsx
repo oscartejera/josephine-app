@@ -30,6 +30,8 @@ import {
   Check,
   ClipboardList,
   ClipboardCheck,
+  CreditCard,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -421,6 +423,20 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             {!collapsed && <span>{t('nav.integrations')}</span>}
           </Button>
 
+          {/* Import Data */}
+          <Button
+            variant={location.pathname === '/settings/import' ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3 h-10",
+              location.pathname === '/settings/import' && "bg-accent text-accent-foreground font-medium",
+              collapsed && "justify-center px-2"
+            )}
+            onClick={() => navigate('/settings/import')}
+          >
+            <Upload className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Importar Datos</span>}
+          </Button>
+
           {/* Other nav items - filtered by permission */}
           {visibleNavItems.filter(item => item.path !== '/dashboard').map((item) => {
             const isActive = location.pathname === item.path ||
@@ -471,6 +487,22 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             >
               <Settings className="h-4 w-4 shrink-0" />
               {!collapsed && <span>{t('nav.settings')}</span>}
+            </Button>
+          )}
+
+          {/* Billing */}
+          {canViewSidebarItem('settings') && (
+            <Button
+              variant={location.pathname === '/settings/billing' ? "secondary" : "ghost"}
+              className={cn(
+                "w-full justify-start gap-3 h-10",
+                location.pathname === '/settings/billing' && "bg-accent text-accent-foreground font-medium",
+                collapsed && "justify-center px-2"
+              )}
+              onClick={() => navigate('/settings/billing')}
+            >
+              <CreditCard className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Facturación</span>}
             </Button>
           )}
         </nav>

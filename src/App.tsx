@@ -55,6 +55,8 @@ const RecipeDetailPage = lazy(() => import("@/pages/inventory-setup/RecipeDetail
 const WasteEntryPage = lazy(() => import("@/pages/operations/WasteEntryPage"));
 const StockAuditPage = lazy(() => import("@/pages/operations/StockAuditPage"));
 const DebugDataCoherence = lazy(() => import("@/pages/DebugDataCoherence"));
+const DataImport = lazy(() => import("@/pages/DataImport"));
+const Pricing = lazy(() => import("@/pages/Pricing"));
 const WorkforceTeam = lazy(() => import("@/pages/WorkforceTeam"));
 const WorkforceTimesheet = lazy(() => import("@/pages/WorkforceTimesheet"));
 const WorkforceOnboarding = lazy(() => import("@/pages/WorkforceOnboarding"));
@@ -210,6 +212,8 @@ function AppRoutes() {
           <Route path="/admin/tools" element={<InsightErrorBoundary pageName="Admin Tools"><AdminTools /></InsightErrorBoundary>} />
           <Route path="/admin/data-health" element={<InsightErrorBoundary pageName="Data Health"><DataHealth /></InsightErrorBoundary>} />
           <Route path="/debug/data-coherence" element={<InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary>} />
+          <Route path="/settings/import" element={<InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary>} />
+          <Route path="/settings/billing" element={<InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary>} />
         </Route>
 
         {/* Team (Employee Portal) */}
