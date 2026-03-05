@@ -498,25 +498,25 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
 
     logger.info("forecast_supabase: location=%s, horizon=%d", location_name or location_id, horizon_days)
 
-    # ── Fetch sales data (paginated at 1000 rows) ────────────────────
+    # ── Fetch sales data from sales_daily_unified ─────────────────────
+    # This is the SAME view used by Dashboard, Sales, Budgets, Scheduling
     headers_sb = {
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}",
     }
-    sales_data = []
-    source_table = "unknown"
 
-    async def _fetch_paginated(client, table_url, date_col, amount_col):
-        """Fetch paginated data from a Supabase REST table."""
+    async def _fetch_paginated(client, table_url):
+        """Fetch paginated data from a Supabase REST endpoint."""
         rows = []
         pg = 0
         while True:
             resp = await client.get(
-                f"{table_url}&order={date_col}.asc",
+                table_url,
                 headers={**headers_sb, "Range": f"{pg*1000}-{(pg+1)*1000-1}"},
             )
             if resp.status_code >= 400:
-                return None  # Table doesn't exist or access denied
+                logger.warning("REST API error %d: %s", resp.status_code, resp.text[:200])
+                return None
             batch = resp.json()
             if not batch:
                 break
@@ -526,60 +526,47 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
                 break
         return rows
 
+    sales_data = []
+    daily_orders: dict[str, int] = {}
+    source_table = "unknown"
+
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            # Strategy 1: facts_sales_15m (15-minute granularity)
-            url1 = (
-                f"{supabase_url}/rest/v1/facts_sales_15m"
+            # PRIMARY: sales_daily_unified (same as Dashboard/Sales/Budgets)
+            url = (
+                f"{supabase_url}/rest/v1/sales_daily_unified"
                 f"?location_id=eq.{location_id}"
-                f"&select=ts_bucket,sales_net"
+                f"&select=date,net_sales,orders_count,avg_check,labor_cost,labor_hours"
+                f"&order=date.asc"
+                f"&net_sales=gt.0"
             )
-            result = await _fetch_paginated(client, url1, "ts_bucket", "sales_net")
+            result = await _fetch_paginated(client, url)
             if result and len(result) > 0:
                 sales_data = result
-                source_table = "facts_sales_15m"
-                logger.info("Using facts_sales_15m: %d records", len(sales_data))
+                source_table = "sales_daily_unified"
+                logger.info("Using sales_daily_unified: %d daily records", len(sales_data))
             else:
-                # Strategy 2: tickets table
-                url2 = (
-                    f"{supabase_url}/rest/v1/tickets"
-                    f"?location_id=eq.{location_id}"
-                    f"&select=opened_at,net_total"
-                    f"&net_total=gt.0"
+                logger.warning("sales_daily_unified returned no data for location %s", location_id)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No sales data found in sales_daily_unified for location {location_name or location_id}"
                 )
-                result = await _fetch_paginated(client, url2, "opened_at", "net_total")
-                if result and len(result) > 0:
-                    sales_data = [{"ts_bucket": r["opened_at"], "sales_net": r["net_total"]} for r in result]
-                    source_table = "tickets"
-                    logger.info("Using tickets: %d records", len(sales_data))
-                else:
-                    # Strategy 3: pos_daily_finance
-                    url3 = (
-                        f"{supabase_url}/rest/v1/pos_daily_finance"
-                        f"?location_id=eq.{location_id}"
-                        f"&select=date,net_sales"
-                        f"&net_sales=gt.0"
-                    )
-                    result = await _fetch_paginated(client, url3, "date", "net_sales")
-                    if result and len(result) > 0:
-                        sales_data = [{"ts_bucket": r["date"], "sales_net": r["net_sales"]} for r in result]
-                        source_table = "pos_daily_finance"
-                        logger.info("Using pos_daily_finance: %d records", len(sales_data))
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Error fetching data from Supabase: %s", str(e))
+        logger.error("Error fetching from Supabase: %s", str(e))
         raise HTTPException(status_code=502, detail=f"Error fetching from Supabase: {str(e)}")
 
     logger.info("Fetched %d sales records from %s", len(sales_data), source_table)
 
-    if len(sales_data) == 0:
-        raise HTTPException(status_code=400, detail="No sales data found for this location in any table")
-
-    # ── Aggregate to daily ────────────────────────────────────────────
+    # ── Build daily aggregates (already daily from view) ─────────────
     daily: dict[str, float] = {}
+    daily_orders = {}
     for s in sales_data:
-        date_str = s["ts_bucket"][:10]
-        daily[date_str] = daily.get(date_str, 0) + float(s.get("sales_net") or 0)
+        date_str = str(s["date"])[:10]
+        daily[date_str] = daily.get(date_str, 0) + float(s.get("net_sales") or 0)
+        daily_orders[date_str] = daily_orders.get(date_str, 0) + int(s.get("orders_count") or 0)
 
     dates = sorted(daily.keys())
     logger.info("Aggregated to %d days: %s to %s", len(dates), dates[0], dates[-1])
@@ -603,6 +590,28 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
     }
     MONTH_TEMPS = {1:6,2:8,3:12,4:14,5:19,6:25,7:30,8:29,9:23,10:16,11:10,12:7}
 
+    # FIX 2: Fetch REAL weather from weather_cache for future dates
+    weather_cache: dict[str, dict] = {}  # date -> {temp, rain}
+    try:
+        async with httpx.AsyncClient(timeout=10) as wc:
+            weather_url = (
+                f"{supabase_url}/rest/v1/weather_cache"
+                f"?location_id=eq.{location_id}"
+                f"&select=forecast_date,temperature_c,rain_mm,sales_multiplier"
+                f"&order=forecast_date.asc"
+            )
+            resp = await wc.get(weather_url, headers=headers_sb)
+            if resp.status_code < 400:
+                for w in resp.json():
+                    weather_cache[w["forecast_date"]] = {
+                        "temp": float(w.get("temperature_c") or 15),
+                        "rain": float(w.get("rain_mm") or 0),
+                        "multiplier": float(w.get("sales_multiplier") or 1.0),
+                    }
+                logger.info("Loaded %d weather_cache entries", len(weather_cache))
+    except Exception as we:
+        logger.warning("Could not load weather_cache: %s", str(we))
+
     def build_regs(ds: str) -> dict:
         from datetime import date as ddate
         d = ddate.fromisoformat(ds)
@@ -610,14 +619,22 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
         m = d.month
         dy = d.day
         nd = (d + timedelta(days=1)).isoformat()
-        temp = MONTH_TEMPS.get(m, 15)
+        # Use real weather if available, otherwise monthly average
+        if ds in weather_cache:
+            temp = weather_cache[ds]["temp"]
+            rain_mm = weather_cache[ds]["rain"]
+            is_rain = int(rain_mm > 0.5)
+        else:
+            temp = MONTH_TEMPS.get(m, 15)
+            rain_mm = 0
+            is_rain = int(m in (3, 4, 10, 11))
         return {
             "festivo": int(ds in HOLIDAYS),
             "day_before_festivo": int(nd in HOLIDAYS),
             "evento_impact": EVENTS.get(ds, 0),
             "payday": int(dy == 1 or dy == 15 or dy >= 25),
-            "temperatura": temp,
-            "rain": int(m in (3, 4, 10, 11)),
+            "temperatura": round(temp, 1),
+            "rain": is_rain,
             "cold_day": int(temp < 10),
             "weekend": int(dow >= 5),
             "mid_week": int(dow in (1, 2)),
@@ -653,19 +670,28 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
     AVG_HOURLY_RATE = 14.5
     today_str = today.isoformat()
 
+    # FIX 3: Compute avg_check from historical data for orders forecast
+    total_sales_hist = sum(daily.values())
+    total_orders_hist = sum(daily_orders.values())
+    avg_check_hist = total_sales_hist / max(total_orders_hist, 1)
+    logger.info("Historical avg_check: %.2f (from %d orders, %.0f sales)",
+                avg_check_hist, total_orders_hist, total_sales_hist)
+
     forecasts_to_store = []
     for f in result.forecast:
         target_labour = f.yhat * (TARGET_COL_PERCENT / 100)
         planned_hours = max(20, min(120, target_labour / AVG_HOURLY_RATE))
+        forecast_orders = max(1, round(f.yhat / avg_check_hist)) if avg_check_hist > 0 else 0
         forecasts_to_store.append({
             "location_id": location_id,
             "date": f.ds,
             "forecast_sales": f.yhat,
+            "forecast_orders": forecast_orders,
             "forecast_sales_lower": f.yhat_lower,
             "forecast_sales_upper": f.yhat_upper,
             "planned_labor_hours": round(planned_hours, 1),
             "planned_labor_cost": round(target_labour, 2),
-            "model_version": "Prophet_v5_Real_ML",
+            "model_version": "Ensemble_v6",
             "confidence": round(result.metrics.r_squared * 100),
             "mape": result.metrics.mape,
             "mse": result.metrics.rmse ** 2,
