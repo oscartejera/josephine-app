@@ -24,6 +24,8 @@ import { AskJosephineSalesDrawer } from '@/components/sales';
 import { ForecastAccuracyCard } from '@/components/forecast/ForecastAccuracyCard';
 import { HourlyForecastChart } from '@/components/forecast/HourlyForecastChart';
 import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
+import { ForecastExplainDrawer } from '@/components/forecast/ForecastExplainDrawer';
+import { ForecastAccuracyTrend } from '@/components/forecast/ForecastAccuracyTrend';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import { startOfMonth, endOfMonth, format, subDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -59,6 +61,7 @@ export default function Sales() {
   const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
   const [productsDisplayCount, setProductsDisplayCount] = useState(10);
+  const [explainDate, setExplainDate] = useState<string | null>(null);
   const { t } = useTranslation();
 
   const { selectedLocationId, accessibleLocations, loading: appLoading } = useApp();
@@ -273,12 +276,27 @@ export default function Sales() {
         </Card>
       </div>
 
-      {/* Forecast Accuracy */}
-      {allLocationIds.length > 0 && <ForecastAccuracyCard locationIds={allLocationIds} />}
+      {/* Forecast Accuracy + Accuracy Trend */}
+      {allLocationIds.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ForecastAccuracyCard locationIds={allLocationIds} />
+          <ForecastAccuracyTrend locationIds={allLocationIds} />
+        </div>
+      )}
 
       {/* Hourly Forecast */}
       {locationIds.length === 1 && (
         <HourlyForecastChart locationId={locationIds[0]} date={new Date()} />
+      )}
+
+      {/* Explain Drawer — triggered by chart click */}
+      {explainDate && locationIds.length === 1 && (
+        <ForecastExplainDrawer
+          open={!!explainDate}
+          onClose={() => setExplainDate(null)}
+          locationId={locationIds[0]}
+          date={explainDate}
+        />
       )}
 
       {/* Chart */}
@@ -308,8 +326,18 @@ export default function Sales() {
                       );
                     }} />
                     <Legend verticalAlign="bottom" height={36} iconType="rect" iconSize={10} wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
-                    <Bar yAxisId="left" dataKey="actual" fill={COLORS.actual} name="Actual" radius={[3, 3, 0, 0]} maxBarSize={50} />
-                    <Bar yAxisId="left" dataKey="forecast" fill={COLORS.forecast} name="Forecast" radius={[3, 3, 0, 0]} maxBarSize={50} />
+                    <Bar yAxisId="left" dataKey="actual" fill={COLORS.actual} name="Actual" radius={[3, 3, 0, 0]} maxBarSize={50}
+                      cursor="pointer"
+                      onClick={(data: any) => {
+                        if (data?.date) setExplainDate(data.date);
+                      }}
+                    />
+                    <Bar yAxisId="left" dataKey="forecast" fill={COLORS.forecast} name="Forecast" radius={[3, 3, 0, 0]} maxBarSize={50}
+                      cursor="pointer"
+                      onClick={(data: any) => {
+                        if (data?.date) setExplainDate(data.date);
+                      }}
+                    />
                     <Line yAxisId="right" type="monotone" dataKey="avgCheckSize" stroke={COLORS.avgCheck} strokeWidth={2.5} name="Avg Check" dot={{ r: 4, fill: COLORS.avgCheck, strokeWidth: 0 }} />
                     <Line yAxisId="right" type="monotone" dataKey="avgCheckForecast" stroke={COLORS.avgCheckForecast} strokeWidth={2.5} name="Avg Check Forecast" dot={{ r: 4, fill: COLORS.avgCheckForecast, strokeWidth: 0 }} />
                   </ComposedChart>

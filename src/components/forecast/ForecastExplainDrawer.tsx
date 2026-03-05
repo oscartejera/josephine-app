@@ -74,11 +74,11 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                 .from('forecast_daily_metrics')
                 .select('*')
                 .eq('location_id', locationId)
-                .eq('forecast_date', date)
+                .eq('date', date)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
-            return data as ForecastDetail | null;
+            return data as unknown as ForecastDetail | null;
         },
     });
 
