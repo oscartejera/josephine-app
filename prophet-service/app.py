@@ -492,6 +492,7 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
     horizon_days = req.get("horizon_days", 90)
     seasonality_mode = req.get("seasonality_mode", "multiplicative")
     changepoint_prior_scale = req.get("changepoint_prior_scale", 0.05)
+    cross_location = req.get("cross_location", False)  # Multi-location learning
 
     if not supabase_url or not supabase_key:
         raise HTTPException(status_code=400, detail="supabase_url and supabase_key required")
@@ -529,28 +530,85 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
     sales_data = []
     daily_orders: dict[str, int] = {}
     source_table = "unknown"
+    loc_scale = 1.0   # Normalization scale factor for multi-location
+    loc_offset = 0.0  # Normalization offset for multi-location
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            # PRIMARY: sales_daily_unified (same as Dashboard/Sales/Budgets)
-            url = (
-                f"{supabase_url}/rest/v1/sales_daily_unified"
-                f"?location_id=eq.{location_id}"
-                f"&select=date,net_sales,orders_count,avg_check,labor_cost,labor_hours"
-                f"&order=date.asc"
-                f"&net_sales=gt.0"
-            )
-            result = await _fetch_paginated(client, url)
-            if result and len(result) > 0:
-                sales_data = result
-                source_table = "sales_daily_unified"
-                logger.info("Using sales_daily_unified: %d daily records", len(sales_data))
-            else:
-                logger.warning("sales_daily_unified returned no data for location %s", location_id)
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"No sales data found in sales_daily_unified for location {location_name or location_id}"
+            if cross_location:
+                # ── MULTI-LOCATION LEARNING: Fetch all locations, normalize ──
+                # 1. Fetch target location data first
+                url_target = (
+                    f"{supabase_url}/rest/v1/sales_daily_unified"
+                    f"?location_id=eq.{location_id}"
+                    f"&select=date,net_sales,orders_count"
+                    f"&order=date.asc&net_sales=gt.0"
                 )
+                target_data = await _fetch_paginated(client, url_target)
+                if not target_data or len(target_data) == 0:
+                    raise HTTPException(status_code=400,
+                        detail=f"No sales data for target location {location_name}")
+
+                # 2. Fetch ALL locations' data
+                url_all = (
+                    f"{supabase_url}/rest/v1/sales_daily_unified"
+                    f"?select=date,net_sales,orders_count,location_id"
+                    f"&order=date.asc&net_sales=gt.0"
+                )
+                all_data = await _fetch_paginated(client, url_all)
+
+                # 3. Normalize: compute per-location mean, scale everything to target location's mean
+                from collections import defaultdict
+                loc_totals: dict[str, list[float]] = defaultdict(list)
+                for r in (all_data or []):
+                    loc_totals[str(r.get("location_id", ""))].append(float(r.get("net_sales") or 0))
+
+                target_mean = sum(float(r.get("net_sales") or 0) for r in target_data) / max(len(target_data), 1)
+                loc_scale = target_mean if target_mean > 0 else 1.0
+
+                # Combine all locations' data, normalized to target location's scale
+                combined_daily: dict[str, list[float]] = defaultdict(list)
+                for r in (all_data or []):
+                    loc_id = str(r.get("location_id", ""))
+                    loc_mean = sum(loc_totals[loc_id]) / max(len(loc_totals[loc_id]), 1)
+                    scale_factor = target_mean / loc_mean if loc_mean > 0 else 1.0
+                    date_str = str(r["date"])[:10]
+                    # Scale this location's sales to target location's magnitude
+                    combined_daily[date_str].append(float(r.get("net_sales") or 0) * scale_factor)
+
+                # Average across locations per date (more data = more robust)
+                sales_data = []
+                for date_str in sorted(combined_daily.keys()):
+                    avg_sales = sum(combined_daily[date_str]) / len(combined_daily[date_str])
+                    sales_data.append({"date": date_str, "net_sales": avg_sales, "orders_count": 0})
+
+                source_table = f"sales_daily_unified (cross-location: {len(loc_totals)} locations)"
+                logger.info("Cross-location: combined %d locations, %d days", len(loc_totals), len(sales_data))
+
+                # Rebuild orders from target only
+                for r in target_data:
+                    date_str = str(r["date"])[:10]
+                    daily_orders[date_str] = int(r.get("orders_count") or 0)
+            else:
+                # ── SINGLE LOCATION (original behavior) ──
+                url = (
+                    f"{supabase_url}/rest/v1/sales_daily_unified"
+                    f"?location_id=eq.{location_id}"
+                    f"&select=date,net_sales,orders_count,avg_check,labor_cost,labor_hours"
+                    f"&order=date.asc"
+                    f"&net_sales=gt.0"
+                )
+                result = await _fetch_paginated(client, url)
+                if result and len(result) > 0:
+                    sales_data = result
+                    source_table = "sales_daily_unified"
+                    logger.info("Using sales_daily_unified: %d daily records", len(sales_data))
+                else:
+                    logger.warning("sales_daily_unified returned no data for location %s", location_id)
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"No sales data found in sales_daily_unified for location {location_name or location_id}"
+                    )
 
     except HTTPException:
         raise
@@ -562,11 +620,13 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
 
     # ── Build daily aggregates (already daily from view) ─────────────
     daily: dict[str, float] = {}
-    daily_orders = {}
+    if not cross_location:  # Skip if already handled above
+        daily_orders = {}
     for s in sales_data:
         date_str = str(s["date"])[:10]
         daily[date_str] = daily.get(date_str, 0) + float(s.get("net_sales") or 0)
-        daily_orders[date_str] = daily_orders.get(date_str, 0) + int(s.get("orders_count") or 0)
+        if not cross_location:
+            daily_orders[date_str] = daily_orders.get(date_str, 0) + int(s.get("orders_count") or 0)
 
     dates = sorted(daily.keys())
     logger.info("Aggregated to %d days: %s to %s", len(dates), dates[0], dates[-1])
