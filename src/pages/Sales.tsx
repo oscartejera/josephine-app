@@ -23,6 +23,7 @@ import {
 import { AskJosephineSalesDrawer } from '@/components/sales';
 import { ForecastAccuracyCard } from '@/components/forecast/ForecastAccuracyCard';
 import { HourlyForecastChart } from '@/components/forecast/HourlyForecastChart';
+import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import { startOfMonth, endOfMonth, format, subDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -155,6 +156,7 @@ export default function Sales() {
               Live
             </span>
           )}
+          <ForecastConfidenceBadge />
         </div>
         <div className="flex items-center gap-3">
           <DateRangePickerNoryLike

@@ -22,6 +22,7 @@ import { PayrollForecast } from '@/components/labour/PayrollForecast';
 import { StaffingHeatmap } from '@/components/labour/StaffingHeatmap';
 import { AskJosephineLabourPanel } from '@/components/labour/AskJosephineLabourPanel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
 
 // Validate UUID format
 function isValidUUID(id: string | undefined): boolean {
@@ -110,17 +111,20 @@ export default function Labour() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <LabourHeader
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        metricMode={metricMode}
-        setMetricMode={setMetricMode}
-        compareMode={compareMode}
-        setCompareMode={setCompareMode}
-        locationId={validLocationId}
-        locationName={locationInfo?.name}
-        onAskJosephine={() => setShowJosephine(true)}
-      />
+      <div className="flex items-center gap-3">
+        <LabourHeader
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          metricMode={metricMode}
+          setMetricMode={setMetricMode}
+          compareMode={compareMode}
+          setCompareMode={setCompareMode}
+          locationId={validLocationId}
+          locationName={locationInfo?.name}
+          onAskJosephine={() => setShowJosephine(true)}
+        />
+        <ForecastConfidenceBadge compact />
+      </div>
 
       {/* Ask Josephine Panel */}
       <AskJosephineLabourPanel

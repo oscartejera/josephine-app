@@ -12,6 +12,8 @@ import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
 import { ExecutiveBriefing } from '@/components/dashboard/ExecutiveBriefing';
 import { LocationHealthIndicators } from '@/components/dashboard/LocationHealthIndicators';
 import { OnboardingWizard } from '@/components/onboarding';
+import { AIImpactCard } from '@/components/forecast/AIImpactCard';
+import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle, Bot } from 'lucide-react';
 import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
 import { Card, CardContent } from '@/components/ui/card';
@@ -180,7 +182,10 @@ export default function Dashboard() {
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
-          <p className="text-muted-foreground">Panel ejecutivo — Josephine Intelligence</p>
+          <p className="text-muted-foreground flex items-center gap-2">
+            Panel ejecutivo — Josephine Intelligence
+            <ForecastConfidenceBadge compact />
+          </p>
         </div>
 
         {/* Executive Briefing — AI Morning Summary */}
@@ -257,8 +262,11 @@ export default function Dashboard() {
         {/* AI Narrative, Health Indicators, and Low Stock */}
         <div className="grid lg:grid-cols-3 gap-6">
           <NarrativeInsightsPanel metrics={narrativeMetrics} />
-          <LocationHealthIndicators />
-          <LowStockWidget />
+          <AIImpactCard />
+          <div className="space-y-6">
+            <LocationHealthIndicators />
+            <LowStockWidget />
+          </div>
         </div>
       </div>
 
