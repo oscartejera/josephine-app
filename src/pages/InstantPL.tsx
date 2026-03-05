@@ -4,7 +4,12 @@
  */
 
 import { useState, useCallback } from 'react';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { generatePLReport, type PLData } from '@/lib/pdfReports';
+import { useApp } from '@/contexts/AppContext';
 import {
   InstantPLHeader,
   FilterChips,
@@ -20,6 +25,7 @@ import {
 import { DateMode, ChartGranularity, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 export default function InstantPL() {
+  const { group } = useApp();
   // Date range state (default: current month)
   const [dateRange, setDateRange] = useState<PLDateRange>(() => ({
     from: startOfMonth(new Date()),
@@ -88,6 +94,43 @@ export default function InstantPL() {
         onFilterModeChange={setFilterMode}
         lastUpdated={lastUpdated}
       />
+
+      {/* PDF Export */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const orgName = group?.name || 'Restaurante';
+            const period = format(dateRange.from, 'MMMM yyyy', { locale: es });
+            const dateRangeStr = `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`;
+            const totalSales = locations.reduce((s, l) => s + (l.salesActual || 0), 0);
+            const totalCogs = locations.reduce((s, l) => s + (l.cogsActual || 0), 0);
+            const totalLabour = locations.reduce((s, l) => s + (l.labourActual || 0), 0);
+
+            const plData: PLData = {
+              orgName, period, dateRange: dateRangeStr,
+              revenue: { netSales: totalSales, otherIncome: 0, totalRevenue: totalSales },
+              cogs: { food: totalCogs * 0.75, beverage: totalCogs * 0.25, totalCogs, cogsPercent: totalSales > 0 ? totalCogs / totalSales * 100 : 0 },
+              labour: { salaries: totalLabour * 0.85, socialSecurity: totalLabour * 0.15, totalLabour, labourPercent: totalSales > 0 ? totalLabour / totalSales * 100 : 0 },
+              overheads: { rent: 0, utilities: 0, marketing: 0, other: 0, totalOverheads: 0 },
+              summary: {
+                grossProfit: totalSales - totalCogs,
+                grossMargin: totalSales > 0 ? (totalSales - totalCogs) / totalSales * 100 : 0,
+                primeCost: totalCogs + totalLabour,
+                primeCostPercent: totalSales > 0 ? (totalCogs + totalLabour) / totalSales * 100 : 0,
+                ebitda: totalSales - totalCogs - totalLabour,
+                ebitdaPercent: totalSales > 0 ? (totalSales - totalCogs - totalLabour) / totalSales * 100 : 0,
+              },
+            };
+            generatePLReport(plData);
+          }}
+          disabled={isLoading || locations.length === 0}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Exportar P&L (PDF)
+        </Button>
+      </div>
 
       {/* Filter Chips */}
       <FilterChips
