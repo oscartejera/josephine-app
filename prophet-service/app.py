@@ -574,8 +574,9 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
     if len(dates) < 14:
         raise HTTPException(status_code=400, detail=f"Need 14+ days, got {len(dates)}")
 
-    # ── Build regressors ──────────────────────────────────────────────
-    HOLIDAYS = {
+    # ── Build regressors (dynamic from event_calendar + weather_cache) ──
+    # Fallback holidays/events in case DB query fails
+    HOLIDAYS_FALLBACK = {
         "2025-01-01","2025-01-06","2025-04-18","2025-04-21","2025-05-01",
         "2025-05-02","2025-05-15","2025-08-15","2025-10-12","2025-11-01",
         "2025-11-09","2025-12-06","2025-12-08","2025-12-25","2025-12-26",
@@ -583,12 +584,40 @@ async def forecast_supabase(req: dict, authorization: str = Header(default="")):
         "2026-05-01","2026-08-15","2026-10-12","2026-11-01","2026-12-06",
         "2026-12-08","2026-12-25",
     }
-    EVENTS = {
+    EVENTS_FALLBACK = {
         "2025-03-15":0.3,"2025-04-20":0.3,"2025-05-15":0.25,
         "2025-07-10":0.4,"2025-07-11":0.4,"2025-07-12":0.4,
         "2025-09-20":0.3,"2025-10-25":0.3,"2025-12-31":0.35,
     }
     MONTH_TEMPS = {1:6,2:8,3:12,4:14,5:19,6:25,7:30,8:29,9:23,10:16,11:10,12:7}
+
+    # Fetch holidays + events from event_calendar table (dynamic!)
+    HOLIDAYS: set[str] = set(HOLIDAYS_FALLBACK)
+    EVENTS: dict[str, float] = dict(EVENTS_FALLBACK)
+    try:
+        async with httpx.AsyncClient(timeout=10) as ec:
+            cal_url = (
+                f"{supabase_url}/rest/v1/event_calendar"
+                f"?select=event_date,event_type,impact_multiplier"
+                f"&order=event_date.asc"
+            )
+            resp = await ec.get(cal_url, headers=headers_sb)
+            if resp.status_code < 400:
+                cal_data = resp.json()
+                if cal_data and len(cal_data) > 0:
+                    HOLIDAYS = set()
+                    EVENTS = {}
+                    for ev in cal_data:
+                        d = ev.get("event_date", "")
+                        etype = ev.get("event_type", "")
+                        impact = float(ev.get("impact_multiplier") or 1.0)
+                        if etype in ("holiday", "festivo_nacional", "festivo_local", "festivo_autonomico"):
+                            HOLIDAYS.add(d)
+                        if impact != 1.0:
+                            EVENTS[d] = round(impact - 1.0, 2)  # Convert multiplier to delta
+                    logger.info("Loaded %d holidays + %d events from event_calendar", len(HOLIDAYS), len(EVENTS))
+    except Exception as ce:
+        logger.warning("Could not load event_calendar: %s — using fallback", str(ce))
 
     # FIX 2: Fetch REAL weather from weather_cache for future dates
     weather_cache: dict[str, dict] = {}  # date -> {temp, rain}
