@@ -51,7 +51,7 @@ const PLANS: Plan[] = [
         icon: Sparkles,
         color: 'text-violet-600',
         highlighted: true,
-        stripePriceId: 'price_pro_monthly', // Replace with real Stripe Price ID
+        stripePriceId: 'price_1T7y8hC46WZ7nQ8jTQc6JFD0',
         features: [
             'Hasta 3 ubicaciones',
             'AI Forecast (Prophet + XGBoost)',
@@ -70,7 +70,7 @@ const PLANS: Plan[] = [
         interval: 'mes',
         icon: Crown,
         color: 'text-amber-600',
-        stripePriceId: 'price_enterprise_monthly', // Replace with real Stripe Price ID
+        stripePriceId: 'price_1T7y8iC46WZ7nQ8jEJPQZZcU8',
         features: [
             'Ubicaciones ilimitadas',
             'Todo en Pro +',
