@@ -1,8 +1,9 @@
 /**
  * create_checkout_session — Stripe Checkout for subscription upgrades
- * Called from frontend Pricing page to create a Stripe Checkout session.
  * 
- * Production-hardened with comprehensive error handling and logging.
+ * IMPORTANT: Always returns HTTP 200 with JSON body.
+ * supabase.functions.invoke discards the body on non-2xx responses,
+ * so we put errors in { error: "..." } within a 200 response.
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -15,133 +16,103 @@ const corsHeaders = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+/** Always return 200 so supabase.functions.invoke can read the body */
+const respond = (body: Record<string, unknown>) =>
+    new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
 serve(async (req) => {
-    // Handle CORS preflight
+    // CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
 
-    const respond = (body: Record<string, unknown>, status = 200) =>
-        new Response(JSON.stringify(body), {
-            status,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-
     try {
-        console.log('[checkout] Request received');
-
-        // 1. Check Stripe key
+        // 1. Stripe key
         const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
         if (!stripeSecretKey) {
-            console.error('[checkout] STRIPE_SECRET_KEY not set');
-            return respond({ error: 'Stripe no configurado. Contacta soporte.' }, 500);
+            return respond({ error: 'Stripe no configurado. Contacta soporte.' });
         }
-        console.log('[checkout] Stripe key found, length:', stripeSecretKey.length);
 
-        // 2. Parse request body
+        // 2. Parse body
         let body: { priceId?: string; successUrl?: string; cancelUrl?: string };
         try {
             body = await req.json();
         } catch {
-            return respond({ error: 'Invalid request body' }, 400);
+            return respond({ error: 'Request body invalido' });
         }
 
         const { priceId, successUrl, cancelUrl } = body;
         if (!priceId) {
-            return respond({ error: 'priceId es requerido' }, 400);
+            return respond({ error: 'priceId es requerido' });
         }
-        console.log('[checkout] Price ID:', priceId);
 
-        // 3. Auth check
+        // 3. Auth
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) {
-            return respond({ error: 'No autorizado — falta token de autenticacion' }, 401);
+            return respond({ error: 'No autorizado — inicia sesion de nuevo' });
         }
 
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const token = authHeader.replace('Bearer ', '');
+
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
         if (authError || !user) {
-            console.error('[checkout] Auth error:', authError?.message);
-            return respond({ error: `No autorizado: ${authError?.message || 'token invalido'}` }, 401);
+            return respond({ error: `Sesion expirada — cierra e inicia sesion de nuevo` });
         }
-        console.log('[checkout] User authenticated:', user.email);
 
-        // 4. Get org info
+        // 4. Profile
         const { data: profile } = await supabase
             .from('profiles')
             .select('group_id, full_name')
             .eq('id', user.id)
             .single();
 
-        // 5. Init Stripe
-        let stripe: Stripe;
-        try {
-            stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
-        } catch (e: any) {
-            console.error('[checkout] Stripe init error:', e.message);
-            return respond({ error: `Error inicializando Stripe: ${e.message}` }, 500);
-        }
+        // 5. Stripe
+        const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
 
-        // 6. Find or create customer
+        // 6. Customer
         let customerId: string;
-        try {
-            const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
-            if (customers.data.length > 0) {
-                customerId = customers.data[0].id;
-                console.log('[checkout] Existing customer:', customerId);
-            } else {
-                const customer = await stripe.customers.create({
-                    email: user.email!,
-                    name: profile?.full_name || undefined,
-                    metadata: {
-                        supabase_user_id: user.id,
-                        group_id: profile?.group_id || '',
-                    },
-                });
-                customerId = customer.id;
-                console.log('[checkout] New customer created:', customerId);
-            }
-        } catch (e: any) {
-            console.error('[checkout] Customer error:', e.message);
-            return respond({ error: `Error con cliente Stripe: ${e.message}` }, 500);
-        }
-
-        // 7. Create checkout session
-        try {
-            const origin = req.headers.get('origin') || 'https://josephine-ai.com';
-            const session = await stripe.checkout.sessions.create({
-                customer: customerId,
-                mode: 'subscription',
-                line_items: [{ price: priceId, quantity: 1 }],
-                success_url: successUrl || `${origin}/settings/billing?success=true`,
-                cancel_url: cancelUrl || `${origin}/settings/billing?canceled=true`,
-                subscription_data: {
-                    trial_period_days: 14,
-                    metadata: {
-                        supabase_user_id: user.id,
-                        group_id: profile?.group_id || '',
-                    },
+        const customers = await stripe.customers.list({ email: user.email!, limit: 1 });
+        if (customers.data.length > 0) {
+            customerId = customers.data[0].id;
+        } else {
+            const customer = await stripe.customers.create({
+                email: user.email!,
+                name: profile?.full_name || undefined,
+                metadata: {
+                    supabase_user_id: user.id,
+                    group_id: profile?.group_id || '',
                 },
-                allow_promotion_codes: true,
             });
-
-            console.log('[checkout] Session created:', session.id, 'URL:', session.url);
-            return respond({ url: session.url, sessionId: session.id });
-        } catch (e: any) {
-            console.error('[checkout] Session creation error:', e.message, e.type, e.code);
-            return respond({
-                error: `Error creando sesion de pago: ${e.message}`,
-                type: e.type,
-                code: e.code,
-            }, 400);
+            customerId = customer.id;
         }
+
+        // 7. Checkout session
+        const origin = req.headers.get('origin') || 'https://josephine-ai.com';
+        const session = await stripe.checkout.sessions.create({
+            customer: customerId,
+            mode: 'subscription',
+            line_items: [{ price: priceId, quantity: 1 }],
+            success_url: successUrl || `${origin}/settings/billing?success=true`,
+            cancel_url: cancelUrl || `${origin}/settings/billing?canceled=true`,
+            subscription_data: {
+                trial_period_days: 14,
+                metadata: {
+                    supabase_user_id: user.id,
+                    group_id: profile?.group_id || '',
+                },
+            },
+            allow_promotion_codes: true,
+        });
+
+        return respond({ url: session.url, sessionId: session.id });
     } catch (error: any) {
-        console.error('[checkout] Unexpected error:', error.message, error.stack);
-        return respond({ error: `Error inesperado: ${error.message}` }, 500);
+        console.error('[checkout] Error:', error.message);
+        return respond({ error: error.message || 'Error inesperado' });
     }
 });
