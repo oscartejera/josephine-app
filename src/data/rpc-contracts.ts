@@ -187,9 +187,16 @@ export const MenuEngineeringItemSchema = z.object({
     name: z.string(),
     category: z.string().default(''),
     classification: z.string().default(''),
-    units_sold: num,
-    revenue: num,
+    units: num,
+    sales: num,
+    cogs: num,
+    profit_eur: num,
     margin_pct: num,
+    profit_per_sale: num,
+    popularity_share: num,
+    sales_share: num,
+    action_tag: z.string().default(''),
+    badges: z.array(z.string()).default([]),
 }).passthrough();
 export const MenuEngineeringSchema = z.array(MenuEngineeringItemSchema);
 export type MenuEngineeringRpc = z.infer<typeof MenuEngineeringSchema>;

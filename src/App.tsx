@@ -214,6 +214,7 @@ function AppRoutes() {
           <Route path="/debug/data-coherence" element={<InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary>} />
           <Route path="/settings/import" element={<InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary>} />
           <Route path="/settings/billing" element={<InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary>} />
+          <Route path="/pricing" element={<Navigate to="/settings/billing" replace />} />
         </Route>
 
         {/* Team (Employee Portal) */}
