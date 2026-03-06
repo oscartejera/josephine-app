@@ -109,15 +109,28 @@ export default function Pricing() {
                 },
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase function error:', error);
+                toast.error(`Error: ${error.message || 'No se pudo conectar con el servidor'}`);
+                return;
+            }
+
+            // Edge function might return error in the body
+            if (data?.error) {
+                console.error('Checkout session error:', data.error);
+                toast.error(`Error de Stripe: ${data.error}`);
+                return;
+            }
+
             if (data?.url) {
                 window.location.href = data.url;
             } else {
-                toast.error('No se pudo crear la sesión de pago');
+                console.error('No checkout URL received:', data);
+                toast.error('No se pudo crear la sesión de pago. Intenta de nuevo.');
             }
         } catch (err: any) {
             console.error('Stripe checkout error:', err);
-            toast.error('Error al conectar con Stripe');
+            toast.error(`Error: ${err?.message || 'Error al conectar con Stripe'}`);
         } finally {
             setLoading(null);
         }
