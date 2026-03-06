@@ -119,24 +119,24 @@ export default function Sales() {
 
   if (appLoading || isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-[1800px]">
-        <div className="flex items-center justify-between">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-[1800px]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-10 w-96" />
+          <Skeleton className="h-10 w-full sm:w-96" />
         </div>
-        <div className="grid grid-cols-3 gap-6">
-          <Skeleton className="h-48" /><Skeleton className="h-48" /><Skeleton className="h-48" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <Skeleton className="h-48" /><Skeleton className="h-48" /><Skeleton className="h-48 hidden sm:block" />
         </div>
-        <Skeleton className="h-96" />
+        <Skeleton className="h-64 md:h-96" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="p-6 space-y-6 max-w-[1800px]">
-        <h1 className="text-3xl font-bold">{t('sales.title')}</h1>
-        <Card className="p-8 flex flex-col items-center justify-center text-center gap-3">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-[1800px]">
+        <h1 className="text-2xl md:text-3xl font-bold">{t('sales.title')}</h1>
+        <Card className="p-6 md:p-8 flex flex-col items-center justify-center text-center gap-3">
           <p className="text-lg font-medium text-destructive">{t('sales.failedToLoad')}</p>
           <p className="text-sm text-muted-foreground">{t('sales.tryRefreshing')}</p>
         </Card>
@@ -145,11 +145,11 @@ export default function Sales() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-[1800px]">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-[1800px]">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">{t('sales.title')}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('sales.title')}</h1>
           {isConnected && (
             <span className="flex items-center gap-1.5 text-xs text-emerald-600">
               <span className="relative flex h-2 w-2">
@@ -161,7 +161,7 @@ export default function Sales() {
           )}
           <ForecastConfidenceBadge />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <DateRangePickerNoryLike
             value={{ from: startDate, to: endDate }}
             onChange={handleDateChange}
@@ -169,7 +169,7 @@ export default function Sales() {
             onModeChange={setDateMode}
           />
           <Select value={compareMode} onValueChange={(v) => setCompareMode(v as CompareMode)}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[140px] md:w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -178,14 +178,14 @@ export default function Sales() {
               <SelectItem value="previous_year">{t('common.vsLastYear')}</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => setAskJosephineOpen(true)}>
+          <Button variant="outline" size="sm" className="md:size-default" onClick={() => setAskJosephineOpen(true)}>
             {t('sales.askJosephine')}
           </Button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Sales to date */}
         <Card className="p-5 bg-white">
           <div className="space-y-4">
@@ -305,7 +305,7 @@ export default function Sales() {
           <TabsList><TabsTrigger value="sales">{t('sales.title')}</TabsTrigger></TabsList>
           <TabsContent value="sales" className="mt-6">
             <h3 className="text-base font-semibold mb-4">{t('sales.salesVsForecast')}</h3>
-            <div className="h-[360px]">
+            <div className="h-[280px] md:h-[360px]">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={chartData} barGap={2} barCategoryGap="15%">
@@ -392,7 +392,7 @@ export default function Sales() {
       )}
 
       {/* Categories + Products */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Categories */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">{t('sales.salesPerCategory')}</h3>

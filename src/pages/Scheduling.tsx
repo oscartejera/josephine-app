@@ -282,7 +282,7 @@ export default function Scheduling() {
   const currentLocation = locations.find(l => l.id === currentLocationId) || locations[0];
 
   return (
-    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
       <SchedulingHeader
         weekStart={weekStart}
@@ -320,7 +320,7 @@ export default function Scheduling() {
       )}
 
       {/* Controls row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <ViewModeDropdown value={viewMode} onChange={setViewMode} />
         </div>
@@ -360,17 +360,22 @@ export default function Scheduling() {
         <PopularShifts />
       )}
 
-      {actualHasSchedule && actualData ? (
-        <ScheduleGrid
-          data={actualData}
-          viewMode={viewMode}
-          positions={positions}
-          weatherData={weatherData}
-          onMoveShift={actualMoveShift}
-          onAddShift={actualAddShift}
-          onInitiateSwap={handleInitiateSwap}
-        />
-      ) : (
+      {actualHasSchedule && actualData && (
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="min-w-[800px]">
+            <ScheduleGrid
+              data={actualData}
+              viewMode={viewMode}
+              positions={positions}
+              weatherData={weatherData}
+              onMoveShift={actualMoveShift}
+              onAddShift={actualAddShift}
+              onInitiateSwap={handleInitiateSwap}
+            />
+          </div>
+        </div>
+      )}
+      {!actualHasSchedule && (
         <EmptyScheduleState weekStart={weekStart} dailyKPIs={placeholderKPIs} />
       )}
 
