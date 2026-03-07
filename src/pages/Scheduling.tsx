@@ -105,14 +105,19 @@ export default function Scheduling() {
   } = useSchedulingSupabase(null, weekStart); // Initial call to get locations
 
   // Resolve location ID - prefer global context, fallback to URL param or first location
+  // Scheduling ALWAYS needs a specific location (can't show "all locations")
   const resolvedLocationId = useMemo(() => {
     if (locations.length === 0) return null;
     // If global context has a specific location, use it
     if (selectedLocationId && selectedLocationId !== 'all') {
       return selectedLocationId;
     }
-    // Otherwise resolve from URL param or default to first
-    return resolveLocationId(locationIdParam, locations);
+    // If URL param exists, resolve it
+    if (locationIdParam) {
+      return resolveLocationId(locationIdParam, locations);
+    }
+    // Default to first location (scheduling requires a single location)
+    return locations[0]?.id || null;
   }, [locations, locationIdParam, selectedLocationId]);
 
   // Get the actual scheduling data with the resolved location
