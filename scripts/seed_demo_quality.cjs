@@ -108,7 +108,7 @@ function getMonday(d) {
 async function fixForecastAccuracy() {
     console.log('\n📊 Step 1: Fixing forecast accuracy (MAPE ~45% → ~6%)...');
 
-    // Get all actual sales data
+    // Get all actual sales data (no data_source filter on forecast since column doesn't exist there)
     const sales = await supabaseRpc('pos_daily_finance?select=date,location_id,net_sales&data_source=eq.demo&order=date.asc');
     console.log(`   Found ${sales.length} actual sales records`);
 
@@ -117,8 +117,9 @@ async function fixForecastAccuracy() {
         return;
     }
 
-    // For each actual sales record, update the forecast to be within ±5-8%
+    // For each actual sales record, update the forecast to be within ±2-8%
     let updated = 0;
+    let errors = 0;
     const batchSize = 50;
 
     for (let i = 0; i < sales.length; i += batchSize) {
@@ -128,27 +129,42 @@ async function fixForecastAccuracy() {
             const actual = Number(sale.net_sales);
             if (actual <= 0) continue;
 
-            // Generate forecast within ±5-8% of actual (realistic accuracy)
-            const errorPct = (Math.random() * 0.06 + 0.02) * (Math.random() > 0.5 ? 1 : -1); // ±2-8%
+            // Generate forecast within ±2-8% of actual (realistic accuracy)
+            const errorPct = (Math.random() * 0.06 + 0.02) * (Math.random() > 0.5 ? 1 : -1);
             const forecast = r2(actual * (1 + errorPct));
 
-            // Update via PATCH
-            const endpoint = `forecast_daily_metrics?date=eq.${sale.date}&location_id=eq.${sale.location_id}&data_source=eq.demo`;
+            // Update via PATCH — NO data_source filter (column doesn't exist in forecast_daily_metrics)
+            const endpoint = `forecast_daily_metrics?date=eq.${sale.date}&location_id=eq.${sale.location_id}`;
             try {
-                await supabaseRpc(endpoint, {
+                const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+                const res = await fetch(url, {
                     method: 'PATCH',
-                    body: { forecast_sales: forecast },
+                    headers: {
+                        'apikey': SERVICE_KEY,
+                        'Authorization': `Bearer ${SERVICE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=headers-only',
+                    },
+                    body: JSON.stringify({ forecast_sales: forecast }),
                 });
-                updated++;
+                if (res.ok) {
+                    updated++;
+                } else {
+                    errors++;
+                    if (errors <= 3) {
+                        const text = await res.text();
+                        console.log(`   ⚠️  PATCH failed (${res.status}): ${text.substring(0, 100)}`);
+                    }
+                }
             } catch (err) {
-                // May not have a matching forecast row, skip silently
+                errors++;
             }
         }
 
-        process.stdout.write(`   Updated ${Math.min(i + batchSize, sales.length)}/${sales.length} forecasts\r`);
+        process.stdout.write(`   Updated ${updated}/${Math.min(i + batchSize, sales.length)} forecasts (${errors} errors)\r`);
     }
 
-    console.log(`\n   ✅ Updated ${updated} forecast records`);
+    console.log(`\n   ✅ Updated ${updated} forecast records (${errors} errors)`);
 }
 
 // ─────────────────── 2. SEED PLANNED SHIFTS ───────────────────
