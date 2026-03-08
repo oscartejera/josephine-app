@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Package, Truck, CheckCircle2, Clock, AlertCircle, RotateCcw, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, Truck, CheckCircle2, Clock, AlertCircle, RotateCcw, Eye, ChevronDown, ChevronUp, PackageCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -149,6 +149,33 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
+  const handleMarkReceived = async (order: OrderHistoryItem) => {
+    try {
+      const { error } = await supabase.rpc('receive_purchase_order', { _po_id: order.id });
+      if (error) throw error;
+
+      // Update local state
+      setOrders(prev => prev.map(o =>
+        o.id === order.id ? { ...o, status: 'delivered' as const } : o
+      ));
+      if (selectedOrder?.id === order.id) {
+        setSelectedOrder({ ...selectedOrder, status: 'delivered' });
+      }
+
+      toast({
+        title: 'Entrega recibida',
+        description: `${order.orderNumber}: ${order.items.length} items actualizados en inventario`,
+      });
+    } catch (err: any) {
+      console.error('Error marking received:', err);
+      toast({
+        title: 'Error',
+        description: err.message || 'No se pudo marcar como recibido',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -229,6 +256,20 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                         <RotateCcw className="h-4 w-4 mr-1" />
                         Reorder
                       </Button>
+                      {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkReceived(order);
+                          }}
+                        >
+                          <PackageCheck className="h-4 w-4 mr-1" />
+                          Received
+                        </Button>
+                      )}
                       {expandedOrderId === order.id ? (
                         <ChevronUp className="h-5 w-5 text-muted-foreground" />
                       ) : (
@@ -372,6 +413,15 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
               <Button variant="outline" onClick={() => setSelectedOrder(null)}>
                 Close
               </Button>
+              {selectedOrder && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled' && (
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => handleMarkReceived(selectedOrder)}
+                >
+                  <PackageCheck className="h-4 w-4 mr-2" />
+                  Mark as Received
+                </Button>
+              )}
               <Button onClick={() => selectedOrder && handleReorder(selectedOrder)}>
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Reorder All Items
