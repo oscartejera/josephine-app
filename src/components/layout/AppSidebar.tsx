@@ -532,7 +532,11 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             "w-full justify-start gap-3 text-muted-foreground hover:text-foreground",
             collapsed && "justify-center px-2"
           )}
-          onClick={handleSignOut}
+          onClick={async () => {
+            await signOut();
+            localStorage.removeItem('josephine_onboarding_complete');
+            navigate('/login');
+          }}
         >
           <LogOut className="h-4 w-4" />
           {!collapsed && <span>{t('nav.logout')}</span>}
