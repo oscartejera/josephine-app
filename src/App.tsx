@@ -48,6 +48,7 @@ const Payroll = lazy(() => import("@/pages/Payroll"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
 const Integrations = lazy(() => import("@/pages/Integrations"));
 const SquareIntegration = lazy(() => import("@/pages/integrations/SquareIntegration"));
+const LightspeedIntegration = lazy(() => import("@/pages/integrations/LightspeedIntegration"));
 const SquareOAuthCallback = lazy(() => import("@/pages/integrations/SquareOAuthCallback"));
 const InventoryItems = lazy(() => import("@/pages/inventory-setup/InventoryItems"));
 const RecipesPage = lazy(() => import("@/pages/inventory-setup/RecipesPage"));
@@ -198,6 +199,7 @@ function AppRoutes() {
           <Route path="/integrations" element={<InsightErrorBoundary pageName="Integraciones"><Integrations /></InsightErrorBoundary>} />
           <Route path="/integrations/square" element={<InsightErrorBoundary pageName="Square"><SquareIntegration /></InsightErrorBoundary>} />
           <Route path="/integrations/square/callback" element={<SquareOAuthCallback />} />
+          <Route path="/integrations/lightspeed" element={<InsightErrorBoundary pageName="Lightspeed"><LightspeedIntegration /></InsightErrorBoundary>} />
 
           {/* Inventory Setup */}
           <Route path="/inventory-setup/items" element={<InsightErrorBoundary pageName="Artículos"><InventoryItems /></InsightErrorBoundary>} />

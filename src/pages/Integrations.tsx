@@ -20,11 +20,11 @@ const availableIntegrations = [
   },
   {
     id: 'lightspeed',
-    name: 'Lightspeed',
-    description: 'Próximamente - Integración con Lightspeed Restaurant',
+    name: 'Lightspeed Restaurant',
+    description: 'Sincroniza ventas, menú y empleados desde Lightspeed POS',
     icon: '⚡',
-    status: 'coming_soon',
-    path: null,
+    status: 'available',
+    path: '/integrations/lightspeed',
   },
   {
     id: 'oracle',
