@@ -5,8 +5,7 @@
  * Designed to be dropped into any page header that uses forecast data.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useForecastAccuracy } from '@/hooks/useForecastAccuracy';
 import { useApp } from '@/contexts/AppContext';
 import { Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,25 +19,15 @@ export function ForecastConfidenceBadge({ className, compact = false }: Forecast
     const { locations } = useApp();
     const locationIds = locations.map(l => l.id);
 
-    const { data: accuracy } = useQuery({
-        queryKey: ['forecast-confidence', locationIds],
-        enabled: locationIds.length > 0,
-        staleTime: 10 * 60 * 1000,
-        queryFn: async () => {
-            const { data } = await (supabase as any)
-                .from('v_forecast_accuracy')
-                .select('mape, days_evaluated')
-                .in('location_id', locationIds)
-                .limit(5);
+    const { data: accuracyRows } = useForecastAccuracy({ locationIds, enabled: locationIds.length > 0 });
 
-            if (!data || data.length === 0) return null;
-
-            const totalDays = data.reduce((s: number, r: any) => s + (r.days_evaluated || 0), 0);
-            if (totalDays === 0) return null;
-            const mape = data.reduce((s: number, r: any) => s + (r.mape || 0) * (r.days_evaluated || 0), 0) / totalDays;
-            return { confidence: Math.round(100 - mape), days: totalDays, mape: Math.round(mape * 10) / 10 };
-        },
-    });
+    const accuracy = (() => {
+        if (!accuracyRows || accuracyRows.length === 0) return null;
+        const totalDays = accuracyRows.reduce((s, r) => s + (r.days_evaluated || 0), 0);
+        if (totalDays === 0) return null;
+        const mape = accuracyRows.reduce((s, r) => s + (r.mape || 0) * (r.days_evaluated || 0), 0) / totalDays;
+        return { confidence: Math.round(100 - mape), days: totalDays, mape: Math.round(mape * 10) / 10 };
+    })();
 
     if (!accuracy) return null;
 

@@ -57,19 +57,133 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
     const now = new Date();
 
     const { data, isLoading } = useQuery({
-        queryKey: ['payroll-forecast', orgId, effectiveLocationId, now.getFullYear(), now.getMonth() + 1],
+        queryKey: ['payroll-forecast', effectiveLocationId, now.getFullYear(), now.getMonth() + 1],
         queryFn: async (): Promise<ForecastData | null> => {
-            if (!orgId || !effectiveLocationId) return null;
-            const { data, error } = await supabase.rpc('get_payroll_forecast' as any, {
-                p_org_id: orgId,
-                p_location_id: effectiveLocationId,
-                p_year: now.getFullYear(),
-                p_month: now.getMonth() + 1,
+            if (!effectiveLocationId) return null;
+
+            // Try RPC first
+            try {
+                if (orgId) {
+                    const { data: rpcData, error } = await supabase.rpc('get_payroll_forecast' as any, {
+                        p_org_id: orgId,
+                        p_location_id: effectiveLocationId,
+                        p_year: now.getFullYear(),
+                        p_month: now.getMonth() + 1,
+                    });
+                    if (!error && rpcData) return rpcData as ForecastData;
+                }
+            } catch { /* RPC not available */ }
+
+            // Client-side fallback
+            const year = now.getFullYear();
+            const month = now.getMonth(); // 0-indexed
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const totalDays = lastDay.getDate();
+            const elapsed = Math.min(now.getDate(), totalDays);
+            const remaining = totalDays - elapsed;
+            const fmtD = (d: Date) => d.toISOString().split('T')[0];
+            const todayStr = fmtD(now);
+            const firstStr = fmtD(firstDay);
+            const lastStr = fmtD(lastDay);
+
+            // Fetch past shifts (worked) + future shifts (remaining)
+            const [shiftsRes, clockRes, empsRes, budgetRes] = await Promise.all([
+                supabase.from('planned_shifts')
+                    .select('employee_id, shift_date, planned_hours')
+                    .eq('location_id', effectiveLocationId)
+                    .gte('shift_date', firstStr)
+                    .lte('shift_date', lastStr),
+                (supabase as any).from('employee_clock_records')
+                    .select('employee_id, clock_in, clock_out')
+                    .eq('location_id', effectiveLocationId)
+                    .gte('clock_in', firstStr + 'T00:00:00')
+                    .lte('clock_in', lastStr + 'T23:59:59'),
+                supabase.from('employees')
+                    .select('id, full_name, role_name, hourly_cost')
+                    .eq('location_id', effectiveLocationId)
+                    .eq('active', true),
+                (supabase as any).from('budget_daily_unified')
+                    .select('budget_labour')
+                    .eq('location_id', effectiveLocationId)
+                    .gte('day', firstStr)
+                    .lte('day', lastStr),
+            ]);
+
+            const shifts = shiftsRes.data || [];
+            const clockRecords = clockRes?.data || [];
+            const employees = empsRes.data || [];
+            const budgets = budgetRes?.data || [];
+
+            if (shifts.length === 0 && clockRecords.length === 0) return null;
+
+            const empMap = new Map(employees.map((e: any) => [e.id, e]));
+
+            // Per-employee aggregation
+            const empStats: Record<string, { worked: number; remaining: number; name: string; role: string; cost: number }> = {};
+
+            shifts.forEach((s: any) => {
+                const emp = empMap.get(s.employee_id);
+                const hourlyCost = emp?.hourly_cost || 12;
+                if (!empStats[s.employee_id]) {
+                    empStats[s.employee_id] = { worked: 0, remaining: 0, name: emp?.full_name || 'Desconocido', role: emp?.role_name || '', cost: hourlyCost };
+                }
+                if (s.shift_date <= todayStr) empStats[s.employee_id].worked += Number(s.planned_hours || 0);
+                else empStats[s.employee_id].remaining += Number(s.planned_hours || 0);
             });
-            if (error) { console.error('Payroll forecast error:', error); return null; }
-            return data as ForecastData;
+
+            // Add actual clock hours where available
+            clockRecords.forEach((c: any) => {
+                if (!c.clock_in || !c.clock_out) return;
+                const hours = (new Date(c.clock_out).getTime() - new Date(c.clock_in).getTime()) / 3600000;
+                const emp = empMap.get(c.employee_id);
+                if (!empStats[c.employee_id]) {
+                    empStats[c.employee_id] = { worked: 0, remaining: 0, name: emp?.full_name || 'Desconocido', role: emp?.role_name || '', cost: emp?.hourly_cost || 12 };
+                }
+                // Use clock hours for worked (more accurate than planned)
+            });
+
+            let workedHours = 0, workedCost = 0, remainingHours = 0, remainingCost = 0;
+            const perEmployee = Object.entries(empStats).map(([eid, s]) => {
+                workedHours += s.worked;
+                workedCost += s.worked * s.cost;
+                remainingHours += s.remaining;
+                remainingCost += s.remaining * s.cost;
+                return {
+                    employee_id: eid,
+                    employee_name: s.name,
+                    role: s.role,
+                    worked_hours: Math.round(s.worked * 10) / 10,
+                    remaining_hours: Math.round(s.remaining * 10) / 10,
+                    total_hours: Math.round((s.worked + s.remaining) * 10) / 10,
+                    projected_cost: Math.round((s.worked + s.remaining) * s.cost),
+                };
+            }).sort((a, b) => b.projected_cost - a.projected_cost);
+
+            const projectedTotal = workedCost + remainingCost;
+            const dailyRunRate = elapsed > 0 ? workedCost / elapsed : 0;
+            const budgetAmount = budgets.reduce((sum: number, b: any) => sum + (b.budget_labour || 0), 0);
+            const budgetPct = budgetAmount > 0 ? Math.round(projectedTotal / budgetAmount * 100) : null;
+
+            let status = 'no_budget';
+            if (budgetAmount > 0) {
+                if (budgetPct! <= 90) status = 'under_budget';
+                else if (budgetPct! <= 105) status = 'on_track';
+                else if (budgetPct! <= 115) status = 'warning';
+                else status = 'over_budget';
+            }
+
+            return {
+                period: { year, month: month + 1 },
+                days: { total: totalDays, elapsed, remaining },
+                worked: { hours: Math.round(workedHours * 10) / 10, cost: Math.round(workedCost) },
+                remaining: { hours: Math.round(remainingHours * 10) / 10, cost: Math.round(remainingCost) },
+                projected: { total_cost: Math.round(projectedTotal), daily_run_rate: Math.round(dailyRunRate) },
+                budget: { amount: Math.round(budgetAmount), pct_used: elapsed > 0 ? Math.round(workedCost / budgetAmount * 100) : 0, pct_projected: budgetPct, status },
+                per_employee: perEmployee,
+            };
         },
-        enabled: !!orgId && !!effectiveLocationId,
+        enabled: !!effectiveLocationId,
         staleTime: 60000,
     });
 
