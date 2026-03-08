@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
+import { NotificationBell } from './NotificationBell';
 
 // Insights children
 const insightsChildren = [
@@ -173,14 +174,17 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             <span className="font-display font-bold text-lg">Josephine</span>
           </div>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggle}
-          className={cn("h-8 w-8", collapsed && "mx-auto")}
-        >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
-        </Button>
+        <div className="flex items-center gap-1">
+          <NotificationBell collapsed={collapsed} />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className={cn("h-8 w-8", collapsed && "mx-auto")}
+          >
+            <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+          </Button>
+        </div>
       </div>
 
       {/* Navigation */}
