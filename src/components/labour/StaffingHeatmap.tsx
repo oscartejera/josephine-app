@@ -59,16 +59,98 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
     const { data, isLoading } = useQuery({
         queryKey: ['staffing-heatmap', orgId, effectiveLocationId],
         queryFn: async (): Promise<HeatmapData | null> => {
-            if (!orgId || !effectiveLocationId) return null;
-            const { data, error } = await supabase.rpc('get_staffing_heatmap' as any, {
-                p_org_id: orgId,
-                p_location_id: effectiveLocationId,
-                p_weeks_back: 4,
+            if (!effectiveLocationId) return null;
+
+            // Try RPC first, fallback to client-side computation
+            try {
+                if (orgId) {
+                    const { data: rpcData, error } = await supabase.rpc('get_staffing_heatmap' as any, {
+                        p_org_id: orgId,
+                        p_location_id: effectiveLocationId,
+                        p_weeks_back: 4,
+                    });
+                    if (!error && rpcData) return rpcData as HeatmapData;
+                }
+            } catch { /* RPC not available, use fallback */ }
+
+            // Client-side fallback: compute from planned_shifts + sales
+            const fourWeeksAgo = new Date();
+            fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+            const today = new Date();
+            const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+            const [shiftsRes, salesRes] = await Promise.all([
+                supabase.from('planned_shifts')
+                    .select('shift_date, planned_hours')
+                    .eq('location_id', effectiveLocationId)
+                    .gte('shift_date', fmt(fourWeeksAgo))
+                    .lte('shift_date', fmt(today)),
+                supabase.from('sales_daily_unified')
+                    .select('date, net_sales')
+                    .eq('location_id', effectiveLocationId)
+                    .gte('date', fmt(fourWeeksAgo))
+                    .lte('date', fmt(today)),
+            ]);
+
+            const shifts = shiftsRes.data || [];
+            const sales = salesRes.data || [];
+            if (shifts.length === 0 && sales.length === 0) return null;
+
+            // Aggregate by day-of-week (0=Sun, 1=Mon, ... 6=Sat)
+            const TARGET_SPLH = 150;
+            const OP_HOURS = { open: 10, close: 23 };
+            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const buckets: Record<number, { totalSales: number; totalHours: number; count: number }> = {};
+
+            // Build sales by date
+            const salesByDate: Record<string, number> = {};
+            sales.forEach((s: any) => { salesByDate[s.date] = (salesByDate[s.date] || 0) + Number(s.net_sales || 0); });
+
+            // Build hours by date
+            const hoursByDate: Record<string, number> = {};
+            shifts.forEach((s: any) => { hoursByDate[s.shift_date] = (hoursByDate[s.shift_date] || 0) + Number(s.planned_hours || 0); });
+
+            // Combine
+            const allDates = new Set([...Object.keys(salesByDate), ...Object.keys(hoursByDate)]);
+            allDates.forEach(dateStr => {
+                const dow = new Date(dateStr).getDay();
+                if (!buckets[dow]) buckets[dow] = { totalSales: 0, totalHours: 0, count: 0 };
+                buckets[dow].totalSales += salesByDate[dateStr] || 0;
+                buckets[dow].totalHours += hoursByDate[dateStr] || 0;
+                buckets[dow].count += 1;
             });
-            if (error) { console.error('Staffing heatmap error:', error); return null; }
-            return data as HeatmapData;
+
+            const days: DayData[] = Object.entries(buckets).map(([dow, b]) => {
+                const dayNum = Number(dow);
+                const avgSales = b.count > 0 ? b.totalSales / b.count : 0;
+                const avgHours = b.count > 0 ? b.totalHours / b.count : 0;
+                const avgStaff = avgHours / (OP_HOURS.close - OP_HOURS.open || 1);
+                const splh = avgHours > 0 ? Math.round(avgSales / avgHours) : 0;
+                const status: DayData['status'] = avgHours === 0 ? 'no_data'
+                    : splh > TARGET_SPLH * 1.2 ? 'understaffed'
+                        : splh < TARGET_SPLH * 0.8 ? 'overstaffed'
+                            : 'optimal';
+                return {
+                    day_of_week: dayNum,
+                    day_name: dayNames[dayNum],
+                    avg_daily_sales: Math.round(avgSales),
+                    avg_staff_count: Math.round(avgStaff * 10) / 10,
+                    avg_daily_splh: splh,
+                    status,
+                };
+            });
+
+            const summary = {
+                overstaffed_days: days.filter(d => d.status === 'overstaffed').length,
+                understaffed_days: days.filter(d => d.status === 'understaffed').length,
+                optimal_days: days.filter(d => d.status === 'optimal').length,
+                potential_savings: days.filter(d => d.status === 'overstaffed')
+                    .reduce((s, d) => s + d.avg_daily_sales * 0.03, 0) * 4,
+            };
+
+            return { target_splh: TARGET_SPLH, operating_hours: OP_HOURS, days, summary };
         },
-        enabled: !!orgId && !!effectiveLocationId,
+        enabled: !!effectiveLocationId,
         staleTime: 120000,
     });
 

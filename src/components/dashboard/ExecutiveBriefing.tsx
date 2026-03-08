@@ -128,11 +128,43 @@ export function ExecutiveBriefing() {
                 .eq('date', yesterday);
 
             // Fetch yesterday's labour cost per location
-            // Uses an RPC to compute SUM(planned_hours × hourly_cost) per location
-            const { data: labourData } = await (supabase as any).rpc('get_labour_cost_by_date', {
-                p_location_ids: locIds,
-                p_date: yesterday,
-            });
+            // Fallback: compute SUM(planned_hours × hourly_cost) from planned_shifts + employees
+            let labourData: any[] | null = null;
+            try {
+                const { data: rpcResult } = await (supabase as any).rpc('get_labour_cost_by_date', {
+                    p_location_ids: locIds,
+                    p_date: yesterday,
+                });
+                labourData = rpcResult;
+            } catch { /* RPC not available */ }
+
+            if (!labourData || labourData.length === 0) {
+                // Client-side fallback
+                const { data: shifts } = await supabase
+                    .from('planned_shifts')
+                    .select('location_id, planned_hours, employee_id')
+                    .in('location_id', locIds)
+                    .eq('shift_date', yesterday);
+
+                if (shifts && shifts.length > 0) {
+                    const empIds = [...new Set(shifts.map((s: any) => s.employee_id))];
+                    const { data: emps } = await supabase
+                        .from('employees')
+                        .select('id, hourly_cost')
+                        .in('id', empIds);
+                    const costMap = new Map((emps || []).map((e: any) => [e.id, e.hourly_cost || 12]));
+
+                    const locCosts: Record<string, number> = {};
+                    shifts.forEach((s: any) => {
+                        const cost = (s.planned_hours || 0) * (costMap.get(s.employee_id) || 12);
+                        locCosts[s.location_id] = (locCosts[s.location_id] || 0) + cost;
+                    });
+                    labourData = Object.entries(locCosts).map(([lid, cost]) => ({
+                        location_id: lid,
+                        labour_cost: cost,
+                    }));
+                }
+            }
 
             // Fetch yesterday's budget
             const { data: budgetData } = await (supabase as any)
