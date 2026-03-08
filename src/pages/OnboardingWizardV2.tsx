@@ -46,33 +46,33 @@ const ROLES = [
 const TOUR_STEPS: JoyrideStep[] = [
     {
         target: '[data-tour="sidebar"]',
-        content: '📍 Aquí tienes el menú principal. Navega entre las distintas secciones de Josephine.',
+        content: 'Aquí tienes el menú principal. Navega entre las distintas secciones de Josephine.',
         placement: 'right',
         disableBeacon: true,
     },
     {
         target: '[data-tour="control-tower"]',
-        content: '🗼 El Control Tower es tu centro de mando. Aquí ves un resumen de todo tu negocio.',
+        content: 'El Control Tower es tu centro de mando. Aquí ves un resumen de todo tu negocio.',
         placement: 'bottom',
     },
     {
         target: '[data-tour="kpi-cards"]',
-        content: '📊 Las tarjetas KPI muestran métricas clave: ventas, personal, costes y previsiones.',
+        content: 'Las tarjetas KPI muestran métricas clave: ventas, personal, costes y previsiones.',
         placement: 'bottom',
     },
     {
         target: '[data-tour="insights"]',
-        content: '💡 En Insights encontrarás análisis detallados: ventas, personal, P&L, reseñas, inventario y más.',
+        content: 'En Insights encontrarás análisis detallados: ventas, personal, P&L, reseñas, inventario y más.',
         placement: 'right',
     },
     {
         target: '[data-tour="workforce"]',
-        content: '👥 Workforce gestiona tu equipo: turnos, fichajes, onboarding y más.',
+        content: 'Workforce gestiona tu equipo: turnos, fichajes, onboarding y más.',
         placement: 'right',
     },
     {
         target: '[data-tour="integrations"]',
-        content: '🔌 Conecta los sistemas POS que usas — Square, Lightspeed, o importa datos por CSV.',
+        content: 'Conecta los sistemas POS que usas — Square, Lightspeed, o importa datos por CSV.',
         placement: 'right',
     },
 ];
@@ -238,7 +238,7 @@ export default function OnboardingWizardV2() {
                 navigate('/dashboard');
             }
 
-            toast.success('🎉 ¡Bienvenido a Josephine!');
+            toast.success('¡Bienvenido a Josephine!');
         } catch (err) {
             console.error('Onboarding finish error:', err);
             toast.error('Error al finalizar. Intenta de nuevo.');
@@ -434,7 +434,7 @@ export default function OnboardingWizardV2() {
                     <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-500 mx-auto flex items-center justify-center">
                         <Rocket className="h-10 w-10 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold">¡Todo listo! 🎉</h2>
+                    <h2 className="text-2xl font-bold">¡Todo listo!</h2>
                     <p className="text-muted-foreground max-w-md mx-auto">
                         Josephine ya está configurada. Tu primera previsión de ventas estará lista en <strong>menos de 24 horas</strong>.
                     </p>
