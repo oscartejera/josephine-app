@@ -21,7 +21,7 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password || !fullName) {
       toast({
         variant: "destructive",
@@ -45,7 +45,7 @@ export default function Signup() {
   };
 
   const handleVerified = () => {
-    navigate('/dashboard');
+    navigate('/onboarding');
   };
 
   const handleBackToForm = () => {

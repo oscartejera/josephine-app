@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import { JosephineChat } from '@/components/ai/JosephineChat';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '@/contexts/AppContext';
@@ -129,9 +130,9 @@ export default function Dashboard() {
     };
   }, [loading, netSales, salesDelta, coversDelta, avgTicketDelta, laborDelta, colPercent, colDelta, gpPercent, gpDelta, topItems, selectedLocName]);
 
-  // Show onboarding wizard for new users
+  // Redirect new users to the fullscreen onboarding wizard
   if (needsOnboarding) {
-    return <OnboardingWizard onComplete={setOnboardingComplete} />;
+    return <Navigate to="/onboarding" replace />;
   }
 
   // Show loading skeleton while app context is initializing

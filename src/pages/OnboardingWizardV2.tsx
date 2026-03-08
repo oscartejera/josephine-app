@@ -100,8 +100,8 @@ export function markTourComplete(): void {
 // ── Main Component ────────────────────────────────────────────────
 export default function OnboardingWizardV2() {
     const navigate = useNavigate();
-    const { selectedLocationId } = useApp();
-    const { session } = useAuth();
+    const { selectedLocationId, setOnboardingComplete } = useApp();
+    const { session, user, profile } = useAuth();
 
     const [step, setStep] = useState<WizardStep>(1);
     const [posChoice, setPosChoice] = useState<'square' | 'lightspeed' | 'csv' | 'skip' | null>(null);
@@ -132,10 +132,11 @@ export default function OnboardingWizardV2() {
     };
 
     // ── Save team to DB ──────────────────────────────────────────
-    const saveTeam = async () => {
-        if (!selectedLocationId || selectedLocationId === 'all') return;
+    const saveTeam = async (orgId?: string) => {
+        const locationId = selectedLocationId && selectedLocationId !== 'all' ? selectedLocationId : null;
+        const groupId = orgId || profile?.group_id;
         const validMembers = team.filter(m => m.name.trim());
-        if (validMembers.length === 0) return;
+        if (validMembers.length === 0 || !groupId) return;
 
         setSaving(true);
         try {
@@ -153,7 +154,8 @@ export default function OnboardingWizardV2() {
                 await supabase.from('employees').insert({
                     full_name: member.name.trim(),
                     role_name: ROLE_MAP[member.role] || 'employee',
-                    location_id: selectedLocationId,
+                    location_id: locationId || undefined,
+                    org_id: groupId,
                     active: true,
                 });
             }
@@ -167,27 +169,87 @@ export default function OnboardingWizardV2() {
 
     // ── Finalize onboarding ──────────────────────────────────────
     const handleFinish = async () => {
-        markOnboardingComplete();
+        setSaving(true);
+        try {
+            // Ensure user has a group + location in DB
+            // This is critical for demo data to flow correctly
+            if (user && (!profile?.group_id)) {
+                // Create group
+                const { data: newGroup, error: groupErr } = await supabase
+                    .from('groups')
+                    .insert({ name: 'Mi Restaurante', owner_id: user.id })
+                    .select('id')
+                    .single();
 
-        // If they chose a POS, redirect there
-        if (posChoice === 'square') {
-            navigate('/integrations/square');
-        } else if (posChoice === 'lightspeed') {
-            navigate('/integrations/lightspeed');
-        } else if (posChoice === 'csv') {
-            navigate('/settings/import');
-        } else {
-            navigate('/dashboard');
+                if (groupErr) {
+                    console.error('Error creating group:', groupErr);
+                } else if (newGroup) {
+                    // Create default location
+                    await supabase
+                        .from('locations')
+                        .insert({
+                            group_id: newGroup.id,
+                            org_id: newGroup.id,
+                            name: 'Mi Local',
+                            city: 'Mi Ciudad',
+                            active: true,
+                        });
+
+                    // Link user profile to group
+                    await supabase
+                        .from('profiles')
+                        .update({ group_id: newGroup.id })
+                        .eq('id', user.id);
+
+                    // Assign owner role
+                    const { data: ownerRole } = await supabase
+                        .from('roles')
+                        .select('id')
+                        .eq('name', 'owner')
+                        .single();
+
+                    if (ownerRole) {
+                        await supabase
+                            .from('user_roles')
+                            .upsert({ user_id: user.id, role_id: ownerRole.id, location_id: null });
+                    }
+                }
+            }
+
+            // Save team members if any were added
+            const teamCount = team.filter(m => m.name.trim()).length;
+            if (teamCount > 0) {
+                const orgId = profile?.group_id || undefined;
+                await saveTeam(orgId);
+            }
+
+            // Mark onboarding complete in localStorage + refresh AppContext
+            markOnboardingComplete();
+            await setOnboardingComplete();
+
+            // Navigate based on POS choice
+            if (posChoice === 'square') {
+                navigate('/integrations/square');
+            } else if (posChoice === 'lightspeed') {
+                navigate('/integrations/lightspeed');
+            } else if (posChoice === 'csv') {
+                navigate('/settings/import');
+            } else {
+                navigate('/dashboard');
+            }
+
+            toast.success('🎉 ¡Bienvenido a Josephine!');
+        } catch (err) {
+            console.error('Onboarding finish error:', err);
+            toast.error('Error al finalizar. Intenta de nuevo.');
+        } finally {
+            setSaving(false);
         }
-
-        toast.success('🎉 ¡Bienvenido a Josephine!');
     };
 
-    const handleStartTour = () => {
-        markOnboardingComplete();
-        navigate('/dashboard');
-        // Tour will be triggered from Dashboard via the exported helper
-        setShowTour(true);
+    const handleStartTour = async () => {
+        await handleFinish();
+        // Tour will auto-trigger from Dashboard via DashboardTour component
     };
 
     // ── Render: Step 1 — Connect POS ─────────────────────────────
@@ -422,8 +484,7 @@ export default function OnboardingWizardV2() {
                         <Button
                             size="lg"
                             onClick={async () => {
-                                if (teamCount > 0) await saveTeam();
-                                handleFinish();
+                                await handleFinish();
                             }}
                             disabled={saving}
                             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white h-14 text-lg rounded-xl"
@@ -436,8 +497,7 @@ export default function OnboardingWizardV2() {
                             variant="outline"
                             size="lg"
                             onClick={async () => {
-                                if (teamCount > 0) await saveTeam();
-                                handleStartTour();
+                                await handleStartTour();
                             }}
                             disabled={saving}
                             className="w-full h-12 rounded-xl"
