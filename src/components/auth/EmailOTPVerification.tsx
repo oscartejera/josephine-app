@@ -10,6 +10,7 @@ interface EmailOTPVerificationProps {
   email: string;
   fullName: string;
   password: string;
+  restaurantName?: string;
   onVerified: () => void;
   onBack: () => void;
 }
@@ -18,6 +19,7 @@ export function EmailOTPVerification({
   email,
   fullName,
   password,
+  restaurantName,
   onVerified,
   onBack
 }: EmailOTPVerificationProps) {
@@ -32,6 +34,13 @@ export function EmailOTPVerification({
     // Send OTP on mount
     sendOTP();
   }, []);
+
+  // Auto-submit when 6 digits entered
+  useEffect(() => {
+    if (code.length === 6 && !loading) {
+      handleVerify();
+    }
+  }, [code]);
 
   useEffect(() => {
     if (countdown > 0 && !canResend) {
@@ -121,8 +130,13 @@ export function EmailOTPVerification({
         return;
       }
 
+      // Store restaurant name for onboarding wizard
+      if (restaurantName) {
+        sessionStorage.setItem('josephine_restaurant_name', restaurantName);
+      }
+
       toast({
-        title: "¡Cuenta creada!",
+        title: "Cuenta creada",
         description: "Tu cuenta ha sido verificada y creada exitosamente."
       });
 

@@ -33,6 +33,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   hasPermission: (permissionKey: string, locationId?: string | null) => boolean;
   hasAnyPermission: (permissionKeys: string[]) => boolean;
   hasRole: (roleName: string) => boolean;
@@ -175,6 +176,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+  };
+
   // Real permission check using database roles
   const hasPermission = useCallback((permissionKey: string, locationId?: string | null): boolean => {
     if (!user) return false;
@@ -219,6 +229,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn,
       signUp,
       signOut,
+      signInWithGoogle,
       hasPermission,
       hasAnyPermission,
       hasRole,

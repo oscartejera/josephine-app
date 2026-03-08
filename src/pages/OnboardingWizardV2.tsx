@@ -1,11 +1,9 @@
 /**
  * OnboardingWizardV2 — New user onboarding flow
  *
- * 4-step wizard:
+ * 2-step wizard:
  * 1. Connect POS (Square/Lightspeed/CSV/Skip)
- * 2. Configure team (import from POS or add manually)
- * 3. Import menu (from POS, CSV, or skip)
- * 4. "First forecast in 24h" confirmation + optional product tour
+ * 2. "Your account is ready" confirmation + optional product tour
  *
  * Shown to new users on first login via localStorage flag.
  * Includes react-joyride product tour of the Dashboard.
@@ -23,24 +21,14 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import {
-    Zap, Users, Rocket, ChevronRight, ChevronLeft,
-    Plus, Trash2, CheckCircle, Link2,
-    ArrowRight, Sparkles
+    Zap, Rocket, ChevronRight, ChevronLeft,
+    CheckCircle, Link2, FileSpreadsheet,
+    ArrowRight, Sparkles, SkipForward, Loader2
 } from 'lucide-react';
 import Joyride, { Step as JoyrideStep, STATUS, CallBackProps } from 'react-joyride';
 
 // ── Types ─────────────────────────────────────────────────────────
-type WizardStep = 1 | 2 | 3;
-
-interface TeamMember {
-    name: string;
-    role: string;
-}
-
-const ROLES = [
-    'Camarero/a', 'Cocinero/a', 'Barista', 'Gerente',
-    'Repartidor/a', 'Lavaplatos', 'Hostess',
-];
+type WizardStep = 1 | 2;
 
 // ── Product Tour Steps (for Dashboard) ────────────────────────────
 const TOUR_STEPS: JoyrideStep[] = [
@@ -97,6 +85,29 @@ export function markTourComplete(): void {
     localStorage.setItem(TOUR_COMPLETE_KEY, 'true');
 }
 
+// ── Loading Transition Component ──────────────────────────────────
+function SetupTransition() {
+    return (
+        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950 flex flex-col items-center justify-center gap-6">
+            <div className="relative">
+                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl animate-pulse">
+                    <Rocket className="h-10 w-10 text-white" />
+                </div>
+                <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 animate-ping" />
+            </div>
+            <div className="text-center space-y-2">
+                <h2 className="text-xl font-bold">Configurando tu cuenta...</h2>
+                <p className="text-sm text-muted-foreground">Preparando Josephine para ti</p>
+            </div>
+            <div className="flex gap-1.5">
+                <div className="h-2 w-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0ms]" />
+                <div className="h-2 w-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:150ms]" />
+                <div className="h-2 w-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:300ms]" />
+            </div>
+        </div>
+    );
+}
+
 // ── Main Component ────────────────────────────────────────────────
 export default function OnboardingWizardV2() {
     const navigate = useNavigate();
@@ -105,24 +116,18 @@ export default function OnboardingWizardV2() {
 
     const [step, setStep] = useState<WizardStep>(1);
     const [posChoice, setPosChoice] = useState<'square' | 'lightspeed' | 'csv' | 'skip' | null>(null);
-    const [team, setTeam] = useState<TeamMember[]>([
-        { name: '', role: 'Camarero/a' },
-    ]);
     const [showTour, setShowTour] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showTransition, setShowTransition] = useState(false);
+
+    // Get restaurant name from sessionStorage (set during signup)
+    const restaurantName = sessionStorage.getItem('josephine_restaurant_name') || 'Mi Restaurante';
 
     // ── Step navigation ──────────────────────────────────────────
-    const nextStep = () => setStep(s => Math.min(s + 1, 3) as WizardStep);
+    const nextStep = () => setStep(s => Math.min(s + 1, 2) as WizardStep);
     const prevStep = () => setStep(s => Math.max(s - 1, 1) as WizardStep);
 
-    const progress = ((step - 1) / 2) * 100;
-
-    // ── Team management ──────────────────────────────────────────
-    const addMember = () => setTeam(prev => [...prev, { name: '', role: 'Camarero/a' }]);
-    const removeMember = (i: number) => setTeam(prev => prev.filter((_, idx) => idx !== i));
-    const updateMember = (i: number, field: 'name' | 'role', value: string) => {
-        setTeam(prev => prev.map((m, idx) => idx === i ? { ...m, [field]: value } : m));
-    };
+    const progress = step === 1 ? 0 : 100;
 
     // ── POS connect handlers ─────────────────────────────────────
     const handlePosConnect = (pos: 'square' | 'lightspeed') => {
@@ -130,78 +135,49 @@ export default function OnboardingWizardV2() {
         toast.success(`${pos === 'square' ? 'Square' : 'Lightspeed'} seleccionado. Lo conectaremos después.`);
     };
 
-    // ── Save team to DB ──────────────────────────────────────────
-    const saveTeam = async (orgId?: string) => {
-        const locationId = selectedLocationId && selectedLocationId !== 'all' ? selectedLocationId : null;
-        const groupId = orgId || profile?.group_id;
-        const validMembers = team.filter(m => m.name.trim());
-        if (validMembers.length === 0 || !groupId) return;
-
-        setSaving(true);
-        try {
-            const ROLE_MAP: Record<string, string> = {
-                'Camarero/a': 'waiter',
-                'Cocinero/a': 'cook',
-                'Barista': 'bartender',
-                'Gerente': 'manager',
-                'Repartidor/a': 'delivery',
-                'Lavaplatos': 'dishwasher',
-                'Hostess': 'host',
-            };
-
-            for (const member of validMembers) {
-                await supabase.from('employees').insert({
-                    full_name: member.name.trim(),
-                    role_name: ROLE_MAP[member.role] || 'employee',
-                    location_id: locationId || undefined,
-                    org_id: groupId,
-                    active: true,
-                });
-            }
-            toast.success(`${validMembers.length} miembros añadidos al equipo`);
-        } catch (e) {
-            console.error('Save team error:', e);
-        } finally {
-            setSaving(false);
-        }
-    };
-
     // ── Finalize onboarding ──────────────────────────────────────
     const handleFinish = async () => {
         setSaving(true);
+        setShowTransition(true);
+
         try {
             // Use server-side RPC to create group + location + owner role
-            // This bypasses RLS (SECURITY DEFINER) — required because the user
-            // has no group_id yet and can't INSERT into groups/locations directly
             if (user && (!profile?.group_id)) {
                 const { data, error } = await supabase.rpc('setup_new_owner', {
                     p_user_id: user.id,
-                    p_group_name: 'Mi Restaurante',
-                    p_location_name: 'Mi Local',
+                    p_group_name: restaurantName,
+                    p_location_name: restaurantName,
                 });
 
                 if (error) {
                     console.error('Setup new owner error:', error);
                     toast.error('Error al configurar tu cuenta. Intenta de nuevo.');
                     setSaving(false);
+                    setShowTransition(false);
                     return;
                 }
 
                 console.log('Owner setup complete:', data);
             }
 
-            // Save team members if any were added
-            const teamCount = team.filter(m => m.name.trim()).length;
-            if (teamCount > 0) {
-                // Refresh profile to get the new group_id for team saves
-                await setOnboardingComplete();
-                const orgId = profile?.group_id || undefined;
-                if (orgId) await saveTeam(orgId);
-            }
-
             // Mark onboarding complete in localStorage + refresh AppContext
             markOnboardingComplete();
             await setOnboardingComplete();
+
+            // Send welcome email (fire and forget — don't block the flow)
+            supabase.functions.invoke('send_welcome_email', {
+                body: {
+                    email: user?.email,
+                    fullName: profile?.full_name || user?.user_metadata?.full_name,
+                    restaurantName,
+                },
+            }).catch(err => console.warn('Welcome email failed:', err));
+
+            // Clean up sessionStorage
+            sessionStorage.removeItem('josephine_restaurant_name');
+
+            // Small delay for the transition animation
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
             // Navigate based on POS choice
             if (posChoice === 'square') {
@@ -218,6 +194,7 @@ export default function OnboardingWizardV2() {
         } catch (err) {
             console.error('Onboarding finish error:', err);
             toast.error('Error al finalizar. Intenta de nuevo.');
+            setShowTransition(false);
         } finally {
             setSaving(false);
         }
@@ -248,7 +225,7 @@ export default function OnboardingWizardV2() {
                     className={`p-5 rounded-xl border-2 text-left transition-all hover:shadow-md ${posChoice === 'square' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30' : 'border-border hover:border-indigo-300'
                         }`}
                 >
-                    <span className="text-3xl block mb-2">🔷</span>
+                    <Zap className="h-8 w-8 text-indigo-500 mb-2" />
                     <p className="font-semibold">Square POS</p>
                     <p className="text-xs text-muted-foreground">Conexión directa vía OAuth</p>
                     {posChoice === 'square' && <CheckCircle className="h-5 w-5 text-indigo-500 mt-2" />}
@@ -257,13 +234,13 @@ export default function OnboardingWizardV2() {
                 {/* Lightspeed */}
                 <button
                     onClick={() => handlePosConnect('lightspeed')}
-                    className={`p-5 rounded-xl border-2 text-left transition-all hover:shadow-md ${posChoice === 'lightspeed' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30' : 'border-border hover:border-yellow-300'
+                    className={`p-5 rounded-xl border-2 text-left transition-all hover:shadow-md ${posChoice === 'lightspeed' ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/30' : 'border-border hover:border-amber-300'
                         }`}
                 >
-                    <span className="text-3xl block mb-2">⚡</span>
+                    <Zap className="h-8 w-8 text-amber-500 mb-2" />
                     <p className="font-semibold">Lightspeed</p>
                     <p className="text-xs text-muted-foreground">Conexión directa vía OAuth</p>
-                    {posChoice === 'lightspeed' && <CheckCircle className="h-5 w-5 text-yellow-500 mt-2" />}
+                    {posChoice === 'lightspeed' && <CheckCircle className="h-5 w-5 text-amber-500 mt-2" />}
                 </button>
 
                 {/* CSV */}
@@ -293,59 +270,8 @@ export default function OnboardingWizardV2() {
         </div>
     );
 
-    // ── Render: Step 2 — Team ────────────────────────────────────
-    const renderStep2 = () => (
-        <div className="space-y-6">
-            <div className="text-center space-y-2">
-                <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 mx-auto flex items-center justify-center">
-                    <Users className="h-8 w-8 text-emerald-500" />
-                </div>
-                <h2 className="text-2xl font-bold">Configura tu equipo</h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                    Añade los miembros de tu equipo. Podrán fichar, ver turnos y recibir notificaciones.
-                </p>
-            </div>
-
-            <div className="max-w-lg mx-auto space-y-3">
-                {team.map((member, i) => (
-                    <div key={i} className="flex gap-2 items-center">
-                        <Input
-                            placeholder="Nombre completo"
-                            value={member.name}
-                            onChange={e => updateMember(i, 'name', e.target.value)}
-                            className="flex-1"
-                        />
-                        <select
-                            value={member.role}
-                            onChange={e => updateMember(i, 'role', e.target.value)}
-                            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                        {team.length > 1 && (
-                            <Button variant="ghost" size="icon" onClick={() => removeMember(i)}>
-                                <Trash2 className="h-4 w-4 text-red-400" />
-                            </Button>
-                        )}
-                    </div>
-                ))}
-
-                <Button variant="outline" size="sm" onClick={addMember} className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Añadir otro miembro
-                </Button>
-
-                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm text-blue-700 dark:text-blue-300">
-                    <Sparkles className="h-4 w-4 shrink-0" />
-                    <span>Puedes añadir más miembros después desde Workforce → Equipo</span>
-                </div>
-            </div>
-        </div>
-    );
-
-    // ── Render: Step 3 — Confirmation ──────────────────────────
-    const renderStep3 = () => {
-        const teamCount = team.filter(m => m.name.trim()).length;
+    // ── Render: Step 2 — Confirmation ──────────────────────────
+    const renderStep2 = () => {
         return (
             <div className="space-y-6">
                 <div className="text-center space-y-2">
@@ -354,7 +280,7 @@ export default function OnboardingWizardV2() {
                     </div>
                     <h2 className="text-2xl font-bold">Todo listo</h2>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        Josephine ya está configurada. Tu primera previsión de ventas estará lista en <strong>menos de 24 horas</strong>.
+                        <strong>{restaurantName}</strong> ya está configurado en Josephine. Tu primera previsión de ventas estará lista en <strong>menos de 24 horas</strong>.
                     </p>
                 </div>
 
@@ -373,7 +299,7 @@ export default function OnboardingWizardV2() {
                         <div className="flex items-center gap-3">
                             <CheckCircle className="h-5 w-5 text-emerald-500" />
                             <span className="text-sm">
-                                <strong>Equipo:</strong> {teamCount > 0 ? `${teamCount} miembro${teamCount > 1 ? 's' : ''}` : 'Se añadirá después'}
+                                <strong>Restaurante:</strong> {restaurantName}
                             </span>
                         </div>
                     </div>
@@ -400,7 +326,7 @@ export default function OnboardingWizardV2() {
                             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white h-14 text-lg rounded-xl"
                         >
                             <Rocket className="h-5 w-5 mr-2" />
-                            {saving ? 'Guardando...' : 'Empezar a usar Josephine'}
+                            Empezar a usar Josephine
                         </Button>
 
                         <Button
@@ -425,10 +351,14 @@ export default function OnboardingWizardV2() {
     const canNext = () => {
         switch (step) {
             case 1: return posChoice !== null;
-            case 2: return true; // Team is optional
             default: return true;
         }
     };
+
+    // ── Show loading transition ──────────────────────────────────
+    if (showTransition) {
+        return <SetupTransition />;
+    }
 
     // ── Render ───────────────────────────────────────────────────
     return (
@@ -443,7 +373,7 @@ export default function OnboardingWizardV2() {
                 </div>
                 <div className="flex items-center gap-4">
                     <span className="text-sm text-muted-foreground">
-                        Paso {step} de 3
+                        Paso {step} de 2
                     </span>
                     <div className="w-32">
                         <Progress value={progress} className="h-2" />
@@ -456,28 +386,14 @@ export default function OnboardingWizardV2() {
                 <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
                     {step === 1 && renderStep1()}
                     {step === 2 && renderStep2()}
-                    {step === 3 && renderStep3()}
                 </div>
             </div>
 
-            {/* Footer */}
-            {step < 3 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+            {/* Footer — only show on step 1 */}
+            {step === 1 && (
+                <div className="flex items-center justify-end px-6 py-4 border-t bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
                     <Button
-                        variant="ghost"
-                        onClick={prevStep}
-                        disabled={step === 1}
-                    >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Atrás
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            if (step === 2 && team.filter(m => m.name.trim()).length > 0) {
-                                saveTeam();
-                            }
-                            nextStep();
-                        }}
+                        onClick={nextStep}
                         disabled={!canNext()}
                     >
                         Siguiente
@@ -526,7 +442,7 @@ export function DashboardTour() {
             locale={{
                 back: 'Atrás',
                 close: 'Cerrar',
-                last: '¡Listo!',
+                last: 'Listo',
                 next: 'Siguiente',
                 skip: 'Saltar tour',
             }}
