@@ -1,5 +1,16 @@
 project_id = "qixipveebfhurbarksib"
 
+# Auth OTP — called by unauthenticated signup users
+[functions.send_email_otp]
+verify_jwt = false
+
+# Email notification functions
+[functions.send_schedule_published]
+verify_jwt = false
+
+[functions.send_payslip_ready]
+verify_jwt = false
+
 [functions.inventory_insights]
 verify_jwt = false
 
