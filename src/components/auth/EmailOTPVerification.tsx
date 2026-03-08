@@ -14,12 +14,12 @@ interface EmailOTPVerificationProps {
   onBack: () => void;
 }
 
-export function EmailOTPVerification({ 
-  email, 
-  fullName, 
-  password, 
-  onVerified, 
-  onBack 
+export function EmailOTPVerification({
+  email,
+  fullName,
+  password,
+  onVerified,
+  onBack
 }: EmailOTPVerificationProps) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -86,18 +86,12 @@ export function EmailOTPVerification({
     setLoading(true);
 
     try {
-      // Verify OTP
+      // Verify OTP code via Edge Function
       const { data: verifyData, error: verifyError } = await supabase.functions.invoke('send_email_otp', {
-        body: { email, code },
-        headers: { 'x-action': 'verify' }
+        body: { email, code, action: 'verify' },
       });
 
-      // Check response for verification
-      const response = await supabase.functions.invoke('send_email_otp?action=verify', {
-        body: { email, code }
-      });
-
-      if (response.error || !response.data?.valid) {
+      if (verifyError || !verifyData?.valid) {
         toast({
           variant: "destructive",
           title: "Código inválido",
@@ -107,13 +101,13 @@ export function EmailOTPVerification({
         return;
       }
 
-      // OTP verified, now create the user account
+      // OTP verified — create the user account
+      // mailer_autoconfirm is enabled, so no extra "confirm email" is sent
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { full_name: fullName },
-          emailRedirectTo: window.location.origin
         }
       });
 
@@ -131,7 +125,7 @@ export function EmailOTPVerification({
         title: "¡Cuenta creada!",
         description: "Tu cuenta ha sido verificada y creada exitosamente."
       });
-      
+
       onVerified();
     } catch (error: any) {
       console.error('Verification error:', error);
@@ -176,9 +170,9 @@ export function EmailOTPVerification({
           </InputOTP>
         </div>
 
-        <Button 
-          onClick={handleVerify} 
-          className="w-full" 
+        <Button
+          onClick={handleVerify}
+          className="w-full"
           disabled={loading || code.length !== 6}
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -190,8 +184,8 @@ export function EmailOTPVerification({
             ¿No recibiste el código?
           </p>
           {canResend ? (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={handleResend}
               disabled={resending}
@@ -210,8 +204,8 @@ export function EmailOTPVerification({
           )}
         </div>
 
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full"
           onClick={onBack}
           disabled={loading}

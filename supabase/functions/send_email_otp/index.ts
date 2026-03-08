@@ -98,10 +98,12 @@ serve(async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "send";
+    const body = await req.json();
+    // Support action from body (frontend) or URL param (legacy)
+    const action = body.action || url.searchParams.get("action") || "send";
 
     if (action === "send") {
-      const { email, fullName }: SendOTPRequest = await req.json();
+      const { email, fullName } = body as SendOTPRequest;
 
       if (!email) {
         return new Response(
@@ -145,7 +147,7 @@ serve(async (req: Request): Promise<Response> => {
       );
 
     } else if (action === "verify") {
-      const { email, code }: VerifyOTPRequest = await req.json();
+      const { email, code } = body as VerifyOTPRequest;
 
       if (!email || !code) {
         return new Response(
