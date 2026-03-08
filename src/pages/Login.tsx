@@ -5,17 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChefHat, Loader2, ArrowLeft, Users } from 'lucide-react';
+import { ChefHat, Loader2, ArrowLeft, Users, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-const DEMO_ACCOUNTS = [
-  { label: 'Owner', email: 'owner@demo.com', description: 'Acceso completo' },
-  { label: 'Ops Manager', email: 'ops@demo.com', description: 'Multi-local' },
-  { label: 'Manager Centro', email: 'manager.centro@demo.com', description: 'Solo Centro' },
-  { label: 'Employee Centro', email: 'employee.centro@demo.com', description: 'Vista limitada' },
-  { label: 'Manager Salamanca', email: 'manager.salamanca@demo.com', description: 'Solo Salamanca' },
-];
+
 
 const DEMO_PASSWORD = 'Demo1234!';
 
@@ -35,7 +29,7 @@ export default function Login() {
     setLoading(true);
 
     const { error } = await signIn(email, password);
-    
+
     if (error) {
       toast({
         variant: "destructive",
@@ -45,7 +39,7 @@ export default function Login() {
     } else {
       navigate('/');
     }
-    
+
     setLoading(false);
   };
 
@@ -56,11 +50,11 @@ export default function Login() {
       title: 'Iniciando demo…',
       description: `Entrando como ${demoEmail}`,
     });
-    
+
     try {
       // First, try to seed demo users if they don't exist
       const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
-      
+
       if (seedError) {
         console.warn('Could not seed demo users:', seedError);
       }
@@ -70,7 +64,7 @@ export default function Login() {
 
       // Now try to login
       const { error } = await signIn(demoEmail, DEMO_PASSWORD);
-      
+
       if (error) {
         toast({
           variant: "destructive",
@@ -92,13 +86,13 @@ export default function Login() {
         description: "No se pudo iniciar sesión en modo demo"
       });
     }
-    
+
     setDemoLoading(null);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       toast({
         variant: "destructive",
@@ -141,8 +135,8 @@ export default function Login() {
                 {resetEmailSent ? "Email enviado" : "Recuperar contraseña"}
               </CardTitle>
               <CardDescription>
-                {resetEmailSent 
-                  ? "Revisa tu bandeja de entrada para continuar" 
+                {resetEmailSent
+                  ? "Revisa tu bandeja de entrada para continuar"
                   : "Te enviaremos un enlace para restablecer tu contraseña"
                 }
               </CardDescription>
@@ -153,8 +147,8 @@ export default function Login() {
                   <p className="text-sm text-muted-foreground text-center">
                     Hemos enviado un email a <strong>{email}</strong> con instrucciones para restablecer tu contraseña.
                   </p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full"
                     onClick={() => {
                       setShowForgotPassword(false);
@@ -183,9 +177,9 @@ export default function Login() {
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Enviar enlace de recuperación
                   </Button>
-                  <Button 
+                  <Button
                     type="button"
-                    variant="ghost" 
+                    variant="ghost"
                     className="w-full"
                     onClick={() => setShowForgotPassword(false)}
                   >
@@ -261,37 +255,29 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        {/* Demo Mode Section */}
-        <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              Modo Demo
-            </CardTitle>
-            <CardDescription>
-              Prueba Josephine con diferentes roles y permisos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {DEMO_ACCOUNTS.map((account) => (
-              <Button
-                key={account.email}
-                variant="outline"
-                className="w-full justify-between h-auto py-3"
-                onClick={() => handleDemoLogin(account.email)}
-                disabled={demoLoading !== null}
-              >
-                <div className="text-left">
-                  <div className="font-medium">{account.label}</div>
-                  <div className="text-xs text-muted-foreground">{account.description}</div>
-                </div>
-                {demoLoading === account.email && (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                )}
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
+        {/* Demo Access */}
+        <button
+          onClick={() => handleDemoLogin('owner@demo.com')}
+          disabled={demoLoading !== null}
+          className="w-full group relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 p-4 text-left transition-all hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Probar Josephine</p>
+                <p className="text-xs text-muted-foreground">Accede al modo demo con datos de ejemplo</p>
+              </div>
+            </div>
+            {demoLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            )}
+          </div>
+        </button>
       </div>
     </div>
   );
