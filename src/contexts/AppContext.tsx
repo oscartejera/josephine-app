@@ -55,7 +55,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   // Detect if user needs onboarding (no group_id)
-  const needsOnboarding = !isDemoMode && !loading && profile !== null && profile.group_id === null && !onboardingCompleted;
+  // Note: NOT gated by isDemoMode — new users are always in demo mode (no POS)
+  // so the old !isDemoMode check prevented onboarding from ever triggering
+  const needsOnboarding = !loading && profile !== null && profile.group_id === null && !onboardingCompleted;
 
   const setOnboardingComplete = async () => {
     setOnboardingCompleted(true);
