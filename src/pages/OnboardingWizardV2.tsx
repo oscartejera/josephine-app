@@ -171,56 +171,33 @@ export default function OnboardingWizardV2() {
     const handleFinish = async () => {
         setSaving(true);
         try {
-            // Ensure user has a group + location in DB
-            // This is critical for demo data to flow correctly
+            // Use server-side RPC to create group + location + owner role
+            // This bypasses RLS (SECURITY DEFINER) — required because the user
+            // has no group_id yet and can't INSERT into groups/locations directly
             if (user && (!profile?.group_id)) {
-                // Create group
-                const { data: newGroup, error: groupErr } = await supabase
-                    .from('groups')
-                    .insert({ name: 'Mi Restaurante', owner_id: user.id })
-                    .select('id')
-                    .single();
+                const { data, error } = await supabase.rpc('setup_new_owner', {
+                    p_user_id: user.id,
+                    p_group_name: 'Mi Restaurante',
+                    p_location_name: 'Mi Local',
+                });
 
-                if (groupErr) {
-                    console.error('Error creating group:', groupErr);
-                } else if (newGroup) {
-                    // Create default location
-                    await supabase
-                        .from('locations')
-                        .insert({
-                            group_id: newGroup.id,
-                            org_id: newGroup.id,
-                            name: 'Mi Local',
-                            city: 'Mi Ciudad',
-                            active: true,
-                        });
-
-                    // Link user profile to group
-                    await supabase
-                        .from('profiles')
-                        .update({ group_id: newGroup.id })
-                        .eq('id', user.id);
-
-                    // Assign owner role
-                    const { data: ownerRole } = await supabase
-                        .from('roles')
-                        .select('id')
-                        .eq('name', 'owner')
-                        .single();
-
-                    if (ownerRole) {
-                        await supabase
-                            .from('user_roles')
-                            .upsert({ user_id: user.id, role_id: ownerRole.id, location_id: null });
-                    }
+                if (error) {
+                    console.error('Setup new owner error:', error);
+                    toast.error('Error al configurar tu cuenta. Intenta de nuevo.');
+                    setSaving(false);
+                    return;
                 }
+
+                console.log('Owner setup complete:', data);
             }
 
             // Save team members if any were added
             const teamCount = team.filter(m => m.name.trim()).length;
             if (teamCount > 0) {
+                // Refresh profile to get the new group_id for team saves
+                await setOnboardingComplete();
                 const orgId = profile?.group_id || undefined;
-                await saveTeam(orgId);
+                if (orgId) await saveTeam(orgId);
             }
 
             // Mark onboarding complete in localStorage + refresh AppContext
@@ -238,7 +215,7 @@ export default function OnboardingWizardV2() {
                 navigate('/dashboard');
             }
 
-            toast.success('¡Bienvenido a Josephine!');
+            toast.success('Bienvenido a Josephine');
         } catch (err) {
             console.error('Onboarding finish error:', err);
             toast.error('Error al finalizar. Intenta de nuevo.');
