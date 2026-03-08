@@ -4,6 +4,9 @@ project_id = "qixipveebfhurbarksib"
 [functions.send_email_otp]
 verify_jwt = false
 
+[functions.send_welcome_email]
+verify_jwt = false
+
 # Email notification functions
 [functions.send_schedule_published]
 verify_jwt = false
