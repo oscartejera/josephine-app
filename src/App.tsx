@@ -60,6 +60,7 @@ const Pricing = lazy(() => import("@/pages/Pricing"));
 const WorkforceTeam = lazy(() => import("@/pages/WorkforceTeam"));
 const WorkforceTimesheet = lazy(() => import("@/pages/WorkforceTimesheet"));
 const WorkforceOnboarding = lazy(() => import("@/pages/WorkforceOnboarding"));
+const KioskMode = lazy(() => import("@/pages/KioskMode"));
 
 // Team (Employee Portal) — lazy loaded
 const TeamHome = lazy(() => import("@/pages/team/TeamHome"));
@@ -226,6 +227,18 @@ function AppRoutes() {
           <Route path="/team/directory" element={<TeamDirectory />} />
           <Route path="/team/news" element={<TeamNews />} />
         </Route>
+
+        {/* Kiosk Mode — fullscreen, no sidebar, auth-protected */}
+        <Route
+          path="/kiosk/:locationId"
+          element={
+            <ProtectedRoute>
+              <AppProvider>
+                <KioskMode />
+              </AppProvider>
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
