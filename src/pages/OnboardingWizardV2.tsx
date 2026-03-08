@@ -23,14 +23,14 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import {
-    Zap, Users, ChefHat, Rocket, ChevronRight, ChevronLeft,
-    Plus, Trash2, CheckCircle, Link2, FileSpreadsheet,
-    ArrowRight, Sparkles, Upload, SkipForward
+    Zap, Users, Rocket, ChevronRight, ChevronLeft,
+    Plus, Trash2, CheckCircle, Link2,
+    ArrowRight, Sparkles
 } from 'lucide-react';
 import Joyride, { Step as JoyrideStep, STATUS, CallBackProps } from 'react-joyride';
 
 // ── Types ─────────────────────────────────────────────────────────
-type WizardStep = 1 | 2 | 3 | 4;
+type WizardStep = 1 | 2 | 3;
 
 interface TeamMember {
     name: string;
@@ -108,15 +108,14 @@ export default function OnboardingWizardV2() {
     const [team, setTeam] = useState<TeamMember[]>([
         { name: '', role: 'Camarero/a' },
     ]);
-    const [menuChoice, setMenuChoice] = useState<'pos' | 'csv' | 'skip' | null>(null);
     const [showTour, setShowTour] = useState(false);
     const [saving, setSaving] = useState(false);
 
     // ── Step navigation ──────────────────────────────────────────
-    const nextStep = () => setStep(s => Math.min(s + 1, 4) as WizardStep);
+    const nextStep = () => setStep(s => Math.min(s + 1, 3) as WizardStep);
     const prevStep = () => setStep(s => Math.max(s - 1, 1) as WizardStep);
 
-    const progress = ((step - 1) / 3) * 100;
+    const progress = ((step - 1) / 2) * 100;
 
     // ── Team management ──────────────────────────────────────────
     const addMember = () => setTeam(prev => [...prev, { name: '', role: 'Camarero/a' }]);
@@ -344,66 +343,8 @@ export default function OnboardingWizardV2() {
         </div>
     );
 
-    // ── Render: Step 3 — Menu ────────────────────────────────────
-    const renderStep3 = () => (
-        <div className="space-y-6">
-            <div className="text-center space-y-2">
-                <div className="h-16 w-16 rounded-2xl bg-amber-500/10 mx-auto flex items-center justify-center">
-                    <ChefHat className="h-8 w-8 text-amber-500" />
-                </div>
-                <h2 className="text-2xl font-bold">Importa tu menú</h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                    Tu menú ayuda a Josephine a calcular rentabilidad, food cost y sugerencias de precios.
-                </p>
-            </div>
-
-            <div className="max-w-md mx-auto space-y-3">
-                {posChoice && posChoice !== 'skip' && posChoice !== 'csv' && (
-                    <button
-                        onClick={() => setMenuChoice('pos')}
-                        className={`w-full p-5 rounded-xl border-2 text-left transition-all hover:shadow-md flex items-center gap-4 ${menuChoice === 'pos' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30' : 'border-border'
-                            }`}
-                    >
-                        <Zap className="h-8 w-8 text-indigo-500" />
-                        <div>
-                            <p className="font-semibold">Importar desde {posChoice === 'square' ? 'Square' : 'Lightspeed'}</p>
-                            <p className="text-xs text-muted-foreground">Sincroniza automáticamente tu catálogo</p>
-                        </div>
-                        {menuChoice === 'pos' && <CheckCircle className="h-5 w-5 text-indigo-500 ml-auto" />}
-                    </button>
-                )}
-
-                <button
-                    onClick={() => setMenuChoice('csv')}
-                    className={`w-full p-5 rounded-xl border-2 text-left transition-all hover:shadow-md flex items-center gap-4 ${menuChoice === 'csv' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-border'
-                        }`}
-                >
-                    <Upload className="h-8 w-8 text-emerald-500" />
-                    <div>
-                        <p className="font-semibold">Subir archivo CSV</p>
-                        <p className="text-xs text-muted-foreground">Usa nuestra plantilla de menú</p>
-                    </div>
-                    {menuChoice === 'csv' && <CheckCircle className="h-5 w-5 text-emerald-500 ml-auto" />}
-                </button>
-
-                <button
-                    onClick={() => setMenuChoice('skip')}
-                    className={`w-full p-5 rounded-xl border-2 text-left transition-all hover:shadow-md flex items-center gap-4 ${menuChoice === 'skip' ? 'border-slate-400 bg-slate-50 dark:bg-slate-800' : 'border-border'
-                        }`}
-                >
-                    <SkipForward className="h-8 w-8 text-slate-400" />
-                    <div>
-                        <p className="font-semibold">Añadir después</p>
-                        <p className="text-xs text-muted-foreground">Puedes configurar el menú más tarde</p>
-                    </div>
-                    {menuChoice === 'skip' && <CheckCircle className="h-5 w-5 text-slate-400 ml-auto" />}
-                </button>
-            </div>
-        </div>
-    );
-
-    // ── Render: Step 4 — Confirmation ────────────────────────────
-    const renderStep4 = () => {
+    // ── Render: Step 3 — Confirmation ──────────────────────────
+    const renderStep3 = () => {
         const teamCount = team.filter(m => m.name.trim()).length;
         return (
             <div className="space-y-6">
@@ -411,7 +352,7 @@ export default function OnboardingWizardV2() {
                     <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-500 mx-auto flex items-center justify-center">
                         <Rocket className="h-10 w-10 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold">¡Todo listo!</h2>
+                    <h2 className="text-2xl font-bold">Todo listo</h2>
                     <p className="text-muted-foreground max-w-md mx-auto">
                         Josephine ya está configurada. Tu primera previsión de ventas estará lista en <strong>menos de 24 horas</strong>.
                     </p>
@@ -433,14 +374,6 @@ export default function OnboardingWizardV2() {
                             <CheckCircle className="h-5 w-5 text-emerald-500" />
                             <span className="text-sm">
                                 <strong>Equipo:</strong> {teamCount > 0 ? `${teamCount} miembro${teamCount > 1 ? 's' : ''}` : 'Se añadirá después'}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <CheckCircle className="h-5 w-5 text-emerald-500" />
-                            <span className="text-sm">
-                                <strong>Menú:</strong>{' '}
-                                {menuChoice === 'pos' ? `Se importará desde ${posChoice === 'square' ? 'Square' : 'Lightspeed'}` :
-                                    menuChoice === 'csv' ? 'Se importará por CSV' : 'Se configurará después'}
                             </span>
                         </div>
                     </div>
@@ -488,12 +421,11 @@ export default function OnboardingWizardV2() {
         );
     };
 
-    // ── Can proceed ──────────────────────────────────────────────
+    // ── Can proceed ──────────────────────────────────────────
     const canNext = () => {
         switch (step) {
             case 1: return posChoice !== null;
             case 2: return true; // Team is optional
-            case 3: return menuChoice !== null;
             default: return true;
         }
     };
@@ -511,7 +443,7 @@ export default function OnboardingWizardV2() {
                 </div>
                 <div className="flex items-center gap-4">
                     <span className="text-sm text-muted-foreground">
-                        Paso {step} de 4
+                        Paso {step} de 3
                     </span>
                     <div className="w-32">
                         <Progress value={progress} className="h-2" />
@@ -525,12 +457,11 @@ export default function OnboardingWizardV2() {
                     {step === 1 && renderStep1()}
                     {step === 2 && renderStep2()}
                     {step === 3 && renderStep3()}
-                    {step === 4 && renderStep4()}
                 </div>
             </div>
 
             {/* Footer */}
-            {step < 4 && (
+            {step < 3 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
                     <Button
                         variant="ghost"
