@@ -21,7 +21,7 @@ async function sendEmail(to: string, subject: string, html: string) {
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "Josephine <onboarding@resend.dev>",
+      from: Deno.env.get("EMAIL_FROM") || "Josephine <josephine@josephine-ai.com>",
       to: [to],
       subject,
       html,
@@ -153,9 +153,9 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await sendEmail(reservation.guest_email, subject, htmlContent);
     console.log("Email sent successfully:", emailResponse);
 
-    const updateField = type === 'confirmation' ? 'confirmation_sent_at' : 
-                        type === 'reminder' ? 'reminder_sent_at' : null;
-    
+    const updateField = type === 'confirmation' ? 'confirmation_sent_at' :
+      type === 'reminder' ? 'reminder_sent_at' : null;
+
     if (updateField) {
       await supabase
         .from('reservations')

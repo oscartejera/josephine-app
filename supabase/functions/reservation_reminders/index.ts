@@ -16,7 +16,7 @@ async function sendEmail(to: string, subject: string, html: string) {
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "Josephine <onboarding@resend.dev>",
+      from: Deno.env.get("EMAIL_FROM") || "Josephine <josephine@josephine-ai.com>",
       to: [to],
       subject,
       html,
@@ -134,11 +134,11 @@ const handler = async (req: Request): Promise<Response> => {
     const failCount = results.filter(r => !r.success).length;
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         processed: results.length,
         success: successCount,
         failed: failCount,
-        results 
+        results
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

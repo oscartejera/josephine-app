@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     // Verify user is authenticated
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await userClient.auth.getUser(token);
-    
+
     if (claimsError || !claimsData.user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
         .select('name')
         .eq('id', location_id)
         .single();
-      
+
       if (locationData) {
         locationName = locationData.name;
       }
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
 
     // Send welcome email with credentials using Resend API directly
     const appUrl = req.headers.get('origin') || 'https://josephine.lovable.app';
-    
+
     try {
       const emailHtml = `
         <!DOCTYPE html>
@@ -279,7 +279,7 @@ Deno.serve(async (req) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'Josephine <onboarding@resend.dev>',
+          from: Deno.env.get('EMAIL_FROM') || 'Josephine <josephine@josephine-ai.com>',
           to: [email],
           subject: `¡Bienvenido a ${groupName}! - Tus credenciales de acceso`,
           html: emailHtml

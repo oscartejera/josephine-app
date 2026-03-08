@@ -22,13 +22,13 @@ function generateOTP(): string {
 
 async function sendEmail(to: string, code: string, fullName?: string): Promise<void> {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-  
+
   if (!RESEND_API_KEY) {
     throw new Error("RESEND_API_KEY not configured");
   }
 
   const name = fullName || "Usuario";
-  
+
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -36,7 +36,7 @@ async function sendEmail(to: string, code: string, fullName?: string): Promise<v
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "Josephine <onboarding@resend.dev>",
+      from: Deno.env.get("EMAIL_FROM") || "Josephine <josephine@josephine-ai.com>",
       to: [to],
       subject: "Tu código de verificación - Josephine",
       html: `
