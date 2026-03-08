@@ -62,6 +62,7 @@ const WorkforceTeam = lazy(() => import("@/pages/WorkforceTeam"));
 const WorkforceTimesheet = lazy(() => import("@/pages/WorkforceTimesheet"));
 const WorkforceOnboarding = lazy(() => import("@/pages/WorkforceOnboarding"));
 const KioskMode = lazy(() => import("@/pages/KioskMode"));
+const OnboardingWizardV2 = lazy(() => import("@/pages/OnboardingWizardV2"));
 
 // Team (Employee Portal) — lazy loaded
 const TeamHome = lazy(() => import("@/pages/team/TeamHome"));
@@ -242,6 +243,17 @@ function AppRoutes() {
           }
         />
 
+        {/* Onboarding Wizard v2 — fullscreen, no sidebar, auth-protected */}
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <AppProvider>
+                <OnboardingWizardV2 />
+              </AppProvider>
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

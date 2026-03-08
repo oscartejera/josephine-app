@@ -15,6 +15,7 @@ import { OnboardingWizard } from '@/components/onboarding';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { AIImpactCard } from '@/components/forecast/AIImpactCard';
 import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
+import { DashboardTour } from '@/pages/OnboardingWizardV2';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle, Bot } from 'lucide-react';
 import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
 import { Card, CardContent } from '@/components/ui/card';
@@ -215,7 +216,7 @@ export default function Dashboard() {
         )}
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div data-tour="kpi-cards" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           <MetricCard
             title={t('dashboard.netSales')}
             value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
@@ -298,6 +299,8 @@ export default function Dashboard() {
           <Bot className="h-6 w-6" />
         </button>
       )}
+      {/* Product Tour (react-joyride) */}
+      <DashboardTour />
     </>
   );
 }

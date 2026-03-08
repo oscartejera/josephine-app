@@ -151,6 +151,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
   return (
     <aside
+      data-tour="sidebar"
       className={cn(
         "fixed left-0 top-0 z-40 h-screen bg-card border-r border-border transition-all duration-300 flex flex-col",
         collapsed ? "w-16" : "w-64"
@@ -241,6 +242,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 collapsed && "justify-center px-2"
               )}
               onClick={() => navigate('/dashboard')}
+              data-tour="control-tower"
             >
               <LayoutDashboard className="h-4 w-4 shrink-0" />
               {!collapsed && <span>{t('nav.controlTower')}</span>}
@@ -252,6 +254,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             <Collapsible open={insightsExpanded && !collapsed} onOpenChange={handleInsightsToggle}>
               <CollapsibleTrigger asChild>
                 <Button
+                  data-tour="insights"
                   variant={isInsightsRoute ? "secondary" : "ghost"}
                   className={cn(
                     "w-full justify-start gap-3 h-10",
@@ -300,6 +303,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           <Collapsible open={workforceExpanded && !collapsed} onOpenChange={() => setWorkforceExpanded(prev => !prev)}>
             <CollapsibleTrigger asChild>
               <Button
+                data-tour="workforce"
                 variant={isWorkforceRoute ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start gap-3 h-10",
@@ -418,6 +422,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               collapsed && "justify-center px-2"
             )}
             onClick={() => navigate('/integrations')}
+            data-tour="integrations"
           >
             <Plug2 className="h-4 w-4 shrink-0" />
             {!collapsed && <span>{t('nav.integrations')}</span>}
