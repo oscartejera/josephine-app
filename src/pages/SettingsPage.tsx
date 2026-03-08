@@ -14,6 +14,7 @@ import { DataSourceSettings } from '@/components/settings/DataSourceSettings';
 import { ObjectivesTab } from '@/components/settings/ObjectivesTab';
 import { PaymentMethodsTab } from '@/components/settings/PaymentMethodsTab';
 import { ExportTab } from '@/components/settings/ExportTab';
+import { TeamManagersTab } from '@/components/settings/TeamManagersTab';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -28,6 +29,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="general">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="general">{t('settings.general')}</TabsTrigger>
+          <TabsTrigger value="team">Equipo</TabsTrigger>
           <TabsTrigger value="locations">{t('settings.locations')}</TabsTrigger>
           <TabsTrigger value="booking">{t('settings.bookings')}</TabsTrigger>
           <TabsTrigger value="loyalty">{t('settings.loyalty')}</TabsTrigger>
@@ -43,6 +45,10 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <LanguageSelector />
           </div>
+        </TabsContent>
+
+        <TabsContent value="team">
+          <TeamManagersTab />
         </TabsContent>
 
         <TabsContent value="locations">

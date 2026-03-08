@@ -7,6 +7,9 @@ verify_jwt = false
 [functions.send_welcome_email]
 verify_jwt = false
 
+[functions.invite_manager]
+verify_jwt = true
+
 # Email notification functions
 [functions.send_schedule_published]
 verify_jwt = false
