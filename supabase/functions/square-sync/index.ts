@@ -27,9 +27,15 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders } from '../_shared/cors.ts';
 import { SquareClient } from '../_shared/square-client.ts';
 
-// Limits to avoid Edge Function timeout (max ~60s for Deno Deploy)
-const MAX_ORDER_PAGES = 5;   // 5 × 100 = 500 orders max
-const MAX_PAYMENT_PAGES = 5; // 5 × 100 = 500 payments max
+// ── Universal Sync Policy ────────────────────────────────────────────
+// Initial sync:  365 days, 50 pages (5,000 orders) — pull full POS history
+// Manual sync:   30 days,  15 pages (1,500 orders) — user-triggered refresh
+// Daily sync:    7 days,   5 pages  (500 orders)   — incremental update
+const SYNC_PROFILES = {
+  initial: { maxOrderPages: 50, maxPaymentPages: 50 },
+  manual: { maxOrderPages: 15, maxPaymentPages: 15 },
+  daily: { maxOrderPages: 5, maxPaymentPages: 5 },
+} as const;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -64,7 +70,11 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const orgId: string = body.org_id;
-    const lookbackDays: number = body.lookback_days ?? 7;
+    const isInitialSync: boolean = body.is_initial_sync ?? false;
+    const syncType: 'initial' | 'manual' | 'daily' = isInitialSync ? 'initial' : (body.sync_type || 'daily');
+    const lookbackDays: number = body.lookback_days ?? (isInitialSync ? 365 : syncType === 'manual' ? 30 : 7);
+    const profile = SYNC_PROFILES[syncType];
+    console.log(`[square-sync] type=${syncType} lookback=${lookbackDays}d pages=${profile.maxOrderPages}`);
 
     if (!orgId) {
       return new Response(
@@ -150,6 +160,8 @@ Deno.serve(async (req) => {
 
     const stats = { locations: 0, orders: 0, payments: 0, items: 0, order_lines: 0 };
     const beginTime = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000).toISOString();
+    const MAX_ORDER_PAGES = profile.maxOrderPages;
+    const MAX_PAYMENT_PAGES = profile.maxPaymentPages;
     const accountId = account.id;
 
     // ── 5a. Fetch Locations ───────────────────────────────────────────
@@ -447,11 +459,31 @@ Deno.serve(async (req) => {
         metadata: {
           ...(integration.metadata || {}),
           last_synced_at: new Date().toISOString(),
+          initial_sync_done: true,
         },
       })
       .eq('id', integration.id);
 
     await finalizeRun('success', stats);
+
+    // ── 9. Auto-trigger forecast after initial sync ───────────────────
+    if (isInitialSync && stats.orders > 0) {
+      console.log('[square-sync] Initial sync done, auto-triggering forecast generation...');
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/generate_forecast_v6`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ org_id: orgId }),
+        });
+        console.log('[square-sync] Forecast generation triggered successfully');
+      } catch (forecastErr) {
+        // Don't fail the sync if forecast generation fails
+        console.warn('[square-sync] Forecast trigger failed (non-blocking):', forecastErr);
+      }
+    }
 
     return new Response(
       JSON.stringify({

@@ -26,7 +26,8 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 /** Max time to wait for the sync Edge Function (ms). */
-const SYNC_TIMEOUT_MS = 180_000; // 3 minutes
+const SYNC_TIMEOUT_MS = 300_000; // 5 minutes (initial sync pulls up to 365 days)
+const MANUAL_SYNC_TIMEOUT_MS = 180_000; // 3 minutes for manual re-syncs
 
 /** Call an Edge Function with a timeout via AbortController. */
 async function invokeEdgeFunction(name: string, body: Record<string, unknown>, timeoutMs = 30_000) {
@@ -305,11 +306,12 @@ export default function SquareIntegration() {
       // Immediately invalidate queries so the badge updates Demo→POS
       queryClient.invalidateQueries();
 
-      // Fire-and-forget: trigger first sync
+      // Fire-and-forget: trigger INITIAL sync (365 days of POS history)
       if (orgId) {
         invokeEdgeFunction('square-sync', {
           org_id: orgId,
-          lookback_days: 7,
+          lookback_days: 365,
+          is_initial_sync: true,
         }, SYNC_TIMEOUT_MS).catch((err) => {
           console.warn('Auto-sync trigger failed (will poll for result):', err.message);
         });
@@ -446,11 +448,23 @@ export default function SquareIntegration() {
     setSyncing(true);
     startProgressAnimation();
 
+    // Detect if this is the first-ever sync (no initial_sync_done flag)
+    const isFirstSync = !(integration?.metadata as any)?.initial_sync_done;
+    const lookbackDays = isFirstSync ? 365 : 30;
+    const timeoutMs = isFirstSync ? SYNC_TIMEOUT_MS : MANUAL_SYNC_TIMEOUT_MS;
+
+    console.log(`[SquareIntegration] Sync: first=${isFirstSync} lookback=${lookbackDays}d`);
+
     try {
       const data = await invokeEdgeFunction(
         'square-sync',
-        { org_id: orgId, lookback_days: 7 },
-        SYNC_TIMEOUT_MS,
+        {
+          org_id: orgId,
+          lookback_days: lookbackDays,
+          is_initial_sync: isFirstSync,
+          sync_type: isFirstSync ? 'initial' : 'manual',
+        },
+        timeoutMs,
       );
 
       if (data.message === 'Sync already running') {
@@ -616,7 +630,7 @@ export default function SquareIntegration() {
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
               <li>Locales y ubicaciones</li>
               <li>Catálogo de productos (items y categorías)</li>
-              <li>Pedidos y transacciones (últimos 7 días)</li>
+              <li>Pedidos y transacciones (hasta 1 año de histórico)</li>
               <li>Métodos de pago y cantidades</li>
             </ul>
             <p className="text-sm text-muted-foreground">

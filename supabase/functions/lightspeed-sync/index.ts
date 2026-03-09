@@ -32,8 +32,11 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { integrationId: intId, org_id, lookback_days = 30 } = await req.json();
+        const { integrationId: intId, org_id, is_initial_sync = false, lookback_days } = await req.json();
+        // Universal Sync Policy: initial=365d, manual=30d, daily=7d
+        const effectiveLookback = lookback_days ?? (is_initial_sync ? 365 : 30);
         integrationId = intId;
+        console.log(`[lightspeed-sync] initial=${is_initial_sync} lookback=${effectiveLookback}d`);
 
         // Find integration + account + tokens
         const { data: account } = await supabase
@@ -84,7 +87,7 @@ Deno.serve(async (req) => {
 
         // ── Pull Sales ──────────────────────────────────────────────
         const endDate = new Date().toISOString().split('T')[0];
-        const startDate = new Date(Date.now() - lookback_days * 86400000).toISOString().split('T')[0];
+        const startDate = new Date(Date.now() - effectiveLookback * 86400000).toISOString().split('T')[0];
 
         try {
             const salesData = await client.getSales(businessId, startDate, endDate);
@@ -155,6 +158,23 @@ Deno.serve(async (req) => {
         }
 
         await finalizeRun('success', stats);
+
+        // Auto-trigger forecast after initial sync
+        if (is_initial_sync && stats.sales > 0) {
+            console.log('[lightspeed-sync] Initial sync done, auto-triggering forecast...');
+            try {
+                await fetch(`${supabaseUrl}/functions/v1/generate_forecast_v6`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ org_id }),
+                });
+            } catch (forecastErr) {
+                console.warn('[lightspeed-sync] Forecast trigger failed (non-blocking):', forecastErr);
+            }
+        }
 
         console.log('[Lightspeed Sync] Done:', stats);
 
