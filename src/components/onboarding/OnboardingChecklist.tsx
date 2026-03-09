@@ -51,7 +51,7 @@ export function OnboardingChecklist() {
             path: '/workforce/team',
             checkFn: async () => {
                 const { count } = await (supabase as any)
-                    .from('staff_members')
+                    .from('employees')
                     .select('*', { count: 'exact', head: true })
                     .limit(1);
                 return (count || 0) > 0;
