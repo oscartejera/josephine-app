@@ -1,9 +1,12 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Building2, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { buildQueryContext, getKpiRangeSummary } from '@/data';
 
 interface LocationKPI {
     id: string;
@@ -15,25 +18,12 @@ interface LocationKPI {
     splh: number;
 }
 
-// Demo data generator — in production this would come from an RPC
-function generateDemoKPIs(locations: { id: string; name: string }[]): LocationKPI[] {
-    return locations.map((loc, idx) => ({
-        id: loc.id,
-        name: loc.name,
-        revenue: 12000 + Math.random() * 8000,
-        gpPercent: 65 + Math.random() * 10,
-        colPercent: 22 + Math.random() * 8,
-        wastePercent: 2 + Math.random() * 4,
-        splh: 35 + Math.random() * 20,
-    }));
-}
-
 const KPI_TARGETS = {
-    gpPercent: { target: 70, higher: 'good' },
-    colPercent: { target: 30, higher: 'bad' },
-    wastePercent: { target: 3, higher: 'bad' },
-    splh: { target: 40, higher: 'good' },
-} as const;
+    gpPercent: { target: 70, higher: 'good' as const },
+    colPercent: { target: 30, higher: 'bad' as const },
+    wastePercent: { target: 3, higher: 'bad' as const },
+    splh: { target: 40, higher: 'good' as const },
+};
 
 function getKPIColor(value: number, kpi: keyof typeof KPI_TARGETS): string {
     const config = KPI_TARGETS[kpi];
@@ -46,20 +36,78 @@ function getKPIIcon(value: number, kpi: keyof typeof KPI_TARGETS) {
     const config = KPI_TARGETS[kpi];
     const diff = value - config.target;
     if (Math.abs(diff) < 1) return <Minus className="h-3 w-3" />;
-    const isUp = diff > 0;
-    return isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />;
+    return diff > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />;
 }
 
 export function LocationBenchmark() {
-    const { locations, canShowAllLocations } = useApp();
+    const { accessibleLocations, canShowAllLocations, getDateRangeValues, dataSource, dateRange } = useApp();
+    const { profile } = useAuth();
+    const [kpis, setKpis] = useState<LocationKPI[]>([]);
+    const [loading, setLoading] = useState(true);
 
     // Only show for owners with multiple locations
-    if (!canShowAllLocations || locations.length < 2) return null;
+    if (!canShowAllLocations || accessibleLocations.length < 2) return null;
 
-    const kpis = useMemo(() => generateDemoKPIs(locations), [locations]);
+    useEffect(() => {
+        async function fetchAllLocations() {
+            if (!profile?.group_id || accessibleLocations.length < 2) {
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
+            const { from, to } = getDateRangeValues();
+            const fromStr = from.toISOString().split('T')[0];
+            const toStr = to.toISOString().split('T')[0];
+
+            const results: LocationKPI[] = [];
+
+            for (const loc of accessibleLocations) {
+                try {
+                    const ctx = buildQueryContext(profile.group_id, [loc.id], dataSource);
+                    const kpiData = await getKpiRangeSummary(ctx, fromStr, toStr);
+                    const c = kpiData.current;
+
+                    results.push({
+                        id: loc.id,
+                        name: loc.name,
+                        revenue: c.net_sales || 0,
+                        gpPercent: c.gp_percent || 0,
+                        colPercent: c.col_percent || 0,
+                        wastePercent: 0, // waste not in KPI summary yet
+                        splh: c.net_sales > 0 && c.labour_cost > 0
+                            ? Math.round(c.net_sales / (c.labour_cost / 12) * 100) / 100
+                            : 0,
+                    });
+                } catch {
+                    results.push({
+                        id: loc.id,
+                        name: loc.name,
+                        revenue: 0, gpPercent: 0, colPercent: 0, wastePercent: 0, splh: 0,
+                    });
+                }
+            }
+
+            setKpis(results);
+            setLoading(false);
+        }
+
+        fetchAllLocations();
+    }, [profile?.group_id, accessibleLocations, dataSource, dateRange]);
+
+    if (loading) {
+        return (
+            <Card>
+                <CardContent className="pt-6 flex items-center justify-center h-24">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </CardContent>
+            </Card>
+        );
+    }
+
+    if (kpis.length === 0 || kpis.every(k => k.revenue === 0)) return null;
 
     const bestGP = kpis.reduce((best, loc) => loc.gpPercent > best.gpPercent ? loc : best, kpis[0]);
-    const bestSPLH = kpis.reduce((best, loc) => loc.splh > best.splh ? loc : best, kpis[0]);
 
     return (
         <Card>
@@ -79,7 +127,6 @@ export function LocationBenchmark() {
                                 <th className="text-right py-2 px-3 font-medium text-muted-foreground">Revenue</th>
                                 <th className="text-right py-2 px-3 font-medium text-muted-foreground">GP%</th>
                                 <th className="text-right py-2 px-3 font-medium text-muted-foreground">COL%</th>
-                                <th className="text-right py-2 px-3 font-medium text-muted-foreground">Waste%</th>
                                 <th className="text-right py-2 pl-3 font-medium text-muted-foreground">SPLH</th>
                             </tr>
                         </thead>
@@ -92,7 +139,7 @@ export function LocationBenchmark() {
                                                 {loc.name.charAt(0)}
                                             </div>
                                             <span className="font-medium truncate max-w-[120px]">{loc.name}</span>
-                                            {loc.id === bestGP.id && (
+                                            {loc.id === bestGP.id && bestGP.gpPercent > 0 && (
                                                 <Badge variant="outline" className="text-[10px] py-0 px-1 border-emerald-300 text-emerald-600">
                                                     Best GP
                                                 </Badge>
@@ -100,7 +147,7 @@ export function LocationBenchmark() {
                                         </div>
                                     </td>
                                     <td className="text-right py-2.5 px-3 font-medium">
-                                        €{loc.revenue.toFixed(0)}
+                                        €{loc.revenue.toLocaleString('es-ES', { maximumFractionDigits: 0 })}
                                     </td>
                                     <td className={cn("text-right py-2.5 px-3 font-medium", getKPIColor(loc.gpPercent, 'gpPercent'))}>
                                         <span className="inline-flex items-center gap-1">
@@ -114,12 +161,6 @@ export function LocationBenchmark() {
                                             {loc.colPercent.toFixed(1)}%
                                         </span>
                                     </td>
-                                    <td className={cn("text-right py-2.5 px-3 font-medium", getKPIColor(loc.wastePercent, 'wastePercent'))}>
-                                        <span className="inline-flex items-center gap-1">
-                                            {getKPIIcon(loc.wastePercent, 'wastePercent')}
-                                            {loc.wastePercent.toFixed(1)}%
-                                        </span>
-                                    </td>
                                     <td className={cn("text-right py-2.5 pl-3 font-medium", getKPIColor(loc.splh, 'splh'))}>
                                         <span className="inline-flex items-center gap-1">
                                             {getKPIIcon(loc.splh, 'splh')}
@@ -129,14 +170,12 @@ export function LocationBenchmark() {
                                 </tr>
                             ))}
                         </tbody>
-                        {/* Target row */}
                         <tfoot>
                             <tr className="bg-muted/30">
                                 <td className="py-2 pr-4 text-xs font-medium text-muted-foreground">Objetivo</td>
                                 <td className="text-right py-2 px-3 text-xs text-muted-foreground">—</td>
                                 <td className="text-right py-2 px-3 text-xs text-muted-foreground">≥70%</td>
                                 <td className="text-right py-2 px-3 text-xs text-muted-foreground">≤30%</td>
-                                <td className="text-right py-2 px-3 text-xs text-muted-foreground">≤3%</td>
                                 <td className="text-right py-2 pl-3 text-xs text-muted-foreground">≥€40</td>
                             </tr>
                         </tfoot>

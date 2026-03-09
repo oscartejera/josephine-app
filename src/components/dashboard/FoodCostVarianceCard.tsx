@@ -18,13 +18,18 @@ interface FoodCostData {
 }
 
 export function FoodCostVarianceCard() {
-    const { selectedLocationId, getDateRangeValues, dateRange, loading: appLoading } = useApp();
+    const { selectedLocationId, accessibleLocations, getDateRangeValues, dateRange, loading: appLoading } = useApp();
     const [data, setData] = useState<FoodCostData | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Resolve location — if 'all', pick first accessible location
+    const effectiveLocationId = selectedLocationId === 'all'
+        ? accessibleLocations[0]?.id || null
+        : selectedLocationId;
+
     useEffect(() => {
         async function fetchVariance() {
-            if (!selectedLocationId || selectedLocationId === 'all' || appLoading) {
+            if (!effectiveLocationId || appLoading) {
                 setLoading(false);
                 return;
             }
@@ -33,7 +38,7 @@ export function FoodCostVarianceCard() {
             try {
                 const { from, to } = getDateRangeValues();
                 const { data: result, error } = await (supabase.rpc as any)('get_food_cost_variance', {
-                    _location_id: selectedLocationId,
+                    _location_id: effectiveLocationId,
                     _from: from.toISOString().split('T')[0],
                     _to: to.toISOString().split('T')[0],
                 });
@@ -49,7 +54,7 @@ export function FoodCostVarianceCard() {
         }
 
         fetchVariance();
-    }, [selectedLocationId, dateRange, appLoading]);
+    }, [effectiveLocationId, dateRange, appLoading]);
 
     if (loading) {
         return (
