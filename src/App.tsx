@@ -112,6 +112,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function ProtectedLayout() {
+  const { roles, isOwner, loading } = useAuth();
+
+  // If employee-only, redirect to team portal (they shouldn't see DashboardLayout)
+  if (!loading) {
+    const isEmployeeOnly = (roles.length > 0 && roles.every(r => r.role_name === 'employee'))
+      || (roles.length === 0 && !isOwner);
+    if (isEmployeeOnly) {
+      return <Navigate to="/team" replace />;
+    }
+  }
+
   return (
     <AppProvider>
       <RouteErrorBoundary>
