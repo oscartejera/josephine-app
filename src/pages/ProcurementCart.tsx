@@ -29,7 +29,7 @@ export default function ProcurementCart() {
     deliveryDaysLabel,
     allSkus,
   } = useProcurementData();
-  
+
   const [paymentState, setPaymentState] = useState<PaymentState>('idle');
   const [orderId, setOrderId] = useState<string | null>(null);
   const [comments, setComments] = useState('');
@@ -48,7 +48,7 @@ export default function ProcurementCart() {
     setPaymentState('processing');
     setErrorMessage('');
     setSavedToDb(false);
-    
+
     try {
       // First, we need to get a supplier ID from the database
       // Check if we have a supplier with the same name
@@ -77,10 +77,10 @@ export default function ProcurementCart() {
             .select('group_id')
             .eq('id', user.id)
             .single();
-          
+
           if (profile?.group_id) {
             groupId = profile.group_id;
-            
+
             // Create the supplier
             const { data: newSupplier, error: createSupplierError } = await supabase
               .from('suppliers')
@@ -124,7 +124,7 @@ export default function ProcurementCart() {
               purchase_order_id: purchaseOrder.id,
               inventory_item_id: sku.inventoryItemId!,
               quantity: packs * sku.packSizeUnits,
-              unit_cost: sku.unitPrice / sku.packSizeUnits,
+              unit_price: sku.unitPrice / sku.packSizeUnits,
             }));
 
           if (orderLines.length > 0) {
@@ -152,7 +152,7 @@ export default function ProcurementCart() {
       const newOrderId = `PO-${Date.now().toString(36).toUpperCase()}`;
       setOrderId(newOrderId);
       setPaymentState('success');
-      
+
     } catch (error) {
       console.error('Error placing order:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
@@ -164,13 +164,13 @@ export default function ProcurementCart() {
     if (paymentState === 'success') {
       clearCart();
       // Navigate to orders page with success state
-      navigate('/procurement/orders', { 
-        state: { 
-          orderSuccess: true, 
+      navigate('/procurement/orders', {
+        state: {
+          orderSuccess: true,
           orderId: orderId,
           supplierName: orderSummary.supplierName,
           savedToDb,
-        } 
+        }
       });
     }
     setPaymentState('idle');
@@ -422,15 +422,15 @@ export default function ProcurementCart() {
 
                 {/* Actions */}
                 <div className="space-y-3 pt-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full"
-                    onClick={() => {/* Save for later */}}
+                    onClick={() => {/* Save for later */ }}
                   >
                     Save for later
                   </Button>
-                  <Button 
-                    className="w-full h-12 text-base font-semibold" 
+                  <Button
+                    className="w-full h-12 text-base font-semibold"
                     size="lg"
                     onClick={handlePlaceOrder}
                     disabled={!meetsMinOrder}

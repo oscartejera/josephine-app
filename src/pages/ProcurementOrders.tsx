@@ -35,7 +35,6 @@ interface SupplierWithStats {
   id: string;
   name: string;
   email: string | null;
-  phone: string | null;
   ordersCount: number;
   totalValue: number;
   lastOrderDate: string | null;
@@ -56,7 +55,7 @@ interface OrderLine {
   inventory_item_id: string;
   item_name: string;
   quantity: number;
-  unit_cost: number;
+  unit_price: number;
 }
 
 export default function ProcurementOrders() {
@@ -91,7 +90,7 @@ export default function ProcurementOrders() {
       // Fetch suppliers with order counts
       const { data: suppliersData, error: suppliersError } = await supabase
         .from('suppliers')
-        .select('id, name, email, phone');
+        .select('id, name, email');
 
       if (suppliersError) throw suppliersError;
 
@@ -112,7 +111,7 @@ export default function ProcurementOrders() {
       // Fetch order line totals
       const { data: linesData, error: linesError } = await supabase
         .from('purchase_order_lines')
-        .select('purchase_order_id, quantity, unit_cost');
+        .select('purchase_order_id, quantity, unit_price');
 
       if (linesError) throw linesError;
 
@@ -122,7 +121,7 @@ export default function ProcurementOrders() {
         const existing = orderTotals.get(line.purchase_order_id) || { lineCount: 0, totalValue: 0 };
         orderTotals.set(line.purchase_order_id, {
           lineCount: existing.lineCount + 1,
-          totalValue: existing.totalValue + (line.quantity * (line.unit_cost || 0))
+          totalValue: existing.totalValue + (line.quantity * (line.unit_price || 0))
         });
       });
 
@@ -160,7 +159,6 @@ export default function ProcurementOrders() {
           id: supplier.id,
           name: supplier.name,
           email: supplier.email,
-          phone: supplier.phone,
           ordersCount: stats.ordersCount,
           totalValue: stats.totalValue,
           lastOrderDate: stats.lastOrderDate
@@ -197,13 +195,13 @@ export default function ProcurementOrders() {
           console.log('Realtime update:', payload);
           // Refetch data when any change occurs
           fetchData();
-          
+
           if (payload.eventType === 'INSERT') {
             // Play notification sound
             const audio = new Audio('/sounds/notification.mp3');
             audio.volume = 0.5;
             audio.play().catch(err => console.log('Audio play failed:', err));
-            
+
             // Show browser push notification if tab is in background
             if (document.hidden && notificationsEnabled && 'Notification' in window) {
               const notification = new Notification('New Procurement Order', {
@@ -211,13 +209,13 @@ export default function ProcurementOrders() {
                 icon: '/favicon.ico',
                 tag: 'new-order',
               });
-              
+
               notification.onclick = () => {
                 window.focus();
                 notification.close();
               };
             }
-            
+
             toast.success('New order received!', {
               description: 'The orders list has been updated.',
               icon: <CheckCircle className="h-5 w-5 text-success" />,
@@ -249,7 +247,7 @@ export default function ProcurementOrders() {
   const handleViewOrder = async (order: PurchaseOrder) => {
     setSelectedOrder(order);
     setIsLoadingLines(true);
-    
+
     try {
       const { data, error } = await supabase
         .from('purchase_order_lines')
@@ -257,7 +255,7 @@ export default function ProcurementOrders() {
           id,
           inventory_item_id,
           quantity,
-          unit_cost,
+          unit_price,
           inventory_items (name)
         `)
         .eq('purchase_order_id', order.id);
@@ -269,7 +267,7 @@ export default function ProcurementOrders() {
         inventory_item_id: line.inventory_item_id,
         item_name: (line.inventory_items as any)?.name || 'Unknown Item',
         quantity: line.quantity,
-        unit_cost: line.unit_cost || 0
+        unit_price: line.unit_price || 0
       }));
 
       setOrderLines(formattedLines);
@@ -315,7 +313,7 @@ export default function ProcurementOrders() {
             <span className="text-foreground">Suppliers & Orders</span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {isLoading ? (
             <Badge variant="secondary" className="gap-1.5">
@@ -405,12 +403,6 @@ export default function ProcurementOrders() {
                                 <span className="flex items-center gap-1">
                                   <Mail className="h-3.5 w-3.5" />
                                   {supplier.email}
-                                </span>
-                              )}
-                              {supplier.phone && (
-                                <span className="flex items-center gap-1">
-                                  <Phone className="h-3.5 w-3.5" />
-                                  {supplier.phone}
                                 </span>
                               )}
                             </div>
@@ -566,7 +558,7 @@ export default function ProcurementOrders() {
               {selectedOrder && getStatusBadge(selectedOrder.status)}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -613,9 +605,9 @@ export default function ProcurementOrders() {
                         <TableRow key={line.id}>
                           <TableCell className="font-medium">{line.item_name}</TableCell>
                           <TableCell className="text-right">{line.quantity}</TableCell>
-                          <TableCell className="text-right">€{line.unit_cost.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">€{line.unit_price.toFixed(2)}</TableCell>
                           <TableCell className="text-right font-semibold">
-                            €{(line.quantity * line.unit_cost).toFixed(2)}
+                            €{(line.quantity * line.unit_price).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
