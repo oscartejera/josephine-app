@@ -1,9 +1,14 @@
 /**
- * Shared availability store that provides a central source of truth for 
+ * Shared availability store that provides a central source of truth for
  * employee availability and time-off requests across Scheduling and Availability modules.
+ * 
+ * Data is persisted in Supabase tables:
+ * - employee_availability (weekly patterns per employee)
+ * - time_off_requests (vacation/sick/personal requests)
  */
 
 import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types
 export type AvailabilityStatus = 'available' | 'unavailable' | 'preferred';
@@ -41,118 +46,105 @@ export interface TimeOffRequest {
 // Constants
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-// Use centralized SeededRandom
-import { SeededRandom } from '@/lib/seededRandom';
-
-// In-memory store (would be database in production)
+// In-memory cache (loaded from DB on first access)
 let employeeAvailabilities: Map<string, EmployeeAvailability> = new Map();
 let timeOffRequests: TimeOffRequest[] = [];
 let isInitialized = false;
+let isLoading = false;
 
 /**
  * Generate default weekly availability pattern for an employee
  */
 function generateDefaultAvailability(employeeId: string): EmployeeAvailability {
-  const rng = new SeededRandom(`avail-${employeeId}`);
-  
-  const weeklyPattern: DayAvailability[] = DAY_NAMES.map((dayName, dayIndex) => {
-    const rand = rng.next();
-    let status: AvailabilityStatus;
-    
-    // Weekdays more likely available, weekends preferred
-    if (dayIndex < 5) {
-      status = rand < 0.15 ? 'unavailable' : 'available';
-    } else {
-      if (rand < 0.2) status = 'unavailable';
-      else if (rand < 0.5) status = 'preferred';
-      else status = 'available';
-    }
-    
-    return {
-      dayIndex,
-      dayName,
-      status,
-      startTime: status !== 'unavailable' ? '09:00' : undefined,
-      endTime: status !== 'unavailable' ? '22:00' : undefined,
-    };
-  });
-  
+  const weeklyPattern: DayAvailability[] = DAY_NAMES.map((dayName, dayIndex) => ({
+    dayIndex,
+    dayName,
+    status: 'available' as AvailabilityStatus,
+    startTime: '09:00',
+    endTime: '22:00',
+  }));
   return { employeeId, weeklyPattern };
 }
 
 /**
- * Initialize store with mock data for demo employees
+ * Load availability data from Supabase 
  */
-function initializeStore() {
-  if (isInitialized) return;
-  
-  const employeeIds = Array.from({ length: 15 }, (_, i) => `emp-${i}`);
-  
-  employeeIds.forEach(id => {
-    employeeAvailabilities.set(id, generateDefaultAvailability(id));
-  });
-  
-  // Generate some mock time-off requests
-  const rng = new SeededRandom('timeoff-global');
-  const today = new Date();
-  
-  const employeeNames = [
-    { id: 'emp-0', name: 'Alex Smith', initials: 'AS' },
-    { id: 'emp-1', name: 'Jordan Johnson', initials: 'JJ' },
-    { id: 'emp-2', name: 'Taylor Williams', initials: 'TW' },
-    { id: 'emp-3', name: 'Morgan Brown', initials: 'MB' },
-    { id: 'emp-4', name: 'Casey Jones', initials: 'CJ' },
-  ];
-  
-  const reasons = [
-    'Family vacation',
-    'Medical appointment',
-    'Personal day',
-    'Wedding attendance',
-    'Moving to new apartment',
-  ];
-  
-  const types: TimeOffRequest['type'][] = ['vacation', 'sick', 'personal', 'other'];
-  
-  for (let i = 0; i < 6; i++) {
-    const emp = rng.pick(employeeNames);
-    const daysFromNow = rng.intRange(-3, 14);
-    const duration = rng.intRange(1, 3);
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() + daysFromNow);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + duration - 1);
-    
-    const statuses: TimeOffRequest['status'][] = ['pending', 'approved', 'rejected'];
-    const status = daysFromNow < 0 ? rng.pick(['approved', 'rejected'] as const) : rng.pick(statuses);
-    
-    timeOffRequests.push({
-      id: `timeoff-${i}`,
-      employeeId: emp.id,
-      employeeName: emp.name,
-      employeeInitials: emp.initials,
-      startDate: format(startDate, 'yyyy-MM-dd'),
-      endDate: format(endDate, 'yyyy-MM-dd'),
-      reason: rng.pick(reasons),
-      type: rng.pick(types),
-      status,
-      createdAt: format(new Date(today.getTime() - rng.intRange(1, 10) * 86400000), "yyyy-MM-dd'T'HH:mm:ss"),
-      reviewedBy: status !== 'pending' ? 'Manager' : undefined,
-      reviewedAt: status !== 'pending' ? format(new Date(today.getTime() - rng.intRange(1, 5) * 86400000), "yyyy-MM-dd'T'HH:mm:ss") : undefined,
-    });
+async function loadFromDB() {
+  if (isInitialized || isLoading) return;
+  isLoading = true;
+
+  try {
+    // Load employee availability patterns
+    const { data: availData } = await (supabase as any)
+      .from('employee_availability')
+      .select('employee_id, day_index, status, start_time, end_time, note');
+
+    if (availData && availData.length > 0) {
+      const grouped = new Map<string, DayAvailability[]>();
+      for (const row of availData) {
+        if (!grouped.has(row.employee_id)) grouped.set(row.employee_id, []);
+        grouped.get(row.employee_id)!.push({
+          dayIndex: row.day_index,
+          dayName: DAY_NAMES[row.day_index] || 'Unknown',
+          status: row.status as AvailabilityStatus,
+          startTime: row.start_time?.substring(0, 5),
+          endTime: row.end_time?.substring(0, 5),
+          note: row.note,
+        });
+      }
+      for (const [empId, days] of grouped) {
+        // Fill missing days with 'available'
+        const fullWeek = DAY_NAMES.map((dayName, i) => {
+          const existing = days.find(d => d.dayIndex === i);
+          return existing || { dayIndex: i, dayName, status: 'available' as AvailabilityStatus, startTime: '09:00', endTime: '22:00' };
+        });
+        employeeAvailabilities.set(empId, { employeeId: empId, weeklyPattern: fullWeek });
+      }
+    }
+
+    // Load time-off requests with employee names
+    const { data: timeOffData } = await (supabase as any)
+      .from('time_off_requests')
+      .select('id, employee_id, start_date, end_date, reason, type, status, reviewed_by, reviewed_at, notes, created_at, employees(full_name)')
+      .order('created_at', { ascending: false });
+
+    if (timeOffData && timeOffData.length > 0) {
+      timeOffRequests = timeOffData.map((row: any) => {
+        const name = row.employees?.full_name || 'Employee';
+        const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+        return {
+          id: row.id,
+          employeeId: row.employee_id,
+          employeeName: name,
+          employeeInitials: initials,
+          startDate: row.start_date,
+          endDate: row.end_date,
+          reason: row.reason || '',
+          type: row.type as TimeOffRequest['type'],
+          status: row.status as TimeOffRequest['status'],
+          createdAt: row.created_at,
+          reviewedBy: row.reviewed_by,
+          reviewedAt: row.reviewed_at,
+          notes: row.notes,
+        };
+      });
+    }
+  } catch (err) {
+    console.error('[availabilityStore] Error loading from DB:', err);
+  } finally {
+    isInitialized = true;
+    isLoading = false;
   }
-  
-  isInitialized = true;
 }
 
 // Initialize on module load
-initializeStore();
+loadFromDB();
 
 /**
  * Get employee's weekly availability pattern
  */
 export function getEmployeeAvailability(employeeId: string): EmployeeAvailability | undefined {
-  return employeeAvailabilities.get(employeeId);
+  return employeeAvailabilities.get(employeeId) || generateDefaultAvailability(employeeId);
 }
 
 /**
@@ -163,10 +155,28 @@ export function getAllAvailabilities(): EmployeeAvailability[] {
 }
 
 /**
- * Update employee's weekly availability
+ * Update employee's weekly availability — persists to DB
  */
-export function updateEmployeeAvailability(employeeId: string, weeklyPattern: DayAvailability[]) {
+export async function updateEmployeeAvailability(employeeId: string, weeklyPattern: DayAvailability[]) {
   employeeAvailabilities.set(employeeId, { employeeId, weeklyPattern });
+
+  // Upsert to DB
+  const rows = weeklyPattern.map(day => ({
+    employee_id: employeeId,
+    day_index: day.dayIndex,
+    status: day.status,
+    start_time: day.startTime || null,
+    end_time: day.endTime || null,
+    note: day.note || null,
+  }));
+
+  try {
+    await (supabase as any)
+      .from('employee_availability')
+      .upsert(rows, { onConflict: 'employee_id,day_index' });
+  } catch (err) {
+    console.error('[availabilityStore] Error saving availability:', err);
+  }
 }
 
 /**
@@ -182,11 +192,10 @@ export function getAllTimeOffRequests(): TimeOffRequest[] {
 export function getApprovedTimeOffForDateRange(startDate: Date, endDate: Date): TimeOffRequest[] {
   return timeOffRequests.filter(req => {
     if (req.status !== 'approved') return false;
-    
+
     const reqStart = parseISO(req.startDate);
     const reqEnd = parseISO(req.endDate);
-    
-    // Check if the request overlaps with the date range
+
     return (
       isWithinInterval(reqStart, { start: startOfDay(startDate), end: endOfDay(endDate) }) ||
       isWithinInterval(reqEnd, { start: startOfDay(startDate), end: endOfDay(endDate) }) ||
@@ -199,11 +208,10 @@ export function getApprovedTimeOffForDateRange(startDate: Date, endDate: Date): 
  * Check if employee is available on a specific date
  */
 export function isEmployeeAvailableOnDate(
-  employeeId: string, 
+  employeeId: string,
   date: Date,
   checkTimeOff: boolean = true
 ): { available: boolean; reason?: 'unavailable' | 'day_off' | 'time_off' | 'preferred' } {
-  // Check time-off first
   if (checkTimeOff) {
     const hasApprovedTimeOff = timeOffRequests.some(req => {
       if (req.employeeId !== employeeId || req.status !== 'approved') return false;
@@ -211,31 +219,29 @@ export function isEmployeeAvailableOnDate(
       const reqEnd = parseISO(req.endDate);
       return isWithinInterval(date, { start: startOfDay(reqStart), end: endOfDay(reqEnd) });
     });
-    
+
     if (hasApprovedTimeOff) {
       return { available: false, reason: 'time_off' };
     }
   }
-  
-  // Check weekly pattern
+
   const availability = employeeAvailabilities.get(employeeId);
   if (!availability) return { available: true };
-  
-  // Get day of week (0 = Monday in our system)
-  const jsDay = date.getDay(); // 0 = Sunday
-  const dayIndex = jsDay === 0 ? 6 : jsDay - 1; // Convert to Monday = 0
-  
+
+  const jsDay = date.getDay();
+  const dayIndex = jsDay === 0 ? 6 : jsDay - 1;
+
   const dayAvail = availability.weeklyPattern[dayIndex];
   if (!dayAvail) return { available: true };
-  
+
   if (dayAvail.status === 'unavailable') {
     return { available: false, reason: 'unavailable' };
   }
-  
+
   if (dayAvail.status === 'preferred') {
     return { available: true, reason: 'preferred' };
   }
-  
+
   return { available: true };
 }
 
@@ -248,28 +254,26 @@ export function getEmployeeDateAvailability(employeeId: string, date: Date): {
   endTime?: string;
   timeOffInfo?: TimeOffRequest;
 } {
-  // Check time-off first
   const approvedTimeOff = timeOffRequests.find(req => {
     if (req.employeeId !== employeeId || req.status !== 'approved') return false;
     const reqStart = parseISO(req.startDate);
     const reqEnd = parseISO(req.endDate);
     return isWithinInterval(date, { start: startOfDay(reqStart), end: endOfDay(reqEnd) });
   });
-  
+
   if (approvedTimeOff) {
     return { status: 'time_off', timeOffInfo: approvedTimeOff };
   }
-  
-  // Check weekly pattern
+
   const availability = employeeAvailabilities.get(employeeId);
   if (!availability) return { status: 'available', startTime: '09:00', endTime: '22:00' };
-  
+
   const jsDay = date.getDay();
   const dayIndex = jsDay === 0 ? 6 : jsDay - 1;
-  
+
   const dayAvail = availability.weeklyPattern[dayIndex];
   if (!dayAvail) return { status: 'available', startTime: '09:00', endTime: '22:00' };
-  
+
   return {
     status: dayAvail.status,
     startTime: dayAvail.startTime,
@@ -278,24 +282,50 @@ export function getEmployeeDateAvailability(employeeId: string, date: Date): {
 }
 
 /**
- * Add a new time-off request
+ * Add a new time-off request — persists to DB
  */
-export function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'createdAt'>): TimeOffRequest {
+export async function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'createdAt'>): Promise<TimeOffRequest> {
   const newRequest: TimeOffRequest = {
     ...request,
     id: `timeoff-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     createdAt: new Date().toISOString(),
   };
-  
+
   timeOffRequests = [newRequest, ...timeOffRequests];
+
+  // Persist to DB
+  try {
+    const { data } = await (supabase as any)
+      .from('time_off_requests')
+      .insert({
+        employee_id: request.employeeId,
+        org_id: '7bca34d5-4448-40b8-bb7f-55f1417aeccd', // TODO: get from context
+        start_date: request.startDate,
+        end_date: request.endDate,
+        reason: request.reason,
+        type: request.type,
+        status: request.status || 'pending',
+        notes: request.notes,
+      })
+      .select('id')
+      .single();
+
+    if (data) {
+      newRequest.id = data.id;
+      timeOffRequests[0] = newRequest;
+    }
+  } catch (err) {
+    console.error('[availabilityStore] Error saving time-off request:', err);
+  }
+
   return newRequest;
 }
 
 /**
- * Update time-off request status
+ * Update time-off request status — persists to DB
  */
-export function updateTimeOffRequestStatus(
-  requestId: string, 
+export async function updateTimeOffRequestStatus(
+  requestId: string,
   status: TimeOffRequest['status'],
   reviewedBy?: string,
   notes?: string
@@ -310,13 +340,37 @@ export function updateTimeOffRequestStatus(
       notes,
     };
   });
+
+  // Persist to DB
+  try {
+    await (supabase as any)
+      .from('time_off_requests')
+      .update({
+        status,
+        reviewed_by: reviewedBy,
+        reviewed_at: new Date().toISOString(),
+        notes,
+      })
+      .eq('id', requestId);
+  } catch (err) {
+    console.error('[availabilityStore] Error updating time-off request:', err);
+  }
 }
 
 /**
- * Remove a time-off request
+ * Remove a time-off request — persists to DB
  */
-export function removeTimeOffRequest(requestId: string) {
+export async function removeTimeOffRequest(requestId: string) {
   timeOffRequests = timeOffRequests.filter(req => req.id !== requestId);
+
+  try {
+    await (supabase as any)
+      .from('time_off_requests')
+      .delete()
+      .eq('id', requestId);
+  } catch (err) {
+    console.error('[availabilityStore] Error deleting time-off request:', err);
+  }
 }
 
 /**
@@ -331,4 +385,14 @@ export function getPendingTimeOffRequests(): TimeOffRequest[] {
  */
 export function getEmployeeTimeOffRequests(employeeId: string): TimeOffRequest[] {
   return timeOffRequests.filter(req => req.employeeId === employeeId);
+}
+
+/**
+ * Force reload from DB (useful after mutations)
+ */
+export async function reloadAvailabilityStore() {
+  isInitialized = false;
+  employeeAvailabilities = new Map();
+  timeOffRequests = [];
+  await loadFromDB();
 }

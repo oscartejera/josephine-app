@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useApp } from '@/contexts/AppContext';
 import { Card } from '@/components/ui/card';
 import { AddItemDialog } from '@/components/inventory/AddItemDialog';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileDown, ChevronLeft, ChevronRight, PackageOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
@@ -36,82 +37,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, MoreVertical, ArrowUpDown } from 'lucide-react';
 
-// Generate 400+ realistic items
-const generateMockItems = () => {
-  const items: any[] = [];
-  const baseNames = [
-    // Food items (200+)
-    'Salmón Fresco', 'Atún Rojo', 'Lubina', 'Dorada', 'Merluza', 'Gambas', 'Langostinos', 'Pulpo',
-    'Jamón Ibérico', 'Jamón Serrano', 'Chorizo', 'Salchichón', 'Lomo Embuchado', 'Morcilla',
-    'Chuletón Buey', 'Solomillo Ternera', 'Entrecot', 'Cordero Lechal', 'Cochinillo', 'Pollo',
-    'Arroz Bomba', 'Arroz Integral', 'Pasta Spaghetti', 'Pasta Penne', 'Garbanzos', 'Lentejas',
-    'Aceite Oliva VE', 'Aceite Girasol', 'Vinagre Jerez', 'Sal Marina', 'Pimienta Negra',
-    'Tomate Natural', 'Pimiento Rojo', 'Cebolla', 'Ajo', 'Patata', 'Zanahoria', 'Lechuga',
-    'Huevos Camperos', 'Leche Entera', 'Nata Cocinar', 'Queso Manchego', 'Queso Cabra',
-    'Pan Barra', 'Pan Molde', 'Harina', 'Levadura', 'Azúcar', 'Sal',
-    'Tomate Triturado', 'Pimientos Padrón', 'Alcachofas', 'Espárragos', 'Champiñones',
-    // Beverages (100+)
-    'Cerveza Estrella', 'Cerveza Mahou', 'Cerveza Alhambra', 'Cerveza Cruzcampo',
-    'Vino Rioja', 'Vino Ribera', 'Vino Albariño', 'Vino Verdejo', 'Cava',
-    'Coca-Cola', 'Fanta', 'Sprite', 'Agua Mineral', 'Agua con Gas',
-    'Zumo Naranja', 'Zumo Tomate', 'Café Grano', 'Té Verde', 'Té Negro',
-    // Misc/Packaging (100+)
-    'Bolsa Basura 100L', 'Bolsa Basura 50L', 'Papel Térmico 80mm', 'Papel Térmico 57mm',
-    'Servilletas', 'Manteles Papel', 'Guantes Latex', 'Guantes Nitrilo',
-    'Detergente Industrial', 'Lavavajillas', 'Desinfectante', 'Limpiador Suelos',
-    'Papel Aluminio', 'Film Transparente', 'Bolsas Vacío', 'Recipientes Plástico',
-  ];
-
-  const categories = {
-    'Food': ['Pescados y Mariscos', 'Carnes', 'Charcutería', 'Verduras', 'Secos', 'Aceites', 'Lácteos', 'Pan'],
-    'Beverage': ['Cervezas', 'Vinos', 'Refrescos', 'Zumos', 'Café y Té'],
-    'Misc': ['Limpieza', 'Papelería', 'Desechables', 'Utensilios'],
-  };
-
-  const suppliers = [
-    'Pescaderías del Norte', 'Carnicerías Premium', 'Ibéricos Salamanca',
-    'Verduras Frescas SL', 'Arroces Valencia', 'Aceites Jaén',
-    'Distribuidora Bebidas', 'Bodegas Rioja', 'Refrescos Levante',
-    'Suministros Hostelería', 'Suministros Oficina', 'Limpieza Pro',
-  ];
-
-  // Generate 400+ items by varying base names
-  let id = 1;
-  for (let i = 0; i < 400; i++) {
-    const baseName = baseNames[i % baseNames.length];
-    const variation = i < baseNames.length ? '' : ` ${Math.floor(i / baseNames.length) + 1}`;
-    const type = i < 200 ? 'Food' : i < 300 ? 'Beverage' : 'Misc';
-    const categoryList = categories[type];
-    const category = categoryList[i % categoryList.length];
-    const supplier = suppliers[i % suppliers.length];
-
-    const basePrice = type === 'Food' ? 15 + Math.random() * 40 :
-      type === 'Beverage' ? 8 + Math.random() * 30 :
-        5 + Math.random() * 25;
-
-    items.push({
-      id: String(id++),
-      name: baseName + variation,
-      type,
-      category,
-      supplier,
-      orderUnit: type === 'Beverage' ? 'Case' : type === 'Food' && Math.random() > 0.5 ? 'kg' : 'Pack',
-      orderQty: type === 'Beverage' ? 12 + Math.floor(Math.random() * 12) : Math.ceil(Math.random() * 10),
-      price: Math.round(basePrice * 100) / 100,
-      vatRate: type === 'Food' ? 10 : 21,
-    });
-  }
-
-  return items;
-};
-
-const mockItems = generateMockItems();
-
 const ITEMS_PER_PAGE = 50;
 
 export default function InventoryItems() {
-  const [items, setItems] = useState<any[]>(mockItems);
-  const [loading, setLoading] = useState(false);
+  const { locations } = useApp();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -121,12 +52,22 @@ export default function InventoryItems() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
 
   // Load items from Supabase
   useEffect(() => {
     loadItems();
     loadCategories();
+    loadSuppliers();
   }, []);
+
+  const loadSuppliers = async () => {
+    const { data } = await supabase
+      .from('suppliers')
+      .select('id, name')
+      .order('name');
+    if (data) setSuppliers(data);
+  };
 
   const loadCategories = async () => {
     const { data } = await supabase
@@ -148,28 +89,22 @@ export default function InventoryItems() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        // Map to UI format with real category name from JOIN
-        const mapped = (data as any[]).map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          type: item.type || 'Food',
-          category: item.inventory_categories?.name || 'Other',
-          supplier: 'Demo Supplier',
-          orderUnit: item.order_unit || item.unit || 'kg',
-          orderQty: item.pack_size || 1,
-          price: item.price || item.last_cost || 0,
-          vatRate: item.vat_rate || 10,
-        }));
-        setItems(mapped);
-      } else {
-        // Use mock data if no DB data
-        setItems(mockItems);
-      }
+      // Map to UI format with real category name from JOIN
+      const mapped = (data || []).map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        type: item.type || 'Food',
+        category: item.inventory_categories?.name || 'Other',
+        supplier: item.supplier_name || '-',
+        orderUnit: item.order_unit || item.unit || 'kg',
+        orderQty: item.pack_size || 1,
+        price: item.price || item.last_cost || 0,
+        vatRate: item.vat_rate || 10,
+      }));
+      setItems(mapped);
     } catch (error) {
       console.error('Error loading items:', error);
-      // Fallback to mock
-      setItems(mockItems);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -308,9 +243,9 @@ export default function InventoryItems() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Suppliers</SelectItem>
-            <SelectItem value="Pescaderías del Norte">Pescaderías del Norte</SelectItem>
-            <SelectItem value="Ibéricos Salamanca">Ibéricos Salamanca</SelectItem>
-            <SelectItem value="Arroces Valencia">Arroces Valencia</SelectItem>
+            {suppliers.map(s => (
+              <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -320,8 +255,9 @@ export default function InventoryItems() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Locations</SelectItem>
-            <SelectItem value="salamanca">La Taberna Centro</SelectItem>
-            <SelectItem value="chamberi">Chamberí</SelectItem>
+            {locations.map(l => (
+              <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

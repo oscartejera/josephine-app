@@ -49,7 +49,7 @@ function generateDefaultAvailability(): DayAvailability[] {
 
 export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { weekStartsOn: 1 })) {
   const currentEmployee = EMPLOYEES[0];
-  
+
   // Get availability from shared store, or use default
   const storedAvailability = getEmployeeAvailability(currentEmployee.id);
   const [availability, setAvailability] = useState<DayAvailability[]>(
@@ -57,36 +57,34 @@ export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { 
   );
   const [hasChanges, setHasChanges] = useState(false);
   const [, forceUpdate] = useState(0);
-  
+
   // Get time-off requests from shared store
   const timeOffRequests = getAllTimeOffRequests();
-  
+
   const pendingRequests = useMemo(() => getPendingTimeOffRequests(), [timeOffRequests]);
-  
-  const myRequests = useMemo(() => 
+
+  const myRequests = useMemo(() =>
     getEmployeeTimeOffRequests(currentEmployee.id),
     [currentEmployee.id, timeOffRequests]
   );
-  
+
   const updateDayAvailability = useCallback((dayIndex: number, updates: Partial<DayAvailability>) => {
-    setAvailability(prev => 
-      prev.map(day => 
+    setAvailability(prev =>
+      prev.map(day =>
         day.dayIndex === dayIndex ? { ...day, ...updates } : day
       )
     );
     setHasChanges(true);
   }, []);
-  
+
   const saveAvailability = useCallback(async () => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    updateEmployeeAvailability(currentEmployee.id, availability);
+    await updateEmployeeAvailability(currentEmployee.id, availability);
     setHasChanges(false);
     return true;
   }, [availability, currentEmployee.id]);
-  
+
   const createTimeOffRequest = useCallback(async (request: Omit<TimeOffRequest, 'id' | 'employeeId' | 'employeeName' | 'employeeInitials' | 'status' | 'createdAt'>) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const newRequest = addTimeOffRequest({
+    const newRequest = await addTimeOffRequest({
       ...request,
       employeeId: currentEmployee.id,
       employeeName: currentEmployee.name,
@@ -96,25 +94,22 @@ export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { 
     forceUpdate(n => n + 1);
     return newRequest;
   }, [currentEmployee]);
-  
+
   const approveTimeOffRequest = useCallback(async (requestId: string) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    updateTimeOffRequestStatus(requestId, 'approved', 'Manager');
+    await updateTimeOffRequestStatus(requestId, 'approved', 'Manager');
     forceUpdate(n => n + 1);
   }, []);
-  
+
   const rejectTimeOffRequest = useCallback(async (requestId: string, notes?: string) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    updateTimeOffRequestStatus(requestId, 'rejected', 'Manager', notes);
+    await updateTimeOffRequestStatus(requestId, 'rejected', 'Manager', notes);
     forceUpdate(n => n + 1);
   }, []);
-  
+
   const cancelTimeOffRequest = useCallback(async (requestId: string) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    removeTimeOffRequest(requestId);
+    await removeTimeOffRequest(requestId);
     forceUpdate(n => n + 1);
   }, []);
-  
+
   return {
     availability,
     timeOffRequests,

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -14,6 +15,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AnnouncementType = 'info' | 'important' | 'celebration' | 'schedule';
 
@@ -24,69 +27,29 @@ interface Announcement {
   type: AnnouncementType;
   pinned: boolean;
   created_at: string;
-  author: string;
+  author_name: string;
 }
-
-// Demo announcements - will be replaced with Supabase data
-const demoAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Horario especial San Valentín',
-    body: 'El 14 de febrero abrimos de 12:00 a 01:00. Se necesita personal extra para el turno de noche. Si estás disponible, habla con tu encargado.',
-    type: 'schedule',
-    pinned: true,
-    created_at: new Date().toISOString(),
-    author: 'Dirección',
-  },
-  {
-    id: '2',
-    title: 'Nuevo menú de temporada',
-    body: 'A partir del lunes se incorporan 3 nuevos platos al menú. Habrá una formación el domingo a las 11:00 para todo el equipo de sala y cocina.',
-    type: 'info',
-    pinned: true,
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    author: 'Chef ejecutivo',
-  },
-  {
-    id: '3',
-    title: 'Empleado del mes: María López',
-    body: 'Felicidades a María por su excelente trabajo este mes. Su dedicación y actitud positiva son un ejemplo para todo el equipo.',
-    type: 'celebration',
-    pinned: false,
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-    author: 'Dirección',
-  },
-  {
-    id: '4',
-    title: 'Recordatorio: Higiene y seguridad',
-    body: 'Recordad usar siempre el EPI correspondiente en cocina. La próxima inspección de sanidad será la semana que viene.',
-    type: 'important',
-    pinned: false,
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    author: 'Gerencia',
-  },
-  {
-    id: '5',
-    title: 'Cambio de turno disponible',
-    body: 'Carlos busca cambio de turno para el viernes 14. Turno de tarde (16:00-23:00) por turno de mañana. Contactad con él directamente.',
-    type: 'schedule',
-    pinned: false,
-    created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-    author: 'Carlos García',
-  },
-  {
-    id: '6',
-    title: 'Cena de equipo',
-    body: 'El próximo martes después del cierre haremos una cena de equipo para celebrar los buenos resultados del mes. ¡Estáis todos invitados!',
-    type: 'celebration',
-    pinned: false,
-    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-    author: 'Dirección',
-  },
-];
 
 export default function TeamNews() {
   const [tab, setTab] = useState('all');
+  const { user } = useAuth();
+
+  // Fetch announcements from Supabase
+  const { data: announcements = [], isLoading } = useQuery({
+    queryKey: ['announcements'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('announcements')
+        .select('id, title, body, type, pinned, created_at, author_name')
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return (data || []) as Announcement[];
+    },
+    staleTime: 30_000,
+  });
 
   const getTypeIcon = (type: AnnouncementType) => {
     switch (type) {
@@ -149,11 +112,19 @@ export default function TeamNews() {
 
   const filtered =
     tab === 'all'
-      ? demoAnnouncements
-      : demoAnnouncements.filter((a) => a.type === tab);
+      ? announcements
+      : announcements.filter((a) => a.type === tab);
 
   const pinned = filtered.filter((a) => a.pinned);
   const rest = filtered.filter((a) => !a.pinned);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 lg:p-6 max-w-2xl mx-auto flex items-center justify-center min-h-[40vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 lg:p-6 max-w-2xl mx-auto space-y-4">
@@ -204,7 +175,7 @@ export default function TeamNews() {
                   </p>
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-xs text-muted-foreground">
-                      {item.author}
+                      {item.author_name}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(item.created_at), "d MMM", { locale: es })}
@@ -252,7 +223,7 @@ export default function TeamNews() {
                       </p>
                       <div className="flex items-center justify-between pt-2">
                         <span className="text-xs text-muted-foreground">
-                          {item.author}
+                          {item.author_name}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(item.created_at), "d MMM", { locale: es })}
@@ -271,7 +242,11 @@ export default function TeamNews() {
         <Card>
           <CardContent className="p-8 text-center">
             <Megaphone className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-muted-foreground">No hay novedades en esta categoría</p>
+            <p className="text-muted-foreground">
+              {announcements.length === 0
+                ? 'Tu manager aún no ha publicado novedades'
+                : 'No hay novedades en esta categoría'}
+            </p>
           </CardContent>
         </Card>
       )}
