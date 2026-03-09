@@ -50,104 +50,107 @@ export default function ProcurementCart() {
     setSavedToDb(false);
 
     try {
-      // First, we need to get a supplier ID from the database
-      // Check if we have a supplier with the same name
-      const { data: existingSuppliers, error: supplierQueryError } = await supabase
+      // Get user context: org_id + location_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('group_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.group_id) throw new Error('No group found');
+
+      // Get first location for this group (locations has org_id)
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('id, org_id')
+        .eq('group_id', profile.group_id)
+        .limit(1);
+
+      const locationId = locations?.[0]?.id;
+      const orgId = (locations?.[0] as any)?.org_id || profile.group_id;
+      if (!locationId) throw new Error('No location found');
+
+      // Find or create supplier
+      const { data: existingSuppliers } = await supabase
         .from('suppliers')
-        .select('id, group_id')
+        .select('id')
+        .eq('org_id', orgId)
         .ilike('name', `%${selectedSupplier.name}%`)
         .limit(1);
 
-      if (supplierQueryError) {
-        console.error('Error querying suppliers:', supplierQueryError);
-      }
-
       let supplierId: string | null = null;
-      let groupId: string | null = null;
 
       if (existingSuppliers && existingSuppliers.length > 0) {
         supplierId = existingSuppliers[0].id;
-        groupId = existingSuppliers[0].group_id;
       } else {
-        // Try to get group_id from profiles
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('group_id')
-            .eq('id', user.id)
-            .single();
-
-          if (profile?.group_id) {
-            groupId = profile.group_id;
-
-            // Create the supplier
-            const { data: newSupplier, error: createSupplierError } = await supabase
-              .from('suppliers')
-              .insert({
-                name: selectedSupplier.name,
-                group_id: groupId,
-              })
-              .select('id')
-              .single();
-
-            if (!createSupplierError && newSupplier) {
-              supplierId = newSupplier.id;
-            }
-          }
-        }
-      }
-
-      // If we have a supplier and group, create the purchase order
-      if (supplierId && groupId) {
-        // Create purchase order
-        const { data: purchaseOrder, error: poError } = await supabase
-          .from('purchase_orders')
+        // Create supplier with required org_id
+        const { data: newSupplier, error: createSupplierError } = await supabase
+          .from('suppliers')
           .insert({
-            supplier_id: supplierId,
-            group_id: groupId,
-            status: 'sent',
-          })
+            name: selectedSupplier.name,
+            org_id: orgId,
+          } as any)
           .select('id')
           .single();
 
-        if (poError) {
-          console.error('Error creating purchase order:', poError);
-          throw new Error('Failed to create purchase order');
-        }
-
-        if (purchaseOrder) {
-          // Create purchase order lines for items with real inventory IDs
-          const orderLines = cartItems
-            .filter(({ sku }) => sku.inventoryItemId) // Only items linked to real inventory
-            .map(({ sku, packs }) => ({
-              purchase_order_id: purchaseOrder.id,
-              inventory_item_id: sku.inventoryItemId!,
-              quantity: packs * sku.packSizeUnits,
-              unit_price: sku.unitPrice / sku.packSizeUnits,
-            }));
-
-          if (orderLines.length > 0) {
-            const { error: linesError } = await supabase
-              .from('purchase_order_lines')
-              .insert(orderLines);
-
-            if (linesError) {
-              console.error('Error creating order lines:', linesError);
-              // Don't throw - the order was still created
-            }
-          }
-
-          setSavedToDb(true);
-          const newOrderId = `PO-${purchaseOrder.id.slice(0, 8).toUpperCase()}`;
-          setOrderId(newOrderId);
-          setPaymentState('success');
-          return;
+        if (!createSupplierError && newSupplier) {
+          supplierId = newSupplier.id;
         }
       }
 
-      // Fallback: If we can't save to DB (no auth, no group, etc.), still show success with mock ID
-      console.log('Order not saved to database - no valid supplier/group context');
+      if (!supplierId) throw new Error('Failed to resolve supplier');
+
+      // Create purchase order with correct schema
+      const { data: purchaseOrder, error: poError } = await supabase
+        .from('purchase_orders')
+        .insert({
+          supplier_id: supplierId,
+          org_id: orgId,
+          location_id: locationId,
+          status: 'sent',
+        } as any)
+        .select('id')
+        .single();
+
+      if (poError) {
+        console.error('Error creating purchase order:', poError);
+        throw new Error('Failed to create purchase order');
+      }
+
+      if (purchaseOrder) {
+        // Create purchase order lines with required item_id
+        const orderLines = cartItems
+          .filter(({ sku }) => sku.inventoryItemId)
+          .map(({ sku, packs }) => ({
+            purchase_order_id: purchaseOrder.id,
+            item_id: sku.inventoryItemId!,
+            inventory_item_id: sku.inventoryItemId!,
+            quantity: packs * sku.packSizeUnits,
+            unit_price: sku.unitPrice / sku.packSizeUnits,
+          }));
+
+        if (orderLines.length > 0) {
+          const { error: linesError } = await supabase
+            .from('purchase_order_lines')
+            .insert(orderLines as any);
+
+          if (linesError) {
+            console.error('Error creating order lines:', linesError);
+            // Don't throw - the order was still created
+          }
+        }
+
+        setSavedToDb(true);
+        const newOrderId = `PO-${purchaseOrder.id.slice(0, 8).toUpperCase()}`;
+        setOrderId(newOrderId);
+        setPaymentState('success');
+        return;
+      }
+
+      // Fallback if purchaseOrder creation returned null
       await new Promise(resolve => setTimeout(resolve, 1500));
       const newOrderId = `PO-${Date.now().toString(36).toUpperCase()}`;
       setOrderId(newOrderId);
