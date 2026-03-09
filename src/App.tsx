@@ -55,6 +55,7 @@ const RecipesPage = lazy(() => import("@/pages/inventory-setup/RecipesPage"));
 const RecipeDetailPage = lazy(() => import("@/pages/inventory-setup/RecipeDetailPage"));
 const WasteEntryPage = lazy(() => import("@/pages/operations/WasteEntryPage"));
 const StockAuditPage = lazy(() => import("@/pages/operations/StockAuditPage"));
+const PrepListPage = lazy(() => import("@/pages/operations/PrepListPage"));
 const DebugDataCoherence = lazy(() => import("@/pages/DebugDataCoherence"));
 const DataImport = lazy(() => import("@/pages/DataImport"));
 const Pricing = lazy(() => import("@/pages/Pricing"));
@@ -217,6 +218,7 @@ function AppRoutes() {
           {/* Operations */}
           <Route path="/operations/waste-entry" element={<InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary>} />
           <Route path="/operations/stock-audit" element={<InsightErrorBoundary pageName="Auditoría Stock"><StockAuditPage /></InsightErrorBoundary>} />
+          <Route path="/operations/prep-list" element={<InsightErrorBoundary pageName="Prep List"><PrepListPage /></InsightErrorBoundary>} />
 
           {/* Settings */}
           <Route path="/settings" element={<InsightErrorBoundary pageName="Ajustes"><SettingsPage /></InsightErrorBoundary>} />

@@ -16,6 +16,8 @@ import { OnboardingWizard } from '@/components/onboarding';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { AIImpactCard } from '@/components/forecast/AIImpactCard';
 import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
+import { FoodCostVarianceCard } from '@/components/dashboard/FoodCostVarianceCard';
+import { LocationBenchmark } from '@/components/dashboard/LocationBenchmark';
 import { DashboardTour } from '@/pages/OnboardingWizardV2';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle, Bot } from 'lucide-react';
 import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
@@ -274,9 +276,13 @@ export default function Dashboard() {
           <AIImpactCard />
           <div className="space-y-6">
             <LocationHealthIndicators />
+            <FoodCostVarianceCard />
             <LowStockWidget />
           </div>
         </div>
+
+        {/* Multi-location benchmarking — only for owners with 2+ locations */}
+        <LocationBenchmark />
       </div>
 
       {/* Josephine AI Chat — Floating Panel */}
