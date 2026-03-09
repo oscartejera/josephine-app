@@ -142,8 +142,18 @@ function RoleRedirect() {
     );
   }
 
-  const isEmployeeOnly = roles.length > 0 && roles.every(r => r.role_name === 'employee');
+  // Employee-only: redirect to Team Portal
+  // If roles loaded and ALL are 'employee', OR if no roles and not owner → treat as employee
+  const isEmployeeOnly = (roles.length > 0 && roles.every(r => r.role_name === 'employee'))
+    || (roles.length === 0 && !isOwner);
   return <Navigate to={isEmployeeOnly ? '/team' : '/dashboard'} replace />;
+}
+
+function OwnerOnlyRoute({ children }: { children: React.ReactNode }) {
+  const { isOwner, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!isOwner) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
 }
 
 function PageLoader() {
@@ -204,11 +214,11 @@ function AppRoutes() {
           <Route path="/procurement/orders" element={<InsightErrorBoundary pageName="Pedidos"><ProcurementOrders /></InsightErrorBoundary>} />
           <Route path="/payroll/*" element={<InsightErrorBoundary pageName="Nóminas"><Payroll /></InsightErrorBoundary>} />
 
-          {/* Integrations */}
-          <Route path="/integrations" element={<InsightErrorBoundary pageName="Integraciones"><Integrations /></InsightErrorBoundary>} />
-          <Route path="/integrations/square" element={<InsightErrorBoundary pageName="Square"><SquareIntegration /></InsightErrorBoundary>} />
+          {/* Integrations — Owner-only */}
+          <Route path="/integrations" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Integraciones"><Integrations /></InsightErrorBoundary></OwnerOnlyRoute>} />
+          <Route path="/integrations/square" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Square"><SquareIntegration /></InsightErrorBoundary></OwnerOnlyRoute>} />
           <Route path="/integrations/square/callback" element={<SquareOAuthCallback />} />
-          <Route path="/integrations/lightspeed" element={<InsightErrorBoundary pageName="Lightspeed"><LightspeedIntegration /></InsightErrorBoundary>} />
+          <Route path="/integrations/lightspeed" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Lightspeed"><LightspeedIntegration /></InsightErrorBoundary></OwnerOnlyRoute>} />
 
           {/* Inventory Setup */}
           <Route path="/inventory-setup/items" element={<InsightErrorBoundary pageName="Artículos"><InventoryItems /></InsightErrorBoundary>} />
@@ -220,13 +230,13 @@ function AppRoutes() {
           <Route path="/operations/stock-audit" element={<InsightErrorBoundary pageName="Auditoría Stock"><StockAuditPage /></InsightErrorBoundary>} />
           <Route path="/operations/prep-list" element={<InsightErrorBoundary pageName="Prep List"><PrepListPage /></InsightErrorBoundary>} />
 
-          {/* Settings */}
-          <Route path="/settings" element={<InsightErrorBoundary pageName="Ajustes"><SettingsPage /></InsightErrorBoundary>} />
-          <Route path="/admin/tools" element={<InsightErrorBoundary pageName="Admin Tools"><AdminTools /></InsightErrorBoundary>} />
-          <Route path="/admin/data-health" element={<InsightErrorBoundary pageName="Data Health"><DataHealth /></InsightErrorBoundary>} />
-          <Route path="/debug/data-coherence" element={<InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary>} />
-          <Route path="/settings/import" element={<InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary>} />
-          <Route path="/settings/billing" element={<InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary>} />
+          {/* Settings — Owner-only routes */}
+          <Route path="/settings" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Ajustes"><SettingsPage /></InsightErrorBoundary></OwnerOnlyRoute>} />
+          <Route path="/admin/tools" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Admin Tools"><AdminTools /></InsightErrorBoundary></OwnerOnlyRoute>} />
+          <Route path="/admin/data-health" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Data Health"><DataHealth /></InsightErrorBoundary></OwnerOnlyRoute>} />
+          <Route path="/debug/data-coherence" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary></OwnerOnlyRoute>} />
+          <Route path="/settings/import" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary></OwnerOnlyRoute>} />
+          <Route path="/settings/billing" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary></OwnerOnlyRoute>} />
           <Route path="/pricing" element={<Navigate to="/settings/billing" replace />} />
         </Route>
 
