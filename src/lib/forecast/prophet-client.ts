@@ -71,11 +71,22 @@ export class ProphetClient {
 
   constructor(apiUrl?: string, apiKey?: string | null) {
     // Use environment variables for browser context
-    this.apiUrl = apiUrl || import.meta.env.VITE_PROPHET_API_URL || 'https://your-modal-app.modal.run/forecast';
+    // Default to the deployed Render service
+    this.apiUrl = apiUrl || import.meta.env.VITE_PROPHET_API_URL || 'https://josephine-prophet.onrender.com/forecast';
     this.apiKey = apiKey || import.meta.env.VITE_PROPHET_API_KEY || null;
   }
 
+  /** Check if a real Prophet service is configured (not placeholder) */
+  isConfigured(): boolean {
+    return !this.apiUrl.includes('your-modal-app') && this.apiUrl.length > 0;
+  }
+
   async forecast(request: ProphetForecastRequest): Promise<ProphetForecastResponse> {
+    if (!this.isConfigured()) {
+      console.warn('[ProphetClient] Service URL not configured. Using fallback.');
+      throw new Error('Prophet service not configured');
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -118,7 +129,7 @@ export class MockProphetClient {
       const forecastDate = this.addPeriod(lastDate, i, request.freq);
       const seasonal = this.getSeasonalFactor(forecastDate, request.freq);
       const noise = (Math.random() - 0.5) * mean * 0.1; // 10% random variation
-      
+
       const yhat = mean + trend * i + seasonal + noise;
       const uncertainty = mean * 0.15; // 15% uncertainty
 
@@ -138,13 +149,13 @@ export class MockProphetClient {
 
   private calculateTrend(data: { ds: string; y: number }[]): number {
     if (data.length < 2) return 0;
-    
+
     const recent = data.slice(-7);
     const older = data.slice(-14, -7);
-    
+
     const recentAvg = recent.reduce((sum, p) => sum + p.y, 0) / recent.length;
     const olderAvg = older.reduce((sum, p) => sum + p.y, 0) / older.length;
-    
+
     return (recentAvg - olderAvg) / 7; // Trend per period
   }
 
@@ -167,7 +178,7 @@ export class MockProphetClient {
 
   private addPeriod(date: Date, count: number, freq: string): Date {
     const newDate = new Date(date);
-    
+
     switch (freq) {
       case '15min':
         newDate.setMinutes(newDate.getMinutes() + count * 15);

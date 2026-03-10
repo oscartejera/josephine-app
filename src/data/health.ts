@@ -27,71 +27,77 @@ export interface HealthReport {
 /**
  * Default params for health probes — minimal date range, nullable location.
  * These should return data (or empty arrays) without errors.
+ * Accepts dataSource to probe either 'demo' or 'pos' data.
  */
-const HEALTH_PROBE_PARAMS: Record<string, Record<string, unknown>> = {
-    get_labour_kpis: {
-        date_from: new Date().toISOString().slice(0, 10),
-        date_to: new Date().toISOString().slice(0, 10),
-        selected_location_id: null,
-        p_data_source: 'demo',
-    },
-    get_labour_timeseries: {
-        date_from: new Date().toISOString().slice(0, 10),
-        date_to: new Date().toISOString().slice(0, 10),
-        selected_location_id: null,
-        p_data_source: 'demo',
-    },
-    get_labour_locations_table: {
-        date_from: new Date().toISOString().slice(0, 10),
-        date_to: new Date().toISOString().slice(0, 10),
-        selected_location_id: null,
-        p_data_source: 'demo',
-    },
-    rpc_kpi_range_summary: {
-        p_org_id: '00000000-0000-0000-0000-000000000000',
-        p_location_ids: null,
-        p_from: new Date().toISOString().slice(0, 10),
-        p_to: new Date().toISOString().slice(0, 10),
-    },
-    get_sales_timeseries_unified: {
-        p_org_id: '00000000-0000-0000-0000-000000000000',
-        p_location_ids: [],
-        p_from: new Date().toISOString().slice(0, 10),
-        p_to: new Date().toISOString().slice(0, 10),
-    },
-    get_top_products_unified: {
-        p_org_id: '00000000-0000-0000-0000-000000000000',
-        p_location_ids: [],
-        p_from: new Date().toISOString().slice(0, 10),
-        p_to: new Date().toISOString().slice(0, 10),
-        p_limit: 1,
-    },
-    get_instant_pnl_unified: {
-        p_org_id: '00000000-0000-0000-0000-000000000000',
-        p_location_ids: [],
-        p_from: new Date().toISOString().slice(0, 10),
-        p_to: new Date().toISOString().slice(0, 10),
-    },
-    menu_engineering_summary: {
-        p_date_from: new Date().toISOString().slice(0, 10),
-        p_date_to: new Date().toISOString().slice(0, 10),
-        p_location_id: null,
-        p_data_source: 'demo',
-    },
-};
+function buildHealthProbeParams(dataSource: 'pos' | 'demo' = 'pos'): Record<string, Record<string, unknown>> {
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+        get_labour_kpis: {
+            date_from: today,
+            date_to: today,
+            selected_location_id: null,
+            p_data_source: dataSource,
+        },
+        get_labour_timeseries: {
+            date_from: today,
+            date_to: today,
+            selected_location_id: null,
+            p_data_source: dataSource,
+        },
+        get_labour_locations_table: {
+            date_from: today,
+            date_to: today,
+            selected_location_id: null,
+            p_data_source: dataSource,
+        },
+        rpc_kpi_range_summary: {
+            p_org_id: '00000000-0000-0000-0000-000000000000',
+            p_location_ids: null,
+            p_from: today,
+            p_to: today,
+        },
+        get_sales_timeseries_unified: {
+            p_org_id: '00000000-0000-0000-0000-000000000000',
+            p_location_ids: [],
+            p_from: today,
+            p_to: today,
+        },
+        get_top_products_unified: {
+            p_org_id: '00000000-0000-0000-0000-000000000000',
+            p_location_ids: [],
+            p_from: today,
+            p_to: today,
+            p_limit: 1,
+        },
+        get_instant_pnl_unified: {
+            p_org_id: '00000000-0000-0000-0000-000000000000',
+            p_location_ids: [],
+            p_from: today,
+            p_to: today,
+        },
+        menu_engineering_summary: {
+            p_date_from: today,
+            p_date_to: today,
+            p_location_id: null,
+            p_data_source: dataSource,
+        },
+    };
+}
 
 /**
  * Run health checks against all registered RPCs.
  * Returns a report with per-RPC status and overall health.
+ * @param dataSource — probe 'pos' or 'demo' data (defaults to 'pos' for production safety)
  */
-export async function checkRpcHealth(): Promise<HealthReport> {
+export async function checkRpcHealth(dataSource: 'pos' | 'demo' = 'pos'): Promise<HealthReport> {
     const results: RpcHealthResult[] = [];
+    const probeParams = buildHealthProbeParams(dataSource);
 
     const entries = Object.entries(RPC_REGISTRY);
 
     await Promise.all(
         entries.map(async ([name, schema]) => {
-            const params = HEALTH_PROBE_PARAMS[name];
+            const params = probeParams[name];
             if (!params) {
                 results.push({ name, status: 'error', latencyMs: 0, error: 'No probe params defined' });
                 return;
