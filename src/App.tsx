@@ -46,6 +46,7 @@ const CashManagement = lazy(() => import("@/pages/CashManagement"));
 const Budgets = lazy(() => import("@/pages/Budgets"));
 const Payroll = lazy(() => import("@/pages/Payroll"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const OnboardingChecklist = lazy(() => import("@/pages/OnboardingChecklist"));
 const Integrations = lazy(() => import("@/pages/Integrations"));
 const SquareIntegration = lazy(() => import("@/pages/integrations/SquareIntegration"));
 const LightspeedIntegration = lazy(() => import("@/pages/integrations/LightspeedIntegration"));
@@ -248,6 +249,7 @@ function AppRoutes() {
           <Route path="/debug/data-coherence" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary></OwnerOnlyRoute>} />
           <Route path="/settings/import" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary></OwnerOnlyRoute>} />
           <Route path="/settings/billing" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary></OwnerOnlyRoute>} />
+          <Route path="/settings/onboarding" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Onboarding"><OnboardingChecklist /></InsightErrorBoundary></OwnerOnlyRoute>} />
           <Route path="/pricing" element={<Navigate to="/settings/billing" replace />} />
         </Route>
 
