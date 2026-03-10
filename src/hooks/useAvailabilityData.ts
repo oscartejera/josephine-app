@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { startOfWeek } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 import {
   getAllTimeOffRequests,
   getPendingTimeOffRequests,
@@ -26,16 +27,40 @@ export interface Employee {
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-const EMPLOYEES: Employee[] = [
-  { id: 'emp-0', name: 'Alex Smith', initials: 'AS', department: 'FOH', position: 'Server' },
-  { id: 'emp-1', name: 'Jordan Johnson', initials: 'JJ', department: 'BOH', position: 'Kitchen Team' },
-  { id: 'emp-2', name: 'Taylor Williams', initials: 'TW', department: 'FOH', position: 'Host' },
-  { id: 'emp-3', name: 'Morgan Brown', initials: 'MB', department: 'Management', position: 'Duty Manager' },
-  { id: 'emp-4', name: 'Casey Jones', initials: 'CJ', department: 'FOH', position: 'Barista' },
-  { id: 'emp-5', name: 'Riley Garcia', initials: 'RG', department: 'BOH', position: 'Prep Cook' },
-  { id: 'emp-6', name: 'Jamie Miller', initials: 'JM', department: 'FOH', position: 'Server' },
-  { id: 'emp-7', name: 'Quinn Davis', initials: 'QD', department: 'BOH', position: 'Kitchen Team' },
-];
+function getInitials(name: string): string {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function getRoleDepartment(role: string | null): string {
+  switch (role) {
+    case 'chef':
+    case 'kitchen':
+    case 'prep_cook':
+      return 'BOH';
+    case 'manager':
+    case 'ops_manager':
+    case 'store_manager':
+      return 'Management';
+    default:
+      return 'FOH';
+  }
+}
+
+function getRolePosition(role: string | null): string {
+  switch (role) {
+    case 'chef': return 'Chef';
+    case 'kitchen': return 'Kitchen Team';
+    case 'prep_cook': return 'Prep Cook';
+    case 'manager':
+    case 'ops_manager':
+    case 'store_manager':
+      return 'Manager';
+    case 'waiter': return 'Server';
+    case 'bartender': return 'Barista';
+    case 'host': return 'Host';
+    default: return 'Employee';
+  }
+}
 
 function generateDefaultAvailability(): DayAvailability[] {
   return DAY_NAMES.map((dayName, dayIndex) => ({
@@ -48,7 +73,41 @@ function generateDefaultAvailability(): DayAvailability[] {
 }
 
 export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { weekStartsOn: 1 })) {
-  const currentEmployee = EMPLOYEES[0];
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(true);
+
+  // Load real employees from DB
+  useEffect(() => {
+    async function fetchEmployees() {
+      try {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('id, full_name, role_name')
+          .eq('active', true)
+          .order('full_name')
+          .limit(50);
+
+        if (error) throw error;
+
+        const mapped: Employee[] = (data || []).map((emp: any) => ({
+          id: emp.id,
+          name: emp.full_name || 'Employee',
+          initials: getInitials(emp.full_name || 'E'),
+          department: getRoleDepartment(emp.role_name),
+          position: getRolePosition(emp.role_name),
+        }));
+        setEmployees(mapped);
+      } catch (err) {
+        console.error('[useAvailabilityData] Error loading employees:', err);
+        setEmployees([]);
+      } finally {
+        setLoadingEmployees(false);
+      }
+    }
+    fetchEmployees();
+  }, []);
+
+  const currentEmployee = employees[0] || { id: '', name: 'Loading...', initials: '--', department: '', position: '' };
 
   // Get availability from shared store, or use default
   const storedAvailability = getEmployeeAvailability(currentEmployee.id);
@@ -57,6 +116,14 @@ export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { 
   );
   const [hasChanges, setHasChanges] = useState(false);
   const [, forceUpdate] = useState(0);
+
+  // Update availability when employee changes
+  useEffect(() => {
+    if (currentEmployee.id) {
+      const stored = getEmployeeAvailability(currentEmployee.id);
+      setAvailability(stored?.weeklyPattern || generateDefaultAvailability());
+    }
+  }, [currentEmployee.id]);
 
   // Get time-off requests from shared store
   const timeOffRequests = getAllTimeOffRequests();
@@ -116,8 +183,9 @@ export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { 
     pendingRequests,
     myRequests,
     currentEmployee,
-    employees: EMPLOYEES,
+    employees,
     hasChanges,
+    loadingEmployees,
     updateDayAvailability,
     saveAvailability,
     createTimeOffRequest,

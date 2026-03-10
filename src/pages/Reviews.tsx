@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, TrendingUp } from 'lucide-react';
+import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 
 export default function Reviews() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -175,6 +176,12 @@ export default function Reviews() {
 
   return (
     <div className="space-y-6">
+      {/* Demo Data Warning */}
+      <DemoDataBanner
+        forceShow={true}
+        message="Las reseñas son datos de ejemplo. Conecta Google Business, TripAdvisor o TheFork para ver reseñas reales."
+      />
+
       {/* Header */}
       <ReviewsHeader
         dateRange={dateRange}

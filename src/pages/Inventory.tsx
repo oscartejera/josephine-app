@@ -16,6 +16,7 @@ import {
 } from '@/components/inventory';
 import { AskJosephineDrawer } from '@/components/inventory/AskJosephineDrawer';
 import { useInventoryData } from '@/hooks/useInventoryData';
+import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 export default function Inventory() {
@@ -75,6 +76,9 @@ export default function Inventory() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Demo Data Warning */}
+      <DemoDataBanner />
+
       {/* Header */}
       <InventoryHeader
         dateRange={dateRange}

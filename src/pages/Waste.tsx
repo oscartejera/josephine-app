@@ -12,6 +12,7 @@ import {
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
+import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
 export default function Waste() {
@@ -20,11 +21,11 @@ export default function Waste() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Initialize from query params if present
-  const initialFrom = searchParams.get('start_date') 
-    ? parseISO(searchParams.get('start_date')!) 
+  const initialFrom = searchParams.get('start_date')
+    ? parseISO(searchParams.get('start_date')!)
     : startOfMonth(today);
-  const initialTo = searchParams.get('end_date') 
-    ? parseISO(searchParams.get('end_date')!) 
+  const initialTo = searchParams.get('end_date')
+    ? parseISO(searchParams.get('end_date')!)
     : endOfMonth(today);
   const initialLocation = searchParams.get('location_id');
 
@@ -55,6 +56,9 @@ export default function Waste() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Demo Data Warning */}
+      <DemoDataBanner />
+
       {/* Header with Log Waste button */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
