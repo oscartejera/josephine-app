@@ -85,29 +85,33 @@ export function useProcurementData() {
           return;
         }
 
-        // Fetch pending purchase order lines
-        const { data: poData } = await supabase
-          .from('purchase_orders')
-          .select(`
-            id,
-            status,
-            purchase_order_lines (
-              inventory_item_id,
-              quantity
-            )
-          `)
-          .in('status', ['draft', 'sent']);
-
+        // Fetch pending purchase order lines (with fallback)
         const onOrderMap = new Map<string, number>();
-        if (poData) {
-          poData.forEach(po => {
-            if (po.purchase_order_lines) {
-              po.purchase_order_lines.forEach((line: { inventory_item_id: string; quantity: number }) => {
-                const current = onOrderMap.get(line.inventory_item_id) || 0;
-                onOrderMap.set(line.inventory_item_id, current + (line.quantity || 0));
-              });
-            }
-          });
+        try {
+          const { data: poData, error: poError } = await supabase
+            .from('purchase_orders')
+            .select(`
+              id,
+              status,
+              purchase_order_lines (
+                inventory_item_id,
+                quantity
+              )
+            `)
+            .in('status', ['draft', 'sent']);
+
+          if (!poError && poData) {
+            poData.forEach(po => {
+              if (po.purchase_order_lines) {
+                po.purchase_order_lines.forEach((line: { inventory_item_id: string; quantity: number }) => {
+                  const current = onOrderMap.get(line.inventory_item_id) || 0;
+                  onOrderMap.set(line.inventory_item_id, current + (line.quantity || 0));
+                });
+              }
+            });
+          }
+        } catch (poErr) {
+          console.warn('[Procurement] Could not fetch PO on-order data:', poErr);
         }
 
         // Get supplier IDs for assignment

@@ -47,7 +47,7 @@ export function FoodCostVarianceCard() {
                     setData(result as FoodCostData);
                 }
             } catch (err) {
-                console.error('Error fetching food cost variance:', err);
+                console.warn('[FoodCostVariance] RPC unavailable:', err);
             } finally {
                 setLoading(false);
             }
