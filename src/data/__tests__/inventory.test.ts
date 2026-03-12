@@ -10,8 +10,13 @@ function createChainableMock(resolvedData: any = [], resolvedError: any = null) 
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     not: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
   };
   const result = { data: resolvedData, error: resolvedError };
   chain.then = (resolve: any) => resolve(result);
@@ -19,12 +24,21 @@ function createChainableMock(resolvedData: any = [], resolvedError: any = null) 
 }
 
 const mockFrom = vi.fn();
+const mockTypedFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: any[]) => mockFrom(...args),
   },
 }));
+
+vi.mock('@/data/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/data/client')>();
+  return {
+    ...actual,
+    typedFrom: (...args: any[]) => mockTypedFrom(...args),
+  };
+});
 
 const ctx: QueryContext = {
   orgId: 'org-1',
@@ -46,12 +60,11 @@ describe('getLowStockAlerts', () => {
 
   it('filters and sorts items below par level', async () => {
     const mockData = [
-      { id: 'item-1', name: 'Tomatoes', unit: 'kg', current_stock: '3', par_level: '10', group_id: 'org-1' },
-      { id: 'item-2', name: 'Onions', unit: 'kg', current_stock: '8', par_level: '10', group_id: 'org-1' },
-      { id: 'item-3', name: 'Salt', unit: 'kg', current_stock: '15', par_level: '10', group_id: 'org-1' }, // above par
+      { item_id: 'item-1', name: 'Tomatoes', unit: 'kg', on_hand: '3', par_level: '10', location_id: 'loc-1', deficit: '7' },
+      { item_id: 'item-2', name: 'Onions', unit: 'kg', on_hand: '8', par_level: '10', location_id: 'loc-1', deficit: '2' },
     ];
 
-    mockFrom.mockReturnValue(createChainableMock(mockData));
+    mockTypedFrom.mockReturnValue(createChainableMock(mockData));
 
     const result = await getLowStockAlerts(ctx);
 
@@ -78,12 +91,15 @@ describe('createPurchaseOrderDraftFromAlerts', () => {
   });
 
   it('creates PO header and line items', async () => {
-    // First call: insert PO header
+    // First call: idempotency check — no existing PO found
+    const idempotencyCheck = createChainableMock(null);
+    // Second call: insert PO header
     const poChain = createChainableMock({ id: 'po-1', status: 'draft' });
-    // Second call: insert PO lines
+    // Third call: insert PO lines
     const linesChain = createChainableMock([]);
 
     mockFrom
+      .mockReturnValueOnce(idempotencyCheck)
       .mockReturnValueOnce(poChain)
       .mockReturnValueOnce(linesChain);
 
@@ -99,7 +115,7 @@ describe('createPurchaseOrderDraftFromAlerts', () => {
     expect(result.id).toBe('po-1');
     expect(result.status).toBe('draft');
     expect(result.totalLines).toBe(2);
-    expect(mockFrom).toHaveBeenCalledTimes(2);
+    expect(mockFrom).toHaveBeenCalledTimes(3);
     expect(mockFrom).toHaveBeenCalledWith('purchase_orders');
     expect(mockFrom).toHaveBeenCalledWith('purchase_order_lines');
   });

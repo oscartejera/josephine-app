@@ -22,6 +22,7 @@ function createChainableMock(resolvedData: any = [], resolvedError: any = null) 
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     not: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
     gte: vi.fn().mockReturnThis(),
     lte: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
@@ -37,12 +38,21 @@ function createChainableMock(resolvedData: any = [], resolvedError: any = null) 
 }
 
 const mockFrom = vi.fn();
+const mockTypedFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: any[]) => mockFrom(...args),
   },
 }));
+
+vi.mock('@/data/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/data/client')>();
+  return {
+    ...actual,
+    typedFrom: (...args: any[]) => mockTypedFrom(...args),
+  };
+});
 
 const ctx: QueryContext = {
   orgId: 'org-test',
@@ -66,8 +76,8 @@ describe('E2E Flow: Dashboard Load', () => {
       { org_id: 'org-test', location_id: 'loc-centro', date: '2026-02-01', net_sales: '500', gross_sales: '600', orders_count: '25', avg_check: '20', payments_cash: '100', payments_card: '400', payments_other: '0', refunds_amount: '5', refunds_count: '1', discounts_amount: '10', comps_amount: '0', voids_amount: '0', labor_cost: '100', labor_hours: '12', data_source: 'demo' },
     ];
 
-    // Step 1: Load KPIs
-    mockFrom.mockReturnValue(createChainableMock(kpiData));
+    // Step 1: Load KPIs (getDashboardKpis uses typedFrom('sales_daily_unified'))
+    mockTypedFrom.mockReturnValue(createChainableMock(kpiData));
     const kpis = await getDashboardKpis(ctx, range);
 
     expect(kpis.sales).toBe(9000);
@@ -76,8 +86,8 @@ describe('E2E Flow: Dashboard Load', () => {
     expect(kpis.avgCheck).toBe(25);
     expect(kpis.laborCost).toBe(2200);
 
-    // Step 2: Load daily trends
-    mockFrom.mockReturnValue(createChainableMock(trendData));
+    // Step 2: Load daily trends (getSalesTrends also uses typedFrom)
+    mockTypedFrom.mockReturnValue(createChainableMock(trendData));
     const trends = await getSalesTrends(ctx, range, 'daily');
 
     expect(trends.length).toBeGreaterThan(0);
@@ -93,14 +103,13 @@ describe('E2E Flow: Low Stock → Create PO Draft', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('detects low stock and creates a purchase order draft', async () => {
-    // Step 1: Get low stock alerts
+    // Step 1: Get low stock alerts (now uses typedFrom → inventory_position_unified)
     const inventoryData = [
-      { id: 'item-tomato', name: 'Tomates', unit: 'kg', current_stock: '2', par_level: '15', group_id: 'org-test' },
-      { id: 'item-onion', name: 'Cebollas', unit: 'kg', current_stock: '5', par_level: '20', group_id: 'org-test' },
-      { id: 'item-salt', name: 'Sal', unit: 'kg', current_stock: '50', par_level: '10', group_id: 'org-test' }, // above par
+      { item_id: 'item-tomato', name: 'Tomates', unit: 'kg', on_hand: '2', par_level: '15', location_id: 'loc-centro', deficit: '13' },
+      { item_id: 'item-onion', name: 'Cebollas', unit: 'kg', on_hand: '5', par_level: '20', location_id: 'loc-centro', deficit: '15' },
     ];
 
-    mockFrom.mockReturnValue(createChainableMock(inventoryData));
+    mockTypedFrom.mockReturnValue(createChainableMock(inventoryData));
     const alerts = await getLowStockAlerts(ctx);
 
     expect(alerts).toHaveLength(2);
@@ -120,12 +129,13 @@ describe('E2E Flow: Low Stock → Create PO Draft', () => {
       })),
     };
 
-    // Mock PO header insert
+    // Mock: idempotency check (no existing PO), PO header insert, PO lines insert
+    const idempotencyCheck = createChainableMock(null);
     const poHeaderMock = createChainableMock({ id: 'po-new-1', status: 'draft' });
-    // Mock PO lines insert
     const poLinesMock = createChainableMock([]);
 
     mockFrom
+      .mockReturnValueOnce(idempotencyCheck)
       .mockReturnValueOnce(poHeaderMock)
       .mockReturnValueOnce(poLinesMock);
 
