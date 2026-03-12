@@ -177,7 +177,7 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product, index) => (
+                {products.slice(0, 5).map((product, index) => (
                   <TableRow key={product.product_id}>
                     <TableCell className="font-medium text-muted-foreground">
                       {index + 1}

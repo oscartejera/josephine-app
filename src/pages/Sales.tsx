@@ -60,7 +60,6 @@ export default function Sales() {
   const [endDate, setEndDate] = useState(new Date());
   const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
   const [askJosephineOpen, setAskJosephineOpen] = useState(false);
-  const [productsDisplayCount, setProductsDisplayCount] = useState(10);
   const [explainDate, setExplainDate] = useState<string | null>(null);
   const { t } = useTranslation();
 
@@ -431,25 +430,41 @@ export default function Sales() {
         {/* Products */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">{t('sales.topProducts')}</h3>
-          <div className="space-y-3">
-            {products.slice(0, productsDisplayCount).map(product => (
-              <div key={product.name}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">{product.name}</span>
-                  <span className="text-sm font-semibold">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(product.value)}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400" style={{ width: `${Math.min(product.percentage * 5, 100)}%` }} />
-                  </div>
-                  <span className="text-xs text-muted-foreground w-14 text-right">{product.percentage.toFixed(1)}%</span>
-                </div>
-              </div>
-            ))}
-            {products.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">{t('sales.noProductData')}</p>
-            )}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">#</TableHead>
+                <TableHead>{t('common.name')}</TableHead>
+                <TableHead className="text-right">{t('sales.title')}</TableHead>
+                <TableHead className="text-right">% {t('sales.title')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.slice(0, 10).map((product, index) => (
+                <TableRow key={product.name}>
+                  <TableCell className="font-medium text-muted-foreground">
+                    {index + 1}
+                  </TableCell>
+                  <TableCell>
+                    <p className="font-medium">{product.name}</p>
+                  </TableCell>
+                  <TableCell className="text-right font-medium tabular-nums">
+                    {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(product.value)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {product.percentage.toFixed(1)}%
+                  </TableCell>
+                </TableRow>
+              ))}
+              {products.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                    {t('sales.noProductData')}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </Card>
       </div>
 
