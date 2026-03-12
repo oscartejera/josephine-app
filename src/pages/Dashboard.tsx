@@ -204,12 +204,12 @@ export default function Dashboard() {
 
         {/* Inline KPI error warning (non-blocking) */}
         {kpiHasError && (
-          <Card className="border-amber-200 bg-amber-50">
+          <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50">
             <CardContent className="flex items-center gap-3 py-3">
               <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800">KPIs temporalmente no disponibles</p>
-                <p className="text-xs text-amber-600">{kpiError instanceof Error ? kpiError.message : 'Error al cargar indicadores'}</p>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">KPIs temporalmente no disponibles</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400">{kpiError instanceof Error ? kpiError.message : 'Error al cargar indicadores'}</p>
               </div>
               <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetch()}>
                 Reintentar
@@ -220,51 +220,64 @@ export default function Dashboard() {
 
         {/* KPI Cards */}
         <div data-tour="kpi-cards" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <MetricCard
-            title={t('dashboard.netSales')}
-            value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-            icon={DollarSign}
-            variant="success"
-            trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: t('common.vsForecast') } : undefined}
-          />
-          <MetricCard
-            title="GP%"
-            value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
-            icon={Percent}
-            variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
-            trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: t('common.vsForecast') } : undefined}
-          />
-          <MetricCard
-            title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
-            value={`€${cogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-            icon={Receipt}
-            trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: t('common.vsForecast') } : undefined}
-          />
-          <MetricCard
-            title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
-            value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-            icon={Users}
-            trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
-          />
-          <MetricCard
-            title="COL%"
-            value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
-            icon={TrendingUp}
-            variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
-            trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: t('common.vsForecast') } : undefined}
-          />
-          <MetricCard
-            title={t('dashboard.covers')}
-            value={ordersCount}
-            icon={Users}
-            trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: t('common.vsForecast') } : undefined}
-          />
-          <MetricCard
-            title={t('dashboard.avgTicket')}
-            value={`€${Number(avgCheck).toFixed(2)}`}
-            icon={Flame}
-            trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: t('common.vsForecast') } : undefined}
-          />
+          {[
+            <MetricCard
+              key="sales"
+              title={t('dashboard.netSales')}
+              value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
+              icon={DollarSign}
+              variant="success"
+              trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: t('common.vsForecast') } : undefined}
+            />,
+            <MetricCard
+              key="gp"
+              title="GP%"
+              value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
+              icon={Percent}
+              variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
+              trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: t('common.vsForecast') } : undefined}
+            />,
+            <MetricCard
+              key="cogs"
+              title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
+              value={`€${cogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
+              icon={Receipt}
+              trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: t('common.vsForecast') } : undefined}
+            />,
+            <MetricCard
+              key="labor"
+              title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
+              value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
+              icon={Users}
+              trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
+            />,
+            <MetricCard
+              key="col"
+              title="COL%"
+              value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
+              icon={TrendingUp}
+              variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
+              trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: t('common.vsForecast') } : undefined}
+            />,
+            <MetricCard
+              key="covers"
+              title={t('dashboard.covers')}
+              value={ordersCount}
+              icon={Users}
+              trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: t('common.vsForecast') } : undefined}
+            />,
+            <MetricCard
+              key="ticket"
+              title={t('dashboard.avgTicket')}
+              value={`€${Number(avgCheck).toFixed(2)}`}
+              icon={Flame}
+              trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: t('common.vsForecast') } : undefined}
+            />,
+          ].map((card, i) => (
+            <div key={i} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'backwards' }}>
+              {card}
+            </div>
+          ))}
         </div>
 
         {/* Top 10 Products - full width */}

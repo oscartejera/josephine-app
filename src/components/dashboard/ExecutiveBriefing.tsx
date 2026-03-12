@@ -283,8 +283,8 @@ export function ExecutiveBriefing() {
                     <div className="space-y-1.5">
                         {briefing.alerts.slice(0, 3).map((alert, i) => (
                             <div key={i} className={`flex items-start gap-2 text-xs px-2.5 py-1.5 rounded ${alert.type === 'critical'
-                                ? 'bg-red-50 text-red-700 border border-red-100'
-                                : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-800'
+                                : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-800'
                                 }`}>
                                 <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                                 <span><strong>{alert.location}:</strong> {alert.message}</span>
