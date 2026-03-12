@@ -28,9 +28,12 @@ export function hasNoLocations(ctx: QueryContext): boolean {
 
 /**
  * Normalise any data source value to the canonical 'pos' | 'demo'.
+ * Real POS integrations (square, lightspeed, cover_manager, toast) → 'pos'
+ * Everything else → 'demo'
  */
+const POS_SOURCES = new Set(['pos', 'square', 'lightspeed', 'cover_manager', 'toast', 'clover', 'revel']);
 export function normaliseDataSource(ds: string): 'pos' | 'demo' {
-  return ds === 'pos' ? 'pos' : 'demo';
+  return POS_SOURCES.has(ds?.toLowerCase()) ? 'pos' : 'demo';
 }
 
 /**

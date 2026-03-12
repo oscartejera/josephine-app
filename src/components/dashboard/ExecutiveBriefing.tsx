@@ -146,12 +146,14 @@ export function ExecutiveBriefing() {
             // Fallback: compute SUM(planned_hours × hourly_cost) from planned_shifts + employees
             let labourData: any[] | null = null;
             try {
-                const { data: rpcResult } = await (supabase as any).rpc('get_labour_cost_by_date', {
-                    p_location_ids: locIds,
-                    p_date: yesterday,
+                const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc('get_labour_cost_by_date', {
+                    _location_ids: locIds,
+                    _from: yesterday,
+                    _to: yesterday,
                 });
-                labourData = rpcResult;
-            } catch { /* RPC not available */ }
+                if (!rpcErr && rpcResult) labourData = rpcResult;
+                else if (rpcErr) console.warn('[ExecutiveBriefing] RPC labour error:', rpcErr.message);
+            } catch (e) { console.warn('[ExecutiveBriefing] RPC call failed, using fallback'); }
 
             if (!labourData || labourData.length === 0) {
                 // Client-side fallback
