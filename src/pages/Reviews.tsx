@@ -179,7 +179,7 @@ export default function Reviews() {
       {/* Review sync status */}
       <DemoDataBanner
         forceShow={true}
-        message="TripAdvisor conectado ✓ — Google Reviews y TheFork pendientes de configurar. Pulsa 'Sincronizar' en Ajustes para importar reseñas."
+        message="Google Reviews y TripAdvisor conectados ✓ — TheFork pendiente. Sincroniza desde Ajustes → Integraciones."
       />
 
       {/* Header */}
