@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
+import { NotificationCenter } from '@/components/ui/NotificationCenter';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -17,7 +18,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   // Generate breadcrumb from path
   const getBreadcrumb = () => {
     const path = location.pathname;
-    
+
     // Map paths to readable breadcrumbs
     const breadcrumbMap: Record<string, string> = {
       '/dashboard': 'Control Tower',
@@ -60,9 +61,12 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         {getBreadcrumb()}
       </div>
 
-      {/* Right side - data source badge */}
+      {/* Right side - notifications + data source badge */}
       <div className="flex-1" />
-      <DataSourceBadge />
+      <div className="flex items-center gap-2">
+        <NotificationCenter />
+        <DataSourceBadge />
+      </div>
     </header>
   );
 }

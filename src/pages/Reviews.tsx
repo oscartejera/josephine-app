@@ -176,10 +176,10 @@ export default function Reviews() {
 
   return (
     <div className="space-y-6">
-      {/* Demo Data Warning */}
+      {/* Review sync status */}
       <DemoDataBanner
         forceShow={true}
-        message="Las reseñas son datos de ejemplo. Conecta Google Business, TripAdvisor o TheFork para ver reseñas reales."
+        message="TripAdvisor conectado ✓ — Google Reviews y TheFork pendientes de configurar. Pulsa 'Sincronizar' en Ajustes para importar reseñas."
       />
 
       {/* Header */}
