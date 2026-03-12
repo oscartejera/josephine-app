@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { ManagerLogbook } from '@/components/workforce/ManagerLogbook';
 import { EmployeeReviews } from '@/components/workforce/EmployeeReviews';
 import { TrainingTracker } from '@/components/workforce/TrainingTracker';
+import { EmploymentContracts } from '@/components/workforce/EmploymentContracts';
 import {
     Users,
     UserPlus,
@@ -23,6 +24,7 @@ import {
     BookOpen,
     TrendingUp,
     GraduationCap,
+    FileText,
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -466,6 +468,10 @@ export default function WorkforceTeam() {
                         <GraduationCap className="h-4 w-4" />
                         Formación
                     </TabsTrigger>
+                    <TabsTrigger value="contracts" className="gap-2">
+                        <FileText className="h-4 w-4" />
+                        Contratos
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* ═══ TAB 1: ROSTER ═══ */}
@@ -797,6 +803,11 @@ export default function WorkforceTeam() {
                 {/* ═══ TAB 6: TRAINING ═══ */}
                 <TabsContent value="training" className="space-y-4">
                     <TrainingTracker locationId={selectedLocationId} />
+                </TabsContent>
+
+                {/* ═══ TAB 7: CONTRACTS ═══ */}
+                <TabsContent value="contracts" className="space-y-4">
+                    <EmploymentContracts locationId={selectedLocationId} />
                 </TabsContent>
             </Tabs>
 

@@ -15,6 +15,7 @@ import {
   type ViewMode
 } from '@/components/inventory';
 import { AskJosephineDrawer } from '@/components/inventory/AskJosephineDrawer';
+import { AutoPurchaseOrder } from '@/components/inventory/AutoPurchaseOrder';
 import { useInventoryData } from '@/hooks/useInventoryData';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
@@ -153,6 +154,9 @@ export default function Inventory() {
           selectedLocations={selectedLocations}
         />
       </div>
+
+      {/* Auto Purchase Order - AI-driven reordering */}
+      <AutoPurchaseOrder />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
