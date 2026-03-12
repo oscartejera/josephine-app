@@ -26,6 +26,7 @@ import { HourlyForecastChart } from '@/components/forecast/HourlyForecastChart';
 import { ForecastConfidenceBadge } from '@/components/forecast/ForecastConfidenceBadge';
 import { ForecastExplainDrawer } from '@/components/forecast/ForecastExplainDrawer';
 import { ForecastAccuracyTrend } from '@/components/forecast/ForecastAccuracyTrend';
+import { useTopProducts } from '@/hooks/useTopProducts';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import { startOfMonth, endOfMonth, format, subDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -100,7 +101,14 @@ export default function Sales() {
   const chartData = salesData?.chartData || [];
   const channels = salesData?.channels || [];
   const categories = salesData?.categories || [];
-  const products = salesData?.products || [];
+
+  // Use same data source as Dashboard for top products (avoids "Unknown" names)
+  const { products: topProductsRaw } = useTopProducts();
+  const products = topProductsRaw.slice(0, 10).map(p => ({
+    name: p.product_name,
+    value: p.sales,
+    percentage: p.sales_share_pct,
+  }));
 
   const dateLabel = `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM')}`;
 
@@ -114,7 +122,7 @@ export default function Sales() {
     channels: channels.map(ch => ({ channel: ch.channel, sales: ch.sales, salesDelta: ch.salesDelta })),
     categories: categories.map(cat => ({ category: cat.category, amount: cat.amount, ratio: cat.ratio })),
     topProducts: products.slice(0, 5).map(p => ({ name: p.name, value: p.value, percentage: p.percentage })),
-  }), [kpis, channels, categories, products]);
+  }), [kpis, channels, categories, products, topProductsRaw]);
 
   if (appLoading || isLoading) {
     return (
