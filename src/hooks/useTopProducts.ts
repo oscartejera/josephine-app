@@ -71,7 +71,8 @@ export function useTopProducts() {
     queryFn: async () => {
       const ctx = buildQueryContext(orgId, locationIds, dataSource);
 
-      // Fetch top products from RPC (for ranking/share) and mart view (for COGS)
+      // Fetch top products from RPC (includes sales, qty, share, and COGS from pos_daily_products)
+      // Also fetch mart data for enrichment (recipe-based COGS source info)
       const [rpcResult, martResult] = await Promise.all([
         getTopProductsRpc(ctx, { from: fromStr, to: toStr }, 20),
         supabase
@@ -83,7 +84,7 @@ export function useTopProducts() {
           .then(({ data }) => data || []),
       ]);
 
-      // Aggregate mart data by product
+      // Aggregate mart data by product (used for recipe COGS source metadata)
       const martMap = new Map<string, { cogs: number; units: number; sales: number; cogsSource: string }>();
       (martResult as any[]).forEach((row: any) => {
         const pid = row.product_id;
@@ -103,10 +104,11 @@ export function useTopProducts() {
         const qty = Number(item.qty) || 0;
         const share = Number(item.share) || 0;
 
-        // Use mart COGS if available, fallback to mart aggregated data
+        // COGS priority: (1) RPC-returned cogs from pos_daily_products, (2) mart COGS, (3) 0
+        const rpcCogs = Number(item.cogs) || 0;
         const martData = martMap.get(productId);
-        const cogs = martData?.cogs ?? 0;
-        const cogsSource = (martData?.cogsSource ?? 'estimated') as 'recipe' | 'estimated';
+        const cogs = rpcCogs > 0 ? rpcCogs : (martData?.cogs ?? 0);
+        const cogsSource = (martData?.cogsSource ?? (rpcCogs > 0 ? 'estimated' : 'estimated')) as 'recipe' | 'estimated';
         const gp = sales - cogs;
 
         return {
