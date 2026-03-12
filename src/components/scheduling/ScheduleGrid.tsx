@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
-import { Cloud, Sun, CloudRain, GripVertical, Plus, ArrowRightLeft, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import { Cloud, Sun, CloudRain, GripVertical, Plus, ArrowRightLeft, ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, TrendingDown, ChevronDown, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScheduleData, ViewMode, Employee, Shift } from '@/hooks/useSchedulingSupabase';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -677,6 +677,80 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                         <div className={varianceIsPositive ? "text-red-600 font-medium" : "text-green-600 font-medium"}>
                           Δ: {varianceIsPositive ? '+' : ''}€{Math.round((kpi as any).varianceCost).toLocaleString()}
                         </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
+
+        {/* Recommended hours row — Forecast → Staffing link (Nory parity) */}
+        <TooltipProvider>
+          <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-gradient-to-r from-indigo-50/50 to-violet-50/50">
+            <div className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Rec. Hours
+            </div>
+            {days.map((day, i) => {
+              const kpi = data.dailyKPIs[i];
+              const forecastHours = kpi?.forecastLaborHours || 0;
+              const scheduledHours = kpi?.shiftsHours || 0;
+              const deviation = forecastHours > 0
+                ? ((scheduledHours - forecastHours) / forecastHours) * 100
+                : 0;
+              const absDeviation = Math.abs(deviation);
+
+              // Color coding: 🟢 ±10%, 🟡 10-25%, 🔴 >25%
+              let deviationColor = 'text-emerald-600'; // green
+              let deviationBg = '';
+              if (absDeviation > 25) {
+                deviationColor = 'text-red-600';
+                deviationBg = 'bg-red-50/50';
+              } else if (absDeviation > 10) {
+                deviationColor = 'text-amber-600';
+                deviationBg = 'bg-amber-50/50';
+              }
+
+              const hasScheduled = scheduledHours > 0;
+
+              return (
+                <Tooltip key={`hours-${day.dateStr}`}>
+                  <TooltipTrigger asChild>
+                    <div className={cn(
+                      "p-2 px-3 border-r border-border last:border-r-0 cursor-default",
+                      hasScheduled && absDeviation > 10 && deviationBg
+                    )}>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium text-indigo-700">
+                          {forecastHours > 0 ? `${forecastHours.toFixed(0)}h` : '-'}
+                        </span>
+                        {hasScheduled && forecastHours > 0 && (
+                          <span className={cn("text-[10px] font-medium", deviationColor)}>
+                            {deviation > 0 ? '+' : ''}{deviation.toFixed(0)}%
+                          </span>
+                        )}
+                      </div>
+                      {hasScheduled && (
+                        <span className="text-[10px] text-muted-foreground">
+                          Prog: {scheduledHours.toFixed(0)}h
+                        </span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    <div className="space-y-1">
+                      <div>Forecast: €{kpi?.forecastSales?.toLocaleString() || 0}</div>
+                      <div>Horas recomendadas: <strong>{forecastHours.toFixed(1)}h</strong></div>
+                      {hasScheduled && (
+                        <>
+                          <div>Horas programadas: {scheduledHours.toFixed(1)}h</div>
+                          <div className={deviationColor}>
+                            Desviación: {deviation > 0 ? '+' : ''}{deviation.toFixed(1)}%
+                            {absDeviation <= 10 ? ' ✓' : absDeviation <= 25 ? ' ⚠' : ' ⛔'}
+                          </div>
+                        </>
                       )}
                     </div>
                   </TooltipContent>

@@ -23,7 +23,8 @@ function generateLocalBriefing(
     salesByLoc: Record<string, number>,
     labourByLoc: Record<string, number>,
     budgetByLoc: Record<string, { sales: number; labour: number }>,
-    wasteTotal: number
+    wasteTotal: number,
+    targetColByLoc: Record<string, number> = {}
 ): BriefingData {
     const alerts: BriefingData['alerts'] = [];
     const recommendations: string[] = [];
@@ -46,13 +47,15 @@ function generateLocalBriefing(
         const salesVar = budget.sales > 0 ? ((sales - budget.sales) / budget.sales) * 100 : 0;
         const labourVar = budget.labour > 0 ? ((labour - budget.labour) / budget.labour) * 100 : 0;
 
-        if (colPct > 35) {
+        const locTarget = targetColByLoc[loc.id] || 30;
+
+        if (colPct > locTarget) {
             alerts.push({
                 location: loc.name,
-                type: 'critical',
-                message: `COL% en ${colPct.toFixed(1)}% — supera el objetivo del 30%`,
+                type: colPct > locTarget + 5 ? 'critical' : 'warning',
+                message: `COL% en ${colPct.toFixed(1)}% — supera el objetivo del ${locTarget}%`,
             });
-            recommendations.push(`Revisa la distribución de turnos en ${loc.name} para esta semana.`);
+            recommendations.push(`Revisa la distribución de turnos en ${loc.name} para esta semana. Objetivo: ${locTarget}%.`);
         }
 
         if (salesVar < -10) {
@@ -90,7 +93,9 @@ function generateLocalBriefing(
         narrativeParts.push(`un ${Math.abs(salesVsTarget).toFixed(1)}% por debajo del presupuesto`);
     }
 
-    narrativeParts.push(`El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (Labor €${Math.round(totalLabour).toLocaleString()} + Mermas €${Math.round(wasteTotal).toLocaleString()}).`);
+    const overallColPct = totalSales > 0 ? (totalLabour / totalSales) * 100 : 0;
+
+    narrativeParts.push(`El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (Labor €${Math.round(totalLabour).toLocaleString()} · COL% ${overallColPct.toFixed(1)}% + Mermas €${Math.round(wasteTotal).toLocaleString()}).`);
 
     if (alerts.length === 0) {
         narrativeParts.push('Todos los locales operan dentro de los márgenes objetivo. Excelente jornada.');
@@ -200,7 +205,19 @@ export function ExecutiveBriefing() {
 
             const wasteTotal = (wasteData || []).reduce((sum: number, r: any) => sum + Math.abs((r.qty_delta || 0) * (r.unit_cost || 0)), 0);
 
-            const result = generateLocalBriefing(accessibleLocations, salesByLoc, labourByLoc, budgetByLoc, wasteTotal);
+            // Fetch target COL% per location from location_settings
+            const targetColByLoc: Record<string, number> = {};
+            try {
+                const { data: settingsData } = await (supabase as any)
+                    .from('location_settings')
+                    .select('location_id, target_col_percent')
+                    .in('location_id', locIds);
+                (settingsData || []).forEach((s: any) => {
+                    if (s.target_col_percent) targetColByLoc[s.location_id] = s.target_col_percent;
+                });
+            } catch { /* location_settings may not exist */ }
+
+            const result = generateLocalBriefing(accessibleLocations, salesByLoc, labourByLoc, budgetByLoc, wasteTotal, targetColByLoc);
             setBriefing(result);
         } catch (err) {
             console.error('[ExecutiveBriefing]', err);
