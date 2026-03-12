@@ -17,22 +17,27 @@ Single source of truth for every number shown in the UI.
 |----------|---------|
 | `rpc_kpi_range_summary(p_org_id, p_location_ids, p_from, p_to)` | `{ current, previous, period, previousPeriod }` — aggregated KPIs for selected range + automatic previous period |
 
-### COGS Cascade (mart_kpi_daily)
+### COGS Cascade (`rpc_kpi_range_summary` — 3-source aggregation)
 
-```
-COALESCE(
-  NULLIF(cogs_daily.cogs_amount, 0),           -- 1. Actual from stock_movements
-  net_sales * COALESCE(default_cogs_percent, 30) / 100  -- 2. Estimated from settings or 30% fallback
-)
+```sql
+-- KPI COGS uses GREATEST() across 3 sources:
+cogs_stock AS (SELECT SUM(cogs_amount) FROM cogs_daily ...),      -- 1. Stock movements
+monthly_cogs AS (SELECT SUM(amount) FROM monthly_cost_entries ...), -- 2. Manual entries
+cogs_pos AS (SELECT SUM(cogs) FROM pos_daily_products ...),        -- 3. POS receipt-level (PREFERRED)
+combined AS (SELECT GREATEST(stock, monthly, pos) AS total_cogs)
 ```
 
-### Product COGS Cascade (mart_sales_category_daily)
+⚠️ **Never hardcode COGS percentages** (e.g., `sales * 0.28`). The old `default_cogs_percent` fallback has been replaced by real data from `pos_daily_products`.
 
-```
-COALESCE(
-  SUM(recipe_ingredients.quantity * inventory_items.last_cost) * units_sold,  -- 1. Recipe-based
-  net_sales * COALESCE(default_cogs_percent, 30) / 100                       -- 2. Estimated fallback
-)
+### Product COGS Priority (`useTopProducts` hook)
+
+```typescript
+// COGS priority:
+// 1. RPC-returned cogs from pos_daily_products (via get_top_products_unified)
+// 2. mart_sales_category_daily (recipe-based, may be stale)
+// 3. 0 (no data)
+const rpcCogs = Number(item.cogs) || 0;
+const cogs = rpcCogs > 0 ? rpcCogs : (martData?.cogs ?? 0);
 ```
 
 ## KPI Definitions
@@ -43,11 +48,11 @@ COALESCE(
 | **orders_count** | `SUM(sales_daily_unified.orders_count)` | POS/CDM | always actual |
 | **covers** | `SUM(sales_daily_unified.covers)` | POS/CDM | always actual |
 | **avg_check** | `net_sales / orders_count` | derived | — |
-| **cogs** | stock_movements → fallback `default_cogs_percent` → 30% | `cogs_daily` or estimated | `actual` \| `estimated` |
+| **cogs** | `GREATEST(cogs_daily, monthly_cost_entries, pos_daily_products.cogs)` | 3-source aggregation | `actual` |
 | **gp_percent** | `(net_sales - cogs) / net_sales * 100` | derived | — |
-| **labour_cost** | `SUM(labour_daily_unified.labour_cost)` | time_entries | `actual` \| NULL |
+| **labour_cost** | `SUM(planned_shifts.planned_hours × employees.hourly_cost)` | planned_shifts | `actual` \| NULL |
 | **col_percent** | `labour_cost / net_sales * 100` | derived | — |
-| **product_cogs** | recipe cost × units → fallback % | `recipes` or estimated | `recipe` \| `estimated` |
+| **product_cogs** | `pos_daily_products.cogs` per product (RPC) → mart fallback | `pos_daily_products` or `mart_sales_category_daily` | `pos` \| `recipe` \| `estimated` |
 
 ## Source Labels
 
@@ -102,7 +107,7 @@ interface KpiRangeSummary {
 | **Sales** | `useBISalesData` → `getKpiRangeSummary` | `rpc_kpi_range_summary` (for previous period) | Previous period comparison uses real historical data instead of forecast-only. |
 | **Labour** | `useLabourData` | RPCs `get_labour_kpis`, `get_labour_timeseries`, `get_labour_locations_table` | Added `sanitizeKpis()` to guard NaN/Infinity. COL%=0 when sales=0, SPLH=0 when hours=0. |
 | **Instant P&L** | `useInstantPLData` | `getInstantPnlRpc` | Removed `SeededRandom` fabricated labour data. Labour stays at actual value (0 or real). |
-| **Top Products** | `useTopProducts` | `getTopProductsRpc` + `mart_sales_category_daily` | Removed `sales * 0.28` hardcode. Uses recipe or estimated COGS from mart view. |
+| **Top Products** | `useTopProducts` | `getTopProductsRpc` (with COGS from `pos_daily_products`) + `mart_sales_category_daily` (enrichment) | COGS priority: (1) RPC cogs from `pos_daily_products`, (2) mart recipe COGS, (3) 0. GP% = 64-75%, not 100%. |
 | **Menu Engineering** | `useMenuEngineeringData` | `getMenuEngineeringSummaryRpc` + `mart_sales_category_daily` | Enriches COGS from mart view when RPC returns 0. Recomputes classification with real margins. |
 | **Inventory** | `useInventoryData` | Direct Supabase queries | Removed arbitrary multipliers (`* 0.6`, `* 0.7`, `* 1.05`, `* 0.85`). Uses actual values. |
 
@@ -170,11 +175,12 @@ RPC: `rpc_data_health(p_org_id)` returns all 5 sections as JSON.
 
 ## Assumptions
 
-1. If no recipes exist → use `location_settings.default_cogs_percent` (fallback: 30%)
-2. If no time_entries → labour = NULL (not fabricated)
-3. If no stock_movements → COGS = estimated via % (not 0)
-4. "Estimated" badge visible in UI when data is not from the real source
+1. COGS comes from 3 real sources (`pos_daily_products`, `cogs_daily`, `monthly_cost_entries`), **never hardcoded percentages**
+2. If no labour data → labour = NULL (not fabricated)
+3. If no COGS data from any source → COGS = 0 (UI shows as-is)
+4. `pos_daily_products.cogs` is the most up-to-date COGS source (POS receipt-level)
 5. Previous period = same number of days immediately before the selected range
+6. Matviews may be stale — RPCs must have fallback to base tables
 
 ## Implementation PRs
 

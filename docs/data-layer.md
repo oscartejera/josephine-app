@@ -49,10 +49,18 @@ Before March 2026, the data layer used `(supabase.rpc as any)(...)` for all RPC 
 | `src/data/typed-rpc.ts` | `typedRpc()` — validates RPC response with Zod |
 | `src/data/rpc-contracts.ts` | Zod schemas for all 8+ RPCs — **single source of truth** |
 | `src/data/database-views.ts` | TypeScript types for SQL views not in generated types |
-| `src/data/client.ts` | `typedFrom()` — type-safe `.from()` for views |
+| `src/data/client.ts` | `typedFrom()` — type-safe `.from()` for views. **Also contains `normaliseDataSource()`** which maps POS provider names (`cover_manager`, `square`, `lightspeed`, `toast`) to `'pos'` |
 | `src/data/health.ts` | RPC health check — probes all RPCs on demand |
 | `src/components/InsightErrorBoundary.tsx` | Catches errors per-page |
 | `src/data/__tests__/rpc-contracts.test.ts` | Contract tests — validates schemas against live DB |
+
+### ⚠️ Matview Staleness Warning
+
+Materialized views (`*_mv`) can become stale. RPCs reading from matviews **MUST include fallback logic** to query base tables when the matview has no data for the requested date range. Example: `get_top_products_unified` checks `product_sales_daily_unified_mv` first, falls back to `pos_daily_products` if stale.
+
+### ⚠️ Data Source Normalization
+
+The `data_source` column in base tables stores provider-specific names (e.g., `'cover_manager'`). **If you add a new POS integration, you MUST add its name to `normaliseDataSource()` in `client.ts`** — otherwise all data from that source will be invisible to the frontend.
 
 ## How `typedRpc()` Works
 

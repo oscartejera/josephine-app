@@ -141,30 +141,69 @@ The auth bypass works by injecting a `sb-{project_ref}-auth-token` key into loca
 - **AI Integration:** Prophet forecasting and Claude API insights both run as Supabase Edge Functions
 - **Feature Store:** Facts tables for time-series aggregation (15min, hourly, daily)
 
-### ⚠️ MANDATORY: Dual Data-Source Validation (Demo + POS)
+### ⚠️ MANDATORY: Data-Source Normalization
 
-> **Every change to app logic, database schema, RPCs, or views MUST work for BOTH data sources: `demo` and `pos` (real POS data).**
+> **The `data_source` column in base tables uses provider-specific names (e.g., `'cover_manager'`, `'square'`, `'lightspeed'`). The frontend normalizes these to `'pos'` or `'demo'`.**
 
-The application has **two parallel data pipelines** that feed the same unified views:
+#### `normaliseDataSource()` in `src/data/client.ts`
 
-| Layer | Demo path | POS (real) path |
-|-------|-----------|-----------------|
-| Sales source | `pos_daily_finance` (seeded demo data) | `cdm_orders` + `cdm_payments` (Square sync) |
-| Forecast source | `forecast_points` + `forecast_runs` | Weekday-average heuristic from `cdm_orders` |
-| Labour source | `labour_daily` + `planned_shifts` | Same (`planned_shifts` × `employees.hourly_cost`) |
-| Data source filter | `resolve_data_source()` returns `'demo'` | `resolve_data_source()` returns `'pos'` |
+```typescript
+// 'cover_manager' | 'square' | 'lightspeed' | 'toast' | 'clover' | 'revel' | 'pos' → 'pos'
+// everything else → 'demo'
+```
 
-**Unified views** (`sales_daily_unified`, `forecast_daily_unified`, `product_sales_daily_unified`) UNION both paths and filter by `resolve_data_source()`. RPCs that read from these views work automatically for both modes.
+**⚠️ CRITICAL BUG PATTERN**: If you add a new POS integration, you MUST add its data_source string to `normaliseDataSource()` or all product/sales data from that source will be invisible.
 
-**When modifying the app, you MUST:**
+### Data Pipeline Architecture
 
-1. **SQL/RPC changes**: Ensure queries use `::uuid` casts when filtering against unified views (demo columns may be `text`, POS columns are `uuid`). Always use `location_id::uuid = ANY(v_loc_filter)` pattern.
-2. **New tables/columns**: If the table feeds an RPC or view, verify the column types and names match both data paths. Use `IF EXISTS` guards when referencing optional tables (e.g., payroll tables that may not exist in demo).
-3. **Frontend changes**: Use `useDemoMode()` context if behaviour diverges between modes. Otherwise, rely on the unified views which handle the split transparently.
-4. **Testing**: After any backend change, verify the Dashboard and affected pages work when logged in as Demo Owner (`owner@demo.com`). The demo org uses `resolve_data_source() → 'demo'`; a POS-connected org would return `'pos'`.
-5. **Never break demo**: The demo mode is the **primary sales tool**. If a change only works with real POS data but breaks demo, it is a critical bug.
+The application has **unified views** that UNION demo and POS paths, plus **base tables** that contain the most up-to-date data:
 
-**This will NOT crash the app** — the architecture is designed for it (unified views + `resolve_data_source`). But failing to test both paths can cause silent data gaps where one mode shows zeros.
+| Data | Base table (freshest) | Unified view | Materialized view (may be stale) |
+|------|----------------------|--------------|----------------------------------|
+| Sales | `pos_daily_finance` | `sales_daily_unified` | `mv_sales_daily` |
+| Products | `pos_daily_products` | `product_sales_daily_unified` | `product_sales_daily_unified_mv` |
+| Labour | `planned_shifts` × `employees.hourly_cost` | `labour_daily_unified` | — |
+| Forecast | `forecast_daily_metrics` | `forecast_daily_unified` | — |
+| COGS (stock) | `stock_movements` | `cogs_daily` (view) | — |
+| COGS (POS) | `pos_daily_products.cogs` | — | — |
+| COGS (manual) | `monthly_cost_entries` | — | — |
+
+### ⚠️ MANDATORY: Materialized View Staleness
+
+> **Materialized views (`*_mv`) can become stale.** RPCs MUST include fallback logic to query base tables when matviews have no data for the requested date range.
+
+**Current matviews:**
+- `product_sales_daily_unified_mv` — may lag behind `pos_daily_products`
+- `mart_sales_category_daily_mv` — may lag behind `pos_daily_products`  
+- `mart_kpi_daily_mv` — may lag behind `sales_daily_unified`
+- `mv_sales_daily`, `mv_sales_hourly` — refreshed by triggers
+
+**Refresh strategy**: `REFRESH MATERIALIZED VIEW <name>` via `scripts/run-migration.mjs` or `refresh_all_mvs()` RPC. Always build RPCs with fallback to base tables.
+
+### COGS Pipeline (3-Source Aggregation)
+
+COGS (Cost of Goods Sold) aggregates from **three sources** using `GREATEST()` to pick the best available data:
+
+| Source | Table | Coverage | Priority |
+|--------|-------|----------|----------|
+| POS receipt-level | `pos_daily_products.cogs` | Most up-to-date (per product per day) | 1st (preferred) |
+| Stock movements | `cogs_daily` view (from `stock_movements`) | When inventory tracking is active | 2nd |
+| Manual entries | `monthly_cost_entries` | Monthly manual cost entries | 3rd |
+
+**Used in:**
+- `rpc_kpi_range_summary` — aggregates all 3 sources for KPI cards
+- `get_top_products_unified` — returns per-product COGS from `pos_daily_products`
+- `useTopProducts` hook — prioritizes RPC COGS over stale `mart_sales_category_daily`
+
+**⚠️ NEVER hardcode COGS percentages** (e.g., `sales * 0.28`). Always read from actual data sources.
+
+### Data Source Testing Rules
+
+1. **SQL/RPC changes**: Use `::uuid` casts in filters: `location_id::uuid = ANY(v_loc_filter)`
+2. **New tables**: Verify column types match both demo and POS paths.
+3. **Frontend**: Use `useDemoMode()` if behaviour diverges. Otherwise rely on unified views.
+4. **Testing**: Verify Dashboard works as Demo Owner (`owner@demo.com`).
+5. **Never break demo**: Demo mode is the primary sales tool.
 
 ## Workflow & Deployment
 
@@ -200,24 +239,28 @@ The application has **two parallel data pipelines** that feed the same unified v
 5. Vercel deploys automatically on push to `main`
 
 #### On every database change:
-1. **Create a migration file** in `supabase/migrations/` with timestamp naming: `YYYYMMDDHHMMSS_description.sql`
-2. **Apply the SQL directly** to the production Supabase database via the Management API:
+1. **Create a migration file** in `supabase/migrations/` with timestamp naming: `YYYYMMDD_description.sql`
+2. **Apply via Node.js runner** (handles dollar-quoting automatically):
+   ```bash
+   # Set SUPABASE_ACCESS_TOKEN in .env.local, then:
+   node scripts/run-migration.mjs supabase/migrations/YYYYMMDD_description.sql
+   ```
+   Alternatively, use the Management API directly:
    ```javascript
-   // Use tmp_check.mjs pattern with SUPABASE_ACCESS_TOKEN from .env.local
    fetch(`https://api.supabase.com/v1/projects/qixipveebfhurbarksib/database/query`, {
      method: 'POST',
      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
      body: JSON.stringify({ query: sql })
    })
    ```
-3. **Register the migration** in `supabase_migrations.schema_migrations`:
-   ```sql
-   INSERT INTO supabase_migrations.schema_migrations (version, name) 
-   VALUES ('YYYYMMDDHHMMSS', 'description');
-   ```
+3. **If replacing a function**: `DROP FUNCTION IF EXISTS name(params)` BEFORE `CREATE OR REPLACE`
 4. **Verify in browser** (Step 0 above) — confirm the data appears correctly in the UI
 5. **Commit and push** the migration file to main (same as code changes)
-6. **Refresh materialized views** if the change affects aggregated data
+6. **Refresh materialized views** if the change affects aggregated data:
+   ```sql
+   REFRESH MATERIALIZED VIEW product_sales_daily_unified_mv;
+   REFRESH MATERIALIZED VIEW mart_sales_category_daily_mv;
+   ```
 
 #### On Edge Function changes:
 1. **Deploy the function**: `npx supabase functions deploy FUNCTION_NAME --project-ref qixipveebfhurbarksib`
@@ -252,8 +295,12 @@ No manual setup needed. Everything is automated.
 
 - **Project ref:** `qixipveebfhurbarksib`
 - **URL:** `https://qixipveebfhurbarksib.supabase.co`
-- **Demo org ID:** `11111111-1111-1111-1111-111111111111`
-- **Demo location IDs:** `["loc-demo-central", "loc-demo-gracia", "loc-demo-born"]`
+- **Demo org ("Josephine"):** `7bca34d5-4448-40b8-bb7f-55f1417aeccd`
+- **Demo locations:**
+  - `13f383c6-0171-4c1f-9ee4-6ef6a6f04b36` — La Taberna Centro
+  - `15548064-e49b-4f27-9ea5-c1caeb3093c7` — La Taberna Chamberi
+  - `f9f0637c-69ae-468f-bce8-0d519aea702e` — La Taberna Malasana
+  - `dcb020c2-1603-41e2-af7f-ccdba7990999` — La Taberna Salamanca
 - **Demo login:** `owner@demo.com` / `Demo1234!` (user ID: `761c2d9c-9a02-4fc6-bf00-ba1b27dea3fc`)
 - **JWT Key ID:** `95e87c5c-d734-4634-bcd8-45a5b8935685`
 - **JWKS URL:** `https://qixipveebfhurbarksib.supabase.co/auth/v1/.well-known/jwks.json`
@@ -394,15 +441,17 @@ await fetch(`https://api.vercel.com/v10/projects/${PROJECT_ID}/domains`, {
 
 ### Facts / Aggregations
 
-| Table | Key columns |
-|-------|-------------|
-| `facts_sales_15m` | location_id, ts_bucket, sales_gross, sales_net, tickets, covers |
-| `facts_item_mix_daily` | location_id, day, item_id, qty, revenue_net, margin_est |
-| `facts_labor_daily` | location_id, day, scheduled_hours, actual_hours, labor_cost_est |
-| `facts_inventory_daily` | location_id, day, item_id, stock_on_hand, waste_est |
-| `sales_daily_unified` | date, location_id, net_sales, orders_count, labor_cost (view) |
-| `pos_daily_finance` | date, location_id, net_sales, gross_sales, payments_cash/card |
-| `product_sales_daily` | date, location_id, product_id, units_sold, net_sales, cogs |
+| Table | Key columns | Notes |
+|-------|-------------|-------|
+| `pos_daily_finance` | date, location_id, net_sales, gross_sales, payments_cash/card | Sales source |
+| `pos_daily_products` | date, location_id, product_id, product_name, units_sold, net_sales, **cogs**, data_source | **Primary product + COGS source** |
+| `sales_daily_unified` | date, location_id, net_sales, orders_count (VIEW) | Reads from `pos_daily_finance` |
+| `product_sales_daily_unified` | day, location_id, product_id, units_sold, net_sales, cogs (VIEW → matview) | Reads from `product_sales_daily_unified_mv` — **may be stale** |
+| `cogs_daily` | date, location_id, cogs_amount (VIEW) | From `stock_movements` — may be stale |
+| `monthly_cost_entries` | location_id, period_year, period_month, amount | Manual COGS entries |
+| `facts_sales_15m` | location_id, ts_bucket, sales_gross, sales_net, tickets, covers | 15-min granularity |
+| `facts_item_mix_daily` | location_id, day, item_id, qty, revenue_net, margin_est | Item-level daily |
+| `facts_labor_daily` | location_id, day, scheduled_hours, actual_hours, labor_cost_est | Labour daily |
 
 ### AI / Forecasting
 
@@ -482,17 +531,37 @@ await fetch(`https://api.vercel.com/v10/projects/${PROJECT_ID}/domains`, {
 | `loyalty_members` | group_id, email, points_balance, tier |
 | `report_subscriptions` | user_id, report_type, is_enabled |
 
-### Key RPC Functions (42 total)
+### Key RPC Functions (82 public)
 
-- `get_daily_sales`, `get_daily_sales_summary`, `get_weekly_sales_summary` — sales queries
-- `get_labour_kpis`, `get_labour_timeseries`, `get_labour_locations_table` — labour analytics
-- `get_top_products`, `menu_engineering_summary` — product analytics
-- `etl_tickets_to_facts` — ETL pipeline
-- `run_daily_forecast`, `forecast_needs_refresh` — forecasting
-- `check_kpi_alerts` — alerting
-- `seed_josephine_demo_data`, `seed_demo_products_and_sales`, `seed_demo_labour_data` — demo seeding
-- `has_permission`, `has_role`, `is_owner`, `get_user_permissions` — RBAC checks
-- `add_loyalty_points`, `redeem_loyalty_reward` — loyalty
+#### Dashboard & KPIs
+- `rpc_kpi_range_summary(p_org_id, p_location_ids, p_from, p_to)` — **KPI cards**: sales, COGS (3-source), labour, GP%, COL%. Sources: `sales_daily_unified` + `planned_shifts` + `cogs_daily` + `pos_daily_products` + `monthly_cost_entries`
+- `get_top_products_unified(p_org_id, p_location_ids, p_from, p_to, p_limit)` — **Top Products**: returns `{data_source, mode, reason, last_synced_at, total_sales, items[]}`. **Has matview fallback**: checks `product_sales_daily_unified_mv` first, falls back to `pos_daily_products` if stale
+- `get_sales_timeseries_unified(p_org_id, p_location_ids, p_from, p_to)` — Sales chart data
+- `get_instant_pnl_unified(p_org_id, p_location_ids, p_from, p_to)` — Instant P&L
+- `menu_engineering_summary(p_date_from, p_date_to, p_location_id, p_data_source)` — Menu engineering matrix
+
+#### Labour & Workforce
+- `get_labour_kpis`, `get_labour_timeseries`, `get_labour_locations_table` — Labour analytics
+- `get_labour_cost_by_date(_location_ids, _from, _to)` — Daily labour cost from `labour_daily_unified`
+- `get_labor_plan_unified` — Labour plan P&L
+- `get_staffing_heatmap`, `get_staffing_recommendation` — Staffing analytics
+- `calculate_schedule_efficiency`, `calculate_tip_distribution` — Schedule/tips
+
+#### Inventory & COGS
+- `get_food_cost_variance` — Food cost variance (requires `purchase_order_status` enum to include 'received')
+- `get_dead_stock`, `get_daily_prep_list` — Inventory management
+- `get_recipe_food_cost`, `deduct_recipe_from_inventory` — Recipe-based COGS
+
+#### RBAC
+- `is_owner`, `is_org_admin`, `is_org_member`, `is_location_member`
+- `get_user_permissions`, `get_user_roles_with_scope`, `get_user_accessible_locations`
+
+#### Data & ETL
+- `resolve_data_source()` — Returns `'demo'` or `'pos'` per org
+- `refresh_all_mvs()`, `process_refresh_mvs_jobs()` — Materialized view refresh
+- `bootstrap_demo`, `bootstrap_demo_operational` — Demo data seeding
+- `merge_square_*` — Square POS data merge
+- `rpc_data_health`, `audit_data_coherence` — Data quality checks
 
 ---
 
