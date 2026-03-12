@@ -284,7 +284,7 @@ export function getEmployeeDateAvailability(employeeId: string, date: Date): {
 /**
  * Add a new time-off request — persists to DB
  */
-export async function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'createdAt'>): Promise<TimeOffRequest> {
+export async function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'createdAt'>, orgId: string): Promise<TimeOffRequest> {
   const newRequest: TimeOffRequest = {
     ...request,
     id: `timeoff-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -299,7 +299,7 @@ export async function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'cr
       .from('time_off_requests')
       .insert({
         employee_id: request.employeeId,
-        org_id: '7bca34d5-4448-40b8-bb7f-55f1417aeccd', // TODO: get from context
+        org_id: orgId,
         start_date: request.startDate,
         end_date: request.endDate,
         reason: request.reason,

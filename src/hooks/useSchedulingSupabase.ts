@@ -1,5 +1,4 @@
-// TODO: Migrate forecast_daily_metrics access to use get_labor_plan_unified RPC
-// which resolves data_source via resolve_data_source(org_id) internally.
+// Scheduling hook — uses resolve_data_source(org_id) via dataSource from AppContext
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { endOfWeek, addDays, format } from 'date-fns';

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 
 interface AddItemDialogProps {
@@ -31,6 +32,7 @@ interface AddItemDialogProps {
 }
 
 export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) {
+  const { group } = useApp();
   const [name, setName] = useState('');
   const [type, setType] = useState('food');
   const [category, setCategory] = useState('');
@@ -48,12 +50,12 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
     }
 
     setSaving(true);
-    
+
     try {
       const { error } = await supabase
         .from('inventory_items')
         .insert({
-          org_id: 'demo-org', // TODO: Get from auth
+          org_id: group?.id || '',
           name,
           type,
           category_name: category,
@@ -67,7 +69,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
       if (error) throw error;
 
       toast.success('Item added successfully');
-      
+
       // Reset form
       setName('');
       setType('food');
@@ -77,7 +79,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
       setOrderQty('1');
       setPrice('');
       setVatRate('10');
-      
+
       onSuccess();
       onClose();
     } catch (error: any) {

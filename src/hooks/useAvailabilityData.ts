@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { startOfWeek } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { useApp } from '@/contexts/AppContext';
 import {
   getAllTimeOffRequests,
   getPendingTimeOffRequests,
@@ -150,14 +151,17 @@ export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { 
     return true;
   }, [availability, currentEmployee.id]);
 
+  const { group } = useApp();
+
   const createTimeOffRequest = useCallback(async (request: Omit<TimeOffRequest, 'id' | 'employeeId' | 'employeeName' | 'employeeInitials' | 'status' | 'createdAt'>) => {
+    const orgId = group?.id || '';
     const newRequest = await addTimeOffRequest({
       ...request,
       employeeId: currentEmployee.id,
       employeeName: currentEmployee.name,
       employeeInitials: currentEmployee.initials,
       status: 'pending',
-    });
+    }, orgId);
     forceUpdate(n => n + 1);
     return newRequest;
   }, [currentEmployee]);
