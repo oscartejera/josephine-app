@@ -72,7 +72,7 @@ export class ProphetClient {
   constructor(apiUrl?: string, apiKey?: string | null) {
     // Use environment variables for browser context
     // Default to the deployed Render service
-    this.apiUrl = apiUrl || import.meta.env.VITE_PROPHET_API_URL || 'https://josephine-prophet.onrender.com/forecast';
+    this.apiUrl = apiUrl || import.meta.env.VITE_PROPHET_API_URL || 'https://prophet-service-aca0.onrender.com/forecast';
     this.apiKey = apiKey || import.meta.env.VITE_PROPHET_API_KEY || null;
   }
 
