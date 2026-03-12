@@ -97,6 +97,16 @@ function generateLocalBriefing(
 
     narrativeParts.push(`El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (Labor €${Math.round(totalLabour).toLocaleString()} · COL% ${overallColPct.toFixed(1)}% + Mermas €${Math.round(wasteTotal).toLocaleString()}).`);
 
+    // Flag zero sales as a data gap — never praise €0 as 'excellent'
+    if (totalSales <= 0) {
+        alerts.push({
+            location: 'Todos',
+            type: 'critical' as const,
+            message: 'No se han registrado ventas. Verifica la conexión POS o que los datos estén sincronizados.',
+        });
+        recommendations.push('⚠️ Sin datos de ventas: revisa que el POS esté conectado y sincronizando correctamente. Si usas datos demo, ejecuta el script de extensión de datos.');
+    }
+
     if (alerts.length === 0) {
         narrativeParts.push('Todos los locales operan dentro de los márgenes objetivo. Excelente jornada.');
     }
