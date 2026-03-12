@@ -16,6 +16,7 @@ export interface Employee {
     hourlyRate: number | null;
     availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'>;
     timeOffInfo?: Record<string, any>;
+    contractType?: string;
 }
 
 export interface Shift {
@@ -28,6 +29,7 @@ export interface Shift {
     role: string;
     plannedCost: number | null;
     isOpen?: boolean;
+    status?: 'draft' | 'approved' | 'published';
 }
 
 export interface SwapRequest {
@@ -105,7 +107,7 @@ export interface ScheduleData {
     targetColPercent: number;
     targetCost: number;
     totalHours: number;
-    status: 'draft' | 'published';
+    status: 'draft' | 'approved' | 'published';
     timeOffConflicts: number;
     // Missing payroll flag
     missingPayrollCount: number;

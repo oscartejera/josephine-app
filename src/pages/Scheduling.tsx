@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { ArrowRightLeft, AlertTriangle, CalendarDays } from 'lucide-react';
 import { EventCalendarManager } from '@/components/settings/EventCalendarManager';
 import { useSchedulingSupabase, ViewMode, Shift, resolveLocationId } from '@/hooks/useSchedulingSupabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useScheduleEfficiency } from '@/hooks/useScheduleEfficiency';
 import { useApp } from '@/contexts/AppContext';
 import {
@@ -71,6 +72,7 @@ export default function Scheduling() {
   const [isCreating, setIsCreating] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const [showSwapPanel, setShowSwapPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showEventCalendar, setShowEventCalendar] = useState(false);
@@ -141,6 +143,7 @@ export default function Scheduling() {
   const actualCreateSchedule = schedulingData.createSchedule;
   const actualUndoSchedule = schedulingData.undoSchedule;
   const actualAcceptSchedule = schedulingData.acceptSchedule;
+  const actualApproveSchedule = schedulingData.approveSchedule;
   const actualPublishSchedule = schedulingData.publishSchedule;
   const actualMoveShift = schedulingData.moveShift;
   const actualAddShift = schedulingData.addShift;
@@ -251,6 +254,10 @@ export default function Scheduling() {
     toast.success('Schedule published and notifications sent to all employees');
   }, [actualPublishSchedule]);
 
+  const handleApprove = useCallback(async () => {
+    await actualApproveSchedule();
+  }, [actualApproveSchedule]);
+
   const handleInitiateSwap = useCallback((shift: Shift, employeeName: string) => {
     setSwapDialogData({ shift, employeeName });
   }, []);
@@ -353,8 +360,51 @@ export default function Scheduling() {
           )}
 
           {actualData && (
-            <div className="text-sm text-muted-foreground">
-              {actualData.employees.length} employees · {actualData.totalHours}h scheduled
+            <div className="flex items-center gap-2">
+              {/* Schedule status badge */}
+              {actualHasSchedule && (
+                <Badge
+                  variant={actualData.status === 'published' ? 'default' : 'secondary'}
+                  className={actualData.status === 'published'
+                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                    : actualData.status === 'approved'
+                      ? 'bg-amber-100 text-amber-700 border-amber-200'
+                      : 'bg-gray-100 text-gray-600 border-gray-200'
+                  }
+                >
+                  {actualData.status === 'published' ? 'Publicado'
+                    : actualData.status === 'approved' ? 'Aprobado'
+                      : 'Borrador'}
+                </Badge>
+              )}
+
+              {/* Approve button (draft → approved) */}
+              {actualHasSchedule && actualData.status === 'draft' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                  onClick={() => setShowApproveModal(true)}
+                >
+                  ✓ Aprobar
+                </Button>
+              )}
+
+              {/* Publish button (approved → published) */}
+              {actualHasSchedule && actualData.status !== 'published' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/30 text-primary hover:bg-primary/5"
+                  onClick={() => setShowPublishModal(true)}
+                >
+                  ✉ Publicar
+                </Button>
+              )}
+
+              <span className="text-sm text-muted-foreground">
+                {actualData.employees.length} employees · {actualData.totalHours}h scheduled
+              </span>
             </div>
           )}
         </div>
@@ -398,12 +448,22 @@ export default function Scheduling() {
         onUndo={handleUndo}
       />
 
+      {/* Approve modal */}
+      <PublishModal
+        isOpen={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        onConfirm={async () => { await handleApprove(); }}
+        locationName={currentLocation?.name || 'Location'}
+        mode="approve"
+      />
+
       {/* Publish modal */}
       <PublishModal
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
         onConfirm={handlePublish}
         locationName={currentLocation?.name || 'Location'}
+        mode="publish"
       />
 
       {/* Swap shift dialog */}

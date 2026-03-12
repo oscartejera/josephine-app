@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -9,70 +8,99 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { CheckCircle, Send } from 'lucide-react';
 
 interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (emailBody: string) => Promise<void>;
   locationName: string;
+  mode?: 'approve' | 'publish';
 }
 
-export function PublishModal({ isOpen, onClose, onConfirm, locationName }: PublishModalProps) {
+export function PublishModal({ isOpen, onClose, onConfirm, locationName, mode = 'publish' }: PublishModalProps) {
   const [emailBody, setEmailBody] = useState('');
-  const [isPublishing, setIsPublishing] = useState(false);
-  
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const isApprove = mode === 'approve';
+
   const handleConfirm = async () => {
-    setIsPublishing(true);
+    setIsProcessing(true);
     try {
       await onConfirm(emailBody);
       onClose();
     } finally {
-      setIsPublishing(false);
+      setIsProcessing(false);
     }
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle>Publish schedule</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {isApprove ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-amber-500" />
+                  Aprobar horario
+                </>
+              ) : (
+                <>
+                  <Send className="h-5 w-5 text-primary" />
+                  Publicar horario
+                </>
+              )}
+            </DialogTitle>
           </div>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <p className="text-sm text-muted-foreground">
-            This schedule will be sent to all employees in <strong>{locationName}</strong>.
-          </p>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email-body">Email Body (optional)</Label>
-            <Textarea
-              id="email-body"
-              placeholder="Add a message to include with the schedule notification..."
-              value={emailBody}
-              onChange={(e) => setEmailBody(e.target.value)}
-              rows={4}
-            />
-          </div>
-        </div>
-        
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isPublishing}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirm} 
-            disabled={isPublishing}
-            className="bg-primary hover:bg-primary/90"
-          >
-            {isPublishing ? (
+            {isApprove ? (
               <>
-                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                Publishing...
+                ¿Aprobar los turnos de <strong>{locationName}</strong>? Una vez aprobados, los managers podrán publicarlos a los empleados.
               </>
             ) : (
-              'Confirm'
+              <>
+                Los turnos de <strong>{locationName}</strong> serán enviados a todos los empleados.
+              </>
+            )}
+          </p>
+
+          {!isApprove && (
+            <div className="space-y-2">
+              <Label htmlFor="email-body">Mensaje (opcional)</Label>
+              <Textarea
+                id="email-body"
+                placeholder="Añade un mensaje con la notificación del horario..."
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                rows={4}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isProcessing}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={isProcessing}
+            className={isApprove
+              ? "bg-amber-500 hover:bg-amber-600 text-white"
+              : "bg-primary hover:bg-primary/90"
+            }
+          >
+            {isProcessing ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                {isApprove ? 'Aprobando...' : 'Publicando...'}
+              </>
+            ) : (
+              isApprove ? 'Aprobar' : 'Publicar'
             )}
           </Button>
         </div>

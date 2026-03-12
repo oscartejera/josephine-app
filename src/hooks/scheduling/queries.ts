@@ -20,7 +20,7 @@ export async function fetchLocations(): Promise<Location[]> {
 export async function fetchEmployees(locationId: string): Promise<Employee[]> {
     const { data, error } = await supabase
         .from('employees')
-        .select('id, full_name, role_name, hourly_cost, active')
+        .select('id, full_name, role_name, hourly_cost, active, contracted_hours, contract_type')
         .eq('location_id', locationId)
         .eq('active', true);
 
@@ -48,8 +48,9 @@ export async function fetchEmployees(locationId: string): Promise<Employee[]> {
             position: roleName,
             station: getStation(roleName),
             weeklyHours: 0, // Will be calculated from shifts
-            targetHours: 40,
+            targetHours: emp.contracted_hours ?? 40,
             hourlyRate: emp.hourly_cost,
+            contractType: emp.contract_type || 'full_time',
             availability: {}, // Derived from shifts below
             timeOffInfo: undefined,
         };
@@ -85,6 +86,7 @@ export async function fetchShifts(
             role: shift.role || 'Team Member',
             plannedCost: shift.planned_cost,
             isOpen: !shift.employee_id,
+            status: (shift.status as 'draft' | 'approved' | 'published') || 'draft',
         };
     });
 }

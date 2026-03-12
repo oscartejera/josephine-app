@@ -468,7 +468,14 @@ export function useSchedulingSupabase(
       targetColPercent,
       targetCost,
       totalHours: Math.round(totalHours * 10) / 10,
-      status: 'draft',
+      status: (() => {
+        const shiftStatuses = allShifts.map(s => s.status || 'draft');
+        if (shiftStatuses.length > 0) {
+          if (shiftStatuses.every(s => s === 'published')) return 'published' as const;
+          if (shiftStatuses.every(s => s === 'approved' || s === 'published')) return 'approved' as const;
+        }
+        return 'draft' as const;
+      })(),
       timeOffConflicts: 0,
       missingPayrollCount,
       // Actual totals for past days
@@ -751,18 +758,47 @@ export function useSchedulingSupabase(
     toast.success('Horario aceptado');
   }, []);
 
+  // Approve schedule: draft → approved (Owner action)
+  const approveSchedule = useCallback(async () => {
+    if (!locationId) return;
+
+    try {
+      const { error } = await supabase
+        .from('planned_shifts')
+        .update({ status: 'approved' })
+        .eq('location_id', locationId)
+        .gte('shift_date', weekStartISO)
+        .lte('shift_date', weekEndISO)
+        .eq('status', 'draft');
+
+      if (error) {
+        console.error('[approveSchedule] Error:', error);
+        toast.error('Error al aprobar el horario');
+        return;
+      }
+
+      await refetchShifts();
+      toast.success('Horario aprobado — listo para publicar');
+    } catch (err) {
+      console.error('[approveSchedule] Exception:', err);
+      toast.error('Error al aprobar');
+    }
+  }, [locationId, weekStartISO, weekEndISO, refetchShifts]);
+
+  // Publish schedule: approved → published (Manager action)
+  // Also handles direct draft → published for backwards compatibility
   const publishSchedule = useCallback(async (emailBody?: string) => {
     if (!locationId) return;
 
     try {
-      // Update all draft shifts to published status
+      // Update approved OR draft shifts to published
       const { error } = await supabase
         .from('planned_shifts')
         .update({ status: 'published' })
         .eq('location_id', locationId)
         .gte('shift_date', weekStartISO)
         .lte('shift_date', weekEndISO)
-        .eq('status', 'draft');
+        .in('status', ['draft', 'approved']);
 
       if (error) {
         console.error('[publishSchedule] Error:', error);
@@ -871,6 +907,7 @@ export function useSchedulingSupabase(
     createSchedule,
     undoSchedule,
     acceptSchedule,
+    approveSchedule,
     publishSchedule,
     moveShift,
     addShift,
