@@ -15,6 +15,20 @@ Sentry.init({
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
     environment: import.meta.env.MODE,
+    beforeSend(event) {
+        const msg = event.exception?.values?.[0]?.value || '';
+        // Filter out non-actionable browser noise
+        if (
+            msg.includes('signal is aborted') ||
+            msg.includes('AbortError') ||
+            msg.includes('Failed to fetch dynamically imported module') ||
+            msg.includes('ResizeObserver loop') ||
+            msg.includes('ChunkLoadError')
+        ) {
+            return null; // Drop the event
+        }
+        return event;
+    },
 });
 
 // ── Analytics: PostHog ──
