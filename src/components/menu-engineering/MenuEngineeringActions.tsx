@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Star, TrendingUp, Gem, Search, Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { CLASSIFICATION_ACTIONS } from '@/lib/menu-engineering-engine';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
@@ -26,103 +26,78 @@ interface MenuEngineeringActionsProps {
   ) => Promise<void>;
 }
 
-interface ActionConfig {
-  classification: Classification;
-  title: string;
-  emoji: string;
-  icon: React.ElementType;
-  color: string;
-  bgColor: string;
-  description: string;
-  actions: {
-    label: string;
-    type: string;
-    impactFn: (items: MenuEngineeringItem[]) => number;
-    impactLabel: string;
-  }[];
+function formatCurrency(value: number): string {
+  if (Math.abs(value) >= 1000) return `€${(value / 1000).toFixed(1)}k`;
+  return `€${value.toFixed(0)}`;
 }
 
-const ACTION_CONFIGS: ActionConfig[] = [
+const PRACTICAL_ACTIONS = [
   {
-    classification: 'star',
-    title: CLASSIFICATION_ACTIONS.star.title,
-    emoji: CLASSIFICATION_ACTIONS.star.emoji,
-    icon: Star,
-    color: 'text-success',
-    bgColor: 'bg-success/10',
-    description: CLASSIFICATION_ACTIONS.star.description,
+    classification: 'star' as Classification,
+    emoji: '⭐',
+    title: 'Stars — Keep & Protect',
+    borderColor: 'border-l-emerald-500',
+    bgColor: 'bg-emerald-500/5',
+    advice: 'Don\'t change what works. Keep recipe quality, visibility, and consistency.',
+    actions: [
+      { label: 'Keep recipe unchanged', type: 'maintain_recipe', getImpact: () => 0 },
+    ],
+  },
+  {
+    classification: 'plow_horse' as Classification,
+    emoji: '🐴',
+    title: 'Plow Horses — Improve Margins',
+    borderColor: 'border-l-blue-500',
+    bgColor: 'bg-blue-500/5',
+    advice: 'Customers already love these. Small cost savings or a slight price increase could make a big difference.',
     actions: [
       {
-        label: 'Maintain and protect',
-        type: 'maintain_protect',
-        impactFn: () => 0,
-        impactLabel: 'No direct impact',
+        label: 'Reduce food cost 5%',
+        type: 'reduce_food_cost',
+        getImpact: (items: MenuEngineeringItem[]) =>
+          Math.round(items.reduce((a, i) => a + i.unit_food_cost * i.units_sold * 0.05, 0)),
+      },
+      {
+        label: 'Raise price €1',
+        type: 'raise_price',
+        getImpact: (items: MenuEngineeringItem[]) =>
+          Math.round(items.reduce((a, i) => a + i.units_sold, 0)),
       },
     ],
   },
   {
-    classification: 'plow_horse',
-    title: CLASSIFICATION_ACTIONS.plow_horse.title,
-    emoji: CLASSIFICATION_ACTIONS.plow_horse.emoji,
-    icon: TrendingUp,
-    color: 'text-info',
-    bgColor: 'bg-info/10',
-    description: CLASSIFICATION_ACTIONS.plow_horse.description,
+    classification: 'puzzle' as Classification,
+    emoji: '💎',
+    title: 'Puzzles — Promote More',
+    borderColor: 'border-l-amber-500',
+    bgColor: 'bg-amber-500/5',
+    advice: 'These make great profit per plate but not enough customers order them. Help them find more buyers.',
     actions: [
       {
-        label: 'Simulate margin improvement',
-        type: 'simulate_margin_improvement',
-        impactFn: (items) => items.reduce((acc, i) => acc + i.units_sold * i.unit_gross_profit * 0.10, 0),
-        impactLabel: 'Impact +10% margin',
-      },
-      {
-        label: 'Review recipes',
-        type: 'review_recipes',
-        impactFn: (items) => items.reduce((acc, i) => acc + i.unit_food_cost * i.units_sold * 0.05, 0),
-        impactLabel: 'Savings -5% cost',
+        label: 'Better menu placement',
+        type: 'improve_placement',
+        getImpact: (items: MenuEngineeringItem[]) =>
+          Math.round(items.reduce((a, i) => a + i.unit_gross_profit * Math.round(i.units_sold * 0.15), 0)),
       },
     ],
   },
   {
-    classification: 'puzzle',
-    title: CLASSIFICATION_ACTIONS.puzzle.title,
-    emoji: CLASSIFICATION_ACTIONS.puzzle.emoji,
-    icon: Gem,
-    color: 'text-warning',
-    bgColor: 'bg-warning/10',
-    description: CLASSIFICATION_ACTIONS.puzzle.description,
+    classification: 'dog' as Classification,
+    emoji: '🔍',
+    title: 'Dogs — Rethink or Remove',
+    borderColor: 'border-l-red-500',
+    bgColor: 'bg-red-500/5',
+    advice: 'These are costing you time, money, and kitchen complexity. Consider removing unless they serve a purpose (e.g. kids menu, dietary option).',
     actions: [
       {
-        label: 'Improve visibility',
-        type: 'improve_visibility',
-        impactFn: (items) => items.reduce((acc, i) => acc + i.unit_gross_profit * Math.round(i.units_sold * 0.15), 0),
-        impactLabel: 'Potential +15% units',
-      },
-    ],
-  },
-  {
-    classification: 'dog',
-    title: CLASSIFICATION_ACTIONS.dog.title,
-    emoji: CLASSIFICATION_ACTIONS.dog.emoji,
-    icon: Search,
-    color: 'text-destructive',
-    bgColor: 'bg-destructive/10',
-    description: CLASSIFICATION_ACTIONS.dog.description,
-    actions: [
-      {
-        label: 'Evaluate removal or redesign',
-        type: 'evaluate_remove_redesign',
-        impactFn: (items) => items.filter((i) => i.total_gross_profit < 0).reduce((acc, i) => acc + Math.abs(i.total_gross_profit), 0),
-        impactLabel: 'Current losses',
+        label: 'Review & decide',
+        type: 'evaluate_remove',
+        getImpact: (items: MenuEngineeringItem[]) =>
+          Math.round(items.filter(i => i.total_gross_profit < 0).reduce((a, i) => a + Math.abs(i.total_gross_profit), 0)),
       },
     ],
   },
 ];
-
-function formatCurrency(value: number): string {
-  if (value >= 1000) return `€${(value / 1000).toFixed(1)}k`;
-  return `€${value.toFixed(0)}`;
-}
 
 export function MenuEngineeringActions({
   itemsByClassification,
@@ -131,105 +106,73 @@ export function MenuEngineeringActions({
 }: MenuEngineeringActionsProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState<{
-    config: ActionConfig;
-    action: ActionConfig['actions'][0];
+    classification: Classification;
+    actionType: string;
     items: MenuEngineeringItem[];
+    impact: number;
   } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const handleActionClick = (
-    config: ActionConfig,
-    action: ActionConfig['actions'][0],
-    items: MenuEngineeringItem[]
-  ) => {
-    setSelectedAction({ config, action, items });
-    setModalOpen(true);
-  };
-
   const handleConfirm = async () => {
     if (!selectedAction) return;
-
     setSaving(true);
     try {
-      const impact = selectedAction.action.impactFn(selectedAction.items);
-      await onSaveAction(
-        null,
-        selectedAction.action.type,
-        selectedAction.config.classification,
-        impact > 0 ? impact : null
-      );
-      toast.success('Plan saved', {
-        description: 'Remember to apply changes in your POS.',
-      });
+      await onSaveAction(null, selectedAction.actionType, selectedAction.classification, selectedAction.impact > 0 ? selectedAction.impact : null);
+      toast.success('Action plan saved');
       setModalOpen(false);
     } catch {
-      toast.error('Error saving plan');
+      toast.error('Error saving');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-4">
-              <Skeleton className="h-6 w-32 mb-2" />
-              <Skeleton className="h-4 w-48 mb-3" />
-              <Skeleton className="h-8 w-24" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <div className="space-y-4">{[1, 2, 3, 4].map((i) => <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>)}</div>;
   }
 
   return (
     <>
-      <div className="space-y-4">
-        {ACTION_CONFIGS.map((config) => {
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground px-1">Action Plan</h3>
+        {PRACTICAL_ACTIONS.map((config) => {
           const items = itemsByClassification[config.classification];
-          const topItems = items.slice(0, 5);
+          const topNames = items.slice(0, 3).map(i => i.name);
 
           return (
-            <Card key={config.classification} className={`${config.bgColor} border-0`}>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <span>{config.emoji}</span>
-                  <span>{config.title}</span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    ({items.length})
-                  </span>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">{config.description}</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {topItems.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-xs text-muted-foreground mb-1">Top products:</p>
-                    <p className="text-sm truncate">
-                      {topItems.map((i) => i.name).join(', ')}
-                      {items.length > 5 && ` +${items.length - 5} more`}
-                    </p>
-                  </div>
+            <Card key={config.classification} className={`border-l-4 ${config.borderColor} ${config.bgColor}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base">{config.emoji}</span>
+                  <span className="text-sm font-semibold">{config.title}</span>
+                  <span className="text-xs text-muted-foreground">({items.length})</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">{config.advice}</p>
+
+                {topNames.length > 0 && (
+                  <p className="text-xs mb-2 text-foreground/80">
+                    {topNames.join(', ')}{items.length > 3 ? ` +${items.length - 3} more` : ''}
+                  </p>
                 )}
+
                 <div className="flex flex-wrap gap-2">
                   {config.actions.map((action) => {
-                    const impact = action.impactFn(items);
+                    const impact = action.getImpact(items);
                     return (
                       <Button
                         key={action.type}
                         variant="secondary"
                         size="sm"
-                        className="text-xs"
+                        className="text-xs h-7 gap-1"
                         disabled={items.length === 0}
-                        onClick={() => handleActionClick(config, action, items)}
+                        onClick={() => {
+                          setSelectedAction({ classification: config.classification, actionType: action.type, items, impact });
+                          setModalOpen(true);
+                        }}
                       >
                         {action.label}
-                        {impact > 0 && (
-                          <span className="ml-1 text-success">+{formatCurrency(impact)}</span>
-                        )}
+                        {impact > 0 && <span className="text-emerald-600">+{formatCurrency(impact)}</span>}
+                        <ChevronRight className="h-3 w-3" />
                       </Button>
                     );
                   })}
@@ -240,56 +183,35 @@ export function MenuEngineeringActions({
         })}
       </div>
 
-      {/* Confirmation Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedAction && (
-                <>
-                  <span>{selectedAction.config.emoji}</span>
-                  {selectedAction.action.label}
-                </>
-              )}
-            </DialogTitle>
+            <DialogTitle>Save Action Plan</DialogTitle>
             <DialogDescription>
-              This is an <strong>action plan</strong>. It will not make automatic changes to your
-              sales system.
+              This creates a reminder for your team. It won't change any data automatically — you apply changes in your POS or kitchen.
             </DialogDescription>
           </DialogHeader>
 
           {selectedAction && (
-            <div className="py-4">
-              <p className="text-sm text-muted-foreground mb-2">
-                Will apply to <strong>{selectedAction.items.length}</strong> products in the{' '}
-                <strong>{selectedAction.config.title}</strong> quadrant.
+            <div className="py-4 space-y-3">
+              <p className="text-sm">
+                Applies to <strong>{selectedAction.items.length}</strong> products.
               </p>
-              {selectedAction.action.impactFn(selectedAction.items) > 0 && (
-                <div className="bg-muted p-3 rounded-lg">
-                  <p className="text-sm">
-                    {selectedAction.action.impactLabel}:{' '}
-                    <strong className="text-success">
-                      {formatCurrency(selectedAction.action.impactFn(selectedAction.items))}
-                    </strong>
-                  </p>
+              {selectedAction.impact > 0 && (
+                <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-lg">
+                  <p className="text-sm">Estimated impact: <strong className="text-emerald-600">+{formatCurrency(selectedAction.impact)}</strong></p>
                 </div>
               )}
-              <p className="text-xs text-muted-foreground mt-4">
-                To apply real changes, edit prices or recipes in your POS.
+              <p className="text-xs text-muted-foreground">
+                💡 Tip: Review individual products in the table to decide specific changes.
               </p>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
             <Button onClick={handleConfirm} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Check className="h-4 w-4 mr-2" />
-              )}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
               Save plan
             </Button>
           </DialogFooter>
