@@ -25,10 +25,10 @@ const CLASSIFICATION_BADGES: Record<string, { label: string; variant: 'default' 
 };
 
 const ACTION_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  Mantener: { label: 'Maintain', variant: 'default' },
-  'Revisar coste': { label: 'Review cost', variant: 'secondary' },
-  Promocionar: { label: 'Promote', variant: 'outline' },
-  Evaluar: { label: 'Evaluate', variant: 'destructive' },
+  Maintain: { label: 'Maintain', variant: 'default' },
+  'Review cost': { label: 'Review cost', variant: 'secondary' },
+  Promote: { label: 'Promote', variant: 'outline' },
+  Evaluate: { label: 'Evaluate', variant: 'destructive' },
 };
 
 const COST_SOURCE_BADGE: Record<string, { label: string; className: string }> = {
