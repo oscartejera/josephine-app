@@ -181,22 +181,43 @@ export type TopProductsRpc = z.infer<typeof TopProductsSchema>;
 export const InstantPnlSchema = z.record(z.string(), z.unknown());
 export type InstantPnlRpc = z.infer<typeof InstantPnlSchema>;
 
-// Menu Engineering — array of product classifications
+// Menu Engineering — array of product classifications (canonical Kasavana-Smith)
 export const MenuEngineeringItemSchema = z.object({
     product_id: z.string().optional(),
     name: z.string(),
     category: z.string().default(''),
     classification: z.string().default(''),
-    units: num,
-    sales: num,
+    // Legacy compat fields
+    units: num,                    // alias for units_sold
+    units_sold: num,
+    sales: num,                    // gross sales (VAT-inclusive)
     cogs: num,
-    profit_eur: num,
+    profit_eur: num,               // alias for total_gross_profit
     margin_pct: num,
-    profit_per_sale: num,
-    popularity_share: num,
+    profit_per_sale: num,          // alias for unit_gross_profit
+    popularity_share: num,         // alias for popularity_pct
     sales_share: num,
     action_tag: z.string().default(''),
     badges: z.array(z.string()).default([]),
+    // Canonical Menu Engineering fields
+    selling_price_ex_vat: num,
+    unit_food_cost: num,
+    unit_gross_profit: num,
+    total_gross_profit: num,
+    popularity_pct: num,
+    ideal_average_popularity: num,
+    average_gross_profit: num,
+    popularity_class: z.string().default(''),
+    profitability_class: z.string().default(''),
+    classification_reason: z.string().default(''),
+    cost_source: z.string().default('unknown'),
+    data_confidence: z.string().default('low'),
+    is_canonical: z.boolean().default(false),
+    // Category-level stats
+    item_count: num,
+    total_units: num,
+    total_sales: num,
+    sales_ex_vat: num,
 }).passthrough();
 export const MenuEngineeringSchema = z.array(MenuEngineeringItemSchema);
 export type MenuEngineeringRpc = z.infer<typeof MenuEngineeringSchema>;

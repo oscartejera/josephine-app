@@ -174,7 +174,18 @@ describe('RPC Contract Schemas — Structure', () => {
 
     it('MenuEngineeringSchema accepts array of product classifications', () => {
         const valid = [
-            { name: 'Paella', category: 'Mains', classification: 'star', units_sold: 50, revenue: 5000, margin_pct: 65 },
+            {
+                name: 'Paella', category: 'Mains', classification: 'star',
+                units_sold: 50, units: 50, sales: 5000, cogs: 200, profit_eur: 4800,
+                margin_pct: 65, profit_per_sale: 96, popularity_share: 25, sales_share: 30,
+                selling_price_ex_vat: 90.91, unit_food_cost: 4.00, unit_gross_profit: 86.91,
+                total_gross_profit: 4345.50, popularity_pct: 25, ideal_average_popularity: 14,
+                average_gross_profit: 60, popularity_class: 'high', profitability_class: 'high',
+                classification_reason: 'Pop 25.0% ≥ 14.0% · GP €86.91 ≥ €60.00',
+                cost_source: 'recipe_actual', data_confidence: 'high', is_canonical: true,
+                action_tag: 'Mantener', badges: [], item_count: 5, total_units: 200, total_sales: 20000,
+                sales_ex_vat: 4545.45,
+            },
         ];
         expect(() => MenuEngineeringSchema.parse(valid)).not.toThrow();
     });

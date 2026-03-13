@@ -5,19 +5,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface MenuItem {
+/**
+ * Canonical Menu Engineering item — pre-classified by the backend.
+ * AI MUST NOT reinterpret or recompute classification.
+ */
+interface CanonicalItem {
   name: string;
   category: string;
-  units: number;
-  sales: number;
-  cogs: number;
-  margin_pct: number;
-  classification: string;
-  popularity_share: number;
+  classification: string;         // FINAL — do not reinterpret
+  classification_reason: string;  // Human-readable explanation
+  selling_price_ex_vat: number;   // € ex VAT
+  unit_food_cost: number;         // € from recipe or fallback
+  unit_gross_profit: number;      // € = selling_price_ex_vat - unit_food_cost
+  units_sold: number;
+  popularity_pct: number;
+  cost_source: string;            // recipe_actual | fallback_average | unknown
+  data_confidence: string;        // high | medium | low
 }
 
 interface PricingRequest {
-  items: MenuItem[];
+  methodology?: string;           // Should be 'kasavana_smith_1982'
+  schema_version?: number;
+  is_canonical?: boolean;
+  thresholds?: {
+    ideal_average_popularity: number;
+    average_gross_profit: number;
+  };
+  items: CanonicalItem[];
   totalSales: number;
   totalUnits: number;
   locationName: string;
@@ -29,39 +43,41 @@ serve(async (req) => {
   }
 
   try {
-    const { items, totalSales, totalUnits, locationName } = (await req.json()) as PricingRequest;
+    const body = (await req.json()) as PricingRequest;
+    const { items, totalSales, totalUnits, locationName, thresholds } = body;
 
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
 
-    // Build items summary for the AI - top 20 items
-    const sortedItems = [...items].sort((a, b) => b.sales - a.sales).slice(0, 20);
+    // Build items summary using CANONICAL fields — no reinterpretation
+    const sortedItems = [...items]
+      .sort((a, b) => (b.unit_gross_profit * b.units_sold) - (a.unit_gross_profit * a.units_sold))
+      .slice(0, 20);
+
     const itemsSummary = sortedItems
-      .map((item) => {
-        const avgPrice = item.units > 0 ? (item.sales / item.units).toFixed(2) : "0";
-        return `- ${item.name} (${item.category}): ${item.units} uds, €${avgPrice}/ud, margen ${item.margin_pct.toFixed(1)}%, clasificación: ${item.classification}`;
-      })
+      .map((item) =>
+        `- ${item.name} [${item.classification.toUpperCase()}]: ` +
+        `€${item.selling_price_ex_vat.toFixed(2)} precio, ` +
+        `€${item.unit_food_cost.toFixed(2)} coste, ` +
+        `GP €${item.unit_gross_profit.toFixed(2)}/ud, ` +
+        `${item.units_sold} uds, ` +
+        `pop ${item.popularity_pct.toFixed(1)}%, ` +
+        `confianza: ${item.data_confidence}`
+      )
       .join("\n");
 
-    // Category summary
-    const categoryMap = new Map<string, { sales: number; units: number; items: number }>();
-    for (const item of items) {
-      const existing = categoryMap.get(item.category) || { sales: 0, units: 0, items: 0 };
-      existing.sales += item.sales;
-      existing.units += item.units;
-      existing.items++;
-      categoryMap.set(item.category, existing);
-    }
-    const categorySummary = Array.from(categoryMap.entries())
-      .sort((a, b) => b[1].sales - a[1].sales)
-      .map(([cat, data]) => `- ${cat}: €${data.sales.toFixed(0)} ventas, ${data.units} uds, ${data.items} productos`)
-      .join("\n");
+    // Thresholds context
+    const thresholdsCtx = thresholds
+      ? `\nUmbrales canónicos (Kasavana-Smith):\n- Popularidad: ≥${thresholds.ideal_average_popularity.toFixed(1)}% = alta\n- GP unitario: ≥€${thresholds.average_gross_profit.toFixed(2)} = alto\n`
+      : '';
 
-    const systemPrompt = `Eres un consultor de pricing de restaurantes especializado en revenue management.
+    const systemPrompt = `Eres un consultor de pricing de restaurantes.
 
-Tu trabajo es analizar el menú de un restaurante y dar recomendaciones ESPECÍFICAS de pricing.
+IMPORTANTE: Los productos ya están clasificados usando la metodología Kasavana-Smith (1982).
+La clasificación es FINAL y ya fue calculada por el sistema. NO la recomputes.
+Tu trabajo es SOLO sugerir ajustes de precio basados en la clasificación dada.
 
 Formato ESTRICTO de respuesta (JSON array):
 [
@@ -76,31 +92,32 @@ Formato ESTRICTO de respuesta (JSON array):
   }
 ]
 
-Reglas:
-- Máximo 6 recomendaciones
-- Solo sugiere cambios que tengan sentido económico
-- Para "plow_horse" (alta demanda, bajo margen): sube precio 3-8%
-- Para "puzzle" (baja demanda, alto margen): baja precio 5-10% para ganar volumen
-- Para "star" (alta demanda, alto margen): pequeño ajuste 1-3% o mantener
-- Para "dog" (baja demanda, bajo margen): sugiere eliminar o reformular
-- priority: "high" (impacto >€300/mes), "medium" (€100-300), "low" (<€100)
-- estimated_impact_eur es el impacto MENSUAL estimado en euros
-- reason en español, máximo 15 palabras
-- Responde SOLO con el JSON array, sin explicaciones`;
+Reglas de pricing POR CLASIFICACIÓN:
+- STAR (popular + rentable): micro-ajuste +1-3% o mantener. No arriesgar.
+- PLOW_HORSE (popular + bajo GP): subir 3-8%. La demanda absorbe la subida.
+- PUZZLE (baja pop + alto GP): bajar 5-10% para ganar volumen, o mejorar visibilidad.
+- DOG (baja pop + bajo GP): sugerir eliminar o reformular. No invertir más.
 
-    const userPrompt = `Analiza este menú y genera recomendaciones de pricing:
+Reglas de confianza:
+- Si data_confidence = "low", añadir "(dato estimado)" a la razón
+- Si data_confidence = "low", prioridad máxima = "medium"
+
+Reglas generales:
+- Máximo 6 recomendaciones
+- priority: "high" (>€300/mes), "medium" (€100-300), "low" (<€100)
+- estimated_impact_eur = impacto MENSUAL estimado en euros
+- reason en español, máximo 20 palabras
+- Responde SOLO con el JSON array`;
+
+    const userPrompt = `Analiza y sugiere precios:
 
 **Local**: ${locationName}
-**Ventas totales periodo**: €${totalSales.toFixed(0)}
-**Unidades totales**: ${totalUnits}
-
-**Categorías**:
-${categorySummary}
-
-**Top 20 productos**:
+**Ventas periodo**: €${totalSales.toFixed(0)} · ${totalUnits} uds
+${thresholdsCtx}
+**Productos (clasificación ya calculada)**:
 ${itemsSummary}
 
-Genera las recomendaciones de pricing en formato JSON.`;
+Genera recomendaciones de pricing en formato JSON.`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -136,10 +153,8 @@ Genera las recomendaciones de pricing en formato JSON.`;
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content?.trim() || "[]";
 
-    // Parse the JSON from the AI response
     let suggestions;
     try {
-      // Handle cases where AI wraps in markdown code block
       const cleanContent = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       suggestions = JSON.parse(cleanContent);
     } catch {

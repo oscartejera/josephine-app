@@ -4,10 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, ArrowUpDown } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Search, ArrowUpDown, Info } from 'lucide-react';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
 
 interface MenuEngineeringTableProps {
@@ -15,14 +14,27 @@ interface MenuEngineeringTableProps {
   loading: boolean;
 }
 
-type SortField = 'name' | 'units' | 'sales' | 'profit_eur' | 'margin_pct' | 'popularity_share';
+type SortField = 'name' | 'units_sold' | 'selling_price_ex_vat' | 'unit_food_cost' | 'unit_gross_profit' | 'popularity_pct' | 'total_gross_profit';
 type SortDirection = 'asc' | 'desc';
+
+const CLASSIFICATION_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  star: { label: '⭐ Estrella', variant: 'default' },
+  plow_horse: { label: '🐴 Caballo', variant: 'secondary' },
+  puzzle: { label: '💎 Joya', variant: 'outline' },
+  dog: { label: '🔍 Revisar', variant: 'destructive' },
+};
 
 const ACTION_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   Mantener: { label: 'Mantener', variant: 'default' },
-  'Subir precio': { label: 'Subir precio', variant: 'secondary' },
+  'Revisar coste': { label: 'Revisar coste', variant: 'secondary' },
   Promocionar: { label: 'Promocionar', variant: 'outline' },
-  Revisar: { label: 'Revisar', variant: 'destructive' },
+  Evaluar: { label: 'Evaluar', variant: 'destructive' },
+};
+
+const COST_SOURCE_BADGE: Record<string, { label: string; className: string }> = {
+  recipe_actual: { label: '✓ Receta', className: 'bg-success/20 text-success' },
+  fallback_average: { label: '~ Media', className: 'bg-amber-500/20 text-amber-600' },
+  unknown: { label: '? Sin dato', className: 'bg-destructive/20 text-destructive' },
 };
 
 function formatCurrency(value: number): string {
@@ -30,24 +42,11 @@ function formatCurrency(value: number): string {
   return `€${value.toFixed(2)}`;
 }
 
-function formatPercent(value: number): string {
-  return `${value.toFixed(1)}%`;
-}
-
-function getPopularityLabel(rank: number, total: number): string {
-  const percentile = (rank / total) * 100;
-  if (percentile <= 10) return 'Top 10';
-  if (percentile <= 25) return 'Top 25';
-  if (percentile <= 50) return 'Normal';
-  return 'Bajo';
-}
-
 export function MenuEngineeringTable({ items, loading }: MenuEngineeringTableProps) {
   const [search, setSearch] = useState('');
   const [classificationFilter, setClassificationFilter] = useState<string>('all');
-  const [sortField, setSortField] = useState<SortField>('sales');
+  const [sortField, setSortField] = useState<SortField>('total_gross_profit');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [showDetails, setShowDetails] = useState(false);
 
   const filteredItems = useMemo(() => {
     let result = [...items];
@@ -59,20 +58,13 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
       result = result.filter(i => i.classification === classificationFilter);
     }
     result.sort((a, b) => {
+      if (sortField === 'name') return sortDirection === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       const aVal = a[sortField] as number;
       const bVal = b[sortField] as number;
-      if (sortField === 'name') return sortDirection === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
     });
     return result;
   }, [items, search, classificationFilter, sortField, sortDirection]);
-
-  const rankedItems = useMemo(() => {
-    const sorted = [...items].sort((a, b) => b.popularity_share - a.popularity_share);
-    const map = new Map<string, number>();
-    sorted.forEach((i, idx) => map.set(i.product_id, idx + 1));
-    return map;
-  }, [items]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
@@ -94,10 +86,6 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
           <CardTitle>Análisis por producto</CardTitle>
-          <div className="flex items-center gap-2">
-            <Switch id="show-details" checked={showDetails} onCheckedChange={setShowDetails} />
-            <Label htmlFor="show-details" className="text-sm text-muted-foreground">Ver detalles</Label>
-          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -125,34 +113,48 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
               <TableRow>
                 <SortHeader field="name">Producto</SortHeader>
                 <TableHead>Categoría</TableHead>
-                <SortHeader field="sales">Ventas</SortHeader>
-                <SortHeader field="profit_eur">€ que deja</SortHeader>
-                <SortHeader field="margin_pct">% margen</SortHeader>
-                <SortHeader field="popularity_share">Popularidad</SortHeader>
-                {showDetails && <><TableHead className="text-right">Uds</TableHead><TableHead className="text-right">COGS</TableHead><TableHead className="text-right">€/venta</TableHead></>}
+                <SortHeader field="selling_price_ex_vat">Precio</SortHeader>
+                <SortHeader field="unit_food_cost">Coste</SortHeader>
+                <SortHeader field="units_sold">Uds</SortHeader>
+                <SortHeader field="popularity_pct">Pop %</SortHeader>
+                <SortHeader field="unit_gross_profit">GP/ud</SortHeader>
+                <SortHeader field="total_gross_profit">GP total</SortHeader>
+                <TableHead>Clase</TableHead>
+                <TableHead>Coste</TableHead>
                 <TableHead>Acción</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredItems.length === 0 ? (
-                <TableRow><TableCell colSpan={showDetails ? 10 : 7} className="text-center py-8 text-muted-foreground">Sin productos</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Sin productos</TableCell></TableRow>
               ) : filteredItems.map((item) => {
-                const rank = rankedItems.get(item.product_id) || 0;
-                const popLabel = getPopularityLabel(rank, items.length);
-                const badge = ACTION_BADGES[item.action_tag] || ACTION_BADGES.Revisar;
+                const classBadge = CLASSIFICATION_BADGES[item.classification] || CLASSIFICATION_BADGES.dog;
+                const actionBadge = ACTION_BADGES[item.action_tag] || ACTION_BADGES.Evaluar;
+                const costBadge = COST_SOURCE_BADGE[item.cost_source] || COST_SOURCE_BADGE.unknown;
                 return (
                   <TableRow key={item.product_id}>
                     <TableCell>
-                      <span className="font-medium">{item.name}</span>
-                      {item.badges.length > 0 && <div className="flex gap-1 mt-1">{item.badges.map((b,i) => <span key={i} className="text-[10px] bg-warning/20 text-warning-foreground px-1.5 py-0.5 rounded">{b}</span>)}</div>}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="font-medium cursor-help">{item.name}</span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <p className="text-xs">{item.classification_reason}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{item.category}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(item.sales)}</TableCell>
-                    <TableCell className={`text-right font-medium ${item.profit_eur < 0 ? 'text-destructive' : ''}`}>{formatCurrency(item.profit_eur)}</TableCell>
-                    <TableCell className="text-right">{formatPercent(item.margin_pct)}</TableCell>
-                    <TableCell className="text-right"><span className={`text-xs px-2 py-0.5 rounded ${popLabel === 'Top 10' ? 'bg-success/20 text-success' : popLabel === 'Top 25' ? 'bg-info/20 text-info' : popLabel === 'Normal' ? 'bg-muted' : 'bg-destructive/20 text-destructive'}`}>{popLabel}</span></TableCell>
-                    {showDetails && <><TableCell className="text-right text-muted-foreground">{item.units.toLocaleString()}</TableCell><TableCell className="text-right text-muted-foreground">{formatCurrency(item.cogs)}</TableCell><TableCell className="text-right text-muted-foreground">{formatCurrency(item.profit_per_sale)}</TableCell></>}
-                    <TableCell><Badge variant={badge.variant}>{badge.label}</Badge></TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{item.category}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(item.selling_price_ex_vat)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{formatCurrency(item.unit_food_cost)}</TableCell>
+                    <TableCell className="text-right">{item.units_sold.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{item.popularity_pct.toFixed(1)}%</TableCell>
+                    <TableCell className={`text-right font-medium ${item.profitability_class === 'low' ? 'text-amber-600' : ''}`}>{formatCurrency(item.unit_gross_profit)}</TableCell>
+                    <TableCell className={`text-right font-medium ${item.total_gross_profit < 0 ? 'text-destructive' : ''}`}>{formatCurrency(item.total_gross_profit)}</TableCell>
+                    <TableCell><Badge variant={classBadge.variant}>{classBadge.label}</Badge></TableCell>
+                    <TableCell><span className={`text-[10px] px-1.5 py-0.5 rounded ${costBadge.className}`}>{costBadge.label}</span></TableCell>
+                    <TableCell><Badge variant={actionBadge.variant}>{actionBadge.label}</Badge></TableCell>
                   </TableRow>
                 );
               })}

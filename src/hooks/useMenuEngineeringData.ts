@@ -4,17 +4,39 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildQueryContext, getMenuEngineeringSummaryRpc } from '@/data';
+import type { Classification as EngineClassification, DataConfidence, CostSource } from '@/lib/menu-engineering-engine';
 
-type CogsSource = 'recipe' | 'estimated' | 'none';
-
-export type Classification = 'star' | 'plow_horse' | 'puzzle' | 'dog';
+export type Classification = EngineClassification;
 export type DatePreset = 'last7' | 'last30' | 'custom';
 export type PopularityMode = 'units' | 'sales';
 
+/**
+ * Menu Engineering Item — canonical data from RPC.
+ * All fields are computed server-side by the SQL RPC.
+ */
 export interface MenuEngineeringItem {
   product_id: string;
   name: string;
   category: string;
+  // Core canonical fields
+  selling_price_ex_vat: number;
+  unit_food_cost: number;
+  unit_gross_profit: number;
+  total_gross_profit: number;
+  units_sold: number;
+  popularity_pct: number;
+  ideal_average_popularity: number;
+  average_gross_profit: number;
+  popularity_class: string;
+  profitability_class: string;
+  classification: Classification;
+  classification_reason: string;
+  cost_source: string;
+  data_confidence: string;
+  action_tag: string;
+  badges: string[];
+  is_canonical: boolean;
+  // Legacy compat
   units: number;
   sales: number;
   cogs: number;
@@ -23,11 +45,12 @@ export interface MenuEngineeringItem {
   profit_per_sale: number;
   popularity_share: number;
   sales_share: number;
-  classification: Classification;
-  action_tag: string;
-  badges: string[];
 }
 
+/**
+ * Menu Engineering Stats — computed from item data.
+ * Canonical thresholds come from the RPC, not from frontend recalculation.
+ */
 export interface MenuEngineeringStats {
   stars: number;
   plowHorses: number;
@@ -35,8 +58,13 @@ export interface MenuEngineeringStats {
   dogs: number;
   totalUnits: number;
   totalSales: number;
-  popThreshold: number;
-  marginThreshold: number;
+  // Canonical thresholds (from RPC, NOT recalculated)
+  popThreshold: number;        // = ideal_average_popularity (%)
+  marginThreshold: number;     // = average_gross_profit (€)
+  // Data quality
+  lowConfidenceCount: number;
+  totalItems: number;
+  isCanonical: boolean;
 }
 
 export function useMenuEngineeringData() {
@@ -54,7 +82,6 @@ export function useMenuEngineeringData() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<Date>(() => startOfMonth(new Date()));
   const [dateTo, setDateTo] = useState<Date>(() => endOfMonth(new Date()));
-  // Keep datePreset for backward compatibility
   const [datePreset, setDatePreset] = useState<DatePreset>('last30');
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
@@ -67,7 +94,7 @@ export function useMenuEngineeringData() {
     return Array.from(cats).sort();
   }, [items]);
 
-  // Date range calculation - uses the direct from/to dates
+  // Date range calculation
   const getDateRange = useCallback(() => {
     return {
       from: format(dateFrom, 'yyyy-MM-dd'),
@@ -77,7 +104,6 @@ export function useMenuEngineeringData() {
 
   // Fetch data from RPC
   const fetchData = useCallback(async () => {
-    // Guard: don't fetch while app context is loading
     if (appLoading) return;
 
     setLoading(true);
@@ -87,8 +113,13 @@ export function useMenuEngineeringData() {
       const { from, to } = getDateRange();
       const ctx = buildQueryContext(orgId, [], dataSource);
 
-      // RPC now returns complete data: real categories, COGS, margins, K-S classification
-      const data = await getMenuEngineeringSummaryRpc(ctx, { from, to }, selectedLocationId);
+      // Pass selected category to RPC for per-category analysis
+      const data = await getMenuEngineeringSummaryRpc(
+        ctx,
+        { from, to },
+        selectedLocationId,
+        selectedCategory,
+      );
 
       if (!data || data.length === 0) {
         setItems([]);
@@ -97,35 +128,45 @@ export function useMenuEngineeringData() {
         return;
       }
 
-      // Map RPC results to typed items — RPC handles all calculations
+      // Map RPC results — all calculations already done server-side
       const mappedItems: MenuEngineeringItem[] = data.map((row: Record<string, unknown>) => ({
-        product_id: row.product_id as string,
-        name: row.name as string,
-        category: row.category as string,
-        units: Number(row.units) || 0,
-        sales: Number(row.sales) || 0,
-        cogs: Number(row.cogs) || 0,
-        profit_eur: Number(row.profit_eur) || 0,
-        margin_pct: Number(row.margin_pct) || 0,
-        profit_per_sale: Number(row.profit_per_sale) || 0,
-        popularity_share: Number(row.popularity_share) || 0,
-        sales_share: Number(row.sales_share) || 0,
+        product_id: String(row.product_id || ''),
+        name: String(row.name || ''),
+        category: String(row.category || ''),
+        // Canonical fields
+        selling_price_ex_vat: Number(row.selling_price_ex_vat) || 0,
+        unit_food_cost: Number(row.unit_food_cost) || 0,
+        unit_gross_profit: Number(row.unit_gross_profit) || 0,
+        total_gross_profit: Number(row.total_gross_profit) || 0,
+        units_sold: Number(row.units_sold) || Number(row.units) || 0,
+        popularity_pct: Number(row.popularity_pct) || Number(row.popularity_share) || 0,
+        ideal_average_popularity: Number(row.ideal_average_popularity) || 0,
+        average_gross_profit: Number(row.average_gross_profit) || 0,
+        popularity_class: String(row.popularity_class || ''),
+        profitability_class: String(row.profitability_class || ''),
         classification: (row.classification as Classification) || 'dog',
-        action_tag: (row.action_tag as string) || 'Revisar',
+        classification_reason: String(row.classification_reason || ''),
+        cost_source: String(row.cost_source || 'unknown'),
+        data_confidence: String(row.data_confidence || 'low'),
+        action_tag: String(row.action_tag || 'Evaluar'),
         badges: (row.badges as string[]) || [],
+        is_canonical: Boolean(row.is_canonical),
+        // Legacy compat
+        units: Number(row.units_sold) || Number(row.units) || 0,
+        sales: Number(row.sales) || 0,
+        cogs: Number(row.cogs) || Number(row.unit_food_cost) || 0,
+        profit_eur: Number(row.profit_eur) || Number(row.total_gross_profit) || 0,
+        margin_pct: Number(row.margin_pct) || 0,
+        profit_per_sale: Number(row.profit_per_sale) || Number(row.unit_gross_profit) || 0,
+        popularity_share: Number(row.popularity_share) || Number(row.popularity_pct) || 0,
+        sales_share: Number(row.sales_share) || 0,
       }));
 
-      // Calculate stats from classified items
-      const totalUnits = mappedItems.reduce((s, i) => s + i.units, 0);
+      // Stats from classified items — thresholds from RPC, not recalculated
+      const firstItem = mappedItems[0];
+      const totalUnits = mappedItems.reduce((s, i) => s + i.units_sold, 0);
       const totalSales = mappedItems.reduce((s, i) => s + i.sales, 0);
-
-      // Kasavana-Smith thresholds (matching the RPC logic)
-      const popThreshold = mappedItems.length > 0
-        ? (1 / mappedItems.length) * 0.7 * 100
-        : 0;
-      const marginThreshold = totalUnits > 0
-        ? mappedItems.reduce((s, i) => s + i.profit_per_sale * i.units, 0) / totalUnits
-        : 0;
+      const lowConfidenceCount = mappedItems.filter(i => i.data_confidence === 'low').length;
 
       const statsData: MenuEngineeringStats = {
         stars: mappedItems.filter(i => i.classification === 'star').length,
@@ -134,8 +175,12 @@ export function useMenuEngineeringData() {
         dogs: mappedItems.filter(i => i.classification === 'dog').length,
         totalUnits,
         totalSales,
-        popThreshold,
-        marginThreshold,
+        // Use canonical thresholds directly from RPC
+        popThreshold: firstItem?.ideal_average_popularity || 0,
+        marginThreshold: firstItem?.average_gross_profit || 0,
+        lowConfidenceCount,
+        totalItems: mappedItems.length,
+        isCanonical: firstItem?.is_canonical || false,
       };
 
       setItems(mappedItems);
@@ -146,28 +191,22 @@ export function useMenuEngineeringData() {
     } finally {
       setLoading(false);
     }
-  }, [getDateRange, selectedLocationId, dataSource, appLoading]);
+  }, [getDateRange, selectedLocationId, selectedCategory, dataSource, appLoading]);
 
   // Refetch on filter changes
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Filter items by category
-  const filteredItems = useMemo(() => {
-    if (!selectedCategory) return items;
-    return items.filter(i => i.category === selectedCategory);
-  }, [items, selectedCategory]);
-
-  // Items by classification
+  // Items by classification (already category-filtered by RPC when category is selected)
   const itemsByClassification = useMemo(() => {
     return {
-      star: filteredItems.filter(i => i.classification === 'star'),
-      plow_horse: filteredItems.filter(i => i.classification === 'plow_horse'),
-      puzzle: filteredItems.filter(i => i.classification === 'puzzle'),
-      dog: filteredItems.filter(i => i.classification === 'dog'),
+      star: items.filter(i => i.classification === 'star'),
+      plow_horse: items.filter(i => i.classification === 'plow_horse'),
+      puzzle: items.filter(i => i.classification === 'puzzle'),
+      dog: items.filter(i => i.classification === 'dog'),
     };
-  }, [filteredItems]);
+  }, [items]);
 
   // Save action to database
   const saveAction = useCallback(async (
@@ -177,8 +216,6 @@ export function useMenuEngineeringData() {
     estimatedImpact: number | null
   ) => {
     const { from, to } = getDateRange();
-
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -203,7 +240,7 @@ export function useMenuEngineeringData() {
 
   return {
     // Data
-    items: filteredItems,
+    items,
     allItems: items,
     stats,
     categories,

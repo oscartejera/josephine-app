@@ -275,12 +275,14 @@ export async function getInstantPnlRpc(
 
 /**
  * Call menu_engineering_summary RPC.
- * Returns product classification (star/plow_horse/puzzle/dog) with margin and popularity.
+ * Returns product classification (star/plow_horse/puzzle/dog) with canonical
+ * Kasavana-Smith metrics computed per-category.
  */
 export async function getMenuEngineeringSummaryRpc(
   ctx: QueryContext,
   range: DateRange,
-  locationId?: string | null
+  locationId?: string | null,
+  category?: string | null,
 ): Promise<Record<string, unknown>[]> {
   assertContext(ctx);
 
@@ -289,5 +291,6 @@ export async function getMenuEngineeringSummaryRpc(
     p_date_to: range.to,
     p_location_id: locationId || null,
     p_data_source: ctx.dataSource,
+    p_category: category || null,
   });
 }

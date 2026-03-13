@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Star, TrendingUp, Gem, Search, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { CLASSIFICATION_ACTIONS } from '@/lib/menu-engineering-engine';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
 
 interface MenuEngineeringActionsProps {
@@ -44,16 +45,16 @@ interface ActionConfig {
 const ACTION_CONFIGS: ActionConfig[] = [
   {
     classification: 'star',
-    title: 'Estrellas',
-    emoji: '⭐',
+    title: CLASSIFICATION_ACTIONS.star.title,
+    emoji: CLASSIFICATION_ACTIONS.star.emoji,
     icon: Star,
     color: 'text-success',
     bgColor: 'bg-success/10',
-    description: 'Tus productos estrella. Mantenlos destacados.',
+    description: CLASSIFICATION_ACTIONS.star.description,
     actions: [
       {
-        label: 'Marcar como destacado',
-        type: 'mark_featured',
+        label: 'Mantener y proteger',
+        type: 'maintain_protect',
         impactFn: () => 0,
         impactLabel: 'Sin impacto directo',
       },
@@ -61,57 +62,57 @@ const ACTION_CONFIGS: ActionConfig[] = [
   },
   {
     classification: 'plow_horse',
-    title: 'Caballos de batalla',
-    emoji: '🐴',
+    title: CLASSIFICATION_ACTIONS.plow_horse.title,
+    emoji: CLASSIFICATION_ACTIONS.plow_horse.emoji,
     icon: TrendingUp,
     color: 'text-info',
     bgColor: 'bg-info/10',
-    description: 'Venden mucho pero dejan poco margen.',
+    description: CLASSIFICATION_ACTIONS.plow_horse.description,
     actions: [
       {
-        label: 'Simular +3% precio',
-        type: 'simulate_price_increase',
-        impactFn: (items) => items.reduce((acc, i) => acc + i.sales * 0.03, 0),
-        impactLabel: 'Impacto estimado',
+        label: 'Simular mejora de margen',
+        type: 'simulate_margin_improvement',
+        impactFn: (items) => items.reduce((acc, i) => acc + i.units_sold * i.unit_gross_profit * 0.10, 0),
+        impactLabel: 'Impacto +10% margen',
       },
       {
-        label: 'Simular -2% coste',
-        type: 'simulate_cost_reduction',
-        impactFn: (items) => items.reduce((acc, i) => acc + i.sales * 0.02, 0),
-        impactLabel: 'Ahorro estimado',
+        label: 'Revisar recetas',
+        type: 'review_recipes',
+        impactFn: (items) => items.reduce((acc, i) => acc + i.unit_food_cost * i.units_sold * 0.05, 0),
+        impactLabel: 'Ahorro -5% coste',
       },
     ],
   },
   {
     classification: 'puzzle',
-    title: 'Joyas ocultas',
-    emoji: '💎',
+    title: CLASSIFICATION_ACTIONS.puzzle.title,
+    emoji: CLASSIFICATION_ACTIONS.puzzle.emoji,
     icon: Gem,
     color: 'text-warning',
     bgColor: 'bg-warning/10',
-    description: 'Muy rentables pero venden poco.',
+    description: CLASSIFICATION_ACTIONS.puzzle.description,
     actions: [
       {
-        label: 'Sugerir promoción',
-        type: 'suggest_promotion',
-        impactFn: (items) => items.reduce((acc, i) => acc + i.sales * 0.05, 0),
-        impactLabel: 'Potencial extra',
+        label: 'Mejorar visibilidad',
+        type: 'improve_visibility',
+        impactFn: (items) => items.reduce((acc, i) => acc + i.unit_gross_profit * Math.round(i.units_sold * 0.15), 0),
+        impactLabel: 'Potencial +15% uds',
       },
     ],
   },
   {
     classification: 'dog',
-    title: 'Para revisar',
-    emoji: '🔍',
+    title: CLASSIFICATION_ACTIONS.dog.title,
+    emoji: CLASSIFICATION_ACTIONS.dog.emoji,
     icon: Search,
     color: 'text-destructive',
     bgColor: 'bg-destructive/10',
-    description: 'Ni venden ni dejan margen.',
+    description: CLASSIFICATION_ACTIONS.dog.description,
     actions: [
       {
-        label: 'Marcar para revisión',
-        type: 'mark_for_review',
-        impactFn: (items) => items.filter((i) => i.profit_eur < 0).reduce((acc, i) => acc + Math.abs(i.profit_eur), 0),
+        label: 'Evaluar retirar o rediseñar',
+        type: 'evaluate_remove_redesign',
+        impactFn: (items) => items.filter((i) => i.total_gross_profit < 0).reduce((acc, i) => acc + Math.abs(i.total_gross_profit), 0),
         impactLabel: 'Pérdidas actuales',
       },
     ],
@@ -152,7 +153,7 @@ export function MenuEngineeringActions({
     try {
       const impact = selectedAction.action.impactFn(selectedAction.items);
       await onSaveAction(
-        null, // Global action
+        null,
         selectedAction.action.type,
         selectedAction.config.classification,
         impact > 0 ? impact : null
@@ -161,7 +162,7 @@ export function MenuEngineeringActions({
         description: 'Recuerda aplicar los cambios en tu POS.',
       });
       setModalOpen(false);
-    } catch (err) {
+    } catch {
       toast.error('Error al guardar');
     } finally {
       setSaving(false);
@@ -189,7 +190,6 @@ export function MenuEngineeringActions({
       <div className="space-y-4">
         {ACTION_CONFIGS.map((config) => {
           const items = itemsByClassification[config.classification];
-          const Icon = config.icon;
           const topItems = items.slice(0, 5);
 
           return (

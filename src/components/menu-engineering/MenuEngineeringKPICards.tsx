@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Star, TrendingUp, Gem, Search } from 'lucide-react';
+import { Star, TrendingUp, Gem, Search, Info, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
 
@@ -15,6 +15,10 @@ const CARDS = [
   { key: 'dogs' as const, label: 'A revisar', emoji: '🔍', icon: Search, color: 'destructive', description: 'Ni venden ni dejan margen' },
 ];
 
+function formatCurrency(value: number): string {
+  return `€${value.toFixed(2)}`;
+}
+
 export function MenuEngineeringKPICards({ stats, loading }: MenuEngineeringKPICardsProps) {
   if (loading) {
     return (
@@ -26,20 +30,52 @@ export function MenuEngineeringKPICards({ stats, loading }: MenuEngineeringKPICa
 
   const borderColors = { success: 'border-l-success', info: 'border-l-info', warning: 'border-l-warning', destructive: 'border-l-destructive' };
 
+  const lowConfidencePct = stats && stats.totalItems > 0
+    ? Math.round((stats.lowConfidenceCount / stats.totalItems) * 100)
+    : 0;
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {CARDS.map((card) => (
-        <Card key={card.key} className={`border-l-4 ${borderColors[card.color as keyof typeof borderColors]}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">{card.emoji}</span>
-              <span className="text-sm font-medium text-muted-foreground">{card.label}</span>
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {CARDS.map((card) => (
+          <Card key={card.key} className={`border-l-4 ${borderColors[card.color as keyof typeof borderColors]}`}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">{card.emoji}</span>
+                <span className="text-sm font-medium text-muted-foreground">{card.label}</span>
+              </div>
+              <div className="text-3xl font-bold text-foreground mb-1">{stats?.[card.key] ?? 0}</div>
+              <p className="text-xs text-muted-foreground">{card.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Thresholds & data quality row */}
+      {stats && (
+        <div className="flex flex-wrap items-center gap-4 px-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Info className="h-3.5 w-3.5" />
+            <span>
+              Umbral popularidad: <strong>{stats.popThreshold.toFixed(1)}%</strong> ·
+              Umbral GP: <strong>{formatCurrency(stats.marginThreshold)}</strong> ·
+              {stats.totalItems} productos · {stats.totalUnits.toLocaleString()} uds vendidas
+            </span>
+          </div>
+          {lowConfidencePct > 30 && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-600">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <span>{lowConfidencePct}% de productos sin coste real — resultados aproximados</span>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-1">{stats?.[card.key] ?? 0}</div>
-            <p className="text-xs text-muted-foreground">{card.description}</p>
-          </CardContent>
-        </Card>
-      ))}
+          )}
+          {!stats.isCanonical && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-600">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <span>Selecciona una categoría para análisis canónico</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

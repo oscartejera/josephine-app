@@ -37,40 +37,44 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
   const [error, setError] = useState<string | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
 
-  /** Rule-based pricing engine (Kasavana-Smith best practices) */
+  /**
+   * Rule-based pricing engine — consumes CANONICAL classification only.
+   * Does NOT reinterpret or recompute classification.
+   * Uses: selling_price_ex_vat, unit_gross_profit, units_sold, popularity_pct, classification.
+   */
   const generateLocalSuggestions = useCallback((menuItems: MenuEngineeringItem[]): PricingSuggestion[] => {
     const results: PricingSuggestion[] = [];
 
-    // Sort by impact potential: plow horses first (high volume × small % = big €)
+    // Sort by impact: plow horses first (high volume × small % = big €)
     const plowHorses = menuItems
       .filter(i => i.classification === 'plow_horse')
-      .sort((a, b) => b.sales - a.sales)
+      .sort((a, b) => b.total_gross_profit - a.total_gross_profit)
       .slice(0, 2);
     const puzzles = menuItems
       .filter(i => i.classification === 'puzzle')
-      .sort((a, b) => b.profit_per_sale - a.profit_per_sale)
+      .sort((a, b) => b.unit_gross_profit - a.unit_gross_profit)
       .slice(0, 2);
     const stars = menuItems
       .filter(i => i.classification === 'star')
-      .sort((a, b) => b.sales - a.sales)
+      .sort((a, b) => b.total_gross_profit - a.total_gross_profit)
       .slice(0, 1);
     const dogs = menuItems
       .filter(i => i.classification === 'dog')
-      .sort((a, b) => a.margin_pct - b.margin_pct)
+      .sort((a, b) => a.unit_gross_profit - b.unit_gross_profit)
       .slice(0, 1);
 
     // Plow Horses → raise price 5% (high demand absorbs increase)
     for (const item of plowHorses) {
-      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
+      const currentPrice = item.selling_price_ex_vat;
       const pctChange = 5;
-      const suggestedPrice = avgPrice * 1.05;
-      const monthlyImpact = Math.round(item.sales * 0.05);
+      const suggestedPrice = currentPrice * 1.05;
+      const monthlyImpact = Math.round(item.units_sold * currentPrice * 0.05);
       results.push({
         product: item.name,
-        current_price: Math.round(avgPrice * 100) / 100,
+        current_price: Math.round(currentPrice * 100) / 100,
         suggested_price: Math.round(suggestedPrice * 100) / 100,
         change_pct: pctChange,
-        reason: `Alta demanda (${item.popularity_share.toFixed(1)}%), margen ${item.margin_pct.toFixed(0)}%. Puede absorber subida.`,
+        reason: `Pop ${item.popularity_pct.toFixed(1)}%, GP €${item.unit_gross_profit.toFixed(2)}. Alta demanda, puede absorber subida.`,
         estimated_impact_eur: monthlyImpact,
         priority: monthlyImpact > 300 ? 'high' : monthlyImpact > 100 ? 'medium' : 'low',
       });
@@ -78,31 +82,31 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
 
     // Puzzles → decrease price 8% to gain volume
     for (const item of puzzles) {
-      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
+      const currentPrice = item.selling_price_ex_vat;
       const pctChange = -8;
-      const suggestedPrice = avgPrice * 0.92;
-      const estimatedExtraUnits = Math.round(item.units * 0.15); // elasticity ~1.8
-      const monthlyImpact = Math.round(estimatedExtraUnits * item.profit_per_sale * 0.7);
+      const suggestedPrice = currentPrice * 0.92;
+      const estimatedExtraUnits = Math.round(item.units_sold * 0.15);
+      const monthlyImpact = Math.round(estimatedExtraUnits * item.unit_gross_profit * 0.7);
       results.push({
         product: item.name,
-        current_price: Math.round(avgPrice * 100) / 100,
+        current_price: Math.round(currentPrice * 100) / 100,
         suggested_price: Math.round(suggestedPrice * 100) / 100,
         change_pct: pctChange,
-        reason: `Margen alto (${item.margin_pct.toFixed(0)}%) pero baja demanda. Reducir para ganar volumen.`,
+        reason: `GP alto (€${item.unit_gross_profit.toFixed(2)}) pero pop baja (${item.popularity_pct.toFixed(1)}%). Reducir para ganar volumen.`,
         estimated_impact_eur: monthlyImpact > 0 ? monthlyImpact : 50,
         priority: 'medium',
       });
     }
 
-    // Stars → micro-increase 2% (protect the cash cow)
+    // Stars → micro-increase 2%
     for (const item of stars) {
-      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
+      const currentPrice = item.selling_price_ex_vat;
       const pctChange = 2;
-      const suggestedPrice = avgPrice * 1.02;
-      const monthlyImpact = Math.round(item.sales * 0.02);
+      const suggestedPrice = currentPrice * 1.02;
+      const monthlyImpact = Math.round(item.units_sold * currentPrice * 0.02);
       results.push({
         product: item.name,
-        current_price: Math.round(avgPrice * 100) / 100,
+        current_price: Math.round(currentPrice * 100) / 100,
         suggested_price: Math.round(suggestedPrice * 100) / 100,
         change_pct: pctChange,
         reason: `Estrella: popular y rentable. Microajuste seguro sin perder volumen.`,
@@ -113,14 +117,13 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
 
     // Dogs → flag for removal/reinvention
     for (const item of dogs) {
-      const avgPrice = item.units > 0 ? item.sales / item.units : 0;
       results.push({
         product: item.name,
-        current_price: Math.round(avgPrice * 100) / 100,
+        current_price: Math.round(item.selling_price_ex_vat * 100) / 100,
         suggested_price: 0,
         change_pct: -100,
-        reason: `Baja demanda y margen. Considerar eliminar o reinventar el plato.`,
-        estimated_impact_eur: Math.round(Math.abs(item.profit_eur) * 0.5),
+        reason: `Pop ${item.popularity_pct.toFixed(1)}%, GP €${item.unit_gross_profit.toFixed(2)}. Evaluar eliminar o reinventar.`,
+        estimated_impact_eur: Math.round(Math.abs(item.total_gross_profit) * 0.5),
         priority: 'low',
       });
     }
@@ -144,6 +147,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
 
       if (token) {
         try {
+          // Send canonical payload — AI must NOT reinterpret classification
           const resp = await fetch(PRICING_URL, {
             method: 'POST',
             headers: {
@@ -152,15 +156,25 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
               apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             },
             body: JSON.stringify({
+              methodology: 'kasavana_smith_1982',
+              schema_version: 1,
+              is_canonical: stats.isCanonical,
+              thresholds: {
+                ideal_average_popularity: stats.popThreshold,
+                average_gross_profit: stats.marginThreshold,
+              },
               items: items.map((i) => ({
                 name: i.name,
                 category: i.category,
-                units: i.units,
-                sales: i.sales,
-                cogs: i.cogs,
-                margin_pct: i.margin_pct,
                 classification: i.classification,
-                popularity_share: i.popularity_share,
+                classification_reason: i.classification_reason,
+                selling_price_ex_vat: i.selling_price_ex_vat,
+                unit_food_cost: i.unit_food_cost,
+                unit_gross_profit: i.unit_gross_profit,
+                units_sold: i.units_sold,
+                popularity_pct: i.popularity_pct,
+                cost_source: i.cost_source,
+                data_confidence: i.data_confidence,
               })),
               totalSales: stats.totalSales,
               totalUnits: stats.totalUnits,
@@ -181,7 +195,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         }
       }
 
-      // Fallback: rule-based Kasavana-Smith pricing engine
+      // Fallback: canonical rule-based pricing engine
       const localSuggestions = generateLocalSuggestions(items);
       setSuggestions(localSuggestions);
       setHasGenerated(true);
@@ -225,7 +239,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         {/* Initial state */}
         {!hasGenerated && !isLoading && !error && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            Analiza tu menú con IA para obtener recomendaciones de pricing basadas en demanda, margen y clasificación BCG.
+            Analiza tu menú con IA para obtener recomendaciones de pricing basadas en la clasificación Kasavana-Smith canónica.
           </p>
         )}
 
@@ -310,7 +324,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
             </div>
 
             <p className="text-xs text-muted-foreground text-center pt-2">
-              Sugerencias basadas en clasificación BCG, elasticidad estimada y benchmarks del sector.
+              Sugerencias basadas en clasificación Kasavana-Smith canónica y elasticidad estimada.
               Aplica cambios en tu POS.
             </p>
           </div>

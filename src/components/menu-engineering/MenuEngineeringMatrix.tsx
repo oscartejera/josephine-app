@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import {
   ScatterChart,
   Scatter,
@@ -14,14 +12,12 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts';
-import type { MenuEngineeringItem, MenuEngineeringStats, PopularityMode } from '@/hooks/useMenuEngineeringData';
+import type { MenuEngineeringItem, MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
 
 interface MenuEngineeringMatrixProps {
   items: MenuEngineeringItem[];
   stats: MenuEngineeringStats | null;
   loading: boolean;
-  popularityMode: PopularityMode;
-  onPopularityModeChange: (mode: PopularityMode) => void;
 }
 
 const CLASSIFICATION_COLORS: Record<string, string> = {
@@ -30,10 +26,6 @@ const CLASSIFICATION_COLORS: Record<string, string> = {
   puzzle: 'hsl(45, 93%, 47%)',
   dog: 'hsl(0, 84%, 60%)',
 };
-
-function formatPercent(value: number): string {
-  return `${value.toFixed(1)}%`;
-}
 
 function formatCurrency(value: number): string {
   if (value >= 1000) return `€${(value / 1000).toFixed(1)}k`;
@@ -52,28 +44,22 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
   return (
     <div className="bg-popover border border-border rounded-lg shadow-lg p-3 text-sm max-w-xs">
-      <p className="font-semibold mb-2">{item.name}</p>
+      <p className="font-semibold mb-1">{item.name}</p>
+      <p className="text-xs text-muted-foreground mb-2 italic">{item.classification_reason}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-        <span>Ventas:</span>
-        <span className="text-foreground font-medium">{formatCurrency(item.sales)}</span>
+        <span>Precio (sin IVA):</span>
+        <span className="text-foreground font-medium">{formatCurrency(item.selling_price_ex_vat)}</span>
+        <span>Coste materia:</span>
+        <span className="text-foreground">{formatCurrency(item.unit_food_cost)}</span>
+        <span>GP unitario:</span>
+        <span className="text-foreground font-medium">{formatCurrency(item.unit_gross_profit)}</span>
         <span>Unidades:</span>
-        <span className="text-foreground">{item.units.toLocaleString()}</span>
-        <span>€ que deja:</span>
-        <span className="text-foreground font-medium">{formatCurrency(item.profit_eur)}</span>
-        <span>% margen:</span>
-        <span className="text-foreground">{formatPercent(item.margin_pct)}</span>
-        <span>€/venta:</span>
-        <span className="text-foreground">{formatCurrency(item.profit_per_sale)}</span>
+        <span className="text-foreground">{item.units_sold.toLocaleString()}</span>
+        <span>Popularidad:</span>
+        <span className="text-foreground">{item.popularity_pct.toFixed(1)}%</span>
+        <span>Fuente coste:</span>
+        <span className="text-foreground">{item.cost_source === 'recipe_actual' ? '✓ Receta' : item.cost_source === 'fallback_average' ? '~ Media cat.' : '? Sin dato'}</span>
       </div>
-      {item.badges.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {item.badges.map((badge, i) => (
-            <span key={i} className="text-xs bg-warning/20 text-warning-foreground px-2 py-0.5 rounded">
-              {badge}
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -82,38 +68,34 @@ export function MenuEngineeringMatrix({
   items,
   stats,
   loading,
-  popularityMode,
-  onPopularityModeChange,
 }: MenuEngineeringMatrixProps) {
-  // Prepare scatter data
+  // Y-axis = unit_gross_profit (€), X-axis = popularity_pct (%)
   const scatterData = useMemo(() => {
     return items.map((item) => ({
       ...item,
-      x: popularityMode === 'units' ? item.popularity_share : item.sales_share,
-      y: item.margin_pct,
+      x: item.popularity_pct,
+      y: item.unit_gross_profit,
     }));
-  }, [items, popularityMode]);
+  }, [items]);
 
   // Calculate axis domains
   const { xMax, yMax } = useMemo(() => {
-    if (items.length === 0) return { xMax: 10, yMax: 100 };
+    if (items.length === 0) return { xMax: 30, yMax: 20 };
 
-    const xValues = items.map((i) =>
-      popularityMode === 'units' ? i.popularity_share : i.sales_share
-    );
-    const yValues = items.map((i) => i.margin_pct);
+    const xValues = items.map((i) => i.popularity_pct);
+    const yValues = items.map((i) => i.unit_gross_profit);
 
     return {
       xMax: Math.ceil(Math.max(...xValues) * 1.2),
-      yMax: Math.min(100, Math.ceil(Math.max(...yValues) * 1.1)),
+      yMax: Math.ceil(Math.max(...yValues) * 1.2),
     };
-  }, [items, popularityMode]);
+  }, [items]);
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Popularidad vs Margen</CardTitle>
+          <CardTitle>Popularidad vs Rentabilidad</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[350px] w-full" />
@@ -126,7 +108,7 @@ export function MenuEngineeringMatrix({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Popularidad vs Margen</CardTitle>
+          <CardTitle>Popularidad vs Rentabilidad</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[350px] flex items-center justify-center text-muted-foreground">
@@ -141,24 +123,8 @@ export function MenuEngineeringMatrix({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base">Popularidad vs Margen</CardTitle>
+          <CardTitle className="text-base">Popularidad vs Rentabilidad</CardTitle>
           <div className="flex items-center gap-4">
-            {/* Toggle for popularity mode */}
-            <div className="flex items-center gap-2">
-              <Label htmlFor="pop-mode" className="text-xs text-muted-foreground">
-                Por unidades
-              </Label>
-              <Switch
-                id="pop-mode"
-                checked={popularityMode === 'sales'}
-                onCheckedChange={(checked) =>
-                  onPopularityModeChange(checked ? 'sales' : 'units')
-                }
-              />
-              <Label htmlFor="pop-mode" className="text-xs text-muted-foreground">
-                Por €
-              </Label>
-            </div>
             {/* Legend */}
             <div className="flex gap-3 text-xs">
               <div className="flex items-center gap-1">
@@ -192,20 +158,27 @@ export function MenuEngineeringMatrix({
             </div>
           </div>
         </div>
+        {/* Threshold info bar */}
+        {stats && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Umbral popularidad: {stats.popThreshold.toFixed(1)}% · Umbral rentabilidad: {formatCurrency(stats.marginThreshold)}
+            {!stats.isCanonical && ' · ⚠ Vista general (selecciona categoría para análisis canónico)'}
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 40 }}>
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 50 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis
                 type="number"
                 dataKey="x"
                 name="Popularidad"
                 domain={[0, xMax]}
-                tickFormatter={(v) => `${v.toFixed(1)}%`}
+                tickFormatter={(v) => `${v.toFixed(0)}%`}
                 label={{
-                  value: popularityMode === 'units' ? 'Popularidad (% uds)' : 'Popularidad (% €)',
+                  value: 'Popularidad (% unidades)',
                   position: 'bottom',
                   offset: 20,
                   style: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
@@ -215,21 +188,21 @@ export function MenuEngineeringMatrix({
               <YAxis
                 type="number"
                 dataKey="y"
-                name="Margen"
+                name="GP unitario"
                 domain={[0, yMax]}
-                tickFormatter={(v) => `${v}%`}
+                tickFormatter={(v) => `€${v}`}
                 label={{
-                  value: '% Margen',
+                  value: 'GP unitario (€)',
                   angle: -90,
                   position: 'left',
-                  offset: 10,
+                  offset: 15,
                   style: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
                 }}
                 tick={{ fontSize: 10 }}
               />
               <Tooltip content={<CustomTooltip />} />
 
-              {/* Reference lines for thresholds */}
+              {/* Reference lines for canonical thresholds */}
               {stats && (
                 <>
                   <ReferenceLine
@@ -237,12 +210,14 @@ export function MenuEngineeringMatrix({
                     stroke="hsl(var(--muted-foreground))"
                     strokeDasharray="5 5"
                     strokeOpacity={0.5}
+                    label={{ value: `${stats.popThreshold.toFixed(0)}%`, position: 'top', fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                   />
                   <ReferenceLine
                     y={stats.marginThreshold}
                     stroke="hsl(var(--muted-foreground))"
                     strokeDasharray="5 5"
                     strokeOpacity={0.5}
+                    label={{ value: `€${stats.marginThreshold.toFixed(2)}`, position: 'right', fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                   />
                 </>
               )}
