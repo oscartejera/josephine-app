@@ -32,6 +32,7 @@ import {
   ClipboardCheck,
   CreditCard,
   Upload,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -401,6 +402,22 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             >
               <ClipboardList className="h-4 w-4 shrink-0" />
               {!collapsed && <span>{t('nav.escandallos')}</span>}
+            </Button>
+          )}
+
+          {/* Carta del Menú - owner only */}
+          {canViewSidebarItem('menu_engineering') && (
+            <Button
+              variant={location.pathname === '/inventory-setup/menu-items' ? "secondary" : "ghost"}
+              className={cn(
+                "w-full justify-start gap-3 h-10",
+                location.pathname === '/inventory-setup/menu-items' && "bg-accent text-accent-foreground font-medium",
+                collapsed && "justify-center px-2"
+              )}
+              onClick={() => navigate('/inventory-setup/menu-items')}
+            >
+              <UtensilsCrossed className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Carta del Menú</span>}
             </Button>
           )}
 

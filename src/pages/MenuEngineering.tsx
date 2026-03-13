@@ -14,6 +14,7 @@ import {
   MenuEngineeringTable,
   DynamicPricingPanel,
 } from '@/components/menu-engineering';
+import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
 import {
   PricingHealthCards,
   PricingBandChart,
@@ -96,6 +97,9 @@ export default function MenuEngineering() {
         loading={loading}
         accessibleLocations={accessibleLocations}
       />
+
+      {/* Setup completeness banner */}
+      <SetupBanner />
 
       {/* Error state */}
       {error && (

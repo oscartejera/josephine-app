@@ -54,6 +54,7 @@ const SquareOAuthCallback = lazy(() => import("@/pages/integrations/SquareOAuthC
 const InventoryItems = lazy(() => import("@/pages/inventory-setup/InventoryItems"));
 const RecipesPage = lazy(() => import("@/pages/inventory-setup/RecipesPage"));
 const RecipeDetailPage = lazy(() => import("@/pages/inventory-setup/RecipeDetailPage"));
+const MenuItemsPage = lazy(() => import("@/pages/inventory-setup/MenuItemsPage"));
 const WasteEntryPage = lazy(() => import("@/pages/operations/WasteEntryPage"));
 const StockAuditPage = lazy(() => import("@/pages/operations/StockAuditPage"));
 const PrepListPage = lazy(() => import("@/pages/operations/PrepListPage"));
@@ -236,6 +237,7 @@ function AppRoutes() {
           <Route path="/inventory-setup/items" element={<InsightErrorBoundary pageName="Artículos"><InventoryItems /></InsightErrorBoundary>} />
           <Route path="/inventory-setup/recipes" element={<InsightErrorBoundary pageName="Recetas"><RecipesPage /></InsightErrorBoundary>} />
           <Route path="/inventory-setup/recipes/:id" element={<InsightErrorBoundary pageName="Receta"><RecipeDetailPage /></InsightErrorBoundary>} />
+          <Route path="/inventory-setup/menu-items" element={<InsightErrorBoundary pageName="Carta del Menú"><MenuItemsPage /></InsightErrorBoundary>} />
 
           {/* Operations */}
           <Route path="/operations/waste-entry" element={<InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary>} />
