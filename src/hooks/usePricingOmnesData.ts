@@ -129,7 +129,7 @@ export function usePricingOmnesData() {
       }
     } catch (err) {
       console.error('Pricing OMNES fetch error:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar análisis de precios');
+      setError(err instanceof Error ? err.message : 'Error loading pricing analysis');
     } finally {
       setLoading(false);
     }

@@ -165,7 +165,7 @@ export default function MenuEngineering() {
               </div>
             </div>
 
-            {/* Dynamic Pricing AI (ME-driven suggestions, NOT OMNES) */}
+            {/* AI Pricing Advisor (uses both ME + OMNES) */}
             <DynamicPricingPanel
               items={items}
               stats={stats}
@@ -174,6 +174,19 @@ export default function MenuEngineering() {
                   ? accessibleLocations.find((l) => l.id === selectedLocationId)?.name || 'Location'
                   : 'All locations'
               }
+              categoryName={selectedCategory || undefined}
+              omnesData={omnes.result ? {
+                price_range_ratio: omnes.result.price_range_ratio,
+                price_range_state: omnes.result.price_range_state,
+                category_ratio: omnes.result.category_ratio,
+                pricing_health_state: omnes.result.pricing_health_state,
+                band_distribution_state: omnes.result.band_distribution_state,
+                lower_band_pct: omnes.result.lower_band_pct,
+                middle_band_pct: omnes.result.middle_band_pct,
+                upper_band_pct: omnes.result.upper_band_pct,
+                average_menu_price: omnes.result.average_menu_price,
+                average_check_per_plate: omnes.result.average_check_per_plate,
+              } : undefined}
             />
 
             {/* Products Table */}
