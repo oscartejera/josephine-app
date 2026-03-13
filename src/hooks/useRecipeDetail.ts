@@ -21,71 +21,27 @@ export function useRecipeDetail(recipeId: string | null) {
                 .single();
             if (recipeError) throw recipeError;
 
-            // Fetch ingredients
+            // Fetch ingredients via bridging RPC (resolves recipes.id → menu_items.id)
             const { data: ingredients, error: ingError } = await supabase
-                .from('recipe_ingredients')
-                .select(`
-          menu_item_id, inventory_item_id, sub_recipe_id,
-          qty_base_units, qty_gross, qty_net, unit, yield_pct, sort_order
-        `)
-                .eq('menu_item_id', recipeId)
-                .order('sort_order');
+                .rpc('get_recipe_ingredients', { p_recipe_id: recipeId });
             if (ingError) throw ingError;
 
-            // Enrich ingredients with item names and costs
-            const enriched: RecipeIngredient[] = await Promise.all(
-                (ingredients || []).map(async (ing) => {
-                    let itemName = '';
-                    let itemUnit = '';
-                    let lastCost = 0;
-                    let subRecipeName = '';
-
-                    if (ing.sub_recipe_id) {
-                        const { data: sr } = await supabase
-                            .from('recipes')
-                            .select('menu_item_name')
-                            .eq('id', ing.sub_recipe_id)
-                            .single();
-                        if (sr) subRecipeName = sr.menu_item_name;
-
-                        // Get sub-recipe cost via RPC
-                        try {
-                            const { data: costData } = await supabase
-                                .rpc('get_recipe_food_cost', { p_recipe_id: ing.sub_recipe_id });
-                            lastCost = costData ?? 0;
-                        } catch {
-                            // RPC may not be available
-                        }
-                    } else {
-                        const { data: item } = await supabase
-                            .from('inventory_items')
-                            .select('name, unit, last_cost')
-                            .eq('id', ing.inventory_item_id)
-                            .single();
-                        if (item) {
-                            itemName = item.name;
-                            itemUnit = item.unit ?? '';
-                            lastCost = item.last_cost ?? 0;
-                        }
-                    }
-
-                    return {
-                        menu_item_id: ing.menu_item_id,
-                        inventory_item_id: ing.inventory_item_id,
-                        sub_recipe_id: ing.sub_recipe_id,
-                        qty_base_units: ing.qty_base_units ?? 0,
-                        qty_gross: ing.qty_gross ?? ing.qty_base_units ?? 0,
-                        qty_net: ing.qty_net ?? ing.qty_base_units ?? 0,
-                        unit: ing.unit ?? (itemUnit || 'kg'),
-                        yield_pct: ing.yield_pct ?? 100,
-                        sort_order: ing.sort_order ?? 0,
-                        item_name: itemName,
-                        item_unit: itemUnit,
-                        last_cost: lastCost,
-                        sub_recipe_name: subRecipeName,
-                    };
-                })
-            );
+            // Map RPC results to RecipeIngredient format
+            const enriched: RecipeIngredient[] = (ingredients || []).map((ing: any) => ({
+                menu_item_id: ing.menu_item_id,
+                inventory_item_id: ing.inventory_item_id,
+                sub_recipe_id: ing.sub_recipe_id,
+                qty_base_units: ing.qty_base_units ?? 0,
+                qty_gross: ing.qty_gross ?? ing.qty_base_units ?? 0,
+                qty_net: ing.qty_net ?? ing.qty_base_units ?? 0,
+                unit: ing.unit ?? 'kg',
+                yield_pct: ing.yield_pct ?? 100,
+                sort_order: ing.sort_order ?? 0,
+                item_name: ing.item_name ?? '',
+                item_unit: ing.item_unit ?? '',
+                last_cost: ing.last_cost ?? 0,
+                sub_recipe_name: '',
+            }));
 
             // Calculate food cost
             const foodCost = enriched.reduce((sum, ing) => {
@@ -114,6 +70,13 @@ export function useRecipeDetail(recipeId: string | null) {
         enabled: !!recipeId,
     });
 
+    // Helper: resolve the actual menu_items.id from the recipes.id
+    const resolveMenuItemId = async (rid: string): Promise<string> => {
+        const { data } = await supabase.rpc('get_menu_item_id_for_recipe', { p_recipe_id: rid });
+        if (data) return data;
+        return rid; // fallback to recipe id (might be a menu_item_id already)
+    };
+
     const addIngredient = useMutation({
         mutationFn: async (ingredient: {
             inventory_item_id: string;
@@ -123,11 +86,12 @@ export function useRecipeDetail(recipeId: string | null) {
             unit?: string;
         }) => {
             if (!recipeId) throw new Error('No recipe');
+            const menuItemId = await resolveMenuItemId(recipeId);
             const qtyNet = ingredient.qty_gross * ((ingredient.yield_pct ?? 100) / 100);
             const { error } = await supabase
                 .from('recipe_ingredients')
                 .insert({
-                    menu_item_id: recipeId,
+                    menu_item_id: menuItemId,
                     inventory_item_id: ingredient.inventory_item_id,
                     sub_recipe_id: ingredient.sub_recipe_id ?? null,
                     qty_base_units: ingredient.qty_gross,
@@ -153,6 +117,7 @@ export function useRecipeDetail(recipeId: string | null) {
             unit?: string;
         }) => {
             if (!recipeId) throw new Error('No recipe');
+            const menuItemId = await resolveMenuItemId(recipeId);
             const payload: Record<string, any> = { ...updates };
             if (updates.qty_gross !== undefined) {
                 payload.qty_base_units = updates.qty_gross;
@@ -161,7 +126,7 @@ export function useRecipeDetail(recipeId: string | null) {
             const { error } = await supabase
                 .from('recipe_ingredients')
                 .update(payload)
-                .eq('menu_item_id', recipeId)
+                .eq('menu_item_id', menuItemId)
                 .eq('inventory_item_id', inventoryItemId);
             if (error) throw error;
         },
@@ -174,10 +139,11 @@ export function useRecipeDetail(recipeId: string | null) {
     const removeIngredient = useMutation({
         mutationFn: async (inventoryItemId: string) => {
             if (!recipeId) throw new Error('No recipe');
+            const menuItemId = await resolveMenuItemId(recipeId);
             const { error } = await supabase
                 .from('recipe_ingredients')
                 .delete()
-                .eq('menu_item_id', recipeId)
+                .eq('menu_item_id', menuItemId)
                 .eq('inventory_item_id', inventoryItemId);
             if (error) throw error;
         },

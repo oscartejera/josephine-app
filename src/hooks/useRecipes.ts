@@ -15,29 +15,32 @@ export function useRecipes() {
         queryFn: async (): Promise<RecipeSummary[]> => {
             if (!group?.id) return [];
 
-            // Fetch recipes with ingredient count
+            // Fetch recipes (no PostgREST join — ingredients are in menu_items domain)
             const { data, error } = await supabase
                 .from('recipes')
                 .select(`
           id, group_id, menu_item_name, selling_price, category,
-          yield_qty, yield_unit, notes, is_sub_recipe, created_at,
-          recipe_ingredients(inventory_item_id)
+          yield_qty, yield_unit, notes, is_sub_recipe, created_at
         `)
                 .eq('group_id', group.id)
                 .order('menu_item_name');
 
             if (error) throw error;
 
-            // Calculate food cost for each recipe via RPC
+            // Enrich with food cost + ingredient count via bridging RPCs
             const recipes: RecipeSummary[] = await Promise.all(
                 (data || []).map(async (r: any) => {
                     let foodCost = 0;
+                    let ingredientCount = 0;
                     try {
-                        const { data: costData } = await supabase
-                            .rpc('get_recipe_food_cost', { p_recipe_id: r.id });
-                        foodCost = costData ?? 0;
+                        const [costRes, countRes] = await Promise.all([
+                            supabase.rpc('get_recipe_food_cost', { p_recipe_id: r.id }),
+                            supabase.rpc('get_recipe_ingredient_count', { p_recipe_id: r.id }),
+                        ]);
+                        foodCost = costRes.data ?? 0;
+                        ingredientCount = countRes.data ?? 0;
                     } catch {
-                        // RPC may not be available
+                        // RPCs may not be available
                     }
                     const sellingPrice = r.selling_price ?? 0;
                     return {
@@ -51,7 +54,7 @@ export function useRecipes() {
                         notes: r.notes,
                         is_sub_recipe: r.is_sub_recipe ?? false,
                         created_at: r.created_at,
-                        ingredient_count: r.recipe_ingredients?.length ?? 0,
+                        ingredient_count: ingredientCount,
                         food_cost: foodCost,
                         food_cost_pct: sellingPrice > 0 ? Math.round((foodCost / sellingPrice) * 1000) / 10 : 0,
                     };
