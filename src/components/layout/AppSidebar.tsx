@@ -132,6 +132,13 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     location.pathname.startsWith('/availability') ||
     location.pathname.startsWith('/payroll');
 
+  // Gestión de Coste collapsible
+  const isCostRoute = location.pathname.startsWith('/inventory-setup') ||
+    location.pathname === '/operations/stock-audit' ||
+    location.pathname === '/operations/waste-entry' ||
+    location.pathname === '/procurement';
+  const [costExpanded, setCostExpanded] = useState(isCostRoute);
+
   useEffect(() => {
     if (isInsightsRoute) {
       setInsightsExpanded(true);
@@ -143,6 +150,12 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       setWorkforceExpanded(true);
     }
   }, [isWorkforceRoute]);
+
+  useEffect(() => {
+    if (isCostRoute) {
+      setCostExpanded(true);
+    }
+  }, [isCostRoute]);
 
   useEffect(() => {
     localStorage.setItem(INSIGHTS_EXPANDED_KEY, String(insightsExpanded));
@@ -357,96 +370,118 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             </Collapsible>
           )}
 
-          {/* Purchases - permission guarded */}
-          {canViewSidebarItem('procurement') && (
-            <Button
-              variant={location.pathname === '/procurement' ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start gap-3 h-10",
-                location.pathname === '/procurement' && "bg-accent text-accent-foreground font-medium",
-                collapsed && "justify-center px-2"
-              )}
-              onClick={() => navigate('/procurement')}
-            >
-              <ShoppingCart className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t('nav.purchases')}</span>}
-            </Button>
-          )}
-
-          {/* Inventory Setup - permission guarded */}
+          {/* Gestión de Coste Collapsible — Nory-style grouping */}
           {canViewSidebarItem('inventory') && (
-            <Button
-              variant={location.pathname.startsWith('/inventory-setup') ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start gap-3 h-10",
-                location.pathname.startsWith('/inventory-setup') && "bg-accent text-accent-foreground font-medium",
-                collapsed && "justify-center px-2"
-              )}
-              onClick={() => navigate('/inventory-setup/items')}
-            >
-              <Package className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t('nav.inventorySetup')}</span>}
-            </Button>
+            <Collapsible open={costExpanded && !collapsed} onOpenChange={() => setCostExpanded(prev => !prev)}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  data-tour="cost-management"
+                  variant={isCostRoute ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10",
+                    isCostRoute && "bg-accent/50 text-accent-foreground font-medium",
+                    collapsed && "justify-center px-2"
+                  )}
+                >
+                  <Package className="h-4 w-4 shrink-0" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">Gestión de Coste</span>
+                      <ChevronDown className={cn(
+                        "h-4 w-4 shrink-0 transition-transform duration-200",
+                        costExpanded && "rotate-180"
+                      )} />
+                    </>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 mt-1">
+                {/* Materias Primas */}
+                <Button
+                  variant={location.pathname === '/inventory-setup/items' ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10 pl-9",
+                    location.pathname === '/inventory-setup/items' && "bg-accent text-accent-foreground font-medium"
+                  )}
+                  onClick={() => navigate('/inventory-setup/items')}
+                >
+                  <Package className="h-4 w-4 shrink-0" />
+                  <span>{t('nav.inventorySetup')}</span>
+                </Button>
+
+                {/* Escandallos */}
+                {canViewSidebarItem('menu_engineering') && (
+                  <Button
+                    variant={location.pathname.startsWith('/inventory-setup/recipes') ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10 pl-9",
+                      location.pathname.startsWith('/inventory-setup/recipes') && "bg-accent text-accent-foreground font-medium"
+                    )}
+                    onClick={() => navigate('/inventory-setup/recipes')}
+                  >
+                    <ClipboardList className="h-4 w-4 shrink-0" />
+                    <span>{t('nav.escandallos')}</span>
+                  </Button>
+                )}
+
+                {/* Carta del Menú */}
+                {canViewSidebarItem('menu_engineering') && (
+                  <Button
+                    variant={location.pathname === '/inventory-setup/menu-items' ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10 pl-9",
+                      location.pathname === '/inventory-setup/menu-items' && "bg-accent text-accent-foreground font-medium"
+                    )}
+                    onClick={() => navigate('/inventory-setup/menu-items')}
+                  >
+                    <UtensilsCrossed className="h-4 w-4 shrink-0" />
+                    <span>Carta del Menú</span>
+                  </Button>
+                )}
+
+                {/* Auditoría de Stock */}
+                <Button
+                  variant={location.pathname === '/operations/stock-audit' ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10 pl-9",
+                    location.pathname === '/operations/stock-audit' && "bg-accent text-accent-foreground font-medium"
+                  )}
+                  onClick={() => navigate('/operations/stock-audit')}
+                >
+                  <ClipboardCheck className="h-4 w-4 shrink-0" />
+                  <span>{t('inventory.stockCount')}</span>
+                </Button>
+
+                {/* Registro de Mermas */}
+                <Button
+                  variant={location.pathname === '/operations/waste-entry' ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 h-10 pl-9",
+                    location.pathname === '/operations/waste-entry' && "bg-accent text-accent-foreground font-medium"
+                  )}
+                  onClick={() => navigate('/operations/waste-entry')}
+                >
+                  <Trash2 className="h-4 w-4 shrink-0" />
+                  <span>{t('nav.waste')}</span>
+                </Button>
+
+                {/* Compras */}
+                {canViewSidebarItem('procurement') && (
+                  <Button
+                    variant={location.pathname === '/procurement' ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10 pl-9",
+                      location.pathname === '/procurement' && "bg-accent text-accent-foreground font-medium"
+                    )}
+                    onClick={() => navigate('/procurement')}
+                  >
+                    <ShoppingCart className="h-4 w-4 shrink-0" />
+                    <span>{t('nav.purchases')}</span>
+                  </Button>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           )}
-
-          {/* Escandallos (BOM) - owner only */}
-          {canViewSidebarItem('menu_engineering') && (
-            <Button
-              variant={location.pathname.startsWith('/inventory-setup/recipes') ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start gap-3 h-10",
-                location.pathname.startsWith('/inventory-setup/recipes') && "bg-accent text-accent-foreground font-medium",
-                collapsed && "justify-center px-2"
-              )}
-              onClick={() => navigate('/inventory-setup/recipes')}
-            >
-              <ClipboardList className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t('nav.escandallos')}</span>}
-            </Button>
-          )}
-
-          {/* Carta del Menú - owner only */}
-          {canViewSidebarItem('menu_engineering') && (
-            <Button
-              variant={location.pathname === '/inventory-setup/menu-items' ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start gap-3 h-10",
-                location.pathname === '/inventory-setup/menu-items' && "bg-accent text-accent-foreground font-medium",
-                collapsed && "justify-center px-2"
-              )}
-              onClick={() => navigate('/inventory-setup/menu-items')}
-            >
-              <UtensilsCrossed className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Carta del Menú</span>}
-            </Button>
-          )}
-
-          {/* Operaciones */}
-          <Button
-            variant={location.pathname === '/operations/waste-entry' ? "secondary" : "ghost"}
-            className={cn(
-              "w-full justify-start gap-3 h-10",
-              location.pathname === '/operations/waste-entry' && "bg-accent text-accent-foreground font-medium",
-              collapsed && "justify-center px-2"
-            )}
-            onClick={() => navigate('/operations/waste-entry')}
-          >
-            <Trash2 className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>{t('nav.waste')}</span>}
-          </Button>
-
-          <Button
-            variant={location.pathname === '/operations/stock-audit' ? "secondary" : "ghost"}
-            className={cn(
-              "w-full justify-start gap-3 h-10",
-              location.pathname === '/operations/stock-audit' && "bg-accent text-accent-foreground font-medium",
-              collapsed && "justify-center px-2"
-            )}
-            onClick={() => navigate('/operations/stock-audit')}
-          >
-            <ClipboardCheck className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>{t('inventory.stockCount')}</span>}
-          </Button>
 
           {/* Integrations - owner only */}
           {canViewSidebarItem('settings') && (
