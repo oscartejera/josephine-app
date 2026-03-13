@@ -18,23 +18,23 @@ type SortField = 'name' | 'units_sold' | 'selling_price_ex_vat' | 'unit_food_cos
 type SortDirection = 'asc' | 'desc';
 
 const CLASSIFICATION_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  star: { label: '⭐ Estrella', variant: 'default' },
-  plow_horse: { label: '🐴 Caballo', variant: 'secondary' },
-  puzzle: { label: '💎 Joya', variant: 'outline' },
-  dog: { label: '🔍 Revisar', variant: 'destructive' },
+  star: { label: '⭐ Star', variant: 'default' },
+  plow_horse: { label: '🐴 Plow Horse', variant: 'secondary' },
+  puzzle: { label: '💎 Puzzle', variant: 'outline' },
+  dog: { label: '🔍 Dog', variant: 'destructive' },
 };
 
 const ACTION_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  Mantener: { label: 'Mantener', variant: 'default' },
-  'Revisar coste': { label: 'Revisar coste', variant: 'secondary' },
-  Promocionar: { label: 'Promocionar', variant: 'outline' },
-  Evaluar: { label: 'Evaluar', variant: 'destructive' },
+  Mantener: { label: 'Maintain', variant: 'default' },
+  'Revisar coste': { label: 'Review cost', variant: 'secondary' },
+  Promocionar: { label: 'Promote', variant: 'outline' },
+  Evaluar: { label: 'Evaluate', variant: 'destructive' },
 };
 
 const COST_SOURCE_BADGE: Record<string, { label: string; className: string }> = {
-  recipe_actual: { label: '✓ Receta', className: 'bg-success/20 text-success' },
-  fallback_average: { label: '~ Media', className: 'bg-amber-500/20 text-amber-600' },
-  unknown: { label: '? Sin dato', className: 'bg-destructive/20 text-destructive' },
+  recipe_actual: { label: '✓ Recipe', className: 'bg-success/20 text-success' },
+  fallback_average: { label: '~ Average', className: 'bg-amber-500/20 text-amber-600' },
+  unknown: { label: '? No data', className: 'bg-destructive/20 text-destructive' },
 };
 
 function formatCurrency(value: number): string {
@@ -78,55 +78,55 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
   );
 
   if (loading) {
-    return <Card><CardHeader><CardTitle>Análisis por producto</CardTitle></CardHeader><CardContent><Skeleton className="h-[400px] w-full" /></CardContent></Card>;
+    return <Card><CardHeader><CardTitle>Product Analysis</CardTitle></CardHeader><CardContent><Skeleton className="h-[400px] w-full" /></CardContent></Card>;
   }
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <CardTitle>Análisis por producto</CardTitle>
+          <CardTitle>Product Analysis</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={classificationFilter} onValueChange={setClassificationFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Clasificación" /></SelectTrigger>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Classification" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="star">⭐ Estrellas</SelectItem>
-              <SelectItem value="plow_horse">🐴 Caballos</SelectItem>
-              <SelectItem value="puzzle">💎 Joyas</SelectItem>
-              <SelectItem value="dog">🔍 Revisar</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="star">⭐ Stars</SelectItem>
+              <SelectItem value="plow_horse">🐴 Plow Horses</SelectItem>
+              <SelectItem value="puzzle">💎 Puzzles</SelectItem>
+              <SelectItem value="dog">🔍 Dogs</SelectItem>
             </SelectContent>
           </Select>
-          <span className="text-sm text-muted-foreground">{filteredItems.length} de {items.length}</span>
+          <span className="text-sm text-muted-foreground">{filteredItems.length} of {items.length}</span>
         </div>
 
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <SortHeader field="name">Producto</SortHeader>
-                <TableHead>Categoría</TableHead>
-                <SortHeader field="selling_price_ex_vat">Precio</SortHeader>
-                <SortHeader field="unit_food_cost">Coste</SortHeader>
-                <SortHeader field="units_sold">Uds</SortHeader>
+                <SortHeader field="name">Product</SortHeader>
+                <TableHead>Category</TableHead>
+                <SortHeader field="selling_price_ex_vat">Price</SortHeader>
+                <SortHeader field="unit_food_cost">Cost</SortHeader>
+                <SortHeader field="units_sold">Units</SortHeader>
                 <SortHeader field="popularity_pct">Pop %</SortHeader>
-                <SortHeader field="unit_gross_profit">GP/ud</SortHeader>
-                <SortHeader field="total_gross_profit">GP total</SortHeader>
-                <TableHead>Clase</TableHead>
-                <TableHead>Coste</TableHead>
-                <TableHead>Acción</TableHead>
+                <SortHeader field="unit_gross_profit">GP/unit</SortHeader>
+                <SortHeader field="total_gross_profit">Total GP</SortHeader>
+                <TableHead>Class</TableHead>
+                <TableHead>Cost</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredItems.length === 0 ? (
-                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Sin productos</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products</TableCell></TableRow>
               ) : filteredItems.map((item) => {
                 const classBadge = CLASSIFICATION_BADGES[item.classification] || CLASSIFICATION_BADGES.dog;
                 const actionBadge = ACTION_BADGES[item.action_tag] || ACTION_BADGES.Evaluar;

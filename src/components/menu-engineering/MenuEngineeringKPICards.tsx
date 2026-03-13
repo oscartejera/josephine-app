@@ -9,10 +9,10 @@ interface MenuEngineeringKPICardsProps {
 }
 
 const CARDS = [
-  { key: 'stars' as const, label: 'Estrellas', emoji: '⭐', icon: Star, color: 'success', description: 'Populares y rentables' },
-  { key: 'plowHorses' as const, label: 'Caballos de batalla', emoji: '🐴', icon: TrendingUp, color: 'info', description: 'Venden mucho pero dejan poco' },
-  { key: 'puzzles' as const, label: 'Joyas ocultas', emoji: '💎', icon: Gem, color: 'warning', description: 'Muy rentables pero venden poco' },
-  { key: 'dogs' as const, label: 'A revisar', emoji: '🔍', icon: Search, color: 'destructive', description: 'Ni venden ni dejan margen' },
+  { key: 'stars' as const, label: 'Stars', emoji: '⭐', icon: Star, color: 'success', description: 'Popular and profitable' },
+  { key: 'plowHorses' as const, label: 'Plow Horses', emoji: '🐴', icon: TrendingUp, color: 'info', description: 'High volume but low margin' },
+  { key: 'puzzles' as const, label: 'Puzzles', emoji: '💎', icon: Gem, color: 'warning', description: 'Highly profitable but low volume' },
+  { key: 'dogs' as const, label: 'Dogs', emoji: '🔍', icon: Search, color: 'destructive', description: 'Low volume and low margin' },
 ];
 
 function formatCurrency(value: number): string {
@@ -57,21 +57,21 @@ export function MenuEngineeringKPICards({ stats, loading }: MenuEngineeringKPICa
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Info className="h-3.5 w-3.5" />
             <span>
-              Umbral popularidad: <strong>{stats.popThreshold.toFixed(1)}%</strong> ·
-              Umbral GP: <strong>{formatCurrency(stats.marginThreshold)}</strong> ·
-              {stats.totalItems} productos · {stats.totalUnits.toLocaleString()} uds vendidas
+              Popularity threshold: <strong>{stats.popThreshold.toFixed(1)}%</strong> ·
+              GP threshold: <strong>{formatCurrency(stats.marginThreshold)}</strong> ·
+              {stats.totalItems} products · {stats.totalUnits.toLocaleString()} units sold
             </span>
           </div>
           {lowConfidencePct > 30 && (
             <div className="flex items-center gap-1.5 text-xs text-amber-600">
               <AlertTriangle className="h-3.5 w-3.5" />
-              <span>{lowConfidencePct}% de productos sin coste real — resultados aproximados</span>
+              <span>{lowConfidencePct}% of products without actual cost — approximate results</span>
             </div>
           )}
           {!stats.isCanonical && (
             <div className="flex items-center gap-1.5 text-xs text-amber-600">
               <AlertTriangle className="h-3.5 w-3.5" />
-              <span>Selecciona una categoría para análisis canónico</span>
+              <span>Select a category for canonical analysis</span>
             </div>
           )}
         </div>

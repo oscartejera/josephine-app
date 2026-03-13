@@ -16,9 +16,9 @@ type SortField = 'item_name' | 'listed_price' | 'units_sold' | 'item_revenue';
 type SortDirection = 'asc' | 'desc';
 
 const BAND_BADGES: Record<string, { label: string; className: string }> = {
-  lower: { label: 'Baja', className: 'bg-blue-500/20 text-blue-600' },
-  middle: { label: 'Media', className: 'bg-violet-500/20 text-violet-600' },
-  upper: { label: 'Alta', className: 'bg-rose-500/20 text-rose-600' },
+  lower: { label: 'Lower', className: 'bg-blue-500/20 text-blue-600' },
+  middle: { label: 'Middle', className: 'bg-violet-500/20 text-violet-600' },
+  upper: { label: 'Upper', className: 'bg-rose-500/20 text-rose-600' },
 };
 
 export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
@@ -63,7 +63,7 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
   );
 
   if (loading) {
-    return <Card><CardHeader><CardTitle>Productos por Banda</CardTitle></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>;
+    return <Card><CardHeader><CardTitle>Products by Band</CardTitle></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>;
   }
 
   if (!result) return null;
@@ -71,7 +71,7 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Productos por Banda de Precios</CardTitle>
+        <CardTitle>Products by Price Band</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -88,7 +88,7 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
                   bandFilter === b ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
-                {b === 'all' ? 'Todas' : b === 'lower' ? 'Baja' : b === 'middle' ? 'Media' : 'Alta'}
+                {b === 'all' ? 'All' : b === 'lower' ? 'Lower' : b === 'middle' ? 'Middle' : 'Upper'}
               </button>
             ))}
           </div>
@@ -99,17 +99,17 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortHeader field="item_name">Producto</SortHeader>
-                <SortHeader field="listed_price">Precio</SortHeader>
-                <SortHeader field="units_sold">Uds</SortHeader>
-                <SortHeader field="item_revenue">Ingresos</SortHeader>
-                <TableHead>Banda</TableHead>
-                <TableHead>Promoción</TableHead>
+                <SortHeader field="item_name">Product</SortHeader>
+                <SortHeader field="listed_price">Price</SortHeader>
+                <SortHeader field="units_sold">Units</SortHeader>
+                <SortHeader field="item_revenue">Revenue</SortHeader>
+                <TableHead>Band</TableHead>
+                <TableHead>Promotion</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredItems.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Sin productos</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products</TableCell></TableRow>
               ) : filteredItems.map((item) => {
                 const bandBadge = BAND_BADGES[item.band] || BAND_BADGES.lower;
                 return (
@@ -124,7 +124,7 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
                     <TableCell>
                       {item.is_promotion_candidate && (
                         <Badge variant="outline" className="text-[10px] gap-1 text-violet-600 border-violet-300">
-                          <Target className="h-3 w-3" /> Promocionar
+                          <Target className="h-3 w-3" /> Promote
                         </Badge>
                       )}
                     </TableCell>

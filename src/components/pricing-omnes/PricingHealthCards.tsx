@@ -12,17 +12,17 @@ interface PricingHealthCardsProps {
 
 const STATE_STYLES = {
   // Price range state
-  too_narrow: { label: 'Muy estrecho', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: Minus },
-  healthy: { label: 'Saludable', color: 'text-success', bg: 'bg-success/10', icon: TrendingUp },
-  too_wide: { label: 'Muy amplio', color: 'text-destructive', bg: 'bg-destructive/10', icon: TrendingDown },
+  too_narrow: { label: 'Too narrow', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: Minus },
+  healthy: { label: 'Healthy', color: 'text-success', bg: 'bg-success/10', icon: TrendingUp },
+  too_wide: { label: 'Too wide', color: 'text-destructive', bg: 'bg-destructive/10', icon: TrendingDown },
   // Pricing health
-  too_expensive: { label: 'Percepción cara', color: 'text-destructive', bg: 'bg-destructive/10', icon: TrendingDown },
-  underpriced: { label: 'Infraprecios', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: TrendingUp },
+  too_expensive: { label: 'Perceived expensive', color: 'text-destructive', bg: 'bg-destructive/10', icon: TrendingDown },
+  underpriced: { label: 'Underpriced', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: TrendingUp },
   // Band distribution
-  balanced: { label: 'Equilibrada', color: 'text-success', bg: 'bg-success/10', icon: TrendingUp },
-  weak_middle: { label: 'Banda media débil', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: AlertTriangle },
-  too_many_lower: { label: 'Exceso banda baja', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: TrendingDown },
-  too_many_upper: { label: 'Exceso banda alta', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: TrendingUp },
+  balanced: { label: 'Balanced', color: 'text-success', bg: 'bg-success/10', icon: TrendingUp },
+  weak_middle: { label: 'Weak middle band', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: AlertTriangle },
+  too_many_lower: { label: 'Lower band heavy', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: TrendingDown },
+  too_many_upper: { label: 'Upper band heavy', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: TrendingUp },
 };
 
 function getStateStyle(state: string) {
@@ -54,7 +54,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
         <Card className="border-l-4 border-l-violet-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">Ratio de Precios</span>
+              <span className="text-sm font-medium text-muted-foreground">Price Range Ratio</span>
               <Badge className={`text-xs ${priceState.bg} ${priceState.color} border-0`}>
                 {priceState.label}
               </Badge>
@@ -70,7 +70,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
         <Card className="border-l-4 border-l-indigo-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">Distribución Bandas</span>
+              <span className="text-sm font-medium text-muted-foreground">Band Distribution</span>
               <Badge className={`text-xs ${bandState.bg} ${bandState.color} border-0`}>
                 {bandState.label}
               </Badge>
@@ -97,7 +97,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Baja {result.lower_band_count} · Media {result.middle_band_count} · Alta {result.upper_band_count} · Ideal: 25/50/25%
+              Lower {result.lower_band_count} · Middle {result.middle_band_count} · Upper {result.upper_band_count} · Target: 25/50/25%
             </p>
           </CardContent>
         </Card>
@@ -106,14 +106,14 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
         <Card className="border-l-4 border-l-fuchsia-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">Ratio de Categoría</span>
+              <span className="text-sm font-medium text-muted-foreground">Category Ratio</span>
               <Badge className={`text-xs ${healthState.bg} ${healthState.color} border-0`}>
                 {healthState.label}
               </Badge>
             </div>
             <div className="text-3xl font-bold mb-1">{result.category_ratio.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              Ticket medio: €{result.average_check_per_plate.toFixed(2)} · Precio medio: €{result.average_menu_price.toFixed(2)} · Ideal: 0.90–1.00
+              Avg check: €{result.average_check_per_plate.toFixed(2)} · Avg price: €{result.average_menu_price.toFixed(2)} · Target: 0.90–1.00
             </p>
           </CardContent>
         </Card>
@@ -122,7 +122,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
       {/* Top Actions */}
       {topActions.length > 0 && (
         <div className="flex flex-wrap gap-2 px-1">
-          <span className="text-xs font-medium text-muted-foreground self-center">🎯 Acciones:</span>
+          <span className="text-xs font-medium text-muted-foreground self-center">🎯 Actions:</span>
           {topActions.map((action, i) => (
             <div key={i} className="flex items-start gap-2 bg-muted/50 rounded-lg px-3 py-1.5 text-xs max-w-sm">
               <span className="font-medium shrink-0">{action.title}</span>
@@ -136,8 +136,8 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
         <Info className="h-3.5 w-3.5" />
         <span>
-          Análisis OMNES — {result.item_count} productos · Banda: €{result.lower_band_min.toFixed(2)}–€{result.upper_band_max.toFixed(2)}
-          {result.promotion_zone === 'middle' && ' · Zona de promoción: banda media'}
+          OMNES Analysis — {result.item_count} products · Range: €{result.lower_band_min.toFixed(2)}–€{result.upper_band_max.toFixed(2)}
+          {result.promotion_zone === 'middle' && ' · Promotion zone: middle band'}
         </span>
       </div>
     </div>

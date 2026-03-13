@@ -26,9 +26,9 @@ interface DynamicPricingPanelProps {
 const PRICING_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pricing_suggestions`;
 
 const PRIORITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  high: { bg: 'bg-red-500/10', text: 'text-red-600', label: 'Alta' },
-  medium: { bg: 'bg-amber-500/10', text: 'text-amber-600', label: 'Media' },
-  low: { bg: 'bg-blue-500/10', text: 'text-blue-600', label: 'Baja' },
+  high: { bg: 'bg-red-500/10', text: 'text-red-600', label: 'High' },
+  medium: { bg: 'bg-amber-500/10', text: 'text-amber-600', label: 'Medium' },
+  low: { bg: 'bg-blue-500/10', text: 'text-blue-600', label: 'Low' },
 };
 
 export function DynamicPricingPanel({ items, stats, locationName }: DynamicPricingPanelProps) {
@@ -74,7 +74,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         current_price: Math.round(currentPrice * 100) / 100,
         suggested_price: Math.round(suggestedPrice * 100) / 100,
         change_pct: pctChange,
-        reason: `Pop ${item.popularity_pct.toFixed(1)}%, GP €${item.unit_gross_profit.toFixed(2)}. Alta demanda, puede absorber subida.`,
+        reason: `Pop ${item.popularity_pct.toFixed(1)}%, GP €${item.unit_gross_profit.toFixed(2)}. High demand, can absorb price increase.`,
         estimated_impact_eur: monthlyImpact,
         priority: monthlyImpact > 300 ? 'high' : monthlyImpact > 100 ? 'medium' : 'low',
       });
@@ -92,7 +92,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         current_price: Math.round(currentPrice * 100) / 100,
         suggested_price: Math.round(suggestedPrice * 100) / 100,
         change_pct: pctChange,
-        reason: `GP alto (€${item.unit_gross_profit.toFixed(2)}) pero pop baja (${item.popularity_pct.toFixed(1)}%). Reducir para ganar volumen.`,
+        reason: `High GP (€${item.unit_gross_profit.toFixed(2)}) but low pop (${item.popularity_pct.toFixed(1)}%). Lower price to gain volume.`,
         estimated_impact_eur: monthlyImpact > 0 ? monthlyImpact : 50,
         priority: 'medium',
       });
@@ -109,7 +109,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         current_price: Math.round(currentPrice * 100) / 100,
         suggested_price: Math.round(suggestedPrice * 100) / 100,
         change_pct: pctChange,
-        reason: `Estrella: popular y rentable. Microajuste seguro sin perder volumen.`,
+        reason: `Star: popular and profitable. Safe micro-adjustment without losing volume.`,
         estimated_impact_eur: monthlyImpact,
         priority: monthlyImpact > 100 ? 'medium' : 'low',
       });
@@ -122,7 +122,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         current_price: Math.round(item.selling_price_ex_vat * 100) / 100,
         suggested_price: 0,
         change_pct: -100,
-        reason: `Pop ${item.popularity_pct.toFixed(1)}%, GP €${item.unit_gross_profit.toFixed(2)}. Evaluar eliminar o reinventar.`,
+        reason: `Pop ${item.popularity_pct.toFixed(1)}%, GP €${item.unit_gross_profit.toFixed(2)}. Consider removing or reinventing.`,
         estimated_impact_eur: Math.round(Math.abs(item.total_gross_profit) * 0.5),
         priority: 'low',
       });
@@ -200,7 +200,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
       setSuggestions(localSuggestions);
       setHasGenerated(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al generar sugerencias');
+      setError(e instanceof Error ? e.message : 'Error generating suggestions');
     } finally {
       setIsLoading(false);
     }
@@ -230,7 +230,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
             ) : (
               <Sparkles className="h-4 w-4 mr-1.5" />
             )}
-            {hasGenerated ? 'Recalcular' : 'Analizar precios'}
+            {hasGenerated ? 'Recalculate' : 'Analyze prices'}
           </Button>
         </div>
       </CardHeader>
@@ -239,7 +239,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         {/* Initial state */}
         {!hasGenerated && !isLoading && !error && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            Analiza tu menú con IA para obtener recomendaciones de pricing basadas en la clasificación Kasavana-Smith canónica.
+            Analyze your menu with AI to get pricing recommendations based on canonical Kasavana-Smith classification.
           </p>
         )}
 
@@ -247,7 +247,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         {isLoading && (
           <div className="flex items-center gap-3 py-6 justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
-            <span className="text-sm text-muted-foreground">Analizando {items.length} productos...</span>
+            <span className="text-sm text-muted-foreground">Analyzing {items.length} products...</span>
           </div>
         )}
 
@@ -258,7 +258,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
             <div>
               <p className="text-sm text-destructive">{error}</p>
               <Button variant="link" size="sm" className="px-0 h-auto text-xs" onClick={generateSuggestions}>
-                Reintentar
+                Retry
               </Button>
             </div>
           </div>
@@ -269,7 +269,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
           <div className="space-y-4">
             {/* Total impact header */}
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <span className="text-sm font-medium">Impacto mensual estimado</span>
+              <span className="text-sm font-medium">Estimated monthly impact</span>
               <span className="text-lg font-bold text-emerald-600">
                 +€{totalImpact.toLocaleString('es-ES')}
               </span>
@@ -314,7 +314,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
                           {isIncrease ? '+' : ''}{suggestion.change_pct.toFixed(1)}%
                         </span>
                         <span className="text-muted-foreground ml-1">
-                          (+€{suggestion.estimated_impact_eur}/mes)
+                          (+€{suggestion.estimated_impact_eur}/mo)
                         </span>
                       </div>
                     </div>
@@ -324,8 +324,8 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
             </div>
 
             <p className="text-xs text-muted-foreground text-center pt-2">
-              Sugerencias basadas en clasificación Kasavana-Smith canónica y elasticidad estimada.
-              Aplica cambios en tu POS.
+              Suggestions based on canonical Kasavana-Smith classification and estimated elasticity.
+              Apply changes in your POS.
             </p>
           </div>
         )}
@@ -333,7 +333,7 @@ export function DynamicPricingPanel({ items, stats, locationName }: DynamicPrici
         {/* No suggestions */}
         {hasGenerated && suggestions.length === 0 && !error && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            No hay recomendaciones de pricing para los datos actuales.
+            No pricing recommendations for current data.
           </p>
         )}
       </CardContent>

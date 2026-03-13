@@ -76,43 +76,43 @@ export const CLASSIFICATION_ACTIONS: Record<Classification, {
   description: string;
 }> = {
   star: {
-    title: 'Estrellas',
+    title: 'Stars',
     emoji: '⭐',
-    description: 'Populares y rentables — proteger y mantener visibles',
+    description: 'Popular and profitable — protect and keep visible',
     actions: [
-      'Mantener consistencia en preparación',
-      'Mantener visibilidad en carta',
-      'Promover como best sellers',
+      'Maintain consistency in preparation',
+      'Keep visible on the menu',
+      'Promote as best sellers',
     ],
   },
   plow_horse: {
-    title: 'Caballos de batalla',
+    title: 'Plow Horses',
     emoji: '🐴',
-    description: 'Venden mucho pero dejan poco margen',
+    description: 'High volume but low margin',
     actions: [
-      'Revisar coste de receta',
-      'Controlar porciones',
-      'Considerar subida de precio cuidadosa',
+      'Review recipe cost',
+      'Control portions',
+      'Consider careful price increase',
     ],
   },
   puzzle: {
-    title: 'Joyas ocultas',
+    title: 'Puzzles',
     emoji: '💎',
-    description: 'Muy rentables pero venden poco',
+    description: 'Highly profitable but low volume',
     actions: [
-      'Mejorar ubicación / nombre en la carta',
-      'Promover más activamente',
-      'Revisar precio con cuidado',
+      'Improve placement / name on the menu',
+      'Promote more actively',
+      'Review pricing carefully',
     ],
   },
   dog: {
-    title: 'A revisar',
+    title: 'Dogs',
     emoji: '🔍',
-    description: 'Ni venden ni dejan margen suficiente',
+    description: 'Low volume and low margin',
     actions: [
-      'Rediseñar el plato',
-      'Reemplazar por alternativa',
-      'Retirar si no tiene justificación estratégica',
+      'Redesign the dish',
+      'Replace with an alternative',
+      'Remove if no strategic justification',
     ],
   },
 };

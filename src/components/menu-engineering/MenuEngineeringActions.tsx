@@ -53,10 +53,10 @@ const ACTION_CONFIGS: ActionConfig[] = [
     description: CLASSIFICATION_ACTIONS.star.description,
     actions: [
       {
-        label: 'Mantener y proteger',
+        label: 'Maintain and protect',
         type: 'maintain_protect',
         impactFn: () => 0,
-        impactLabel: 'Sin impacto directo',
+        impactLabel: 'No direct impact',
       },
     ],
   },
@@ -70,16 +70,16 @@ const ACTION_CONFIGS: ActionConfig[] = [
     description: CLASSIFICATION_ACTIONS.plow_horse.description,
     actions: [
       {
-        label: 'Simular mejora de margen',
+        label: 'Simulate margin improvement',
         type: 'simulate_margin_improvement',
         impactFn: (items) => items.reduce((acc, i) => acc + i.units_sold * i.unit_gross_profit * 0.10, 0),
-        impactLabel: 'Impacto +10% margen',
+        impactLabel: 'Impact +10% margin',
       },
       {
-        label: 'Revisar recetas',
+        label: 'Review recipes',
         type: 'review_recipes',
         impactFn: (items) => items.reduce((acc, i) => acc + i.unit_food_cost * i.units_sold * 0.05, 0),
-        impactLabel: 'Ahorro -5% coste',
+        impactLabel: 'Savings -5% cost',
       },
     ],
   },
@@ -93,10 +93,10 @@ const ACTION_CONFIGS: ActionConfig[] = [
     description: CLASSIFICATION_ACTIONS.puzzle.description,
     actions: [
       {
-        label: 'Mejorar visibilidad',
+        label: 'Improve visibility',
         type: 'improve_visibility',
         impactFn: (items) => items.reduce((acc, i) => acc + i.unit_gross_profit * Math.round(i.units_sold * 0.15), 0),
-        impactLabel: 'Potencial +15% uds',
+        impactLabel: 'Potential +15% units',
       },
     ],
   },
@@ -110,10 +110,10 @@ const ACTION_CONFIGS: ActionConfig[] = [
     description: CLASSIFICATION_ACTIONS.dog.description,
     actions: [
       {
-        label: 'Evaluar retirar o rediseñar',
+        label: 'Evaluate removal or redesign',
         type: 'evaluate_remove_redesign',
         impactFn: (items) => items.filter((i) => i.total_gross_profit < 0).reduce((acc, i) => acc + Math.abs(i.total_gross_profit), 0),
-        impactLabel: 'Pérdidas actuales',
+        impactLabel: 'Current losses',
       },
     ],
   },
@@ -158,12 +158,12 @@ export function MenuEngineeringActions({
         selectedAction.config.classification,
         impact > 0 ? impact : null
       );
-      toast.success('Plan guardado', {
-        description: 'Recuerda aplicar los cambios en tu POS.',
+      toast.success('Plan saved', {
+        description: 'Remember to apply changes in your POS.',
       });
       setModalOpen(false);
     } catch {
-      toast.error('Error al guardar');
+      toast.error('Error saving plan');
     } finally {
       setSaving(false);
     }
@@ -207,10 +207,10 @@ export function MenuEngineeringActions({
               <CardContent className="pt-0">
                 {topItems.length > 0 && (
                   <div className="mb-3">
-                    <p className="text-xs text-muted-foreground mb-1">Top productos:</p>
+                    <p className="text-xs text-muted-foreground mb-1">Top products:</p>
                     <p className="text-sm truncate">
                       {topItems.map((i) => i.name).join(', ')}
-                      {items.length > 5 && ` +${items.length - 5} más`}
+                      {items.length > 5 && ` +${items.length - 5} more`}
                     </p>
                   </div>
                 )}
@@ -253,16 +253,16 @@ export function MenuEngineeringActions({
               )}
             </DialogTitle>
             <DialogDescription>
-              Esto es un <strong>plan de acción</strong>. No realizará cambios automáticos en tu
-              sistema de ventas.
+              This is an <strong>action plan</strong>. It will not make automatic changes to your
+              sales system.
             </DialogDescription>
           </DialogHeader>
 
           {selectedAction && (
             <div className="py-4">
               <p className="text-sm text-muted-foreground mb-2">
-                Se aplicará a <strong>{selectedAction.items.length}</strong> productos del cuadrante{' '}
-                <strong>{selectedAction.config.title}</strong>.
+                Will apply to <strong>{selectedAction.items.length}</strong> products in the{' '}
+                <strong>{selectedAction.config.title}</strong> quadrant.
               </p>
               {selectedAction.action.impactFn(selectedAction.items) > 0 && (
                 <div className="bg-muted p-3 rounded-lg">
@@ -275,14 +275,14 @@ export function MenuEngineeringActions({
                 </div>
               )}
               <p className="text-xs text-muted-foreground mt-4">
-                Para aplicar cambios reales, edita precios o recetas en tu POS.
+                To apply real changes, edit prices or recipes in your POS.
               </p>
             </div>
           )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
-              Cancelar
+              Cancel
             </Button>
             <Button onClick={handleConfirm} disabled={saving}>
               {saving ? (
@@ -290,7 +290,7 @@ export function MenuEngineeringActions({
               ) : (
                 <Check className="h-4 w-4 mr-2" />
               )}
-              Guardar plan
+              Save plan
             </Button>
           </DialogFooter>
         </DialogContent>

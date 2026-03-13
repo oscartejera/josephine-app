@@ -47,18 +47,18 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       <p className="font-semibold mb-1">{item.name}</p>
       <p className="text-xs text-muted-foreground mb-2 italic">{item.classification_reason}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-        <span>Precio (sin IVA):</span>
+        <span>Price (ex VAT):</span>
         <span className="text-foreground font-medium">{formatCurrency(item.selling_price_ex_vat)}</span>
-        <span>Coste materia:</span>
+        <span>Food cost:</span>
         <span className="text-foreground">{formatCurrency(item.unit_food_cost)}</span>
-        <span>GP unitario:</span>
+        <span>Unit GP:</span>
         <span className="text-foreground font-medium">{formatCurrency(item.unit_gross_profit)}</span>
-        <span>Unidades:</span>
+        <span>Units sold:</span>
         <span className="text-foreground">{item.units_sold.toLocaleString()}</span>
-        <span>Popularidad:</span>
+        <span>Popularity:</span>
         <span className="text-foreground">{item.popularity_pct.toFixed(1)}%</span>
-        <span>Fuente coste:</span>
-        <span className="text-foreground">{item.cost_source === 'recipe_actual' ? '✓ Receta' : item.cost_source === 'fallback_average' ? '~ Media cat.' : '? Sin dato'}</span>
+        <span>Cost source:</span>
+        <span className="text-foreground">{item.cost_source === 'recipe_actual' ? '✓ Recipe' : item.cost_source === 'fallback_average' ? '~ Cat. avg' : '? No data'}</span>
       </div>
     </div>
   );
@@ -95,7 +95,7 @@ export function MenuEngineeringMatrix({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Popularidad vs Rentabilidad</CardTitle>
+          <CardTitle>Popularity vs Profitability</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[350px] w-full" />
@@ -108,11 +108,11 @@ export function MenuEngineeringMatrix({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Popularidad vs Rentabilidad</CardTitle>
+          <CardTitle>Popularity vs Profitability</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[350px] flex items-center justify-center text-muted-foreground">
-            No hay datos para mostrar
+            No data to display
           </div>
         </CardContent>
       </Card>
@@ -123,7 +123,7 @@ export function MenuEngineeringMatrix({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base">Popularidad vs Rentabilidad</CardTitle>
+          <CardTitle className="text-base">Popularity vs Profitability</CardTitle>
           <div className="flex items-center gap-4">
             {/* Legend */}
             <div className="flex gap-3 text-xs">
@@ -132,28 +132,28 @@ export function MenuEngineeringMatrix({
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.star }}
                 />
-                <span>Estrellas</span>
+                <span>Stars</span>
               </div>
               <div className="flex items-center gap-1">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.plow_horse }}
                 />
-                <span>Caballos</span>
+                <span>Plow Horses</span>
               </div>
               <div className="flex items-center gap-1">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.puzzle }}
                 />
-                <span>Joyas</span>
+                <span>Puzzles</span>
               </div>
               <div className="flex items-center gap-1">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.dog }}
                 />
-                <span>Revisar</span>
+                <span>Dogs</span>
               </div>
             </div>
           </div>
@@ -161,8 +161,8 @@ export function MenuEngineeringMatrix({
         {/* Threshold info bar */}
         {stats && (
           <p className="text-xs text-muted-foreground mt-1">
-            Umbral popularidad: {stats.popThreshold.toFixed(1)}% · Umbral rentabilidad: {formatCurrency(stats.marginThreshold)}
-            {!stats.isCanonical && ' · ⚠ Vista general (selecciona categoría para análisis canónico)'}
+            Popularity threshold: {stats.popThreshold.toFixed(1)}% · Profitability threshold: {formatCurrency(stats.marginThreshold)}
+            {!stats.isCanonical && ' · ⚠ Overview (select a category for canonical analysis)'}
           </p>
         )}
       </CardHeader>
@@ -174,11 +174,11 @@ export function MenuEngineeringMatrix({
               <XAxis
                 type="number"
                 dataKey="x"
-                name="Popularidad"
+                name="Popularity"
                 domain={[0, xMax]}
                 tickFormatter={(v) => `${v.toFixed(0)}%`}
                 label={{
-                  value: 'Popularidad (% unidades)',
+                  value: 'Popularity (% units)',
                   position: 'bottom',
                   offset: 20,
                   style: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
@@ -188,11 +188,11 @@ export function MenuEngineeringMatrix({
               <YAxis
                 type="number"
                 dataKey="y"
-                name="GP unitario"
+                name="Unit GP"
                 domain={[0, yMax]}
                 tickFormatter={(v) => `€${v}`}
                 label={{
-                  value: 'GP unitario (€)',
+                  value: 'Unit GP (€)',
                   angle: -90,
                   position: 'left',
                   offset: 15,
