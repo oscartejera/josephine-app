@@ -61,7 +61,6 @@ const insightsChildren = [
   { icon: Star, i18nKey: 'nav.reviews', path: '/insights/reviews', key: 'reviews' as const },
   { icon: Package, i18nKey: 'nav.inventory', path: '/insights/inventory', key: 'inventory' as const },
   { icon: Trash2, i18nKey: 'nav.waste', path: '/insights/waste', key: 'waste' as const },
-  { icon: ChefHat, i18nKey: 'nav.menuEngineering', path: '/insights/menu-engineering', key: 'menu_engineering' as const },
   { icon: Wallet, i18nKey: 'nav.cashManagement', path: '/insights/cash-management', key: 'settings' as const },
   { icon: PiggyBank, i18nKey: 'nav.budgets', path: '/insights/budgets', key: 'settings' as const },
 ];
@@ -136,7 +135,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const isCostRoute = location.pathname.startsWith('/inventory-setup') ||
     location.pathname === '/operations/stock-audit' ||
     location.pathname === '/operations/waste-entry' ||
-    location.pathname === '/procurement';
+    location.pathname === '/procurement' ||
+    location.pathname.startsWith('/insights/menu-engineering');
   const [costExpanded, setCostExpanded] = useState(isCostRoute);
 
   useEffect(() => {
@@ -396,7 +396,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-1 mt-1">
-                {/* Materias Primas */}
+                {/* 1. Materias Primas — Setup: raw ingredients first */}
                 <Button
                   variant={location.pathname === '/inventory-setup/items' ? "secondary" : "ghost"}
                   className={cn(
@@ -409,7 +409,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   <span>{t('nav.inventorySetup')}</span>
                 </Button>
 
-                {/* Escandallos */}
+                {/* 2. Escandallos — Setup: recipes using ingredients */}
                 {canViewSidebarItem('menu_engineering') && (
                   <Button
                     variant={location.pathname.startsWith('/inventory-setup/recipes') ? "secondary" : "ghost"}
@@ -424,7 +424,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   </Button>
                 )}
 
-                {/* Carta del Menú */}
+                {/* 3. Carta del Menú — Setup: link recipes to POS menu */}
                 {canViewSidebarItem('menu_engineering') && (
                   <Button
                     variant={location.pathname === '/inventory-setup/menu-items' ? "secondary" : "ghost"}
@@ -439,7 +439,22 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   </Button>
                 )}
 
-                {/* Auditoría de Stock */}
+                {/* 4. Compras — Operations: buy ingredients */}
+                {canViewSidebarItem('procurement') && (
+                  <Button
+                    variant={location.pathname === '/procurement' ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start gap-3 h-10 pl-9",
+                      location.pathname === '/procurement' && "bg-accent text-accent-foreground font-medium"
+                    )}
+                    onClick={() => navigate('/procurement')}
+                  >
+                    <ShoppingCart className="h-4 w-4 shrink-0" />
+                    <span>{t('nav.purchases')}</span>
+                  </Button>
+                )}
+
+                {/* 5. Recuento de Stock — Operations: physical count */}
                 <Button
                   variant={location.pathname === '/operations/stock-audit' ? "secondary" : "ghost"}
                   className={cn(
@@ -452,7 +467,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   <span>{t('inventory.stockCount')}</span>
                 </Button>
 
-                {/* Registro de Mermas */}
+                {/* 6. Registro de Mermas — Operations: log waste */}
                 <Button
                   variant={location.pathname === '/operations/waste-entry' ? "secondary" : "ghost"}
                   className={cn(
@@ -465,18 +480,18 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   <span>{t('nav.waste')}</span>
                 </Button>
 
-                {/* Compras */}
-                {canViewSidebarItem('procurement') && (
+                {/* 7. Rentabilidad del Menú — Analysis: final result */}
+                {canViewSidebarItem('menu_engineering') && (
                   <Button
-                    variant={location.pathname === '/procurement' ? "secondary" : "ghost"}
+                    variant={location.pathname.startsWith('/insights/menu-engineering') ? "secondary" : "ghost"}
                     className={cn(
                       "w-full justify-start gap-3 h-10 pl-9",
-                      location.pathname === '/procurement' && "bg-accent text-accent-foreground font-medium"
+                      location.pathname.startsWith('/insights/menu-engineering') && "bg-accent text-accent-foreground font-medium"
                     )}
-                    onClick={() => navigate('/procurement')}
+                    onClick={() => navigate('/insights/menu-engineering')}
                   >
-                    <ShoppingCart className="h-4 w-4 shrink-0" />
-                    <span>{t('nav.purchases')}</span>
+                    <ChefHat className="h-4 w-4 shrink-0" />
+                    <span>{t('nav.menuEngineering')}</span>
                   </Button>
                 )}
               </CollapsibleContent>
