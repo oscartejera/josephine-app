@@ -225,16 +225,18 @@ COGS (Cost of Goods Sold) aggregates from **three sources** using `GREATEST()` t
 3. **For Edge Functions**: Deploy to Supabase first
 4. **For frontend changes**: Wait for Vercel preview or use `npm run dev` locally
 5. **Open the browser** using the browser tool and navigate to `https://josephine-ai.com`
-6. **Log in** as Demo Owner and navigate to the affected page(s)
+6. **Log in** by clicking the **"Probar Josephine"** button on the login page — this auto-fills demo credentials. **NEVER type credentials manually.**
 7. **Take a screenshot** and verify the change works in the UI
 8. **If it doesn't work** → go back to step 1, fix the issue, and re-verify
 9. **If it works** → proceed to commit and push
 10. **Keep iterating** until the UI confirms the change is correct — never commit broken code
 
+> ⚠️ **LOGIN RULE**: When opening Josephine in the browser to verify, ALWAYS click the **"Probar Josephine"** button. This demo-login button exists on the landing/login page and auto-fills+submits the demo owner credentials. Do NOT manually type `owner@demo.com` / `Demo1234!`.
+
 #### On every code change:
 1. **Write code** directly on `main` (no feature branches, no PRs)
 2. **Verify in browser** (Step 0 above)
-3. **Commit immediately** with a descriptive message: `git add -A && git commit -m "..."` 
+3. **Commit immediately** with a descriptive message: `git add -A && git commit -m "..."`
 4. **Push to main**: `git push origin main`
 5. Vercel deploys automatically on push to `main`
 
@@ -256,7 +258,8 @@ COGS (Cost of Goods Sold) aggregates from **three sources** using `GREATEST()` t
 3. **If replacing a function**: `DROP FUNCTION IF EXISTS name(params)` BEFORE `CREATE OR REPLACE`
 4. **Verify in browser** (Step 0 above) — confirm the data appears correctly in the UI
 5. **Commit and push** the migration file to main (same as code changes)
-6. **Refresh materialized views** if the change affects aggregated data:
+6. **Always run `npx supabase db push`** to sync migration state with remote
+7. **Refresh materialized views** if the change affects aggregated data:
    ```sql
    REFRESH MATERIALIZED VIEW product_sales_daily_unified_mv;
    REFRESH MATERIALIZED VIEW mart_sales_category_daily_mv;
@@ -267,17 +270,23 @@ COGS (Cost of Goods Sold) aggregates from **three sources** using `GREATEST()` t
 2. **Verify in browser** (Step 0 above) — confirm the function works from the UI
 3. **Commit and push** the code to main
 
+#### ⚠️ End-of-Session Pipeline (MANDATORY)
+> **After EVERY work session where code or DB was changed, run the `/commit-push` workflow.**
+> This includes: TypeScript check → tests → `git add -A && git commit && git push origin main` → `npx supabase db push` (if SQL changed) → browser verification.
+> **No exceptions. No "I'll do it next time."**
+
 #### Summary — The golden rule:
-- 🔍 **VERIFY FIRST** → open browser, check UI, take screenshot
+- 🔍 **VERIFY FIRST** → open browser, click "Probar Josephine", check UI, take screenshot
 - 🔁 **ITERATE** → if broken, fix and re-verify until it works
 - ✅ **THEN COMMIT** → only after visual confirmation
 - ✅ Code change → verify in browser → commit + push to main
-- ✅ DB migration → apply SQL + register version → verify in browser → commit + push
+- ✅ DB migration → apply SQL → `npx supabase db push` → verify in browser → commit + push
 - ✅ Edge function → deploy → verify in browser → commit + push
 - ❌ Never commit without browser verification
 - ❌ Never use feature branches
 - ❌ Never create PRs
 - ❌ Never leave changes without pushing
+- ❌ Never skip `npx supabase db push` when there are SQL changes
 
 ### Environment Setup (automated via session-start hook)
 

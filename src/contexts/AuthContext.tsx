@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import posthog from 'posthog-js';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { SessionTimeoutDialog } from '@/components/auth/SessionTimeoutDialog';
 
 interface Profile {
   id: string;
@@ -242,7 +244,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hasActionPermission
     }}>
       {children}
+      <SessionTimeoutWarning session={session} onLogout={signOut} />
     </AuthContext.Provider>
+  );
+}
+
+function SessionTimeoutWarning({
+  session,
+  onLogout,
+}: {
+  session: Session | null;
+  onLogout: () => Promise<void>;
+}) {
+  const isLoggedIn = !!session;
+  const { showWarning, minutesRemaining, resetTimer } = useIdleTimeout(isLoggedIn);
+
+  const handleStayLoggedIn = useCallback(async () => {
+    // Refresh the Supabase session to extend it
+    await supabase.auth.refreshSession();
+    resetTimer();
+  }, [resetTimer]);
+
+  return (
+    <SessionTimeoutDialog
+      open={showWarning}
+      minutesRemaining={minutesRemaining}
+      onStayLoggedIn={handleStayLoggedIn}
+      onLogout={onLogout}
+    />
   );
 }
 
