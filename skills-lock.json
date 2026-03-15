@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "analytics-tracking": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "6ea7d8bb78cacaec93f61c953807e35446304f5c6374fda4b190c76c4281fd4d"
+    },
+    "billing-automation": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "26eac9933943cce48c7a1e2e192a8417fe21070b18d5ba557dc59d152fbee6f5"
+    },
+    "gdpr-data-handling": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "38f10132530bbf4397577ce7c5327ab93d98554f5341b6b89e60bc8569f25b83"
+    },
+    "i18n-localization": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "d55345d9d66f345fb5f03d4c45901ca77be23d97800e8f91878f3f9eebbaafdd"
+    },
+    "nextjs-app-router-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "04c1df896cc2c9ef824d618b95d21686c5b8e24e5cb32b3d6fe9d97d4b661536"
+    },
+    "playwright-skill": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "a88631790e6a0ef2a3fbe70528a2a599357efa63b89729997d79fce08e5dabc3"
+    },
+    "plotly": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "4fdf1d51109325319d58807609509b26e932a42acb4612c72cfbe40bb8316013"
+    },
+    "react-patterns": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "computedHash": "fbccae8efbe606590beef3193287a106b75cca814738a4a1f7658d7786f73861"
+    },
+    "sql-optimization-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "7d20c24c6f52da9697d3e1c7d2f25cc560150de643d044a5f45e300bb78884fd"
+    },
+    "stripe-integration": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "bc5d0d76d6640f534371039426425284176955816a026fa1e0142c9bd160de50"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "ee8377c523a911be41c31037b477805773ca5ab5ade181e44ca7dd3cd8df6692"
+    },
+    "zod-validation-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "81c1f7192f8710cc7d2392c724bcb52863d07b552e85ac07aa66f85ea86c7c69"
+    }
+  }
+}

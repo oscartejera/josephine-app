@@ -26,8 +26,6 @@ import {
   QrCode,
   Plug2,
   UserCircle,
-  MapPin,
-  Check,
   ClipboardList,
   ClipboardCheck,
   CreditCard,
@@ -35,20 +33,15 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LocationSwitcher } from '@/components/layout/LocationSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
-import { useApp } from '@/contexts/AppContext';
 import { usePermissions, SIDEBAR_PERMISSIONS } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { DataSourceBadge } from '@/components/layout/DataSourceBadge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 
 const INSIGHTS_EXPANDED_KEY = 'sidebar.insights.expanded';
 import { NotificationBell } from './NotificationBell';
@@ -90,11 +83,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const { t } = useTranslation();
   const { signOut, profile } = useAuth();
   const { canViewSidebarItem, primaryRole, isOwner } = usePermissions();
-  const { accessibleLocations, selectedLocationId, setSelectedLocationId, canShowAllLocations } = useApp();
-
-  const selectedLocationLabel = selectedLocationId === 'all'
-    ? t('common.allLocations')
-    : accessibleLocations.find(l => l.id === selectedLocationId)?.name || t('common.allLocations');
 
   // Filter nav items by permission
   const visibleNavItems = useMemo(() => {
@@ -205,56 +193,11 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-1 px-2">
           {/* Global Location Selector */}
-          {!collapsed ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 h-10 mb-2 border-border/60 bg-muted/30 hover:bg-muted/50"
-                >
-                  <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="flex-1 text-left text-sm truncate">{selectedLocationLabel}</span>
-                  <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {canShowAllLocations && (
-                  <DropdownMenuItem onClick={() => setSelectedLocationId('all')}>
-                    <span className="flex-1">All locations</span>
-                    {selectedLocationId === 'all' && <Check className="h-4 w-4 text-primary" />}
-                  </DropdownMenuItem>
-                )}
-                {accessibleLocations.map(loc => (
-                  <DropdownMenuItem key={loc.id} onClick={() => setSelectedLocationId(loc.id)}>
-                    <span className="flex-1">{loc.name}</span>
-                    {selectedLocationId === loc.id && <Check className="h-4 w-4 text-primary" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-full h-10 mb-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="start" className="w-56">
-                {canShowAllLocations && (
-                  <DropdownMenuItem onClick={() => setSelectedLocationId('all')}>
-                    <span className="flex-1">All locations</span>
-                    {selectedLocationId === 'all' && <Check className="h-4 w-4 text-primary" />}
-                  </DropdownMenuItem>
-                )}
-                {accessibleLocations.map(loc => (
-                  <DropdownMenuItem key={loc.id} onClick={() => setSelectedLocationId(loc.id)}>
-                    <span className="flex-1">{loc.name}</span>
-                    {selectedLocationId === loc.id && <Check className="h-4 w-4 text-primary" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <LocationSwitcher
+            collapsed={collapsed}
+            align="start"
+            side={collapsed ? 'right' : undefined}
+          />
 
           {/* Dashboard - only show if has permission */}
           {canViewSidebarItem('dashboard') && (

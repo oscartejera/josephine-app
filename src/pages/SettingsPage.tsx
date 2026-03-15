@@ -14,6 +14,8 @@ import { DataSourceSettings } from '@/components/settings/DataSourceSettings';
 import { ObjectivesTab } from '@/components/settings/ObjectivesTab';
 import { PaymentMethodsTab } from '@/components/settings/PaymentMethodsTab';
 import { ExportTab } from '@/components/settings/ExportTab';
+import { DataPrivacySection } from '@/pages/Settings/DataPrivacySection';
+import { BillingTab } from '@/components/settings/BillingTab';
 import { TeamManagersTab } from '@/components/settings/TeamManagersTab';
 
 export default function SettingsPage() {
@@ -39,6 +41,8 @@ export default function SettingsPage() {
           <TabsTrigger value="transactions">{t('common.transactions')}</TabsTrigger>
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
           <TabsTrigger value="datasource">{t('settings.dataSource', 'Fuente de Datos')}</TabsTrigger>
+          <TabsTrigger value="privacy">Privacidad</TabsTrigger>
+          <TabsTrigger value="billing">Facturación</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -85,6 +89,14 @@ export default function SettingsPage() {
 
         <TabsContent value="datasource">
           <DataSourceSettings />
+        </TabsContent>
+
+        <TabsContent value="privacy">
+          <DataPrivacySection />
+        </TabsContent>
+
+        <TabsContent value="billing">
+          <BillingTab />
         </TabsContent>
 
       </Tabs>

@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,6 +11,9 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteErrorBoundary } from "@/components/ui/RouteErrorBoundary";
 import { InsightErrorBoundary } from "@/components/InsightErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { GlobalErrorBoundary } from "@/components/errors/GlobalErrorBoundary";
+import { CookieConsentBanner } from "@/components/gdpr/CookieConsentBanner";
+import { markRouteStart, markRouteEnd } from "@/utils/performanceMonitor";
 
 // Auth pages loaded eagerly (first screen the user sees)
 import Login from "@/pages/Login";
@@ -66,6 +69,7 @@ const WorkforceTimesheet = lazy(() => import("@/pages/WorkforceTimesheet"));
 const WorkforceOnboarding = lazy(() => import("@/pages/WorkforceOnboarding"));
 const KioskMode = lazy(() => import("@/pages/KioskMode"));
 const OnboardingWizardV2 = lazy(() => import("@/pages/OnboardingWizardV2"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 
 // Team (Employee Portal) — lazy loaded
 const TeamHome = lazy(() => import("@/pages/team/TeamHome"));
@@ -177,6 +181,31 @@ function PageLoader() {
   );
 }
 
+function SectionLoader({ section }: { section: string }) {
+  return (
+    <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <span className="text-sm text-muted-foreground">Cargando {section}…</span>
+    </div>
+  );
+}
+
+/** Tracks route changes and logs timing in dev mode */
+function RoutePerformanceTracker() {
+  const location = useLocation();
+  const prevPath = useRef(location.pathname);
+
+  useEffect(() => {
+    if (prevPath.current !== location.pathname) {
+      markRouteEnd(location.pathname);
+      prevPath.current = location.pathname;
+    }
+    markRouteStart();
+  }, [location.pathname]);
+
+  return null;
+}
+
 function AppRoutes() {
   const { user, loading } = useAuth();
 
@@ -189,127 +218,139 @@ function AppRoutes() {
   }
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/login" element={user ? <RoleRedirect /> : <Login />} />
-        <Route path="/signup" element={user ? <RoleRedirect /> : <Signup />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/" element={user ? <RoleRedirect /> : <Navigate to="/login" replace />} />
+    <>
+      <RoutePerformanceTracker />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/login" element={user ? <RoleRedirect /> : <Login />} />
+          <Route path="/signup" element={user ? <RoleRedirect /> : <Signup />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/" element={user ? <RoleRedirect /> : <Navigate to="/login" replace />} />
 
-        <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+            <Route path="/dashboard" element={<Suspense fallback={<SectionLoader section="Dashboard" />}><Dashboard /></Suspense>} />
 
-          {/* Insights routes — wrapped with error boundaries */}
-          <Route path="/insights" element={<Insights />} />
-          <Route path="/insights/sales" element={<InsightErrorBoundary pageName="Ventas"><Sales /></InsightErrorBoundary>} />
-          <Route path="/insights/labour" element={<InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary>} />
-          <Route path="/insights/labour/:locationId" element={<InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary>} />
-          <Route path="/insights/instant-pl" element={<InsightErrorBoundary pageName="P&L Instantáneo"><InstantPL /></InsightErrorBoundary>} />
-          <Route path="/insights/reviews" element={<Reviews />} />
-          <Route path="/insights/reviews/all" element={<ReviewsAll />} />
-          <Route path="/insights/inventory" element={<InsightErrorBoundary pageName="Inventario"><Inventory /></InsightErrorBoundary>} />
-          <Route path="/insights/inventory/location/:locationId" element={<InsightErrorBoundary pageName="Inventario"><InventoryLocation /></InsightErrorBoundary>} />
-          <Route path="/insights/inventory/location/:locationId/reconciliation" element={<InventoryLocationReconciliation />} />
-          <Route path="/insights/inventory/reconciliation" element={<InventoryReconciliation />} />
-          <Route path="/insights/waste" element={<Waste />} />
-          <Route path="/insights/menu-engineering" element={<InsightErrorBoundary pageName="Rentabilidad del Menú"><MenuEngineering /></InsightErrorBoundary>} />
-          <Route path="/insights/cash-management" element={<InsightErrorBoundary pageName="Caja"><CashManagement /></InsightErrorBoundary>} />
-          <Route path="/insights/budgets" element={<InsightErrorBoundary pageName="Presupuestos"><Budgets /></InsightErrorBoundary>} />
+            {/* Insights routes — per-section Suspense boundary */}
+            <Route path="/insights" element={<Suspense fallback={<SectionLoader section="Insights" />}><Insights /></Suspense>} />
+            <Route path="/insights/sales" element={<Suspense fallback={<SectionLoader section="Ventas" />}><InsightErrorBoundary pageName="Ventas"><Sales /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/labour" element={<Suspense fallback={<SectionLoader section="Personal" />}><InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/labour/:locationId" element={<Suspense fallback={<SectionLoader section="Personal" />}><InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/instant-pl" element={<Suspense fallback={<SectionLoader section="P&L" />}><InsightErrorBoundary pageName="P&L Instantáneo"><InstantPL /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/reviews" element={<Suspense fallback={<SectionLoader section="Reseñas" />}><Reviews /></Suspense>} />
+            <Route path="/insights/reviews/all" element={<Suspense fallback={<SectionLoader section="Reseñas" />}><ReviewsAll /></Suspense>} />
+            <Route path="/insights/inventory" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InsightErrorBoundary pageName="Inventario"><Inventory /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/inventory/location/:locationId" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InsightErrorBoundary pageName="Inventario"><InventoryLocation /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/inventory/location/:locationId/reconciliation" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InventoryLocationReconciliation /></Suspense>} />
+            <Route path="/insights/inventory/reconciliation" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InventoryReconciliation /></Suspense>} />
+            <Route path="/insights/waste" element={<Suspense fallback={<SectionLoader section="Merma" />}><Waste /></Suspense>} />
+            <Route path="/insights/menu-engineering" element={<Suspense fallback={<SectionLoader section="Menú" />}><InsightErrorBoundary pageName="Rentabilidad del Menú"><MenuEngineering /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/cash-management" element={<Suspense fallback={<SectionLoader section="Caja" />}><InsightErrorBoundary pageName="Caja"><CashManagement /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/budgets" element={<Suspense fallback={<SectionLoader section="Presupuestos" />}><InsightErrorBoundary pageName="Presupuestos"><Budgets /></InsightErrorBoundary></Suspense>} />
 
-          {/* Workforce & Operations — all wrapped with error boundaries */}
-          <Route path="/workforce/team" element={<InsightErrorBoundary pageName="Equipo"><WorkforceTeam /></InsightErrorBoundary>} />
-          <Route path="/workforce/timesheet" element={<InsightErrorBoundary pageName="Fichajes"><WorkforceTimesheet /></InsightErrorBoundary>} />
-          <Route path="/workforce/onboarding" element={<InsightErrorBoundary pageName="Onboarding"><WorkforceOnboarding /></InsightErrorBoundary>} />
-          <Route path="/scheduling" element={<InsightErrorBoundary pageName="Turnos"><Scheduling /></InsightErrorBoundary>} />
-          <Route path="/availability" element={<InsightErrorBoundary pageName="Disponibilidad"><Availability /></InsightErrorBoundary>} />
-          <Route path="/procurement" element={<InsightErrorBoundary pageName="Compras"><Procurement /></InsightErrorBoundary>} />
-          <Route path="/procurement/cart" element={<InsightErrorBoundary pageName="Carrito"><ProcurementCart /></InsightErrorBoundary>} />
-          <Route path="/procurement/orders" element={<InsightErrorBoundary pageName="Pedidos"><ProcurementOrders /></InsightErrorBoundary>} />
-          <Route path="/payroll/*" element={<InsightErrorBoundary pageName="Nóminas"><Payroll /></InsightErrorBoundary>} />
+            {/* Workforce & Operations — per-section Suspense boundary */}
+            <Route path="/workforce/team" element={<Suspense fallback={<SectionLoader section="Equipo" />}><InsightErrorBoundary pageName="Equipo"><WorkforceTeam /></InsightErrorBoundary></Suspense>} />
+            <Route path="/workforce/timesheet" element={<Suspense fallback={<SectionLoader section="Fichajes" />}><InsightErrorBoundary pageName="Fichajes"><WorkforceTimesheet /></InsightErrorBoundary></Suspense>} />
+            <Route path="/workforce/onboarding" element={<Suspense fallback={<SectionLoader section="Onboarding" />}><InsightErrorBoundary pageName="Onboarding"><WorkforceOnboarding /></InsightErrorBoundary></Suspense>} />
+            <Route path="/scheduling" element={<Suspense fallback={<SectionLoader section="Turnos" />}><InsightErrorBoundary pageName="Turnos"><Scheduling /></InsightErrorBoundary></Suspense>} />
+            <Route path="/availability" element={<Suspense fallback={<SectionLoader section="Disponibilidad" />}><InsightErrorBoundary pageName="Disponibilidad"><Availability /></InsightErrorBoundary></Suspense>} />
+            <Route path="/procurement" element={<Suspense fallback={<SectionLoader section="Compras" />}><InsightErrorBoundary pageName="Compras"><Procurement /></InsightErrorBoundary></Suspense>} />
+            <Route path="/procurement/cart" element={<Suspense fallback={<SectionLoader section="Carrito" />}><InsightErrorBoundary pageName="Carrito"><ProcurementCart /></InsightErrorBoundary></Suspense>} />
+            <Route path="/procurement/orders" element={<Suspense fallback={<SectionLoader section="Pedidos" />}><InsightErrorBoundary pageName="Pedidos"><ProcurementOrders /></InsightErrorBoundary></Suspense>} />
+            <Route path="/payroll/*" element={<Suspense fallback={<SectionLoader section="Nóminas" />}><InsightErrorBoundary pageName="Nóminas"><Payroll /></InsightErrorBoundary></Suspense>} />
 
-          {/* Integrations — Owner-only */}
-          <Route path="/integrations" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Integraciones"><Integrations /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/integrations/square" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Square"><SquareIntegration /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/integrations/square/callback" element={<SquareOAuthCallback />} />
-          <Route path="/integrations/lightspeed" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Lightspeed"><LightspeedIntegration /></InsightErrorBoundary></OwnerOnlyRoute>} />
+            {/* Integrations — Owner-only, per-section Suspense */}
+            <Route path="/integrations" element={<Suspense fallback={<SectionLoader section="Integraciones" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Integraciones"><Integrations /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/integrations/square" element={<Suspense fallback={<SectionLoader section="Square" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Square"><SquareIntegration /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/integrations/square/callback" element={<Suspense fallback={<SectionLoader section="Square" />}><SquareOAuthCallback /></Suspense>} />
+            <Route path="/integrations/lightspeed" element={<Suspense fallback={<SectionLoader section="Lightspeed" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Lightspeed"><LightspeedIntegration /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
 
-          {/* Inventory Setup */}
-          <Route path="/inventory-setup/items" element={<InsightErrorBoundary pageName="Artículos"><InventoryItems /></InsightErrorBoundary>} />
-          <Route path="/inventory-setup/recipes" element={<InsightErrorBoundary pageName="Recetas"><RecipesPage /></InsightErrorBoundary>} />
-          <Route path="/inventory-setup/recipes/:id" element={<InsightErrorBoundary pageName="Receta"><RecipeDetailPage /></InsightErrorBoundary>} />
-          <Route path="/inventory-setup/menu-items" element={<InsightErrorBoundary pageName="Carta del Menú"><MenuItemsPage /></InsightErrorBoundary>} />
+            {/* Inventory Setup — per-section Suspense */}
+            <Route path="/inventory-setup/items" element={<Suspense fallback={<SectionLoader section="Artículos" />}><InsightErrorBoundary pageName="Artículos"><InventoryItems /></InsightErrorBoundary></Suspense>} />
+            <Route path="/inventory-setup/recipes" element={<Suspense fallback={<SectionLoader section="Recetas" />}><InsightErrorBoundary pageName="Recetas"><RecipesPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/inventory-setup/recipes/:id" element={<Suspense fallback={<SectionLoader section="Receta" />}><InsightErrorBoundary pageName="Receta"><RecipeDetailPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/inventory-setup/menu-items" element={<Suspense fallback={<SectionLoader section="Menú" />}><InsightErrorBoundary pageName="Carta del Menú"><MenuItemsPage /></InsightErrorBoundary></Suspense>} />
 
-          {/* Operations */}
-          <Route path="/operations/waste-entry" element={<InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary>} />
-          <Route path="/operations/stock-audit" element={<InsightErrorBoundary pageName="Auditoría Stock"><StockAuditPage /></InsightErrorBoundary>} />
-          <Route path="/operations/prep-list" element={<InsightErrorBoundary pageName="Prep List"><PrepListPage /></InsightErrorBoundary>} />
+            {/* Operations — per-section Suspense */}
+            <Route path="/operations/waste-entry" element={<Suspense fallback={<SectionLoader section="Merma" />}><InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/operations/stock-audit" element={<Suspense fallback={<SectionLoader section="Stock" />}><InsightErrorBoundary pageName="Auditoría Stock"><StockAuditPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/operations/prep-list" element={<Suspense fallback={<SectionLoader section="Prep List" />}><InsightErrorBoundary pageName="Prep List"><PrepListPage /></InsightErrorBoundary></Suspense>} />
 
-          {/* Settings — Owner-only routes */}
-          <Route path="/settings" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Ajustes"><SettingsPage /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/admin/tools" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Admin Tools"><AdminTools /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/admin/data-health" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Data Health"><DataHealth /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/debug/data-coherence" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/settings/import" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/settings/billing" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/settings/onboarding" element={<OwnerOnlyRoute><InsightErrorBoundary pageName="Onboarding"><OnboardingChecklist /></InsightErrorBoundary></OwnerOnlyRoute>} />
-          <Route path="/pricing" element={<Navigate to="/settings/billing" replace />} />
-        </Route>
+            {/* Settings — Owner-only, per-section Suspense */}
+            <Route path="/settings" element={<Suspense fallback={<SectionLoader section="Ajustes" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Ajustes"><SettingsPage /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/admin/tools" element={<Suspense fallback={<SectionLoader section="Admin" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Admin Tools"><AdminTools /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/admin/data-health" element={<Suspense fallback={<SectionLoader section="Data Health" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Data Health"><DataHealth /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/debug/data-coherence" element={<Suspense fallback={<SectionLoader section="Debug" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/settings/import" element={<Suspense fallback={<SectionLoader section="Importar" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/settings/billing" element={<Suspense fallback={<SectionLoader section="Facturación" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/settings/onboarding" element={<Suspense fallback={<SectionLoader section="Onboarding" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Onboarding"><OnboardingChecklist /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/pricing" element={<Navigate to="/settings/billing" replace />} />
+          </Route>
 
-        {/* Team (Employee Portal) */}
-        <Route element={<ProtectedRoute><AppProvider><RouteErrorBoundary><TeamLayout /></RouteErrorBoundary></AppProvider></ProtectedRoute>}>
-          <Route path="/team" element={<TeamHome />} />
-          <Route path="/team/schedule" element={<TeamSchedule />} />
-          <Route path="/team/clock" element={<TeamClock />} />
-          <Route path="/team/pay" element={<TeamPay />} />
-          <Route path="/team/directory" element={<TeamDirectory />} />
-          <Route path="/team/news" element={<TeamNews />} />
-        </Route>
+          {/* Team (Employee Portal) — per-section Suspense */}
+          <Route element={<ProtectedRoute><AppProvider><RouteErrorBoundary><TeamLayout /></RouteErrorBoundary></AppProvider></ProtectedRoute>}>
+            <Route path="/team" element={<Suspense fallback={<SectionLoader section="Portal" />}><TeamHome /></Suspense>} />
+            <Route path="/team/schedule" element={<Suspense fallback={<SectionLoader section="Horarios" />}><TeamSchedule /></Suspense>} />
+            <Route path="/team/clock" element={<Suspense fallback={<SectionLoader section="Fichaje" />}><TeamClock /></Suspense>} />
+            <Route path="/team/pay" element={<Suspense fallback={<SectionLoader section="Nómina" />}><TeamPay /></Suspense>} />
+            <Route path="/team/directory" element={<Suspense fallback={<SectionLoader section="Directorio" />}><TeamDirectory /></Suspense>} />
+            <Route path="/team/news" element={<Suspense fallback={<SectionLoader section="Noticias" />}><TeamNews /></Suspense>} />
+          </Route>
 
-        {/* Kiosk Mode — fullscreen, no sidebar, auth-protected */}
-        <Route
-          path="/kiosk/:locationId"
-          element={
-            <ProtectedRoute>
-              <AppProvider>
-                <KioskMode />
-              </AppProvider>
-            </ProtectedRoute>
-          }
-        />
+          {/* Kiosk Mode — fullscreen, no sidebar, auth-protected */}
+          <Route
+            path="/kiosk/:locationId"
+            element={
+              <ProtectedRoute>
+                <AppProvider>
+                  <Suspense fallback={<SectionLoader section="Kiosk" />}>
+                    <KioskMode />
+                  </Suspense>
+                </AppProvider>
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Onboarding Wizard v2 — fullscreen, no sidebar, auth-protected */}
-        <Route
-          path="/onboarding"
-          element={
-            <ProtectedRoute>
-              <AppProvider>
-                <OnboardingWizardV2 />
-              </AppProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+          {/* Onboarding Wizard v2 — fullscreen, no sidebar, auth-protected */}
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <AppProvider>
+                  <Suspense fallback={<SectionLoader section="Onboarding" />}>
+                    <OnboardingWizardV2 />
+                  </Suspense>
+                </AppProvider>
+              </ProtectedRoute>
+            }
+          />
+          {/* Legal (public) */}
+          <Route path="/legal/privacy" element={<Suspense fallback={<SectionLoader section="Privacidad" />}><PrivacyPolicy /></Suspense>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <DemoModeProvider>
-            <BrowserRouter>
-              <OfflineBanner />
-              <AppRoutes />
-              <Toaster />
-              <Sonner />
-            </BrowserRouter>
-          </DemoModeProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <DemoModeProvider>
+              <BrowserRouter>
+                <OfflineBanner />
+                <AppRoutes />
+                <CookieConsentBanner />
+                <Toaster />
+                <Sonner />
+              </BrowserRouter>
+            </DemoModeProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { useDemoMode } from './DemoModeContext';
@@ -9,9 +9,13 @@ export interface Location {
   city: string | null;
 }
 
-interface Group {
+export interface Group {
   id: string;
   name: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  subscription_status: string;
 }
 
 type DateRange = 'today' | '7d' | '30d' | 'custom';
@@ -48,7 +52,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [group, setGroup] = useState<Group | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('josephine_selected_location') || null;
+    } catch {
+      return null;
+    }
+  });
   const [dateRange, setDateRange] = useState<DateRange>('today');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,15 +97,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [profile?.group_id]);
 
-  // Set default location when accessible locations change
+  // Set default location when accessible locations change, and validate persisted selection
   useEffect(() => {
-    if (accessibleLocations.length > 0 && !selectedLocationId) {
-      // Set default location
-      if (canShowAllLocations) {
-        setSelectedLocationIdInternal('all');
-      } else {
-        setSelectedLocationIdInternal(accessibleLocations[0].id);
+    if (accessibleLocations.length === 0) return;
+
+    // Validate persisted selection against current accessible locations
+    if (selectedLocationId && selectedLocationId !== 'all') {
+      const isValid = accessibleLocations.some(l => l.id === selectedLocationId);
+      if (!isValid) {
+        // Persisted location no longer accessible — reset
+        const fallback = canShowAllLocations ? 'all' : accessibleLocations[0].id;
+        setSelectedLocationIdInternal(fallback);
+        try { localStorage.setItem('josephine_selected_location', fallback); } catch {}
+        return;
       }
+    }
+
+    // No selection yet — set default
+    if (!selectedLocationId) {
+      const defaultId = canShowAllLocations ? 'all' : accessibleLocations[0].id;
+      setSelectedLocationIdInternal(defaultId);
+      try { localStorage.setItem('josephine_selected_location', defaultId); } catch {}
     }
   }, [accessibleLocations, selectedLocationId, canShowAllLocations]);
 
@@ -103,7 +125,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const [groupResult, locationsResult] = await Promise.all([
-        supabase.from('groups').select('id, name').eq('id', groupId).single(),
+        supabase.from('groups').select('id, name, plan, stripe_customer_id, stripe_subscription_id, subscription_status').eq('id', groupId).single(),
         supabase.from('locations').select('id, name, city').eq('group_id', groupId).eq('active', true)
       ]);
 
@@ -121,10 +143,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Wrapped setter - in DEMO_MODE, all locations are valid
-  const setSelectedLocationId = (id: string | null) => {
+  const setSelectedLocationId = useCallback((id: string | null) => {
     // In demo mode, all selections are valid
     if (isDemoMode) {
       setSelectedLocationIdInternal(id);
+      try { if (id) localStorage.setItem('josephine_selected_location', id); } catch {}
       return;
     }
 
@@ -143,7 +166,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     setSelectedLocationIdInternal(id);
-  };
+    try { if (id) localStorage.setItem('josephine_selected_location', id); } catch {}
+  }, [isDemoMode, canShowAllLocations, isOwner, hasGlobalScope, accessibleLocationIds]);
 
   const selectedLocation = locations.find(l => l.id === selectedLocationId) || null;
 

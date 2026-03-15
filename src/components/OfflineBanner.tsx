@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { WifiOff, Wifi } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 /**
  * OfflineBanner — shows a subtle warning when the browser loses network connectivity.
+ * Auto-reconnects by invalidating all React-Query caches when connectivity resumes.
  * Auto-dismisses 3 seconds after reconnection with a success message.
  */
 export function OfflineBanner() {
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [showReconnected, setShowReconnected] = useState(false);
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         const handleOffline = () => {
@@ -18,6 +21,10 @@ export function OfflineBanner() {
         const handleOnline = () => {
             setIsOffline(false);
             setShowReconnected(true);
+
+            // Auto-reconnect: invalidate all queries so stale data gets refetched
+            queryClient.invalidateQueries();
+
             // Auto-dismiss reconnected message after 3s
             setTimeout(() => setShowReconnected(false), 3000);
         };
@@ -29,7 +36,7 @@ export function OfflineBanner() {
             window.removeEventListener('offline', handleOffline);
             window.removeEventListener('online', handleOnline);
         };
-    }, []);
+    }, [queryClient]);
 
     if (!isOffline && !showReconnected) return null;
 

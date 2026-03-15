@@ -56,7 +56,7 @@ serve(async (req) => {
                         stripe_subscription_id: subscription.id,
                         stripe_customer_id: subscription.customer as string,
                         subscription_status: status,
-                    } as any)
+                    })
                     .eq('id', groupId);
 
                 console.log(`Updated group ${groupId} to plan=${plan}, status=${status}`);
@@ -73,7 +73,7 @@ serve(async (req) => {
                     .update({
                         plan: 'free',
                         subscription_status: 'canceled',
-                    } as any)
+                    })
                     .eq('id', groupId);
 
                 console.log(`Downgraded group ${groupId} to free`);

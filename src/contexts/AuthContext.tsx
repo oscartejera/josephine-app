@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import posthog from 'posthog-js';
 
 interface Profile {
   id: string;
@@ -124,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             fetchUserData(session.user.id),
           ]);
           setProfile(profileData);
+          posthog.identify(session.user.id, { email: session.user.email });
         } else {
           setProfile(null);
           setRoles([]);
@@ -173,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    posthog.reset();
     await supabase.auth.signOut();
   };
 

@@ -12,6 +12,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 
 const STRIPE_PK = import.meta.env.VITE_STRIPE_PK || 'pk_live_51SsXizC46WZ7nQ8jQMm0oKqU4Dg3MXzakAT1jE6vqqHn3aJ8Zsa1OrKpoDvgay7ew4LDc73yVZhBVFiYcKSNJhxi00rb2FXHT7';
 
@@ -90,7 +91,7 @@ export default function Pricing() {
     const [loading, setLoading] = useState<string | null>(null);
 
     // Current plan — check from org metadata
-    const currentPlan = (group as any)?.plan || 'free';
+    const currentPlan = group?.plan || 'free';
 
     const handleUpgrade = async (plan: Plan) => {
         if (!plan.stripePriceId) {
@@ -99,6 +100,12 @@ export default function Pricing() {
         }
 
         setLoading(plan.id);
+        posthog.capture('plan_upgrade_clicked', {
+            plan_id: plan.id,
+            plan_name: plan.name,
+            price: plan.price,
+            current_plan: currentPlan,
+        });
         try {
             // Call edge function to create Stripe Checkout session
             const { data, error } = await supabase.functions.invoke('create_checkout_session', {
@@ -123,6 +130,10 @@ export default function Pricing() {
             }
 
             if (data?.url) {
+                posthog.capture('checkout_started', {
+                    plan_id: plan.id,
+                    plan_name: plan.name,
+                });
                 window.location.href = data.url;
             } else {
                 console.error('No checkout URL received:', data);
