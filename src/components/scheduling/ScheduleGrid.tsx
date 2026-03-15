@@ -511,14 +511,55 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
             const weather = getWeatherIcon(day.dateStr);
             const WeatherIcon = weather.Icon;
 
+            // Staffing level indicator for day column
+            const kpi = data.dailyKPIs[i];
+            const forecastHours = kpi?.forecastLaborHours || 0;
+            const scheduledHours = kpi?.shiftsHours || 0;
+            const hasScheduled = scheduledHours > 0 && forecastHours > 0;
+            const staffDeviation = hasScheduled
+              ? ((scheduledHours - forecastHours) / forecastHours) * 100
+              : 0;
+            const absStaffDeviation = Math.abs(staffDeviation);
+
+            // Color coding: 🟢 ±10%, 🟡 10-25%, 🔴 >25%
+            let staffBorderColor = '';
+            let staffBadge = '';
+            let staffBadgeColor = '';
+            if (hasScheduled) {
+              if (absStaffDeviation > 25) {
+                staffBorderColor = 'border-l-2 border-l-red-400';
+                staffBadge = staffDeviation > 0 ? 'Over' : 'Under';
+                staffBadgeColor = 'bg-red-100 text-red-700';
+              } else if (absStaffDeviation > 10) {
+                staffBorderColor = 'border-l-2 border-l-amber-400';
+                staffBadge = staffDeviation > 0 ? 'Over' : 'Under';
+                staffBadgeColor = 'bg-amber-100 text-amber-700';
+              } else {
+                staffBorderColor = 'border-l-2 border-l-emerald-400';
+                staffBadge = 'OK';
+                staffBadgeColor = 'bg-emerald-100 text-emerald-700';
+              }
+            }
+
             return (
-              <div key={day.dateStr} className="p-3 border-r border-border last:border-r-0">
+              <div key={day.dateStr} className={cn(
+                "p-3 border-r border-border last:border-r-0",
+                staffBorderColor
+              )}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{day.dayName}</span>
                     <span className="text-sm text-muted-foreground">{day.dayNum}</span>
                   </div>
                   <div className="flex items-center gap-1">
+                    {hasScheduled && staffBadge && (
+                      <span className={cn(
+                        "text-[9px] font-semibold px-1 py-0.5 rounded",
+                        staffBadgeColor
+                      )}>
+                        {staffBadge}
+                      </span>
+                    )}
                     <WeatherIcon className="h-4 w-4 text-muted-foreground" />
                     {weather.temp !== null && (
                       <span className="text-[10px] text-muted-foreground">{weather.temp}°</span>

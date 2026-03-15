@@ -12,6 +12,8 @@ import {
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
+import { useWasteAlerts } from '@/hooks/useWasteAlerts';
+import { WasteAlertBanner } from '@/components/waste/WasteAlertBanner';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -49,6 +51,8 @@ export default function Waste() {
     items,
   } = useWasteData(dateRange, dateMode, selectedLocations);
 
+  const alerts = useWasteAlerts({ metrics, byReason, topItems: items });
+
   const handleWasteLogged = () => {
     // Trigger refresh by updating key
     setRefreshKey(k => k + 1);
@@ -79,6 +83,9 @@ export default function Waste() {
           />
         </div>
       </div>
+
+      {/* Waste Alerts */}
+      <WasteAlertBanner alerts={alerts} />
 
       {/* KPI Cards Row */}
       <WasteKPICards

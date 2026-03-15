@@ -21,6 +21,7 @@ import {
   SwapRequestsPanel,
   PopularShifts,
   ScheduleSettingsSheet,
+  DemandOverlay,
 } from '@/components/scheduling';
 import {
   Select,
@@ -147,6 +148,7 @@ export default function Scheduling() {
   const actualPublishSchedule = schedulingData.publishSchedule;
   const actualMoveShift = schedulingData.moveShift;
   const actualAddShift = schedulingData.addShift;
+  const actualAutoFillShifts = schedulingData.autoFillShifts;
   const actualSwapRequests = schedulingData.swapRequests;
   const actualPendingSwapRequests = schedulingData.pendingSwapRequests;
   const actualCreateSwapRequest = schedulingData.createSwapRequest;
@@ -301,6 +303,14 @@ export default function Scheduling() {
         onWeekChange={handleWeekChange}
         onGoToToday={handleGoToToday}
         onCreateSchedule={handleCreateSchedule}
+        onAutoFill={async () => {
+          const count = await actualAutoFillShifts();
+          if (count && count > 0) {
+            toast.success(`Auto-fill: ${count} turno${count > 1 ? 's' : ''} añadido${count > 1 ? 's' : ''}`);
+          } else {
+            toast.info('Auto-fill: No se encontraron huecos para rellenar');
+          }
+        }}
         onPublish={() => setShowPublishModal(true)}
         onOpenSettings={() => setShowSettings(true)}
         hasSchedule={actualHasSchedule}
@@ -416,19 +426,26 @@ export default function Scheduling() {
       )}
 
       {actualHasSchedule && actualData && (
-        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <div className="min-w-[800px]">
-            <ScheduleGrid
-              data={actualData}
-              viewMode={viewMode}
-              positions={positions}
-              weatherData={weatherData}
-              onMoveShift={actualMoveShift}
-              onAddShift={actualAddShift}
-              onInitiateSwap={handleInitiateSwap}
-            />
+        <>
+          {/* Demand forecast overlay above the grid */}
+          <DemandOverlay
+            locationId={resolvedLocationId ?? undefined}
+            weekStart={weekStart}
+          />
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="min-w-[800px]">
+              <ScheduleGrid
+                data={actualData}
+                viewMode={viewMode}
+                positions={positions}
+                weatherData={weatherData}
+                onMoveShift={actualMoveShift}
+                onAddShift={actualAddShift}
+                onInitiateSwap={handleInitiateSwap}
+              />
+            </div>
           </div>
-        </div>
+        </>
       )}
       {!actualHasSchedule && (
         <EmptyScheduleState weekStart={weekStart} dailyKPIs={placeholderKPIs} />

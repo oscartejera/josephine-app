@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus } from 'lucide-react';
+import { Plus, Camera, X as XIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
@@ -47,6 +47,7 @@ const formSchema = z.object({
   quantity: z.coerce.number().positive('Quantity must be positive'),
   reason: z.string().min(1, 'Please select a reason'),
   waste_value: z.coerce.number().min(0, 'Value must be 0 or more'),
+  photo_url: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -69,6 +70,9 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -113,6 +117,24 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
     }
   }, [selectedItemId, quantity, inventoryItems, form]);
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'Photo too large', description: 'Max 5 MB.' });
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
 
@@ -128,8 +150,27 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
         });
         setOpen(false);
         form.reset();
+        removePhoto();
         onSuccess?.();
         return;
+      }
+
+      // Upload photo if provided
+      let uploadedPhotoUrl: string | undefined;
+      if (photoFile) {
+        const ext = photoFile.name.split('.').pop() || 'jpg';
+        const path = `waste/${values.location_id}/${Date.now()}.${ext}`;
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage.from('waste-photos').upload(path, photoFile);
+        if (uploadError) {
+          console.error('Photo upload failed:', uploadError);
+          // Continue without photo — non-blocking
+        } else if (uploadData) {
+          const { data: urlData } = supabase.storage
+            .from('waste-photos')
+            .getPublicUrl(uploadData.path);
+          uploadedPhotoUrl = urlData?.publicUrl;
+        }
       }
 
       const { error } = await supabase.from('waste_events').insert({
@@ -138,6 +179,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
         quantity: values.quantity,
         reason: values.reason,
         waste_value: values.waste_value,
+        ...(uploadedPhotoUrl ? { photo_url: uploadedPhotoUrl } : {}),
       });
 
       if (error) throw error;
@@ -149,6 +191,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
 
       setOpen(false);
       form.reset();
+      removePhoto();
       onSuccess?.();
     } catch (error) {
       console.error('Error logging waste:', error);
@@ -286,6 +329,48 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
                 </FormItem>
               )}
             />
+
+
+            {/* Photo upload */}
+            <div className="space-y-2">
+              <FormLabel>Photo (optional)</FormLabel>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
+              {photoPreview ? (
+                <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                  <img
+                    src={photoPreview}
+                    alt="Waste photo"
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6"
+                    onClick={removePhoto}
+                  >
+                    <XIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="h-4 w-4" />
+                  Take / Upload Photo
+                </Button>
+              )}
+            </div>
 
             {/* Value */}
             <FormField

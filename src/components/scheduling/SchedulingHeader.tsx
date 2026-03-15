@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Loader2, Clock, TrendingUp, DollarSign, AlertTriangle, Lightbulb } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Loader2, Clock, TrendingUp, DollarSign, AlertTriangle, Lightbulb, Wand2 } from 'lucide-react';
 import { format, addWeeks, subWeeks, endOfWeek, getWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,8 +31,10 @@ interface SchedulingHeaderProps {
   onCreateSchedule: () => void;
   onPublish: () => void;
   onOpenSettings?: () => void;
+  onAutoFill?: () => void;
   hasSchedule: boolean;
   isCreating: boolean;
+  isAutoFilling?: boolean;
   projectedSales?: number;
   projectedColPercent?: number;
   scheduledColPercent?: number;
@@ -60,6 +62,7 @@ export function SchedulingHeader({
   onPublish,
   hasSchedule,
   isCreating,
+  isAutoFilling,
   projectedSales,
   projectedColPercent,
   scheduledColPercent,
@@ -71,6 +74,7 @@ export function SchedulingHeader({
   splh,
   oplh,
   onOpenSettings,
+  onAutoFill,
   efficiency,
 }: SchedulingHeaderProps) {
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -200,6 +204,27 @@ export function SchedulingHeader({
               </>
             )}
           </Button>
+
+          {hasSchedule && onAutoFill && (
+            <Button
+              onClick={onAutoFill}
+              disabled={isAutoFilling}
+              variant="outline"
+              className="gap-2"
+            >
+              {isAutoFilling ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Filling...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4" />
+                  Auto-fill
+                </>
+              )}
+            </Button>
+          )}
 
           <Button variant="outline">
             Templates

@@ -893,6 +893,108 @@ export function useSchedulingSupabase(
     return Array.from(roleSet);
   }, [employees]);
 
+  // Auto-fill shifts for under-staffed days
+  const autoFillShifts = useCallback(async () => {
+    if (!data || !locationId) return 0;
+
+    const allShifts = data.shifts;
+    const allEmployees = data.employees;
+    let newShiftsCount = 0;
+
+    // For each day in the week, check if under-staffed
+    for (let d = 0; d < 7; d++) {
+      const dayDate = addDays(weekStart, d);
+      const dayISO = format(dayDate, 'yyyy-MM-dd');
+      const dayOfWeek = dayDate.getDay();
+
+      // Get existing shifts for this day
+      const dayShifts = allShifts.filter(s => s.date === dayISO);
+      const scheduledHours = dayShifts.reduce((sum, s) => sum + s.hours, 0);
+
+      // Get forecast hours for this day
+      const kpi = data.dailyKPIs[d];
+      const forecastHours = kpi?.forecastLaborHours || 0;
+
+      // Only fill if under-staffed (scheduled < 90% of forecast)
+      if (forecastHours <= 0 || scheduledHours >= forecastHours * 0.9) continue;
+
+      const gapHours = forecastHours - scheduledHours;
+
+      // Find employees WITHOUT shifts on this day
+      const busyEmployeeIds = new Set(dayShifts.map(s => s.employeeId));
+      const availableEmps = allEmployees.filter(e => !busyEmployeeIds.has(e.id));
+
+
+      if (availableEmps.length === 0) continue;
+
+      // Sort available employees by cost (cheapest first)
+      const sortedEmps = [...availableEmps].sort(
+        (a, b) => (a.hourlyRate || 12) - (b.hourlyRate || 12)
+      );
+
+      // Calculate weekly hours used
+      const weeklyHoursUsed = new Map<string, number>();
+      for (const e of allEmployees) {
+        const empShifts = allShifts.filter(s => s.employeeId === e.id);
+        const total = empShifts.reduce((sum, s) => sum + s.hours, 0);
+        weeklyHoursUsed.set(e.id, total);
+      }
+
+      // Simple fill: assign available employees to cover the gap
+      let hoursToFill = gapHours;
+      for (const emp of sortedEmps) {
+        if (hoursToFill <= 0) break;
+
+        const weeklyUsed = weeklyHoursUsed.get(emp.id) || 0;
+        if (weeklyUsed >= 40) continue; // Max weekly hours
+
+        // Determine shift length (6-8 hrs, capped at remaining needed)
+        const shiftHours = Math.min(Math.max(6, hoursToFill), 8, 40 - weeklyUsed);
+        if (shiftHours < 3) continue; // Skip if less than 3h
+
+        // Determine shift time based on gap analysis
+        // If evening coverage is lower, assign evening; otherwise morning
+        const eveningShifts = dayShifts.filter(s => {
+          const h = parseInt(s.startTime.split(':')[0]);
+          return h >= 17;
+        });
+        const morningShifts = dayShifts.filter(s => {
+          const h = parseInt(s.startTime.split(':')[0]);
+          return h < 17;
+        });
+
+        let startTime: string, endTime: string;
+        if (eveningShifts.length <= morningShifts.length) {
+          // Need more evening coverage
+          startTime = '17:00';
+          const endH = 17 + shiftHours;
+          endTime = `${String(endH % 24).padStart(2, '0')}:00`;
+        } else {
+          // Need more morning coverage
+          startTime = '09:00';
+          const endH = 9 + shiftHours;
+          endTime = `${String(endH % 24).padStart(2, '0')}:00`;
+        }
+
+        addShift({
+          employeeId: emp.id,
+          date: dayISO,
+          startTime,
+          endTime,
+          hours: shiftHours,
+          role: emp.position || 'Team Member',
+          plannedCost: shiftHours * (emp.hourlyRate || 12),
+        });
+
+        weeklyHoursUsed.set(emp.id, weeklyUsed + shiftHours);
+        hoursToFill -= shiftHours;
+        newShiftsCount++;
+      }
+    }
+
+    return newShiftsCount;
+  }, [data, locationId, weekStart, addShift]);
+
   return {
     data,
     isLoading,
@@ -911,8 +1013,10 @@ export function useSchedulingSupabase(
     publishSchedule,
     moveShift,
     addShift,
+    autoFillShifts,
     createSwapRequest,
     approveSwapRequest,
     rejectSwapRequest,
   };
 }
+
