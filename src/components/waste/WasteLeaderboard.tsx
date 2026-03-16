@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { WasteLeaderboard as WasteLeaderboardType } from '@/hooks/useWasteData';
+import { useTranslation } from 'react-i18next';
 
 interface WasteLeaderboardProps {
   leaderboard: WasteLeaderboardType[];
@@ -19,6 +20,7 @@ interface WasteLeaderboardProps {
 }
 
 export function WasteLeaderboard({
+  const { t } = useTranslation();
   leaderboard,
   isLoading = false,
   currency = '€'

@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 interface Location {
   id: string;
@@ -24,6 +25,7 @@ interface MenuEngineeringHeaderProps {
 }
 
 export function MenuEngineeringHeader({
+  const { t } = useTranslation();
   selectedLocationId,
   onLocationChange,
   dateRange,

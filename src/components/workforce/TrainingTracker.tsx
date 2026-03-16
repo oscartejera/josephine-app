@@ -16,6 +16,7 @@ import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { GraduationCap, Plus, AlertTriangle, CheckCircle2, Clock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface TrainingRecord {
     id: string;
@@ -50,7 +51,8 @@ function getStatusBadge(status: string, expiryDate: string | null) {
     return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />Válido</Badge>;
 }
 
-export function TrainingTracker({ locationId }: { locationId: string | null }) {
+export function TrainingTracker({
+  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
     const { group } = useApp();
     const [records, setRecords] = useState<TrainingRecord[]>([]);
     const [employees, setEmployees] = useState<Employee[]>([]);
@@ -230,7 +232,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                             <SelectTrigger><SelectValue placeholder="Empleado" /></SelectTrigger>
                             <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>)}</SelectContent>
                         </Select>
-                        <Input placeholder="Nombre del certificado" value={certName} onChange={e => setCertName(e.target.value)} />
+                        <Input placeholder={t("workforce.certificateName")} value={certName} onChange={e => setCertName(e.target.value)} />
                         <Select value={certType} onValueChange={setCertType}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>{CERT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>

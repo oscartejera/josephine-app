@@ -5,8 +5,10 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { BudgetKPICards, BudgetChart, BudgetLocationTable } from '@/components/budgets';
 import { useBudgetsData, type BudgetTab } from '@/hooks/useBudgetsData';
+import { useTranslation } from 'react-i18next';
 
 export default function Budgets() {
+  const { t } = useTranslation();
   const { hasPermission, loading: permLoading } = usePermissions();
 
   const initialDateRange = useMemo((): DateRangeValue => {

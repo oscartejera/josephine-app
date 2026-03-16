@@ -36,10 +36,12 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, MoreVertical, ArrowUpDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ITEMS_PER_PAGE = 50;
 
 export default function InventoryItems() {
+  const { t } = useTranslation();
   const { locations } = useApp();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

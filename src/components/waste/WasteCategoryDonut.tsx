@@ -25,6 +25,7 @@ import {
 } from 'recharts';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import type { WasteByCategory } from '@/hooks/useWasteData';
+import { useTranslation } from 'react-i18next';
 
 const CATEGORY_COLORS = [
   '#22c55e',  // Green - Frozen
@@ -42,6 +43,7 @@ interface WasteCategoryDonutProps {
 }
 
 export function WasteCategoryDonut({
+  const { t } = useTranslation();
   byCategory,
   isLoading = false,
   currency = '€'

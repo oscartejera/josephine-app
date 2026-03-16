@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 const TIER_CONFIG = {
   bronze: { icon: Medal, color: 'text-amber-700 bg-amber-100', label: 'Bronce' },
@@ -56,6 +57,7 @@ const REWARD_TYPES = [
 ];
 
 export function LoyaltyManager() {
+  const { t } = useTranslation();
   const {
     settings,
     members,
@@ -603,7 +605,7 @@ export function LoyaltyManager() {
               <Textarea
                 value={rewardForm.description}
                 onChange={(e) => setRewardForm((p) => ({ ...p, description: e.target.value }))}
-                placeholder="Detalles de la recompensa"
+                placeholder={t("settings.rewardDetails")}
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -700,7 +702,7 @@ export function LoyaltyManager() {
               <Input
                 value={pointsForm.description}
                 onChange={(e) => setPointsForm((p) => ({ ...p, description: e.target.value }))}
-                placeholder="Motivo del ajuste"
+                placeholder={t("settings.adjustmentReason")}
               />
             </div>
           </div>

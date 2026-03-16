@@ -1,8 +1,10 @@
 import { useDemoMode } from '@/contexts/DemoModeContext';
 import { Badge } from '@/components/ui/badge';
 import { FlaskConical } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function DemoModeBanner() {
+  const { t } = useTranslation();
   const { isDemoMode, demoLabel } = useDemoMode();
 
   if (!isDemoMode) return null;

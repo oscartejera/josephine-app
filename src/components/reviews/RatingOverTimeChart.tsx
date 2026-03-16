@@ -11,13 +11,15 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface RatingOverTimeChartProps {
   data: RatingOverTimePoint[];
   isLoading: boolean;
 }
 
-export function RatingOverTimeChart({ data, isLoading }: RatingOverTimeChartProps) {
+export function RatingOverTimeChart({
+  const { t } = useTranslation(); data, isLoading }: RatingOverTimeChartProps) {
   const chartData = data.map((point) => ({
     ...point,
     displayDate: format(parseISO(point.date), 'EEE dd'),

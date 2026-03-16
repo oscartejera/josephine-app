@@ -16,6 +16,7 @@ import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { BookOpen, Plus, AlertTriangle, CheckCircle2, Clock, ShieldAlert, Users, Package, Wrench, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface LogEntry {
     id: string;
@@ -44,7 +45,8 @@ const SEVERITIES = [
     { value: 'critical', label: 'Crítico', color: 'text-red-600 bg-red-50 border-red-200' },
 ];
 
-export function ManagerLogbook({ locationId }: { locationId: string | null }) {
+export function ManagerLogbook({
+  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
     const { group } = useApp();
     const { user } = useAuth();
     const [entries, setEntries] = useState<LogEntry[]>([]);

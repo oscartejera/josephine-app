@@ -15,6 +15,7 @@ import { format, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarDays, Plus, Trophy, Music, Landmark, Sun, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface CalendarEvent {
     id: string;
@@ -38,7 +39,8 @@ const EVENT_TYPES = [
     { value: 'custom', label: 'Custom', icon: CalendarDays, color: 'bg-gray-100 text-gray-700' },
 ];
 
-export function EventCalendarManager({ locationId }: { locationId: string | null }) {
+export function EventCalendarManager({
+  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
     const { group } = useApp();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -198,7 +200,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                 <DialogContent className="max-w-md">
                     <DialogHeader><DialogTitle>Nuevo Evento</DialogTitle></DialogHeader>
                     <div className="space-y-3 py-2">
-                        <Input placeholder="Nombre del evento" value={eventName} onChange={e => setEventName(e.target.value)} />
+                        <Input placeholder={t("settings.eventName")} value={eventName} onChange={e => setEventName(e.target.value)} />
                         <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
                         <Select value={eventType} onValueChange={setEventType}>
                             <SelectTrigger><SelectValue /></SelectTrigger>

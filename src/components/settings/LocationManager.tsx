@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Building2, Plus, Trash2, Edit2, MapPin, Clock, Loader2, Check, AlertTriangle, Copy, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { LocationWizard } from './LocationWizard';
+import { useTranslation } from 'react-i18next';
 
 interface LocationFormData {
   name: string;
@@ -62,6 +63,7 @@ const initialDuplicateOptions: DuplicateOptions = {
 };
 
 export function LocationManager() {
+  const { t } = useTranslation();
   const { locations, group } = useApp();
   const { profile } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);

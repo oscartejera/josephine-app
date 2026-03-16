@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import type { Supplier } from '@/hooks/useProcurementData';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ProcurementHeaderProps {
   suppliers: Supplier[];
@@ -24,6 +25,7 @@ interface ProcurementHeaderProps {
 }
 
 export function ProcurementHeader({
+  const { t } = useTranslation();
   suppliers,
   selectedSupplierId,
   onSupplierChange,

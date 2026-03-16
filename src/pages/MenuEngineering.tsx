@@ -20,8 +20,10 @@ import {
   PricingBandChart,
   PricingOmnesTable,
 } from '@/components/pricing-omnes';
+import { useTranslation } from 'react-i18next';
 
 export default function MenuEngineering() {
+  const { t } = useTranslation();
   const {
     items,
     stats,

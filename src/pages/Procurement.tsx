@@ -34,8 +34,10 @@ import { CoverageBannerDesktop } from '@/components/procurement/CoverageBannerDe
 import { OrderHistoryPanel } from '@/components/procurement/OrderHistoryPanel';
 import { AIRecommendPanel } from '@/components/procurement/AIRecommendPanel';
 import { ProcurementSettingsDialog } from '@/components/procurement/ProcurementSettingsDialog';
+import { useTranslation } from 'react-i18next';
 
 export default function Procurement() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('order');
 
   const {

@@ -18,6 +18,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface HourlyData {
   hour: string;
@@ -58,6 +59,7 @@ const VarianceIndicator = ({ value }: { value: number }) => {
 };
 
 export function HourlyDrillDownDrawer({
+  const { t } = useTranslation();
   open,
   onOpenChange,
   selectedDay,

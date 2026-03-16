@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const DISTRIBUTION_METHODS = [
     { value: 'hours_worked', label: 'Por horas trabajadas', description: 'Proporcional a las horas de cada persona' },
@@ -53,7 +54,8 @@ function formatCurrency(v: number) {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
 }
 
-export function TipDistributionConfig({ locationId, className }: TipDistributionConfigProps) {
+export function TipDistributionConfig({
+  const { t } = useTranslation(); locationId, className }: TipDistributionConfigProps) {
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

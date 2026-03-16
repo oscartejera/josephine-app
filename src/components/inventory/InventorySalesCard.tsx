@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
 
 interface InventorySalesCardProps {
   totalSales: number;
@@ -10,6 +11,7 @@ interface InventorySalesCardProps {
 }
 
 export function InventorySalesCard({
+  const { t } = useTranslation();
   totalSales,
   assignedSales,
   unassignedSales,

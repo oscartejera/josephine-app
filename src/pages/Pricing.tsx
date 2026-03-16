@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import posthog from 'posthog-js';
+import { useTranslation } from 'react-i18next';
 
 const STRIPE_PK = import.meta.env.VITE_STRIPE_PK || 'pk_live_51SsXizC46WZ7nQ8jQMm0oKqU4Dg3MXzakAT1jE6vqqHn3aJ8Zsa1OrKpoDvgay7ew4LDc73yVZhBVFiYcKSNJhxi00rb2FXHT7';
 
@@ -86,6 +87,7 @@ const PLANS: Plan[] = [
 ];
 
 export default function Pricing() {
+  const { t } = useTranslation();
     const { group } = useApp();
     const { session } = useAuth();
     const [loading, setLoading] = useState<string | null>(null);

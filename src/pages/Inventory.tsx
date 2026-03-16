@@ -19,8 +19,10 @@ import { AutoPurchaseOrder } from '@/components/inventory/AutoPurchaseOrder';
 import { useInventoryData } from '@/hooks/useInventoryData';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 export default function Inventory() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 

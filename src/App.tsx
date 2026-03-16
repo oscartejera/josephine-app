@@ -243,7 +243,7 @@ function AppRoutes() {
             <Route path="/insights/inventory/location/:locationId/reconciliation" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InventoryLocationReconciliation /></Suspense>} />
             <Route path="/insights/inventory/reconciliation" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InventoryReconciliation /></Suspense>} />
             <Route path="/insights/waste" element={<Suspense fallback={<SectionLoader section="Merma" />}><Waste /></Suspense>} />
-            <Route path="/insights/menu-engineering" element={<Suspense fallback={<SectionLoader section="Menú" />}><InsightErrorBoundary pageName="Rentabilidad del Menú"><MenuEngineering /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/menu-engineering" element={<Suspense fallback={<SectionLoader section={t("nav.menu")} />}><InsightErrorBoundary pageName={t("nav.menuEngineering")}><MenuEngineering /></InsightErrorBoundary></Suspense>} />
             <Route path="/insights/cash-management" element={<Suspense fallback={<SectionLoader section="Caja" />}><InsightErrorBoundary pageName="Caja"><CashManagement /></InsightErrorBoundary></Suspense>} />
             <Route path="/insights/budgets" element={<Suspense fallback={<SectionLoader section="Presupuestos" />}><InsightErrorBoundary pageName="Presupuestos"><Budgets /></InsightErrorBoundary></Suspense>} />
 
@@ -256,7 +256,7 @@ function AppRoutes() {
             <Route path="/procurement" element={<Suspense fallback={<SectionLoader section="Compras" />}><InsightErrorBoundary pageName="Compras"><Procurement /></InsightErrorBoundary></Suspense>} />
             <Route path="/procurement/cart" element={<Suspense fallback={<SectionLoader section="Carrito" />}><InsightErrorBoundary pageName="Carrito"><ProcurementCart /></InsightErrorBoundary></Suspense>} />
             <Route path="/procurement/orders" element={<Suspense fallback={<SectionLoader section="Pedidos" />}><InsightErrorBoundary pageName="Pedidos"><ProcurementOrders /></InsightErrorBoundary></Suspense>} />
-            <Route path="/payroll/*" element={<Suspense fallback={<SectionLoader section="Nóminas" />}><InsightErrorBoundary pageName="Nóminas"><Payroll /></InsightErrorBoundary></Suspense>} />
+            <Route path="/payroll/*" element={<Suspense fallback={<SectionLoader section={t("payroll.payrollManagement")} />}><InsightErrorBoundary pageName={t("payroll.payrollManagement")}><Payroll /></InsightErrorBoundary></Suspense>} />
 
             {/* Integrations — Owner-only, per-section Suspense */}
             <Route path="/integrations" element={<Suspense fallback={<SectionLoader section="Integraciones" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Integraciones"><Integrations /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
@@ -268,7 +268,7 @@ function AppRoutes() {
             <Route path="/inventory-setup/items" element={<Suspense fallback={<SectionLoader section="Artículos" />}><InsightErrorBoundary pageName="Artículos"><InventoryItems /></InsightErrorBoundary></Suspense>} />
             <Route path="/inventory-setup/recipes" element={<Suspense fallback={<SectionLoader section="Recetas" />}><InsightErrorBoundary pageName="Recetas"><RecipesPage /></InsightErrorBoundary></Suspense>} />
             <Route path="/inventory-setup/recipes/:id" element={<Suspense fallback={<SectionLoader section="Receta" />}><InsightErrorBoundary pageName="Receta"><RecipeDetailPage /></InsightErrorBoundary></Suspense>} />
-            <Route path="/inventory-setup/menu-items" element={<Suspense fallback={<SectionLoader section="Menú" />}><InsightErrorBoundary pageName="Carta del Menú"><MenuItemsPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/inventory-setup/menu-items" element={<Suspense fallback={<SectionLoader section={t("nav.menu")} />}><InsightErrorBoundary pageName={t("nav.menuItems")}><MenuItemsPage /></InsightErrorBoundary></Suspense>} />
 
             {/* Operations — per-section Suspense */}
             <Route path="/operations/waste-entry" element={<Suspense fallback={<SectionLoader section="Merma" />}><InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary></Suspense>} />

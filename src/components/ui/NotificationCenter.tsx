@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 interface Notification {
     id: string;
@@ -51,6 +52,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function NotificationCenter() {
+  const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useAuth();
     const queryClient = useQueryClient();

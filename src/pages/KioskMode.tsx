@@ -29,6 +29,7 @@ import {
     CheckCircle,
     AlertCircle,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // ── Types ─────────────────────────────────────────────────────────
 interface Employee {
@@ -53,6 +54,7 @@ const SUCCESS_DISPLAY_MS = 3_000; // Show success for 3 seconds
 const CAMERA_TIMEOUT_MS = 15_000; // 15 seconds max for camera
 
 export default function KioskMode() {
+  const { t } = useTranslation();
     const { locationId } = useParams<{ locationId: string }>();
     const navigate = useNavigate();
 
@@ -400,7 +402,7 @@ export default function KioskMode() {
                     {lastAction.photoUrl && (
                         <img
                             src={lastAction.photoUrl}
-                            alt="Foto de fichaje"
+                            alt={t("workforce.clockPhoto")}
                             className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-emerald-500/30"
                         />
                     )}

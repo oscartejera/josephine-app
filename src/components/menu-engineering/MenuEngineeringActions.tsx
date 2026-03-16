@@ -14,6 +14,7 @@ import { Check, Loader2, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { CLASSIFICATION_ACTIONS } from '@/lib/menu-engineering-engine';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
+import { useTranslation } from 'react-i18next';
 
 interface MenuEngineeringActionsProps {
   itemsByClassification: Record<Classification, MenuEngineeringItem[]>;
@@ -100,6 +101,7 @@ const PRACTICAL_ACTIONS = [
 ];
 
 export function MenuEngineeringActions({
+  const { t } = useTranslation();
   itemsByClassification,
   loading,
   onSaveAction,

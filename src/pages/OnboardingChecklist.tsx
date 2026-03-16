@@ -25,6 +25,7 @@ import {
     Star,
     Loader2,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ChecklistStep {
     id: string;
@@ -38,6 +39,7 @@ interface ChecklistStep {
 }
 
 export default function OnboardingChecklist() {
+  const { t } = useTranslation();
     const navigate = useNavigate();
     const { dataSource, locations, group } = useApp();
     const [steps, setSteps] = useState<ChecklistStep[]>([]);

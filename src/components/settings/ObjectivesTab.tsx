@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
+import { useTranslation } from 'react-i18next';
 
 interface LocationSetting {
     id: string;
@@ -19,6 +20,7 @@ interface LocationSetting {
 }
 
 export function ObjectivesTab() {
+  const { t } = useTranslation();
     const { locations } = useApp();
     const { isOwner, hasPermission } = usePermissions();
     const { toast } = useToast();

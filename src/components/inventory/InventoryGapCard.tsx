@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { ViewMode } from './InventoryHeader';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface InventoryGapCardProps {
   viewMode: ViewMode;
@@ -19,6 +20,7 @@ interface InventoryGapCardProps {
 }
 
 export function InventoryGapCard({
+  const { t } = useTranslation();
   viewMode,
   gapPercent,
   gapAmount,

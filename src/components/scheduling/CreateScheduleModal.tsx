@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Check, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface Step {
   title: string;
@@ -27,7 +28,8 @@ interface CreateScheduleModalProps {
   onComplete: () => void;
 }
 
-export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalProps) {
+export function CreateScheduleModal({
+  const { t } = useTranslation(); isOpen, onComplete }: CreateScheduleModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 

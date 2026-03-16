@@ -31,6 +31,7 @@ import {
 import { FileText, Plus, Edit, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface Contract {
     id: string;
@@ -70,7 +71,8 @@ interface Props {
     locationId: string;
 }
 
-export function EmploymentContracts({ locationId }: Props) {
+export function EmploymentContracts({
+  const { t } = useTranslation(); locationId }: Props) {
     const { accessibleLocations } = useApp();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);

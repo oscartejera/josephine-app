@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAINarratives } from '@/hooks/useAINarratives';
 import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
+import { useTranslation } from 'react-i18next';
 
 interface NarrativeInsightsPanelProps {
   metrics: DashboardMetricsForAI | null;
@@ -20,7 +21,8 @@ function renderMarkdown(text: string): string {
     .replace(/\n/g, '<br/>');
 }
 
-export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsightsPanelProps) {
+export function NarrativeInsightsPanel({
+  const { t } = useTranslation(); metrics, className }: NarrativeInsightsPanelProps) {
   const { narrative, isLoading, error, generate } = useAINarratives();
   const hasGenerated = useRef(false);
 

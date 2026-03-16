@@ -10,6 +10,7 @@ import { useReconciliationData } from '@/hooks/useReconciliationData';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import { useApp } from '@/contexts/AppContext';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 // Validate locationId format (demo IDs or UUIDs)
 function isValidLocationId(id: string | undefined): boolean {
@@ -21,6 +22,7 @@ function isValidLocationId(id: string | undefined): boolean {
 }
 
 export default function InventoryLocationReconciliation() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { locationId } = useParams<{ locationId: string }>();
   const [searchParams] = useSearchParams();

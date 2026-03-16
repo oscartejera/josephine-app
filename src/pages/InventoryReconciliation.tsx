@@ -7,8 +7,10 @@ import { useReconciliationData } from '@/hooks/useReconciliationData';
 import { useInventoryData } from '@/hooks/useInventoryData';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
+import { useTranslation } from 'react-i18next';
 
 export default function InventoryReconciliation() {
+  const { t } = useTranslation();
   const today = new Date();
   
   const [dateRange, setDateRange] = useState<DateRangeValue>({

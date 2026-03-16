@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { AlertOctagon, RefreshCw, Home } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   children: React.ReactNode;

@@ -11,6 +11,7 @@ import { useNotificationStore, NotificationType } from '@/stores/notificationSto
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; bgColor: string }> = {
   sale: { icon: DollarSign, color: 'text-success', bgColor: 'bg-success/10' },
@@ -22,6 +23,7 @@ const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; b
 };
 
 export function NotificationCenter() {
+  const { t } = useTranslation();
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification, clearAll } = useNotificationStore();
 
   return (

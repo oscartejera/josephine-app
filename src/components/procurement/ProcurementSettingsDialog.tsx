@@ -38,6 +38,7 @@ import {
   SAMPLE_SKUS_FOR_PREVIEW,
   calculateRecommendation,
 } from '@/lib/procurementConstants';
+import { useTranslation } from 'react-i18next';
 
 // Re-export types for backwards compatibility
 export type { CategorySettings, ProcurementCategorySettings };
@@ -65,6 +66,7 @@ interface ProcurementSettingsDialogProps {
 }
 
 export function ProcurementSettingsDialog({
+  const { t } = useTranslation();
   categorySettings,
   onSettingsChange,
 }: ProcurementSettingsDialogProps) {

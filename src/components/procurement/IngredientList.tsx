@@ -1,5 +1,6 @@
 import { IngredientRow } from './IngredientRow';
 import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
+import { useTranslation } from 'react-i18next';
 
 interface IngredientListProps {
   skus: IngredientSku[];
@@ -12,6 +13,7 @@ interface IngredientListProps {
 }
 
 export function IngredientList({
+  const { t } = useTranslation();
   skus,
   categories,
   cart,

@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from 'react-i18next';
 
 const WASTE_REASONS = [
   { value: 'broken', label: 'Broken' },
@@ -64,7 +65,8 @@ interface LogWasteDialogProps {
   defaultLocationId?: string;
 }
 
-export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogProps) {
+export function LogWasteDialog({
+  const { t } = useTranslation(); onSuccess, defaultLocationId }: LogWasteDialogProps) {
   const { locations } = useApp();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

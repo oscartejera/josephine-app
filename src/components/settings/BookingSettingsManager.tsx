@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Copy, ExternalLink, Globe, Check, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface BookingSettings {
   id: string;
@@ -52,6 +53,7 @@ const DEFAULT_TIME_SLOTS = [
 ];
 
 export function BookingSettingsManager() {
+  const { t } = useTranslation();
   const { locations } = useApp();
   const { toast } = useToast();
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');

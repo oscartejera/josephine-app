@@ -10,13 +10,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface EstimatedLabelProps {
   reason?: string;
   className?: string;
 }
 
-export function EstimatedLabel({ reason, className = '' }: EstimatedLabelProps) {
+export function EstimatedLabel({
+  const { t } = useTranslation(); reason, className = '' }: EstimatedLabelProps) {
   const defaultReason = 'Este valor usa supuestos (COGS%, tarifas horarias, etc.) que pueden no reflejar tus costos reales.';
 
   return (

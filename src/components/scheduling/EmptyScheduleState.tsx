@@ -1,13 +1,15 @@
 import { Calendar, Sparkles } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { DayKPI } from '@/hooks/useSchedulingSupabase';
+import { useTranslation } from 'react-i18next';
 
 interface EmptyScheduleStateProps {
   weekStart: Date;
   dailyKPIs: DayKPI[];
 }
 
-export function EmptyScheduleState({ weekStart, dailyKPIs }: EmptyScheduleStateProps) {
+export function EmptyScheduleState({
+  const { t } = useTranslation(); weekStart, dailyKPIs }: EmptyScheduleStateProps) {
   const days = Array.from({ length: 7 }, (_, i) => ({
     date: addDays(weekStart, i),
     dayName: format(addDays(weekStart, i), 'EEE'),

@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface WasteKPICardsProps {
   totalSales: number;
@@ -13,6 +14,7 @@ interface WasteKPICardsProps {
 const INDUSTRY_WASTE_BENCHMARK = 5.0; // Industry avg waste% without AI forecasting
 
 export function WasteKPICards({
+  const { t } = useTranslation();
   totalSales,
   totalAccountedWaste,
   wastePercentOfSales,

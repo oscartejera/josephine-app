@@ -16,8 +16,10 @@ import { useWasteAlerts } from '@/hooks/useWasteAlerts';
 import { WasteAlertBanner } from '@/components/waste/WasteAlertBanner';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 export default function Waste() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const today = new Date();
   const [refreshKey, setRefreshKey] = useState(0);

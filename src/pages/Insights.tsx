@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useControlTowerData } from '@/hooks/useControlTowerData';
+import { useTranslation } from 'react-i18next';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(v);
@@ -35,6 +36,7 @@ interface InsightModule {
 }
 
 export default function Insights() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: kpis, isLoading } = useControlTowerData();
 

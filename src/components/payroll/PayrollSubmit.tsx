@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
+import { useTranslation } from 'react-i18next';
 
 const AGENCIES = [
   { 
@@ -36,6 +37,7 @@ const AGENCIES = [
 ];
 
 export default function PayrollSubmit({
+  const { t } = useTranslation();
   currentRun,
   refreshData,
   isSandboxMode,

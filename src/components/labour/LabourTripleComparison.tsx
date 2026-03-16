@@ -12,6 +12,7 @@
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { LabourKpis, MetricMode } from '@/hooks/useLabourData';
+import { useTranslation } from 'react-i18next';
 
 interface LabourTripleComparisonProps {
     kpis: LabourKpis | undefined;
@@ -60,7 +61,8 @@ function BarRow({ label, value, maxValue, color, badge }: BarRowProps) {
     );
 }
 
-export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparisonProps) {
+export function LabourTripleComparison({
+  const { t } = useTranslation(); kpis, isLoading }: LabourTripleComparisonProps) {
     if (isLoading || !kpis) {
         return (
             <Card className="p-6 bg-white">

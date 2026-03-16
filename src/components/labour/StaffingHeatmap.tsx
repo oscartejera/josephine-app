@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface StaffingHeatmapProps {
     locationId?: string | null;
@@ -50,7 +51,8 @@ const STATUS_STYLES: Record<string, { label: string; bg: string; text: string; b
     no_data: { label: 'Sin datos', bg: 'bg-gray-50', text: 'text-gray-400', bar: 'bg-gray-200', emoji: '—' },
 };
 
-export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
+export function StaffingHeatmap({
+  const { t } = useTranslation(); locationId }: StaffingHeatmapProps) {
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

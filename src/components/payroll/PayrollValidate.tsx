@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
+import { useTranslation } from 'react-i18next';
 
 interface ValidationItem {
   id: string;
@@ -23,6 +24,7 @@ interface ValidationItem {
 }
 
 export default function PayrollValidate({
+  const { t } = useTranslation();
   selectedLegalEntity,
   currentPeriod,
   currentRun,

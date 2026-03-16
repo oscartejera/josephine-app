@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { DayAvailability, AvailabilityStatus } from '@/hooks/useAvailabilityData';
+import { useTranslation } from 'react-i18next';
 
 interface WeeklyAvailabilityGridProps {
   availability: DayAvailability[];
@@ -38,6 +39,7 @@ const STATUS_CONFIG: Record<AvailabilityStatus, { label: string; icon: React.Ele
 };
 
 export function WeeklyAvailabilityGrid({
+  const { t } = useTranslation();
   availability,
   onUpdateDay,
   hasChanges,

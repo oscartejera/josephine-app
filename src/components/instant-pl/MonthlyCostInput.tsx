@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const COGS_CATEGORIES = [
     { key: 'food', label: 'Alimentación', icon: '🍖', description: 'Materias primas' },
@@ -38,7 +39,8 @@ interface CostEntry {
     id?: string;
 }
 
-export function MonthlyCostInput({ year, month, locationId, onSaved, className }: MonthlyCostInputProps) {
+export function MonthlyCostInput({
+  const { t } = useTranslation(); year, month, locationId, onSaved, className }: MonthlyCostInputProps) {
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const [entries, setEntries] = useState<Record<string, number>>({});

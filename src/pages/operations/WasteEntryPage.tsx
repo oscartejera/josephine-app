@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { Search, Check, ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 // Step-based flow: 1=Select Item, 2=Select Reason, 3=Set Quantity, 4=Confirm
 
@@ -51,6 +52,7 @@ function useInventoryItemsForWaste() {
 }
 
 export default function WasteEntryPage() {
+  const { t } = useTranslation();
     const { toast } = useToast();
     const { logWaste } = useWasteEntry();
     const { data: locations } = useLocations();

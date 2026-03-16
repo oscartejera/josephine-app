@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import type { ViewMode } from './InventoryHeader';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 interface LocationPerformance {
   locationId: string;
@@ -33,6 +34,7 @@ interface LocationPerformanceTableProps {
 }
 
 export function LocationPerformanceTable({
+  const { t } = useTranslation();
   viewMode,
   data,
   isLoading = false,

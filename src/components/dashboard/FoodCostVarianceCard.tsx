@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface FoodCostData {
     theoretical_cogs: number;
@@ -18,6 +19,7 @@ interface FoodCostData {
 }
 
 export function FoodCostVarianceCard() {
+  const { t } = useTranslation();
     const { selectedLocationId, accessibleLocations, getDateRangeValues, dateRange, loading: appLoading } = useApp();
     const [data, setData] = useState<FoodCostData | null>(null);
     const [loading, setLoading] = useState(true);

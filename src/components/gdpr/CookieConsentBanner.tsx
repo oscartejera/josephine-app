@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CookiePreferencesDialog } from './CookiePreferencesDialog';
+import { useTranslation } from 'react-i18next';
 
 export interface ConsentPreferences {
   essential: boolean; // always true
@@ -44,6 +45,7 @@ function storeConsent(prefs: ConsentPreferences): void {
 }
 
 export function CookieConsentBanner() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);

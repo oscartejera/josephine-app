@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { DollarSign, Users, Package, TrendingUp } from 'lucide-react';
 import type { BudgetMetrics, BudgetTab } from '@/hooks/useBudgetsData';
+import { useTranslation } from 'react-i18next';
 
 interface BudgetKPICardsProps {
   metrics: BudgetMetrics;
@@ -66,7 +67,8 @@ function StatusBadge({ status }: { status: BudgetMetrics['primeStatus'] }) {
   );
 }
 
-export function BudgetKPICards({ metrics, activeTab, isLoading = false, currency = '€' }: BudgetKPICardsProps) {
+export function BudgetKPICards({
+  const { t } = useTranslation(); metrics, activeTab, isLoading = false, currency = '€' }: BudgetKPICardsProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

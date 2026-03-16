@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import type { OrderSummary } from '@/hooks/useProcurementData';
+import { useTranslation } from 'react-i18next';
 
 interface OrderSummaryPanelProps {
   summary: OrderSummary;
@@ -13,6 +14,7 @@ interface OrderSummaryPanelProps {
 }
 
 export function OrderSummaryPanel({
+  const { t } = useTranslation();
   summary,
   onAutofill,
   onClearCart,

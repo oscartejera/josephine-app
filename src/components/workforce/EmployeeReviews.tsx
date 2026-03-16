@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Star, TrendingUp, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface Review {
     id: string;
@@ -71,7 +72,8 @@ function StarRating({ value, onChange, size = 'md' }: {
     );
 }
 
-export function EmployeeReviews({ locationId }: { locationId: string | null }) {
+export function EmployeeReviews({
+  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
     const { group } = useApp();
     const { user } = useAuth();
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -298,7 +300,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                         </div>
 
                         <Textarea placeholder="Fortalezas" value={strengths} onChange={e => setStrengths(e.target.value)} rows={2} />
-                        <Textarea placeholder="Áreas de mejora" value={improvements} onChange={e => setImprovements(e.target.value)} rows={2} />
+                        <Textarea placeholder={t("workforce.areasOfImprovement")} value={improvements} onChange={e => setImprovements(e.target.value)} rows={2} />
                         <Textarea placeholder="Objetivos" value={goals} onChange={e => setGoals(e.target.value)} rows={2} />
                     </div>
                     <DialogFooter>

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTranslation } from 'react-i18next';
 
 interface ScheduleSettings {
   // Venue
@@ -89,7 +90,8 @@ interface ScheduleSettingsSheetProps {
   locationName: string;
 }
 
-export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationName }: ScheduleSettingsSheetProps) {
+export function ScheduleSettingsSheet({
+  const { t } = useTranslation(); isOpen, onClose, locationId, locationName }: ScheduleSettingsSheetProps) {
   const [settings, setSettings] = useState<ScheduleSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

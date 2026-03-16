@@ -4,6 +4,7 @@ import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BISalesData, CompareMode } from '@/hooks/useBISalesData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
 
 interface BIKpiCardsProps {
   data: BISalesData | undefined;
@@ -109,7 +110,8 @@ function KpiCardSkeleton() {
   );
 }
 
-export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
+export function BIKpiCards({
+  const { t } = useTranslation(); data, isLoading, compareMode }: BIKpiCardsProps) {
   if (isLoading || !data) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

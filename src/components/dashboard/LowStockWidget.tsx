@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, Package, ArrowRight, Wifi } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface LowStockItem {
   id: string;
@@ -20,6 +21,7 @@ interface LowStockItem {
 }
 
 export function LowStockWidget() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { session } = useAuth();
   const [items, setItems] = useState<LowStockItem[]>([]);

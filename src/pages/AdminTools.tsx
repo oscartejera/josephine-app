@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar, Sparkles, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminTools() {
+  const { t } = useTranslation();
   const [isSeeding, setIsSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);

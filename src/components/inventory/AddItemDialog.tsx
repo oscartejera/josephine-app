@@ -24,6 +24,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface AddItemDialogProps {
   open: boolean;
@@ -31,7 +32,8 @@ interface AddItemDialogProps {
   onSuccess: () => void;
 }
 
-export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) {
+export function AddItemDialog({
+  const { t } = useTranslation(); open, onClose, onSuccess }: AddItemDialogProps) {
   const { group } = useApp();
   const [name, setName] = useState('');
   const [type, setType] = useState('food');

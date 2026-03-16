@@ -4,8 +4,10 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { CashKPICards, CashLeakageChart, CashLocationTable } from '@/components/cash-management';
 import { useCashManagementData } from '@/hooks/useCashManagementData';
+import { useTranslation } from 'react-i18next';
 
 export default function CashManagement() {
+  const { t } = useTranslation();
   const { hasPermission, loading: permLoading } = usePermissions();
 
   const initialDateRange = useMemo((): DateRangeValue => {

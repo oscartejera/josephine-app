@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { Shift, Employee } from '@/hooks/useSchedulingSupabase';
+import { useTranslation } from 'react-i18next';
 
 interface SwapShiftDialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface SwapShiftDialogProps {
 }
 
 export function SwapShiftDialog({
+  const { t } = useTranslation();
   isOpen,
   onClose,
   onSubmit,

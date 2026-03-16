@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface ClockRecord {
   id: string;
@@ -53,6 +54,7 @@ interface EmployeeInfo {
 }
 
 export default function TeamHome() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);

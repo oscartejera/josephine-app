@@ -16,6 +16,7 @@ import {
 import { Loader2, PackageSearch, Truck, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface LowStockAlert {
     itemId: string;
@@ -28,6 +29,7 @@ interface LowStockAlert {
 }
 
 export function AutoPurchaseOrder() {
+  const { t } = useTranslation();
     const { selectedLocationId, accessibleLocations } = useApp();
     const [alerts, setAlerts] = useState<LowStockAlert[]>([]);
     const [loading, setLoading] = useState(false);

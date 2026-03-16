@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { TimeOffRequest } from '@/hooks/useAvailabilityData';
+import { useTranslation } from 'react-i18next';
 
 interface TimeOffRequestDialogProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ const TYPE_CONFIG: Record<TimeOffRequest['type'], { label: string; icon: React.E
 };
 
 export function TimeOffRequestDialog({
+  const { t } = useTranslation();
   isOpen,
   onClose,
   onSubmit,

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { TimeOffRequest } from '@/hooks/useAvailabilityData';
+import { useTranslation } from 'react-i18next';
 
 interface TimeOffRequestsListProps {
   requests: TimeOffRequest[];
@@ -179,6 +180,7 @@ function TimeOffRequestCard({
 }
 
 export function TimeOffRequestsList({
+  const { t } = useTranslation();
   requests,
   isManager = false,
   onApprove,

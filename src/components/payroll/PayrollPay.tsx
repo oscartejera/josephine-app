@@ -12,8 +12,10 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
+import { useTranslation } from 'react-i18next';
 
 export default function PayrollPay({
+  const { t } = useTranslation();
   currentPeriod,
   currentRun,
   refreshData,

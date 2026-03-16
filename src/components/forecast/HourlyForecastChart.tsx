@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { useHourlyForecast, type HourlyForecastRow } from '@/hooks/useHourlyForecast';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // ── Colors ───────────────────────────────────────────────────
 
@@ -23,7 +24,8 @@ interface HourlyForecastChartProps {
     date: Date;
 }
 
-export function HourlyForecastChart({ locationId, date }: HourlyForecastChartProps) {
+export function HourlyForecastChart({
+  const { t } = useTranslation(); locationId, date }: HourlyForecastChartProps) {
     const { data: rows, isLoading } = useHourlyForecast({ locationId, date });
 
     if (isLoading) {

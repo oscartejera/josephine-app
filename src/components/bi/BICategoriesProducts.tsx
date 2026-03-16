@@ -19,6 +19,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { cn } from '@/lib/utils';
 import type { BISalesData } from '@/hooks/useBISalesData';
+import { useTranslation } from 'react-i18next';
 
 interface BICategoriesProductsProps {
   data: BISalesData | undefined;
@@ -34,7 +35,8 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsProps) {
+export function BICategoriesProducts({
+  const { t } = useTranslation(); data, isLoading }: BICategoriesProductsProps) {
   const [productSort, setProductSort] = useState<'sales' | 'name'>('sales');
 
   if (isLoading || !data) {

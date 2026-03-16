@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SchedulingHeaderProps {
   weekStart: Date;
@@ -55,6 +56,7 @@ interface SchedulingHeaderProps {
 }
 
 export function SchedulingHeader({
+  const { t } = useTranslation();
   weekStart,
   onWeekChange,
   onGoToToday,

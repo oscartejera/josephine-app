@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { BudgetLocationData } from '@/hooks/useBudgetsData';
+import { useTranslation } from 'react-i18next';
 
 interface BudgetLocationTableProps {
   data: BudgetLocationData[];
@@ -56,7 +57,8 @@ function StatusBadge({ status }: { status: BudgetLocationData['status'] }) {
   );
 }
 
-export function BudgetLocationTable({ data, isLoading = false, currency = '€' }: BudgetLocationTableProps) {
+export function BudgetLocationTable({
+  const { t } = useTranslation(); data, isLoading = false, currency = '€' }: BudgetLocationTableProps) {
   const [search, setSearch] = useState('');
 
   const filteredData = useMemo(() => {

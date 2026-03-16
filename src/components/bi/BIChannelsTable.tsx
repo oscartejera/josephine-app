@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { BISalesData, CompareMode } from '@/hooks/useBISalesData';
+import { useTranslation } from 'react-i18next';
 
 interface BIChannelsTableProps {
   data: BISalesData | undefined;
@@ -56,7 +57,8 @@ function AcsDeltaCell({ value, delta }: { value: number; delta: number }) {
   );
 }
 
-export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTableProps) {
+export function BIChannelsTable({
+  const { t } = useTranslation(); data, isLoading, compareMode }: BIChannelsTableProps) {
   if (isLoading || !data) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">

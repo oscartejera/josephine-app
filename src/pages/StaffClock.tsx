@@ -1,8 +1,10 @@
 import { useParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { ClockInPanel } from '@/components/staff/ClockInPanel';
+import { useTranslation } from 'react-i18next';
 
 export default function StaffClock() {
+  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId: string }>();
   const { locations } = useApp();
   

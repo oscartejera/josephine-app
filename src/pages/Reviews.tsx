@@ -18,8 +18,10 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, TrendingUp } from 'lucide-react';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
+import { useTranslation } from 'react-i18next';
 
 export default function Reviews() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { group, locations } = useApp();
 

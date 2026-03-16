@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Search, ArrowUpDown, Star, HelpCircle, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
+import { useTranslation } from 'react-i18next';
 
 interface MenuEngineeringTableProps {
   items: MenuEngineeringItem[];
@@ -71,7 +72,8 @@ function getFoodCostHealth(pct: number): { label: string; className: string } {
   return { label: `${pct.toFixed(0)}%`, className: 'text-red-600 font-semibold' };
 }
 
-export function MenuEngineeringTable({ items, loading }: MenuEngineeringTableProps) {
+export function MenuEngineeringTable({
+  const { t } = useTranslation(); items, loading }: MenuEngineeringTableProps) {
   const [search, setSearch] = useState('');
   const [classificationFilter, setClassificationFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('total_gross_profit');

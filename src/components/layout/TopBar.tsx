@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { NotificationCenter } from '@/components/ui/NotificationCenter';
+import { useTranslation } from 'react-i18next';
 
 interface TopBarProps {
   onMenuClick: () => void;
 }
 
-export function TopBar({ onMenuClick }: TopBarProps) {
+export function TopBar({
+  const { t } = useTranslation(); onMenuClick }: TopBarProps) {
   const location = useLocation();
 
   // Generate breadcrumb from path

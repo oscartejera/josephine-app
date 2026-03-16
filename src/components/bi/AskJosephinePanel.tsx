@@ -6,6 +6,7 @@ import { Sparkles, Send, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BISalesData } from '@/hooks/useBISalesData';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface AskJosephinePanelProps {
   open: boolean;
@@ -104,7 +105,8 @@ async function streamInsights({
   }
 }
 
-export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProps) {
+export function AskJosephinePanel({
+  const { t } = useTranslation(); open, onClose, data }: AskJosephinePanelProps) {
   const [insight, setInsight] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

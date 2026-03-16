@@ -9,6 +9,7 @@ import { Database, RefreshCw, AlertTriangle, Loader2, CheckCircle2, XCircle, Cal
 import { useToast } from '@/hooks/use-toast';
 import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 interface RegenerationResult {
   step: string;
@@ -17,6 +18,7 @@ interface RegenerationResult {
 }
 
 export function DemoDataManager() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [regenerating, setRegenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -102,7 +104,7 @@ export function DemoDataManager() {
 
       toast({
         title: "Datos demo regenerados",
-        description: "Todos los datos de demostración han sido actualizados correctamente.",
+        description: t("settings.demoDataUpdated"),
       });
     } catch (error) {
       console.error('Error regenerating demo data:', error);

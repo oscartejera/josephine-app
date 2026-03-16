@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 interface WasteByCategory {
   category: string;
@@ -27,6 +28,7 @@ interface InventoryWasteOverviewProps {
 }
 
 export function InventoryWasteOverview({
+  const { t } = useTranslation();
   categoryData,
   locationData,
   isLoading = false,

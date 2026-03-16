@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   children: ReactNode;

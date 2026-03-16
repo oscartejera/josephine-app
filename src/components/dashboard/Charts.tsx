@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface HourlySalesChartProps {
   data: Array<{
@@ -12,7 +13,8 @@ interface HourlySalesChartProps {
   className?: string;
 }
 
-export function HourlySalesChart({ data, title = "Ventas por Hora", className }: HourlySalesChartProps) {
+export function HourlySalesChart({
+  const { t } = useTranslation(); data, title = t("dashboard.hourlySales"), className }: HourlySalesChartProps) {
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
@@ -87,7 +89,7 @@ interface HourlyLaborChartProps {
   className?: string;
 }
 
-export function HourlyLaborChart({ data, title = "Labor por Hora", className }: HourlyLaborChartProps) {
+export function HourlyLaborChart({ data, title = t("dashboard.hourlyLabour"), className }: HourlyLaborChartProps) {
   return (
     <Card className={className}>
       <CardHeader className="pb-2">

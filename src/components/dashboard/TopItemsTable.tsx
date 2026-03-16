@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface TopItem {
   rank: number;
@@ -18,7 +19,8 @@ interface TopItemsTableProps {
   className?: string;
 }
 
-export function TopItemsTable({ items, title = "Top Items", className }: TopItemsTableProps) {
+export function TopItemsTable({
+  const { t } = useTranslation(); items, title = "Top Items", className }: TopItemsTableProps) {
   return (
     <Card className={className}>
       <CardHeader className="pb-3">

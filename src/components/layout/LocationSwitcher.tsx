@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { useTranslation } from 'react-i18next';
 
 interface LocationSwitcherProps {
   /** When true, shows only the icon (for collapsed sidebar) */
@@ -20,7 +21,8 @@ interface LocationSwitcherProps {
   side?: 'bottom' | 'right' | 'left' | 'top';
 }
 
-export function LocationSwitcher({ collapsed = false, align = 'start', side }: LocationSwitcherProps) {
+export function LocationSwitcher({
+  const { t } = useTranslation(); collapsed = false, align = 'start', side }: LocationSwitcherProps) {
   const {
     selectedLocationId,
     setSelectedLocationId,

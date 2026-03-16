@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface LabourComplianceDashboardProps {
     locationId: string | null;
@@ -82,7 +83,8 @@ function StatusDot({ ok, label }: { ok: boolean; label: string }) {
     );
 }
 
-export function LabourComplianceDashboard({ locationId, weekStart }: LabourComplianceDashboardProps) {
+export function LabourComplianceDashboard({
+  const { t } = useTranslation(); locationId, weekStart }: LabourComplianceDashboardProps) {
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const ws = weekStart || startOfWeek(new Date(), { weekStartsOn: 1 });

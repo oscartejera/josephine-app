@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format, subDays } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface BriefingData {
     narrative: string;
@@ -123,6 +124,7 @@ function generateLocalBriefing(
 }
 
 export function ExecutiveBriefing() {
+  const { t } = useTranslation();
     const { accessibleLocations } = useApp();
     const [briefing, setBriefing] = useState<BriefingData | null>(null);
     const [isLoading, setIsLoading] = useState(true);

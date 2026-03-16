@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface StaffingRecommendationProps {
     locationId: string | null;
@@ -56,7 +57,8 @@ function formatCurrency(v: number) {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
 }
 
-export function StaffingRecommendation({ locationId, dateFrom, dateTo }: StaffingRecommendationProps) {
+export function StaffingRecommendation({
+  const { t } = useTranslation(); locationId, dateFrom, dateTo }: StaffingRecommendationProps) {
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const from = dateFrom || new Date();

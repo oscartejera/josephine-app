@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ChevronDown, Filter, MoreHorizontal, Search, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReconciliationLine } from '@/hooks/useReconciliationData';
+import { useTranslation } from 'react-i18next';
 
 interface ReconciliationGridProps {
   lines: ReconciliationLine[];
@@ -50,6 +51,7 @@ const allColumns = [
 ];
 
 export function ReconciliationGrid({
+  const { t } = useTranslation();
   lines,
   totals,
   stockStatus,

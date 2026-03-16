@@ -12,10 +12,12 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Search, ChefHat, Trash2, Pencil } from 'lucide-react';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 const CATEGORIES = ['Main', 'Starter', 'Dessert', 'Beverage', 'Sauce', 'Prep', 'Side', 'Other'];
 
 export default function RecipesPage() {
+  const { t } = useTranslation();
     const navigate = useNavigate();
     const { recipes, isLoading, createRecipe, deleteRecipe } = useRecipes();
     const { toast } = useToast();

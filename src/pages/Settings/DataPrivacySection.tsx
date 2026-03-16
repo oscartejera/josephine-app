@@ -25,8 +25,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CookiePreferencesDialog } from '@/components/gdpr/CookiePreferencesDialog';
 import { getConsent, type ConsentPreferences } from '@/components/gdpr/CookieConsentBanner';
+import { useTranslation } from 'react-i18next';
 
 export function DataPrivacySection() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);

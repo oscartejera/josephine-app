@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePermissions, PermissionKey } from '@/hooks/usePermissions';
+import { useTranslation } from 'react-i18next';
 
 interface PermissionGateProps {
   /** Single permission required */
@@ -37,6 +38,7 @@ interface PermissionGateProps {
  * </PermissionGate>
  */
 export function PermissionGate({
+  const { t } = useTranslation();
   children,
 }: PermissionGateProps) {
   // Always render children - no content hiding

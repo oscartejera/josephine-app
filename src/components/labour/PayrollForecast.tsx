@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface PayrollForecastProps {
     locationId?: string | null;
@@ -49,7 +50,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
     no_budget: { label: 'Sin presupuesto', color: 'text-gray-500', bg: 'bg-gray-100', icon: '—' },
 };
 
-export function PayrollForecast({ locationId }: PayrollForecastProps) {
+export function PayrollForecast({
+  const { t } = useTranslation(); locationId }: PayrollForecastProps) {
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

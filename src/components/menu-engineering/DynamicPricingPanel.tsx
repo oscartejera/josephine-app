@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import type { MenuEngineeringItem, MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
+import { useTranslation } from 'react-i18next';
 
 interface PricingSuggestion {
   product: string;
@@ -250,7 +251,8 @@ function generateTheoryBasedSuggestions(
   });
 }
 
-export function DynamicPricingPanel({ items, stats, locationName, categoryName, omnesData }: DynamicPricingPanelProps) {
+export function DynamicPricingPanel({
+  const { t } = useTranslation(); items, stats, locationName, categoryName, omnesData }: DynamicPricingPanelProps) {
   const [suggestions, setSuggestions] = useState<PricingSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

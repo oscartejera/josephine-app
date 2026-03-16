@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
+import { useTranslation } from 'react-i18next';
 
 interface IngredientTableProps {
   skus: IngredientSku[];
@@ -266,6 +267,7 @@ function CategorySection({
 }
 
 export function IngredientTable({
+  const { t } = useTranslation();
   skus,
   categories,
   cart,

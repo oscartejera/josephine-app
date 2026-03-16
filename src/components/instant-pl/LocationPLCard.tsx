@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslation } from 'react-i18next';
 
 interface LocationPLCardProps {
   data: LocationPLMetrics;
@@ -133,6 +134,7 @@ function MetricRow({
 }
 
 export function LocationPLCard({
+  const { t } = useTranslation();
   data,
   viewMode,
   isSelected = false,

@@ -5,6 +5,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { ChefHat, Loader2, Mail, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 interface EmailOTPVerificationProps {
   email: string;
@@ -16,6 +17,7 @@ interface EmailOTPVerificationProps {
 }
 
 export function EmailOTPVerification({
+  const { t } = useTranslation();
   email,
   fullName,
   password,
@@ -123,7 +125,7 @@ export function EmailOTPVerification({
       if (signUpError) {
         toast({
           variant: "destructive",
-          title: "Error al crear cuenta",
+          title: t("auth.errorCreatingAccount"),
           description: signUpError.message
         });
         setLoading(false);

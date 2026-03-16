@@ -1,5 +1,6 @@
 import { CheckCircle, Calendar, TrendingUp } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface CoverageBannerDesktopProps {
   coverageEndDate: Date;
@@ -8,7 +9,8 @@ interface CoverageBannerDesktopProps {
   deliveryDate?: Date;
 }
 
-export function CoverageBannerDesktop({ 
+export function CoverageBannerDesktop({
+  const { t } = useTranslation(); 
   coverageEndDate, 
   hasItems, 
   orderDate = new Date(),

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import type { ConsentPreferences } from './CookieConsentBanner';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -27,7 +28,8 @@ interface Props {
   initialPrefs?: Partial<ConsentPreferences>;
 }
 
-export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPrefs }: Props) {
+export function CookiePreferencesDialog({
+  const { t } = useTranslation(); open, onOpenChange, onSave, initialPrefs }: Props) {
   const [analytics, setAnalytics] = useState(initialPrefs?.analytics ?? false);
   const [marketing, setMarketing] = useState(initialPrefs?.marketing ?? false);
 

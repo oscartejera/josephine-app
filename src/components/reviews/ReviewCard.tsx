@@ -12,6 +12,7 @@ import { Review } from '@/hooks/useReviewsData';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface ReviewCardProps {
   review: Review;
@@ -25,7 +26,8 @@ const REFINE_OPTIONS = [
   { value: 'concise' as const, label: 'Concise', description: 'Short, direct, and to the point' },
 ];
 
-export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
+export function ReviewCard({
+  const { t } = useTranslation(); review, onRefine, onSubmit }: ReviewCardProps) {
   const [replyText, setReplyText] = useState(review.owner_reply?.text || '');
   const [isRefining, setIsRefining] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

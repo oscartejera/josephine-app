@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
+import { useTranslation } from 'react-i18next';
 
 interface IngredientRowProps {
   sku: IngredientSku;
@@ -15,6 +16,7 @@ interface IngredientRowProps {
 }
 
 export function IngredientRow({
+  const { t } = useTranslation();
   sku,
   packs,
   recommendedPacks,

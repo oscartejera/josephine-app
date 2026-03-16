@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { LabourKpis, LabourDateRange, MetricMode } from '@/hooks/useLabourData';
+import { useTranslation } from 'react-i18next';
 
 interface LabourKPICardsProps {
   kpis: LabourKpis | undefined;
@@ -69,7 +70,7 @@ function SourceBadge({ source }: { source: 'payroll' | 'schedule' }) {
           : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
       )}
       title={isPayroll
-        ? "Basado en nóminas procesadas"
+        ? t("payroll.basedOnProcessedPayroll")
         : "Estimado desde horarios planificados"}
     >
       <span>{isPayroll ? '✓' : '~'}</span>
@@ -93,7 +94,8 @@ function KpiCardSkeleton() {
   );
 }
 
-export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
+export function LabourKPICards({
+  const { t } = useTranslation(); kpis, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
   if (isLoading || !kpis) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

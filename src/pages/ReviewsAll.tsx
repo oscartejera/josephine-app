@@ -17,8 +17,10 @@ import { ReviewCard } from '@/components/reviews/ReviewCard';
 import { useReviewsData, Platform } from '@/hooks/useReviewsData';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 export default function ReviewsAll() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { locations } = useApp();

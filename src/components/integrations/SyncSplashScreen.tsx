@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChefHat, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const QUOTES = [
   'La IA dice que tu plato estrella es el que menos vendes... awkward.',
@@ -25,7 +26,8 @@ interface SyncSplashScreenProps {
   message?: string;
 }
 
-export default function SyncSplashScreen({ message = 'Actualizando datos...' }: SyncSplashScreenProps) {
+export default function SyncSplashScreen({
+  const { t } = useTranslation(); message = 'Actualizando datos...' }: SyncSplashScreenProps) {
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * QUOTES.length));
 
   useEffect(() => {

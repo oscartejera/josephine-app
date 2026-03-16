@@ -13,6 +13,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { SwapRequest } from '@/hooks/useSchedulingSupabase';
+import { useTranslation } from 'react-i18next';
 
 interface SwapRequestsPanelProps {
   isOpen: boolean;
@@ -149,6 +150,7 @@ function SwapRequestCard({
 }
 
 export function SwapRequestsPanel({
+  const { t } = useTranslation();
   isOpen,
   onClose,
   requests,

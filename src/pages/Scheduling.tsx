@@ -33,6 +33,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from 'react-i18next';
 
 // Generate placeholder KPIs for empty state
 function generatePlaceholderKPIs(weekStart: Date) {
@@ -57,6 +58,7 @@ function generatePlaceholderKPIs(weekStart: Date) {
 }
 
 export default function Scheduling() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { selectedLocationId, accessibleLocations } = useApp();

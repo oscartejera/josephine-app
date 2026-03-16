@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChefHat, Printer, Calendar, Search, ChevronRight, Package, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 interface PrepIngredient {
     name: string;
@@ -26,6 +27,7 @@ interface PrepItem {
 }
 
 export default function PrepListPage() {
+  const { t } = useTranslation();
     const { selectedLocationId, selectedLocation, loading: appLoading } = useApp();
     const [prepItems, setPrepItems] = useState<PrepItem[]>([]);
     const [loading, setLoading] = useState(true);

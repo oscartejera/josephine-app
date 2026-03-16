@@ -24,6 +24,7 @@ import type { CompareMode, GranularityMode, BIDateRange } from '@/types/sales';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from './DateRangePickerNoryLike';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface BISalesHeaderProps {
   dateRange: BIDateRange;
@@ -40,6 +41,7 @@ interface BISalesHeaderProps {
 }
 
 export function BISalesHeader({
+  const { t } = useTranslation();
   dateRange,
   setDateRange,
   granularity,

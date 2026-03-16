@@ -3,13 +3,15 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StarBreakdown } from '@/hooks/useReviewsData';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface StarBreakdownTableProps {
   data: StarBreakdown[];
   isLoading: boolean;
 }
 
-export function StarBreakdownTable({ data, isLoading }: StarBreakdownTableProps) {
+export function StarBreakdownTable({
+  const { t } = useTranslation(); data, isLoading }: StarBreakdownTableProps) {
   return (
     <Card className="p-5 bg-card border border-border/60 rounded-xl">
       <h3 className="text-base font-semibold text-foreground mb-4">Rating</h3>

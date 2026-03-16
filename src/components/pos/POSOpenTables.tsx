@@ -10,6 +10,7 @@ import { Clock, Users, Receipt } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { POSTicket, POSTable } from '@/hooks/usePOSData';
+import { useTranslation } from 'react-i18next';
 
 interface POSOpenTablesProps {
   tickets: POSTicket[];
@@ -17,7 +18,8 @@ interface POSOpenTablesProps {
   onRefresh: () => void;
 }
 
-export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps) {
+export function POSOpenTables({
+  const { t } = useTranslation(); tickets, tables, onRefresh }: POSOpenTablesProps) {
   const getTableName = (tableId?: string) => {
     if (!tableId) return 'Sin mesa';
     return tables.find(t => t.id === tableId)?.name || 'Mesa';

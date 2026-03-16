@@ -4,8 +4,10 @@ import { useApp } from '@/contexts/AppContext';
 import { Store, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 export default function POS() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { locations, loading } = useApp();
   

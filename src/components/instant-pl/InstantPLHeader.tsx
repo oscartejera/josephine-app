@@ -20,6 +20,7 @@ import {
 import { FilterMode } from '@/hooks/useInstantPLData';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface InstantPLHeaderProps {
   dateRange: DateRangeValue;
@@ -38,6 +39,7 @@ const FILTER_OPTIONS: { value: FilterMode; label: string }[] = [
 ];
 
 export function InstantPLHeader({
+  const { t } = useTranslation();
   dateRange,
   dateMode,
   onDateChange,

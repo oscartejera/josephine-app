@@ -25,6 +25,7 @@ import PayrollReview from '@/components/payroll/PayrollReview';
 import PayrollSubmit from '@/components/payroll/PayrollSubmit';
 import PayrollPay from '@/components/payroll/PayrollPay';
 import { TipDistributionConfig } from '@/components/payroll/TipDistributionConfig';
+import { useTranslation } from 'react-i18next';
 
 export interface PayrollContextData {
   legalEntities: any[];
@@ -50,6 +51,7 @@ const PAYROLL_STEPS = [
 ];
 
 export default function Payroll() {
+  const { t } = useTranslation();
   const { group } = useApp();
   const { hasRole } = useAuth();
   const navigate = useNavigate();

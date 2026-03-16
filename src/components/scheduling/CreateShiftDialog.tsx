@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTranslation } from 'react-i18next';
 
 interface CreateShiftDialogProps {
   isOpen: boolean;
@@ -59,6 +60,7 @@ function isOvernightShift(startTime: string): boolean {
 }
 
 export function CreateShiftDialog({
+  const { t } = useTranslation();
   isOpen,
   onClose,
   onSubmit,

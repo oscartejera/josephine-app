@@ -16,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslation } from 'react-i18next';
 
 interface DemandOverlayProps {
   locationId: string | undefined;
@@ -26,7 +27,8 @@ interface DemandOverlayProps {
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-export function DemandOverlay({ locationId, weekStart, scheduledHoursPerDay }: DemandOverlayProps) {
+export function DemandOverlay({
+  const { t } = useTranslation(); locationId, weekStart, scheduledHoursPerDay }: DemandOverlayProps) {
   const [selectedDay, setSelectedDay] = useState(0); // 0 = Monday
   const [visible, setVisible] = useState(true);
 

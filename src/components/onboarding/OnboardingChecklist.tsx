@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 interface Step {
     id: string;
@@ -21,6 +22,7 @@ interface Step {
 }
 
 export function OnboardingChecklist() {
+  const { t } = useTranslation();
     const navigate = useNavigate();
     const { locations, group } = useApp();
     const [completed, setCompleted] = useState<Record<string, boolean>>({});

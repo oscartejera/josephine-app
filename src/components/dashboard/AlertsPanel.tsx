@@ -2,6 +2,7 @@ import { AlertTriangle, AlertCircle, Info, TrendingDown, TrendingUp } from 'luci
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export interface Alert {
   id: string;
@@ -17,7 +18,8 @@ interface AlertsPanelProps {
   className?: string;
 }
 
-export function AlertsPanel({ alerts, className }: AlertsPanelProps) {
+export function AlertsPanel({
+  const { t } = useTranslation(); alerts, className }: AlertsPanelProps) {
   const getAlertIcon = (type: Alert['type']) => {
     switch (type) {
       case 'error':

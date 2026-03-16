@@ -6,6 +6,7 @@ import { ExternalLink, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 export interface StockCountRow {
   id: string;
@@ -29,6 +30,7 @@ interface StockCountReportProps {
 }
 
 export function StockCountReport({
+  const { t } = useTranslation();
   dateRange,
   data,
   isLoading = false,

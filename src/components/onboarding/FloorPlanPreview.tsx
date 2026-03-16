@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import type { TableShape } from '@/lib/onboardingTemplates';
+import { useTranslation } from 'react-i18next';
 
 export interface TablePreview {
   id: string;
@@ -30,6 +31,7 @@ const SHAPE_COLORS: Record<TableShape, string> = {
 };
 
 export function FloorPlanPreview({
+  const { t } = useTranslation();
   tables,
   width = 800,
   height = 500,

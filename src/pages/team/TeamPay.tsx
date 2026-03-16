@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface ClockRecord {
   id: string;
@@ -49,6 +50,7 @@ interface EmployeeInfo {
 }
 
 export default function TeamPay() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [employee, setEmployee] = useState<EmployeeInfo | null>(null);

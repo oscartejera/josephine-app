@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import type { BudgetDailyData, BudgetTab } from '@/hooks/useBudgetsData';
+import { useTranslation } from 'react-i18next';
 
 interface BudgetChartProps {
   data: BudgetDailyData[];
@@ -13,7 +14,8 @@ interface BudgetChartProps {
   currency?: string;
 }
 
-export function BudgetChart({ data, activeTab, isLoading = false, currency = '€' }: BudgetChartProps) {
+export function BudgetChart({
+  const { t } = useTranslation(); data, activeTab, isLoading = false, currency = '€' }: BudgetChartProps) {
   const [viewMode, setViewMode] = useState<'eur' | 'pct'>('eur');
   const [granularity, setGranularity] = useState<'daily' | 'weekly'>('daily');
 

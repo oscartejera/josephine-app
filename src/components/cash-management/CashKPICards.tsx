@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { DollarSign, CreditCard, RotateCcw, TrendingDown } from 'lucide-react';
 import type { CashManagementMetrics } from '@/hooks/useCashManagementData';
+import { useTranslation } from 'react-i18next';
 
 interface CashKPICardsProps {
   metrics: CashManagementMetrics;
@@ -44,7 +45,8 @@ function KPICardSkeleton() {
   );
 }
 
-export function CashKPICards({ metrics, isLoading = false, currency = '€' }: CashKPICardsProps) {
+export function CashKPICards({
+  const { t } = useTranslation(); metrics, isLoading = false, currency = '€' }: CashKPICardsProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

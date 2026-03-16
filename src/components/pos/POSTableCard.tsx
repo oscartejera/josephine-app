@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Clock, ChefHat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { POSTable } from '@/hooks/usePOSData';
+import { useTranslation } from 'react-i18next';
 
 interface TableKDSInfo {
   hasActiveOrders: boolean;
@@ -25,6 +26,7 @@ interface POSTableCardProps {
 }
 
 export function POSTableCard({
+  const { t } = useTranslation();
   table,
   isSelected,
   onClick,

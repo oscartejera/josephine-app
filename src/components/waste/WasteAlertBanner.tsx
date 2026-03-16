@@ -10,6 +10,7 @@ import { AlertTriangle, Info, X, ShieldAlert, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { WasteAlert } from '@/hooks/useWasteAlerts';
+import { useTranslation } from 'react-i18next';
 
 interface WasteAlertBannerProps {
   alerts: WasteAlert[];
@@ -40,7 +41,8 @@ const SEVERITY_STYLES = {
   },
 } as const;
 
-export function WasteAlertBanner({ alerts, className }: WasteAlertBannerProps) {
+export function WasteAlertBanner({
+  const { t } = useTranslation(); alerts, className }: WasteAlertBannerProps) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   if (!alerts.length) return null;

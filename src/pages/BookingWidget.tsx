@@ -19,8 +19,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Clock, Users, MapPin, Phone, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { es } from 'date-fns/locale';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 export default function BookingWidget() {
+  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId: string }>();
   const navigate = useNavigate();
   const {

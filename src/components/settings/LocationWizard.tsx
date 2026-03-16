@@ -21,6 +21,7 @@ import {
   type SupplierTemplate,
   type SupplierCategory 
 } from '@/lib/supplierTemplates';
+import { useTranslation } from 'react-i18next';
 
 interface LocationWizardProps {
   open: boolean;
@@ -151,7 +152,8 @@ const SHAPE_COLORS: Record<string, string> = {
   rectangle: 'bg-violet-500/80 border-violet-600',
 };
 
-export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: LocationWizardProps) {
+export function LocationWizard({
+  const { t } = useTranslation(); open, onOpenChange, groupId, onSuccess }: LocationWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   
@@ -720,7 +722,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                 <Label className="text-sm">Añadir producto personalizado</Label>
                 <div className="flex gap-2 mt-2">
                   <Input
-                    placeholder="Nombre del producto"
+                    placeholder={t("common.productName")}
                     value={newProductName}
                     onChange={(e) => setNewProductName(e.target.value)}
                     className="flex-1"

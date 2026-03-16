@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Info, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { PricingOmnesCategoryResult, PricingAction } from '@/lib/pricing-omnes-engine';
+import { useTranslation } from 'react-i18next';
 
 interface PricingHealthCardsProps {
   result: PricingOmnesCategoryResult | null;
@@ -29,7 +30,8 @@ function getStateStyle(state: string) {
   return STATE_STYLES[state as keyof typeof STATE_STYLES] || STATE_STYLES.healthy;
 }
 
-export function PricingHealthCards({ result, topActions, loading }: PricingHealthCardsProps) {
+export function PricingHealthCards({
+  const { t } = useTranslation(); result, topActions, loading }: PricingHealthCardsProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Package, Truck, CheckCircle2, Clock, AlertCircle, RotateCcw, Eye, ChevronDown, ChevronUp, PackageCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 export interface OrderHistoryItem {
   id: string;
@@ -47,7 +48,8 @@ interface OrderHistoryPanelProps {
   onReorder?: (items: { skuId: string; packs: number }[]) => void;
 }
 
-export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
+export function OrderHistoryPanel({
+  const { t } = useTranslation(); onReorder }: OrderHistoryPanelProps) {
   const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);

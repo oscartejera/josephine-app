@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Sparkles, Send, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { LabourKpis, LabourLocationRow } from '@/hooks/useLabourData';
+import { useTranslation } from 'react-i18next';
 
 interface AskJosephineLabourPanelProps {
   open: boolean;
@@ -104,7 +105,8 @@ async function streamInsights({
   }
 }
 
-export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJosephineLabourPanelProps) {
+export function AskJosephineLabourPanel({
+  const { t } = useTranslation(); open, onClose, kpis, locations }: AskJosephineLabourPanelProps) {
   const [insight, setInsight] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,5 +1,6 @@
 import { CheckCircle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface CoverageBannerProps {
   coverageEndDate: Date;
@@ -7,7 +8,8 @@ interface CoverageBannerProps {
   orderDate?: Date;
 }
 
-export function CoverageBanner({ coverageEndDate, hasItems, orderDate = new Date() }: CoverageBannerProps) {
+export function CoverageBanner({
+  const { t } = useTranslation(); coverageEndDate, hasItems, orderDate = new Date() }: CoverageBannerProps) {
   if (!hasItems) return null;
 
   const coverageDays = Math.ceil((coverageEndDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));

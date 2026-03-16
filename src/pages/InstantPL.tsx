@@ -23,8 +23,10 @@ import {
   PLDateRange
 } from '@/hooks/useInstantPLData';
 import { DateMode, ChartGranularity, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 export default function InstantPL() {
+  const { t } = useTranslation();
   const { group } = useApp();
   // Date range state (default: current month)
   const [dateRange, setDateRange] = useState<PLDateRange>(() => ({

@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Bot, Send, User, Loader2, Sparkles, TrendingUp, Users, Package, X, Maximize2, Minimize2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
     id: string;
@@ -28,7 +29,8 @@ const QUICK_PROMPTS = [
     { label: '✨ Briefing', prompt: 'Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predicción para mañana.', icon: Sparkles },
 ];
 
-export function JosephineChat({ isExpanded = false, onToggleExpand, onClose }: {
+export function JosephineChat({
+  const { t } = useTranslation(); isExpanded = false, onToggleExpand, onClose }: {
     isExpanded?: boolean;
     onToggleExpand?: () => void;
     onClose?: () => void;

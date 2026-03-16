@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard, Plus, Trash2, CheckCircle2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface PaymentMethod {
     id: string;
@@ -22,6 +23,7 @@ interface PaymentMethod {
 }
 
 export function PaymentMethodsTab() {
+  const { t } = useTranslation();
     const { toast } = useToast();
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(() => {
         const saved = localStorage.getItem('paymentMethods');

@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, UserPlus, Mail, MapPin, Globe, Shield, Loader2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface TeamMember {
   id: string;
@@ -50,6 +51,7 @@ const ROLE_DISPLAY: Record<string, { label: string; variant: 'default' | 'second
 };
 
 export function TeamManager() {
+  const { t } = useTranslation();
   const { locations, group } = useApp();
   const { user: currentUser, session } = useAuth();
   const { isOwner, hasPermission } = usePermissions();

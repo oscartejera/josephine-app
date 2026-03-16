@@ -3,8 +3,10 @@ import { useApp } from '@/contexts/AppContext';
 import { usePOSData } from '@/hooks/usePOSData';
 import { POSTableCard } from '@/components/pos/POSTableCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
 
 export default function StaffFloor() {
+  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId: string }>();
   const { locations } = useApp();
   

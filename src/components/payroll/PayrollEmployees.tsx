@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
+import { useTranslation } from 'react-i18next';
 
 interface Employee {
   id: string;
@@ -37,6 +38,7 @@ interface Employee {
 }
 
 export default function PayrollEmployees({
+  const { t } = useTranslation();
   selectedLegalEntity,
   currentRun,
   refreshData,

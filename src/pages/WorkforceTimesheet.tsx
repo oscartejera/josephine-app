@@ -70,6 +70,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ──────────────────────────────────────────────
 interface TimesheetRecord {
@@ -142,6 +143,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 // ─── Main Component ─────────────────────────────────────
 export default function WorkforceTimesheet() {
+  const { t } = useTranslation();
     const { accessibleLocations, selectedLocationId } = useApp();
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
     const [records, setRecords] = useState<TimesheetRecord[]>([]);

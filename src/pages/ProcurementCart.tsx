@@ -13,10 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { format } from 'date-fns';
 import { useProcurementData } from '@/hooks/useProcurementData';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 type PaymentState = 'idle' | 'processing' | 'success' | 'error';
 
 export default function ProcurementCart() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     orderSummary,

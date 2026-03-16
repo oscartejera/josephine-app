@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CheckCircle, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -18,7 +19,8 @@ interface PublishModalProps {
   mode?: 'approve' | 'publish';
 }
 
-export function PublishModal({ isOpen, onClose, onConfirm, locationName, mode = 'publish' }: PublishModalProps) {
+export function PublishModal({
+  const { t } = useTranslation(); isOpen, onClose, onConfirm, locationName, mode = 'publish' }: PublishModalProps) {
   const [emailBody, setEmailBody] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 

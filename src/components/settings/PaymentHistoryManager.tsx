@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useApp } from '@/contexts/AppContext';
+import { useTranslation } from 'react-i18next';
 
 interface Payment {
   id: string;
@@ -33,6 +34,7 @@ interface Payment {
 }
 
 export function PaymentHistoryManager() {
+  const { t } = useTranslation();
   const { locations } = useApp();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,7 +189,7 @@ export function PaymentHistoryManager() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por ID de Stripe o Ticket..."
+              placeholder={t("settings.searchByStripeOrTicket")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9"

@@ -9,6 +9,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { format, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 export type DateRangePreset = 'today' | 'week' | 'month';
 
@@ -21,6 +22,7 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({
+  const { t } = useTranslation();
   selectedPreset,
   onPresetChange,
   startDate,

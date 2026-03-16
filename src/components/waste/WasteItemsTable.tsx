@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { WasteItem, WasteReason } from '@/hooks/useWasteData';
+import { useTranslation } from 'react-i18next';
 
 const REASON_LABELS: Record<WasteReason, string> = {
   broken: 'Broken',
@@ -41,6 +42,7 @@ interface WasteItemsTableProps {
 }
 
 export function WasteItemsTable({
+  const { t } = useTranslation();
   items,
   totalWastePercent,
   isLoading = false,

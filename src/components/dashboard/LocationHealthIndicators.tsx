@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { format, subDays } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface LocationHealth {
     locationId: string;
@@ -27,6 +28,7 @@ interface LocationHealth {
 }
 
 export function LocationHealthIndicators() {
+  const { t } = useTranslation();
     const { accessibleLocations } = useApp();
     const [healthData, setHealthData] = useState<LocationHealth[]>([]);
     const [isLoading, setIsLoading] = useState(true);

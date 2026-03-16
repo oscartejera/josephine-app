@@ -2,6 +2,7 @@ import { Star, MessageSquare, Clock, BarChart3 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReviewsSummary } from '@/hooks/useReviewsData';
+import { useTranslation } from 'react-i18next';
 
 interface ReviewsKPICardsProps {
   summary: ReviewsSummary;
@@ -35,7 +36,8 @@ function KPICard({ title, value, icon, isLoading }: KPICardProps) {
   );
 }
 
-export function ReviewsKPICards({ summary, isLoading }: ReviewsKPICardsProps) {
+export function ReviewsKPICards({
+  const { t } = useTranslation(); summary, isLoading }: ReviewsKPICardsProps) {
   const formatRating = (rating: number) => {
     return rating.toFixed(2);
   };

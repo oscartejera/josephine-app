@@ -20,6 +20,7 @@ import { es } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { resetDemoGenerator } from '@/lib/demoDataGenerator';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export type ViewMode = 'COGS' | 'GP';
 
@@ -42,6 +43,7 @@ interface InventoryHeaderProps {
 }
 
 export function InventoryHeader({
+  const { t } = useTranslation();
   dateRange,
   setDateRange,
   dateMode,

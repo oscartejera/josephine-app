@@ -12,12 +12,14 @@ import {
 } from '@/components/ui/popover';
 import { Sparkles, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface AskJosephineProps {
   salesData: any;
 }
 
-export function AskJosephine({ salesData }: AskJosephineProps) {
+export function AskJosephine({
+  const { t } = useTranslation(); salesData }: AskJosephineProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');

@@ -1,5 +1,6 @@
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface ShiftTemplate {
   id: string;
@@ -22,7 +23,8 @@ interface PopularShiftsProps {
   onDragStart?: (template: { startTime: string; endTime: string; hours: number; label: string }) => void;
 }
 
-export function PopularShifts({ onDragStart }: PopularShiftsProps) {
+export function PopularShifts({
+  const { t } = useTranslation(); onDragStart }: PopularShiftsProps) {
   const handleDragStart = (e: React.DragEvent, shift: ShiftTemplate) => {
     const payload = {
       type: 'template',

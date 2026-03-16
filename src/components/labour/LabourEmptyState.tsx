@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Database, BarChart3 } from 'lucide-react';
 import { seedLabourDemoData } from '@/hooks/useLabourData';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface LabourEmptyStateProps {
   onDataSeeded: () => void;
 }
 
-export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
+export function LabourEmptyState({
+  const { t } = useTranslation(); onDataSeeded }: LabourEmptyStateProps) {
   const [isSeeding, setIsSeeding] = useState(false);
 
   const handleSeedData = async () => {

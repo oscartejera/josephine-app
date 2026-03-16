@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ViewMode } from '@/hooks/useSchedulingSupabase';
+import { useTranslation } from 'react-i18next';
 
 interface ViewModeDropdownProps {
   value: ViewMode;
@@ -20,7 +21,8 @@ const VIEW_OPTIONS: { value: ViewMode; label: string; icon: typeof Users }[] = [
   { value: 'stations', label: 'Stations', icon: MapPin },
 ];
 
-export function ViewModeDropdown({ value, onChange }: ViewModeDropdownProps) {
+export function ViewModeDropdown({
+  const { t } = useTranslation(); value, onChange }: ViewModeDropdownProps) {
   const selected = VIEW_OPTIONS.find(o => o.value === value) || VIEW_OPTIONS[0];
   const Icon = selected.icon;
   

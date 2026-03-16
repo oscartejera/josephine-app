@@ -24,6 +24,7 @@ import {
 } from 'recharts';
 import type { LabourTimeseriesRow, MetricMode } from '@/hooks/useLabourData';
 import { LabourHourlyDrillDown } from './LabourHourlyDrillDown';
+import { useTranslation } from 'react-i18next';
 
 interface LabourChartProps {
   data: LabourTimeseriesRow[];
@@ -137,7 +138,8 @@ function CustomTooltip({ active, payload, label, metricMode, chartMode }: Custom
   );
 }
 
-export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
+export function LabourChart({
+  const { t } = useTranslation(); data, isLoading, metricMode }: LabourChartProps) {
   const [chartMode, setChartMode] = useState<ChartMode>('splh');
   const [drillDownOpen, setDrillDownOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState<any>(null);

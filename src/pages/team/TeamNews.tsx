@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 type AnnouncementType = 'info' | 'important' | 'celebration' | 'schedule';
 
@@ -31,6 +32,7 @@ interface Announcement {
 }
 
 export default function TeamNews() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('all');
   const { user } = useAuth();
 

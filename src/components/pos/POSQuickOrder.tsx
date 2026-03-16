@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Search, Plus, Minus, Trash2, CreditCard, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { POSProduct, CashSession } from '@/hooks/usePOSData';
+import { useTranslation } from 'react-i18next';
 
 interface POSQuickOrderProps {
   locationId: string;
@@ -26,6 +27,7 @@ interface CartItem {
 }
 
 export function POSQuickOrder({
+  const { t } = useTranslation();
   locationId,
   products,
   cashSession,

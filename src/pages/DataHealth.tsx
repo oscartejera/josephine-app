@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   AlertTriangle,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface DataHealthResult {
   last_mv_refresh: {
@@ -80,6 +81,7 @@ function healthBadge(value: number, good: number, warn: number) {
 }
 
 export default function DataHealth() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const orgId = profile?.group_id;
   const [refreshing, setRefreshing] = useState(false);

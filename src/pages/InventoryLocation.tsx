@@ -19,6 +19,7 @@ import { useInventoryData } from '@/hooks/useInventoryData';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import { useApp } from '@/contexts/AppContext';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
+import { useTranslation } from 'react-i18next';
 
 // Validate locationId format (demo IDs or UUIDs)
 function isValidLocationId(id: string | undefined): boolean {
@@ -30,6 +31,7 @@ function isValidLocationId(id: string | undefined): boolean {
 }
 
 export default function InventoryLocation() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { locationId } = useParams<{ locationId: string }>();
   const [searchParams] = useSearchParams();

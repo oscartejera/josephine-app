@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bell, Check, CheckCheck, Info, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Notification } from '@/hooks/useNotifications';
+import { useTranslation } from 'react-i18next';
 
 const typeIcons: Record<string, typeof Info> = {
     info: Info,
@@ -41,7 +42,8 @@ function formatTimeAgo(dateStr: string): string {
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
-export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
+export function NotificationBell({
+  const { t } = useTranslation(); collapsed }: { collapsed?: boolean }) {
     const navigate = useNavigate();
     const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
     const [open, setOpen] = useState(false);

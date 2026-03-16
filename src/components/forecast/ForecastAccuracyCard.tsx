@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { useForecastAccuracy, type ForecastAccuracyRow } from '@/hooks/useForecastAccuracy';
 import { Target, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 // ── Helper: rating badge ─────────────────────────────────────
 
@@ -73,7 +74,8 @@ interface ForecastAccuracyCardProps {
     locationIds: string[];
 }
 
-export function ForecastAccuracyCard({ locationIds }: ForecastAccuracyCardProps) {
+export function ForecastAccuracyCard({
+  const { t } = useTranslation(); locationIds }: ForecastAccuracyCardProps) {
     const { data: rows, isLoading } = useForecastAccuracy({ locationIds });
 
     if (isLoading) {

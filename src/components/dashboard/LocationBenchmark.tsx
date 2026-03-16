@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buildQueryContext, getKpiRangeSummary } from '@/data';
+import { useTranslation } from 'react-i18next';
 
 interface LocationKPI {
     id: string;
@@ -40,6 +41,7 @@ function getKPIIcon(value: number, kpi: keyof typeof KPI_TARGETS) {
 }
 
 export function LocationBenchmark() {
+  const { t } = useTranslation();
     const { accessibleLocations, canShowAllLocations, getDateRangeValues, dataSource, dateRange } = useApp();
     const { profile } = useAuth();
     const [kpis, setKpis] = useState<LocationKPI[]>([]);

@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface PlannedShift {
   id: string;
@@ -38,6 +39,7 @@ interface PlannedShift {
 }
 
 export default function TeamSchedule() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [currentWeekStart, setCurrentWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })

@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface MetricCardProps {
   title: string | ReactNode;
@@ -19,6 +20,7 @@ interface MetricCardProps {
 }
 
 export function MetricCard({
+  const { t } = useTranslation();
   title,
   value,
   subtitle,

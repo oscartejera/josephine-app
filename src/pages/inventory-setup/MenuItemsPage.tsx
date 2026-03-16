@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSetupCompleteness } from '@/hooks/useSetupCompleteness';
+import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
   id: string;
@@ -25,6 +26,7 @@ interface MenuItem {
 }
 
 export default function MenuItemsPage() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const orgId = profile?.group_id;
   const [search, setSearch] = useState('');

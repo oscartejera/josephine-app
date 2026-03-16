@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ReviewCard } from './ReviewCard';
 import { Review } from '@/hooks/useReviewsData';
+import { useTranslation } from 'react-i18next';
 
 interface CustomerReviewsPanelProps {
   reviews: Review[];
@@ -16,6 +17,7 @@ interface CustomerReviewsPanelProps {
 }
 
 export function CustomerReviewsPanel({
+  const { t } = useTranslation();
   reviews,
   isLoading,
   onRefine,

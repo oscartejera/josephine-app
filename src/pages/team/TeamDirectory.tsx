@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface TeamMember {
   id: string;
@@ -24,6 +25,7 @@ interface TeamMember {
 }
 
 export default function TeamDirectory() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [search, setSearch] = useState('');

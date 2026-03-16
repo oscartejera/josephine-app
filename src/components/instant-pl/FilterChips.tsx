@@ -4,6 +4,7 @@
 
 import { cn } from '@/lib/utils';
 import { ChipFilter } from '@/hooks/useInstantPLData';
+import { useTranslation } from 'react-i18next';
 
 interface ChipConfig {
   key: ChipFilter;
@@ -24,7 +25,8 @@ interface FilterChipsProps {
   onChipToggle: (chip: ChipFilter) => void;
 }
 
-export function FilterChips({ counts, activeChips, onChipToggle }: FilterChipsProps) {
+export function FilterChips({
+  const { t } = useTranslation(); counts, activeChips, onChipToggle }: FilterChipsProps) {
   return (
     <div className="flex items-center gap-2 flex-wrap py-2">
       {CHIPS.map(chip => {

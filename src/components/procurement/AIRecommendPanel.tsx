@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { RecommendationSettings } from '@/hooks/useProcurementData';
+import { useTranslation } from 'react-i18next';
 
 interface AIRecommendPanelProps {
   settings: RecommendationSettings;
@@ -19,6 +20,7 @@ interface AIRecommendPanelProps {
 }
 
 export function AIRecommendPanel({
+  const { t } = useTranslation();
   settings,
   onSettingsChange,
   onRecommend,

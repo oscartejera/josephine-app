@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Info, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
+import { useTranslation } from 'react-i18next';
 
 interface MenuEngineeringKPICardsProps {
   stats: MenuEngineeringStats | null;
@@ -13,7 +14,8 @@ function formatCurrency(value: number): string {
   return `€${value.toFixed(0)}`;
 }
 
-export function MenuEngineeringKPICards({ stats, loading }: MenuEngineeringKPICardsProps) {
+export function MenuEngineeringKPICards({
+  const { t } = useTranslation(); stats, loading }: MenuEngineeringKPICardsProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

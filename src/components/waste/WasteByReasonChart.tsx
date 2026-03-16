@@ -18,6 +18,7 @@ import {
   Cell,
 } from 'recharts';
 import type { WasteReason, WasteByReason } from '@/hooks/useWasteData';
+import { useTranslation } from 'react-i18next';
 
 const REASON_COLORS: Record<WasteReason, string> = {
   broken: '#22c55e',      // Green
@@ -45,6 +46,7 @@ interface WasteByReasonChartProps {
 }
 
 export function WasteByReasonChart({
+  const { t } = useTranslation();
   byReason,
   isLoading = false,
   currency = '€'

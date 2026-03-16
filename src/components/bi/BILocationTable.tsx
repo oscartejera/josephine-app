@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import type { BISalesData } from '@/hooks/useBISalesData';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface BILocationTableProps {
   data: BISalesData | undefined;
@@ -47,7 +48,8 @@ function DeltaValue({ value, delta }: { value: number; delta: number }) {
   );
 }
 
-export function BILocationTable({ data, isLoading }: BILocationTableProps) {
+export function BILocationTable({
+  const { t } = useTranslation(); data, isLoading }: BILocationTableProps) {
   const [search, setSearch] = useState('');
 
   const filteredLocations = useMemo(() => {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { WifiOff, Wifi } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 /**
  * OfflineBanner — shows a subtle warning when the browser loses network connectivity.
@@ -8,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
  * Auto-dismisses 3 seconds after reconnection with a success message.
  */
 export function OfflineBanner() {
+  const { t } = useTranslation();
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [showReconnected, setShowReconnected] = useState(false);
     const queryClient = useQueryClient();

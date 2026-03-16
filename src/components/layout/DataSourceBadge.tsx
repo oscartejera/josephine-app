@@ -7,6 +7,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslation } from 'react-i18next';
 
 const REASON_LABELS: Record<string, string> = {
     auto_demo_no_sync: 'Sin datos POS',
@@ -25,7 +26,8 @@ interface DataSourceBadgeProps {
     collapsed?: boolean;
 }
 
-export function DataSourceBadge({ collapsed = false }: DataSourceBadgeProps) {
+export function DataSourceBadge({
+  const { t } = useTranslation(); collapsed = false }: DataSourceBadgeProps) {
     const { dataSource, dataSourceMode, dataSourceReason, dataSourceBlocked } = useDemoMode();
 
     const isPos = dataSource === 'pos';

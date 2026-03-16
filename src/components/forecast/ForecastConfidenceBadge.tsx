@@ -9,13 +9,15 @@ import { useForecastAccuracy } from '@/hooks/useForecastAccuracy';
 import { useApp } from '@/contexts/AppContext';
 import { Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface ForecastConfidenceBadgeProps {
     className?: string;
     compact?: boolean;
 }
 
-export function ForecastConfidenceBadge({ className, compact = false }: ForecastConfidenceBadgeProps) {
+export function ForecastConfidenceBadge({
+  const { t } = useTranslation(); className, compact = false }: ForecastConfidenceBadgeProps) {
     const { locations } = useApp();
     const locationIds = locations.map(l => l.id);
 

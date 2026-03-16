@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { ViewMode } from './InventoryHeader';
+import { useTranslation } from 'react-i18next';
 
 interface InventoryCOGSGPCardProps {
   viewMode: ViewMode;
@@ -17,6 +18,7 @@ interface InventoryCOGSGPCardProps {
 }
 
 export function InventoryCOGSGPCard({
+  const { t } = useTranslation();
   viewMode,
   actualPercent,
   actualAmount,

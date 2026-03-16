@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import type { WasteTrendData, WasteReason, WasteByReason } from '@/hooks/useWasteData';
+import { useTranslation } from 'react-i18next';
 
 const REASON_COLORS: Record<WasteReason, string> = {
   broken: '#22c55e',      // Green
@@ -43,6 +44,7 @@ interface WasteTrendChartProps {
 }
 
 export function WasteTrendChart({
+  const { t } = useTranslation();
   trendData,
   byReason,
   isLoading = false

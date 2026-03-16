@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Platform } from '@/hooks/useReviewsData';
+import { useTranslation } from 'react-i18next';
 
 interface ReviewsHeaderProps {
   dateRange: DateRangeValue;
@@ -21,6 +22,7 @@ interface ReviewsHeaderProps {
 }
 
 export function ReviewsHeader({
+  const { t } = useTranslation();
   dateRange,
   dateMode,
   onDateChange,

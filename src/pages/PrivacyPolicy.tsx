@@ -6,8 +6,10 @@
 import { ArrowLeft, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function PrivacyPolicy() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (

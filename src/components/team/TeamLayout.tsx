@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useTranslation } from 'react-i18next';
 
 const teamNavItems = [
   { icon: Home, label: 'Inicio', path: '/team' },
@@ -29,6 +30,7 @@ const teamNavItems = [
 ];
 
 export function TeamLayout() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, profile } = useAuth();

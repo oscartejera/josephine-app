@@ -13,6 +13,7 @@ import { Truck, Settings2, Mail, Globe, Phone, CheckCircle2, AlertCircle, Loader
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useTranslation } from 'react-i18next';
 
 interface Supplier {
   id: string;
@@ -42,6 +43,7 @@ const API_FORMATS = [
 ] as const;
 
 export function SupplierIntegrationManager() {
+  const { t } = useTranslation();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);

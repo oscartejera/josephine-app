@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { Search, AlertTriangle, TrendingDown, Package, ClipboardCheck, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 function useLocations() {
     const { group } = useApp();
@@ -55,6 +56,7 @@ function useInventoryItemsForAudit(locationId: string | null) {
 }
 
 export default function StockAuditPage() {
+  const { t } = useTranslation();
     const { toast } = useToast();
     const { data: locations } = useLocations();
     const [locationId, setLocationId] = useState('');

@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { FloorMap, POSTable, POSProduct, POSTicket } from '@/hooks/usePOSData';
+import { useTranslation } from 'react-i18next';
 
 interface POSFloorPlanProps {
   locationId: string;
@@ -17,6 +18,7 @@ interface POSFloorPlanProps {
 }
 
 export function POSFloorPlan({
+  const { t } = useTranslation();
   locationId,
   floorMaps,
   tables,

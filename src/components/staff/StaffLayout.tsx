@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useTranslation } from 'react-i18next';
 
 const staffNavItems = [
   { icon: Map, label: 'Mesas', path: 'floor' },
@@ -14,6 +15,7 @@ const staffNavItems = [
 ];
 
 export function StaffLayout() {
+  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId: string }>();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();

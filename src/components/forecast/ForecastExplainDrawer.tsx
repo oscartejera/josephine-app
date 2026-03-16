@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Brain, Cloud, Calendar, TrendingUp, Sparkles } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 interface ForecastExplainDrawerProps {
     open: boolean;
@@ -65,7 +66,8 @@ function ExplainFactor({
     );
 }
 
-export function ForecastExplainDrawer({ open, onClose, locationId, date }: ForecastExplainDrawerProps) {
+export function ForecastExplainDrawer({
+  const { t } = useTranslation(); open, onClose, locationId, date }: ForecastExplainDrawerProps) {
     const { data: detail, isLoading } = useQuery({
         queryKey: ['forecast-explain', locationId, date],
         enabled: open && !!locationId && !!date,
@@ -131,7 +133,7 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                                     icon={TrendingUp}
                                     label="Tendencia Base"
                                     impact={`€${Math.round(detail.trend || 0).toLocaleString('es-ES')}`}
-                                    detail="Tendencia de crecimiento a largo plazo del negocio"
+                                    detail={t("bi.longTermGrowthTrend")}
                                     color="bg-blue-50 text-blue-600"
                                 />
                                 <ExplainFactor

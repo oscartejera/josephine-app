@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { LabourLocationRow, MetricMode } from '@/hooks/useLabourData';
+import { useTranslation } from 'react-i18next';
 
 interface LabourLocationsTableProps {
   data: LabourLocationRow[];
@@ -74,7 +75,8 @@ function TableSkeleton() {
   );
 }
 
-export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLocationsTableProps) {
+export function LabourLocationsTable({
+  const { t } = useTranslation(); data, isLoading, metricMode }: LabourLocationsTableProps) {
   const navigate = useNavigate();
 
   if (isLoading) {

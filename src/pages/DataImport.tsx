@@ -26,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 // ── Types ─────────────────────────────────────────────────────────
 type ImportStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'done';
@@ -231,6 +232,7 @@ function downloadTemplate(template: typeof CSV_TEMPLATES[0]) {
 
 // ── Component ─────────────────────────────────────────────────────
 export default function DataImport() {
+  const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('import');
     const [step, setStep] = useState<ImportStep>('upload');
     const [parsed, setParsed] = useState<ParsedData | null>(null);

@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
+import { useTranslation } from 'react-i18next';
 
 interface AuditCheck {
   name: string;
@@ -32,6 +33,7 @@ interface AuditResult {
 }
 
 export default function DebugDataCoherence() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { locations } = useApp();
   const [days, setDays] = useState(30);

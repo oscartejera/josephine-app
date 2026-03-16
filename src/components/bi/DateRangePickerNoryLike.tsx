@@ -25,6 +25,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
 
 export type DateMode = 'daily' | 'weekly' | 'monthly';
 export type ChartGranularity = 'hourly' | 'daily';
@@ -50,6 +51,7 @@ const MODE_BUTTONS: { key: DateMode; label: string }[] = [
 ];
 
 export function DateRangePickerNoryLike({
+  const { t } = useTranslation();
   value,
   onChange,
   mode,

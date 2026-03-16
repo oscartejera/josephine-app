@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import SyncSplashScreen from '@/components/integrations/SyncSplashScreen';
+import { useTranslation } from 'react-i18next';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -138,6 +139,7 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
 }
 
 export default function SquareIntegration() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { group } = useApp();
   const orgId = group?.id || profile?.group_id || null;

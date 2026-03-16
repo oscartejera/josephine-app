@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 interface ScheduleToastProps {
   isVisible: boolean;
@@ -9,7 +10,8 @@ interface ScheduleToastProps {
   onUndo: () => void;
 }
 
-export function ScheduleToast({ isVisible, hoursAdded, onAccept, onUndo }: ScheduleToastProps) {
+export function ScheduleToast({
+  const { t } = useTranslation(); isVisible, hoursAdded, onAccept, onUndo }: ScheduleToastProps) {
   return (
     <AnimatePresence>
       {isVisible && (

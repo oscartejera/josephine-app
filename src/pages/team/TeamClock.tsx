@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function TeamClock() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [locationId, setLocationId] = useState<string | null>(null);
   const [locationName, setLocationName] = useState<string>('');

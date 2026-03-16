@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, ArrowUpDown, Target } from 'lucide-react';
 import type { PricingOmnesCategoryResult } from '@/lib/pricing-omnes-engine';
+import { useTranslation } from 'react-i18next';
 
 interface PricingOmnesTableProps {
   result: PricingOmnesCategoryResult | null;
@@ -21,7 +22,8 @@ const BAND_BADGES: Record<string, { label: string; className: string }> = {
   upper: { label: 'Upper', className: 'bg-rose-500/20 text-rose-600' },
 };
 
-export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
+export function PricingOmnesTable({
+  const { t } = useTranslation(); result, loading }: PricingOmnesTableProps) {
   const [search, setSearch] = useState('');
   const [bandFilter, setBandFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('listed_price');

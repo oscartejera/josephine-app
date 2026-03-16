@@ -1,6 +1,7 @@
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface NoAccessProps {
   title?: string;
@@ -9,6 +10,7 @@ interface NoAccessProps {
 }
 
 export function NoAccess({
+  const { t } = useTranslation();
   title = 'Acceso Denegado',
   message = 'No tienes permisos para ver esta página. Contacta a tu administrador si crees que esto es un error.',
   showBackButton = true,

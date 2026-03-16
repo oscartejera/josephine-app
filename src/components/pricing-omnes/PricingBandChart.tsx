@@ -13,6 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import type { PricingOmnesCategoryResult } from '@/lib/pricing-omnes-engine';
+import { useTranslation } from 'react-i18next';
 
 interface PricingBandChartProps {
   result: PricingOmnesCategoryResult | null;
@@ -56,7 +57,8 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   );
 }
 
-export function PricingBandChart({ result, loading }: PricingBandChartProps) {
+export function PricingBandChart({
+  const { t } = useTranslation(); result, loading }: PricingBandChartProps) {
   const chartData = useMemo(() => {
     if (!result) return [];
     return result.items

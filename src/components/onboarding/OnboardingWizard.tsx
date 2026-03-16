@@ -25,6 +25,7 @@ import {
   type RoleTemplate,
   type TableShape,
 } from '@/lib/onboardingTemplates';
+import { useTranslation } from 'react-i18next';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -70,7 +71,8 @@ const STEPS: Step[] = [
   { id: 'inventory', title: 'Inventario', description: 'Ingredientes (opcional)', icon: Package },
 ];
 
-export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
+export function OnboardingWizard({
+  const { t } = useTranslation(); onComplete }: OnboardingWizardProps) {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);

@@ -12,6 +12,7 @@ import {
     UserPlus, Shield, MapPin, Loader2,
     Mail, Copy, CheckCircle, Users, Trash2
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ManagerEntry {
     id: string;
@@ -23,6 +24,7 @@ interface ManagerEntry {
 }
 
 export function TeamManagersTab() {
+  const { t } = useTranslation();
     const { user, profile } = useAuth();
     const { locations } = useApp();
     const [firstName, setFirstName] = useState('');

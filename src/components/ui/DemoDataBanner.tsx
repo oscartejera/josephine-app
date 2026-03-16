@@ -5,6 +5,7 @@
 
 import { AlertTriangle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { useTranslation } from 'react-i18next';
 
 interface DemoDataBannerProps {
     /** Optional custom message */
@@ -13,7 +14,8 @@ interface DemoDataBannerProps {
     forceShow?: boolean;
 }
 
-export function DemoDataBanner({ message, forceShow }: DemoDataBannerProps) {
+export function DemoDataBanner({
+  const { t } = useTranslation(); message, forceShow }: DemoDataBannerProps) {
     const { dataSource } = useApp();
 
     // Show when in demo mode or forced

@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, Send, Loader2, User, Bot, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -78,6 +79,7 @@ const suggestedQuestions = [
 ];
 
 export function AskJosephineDrawer({
+  const { t } = useTranslation();
   open,
   onOpenChange,
   metrics,

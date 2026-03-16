@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, CartesianGrid } from 'recharts';
 import type { ViewMode } from './InventoryHeader';
+import { useTranslation } from 'react-i18next';
 
 interface CategoryBreakdown {
   category: string;
@@ -21,6 +22,7 @@ interface InventoryBreakdownChartProps {
 }
 
 export function InventoryBreakdownChart({
+  const { t } = useTranslation();
   viewMode,
   data,
   totalSales,

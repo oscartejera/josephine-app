@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Supplier } from '@/hooks/useProcurementData';
+import { useTranslation } from 'react-i18next';
 
 interface SupplierHeaderProps {
   supplier: Supplier;
@@ -23,6 +24,7 @@ interface SupplierHeaderProps {
 }
 
 export function SupplierHeader({
+  const { t } = useTranslation();
   supplier,
   deliveryDaysLabel,
   orderDate,

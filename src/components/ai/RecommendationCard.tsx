@@ -17,6 +17,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface Recommendation {
   id: string;
@@ -72,7 +73,8 @@ const typeConfig = {
   },
 };
 
-export function RecommendationCard({ 
+export function RecommendationCard({
+  const { t } = useTranslation(); 
   recommendation, 
   onApprove, 
   onReject 

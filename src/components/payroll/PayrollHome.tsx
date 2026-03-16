@@ -18,6 +18,7 @@ import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
+import { useTranslation } from 'react-i18next';
 
 interface Issue {
   type: 'critical' | 'warning' | 'info';
@@ -27,6 +28,7 @@ interface Issue {
 }
 
 export default function PayrollHome({
+  const { t } = useTranslation();
   legalEntities,
   selectedLegalEntity,
   setSelectedLegalEntity,

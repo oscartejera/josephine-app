@@ -53,6 +53,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ──────────────────────────────────────────────
 interface Employee {
@@ -109,6 +110,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 // ─── Main Component ─────────────────────────────────────
 export default function WorkforceOnboarding() {
+  const { t } = useTranslation();
     const { accessibleLocations } = useApp();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
@@ -566,7 +568,7 @@ export default function WorkforceOnboarding() {
                             <Textarea
                                 value={contractForm.notes}
                                 onChange={(e) => setContractForm((f) => ({ ...f, notes: e.target.value }))}
-                                placeholder="Observaciones del contrato..."
+                                placeholder={t("workforce.contractNotes")}
                                 rows={3}
                             />
                         </div>

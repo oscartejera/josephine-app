@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, ChevronRight, Package, ChefHat, ShoppingCart, BarChart3 } from 'lucide-react';
 import { useSetupCompleteness } from '@/hooks/useSetupCompleteness';
+import { useTranslation } from 'react-i18next';
 
 const STEPS = [
   {
@@ -38,6 +39,7 @@ const STEPS = [
 ];
 
 export function SetupBanner() {
+  const { t } = useTranslation();
   const { data, isLoading } = useSetupCompleteness();
 
   if (isLoading || !data) return null;

@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface EmployeeRevenueTableProps {
     locationId?: string | null;
@@ -65,7 +66,8 @@ function RoiBadge({ roi }: { roi: number }) {
     );
 }
 
-export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeRevenueTableProps) {
+export function EmployeeRevenueTable({
+  const { t } = useTranslation(); locationId, dateFrom, dateTo }: EmployeeRevenueTableProps) {
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

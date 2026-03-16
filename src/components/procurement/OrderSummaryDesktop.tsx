@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import type { OrderSummary } from '@/hooks/useProcurementData';
+import { useTranslation } from 'react-i18next';
 
 interface OrderSummaryDesktopProps {
   summary: OrderSummary;
@@ -14,6 +15,7 @@ interface OrderSummaryDesktopProps {
 }
 
 export function OrderSummaryDesktop({
+  const { t } = useTranslation();
   summary,
   onAutofill,
   onClearCart,

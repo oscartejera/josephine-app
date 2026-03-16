@@ -13,6 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import type { MenuEngineeringItem, MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
+import { useTranslation } from 'react-i18next';
 
 interface MenuEngineeringMatrixProps {
   items: MenuEngineeringItem[];
@@ -65,6 +66,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 export function MenuEngineeringMatrix({
+  const { t } = useTranslation();
   items,
   stats,
   loading,

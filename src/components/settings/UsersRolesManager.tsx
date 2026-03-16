@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Users, Plus, Pencil, Trash2, Shield, MapPin, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import { useTranslation } from 'react-i18next';
 
 interface UserWithRoles {
   id: string;
@@ -55,6 +56,7 @@ const ROLE_DISPLAY: Record<string, { label: string; variant: 'default' | 'second
 };
 
 export function UsersRolesManager() {
+  const { t } = useTranslation();
   const { locations, group } = useApp();
   const { user: currentUser } = useAuth();
   const { isOwner, hasPermission } = usePermissions();

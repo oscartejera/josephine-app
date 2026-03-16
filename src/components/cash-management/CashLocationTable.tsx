@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { CashLocationData } from '@/hooks/useCashManagementData';
+import { useTranslation } from 'react-i18next';
 
 interface CashLocationTableProps {
   data: CashLocationData[];
@@ -33,7 +34,8 @@ function DeltaCell({ value, suffix = '%', inverse = false }: { value: number; su
   );
 }
 
-export function CashLocationTable({ data, isLoading = false, currency = '€' }: CashLocationTableProps) {
+export function CashLocationTable({
+  const { t } = useTranslation(); data, isLoading = false, currency = '€' }: CashLocationTableProps) {
   const [search, setSearch] = useState('');
 
   const filteredData = useMemo(() => {

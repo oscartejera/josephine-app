@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import type { BISalesData, BIDateRange } from '@/hooks/useBISalesData';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface BISalesChartProps {
   data: BISalesData | undefined;
@@ -138,7 +139,8 @@ function CustomLegend() {
   );
 }
 
-export function BISalesChart({ data, isLoading, granularity, dateRange }: BISalesChartProps) {
+export function BISalesChart({
+  const { t } = useTranslation(); data, isLoading, granularity, dateRange }: BISalesChartProps) {
   if (isLoading || !data) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">

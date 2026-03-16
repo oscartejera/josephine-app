@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useTranslation } from 'react-i18next';
 
 interface WeatherDayData {
   date: string;
@@ -229,7 +230,8 @@ function DropZone({
   );
 }
 
-export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
+export function ScheduleGrid({
+  const { t } = useTranslation(); data, viewMode, positions, weatherData, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
   const [dragData, setDragData] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
   const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);

@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   moduleName: string;

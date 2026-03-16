@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const PLAN_META: Record<string, { label: string; icon: typeof Zap; color: string }> = {
   free: { label: 'Starter', icon: Zap, color: 'text-gray-500' },
@@ -28,6 +29,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secon
 };
 
 export function BillingTab() {
+  const { t } = useTranslation();
   const { group } = useApp();
   const navigate = useNavigate();
   const [portalLoading, setPortalLoading] = useState(false);

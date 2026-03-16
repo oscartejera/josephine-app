@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useCategorySales } from '@/hooks/useCategorySales';
+import { useTranslation } from 'react-i18next';
 
 const CATEGORY_COLORS: Record<string, string> = {
   'Bebidas': 'hsl(var(--chart-4))',
@@ -16,7 +17,8 @@ interface CategoryBreakdownChartProps {
   className?: string;
 }
 
-export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProps) {
+export function CategoryBreakdownChart({
+  const { t } = useTranslation(); className }: CategoryBreakdownChartProps) {
   const { categories, loading, totalSales } = useCategorySales();
 
   if (loading) {

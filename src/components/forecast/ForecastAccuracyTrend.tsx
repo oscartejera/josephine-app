@@ -10,6 +10,7 @@ import { useApp } from '@/contexts/AppContext';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import { format, subDays } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface AccuracyPoint {
     date: string;
@@ -19,7 +20,8 @@ interface AccuracyPoint {
     forecast_sales: number;
 }
 
-export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }) {
+export function ForecastAccuracyTrend({
+  const { t } = useTranslation(); locationIds }: { locationIds: string[] }) {
     const { data: points, isLoading } = useQuery({
         queryKey: ['accuracy-trend', locationIds],
         enabled: locationIds.length > 0,

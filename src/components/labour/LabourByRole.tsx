@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { MetricMode } from '@/hooks/useLabourData';
+import { useTranslation } from 'react-i18next';
 
 interface RoleData {
   role: string;
@@ -55,7 +56,8 @@ function RoleSkeleton() {
   );
 }
 
-export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
+export function LabourByRole({
+  const { t } = useTranslation(); isLoading, metricMode }: LabourByRoleProps) {
   // Mock data - in production would come from backend
   const rolesData: RoleData[] = [
     { role: 'Chef', hours: 180, cost: 3600, salesShare: 35, col: 28.5, variance: -2.1, count: 8 },

@@ -7,6 +7,7 @@ import { LocationPLCard } from './LocationPLCard';
 import { LocationPLMetrics, ViewMode } from '@/hooks/useInstantPLData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface LocationCardsGridProps {
   locations: LocationPLMetrics[];
@@ -14,7 +15,8 @@ interface LocationCardsGridProps {
   isLoading: boolean;
 }
 
-export function LocationCardsGrid({ 
+export function LocationCardsGrid({
+  const { t } = useTranslation(); 
   locations, 
   viewMode, 
   isLoading 

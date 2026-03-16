@@ -10,8 +10,10 @@ import {
   TimeOffRequestDialog,
   TimeOffRequestsList,
 } from '@/components/availability';
+import { useTranslation } from 'react-i18next';
 
 export default function Availability() {
+  const { t } = useTranslation();
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'availability' | 'requests' | 'team'>('availability');

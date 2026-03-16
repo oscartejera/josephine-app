@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTranslation } from 'react-i18next';
 
 interface SupplierWithStats {
   id: string;
@@ -59,6 +60,7 @@ interface OrderLine {
 }
 
 export default function ProcurementOrders() {
+  const { t } = useTranslation();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<'place-order' | 'orders' | 'invoices' | 'credits'>('orders');
   const [suppliers, setSuppliers] = useState<SupplierWithStats[]>([]);

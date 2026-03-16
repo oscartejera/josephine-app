@@ -14,6 +14,7 @@ import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
 import { Package, CheckCircle2, AlertTriangle, ArrowRight, RotateCcw, ClipboardCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface CountItem {
     id: string;
@@ -27,7 +28,8 @@ interface CountItem {
     categoryName: string;
 }
 
-export function SmartCountingFlow({ locationId }: { locationId: string | null }) {
+export function SmartCountingFlow({
+  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
     const { group } = useApp();
     const [items, setItems] = useState<CountItem[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);

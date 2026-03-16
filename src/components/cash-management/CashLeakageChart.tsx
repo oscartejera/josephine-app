@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import type { CashDailyData } from '@/hooks/useCashManagementData';
+import { useTranslation } from 'react-i18next';
 
 interface CashLeakageChartProps {
   data: CashDailyData[];
@@ -12,7 +13,8 @@ interface CashLeakageChartProps {
   currency?: string;
 }
 
-export function CashLeakageChart({ data, isLoading = false, currency = '€' }: CashLeakageChartProps) {
+export function CashLeakageChart({
+  const { t } = useTranslation(); data, isLoading = false, currency = '€' }: CashLeakageChartProps) {
   const [viewMode, setViewMode] = useState<'eur' | 'pct'>('eur');
 
   if (isLoading) {

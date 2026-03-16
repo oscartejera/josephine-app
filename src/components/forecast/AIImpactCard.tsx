@@ -16,6 +16,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { startOfMonth, format, subMonths } from 'date-fns';
 import { Sparkles, TrendingDown, Clock, Target, ShieldCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const INDUSTRY_COL_BENCHMARK = 30;     // Industry avg COL% without AI
 const INDUSTRY_WASTE_BENCHMARK = 5;    // Industry avg waste% without AI
@@ -148,6 +149,7 @@ function ImpactKPI({
 }
 
 export function AIImpactCard() {
+  const { t } = useTranslation();
     const { data, isLoading } = useAIImpactData();
 
     if (isLoading) {

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LocationRatingData } from '@/hooks/useReviewsData';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface RatingByLocationTableProps {
   data: LocationRatingData[];
@@ -12,7 +13,8 @@ interface RatingByLocationTableProps {
   onLocationClick: (locationId: string) => void;
 }
 
-export function RatingByLocationTable({ data, isLoading, onLocationClick }: RatingByLocationTableProps) {
+export function RatingByLocationTable({
+  const { t } = useTranslation(); data, isLoading, onLocationClick }: RatingByLocationTableProps) {
   const [search, setSearch] = useState('');
 
   const filteredData = data.filter((loc) =>

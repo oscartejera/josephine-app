@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plug2, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const availableIntegrations = [
   {
@@ -45,6 +46,7 @@ const availableIntegrations = [
 ];
 
 export default function Integrations() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (

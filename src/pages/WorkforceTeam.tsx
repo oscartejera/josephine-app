@@ -69,6 +69,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ──────────────────────────────────────────────
 interface Employee {
@@ -159,6 +160,7 @@ const getAvatarColor = (name: string) =>
 
 // ─── Main Component ─────────────────────────────────────
 export default function WorkforceTeam() {
+  const { t } = useTranslation();
     const { accessibleLocations, selectedLocationId } = useApp();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [clockedIn, setClockedIn] = useState<ClockRecord[]>([]);
@@ -481,7 +483,7 @@ export default function WorkforceTeam() {
                         <div className="relative flex-1 min-w-[200px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Buscar por nombre..."
+                                placeholder={t("common.searchByName")}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="pl-10"
@@ -962,7 +964,7 @@ export default function WorkforceTeam() {
                             <Input
                                 value={announcementForm.title}
                                 onChange={(e) => setAnnouncementForm((f) => ({ ...f, title: e.target.value }))}
-                                placeholder="Título del anuncio"
+                                placeholder={t("workforce.announcementTitle")}
                             />
                         </div>
                         <div className="space-y-2">
