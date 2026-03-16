@@ -246,7 +246,7 @@ export default function Dashboard() {
             />,
             <MetricCard
               key="labor"
-              title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason=t("dashboard.labourPartiallyEstimated") />}</span>}
+              title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason={t("dashboard.labourPartiallyEstimated")} />}</span>}
               value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
               icon={Users}
               trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}

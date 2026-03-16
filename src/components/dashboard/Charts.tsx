@@ -13,12 +13,13 @@ interface HourlySalesChartProps {
   className?: string;
 }
 
-export function HourlySalesChart({
-  const { t } = useTranslation(); data, title = t("dashboard.hourlySales"), className }: HourlySalesChartProps) {
+export function HourlySalesChart({ data, title, className }: HourlySalesChartProps) {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t("dashboard.hourlySales");
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardTitle className="text-lg">{resolvedTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
@@ -89,11 +90,13 @@ interface HourlyLaborChartProps {
   className?: string;
 }
 
-export function HourlyLaborChart({ data, title = t("dashboard.hourlyLabour"), className }: HourlyLaborChartProps) {
+export function HourlyLaborChart({ data, title, className }: HourlyLaborChartProps) {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t("dashboard.hourlyLabour");
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardTitle className="text-lg">{resolvedTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
