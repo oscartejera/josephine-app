@@ -24,15 +24,9 @@ import {
 import type { WasteItem, WasteReason } from '@/hooks/useWasteData';
 import { useTranslation } from 'react-i18next';
 
-const REASON_LABELS: Record<WasteReason, string> = {
-  broken: 'Broken',
-  end_of_day: 'End of day',
-  expired: 'Expired',
-  theft: 'Theft',
-  other: 'Other'
-};
+const REASON_KEYS: WasteReason[] = ['broken', 'end_of_day', 'expired', 'theft', 'other'];
 
-const REASON_OPTIONS: WasteReason[] = ['broken', 'end_of_day', 'expired', 'theft', 'other'];
+
 
 interface WasteItemsTableProps {
   items: WasteItem[];
@@ -105,9 +99,9 @@ export function WasteItemsTable({
         <CardContent className="py-16">
           <div className="flex flex-col items-center justify-center text-center">
             <Search className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No waste data found</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('wasteTable.noData')}</h3>
             <p className="text-sm text-muted-foreground max-w-md">
-              No waste events recorded for the selected period and location.
+              {t('wasteTable.noDataDesc')}
             </p>
           </div>
         </CardContent>
@@ -119,7 +113,7 @@ export function WasteItemsTable({
     <Card className="border-border">
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-sm font-medium text-foreground">% of total waste</p>
+          <p className="text-sm font-medium text-foreground">{t('wasteTable.percentOfTotal')}</p>
           <div className="flex items-center gap-2">
             {/* Reason Filter */}
             <Select
@@ -127,13 +121,13 @@ export function WasteItemsTable({
               onValueChange={(val) => setReasonFilter(val as WasteReason | 'all')}
             >
               <SelectTrigger className="h-9 w-[130px] text-sm bg-card border-border">
-                <SelectValue placeholder="All reasons" />
+                <SelectValue placeholder={t('wasteTable.allReasons')} />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                <SelectItem value="all">All reasons</SelectItem>
-                {REASON_OPTIONS.map(reason => (
+                <SelectItem value="all">{t('wasteTable.allReasons')}</SelectItem>
+                {REASON_KEYS.map(reason => (
                   <SelectItem key={reason} value={reason}>
-                    {REASON_LABELS[reason]}
+                    {t(`logWaste.reasons.${reason}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -155,7 +149,7 @@ export function WasteItemsTable({
             <div className="relative w-full sm:w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by item name"
+                placeholder={t('wasteTable.searchByItem')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-9 text-sm"
@@ -170,23 +164,23 @@ export function WasteItemsTable({
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b">
                 <TableHead className="text-xs font-medium text-muted-foreground min-w-[180px]">
-                  Items
+                  {t('wasteTable.items')}
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">
-                  Quantity
+                  {t('wasteTable.quantity')}
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">
-                  Value
+                  {t('wasteTable.value')}
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground w-24">
-                  Type
+                  {t('wasteTable.type')}
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground w-32">
-                  Top reason by value
+                  {t('wasteTable.topReason')}
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">
                   <div className="flex items-center justify-end gap-1">
-                    % of sales
+                    {t('wasteTable.percentOfSales')}
                     <ArrowDown className="h-3 w-3" />
                   </div>
                 </TableHead>
@@ -208,14 +202,14 @@ export function WasteItemsTable({
                       {currency}{item.value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="py-3 text-sm text-muted-foreground">
-                      {item.type === 'ingredient' ? 'Ingredient' : 'Menu item'}
+                      {item.type === 'ingredient' ? t('wasteTable.ingredient') : t('wasteTable.menuItem')}
                     </TableCell>
                     <TableCell className="py-3">
                       <Badge
                         variant="secondary"
                         className="text-[11px] font-normal bg-primary/10 text-primary border-0 px-2 py-0.5"
                       >
-                        {REASON_LABELS[item.topReason]}
+                        {t(`logWaste.reasons.${item.topReason}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="py-3">

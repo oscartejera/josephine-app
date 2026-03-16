@@ -34,13 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useTranslation } from 'react-i18next';
 
-const WASTE_REASONS = [
-  { value: 'broken', label: 'Broken' },
-  { value: 'end_of_day', label: 'End of day' },
-  { value: 'expired', label: 'Expired' },
-  { value: 'theft', label: 'Theft' },
-  { value: 'other', label: 'Other' },
-] as const;
+const WASTE_REASON_KEYS = ['broken', 'end_of_day', 'expired', 'theft', 'other'] as const;
 
 const formSchema = z.object({
   inventory_item_id: z.string().min(1, 'Please select an item'),
@@ -123,7 +117,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast({ variant: 'destructive', title: 'Photo too large', description: 'Max 5 MB.' });
+      toast({ variant: 'destructive', title: t('logWaste.photoTooLarge'), description: t('logWaste.maxSize') });
       return;
     }
     setPhotoFile(file);
@@ -147,8 +141,8 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
       if (isDemo) {
         // Simulate success for demo
         toast({
-          title: 'Waste logged (Demo)',
-          description: 'In production, this would save to the database.',
+          title: t('logWaste.demoTitle'),
+          description: t('logWaste.demoDesc'),
         });
         setOpen(false);
         form.reset();
@@ -187,8 +181,8 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
       if (error) throw error;
 
       toast({
-        title: 'Waste logged successfully',
-        description: `${quantity} units recorded as ${values.reason}`,
+        title: t('logWaste.successTitle'),
+        description: t('logWaste.successDesc', { quantity, reason: values.reason }),
       });
 
       setOpen(false);
@@ -199,8 +193,8 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
       console.error('Error logging waste:', error);
       toast({
         variant: 'destructive',
-        title: 'Error logging waste',
-        description: 'Please try again.',
+        title: t('logWaste.errorTitle'),
+        description: t('logWaste.errorDesc'),
       });
     } finally {
       setIsSubmitting(false);
@@ -214,14 +208,14 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Log Waste
+          {t('logWaste.logWaste')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Log Waste Event</DialogTitle>
+          <DialogTitle>{t('logWaste.dialogTitle')}</DialogTitle>
           <DialogDescription>
-            Record a new waste event for inventory tracking.
+            {t('logWaste.dialogDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -233,11 +227,11 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
               name="location_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location</FormLabel>
+                  <FormLabel>{t('logWaste.location')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
+                        <SelectValue placeholder={t('logWaste.selectLocation')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -259,7 +253,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
               name="inventory_item_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Item</FormLabel>
+                  <FormLabel>{t('logWaste.item')}</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     value={field.value}
@@ -267,7 +261,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={isLoadingItems ? "Loading items..." : "Select item"} />
+                        <SelectValue placeholder={isLoadingItems ? t('logWaste.loadingItems') : t('logWaste.selectItem')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -290,14 +284,14 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Quantity {selectedItem?.unit ? `(${selectedItem.unit})` : ''}
+                    {t('logWaste.quantity')} {selectedItem?.unit ? `(${selectedItem.unit})` : ''}
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.1"
                       min="0.1"
-                      placeholder="Enter quantity"
+                      placeholder={t('logWaste.enterQuantity')}
                       {...field}
                     />
                   </FormControl>
@@ -312,17 +306,17 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason</FormLabel>
+                  <FormLabel>{t('logWaste.reason')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select reason" />
+                        <SelectValue placeholder={t('logWaste.selectReason')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {WASTE_REASONS.map((reason) => (
-                        <SelectItem key={reason.value} value={reason.value}>
-                          {reason.label}
+                      {WASTE_REASON_KEYS.map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {t(`logWaste.reasons.${key}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -335,7 +329,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
 
             {/* Photo upload */}
             <div className="space-y-2">
-              <FormLabel>Photo (optional)</FormLabel>
+              <FormLabel>{t('logWaste.photoOptional')}</FormLabel>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -369,7 +363,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Camera className="h-4 w-4" />
-                  Take / Upload Photo
+                  {t('logWaste.takePhoto')}
                 </Button>
               )}
             </div>
@@ -380,13 +374,13 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
               name="waste_value"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Value (€)</FormLabel>
+                  <FormLabel>{t('logWaste.valueEuro')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.01"
                       min="0"
-                      placeholder="Calculated automatically"
+                      placeholder={t('logWaste.calculatedAuto')}
                       {...field}
                     />
                   </FormControl>
@@ -401,10 +395,10 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
                 variant="outline"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Log Waste'}
+                {isSubmitting ? t('common.saving') : t('logWaste.logWaste')}
               </Button>
             </DialogFooter>
           </form>

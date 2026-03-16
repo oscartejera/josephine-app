@@ -43,8 +43,8 @@ export default function Insights() {
   const modules: InsightModule[] = [
     {
       id: 'sales',
-      title: 'Sales',
-      description: 'Analiza ventas, canales, productos y forecast en tiempo real',
+      title: t('insights.sales'),
+      description: t('insights.salesDesc'),
       icon: <TrendingUp className="h-8 w-8" />,
       path: '/sales',
       color: 'text-indigo-600',
@@ -53,8 +53,8 @@ export default function Insights() {
     },
     {
       id: 'labour',
-      title: 'Labour',
-      description: 'Optimiza COL%, SPLH, OPLH y costos de personal',
+      title: t('insights.labour'),
+      description: t('insights.labourDesc'),
       icon: <Users className="h-8 w-8" />,
       path: '/insights/labour',
       color: 'text-emerald-600',
@@ -63,8 +63,8 @@ export default function Insights() {
     },
     {
       id: 'instant-pl',
-      title: 'Instant P&L',
-      description: 'P&L en tiempo real por ubicación con drill-down',
+      title: t('insights.instantPL'),
+      description: t('insights.instantPLDesc'),
       icon: <DollarSign className="h-8 w-8" />,
       path: '/insights/instant-pl',
       color: 'text-blue-600',
@@ -73,8 +73,8 @@ export default function Insights() {
     },
     {
       id: 'forecasting',
-      title: 'Forecasting',
-      description: 'Modelos Prophet ML para predicción de ventas y demanda',
+      title: t('insights.forecasting'),
+      description: t('insights.forecastingDesc'),
       icon: <BarChart3 className="h-8 w-8" />,
       path: '/insights/forecasting',
       color: 'text-amber-600',
@@ -90,9 +90,9 @@ export default function Insights() {
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Insights</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{t('insights.title')}</h1>
         <p className="text-gray-600">
-          Dashboard centralizado de Business Intelligence con AI-powered analytics
+          {t('insights.subtitle')}
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export default function Insights() {
               <DollarSign className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Ventas hoy</p>
+              <p className="text-sm text-gray-600">{t('insights.salesToday')}</p>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 mt-1" />
               ) : (
@@ -119,7 +119,7 @@ export default function Insights() {
               <span className={cn('font-medium', delta >= 0 ? 'text-emerald-600' : 'text-rose-600')}>
                 {delta >= 0 ? '+' : ''}{delta.toFixed(1)}%
               </span>
-              <span className="text-gray-500">vs ayer</span>
+              <span className="text-gray-500">{t('insights.vsYesterday')}</span>
             </div>
           )}
         </Card>
@@ -131,7 +131,7 @@ export default function Insights() {
               <BarChart3 className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Ventas MTD</p>
+              <p className="text-sm text-gray-600">{t('insights.salesMTD')}</p>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 mt-1" />
               ) : (
@@ -148,7 +148,7 @@ export default function Insights() {
               <ShoppingCart className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Pedidos hoy</p>
+              <p className="text-sm text-gray-600">{t('insights.ordersToday')}</p>
               {isLoading ? (
                 <Skeleton className="h-7 w-14 mt-1" />
               ) : (
@@ -165,7 +165,7 @@ export default function Insights() {
               <Sparkles className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Top producto</p>
+              <p className="text-sm text-gray-600">{t('insights.topProduct')}</p>
               {isLoading ? (
                 <Skeleton className="h-7 w-24 mt-1" />
               ) : (
@@ -180,7 +180,7 @@ export default function Insights() {
 
       {/* Modules Grid */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Modules</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('insights.modules')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {modules.map((module) => (
             <Card
@@ -199,7 +199,7 @@ export default function Insights() {
                   </div>
                   {!module.available && (
                     <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
-                      Coming soon
+                      {t('common.comingSoon')}
                     </span>
                   )}
                 </div>
@@ -216,7 +216,7 @@ export default function Insights() {
                     variant="ghost"
                     className="w-full justify-between group-hover:bg-gray-50"
                   >
-                    <span>Ver análisis</span>
+                    <span>{t('insights.viewAnalysis')}</span>
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 )}
@@ -242,14 +242,13 @@ export default function Insights() {
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              ¿Necesitas ayuda con tus métricas?
+              {t('insights.needHelp')}
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Ask Josephine está disponible en cada módulo para darte insights personalizados
-              basados en tus datos en tiempo real.
+              {t('insights.helpDescription')}
             </p>
             <Button variant="outline" size="sm">
-              Conocer más sobre Josephine AI
+              {t('insights.learnMore')}
             </Button>
           </div>
         </div>

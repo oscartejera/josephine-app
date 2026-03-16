@@ -122,7 +122,7 @@ export default function WasteEntryPage() {
                 unit_cost: unitCost,
                 notes: notes || undefined,
             });
-            toast({ title: '✅ Merma registrada', description: `${selectedItem?.name} — ${quantity} ${selectedItem?.base_unit ?? 'ud'}` });
+            toast({ title: `✅ ${t('waste.wasteRegistered')}`, description: `${selectedItem?.name} — ${quantity} ${selectedItem?.base_unit ?? t('common.units')}` });
             // Reset
             setStep(1);
             setSelectedItemId('');
@@ -148,14 +148,14 @@ export default function WasteEntryPage() {
                 <div>
                     <h1 className="text-2xl font-display font-bold flex items-center gap-2">
                         <Trash2 className="h-6 w-6 text-red-500" />
-                        Registrar Merma
+                        {t('waste.logWaste')}
                     </h1>
-                    <p className="text-muted-foreground">Registro optimizado de merma</p>
+                    <p className="text-muted-foreground">{t('waste.optimizedWasteLog')}</p>
                 </div>
                 {(locations?.length ?? 0) > 1 && (
                     <Select value={locationId} onValueChange={setLocationId}>
                         <SelectTrigger className="w-48">
-                            <SelectValue placeholder="Ubicación" />
+                            <SelectValue placeholder={t('common.location')} />
                         </SelectTrigger>
                         <SelectContent>
                             {(locations ?? []).map(l => (
@@ -168,7 +168,7 @@ export default function WasteEntryPage() {
 
             {/* Progress Steps */}
             <div className="flex items-center gap-2">
-                {['Producto', 'Motivo', 'Cantidad', 'Confirmar'].map((label, i) => (
+                {[t('common.product'), t('common.reason'), t('common.quantity'), t('common.confirm')].map((label, i) => (
                     <div key={label} className="flex items-center gap-2 flex-1">
                         <div className={cn(
                             "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
@@ -188,13 +188,13 @@ export default function WasteEntryPage() {
             {step === 1 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Selecciona el producto</CardTitle>
+                        <CardTitle className="text-lg">{t('waste.selectItem')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Buscar producto..."
+                                placeholder={t('common.searchProduct')}
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 className="pl-9 h-12 text-lg"
@@ -215,12 +215,12 @@ export default function WasteEntryPage() {
                                     </div>
                                     <div className="text-right text-sm">
                                         <div className="font-mono">€{(item.last_cost ?? 0).toFixed(2)}</div>
-                                        <div className="text-muted-foreground text-xs">Stock: {item.current_stock ?? 0}</div>
+                                        <div className="text-muted-foreground text-xs">{t('common.stock')}: {item.current_stock ?? 0}</div>
                                     </div>
                                 </Button>
                             ))}
                             {filteredItems.length === 0 && (
-                                <p className="text-center py-8 text-muted-foreground">No hay resultados</p>
+                                <p className="text-center py-8 text-muted-foreground">{t('common.noResults')}</p>
                             )}
                         </div>
                     </CardContent>
@@ -236,7 +236,7 @@ export default function WasteEntryPage() {
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
                             <div>
-                                <CardTitle className="text-lg">Motivo de pérdida</CardTitle>
+                                <CardTitle className="text-lg">{t('waste.lossReason')}</CardTitle>
                                 <p className="text-sm text-muted-foreground">{selectedItem?.name}</p>
                             </div>
                         </div>
@@ -271,7 +271,7 @@ export default function WasteEntryPage() {
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
                             <div>
-                                <CardTitle className="text-lg">Cantidad perdida</CardTitle>
+                                <CardTitle className="text-lg">{t('waste.lostQuantity')}</CardTitle>
                                 <p className="text-sm text-muted-foreground">
                                     {selectedItem?.name} — {WASTE_REASONS.find(r => r.code === selectedReason)?.label}
                                 </p>
@@ -282,7 +282,7 @@ export default function WasteEntryPage() {
                         {/* Display */}
                         <div className="text-center py-4 bg-muted/50 rounded-xl">
                             <div className="text-5xl font-bold font-mono">{numpadValue}</div>
-                            <div className="text-muted-foreground mt-1">{selectedItem?.base_unit ?? 'unidades'}</div>
+                            <div className="text-muted-foreground mt-1">{selectedItem?.base_unit ?? t('common.units')}</div>
                             <div className="text-lg font-medium text-red-500 mt-2">−€{totalCost.toFixed(2)}</div>
                         </div>
 
@@ -317,7 +317,7 @@ export default function WasteEntryPage() {
 
                         {/* Notes */}
                         <Input
-                            placeholder="Notas (opcional)..."
+                            placeholder={t('common.notesOptional')}
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
                         />
@@ -327,7 +327,7 @@ export default function WasteEntryPage() {
                             onClick={() => setStep(4)}
                             disabled={quantity <= 0}
                         >
-                            Continuar <ArrowRight className="h-5 w-5 ml-2" />
+                            {t('common.continue')} <ArrowRight className="h-5 w-5 ml-2" />
                         </Button>
                     </CardContent>
                 </Card>
@@ -341,37 +341,37 @@ export default function WasteEntryPage() {
                             <Button variant="ghost" size="icon" onClick={() => setStep(3)}>
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
-                            <CardTitle className="text-lg">Confirmar registro</CardTitle>
+                            <CardTitle className="text-lg">{t('waste.confirmEntry')}</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="bg-muted/50 rounded-xl p-6 space-y-3">
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Producto</span>
+                                <span className="text-muted-foreground">{t('common.product')}</span>
                                 <span className="font-medium">{selectedItem?.name}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Motivo</span>
+                                <span className="text-muted-foreground">{t('common.reason')}</span>
                                 <Badge variant="outline">
                                     {WASTE_REASONS.find(r => r.code === selectedReason)?.icon}{' '}
                                     {WASTE_REASONS.find(r => r.code === selectedReason)?.label}
                                 </Badge>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Cantidad</span>
-                                <span className="font-mono font-bold">{quantity} {selectedItem?.base_unit ?? 'ud'}</span>
+                                <span className="text-muted-foreground">{t('common.quantity')}</span>
+                                <span className="font-mono font-bold">{quantity} {selectedItem?.base_unit ?? t('common.units')}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Coste unitario</span>
+                                <span className="text-muted-foreground">{t('common.unitCost')}</span>
                                 <span className="font-mono">€{unitCost.toFixed(2)}</span>
                             </div>
                             <div className="border-t pt-3 flex justify-between">
-                                <span className="font-medium">Pérdida total</span>
+                                <span className="font-medium">{t('common.totalLoss')}</span>
                                 <span className="text-xl font-bold text-red-500 font-mono">−€{totalCost.toFixed(2)}</span>
                             </div>
                             {notes && (
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Notas</span>
+                                    <span className="text-muted-foreground">{t('common.notes')}</span>
                                     <span className="text-sm">{notes}</span>
                                 </div>
                             )}
@@ -382,7 +382,7 @@ export default function WasteEntryPage() {
                             onClick={handleConfirm}
                             disabled={logWaste.isPending || !locationId}
                         >
-                            {logWaste.isPending ? 'Registrando...' : '🗑️ Confirmar Merma'}
+                            {logWaste.isPending ? t('waste.registering') : `🗑️ ${t('waste.confirmWaste')}`}
                         </Button>
                     </CardContent>
                 </Card>

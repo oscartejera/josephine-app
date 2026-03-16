@@ -99,16 +99,16 @@ export default function PrepListPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-display font-bold">Prep List</h1>
+                        <h1 className="text-2xl font-display font-bold">{t('prepList.title')}</h1>
                         <Badge variant="outline" className="gap-1.5">
                             <Calendar className="h-3 w-3" />
                             {format(new Date(selectedDate), "EEEE d 'de' MMMM", { locale: es })}
                         </Badge>
                     </div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <span>Operaciones</span>
+                        <span>{t('nav.operations')}</span>
                         <ChevronRight className="h-3 w-3" />
-                        <span className="text-foreground">Prep List</span>
+                        <span className="text-foreground">{t('prepList.title')}</span>
                     </div>
                 </div>
 
@@ -120,11 +120,11 @@ export default function PrepListPage() {
                         className="w-[160px]"
                     />
                     <Button variant="outline" onClick={() => setSelectedDate(format(addDays(new Date(), 1), 'yyyy-MM-dd'))}>
-                        Mañana
+                        {t('prepList.tomorrow')}
                     </Button>
                     <Button variant="outline" onClick={handlePrint}>
                         <Printer className="h-4 w-4 mr-2" />
-                        Imprimir
+                        {t('common.print')}
                     </Button>
                 </div>
             </div>
@@ -135,7 +135,7 @@ export default function PrepListPage() {
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-muted-foreground">Progreso</p>
+                                <p className="text-sm text-muted-foreground">{t('prepList.progress')}</p>
                                 <p className="text-2xl font-bold">{progress}%</p>
                             </div>
                             <div className="h-12 w-12 rounded-full border-4 border-primary flex items-center justify-center">
@@ -158,7 +158,7 @@ export default function PrepListPage() {
                                 <ChefHat className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Recetas a preparar</p>
+                                <p className="text-sm text-muted-foreground">{t('prepList.recipesToPrepare')}</p>
                                 <p className="text-2xl font-bold">{prepItems.length}</p>
                             </div>
                         </div>
@@ -177,7 +177,7 @@ export default function PrepListPage() {
                                 )}
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Stock bajo</p>
+                                <p className="text-sm text-muted-foreground">{t('prepList.lowStock')}</p>
                                 <p className="text-2xl font-bold">{lowStockCount}</p>
                             </div>
                         </div>
@@ -189,7 +189,7 @@ export default function PrepListPage() {
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder="Buscar receta o categoría..."
+                    placeholder={t('prepList.searchRecipe')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -207,9 +207,9 @@ export default function PrepListPage() {
                 <Card>
                     <CardContent className="py-12 text-center">
                         <ChefHat className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />
-                        <p className="font-medium text-muted-foreground">No hay ítems de prep</p>
+                        <p className="font-medium text-muted-foreground">{t('prepList.noItems')}</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Añade recetas en Escandallos y las verás aquí con cantidades basadas en el forecast
+                            {t('prepList.addRecipesHint')}
                         </p>
                     </CardContent>
                 </Card>
@@ -222,7 +222,7 @@ export default function PrepListPage() {
                                 {category}
                             </CardTitle>
                             <CardDescription>
-                                {filteredItems.filter(i => i.category === category).length} recetas
+                                {filteredItems.filter(i => i.category === category).length} {t('prepList.recipes')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -262,7 +262,7 @@ export default function PrepListPage() {
                                                         {hasLowStock && (
                                                             <Badge variant="outline" className="text-xs text-warning border-warning/30">
                                                                 <AlertTriangle className="h-3 w-3 mr-1" />
-                                                                Stock bajo
+                                                                {t('prepList.lowStock')}
                                                             </Badge>
                                                         )}
                                                     </div>

@@ -30,20 +30,22 @@ interface LogEntry {
     created_at: string;
 }
 
-const CATEGORIES = [
-    { value: 'general', label: 'General', icon: MessageSquare, color: 'bg-gray-500' },
-    { value: 'incident', label: 'Incidencia', icon: ShieldAlert, color: 'bg-red-500' },
-    { value: 'staffing', label: 'Personal', icon: Users, color: 'bg-blue-500' },
-    { value: 'inventory', label: 'Inventario', icon: Package, color: 'bg-amber-500' },
-    { value: 'maintenance', label: 'Mantenimiento', icon: Wrench, color: 'bg-purple-500' },
-    { value: 'customer', label: 'Cliente', icon: MessageSquare, color: 'bg-green-500' },
-];
+const CATEGORY_KEYS = ['general', 'incident', 'staffing', 'inventory', 'maintenance', 'customer'] as const;
+const CATEGORY_ICONS: Record<string, typeof MessageSquare> = {
+    general: MessageSquare, incident: ShieldAlert, staffing: Users,
+    inventory: Package, maintenance: Wrench, customer: MessageSquare,
+};
+const CATEGORY_COLORS: Record<string, string> = {
+    general: 'bg-gray-500', incident: 'bg-red-500', staffing: 'bg-blue-500',
+    inventory: 'bg-amber-500', maintenance: 'bg-purple-500', customer: 'bg-green-500',
+};
 
-const SEVERITIES = [
-    { value: 'info', label: 'Info', color: 'text-blue-600 bg-blue-50 border-blue-200' },
-    { value: 'warning', label: 'Aviso', color: 'text-amber-600 bg-amber-50 border-amber-200' },
-    { value: 'critical', label: 'Crítico', color: 'text-red-600 bg-red-50 border-red-200' },
-];
+const SEVERITY_KEYS = ['info', 'warning', 'critical'] as const;
+const SEVERITY_COLORS: Record<string, string> = {
+    info: 'text-blue-600 bg-blue-50 border-blue-200',
+    warning: 'text-amber-600 bg-amber-50 border-amber-200',
+    critical: 'text-red-600 bg-red-50 border-red-200',
+};
 
 export function ManagerLogbook({ locationId }: { locationId: string | null }) {
   const { t } = useTranslation();
@@ -98,12 +100,12 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
                 severity,
             });
             if (error) throw error;
-            toast.success('Entrada añadida al logbook');
+            toast.success(t('logbook.entryAdded'));
             setContent('');
             setShowForm(false);
             loadEntries();
         } catch (err: any) {
-            toast.error('Error al guardar', { description: err.message });
+            toast.error(t('logbook.saveError'), { description: err.message });
         } finally {
             setSubmitting(false);
         }
@@ -125,16 +127,16 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Manager Logbook</h3>
+                    <h3 className="text-lg font-semibold">{t('logbook.title')}</h3>
                     {unresolvedCount > 0 && (
                         <Badge variant="destructive" className="rounded-full">
-                            {unresolvedCount} pendiente{unresolvedCount > 1 ? 's' : ''}
+                            {unresolvedCount} {t('logbook.pending', { count: unresolvedCount })}
                         </Badge>
                     )}
                 </div>
                 <Button size="sm" onClick={() => setShowForm(!showForm)}>
                     <Plus className="h-4 w-4 mr-1" />
-                    Nueva Entrada
+                    {t('logbook.newEntry')}
                 </Button>
             </div>
 
@@ -145,27 +147,27 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
                         <div className="grid grid-cols-2 gap-3">
                             <Select value={category} onValueChange={setCategory}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Categoría" />
+                                    <SelectValue placeholder={t('logbook.category')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {CATEGORIES.map(c => (
-                                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                    {CATEGORY_KEYS.map(c => (
+                                        <SelectItem key={c} value={c}>{t(`logbook.categories.${c}`)}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                             <Select value={severity} onValueChange={setSeverity}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Severidad" />
+                                    <SelectValue placeholder={t('logbook.severity')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {SEVERITIES.map(s => (
-                                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                    {SEVERITY_KEYS.map(s => (
+                                        <SelectItem key={s} value={s}>{t(`logbook.severities.${s}`)}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         <Textarea
-                            placeholder="¿Qué ha ocurrido durante el turno?"
+                            placeholder={t('logbook.placeholder')}
                             value={content}
                             onChange={e => setContent(e.target.value)}
                             rows={3}
@@ -173,7 +175,7 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
                         <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>{t("common.cancel")}</Button>
                             <Button size="sm" onClick={handleSubmit} disabled={submitting || !content.trim()}>
-                                {submitting ? 'Guardando...' : 'Guardar'}
+                                {submitting ? t('common.saving') : t('common.save')}
                             </Button>
                         </div>
                     </CardContent>
@@ -182,37 +184,38 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
 
             {/* Entries Timeline */}
             {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Cargando logbook...</div>
+                <div className="text-center py-8 text-muted-foreground">{t('logbook.loading')}</div>
             ) : entries.length === 0 ? (
                 <Card>
                     <CardContent className="py-8 text-center">
                         <BookOpen className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                        <p className="text-muted-foreground">Sin entradas esta semana</p>
-                        <p className="text-sm text-muted-foreground/60">Registra incidencias, notas de personal y eventos del turno</p>
+                        <p className="text-muted-foreground">{t('logbook.noEntries')}</p>
+                        <p className="text-sm text-muted-foreground/60">{t('logbook.noEntriesHint')}</p>
                     </CardContent>
                 </Card>
             ) : (
                 <div className="space-y-3">
                     {entries.map(entry => {
-                        const cat = CATEGORIES.find(c => c.value === entry.category);
-                        const sev = SEVERITIES.find(s => s.value === entry.severity);
-                        const CatIcon = cat?.icon || MessageSquare;
+                        const catIcon = CATEGORY_ICONS[entry.category] || MessageSquare;
+                        const catColor = CATEGORY_COLORS[entry.category] || 'bg-gray-500';
+                        const sevColor = SEVERITY_COLORS[entry.severity] || '';
+                        const CatIcon = catIcon;
                         return (
                             <Card key={entry.id} className={`transition-all ${entry.resolved ? 'opacity-60' : ''}`}>
                                 <CardContent className="py-3 px-4">
                                     <div className="flex items-start gap-3">
-                                        <div className={`rounded-full p-1.5 ${cat?.color || 'bg-gray-500'} text-white mt-0.5`}>
+                                        <div className={`rounded-full p-1.5 ${catColor} text-white mt-0.5`}>
                                             <CatIcon className="h-3.5 w-3.5" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <Badge variant="outline" className={sev?.color || ''}>{sev?.label || entry.severity}</Badge>
+                                                <Badge variant="outline" className={sevColor}>{t(`logbook.severities.${entry.severity}`)}</Badge>
                                                 <span className="text-xs text-muted-foreground">
                                                     {format(new Date(entry.created_at), "d MMM HH:mm", { locale: es })}
                                                 </span>
                                                 {entry.resolved && (
                                                     <Badge variant="outline" className="text-green-600 bg-green-50">
-                                                        <CheckCircle2 className="h-3 w-3 mr-1" />Resuelto
+                                                        <CheckCircle2 className="h-3 w-3 mr-1" />{t('logbook.resolved')}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -223,7 +226,7 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
                                             size="icon"
                                             className="h-8 w-8 shrink-0"
                                             onClick={() => toggleResolved(entry.id, entry.resolved)}
-                                            title={entry.resolved ? 'Marcar como pendiente' : 'Marcar como resuelto'}
+                                            title={entry.resolved ? t('logbook.markPending') : t('logbook.markResolved')}
                                         >
                                             {entry.resolved ? <Clock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                                         </Button>
