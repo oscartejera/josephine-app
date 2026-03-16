@@ -440,7 +440,7 @@ export function EmploymentContracts({ locationId }: Props) {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSave} disabled={saving}>
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {editingId ? 'Guardar cambios' : 'Crear contrato'}

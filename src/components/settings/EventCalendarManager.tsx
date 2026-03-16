@@ -241,7 +241,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                         <Input placeholder="Ciudad (opcional)" value={city} onChange={e => setCity(e.target.value)} />
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !eventName.trim() || !eventDate}>
                             {submitting ? 'Guardando...' : 'Guardar'}
                         </Button>

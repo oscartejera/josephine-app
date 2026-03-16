@@ -79,7 +79,7 @@ export function ObjectivesTab() {
             .eq('id', id);
 
         if (error) {
-            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar" });
+            toast({ variant: "destructive", title: t("common.error"), description: "No se pudo guardar" });
         } else {
             toast({ title: "Guardado", description: "Objetivos actualizados" });
             setEditingId(null);

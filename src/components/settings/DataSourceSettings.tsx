@@ -92,7 +92,7 @@ export function DataSourceSettings() {
         console.error('Failed to save org_settings:', error);
         toast({
           variant: 'destructive',
-          title: 'Error',
+          title: t("common.error"),
           description: 'No se pudo guardar la configuración de fuente de datos.',
         });
       } else {
@@ -106,7 +106,7 @@ export function DataSourceSettings() {
       console.error('Error saving data source settings:', err);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: 'Error inesperado al guardar.',
       });
     } finally {

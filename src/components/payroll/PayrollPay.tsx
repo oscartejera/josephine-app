@@ -61,7 +61,7 @@ export default function PayrollPay({
         description: `${result.sepa?.numberOfTransactions || 0} transferencias por €${result.sepa?.controlSum?.toLocaleString('es-ES') || '0'}`
       });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error generando SEPA' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'Error generando SEPA' });
     }
     setGenerating(false);
   };
@@ -240,7 +240,7 @@ export default function PayrollPay({
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowPayDialog(false)}>Cancelar</Button>
+                    <Button variant="outline" onClick={() => setShowPayDialog(false)}>{t("common.cancel")}</Button>
                     <Button onClick={handleMarkPaid} disabled={paying}>
                       {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Confirmar Pago

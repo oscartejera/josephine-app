@@ -62,15 +62,15 @@ export function PaymentMethodsTab() {
     const handleAddPaymentMethod = () => {
         const cleaned = newCard.cardNumber.replace(/\s/g, '');
         if (cleaned.length < 13) {
-            toast({ variant: "destructive", title: "Error", description: "Card number is invalid" });
+            toast({ variant: "destructive", title: t("common.error"), description: "Card number is invalid" });
             return;
         }
         if (!newCard.expiryMonth || !newCard.expiryYear) {
-            toast({ variant: "destructive", title: "Error", description: "Please enter expiry date" });
+            toast({ variant: "destructive", title: t("common.error"), description: "Please enter expiry date" });
             return;
         }
         if (newCard.cvv.length < 3) {
-            toast({ variant: "destructive", title: "Error", description: "CVV is invalid" });
+            toast({ variant: "destructive", title: t("common.error"), description: "CVV is invalid" });
             return;
         }
 

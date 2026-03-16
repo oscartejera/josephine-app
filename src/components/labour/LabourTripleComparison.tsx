@@ -95,8 +95,8 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-base font-semibold text-gray-900">Planificado vs Actual vs Nómina</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">Compara las tres capas de coste laboral</p>
+                        <h3 className="text-base font-semibold text-gray-900">{t("labour.plannedVsActualVsPayroll")}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("labour.compareThreeLayers")}</p>
                     </div>
                     {/* Drift indicator */}
                     <div className={cn(
@@ -114,7 +114,7 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                 {/* Three bars */}
                 <div className="space-y-4">
                     <BarRow
-                        label="Planificado"
+                        label={t("labour.planned")}
                         value={planned}
                         maxValue={maxVal}
                         color="bg-gradient-to-r from-indigo-300 to-indigo-400"
@@ -122,7 +122,7 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                     />
 
                     <BarRow
-                        label="Actual (horarios)"
+                        label={t("labour.actualSchedules")}
                         value={schedule}
                         maxValue={maxVal}
                         color="bg-gradient-to-r from-blue-400 to-blue-500"
@@ -134,7 +134,7 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
 
                     {hasPayroll ? (
                         <BarRow
-                            label="Nómina (real)"
+                            label={t("labour.payrollActual")}
                             value={payroll}
                             maxValue={maxVal}
                             color="bg-gradient-to-r from-emerald-500 to-emerald-600"
@@ -147,9 +147,9 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                         <div className="space-y-1">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-400">Nómina (real)</span>
+                                    <span className="text-sm text-gray-400">{t("labour.payrollActual")}</span>
                                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase bg-gray-100 text-gray-500">
-                                        Sin datos
+                                        {t("common.noData")}
                                     </span>
                                 </div>
                                 <span className="text-sm text-gray-400">—</span>
@@ -163,18 +163,18 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                 <div className="flex items-center gap-6 pt-2 border-t border-gray-100 text-xs text-gray-500">
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-indigo-400" />
-                        <span>Planificado</span>
+                        <span>{t("labour.planned")}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
-                        <span>Horarios</span>
+                        <span>{t("labour.schedules")}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-                        <span>Nómina</span>
+                        <span>{t("labour.payroll")}</span>
                     </div>
                     <div className="ml-auto text-gray-400">
-                        Drift = diferencia entre planificado y coste real
+                        {t("labour.driftExplanation")}
                     </div>
                 </div>
             </div>

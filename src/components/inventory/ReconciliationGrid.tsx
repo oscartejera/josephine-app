@@ -323,7 +323,7 @@ export function ReconciliationGrid({
               {/* Totals row */}
               <TableRow className="font-semibold border-t-2 border-border bg-muted/30 sticky bottom-0 hover:bg-muted/30">
                 {visibleColumns.includes('itemName') && (
-                  <TableCell className="sticky left-0 bg-muted/30 z-10 text-sm">Total</TableCell>
+                  <TableCell className="sticky left-0 bg-muted/30 z-10 text-sm">{t("common.total")}</TableCell>
                 )}
                 {visibleColumns.includes('unit') && <TableCell className="text-sm">—</TableCell>}
                 {visibleColumns.includes('varianceQty') && (

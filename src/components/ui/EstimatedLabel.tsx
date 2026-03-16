@@ -1,5 +1,5 @@
 /**
- * EstimatedLabel — Shows "Estimado" badge with tooltip for KPIs
+ * EstimatedLabel — Shows t("labour.estimated") badge with tooltip for KPIs
  * that depend on assumptions (COGS%, hourly rates, channel ratios).
  */
 

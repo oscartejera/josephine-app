@@ -145,7 +145,19 @@
     "decrease": "Descens",
     "positive": "Positiu",
     "negative": "Negatiu",
-    "productName": "Nom del producte"
+    "productName": "Nom del producte",
+    "send": "Enviar",
+    "import": "Importar",
+    "information": "Informació",
+    "warning": "Avís",
+    "accept": "Acceptar",
+    "reject": "Rebutjar",
+    "filter": "Filtrar",
+    "configure": "Configurar",
+    "select": "Seleccionar",
+    "objectives": "Objectius",
+    "processing": "Processant",
+    "upload": "Pujar"
   },
   "nav": {
     "controlTower": "Torre de Control",
@@ -330,7 +342,19 @@
     "byRole": "Per rol",
     "byLocation": "Per ubicació",
     "trend": "Tendència",
-    "labourVsBudget": "Personal vs Pressupost"
+    "labourVsBudget": "Personal vs Pressupost",
+    "estimated": "Estimat",
+    "planned": "Planificat",
+    "employee": "Empleat",
+    "optimal": "Òptim",
+    "estimatedFromSchedules": "Estimat des dels horaris planificats",
+    "plannedVsActualVsPayroll": "Planificat vs Real vs Nòmina",
+    "compareThreeLayers": "Compara les tres capes de cost laboral",
+    "actualSchedules": "Real (horaris)",
+    "schedules": "Horaris",
+    "driftExplanation": "Desviació = diferència entre planificat i cost real",
+    "payrollActual": "Nòmina (real)",
+    "actual": "real"
   },
   "waste": {
     "title": "Pèrdues",
@@ -722,7 +746,10 @@
     "searchByStripeOrTicket": "Cercar per ID de Stripe o Tiquet...",
     "rewardDetails": "Detalls de la recompensa",
     "adjustmentReason": "Motiu de l'ajust",
-    "demoDataUpdated": "Totes les dades de demostració s'han actualitzat correctament."
+    "demoDataUpdated": "Totes les dades de demostració s'han actualitzat correctament.",
+    "privacy": "Privacitat",
+    "costManagement": "Gestió de costos",
+    "importData": "Importar dades"
   },
   "reports": {
     "title": "Informes",

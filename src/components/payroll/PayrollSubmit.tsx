@@ -88,7 +88,7 @@ export default function PayrollSubmit({
         toast({ title: 'Todas las presentaciones completadas', description: 'Puedes proceder al pago.' });
       }
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error al presentar' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'Error al presentar' });
     }
     setLoadingAgency(null);
   };

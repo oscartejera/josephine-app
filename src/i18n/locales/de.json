@@ -145,7 +145,19 @@
     "decrease": "Rückgang",
     "positive": "Positiv",
     "negative": "Negativ",
-    "productName": "Produktname"
+    "productName": "Produktname",
+    "send": "Senden",
+    "import": "Importieren",
+    "information": "Information",
+    "warning": "Warnung",
+    "accept": "Akzeptieren",
+    "reject": "Ablehnen",
+    "filter": "Filtern",
+    "configure": "Konfigurieren",
+    "select": "Auswählen",
+    "objectives": "Ziele",
+    "processing": "Verarbeitung",
+    "upload": "Hochladen"
   },
   "nav": {
     "controlTower": "Kontrollturm",
@@ -330,7 +342,19 @@
     "byRole": "Nach Position",
     "byLocation": "Nach Standort",
     "trend": "Trend",
-    "labourVsBudget": "Personal vs Budget"
+    "labourVsBudget": "Personal vs Budget",
+    "estimated": "Geschätzt",
+    "planned": "Geplant",
+    "employee": "Mitarbeiter",
+    "optimal": "Optimal",
+    "estimatedFromSchedules": "Geschätzt aus geplanten Dienstplänen",
+    "plannedVsActualVsPayroll": "Geplant vs Ist vs Lohn",
+    "compareThreeLayers": "Vergleichen Sie die drei Ebenen der Arbeitskosten",
+    "actualSchedules": "Ist (Dienstpläne)",
+    "schedules": "Dienstpläne",
+    "driftExplanation": "Abweichung = Differenz zwischen geplanten und tatsächlichen Kosten",
+    "payrollActual": "Lohn (tatsächlich)",
+    "actual": "tatsächlich"
   },
   "waste": {
     "title": "Verluste",
@@ -749,7 +773,10 @@
     "searchByStripeOrTicket": "Nach Stripe-ID oder Ticket suchen...",
     "rewardDetails": "Prämiendetails",
     "adjustmentReason": "Anpassungsgrund",
-    "demoDataUpdated": "Alle Demo-Daten wurden erfolgreich aktualisiert."
+    "demoDataUpdated": "Alle Demo-Daten wurden erfolgreich aktualisiert.",
+    "privacy": "Datenschutz",
+    "costManagement": "Kostenmanagement",
+    "importData": "Daten importieren"
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten",

@@ -171,7 +171,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
     } catch (err: any) {
       console.error('Error marking received:', err);
       toast({
-        title: 'Error',
+        title: t("common.error"),
         description: err.message || 'No se pudo marcar como recibido',
         variant: 'destructive',
       });
@@ -291,7 +291,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                           <TableHead>Pack Size</TableHead>
                           <TableHead className="text-right">Qty</TableHead>
                           <TableHead className="text-right">Unit Price</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
+                          <TableHead className="text-right">{t("common.total")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -321,7 +321,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                           <span>€{order.tax.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between gap-8 font-semibold pt-2 border-t">
-                          <span>Total</span>
+                          <span>{t("common.total")}</span>
                           <span>€{order.total.toFixed(2)}</span>
                         </div>
                       </div>
@@ -373,7 +373,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                         <TableHead>Pack Size</TableHead>
                         <TableHead className="text-right">Qty</TableHead>
                         <TableHead className="text-right">Price</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">{t("common.total")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -404,7 +404,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                     <span>€{selectedOrder.tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-base pt-2 border-t">
-                    <span>Total</span>
+                    <span>{t("common.total")}</span>
                     <span>€{selectedOrder.total.toFixed(2)}</span>
                   </div>
                 </div>

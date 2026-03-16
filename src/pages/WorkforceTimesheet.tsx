@@ -771,8 +771,8 @@ export default function WorkforceTimesheet() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditRecord(null)}>Cancelar</Button>
-                        <Button onClick={handleEditRecord}>Guardar</Button>
+                        <Button variant="outline" onClick={() => setEditRecord(null)}>{t("common.cancel")}</Button>
+                        <Button onClick={handleEditRecord}>{t("common.save")}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

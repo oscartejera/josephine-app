@@ -36,7 +36,7 @@ export default function ResetPassword() {
     if (password !== confirmPassword) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("common.error"),
         description: "Las contraseñas no coinciden"
       });
       return;
@@ -45,7 +45,7 @@ export default function ResetPassword() {
     if (password.length < 6) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("common.error"),
         description: "La contraseña debe tener al menos 6 caracteres"
       });
       return;
@@ -58,7 +58,7 @@ export default function ResetPassword() {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("common.error"),
         description: error.message
       });
     } else {

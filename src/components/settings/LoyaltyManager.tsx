@@ -112,7 +112,7 @@ export function LoyaltyManager() {
       await updateSettings({ is_enabled: enabled });
       toast({ title: enabled ? 'Programa activado' : 'Programa desactivado' });
     } catch (err) {
-      toast({ title: 'Error', description: 'No se pudo actualizar', variant: 'destructive' });
+      toast({ title: t("common.error"), description: 'No se pudo actualizar', variant: 'destructive' });
     }
   };
 
@@ -126,7 +126,7 @@ export function LoyaltyManager() {
       });
       toast({ title: 'Configuración guardada' });
     } catch (err) {
-      toast({ title: 'Error', variant: 'destructive' });
+      toast({ title: t("common.error"), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -151,7 +151,7 @@ export function LoyaltyManager() {
       setEditingMember(null);
       setMemberForm({ name: '', email: '', phone: '', notes: '' });
     } catch (err) {
-      toast({ title: 'Error', variant: 'destructive' });
+      toast({ title: t("common.error"), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -189,7 +189,7 @@ export function LoyaltyManager() {
       setEditingReward(null);
       setRewardForm({ name: '', description: '', points_cost: 100, reward_type: 'discount', value: 5, is_active: true });
     } catch (err) {
-      toast({ title: 'Error', variant: 'destructive' });
+      toast({ title: t("common.error"), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -206,7 +206,7 @@ export function LoyaltyManager() {
       setSelectedMember(null);
       setPointsForm({ points: 0, type: 'bonus', description: '' });
     } catch (err) {
-      toast({ title: 'Error', variant: 'destructive' });
+      toast({ title: t("common.error"), variant: 'destructive' });
     } finally {
       setSaving(false);
     }

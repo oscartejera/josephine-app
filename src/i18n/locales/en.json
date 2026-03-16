@@ -145,7 +145,19 @@
     "decrease": "Decrease",
     "positive": "Positive",
     "negative": "Negative",
-    "productName": "Product name"
+    "productName": "Product name",
+    "send": "Send",
+    "import": "Import",
+    "information": "Information",
+    "warning": "Warning",
+    "accept": "Accept",
+    "reject": "Reject",
+    "filter": "Filter",
+    "configure": "Configure",
+    "select": "Select",
+    "objectives": "Objectives",
+    "processing": "Processing",
+    "upload": "Upload"
   },
   "nav": {
     "controlTower": "Control Tower",
@@ -330,7 +342,19 @@
     "byRole": "By role",
     "byLocation": "By location",
     "trend": "Trend",
-    "labourVsBudget": "Labour vs Budget"
+    "labourVsBudget": "Labour vs Budget",
+    "estimated": "Estimated",
+    "planned": "Planned",
+    "employee": "Employee",
+    "optimal": "Optimal",
+    "estimatedFromSchedules": "Estimated from planned schedules",
+    "plannedVsActualVsPayroll": "Planned vs Actual vs Payroll",
+    "compareThreeLayers": "Compare the three layers of labour cost",
+    "actualSchedules": "Actual (schedules)",
+    "schedules": "Schedules",
+    "driftExplanation": "Drift = difference between planned and actual cost",
+    "payrollActual": "Payroll (actual)",
+    "actual": "actual"
   },
   "waste": {
     "title": "Waste",

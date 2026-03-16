@@ -43,7 +43,7 @@ export default function RecipesPage() {
 
     const handleCreate = async () => {
         if (!newRecipe.menu_item_name.trim()) {
-            toast({ variant: 'destructive', title: 'Error', description: 'El nombre es obligatorio' });
+            toast({ variant: 'destructive', title: t("common.error"), description: 'El nombre es obligatorio' });
             return;
         }
         try {
@@ -60,7 +60,7 @@ export default function RecipesPage() {
             setNewRecipe({ menu_item_name: '', selling_price: '', category: 'Main', yield_qty: '1', yield_unit: 'portion', is_sub_recipe: false });
             navigate(`/inventory-setup/recipes/${result.id}`);
         } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message });
+            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
     };
 
@@ -70,7 +70,7 @@ export default function RecipesPage() {
             await deleteRecipe.mutateAsync(id);
             toast({ title: 'Eliminado', description: `Receta "${name}" eliminada` });
         } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message });
+            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
     };
 
@@ -280,7 +280,7 @@ export default function RecipesPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowCreateDialog(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleCreate} disabled={createRecipe.isPending}>
                             {createRecipe.isPending ? 'Creando...' : 'Crear Receta'}
                         </Button>

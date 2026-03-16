@@ -77,7 +77,7 @@ function timeAgo(dateStr: string | null): string {
 function healthBadge(value: number, good: number, warn: number) {
   if (value >= good) return <Badge variant="default">OK</Badge>;
   if (value >= warn) return <Badge variant="secondary">Parcial</Badge>;
-  return <Badge variant="destructive">Sin datos</Badge>;
+  return <Badge variant="destructive">{t("common.noData")}</Badge>;
 }
 
 export default function DataHealth() {

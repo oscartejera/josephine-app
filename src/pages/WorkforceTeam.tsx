@@ -867,7 +867,7 @@ export default function WorkforceTeam() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setAddOpen(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setAddOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleAddEmployee} disabled={saving}>
                             {saving ? 'Guardando...' : 'Añadir'}
                         </Button>
@@ -941,7 +941,7 @@ export default function WorkforceTeam() {
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditEmployee(null)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setEditEmployee(null)}>{t("common.cancel")}</Button>
                         <Button onClick={handleEditEmployee} disabled={saving}>
                             {saving ? 'Guardando...' : 'Guardar cambios'}
                         </Button>
@@ -982,7 +982,7 @@ export default function WorkforceTeam() {
                                 <Select value={announcementForm.type} onValueChange={(v) => setAnnouncementForm((f) => ({ ...f, type: v }))}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="info">Información</SelectItem>
+                                        <SelectItem value="info">{t("common.information")}</SelectItem>
                                         <SelectItem value="important">Importante</SelectItem>
                                         <SelectItem value="schedule">Horarios</SelectItem>
                                         <SelectItem value="celebration">Celebración</SelectItem>
@@ -1012,7 +1012,7 @@ export default function WorkforceTeam() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setAnnouncementOpen(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setAnnouncementOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleCreateAnnouncement} disabled={saving}>
                             {saving ? 'Publicando...' : 'Publicar anuncio'}
                         </Button>

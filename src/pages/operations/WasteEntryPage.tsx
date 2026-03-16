@@ -132,7 +132,7 @@ export default function WasteEntryPage() {
             setNotes('');
             setSearch('');
         } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message });
+            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
     };
 

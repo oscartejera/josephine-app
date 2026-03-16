@@ -236,7 +236,7 @@ export default function PayrollReview({
                     <div className="flex justify-between"><span className="text-muted-foreground">Coste Total Empresa:</span><span className="font-medium">€{fmt(totals.gross + totals.employerSS)}</span></div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowApproveDialog(false)}>Cancelar</Button>
+                    <Button variant="outline" onClick={() => setShowApproveDialog(false)}>{t("common.cancel")}</Button>
                     <Button onClick={handleApprove} disabled={approving}>
                       {approving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Confirmar Aprobación

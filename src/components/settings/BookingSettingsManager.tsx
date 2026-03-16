@@ -128,7 +128,7 @@ export function BookingSettingsManager() {
       } catch (err) {
         console.error('Error fetching booking settings:', err);
         toast({
-          title: 'Error',
+          title: t("common.error"),
           description: 'No se pudieron cargar los ajustes de reservas',
           variant: 'destructive',
         });
@@ -173,7 +173,7 @@ export function BookingSettingsManager() {
     } catch (err) {
       console.error('Error saving booking settings:', err);
       toast({
-        title: 'Error',
+        title: t("common.error"),
         description: 'No se pudieron guardar los ajustes',
         variant: 'destructive',
       });

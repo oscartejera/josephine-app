@@ -202,7 +202,7 @@ export function AskJosephineSalesDrawer({
       setError(errorMessage);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: errorMessage
       });
       // Remove the empty assistant message if there was an error

@@ -195,7 +195,7 @@ export function HourlyDrillDownDrawer({
                 </tbody>
                 <tfoot>
                   <tr className="bg-muted/50 font-bold">
-                    <td className="py-2 px-3">Total</td>
+                    <td className="py-2 px-3">{t("common.total")}</td>
                     <td className="py-2 px-3 text-right">€{totalSales.toLocaleString()}</td>
                     <td className="py-2 px-3 text-right">€{totalForecast.toLocaleString()}</td>
                     <td className="py-2 px-3 text-right">

@@ -65,7 +65,7 @@ export function SupplierIntegrationManager() {
       .order('name');
     
     if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron cargar los proveedores' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'No se pudieron cargar los proveedores' });
     } else {
       // Map to include category as null since it doesn't exist in DB
       const mapped: Supplier[] = (data || []).map((s: any) => ({
@@ -102,7 +102,7 @@ export function SupplierIntegrationManager() {
       .eq('id', editingSupplier.id);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar la configuración' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'No se pudo guardar la configuración' });
     } else {
       toast({ title: 'Guardado', description: `Configuración de ${editingSupplier.name} actualizada` });
       setEditingSupplier(null);
@@ -113,7 +113,7 @@ export function SupplierIntegrationManager() {
 
   const handleTestConnection = async () => {
     if (!editingSupplier?.api_endpoint) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Configura primero el endpoint de la API' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'Configura primero el endpoint de la API' });
       return;
     }
     

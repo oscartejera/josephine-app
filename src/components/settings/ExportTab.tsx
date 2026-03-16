@@ -34,7 +34,7 @@ export function ExportTab() {
         }
 
         if (data.length === 0) {
-            toast({ variant: "destructive", title: "Sin datos", description: "No hay datos para exportar" });
+            toast({ variant: "destructive", title: t("common.noData"), description: "No hay datos para exportar" });
             return;
         }
 

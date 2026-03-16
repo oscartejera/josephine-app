@@ -122,7 +122,7 @@ export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTabl
             ))}
             {/* Total row */}
             <TableRow className="bg-muted/30 font-semibold">
-              <TableCell>Total</TableCell>
+              <TableCell>{t("common.total")}</TableCell>
               <TableCell className="text-right border-l">{formatCurrency(totalSales)}</TableCell>
               <TableCell className="text-right">{formatCurrency(totalProjected)}</TableCell>
               <TableCell className="text-right border-l">€{avgAcs.toFixed(2)}</TableCell>

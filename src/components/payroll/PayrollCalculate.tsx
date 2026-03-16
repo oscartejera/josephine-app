@@ -99,7 +99,7 @@ export default function PayrollCalculate({
     if (!currentRun) {
       toast({ 
         variant: 'destructive', 
-        title: 'Error', 
+        title: t("common.error"), 
         description: 'No hay nómina iniciada para este período. Vuelve a Inicio y pulsa "Iniciar nómina del mes".' 
       });
       return;

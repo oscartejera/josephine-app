@@ -146,7 +146,7 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
         setError(err);
         setIsLoading(false);
         toast({
-          title: "Error",
+          title: t("common.error"),
           description: err,
           variant: "destructive"
         });

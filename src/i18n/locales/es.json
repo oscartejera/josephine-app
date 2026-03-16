@@ -145,7 +145,19 @@
     "decrease": "Descenso",
     "positive": "Positivo",
     "negative": "Negativo",
-    "productName": "Nombre del producto"
+    "productName": "Nombre del producto",
+    "send": "Enviar",
+    "import": "Importar",
+    "information": "Información",
+    "warning": "Aviso",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "filter": "Filtrar",
+    "configure": "Configurar",
+    "select": "Seleccionar",
+    "objectives": "Objetivos",
+    "processing": "Procesando",
+    "upload": "Subir"
   },
   "nav": {
     "controlTower": "Control Tower",
@@ -330,7 +342,19 @@
     "byRole": "Por rol",
     "byLocation": "Por ubicación",
     "trend": "Tendencia",
-    "labourVsBudget": "Personal vs Presupuesto"
+    "labourVsBudget": "Personal vs Presupuesto",
+    "estimated": "Estimado",
+    "planned": "Planificado",
+    "employee": "Empleado",
+    "optimal": "Óptimo",
+    "estimatedFromSchedules": "Estimado desde horarios planificados",
+    "plannedVsActualVsPayroll": "Planificado vs Actual vs Nómina",
+    "compareThreeLayers": "Compara las tres capas de coste laboral",
+    "actualSchedules": "Actual (horarios)",
+    "schedules": "Horarios",
+    "driftExplanation": "Drift = diferencia entre planificado y coste real",
+    "payrollActual": "Nómina (real)",
+    "actual": "real"
   },
   "waste": {
     "title": "Mermas",
@@ -722,7 +746,10 @@
     "searchByStripeOrTicket": "Buscar por ID de Stripe o Ticket...",
     "rewardDetails": "Detalles de la recompensa",
     "adjustmentReason": "Motivo del ajuste",
-    "demoDataUpdated": "Todos los datos de demostración han sido actualizados correctamente."
+    "demoDataUpdated": "Todos los datos de demostración han sido actualizados correctamente.",
+    "privacy": "Privacidad",
+    "costManagement": "Gestión de costes",
+    "importData": "Importar datos"
   },
   "reports": {
     "title": "Informes",

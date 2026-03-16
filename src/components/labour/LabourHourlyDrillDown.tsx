@@ -214,7 +214,7 @@ export function LabourHourlyDrillDown({
                 </tbody>
                 <tfoot>
                   <tr className="bg-muted/50 font-bold">
-                    <td className="py-2 px-3">Total</td>
+                    <td className="py-2 px-3">{t("common.total")}</td>
                     <td className="py-2 px-3 text-right">{totalActualCOL.toFixed(2)}%</td>
                     <td className="py-2 px-3 text-right">{totalPlannedCOL.toFixed(2)}%</td>
                     <td className="py-2 px-3 text-right">€{totalActualSPLH.toFixed(0)}</td>

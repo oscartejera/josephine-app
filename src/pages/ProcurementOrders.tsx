@@ -480,7 +480,7 @@ export default function ProcurementOrders() {
                         <TableHead>Supplier</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Items</TableHead>
-                        <TableHead>Total</TableHead>
+                        <TableHead>{t("common.total")}</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -577,7 +577,7 @@ export default function ProcurementOrders() {
                   <p className="font-medium">{format(new Date(selectedOrder.created_at), 'PPP')}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Total</p>
+                  <p className="text-muted-foreground">{t("common.total")}</p>
                   <p className="font-semibold text-lg">€{selectedOrder.total_value.toFixed(2)}</p>
                 </div>
               </div>
@@ -599,7 +599,7 @@ export default function ProcurementOrders() {
                         <TableHead>Item</TableHead>
                         <TableHead className="text-right">Qty</TableHead>
                         <TableHead className="text-right">Unit Cost</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">{t("common.total")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

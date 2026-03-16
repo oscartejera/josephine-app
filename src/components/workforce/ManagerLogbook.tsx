@@ -171,7 +171,7 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
                             rows={3}
                         />
                         <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>{t("common.cancel")}</Button>
                             <Button size="sm" onClick={handleSubmit} disabled={submitting || !content.trim()}>
                                 {submitting ? 'Guardando...' : 'Guardar'}
                             </Button>

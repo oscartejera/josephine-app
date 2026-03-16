@@ -103,7 +103,7 @@ export function DataPrivacySection() {
     } catch (error) {
       console.error('Delete request error:', error);
       toast({
-        title: 'Error',
+        title: t("common.error"),
         description: 'No se pudo procesar la solicitud. Inténtalo de nuevo.',
         variant: 'destructive',
       });
@@ -207,7 +207,7 @@ export function DataPrivacySection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
               disabled={deleting}

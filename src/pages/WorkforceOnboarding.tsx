@@ -574,7 +574,7 @@ export default function WorkforceOnboarding() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setContractOpen(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setContractOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={() => { toast.success('Contrato registrado (demo)'); setContractOpen(false); }}>
                             Guardar contrato
                         </Button>

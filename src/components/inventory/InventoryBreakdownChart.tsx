@@ -138,7 +138,7 @@ export function InventoryBreakdownChart({
               ))}
               {/* Total row */}
               <TableRow className="border-t-2 border-border bg-muted/20">
-                <TableCell className="py-2.5 font-semibold text-sm text-muted-foreground">Total</TableCell>
+                <TableCell className="py-2.5 font-semibold text-sm text-muted-foreground">{t("common.total")}</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{totals.actualPercent.toFixed(1)}%</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{currency}{totals.actualAmount.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{totals.theoreticalPercent.toFixed(1)}%</TableCell>

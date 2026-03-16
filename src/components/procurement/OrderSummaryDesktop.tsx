@@ -159,7 +159,7 @@ export function OrderSummaryDesktop({
           </div>
           <Separator />
           <div className="flex justify-between font-semibold text-lg pt-1">
-            <span className="text-foreground">Total</span>
+            <span className="text-foreground">{t("common.total")}</span>
             <span className="text-foreground">€{summary.total.toFixed(2)}</span>
           </div>
         </div>

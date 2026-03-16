@@ -26,7 +26,7 @@ import {
     ArrowRight, Sparkles, SkipForward, Loader2
 } from 'lucide-react';
 import Joyride, { Step as JoyrideStep, STATUS, CallBackProps } from 'react-joyride';
-import { useTranslation } from 'react-i18next';
+
 
 // ── Types ─────────────────────────────────────────────────────────
 type WizardStep = 1 | 2;
@@ -71,7 +71,6 @@ const ONBOARDING_COMPLETE_KEY = 'josephine_onboarding_complete';
 const TOUR_COMPLETE_KEY = 'josephine_tour_complete';
 
 export function isOnboardingComplete(): boolean {
-  const { t } = useTranslation();
     return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true';
 }
 

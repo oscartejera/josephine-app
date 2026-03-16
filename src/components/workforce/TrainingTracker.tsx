@@ -168,7 +168,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
             <div className="grid grid-cols-4 gap-3">
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold">{records.length}</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xs text-muted-foreground">{t("common.total")}</p>
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-green-600">{records.length - expiredCount - expiringCount}</p>
@@ -229,7 +229,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                     <DialogHeader><DialogTitle>Nuevo Certificado</DialogTitle></DialogHeader>
                     <div className="space-y-3 py-2">
                         <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                            <SelectTrigger><SelectValue placeholder="Empleado" /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder={t("labour.employee")} /></SelectTrigger>
                             <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>)}</SelectContent>
                         </Select>
                         <Input placeholder={t("workforce.certificateName")} value={certName} onChange={e => setCertName(e.target.value)} />
@@ -249,7 +249,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !selectedEmployee || !certName.trim()}>
                             {submitting ? 'Guardando...' : 'Guardar'}
                         </Button>

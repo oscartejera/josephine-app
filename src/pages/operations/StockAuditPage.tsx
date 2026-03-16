@@ -107,7 +107,7 @@ export default function StockAuditPage() {
             setCountItemId('');
             setCountActual('');
         } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message });
+            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
     };
 
@@ -367,7 +367,7 @@ export default function StockAuditPage() {
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowCountDialog(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowCountDialog(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSubmitCount} disabled={submitCount.isPending || !countItemId || !countActual}>
                             {submitCount.isPending ? 'Guardando...' : 'Registrar Conteo'}
                         </Button>

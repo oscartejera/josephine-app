@@ -160,7 +160,7 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
         setError(err);
         setIsLoading(false);
         toast({
-          title: "Error",
+          title: t("common.error"),
           description: err,
           variant: "destructive"
         });

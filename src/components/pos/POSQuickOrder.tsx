@@ -181,7 +181,7 @@ export function POSQuickOrder({
 
         <div className="p-4 border-t space-y-3">
           <div className="flex justify-between text-lg font-bold">
-            <span>Total</span>
+            <span>{t("common.total")}</span>
             <span>€{total.toFixed(2)}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">

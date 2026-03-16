@@ -145,7 +145,19 @@
     "decrease": "Diminution",
     "positive": "Positif",
     "negative": "Négatif",
-    "productName": "Nom du produit"
+    "productName": "Nom du produit",
+    "send": "Envoyer",
+    "import": "Importer",
+    "information": "Information",
+    "warning": "Avertissement",
+    "accept": "Accepter",
+    "reject": "Rejeter",
+    "filter": "Filtrer",
+    "configure": "Configurer",
+    "select": "Sélectionner",
+    "objectives": "Objectifs",
+    "processing": "Traitement",
+    "upload": "Téléverser"
   },
   "nav": {
     "controlTower": "Tour de contrôle",
@@ -330,7 +342,19 @@
     "byRole": "Par poste",
     "byLocation": "Par établissement",
     "trend": "Tendance",
-    "labourVsBudget": "Personnel vs Budget"
+    "labourVsBudget": "Personnel vs Budget",
+    "estimated": "Estimé",
+    "planned": "Planifié",
+    "employee": "Employé",
+    "optimal": "Optimal",
+    "estimatedFromSchedules": "Estimé à partir des horaires planifiés",
+    "plannedVsActualVsPayroll": "Planifié vs Réel vs Paie",
+    "compareThreeLayers": "Comparez les trois couches de coût de main-d'œuvre",
+    "actualSchedules": "Réel (horaires)",
+    "schedules": "Horaires",
+    "driftExplanation": "Écart = différence entre planifié et coût réel",
+    "payrollActual": "Paie (réel)",
+    "actual": "réel"
   },
   "waste": {
     "title": "Pertes",
@@ -749,7 +773,10 @@
     "searchByStripeOrTicket": "Rechercher par Stripe ID ou Ticket...",
     "rewardDetails": "Détails de la récompense",
     "adjustmentReason": "Motif de l'ajustement",
-    "demoDataUpdated": "Toutes les données de démo ont été mises à jour avec succès."
+    "demoDataUpdated": "Toutes les données de démo ont été mises à jour avec succès.",
+    "privacy": "Confidentialité",
+    "costManagement": "Gestion des coûts",
+    "importData": "Importer des données"
   },
   "errors": {
     "generic": "Une erreur est survenue",

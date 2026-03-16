@@ -139,7 +139,7 @@ export default function PayrollEmployees({
       fetchEmployees();
       setEditingEmployee(null);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudieron guardar los datos' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudieron guardar los datos' });
     }
   };
 
@@ -165,7 +165,7 @@ export default function PayrollEmployees({
       fetchEmployees();
       setEditingEmployee(null);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo crear el contrato' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudo crear el contrato' });
     }
   };
 

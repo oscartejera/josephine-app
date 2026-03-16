@@ -174,14 +174,14 @@ export default function PayrollInputs({
       }
 
       if (error) {
-        toast({ variant: 'destructive', title: 'Error', description: `No se pudo guardar: ${error.message}` });
+        toast({ variant: 'destructive', title: t("common.error"), description: `No se pudo guardar: ${error.message}` });
       } else {
         toast({ title: 'Guardado', description: 'Variables actualizadas' });
         fetchInputs();
         setEditingInput(null);
       }
     } catch (err) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar las variables' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'No se pudo guardar las variables' });
     }
   };
 

@@ -234,30 +234,30 @@ function AppRoutes() {
 
             {/* Insights routes — per-section Suspense boundary */}
             <Route path="/insights" element={<Suspense fallback={<SectionLoader section="Insights" />}><Insights /></Suspense>} />
-            <Route path="/insights/sales" element={<Suspense fallback={<SectionLoader section="Ventas" />}><InsightErrorBoundary pageName="Ventas"><Sales /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/labour" element={<Suspense fallback={<SectionLoader section="Personal" />}><InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/labour/:locationId" element={<Suspense fallback={<SectionLoader section="Personal" />}><InsightErrorBoundary pageName="Personal"><Labour /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/instant-pl" element={<Suspense fallback={<SectionLoader section="P&L" />}><InsightErrorBoundary pageName="P&L Instantáneo"><InstantPL /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/reviews" element={<Suspense fallback={<SectionLoader section="Reseñas" />}><Reviews /></Suspense>} />
-            <Route path="/insights/reviews/all" element={<Suspense fallback={<SectionLoader section="Reseñas" />}><ReviewsAll /></Suspense>} />
-            <Route path="/insights/inventory" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InsightErrorBoundary pageName="Inventario"><Inventory /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/inventory/location/:locationId" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InsightErrorBoundary pageName="Inventario"><InventoryLocation /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/inventory/location/:locationId/reconciliation" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InventoryLocationReconciliation /></Suspense>} />
-            <Route path="/insights/inventory/reconciliation" element={<Suspense fallback={<SectionLoader section="Inventario" />}><InventoryReconciliation /></Suspense>} />
-            <Route path="/insights/waste" element={<Suspense fallback={<SectionLoader section="Merma" />}><Waste /></Suspense>} />
+            <Route path="/insights/sales" element={<Suspense fallback={<SectionLoader section={t("nav.sales")} />}><InsightErrorBoundary pageName={t("nav.sales")}><Sales /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/labour" element={<Suspense fallback={<SectionLoader section={t("nav.labour")} />}><InsightErrorBoundary pageName={t("nav.labour")}><Labour /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/labour/:locationId" element={<Suspense fallback={<SectionLoader section={t("nav.labour")} />}><InsightErrorBoundary pageName={t("nav.labour")}><Labour /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/instant-pl" element={<Suspense fallback={<SectionLoader section={t("nav.instantPL")} />}><InsightErrorBoundary pageName={t("nav.instantPL")}><InstantPL /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/reviews" element={<Suspense fallback={<SectionLoader section={t("nav.reviews")} />}><Reviews /></Suspense>} />
+            <Route path="/insights/reviews/all" element={<Suspense fallback={<SectionLoader section={t("nav.reviews")} />}><ReviewsAll /></Suspense>} />
+            <Route path="/insights/inventory" element={<Suspense fallback={<SectionLoader section={t("nav.inventory")} />}><InsightErrorBoundary pageName={t("nav.inventory")}><Inventory /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/inventory/location/:locationId" element={<Suspense fallback={<SectionLoader section={t("nav.inventory")} />}><InsightErrorBoundary pageName={t("nav.inventory")}><InventoryLocation /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/inventory/location/:locationId/reconciliation" element={<Suspense fallback={<SectionLoader section={t("nav.inventory")} />}><InventoryLocationReconciliation /></Suspense>} />
+            <Route path="/insights/inventory/reconciliation" element={<Suspense fallback={<SectionLoader section={t("nav.inventory")} />}><InventoryReconciliation /></Suspense>} />
+            <Route path="/insights/waste" element={<Suspense fallback={<SectionLoader section={t("nav.waste")} />}><Waste /></Suspense>} />
             <Route path="/insights/menu-engineering" element={<Suspense fallback={<SectionLoader section={t("nav.menu")} />}><InsightErrorBoundary pageName={t("nav.menuEngineering")}><MenuEngineering /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/cash-management" element={<Suspense fallback={<SectionLoader section="Caja" />}><InsightErrorBoundary pageName="Caja"><CashManagement /></InsightErrorBoundary></Suspense>} />
-            <Route path="/insights/budgets" element={<Suspense fallback={<SectionLoader section="Presupuestos" />}><InsightErrorBoundary pageName="Presupuestos"><Budgets /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/cash-management" element={<Suspense fallback={<SectionLoader section={t("nav.cashManagement")} />}><InsightErrorBoundary pageName={t("nav.cashManagement")}><CashManagement /></InsightErrorBoundary></Suspense>} />
+            <Route path="/insights/budgets" element={<Suspense fallback={<SectionLoader section={t("nav.budgets")} />}><InsightErrorBoundary pageName={t("nav.budgets")}><Budgets /></InsightErrorBoundary></Suspense>} />
 
             {/* Workforce & Operations — per-section Suspense boundary */}
-            <Route path="/workforce/team" element={<Suspense fallback={<SectionLoader section="Equipo" />}><InsightErrorBoundary pageName="Equipo"><WorkforceTeam /></InsightErrorBoundary></Suspense>} />
-            <Route path="/workforce/timesheet" element={<Suspense fallback={<SectionLoader section="Fichajes" />}><InsightErrorBoundary pageName="Fichajes"><WorkforceTimesheet /></InsightErrorBoundary></Suspense>} />
+            <Route path="/workforce/team" element={<Suspense fallback={<SectionLoader section={t("nav.teamRoster")} />}><InsightErrorBoundary pageName={t("nav.teamRoster")}><WorkforceTeam /></InsightErrorBoundary></Suspense>} />
+            <Route path="/workforce/timesheet" element={<Suspense fallback={<SectionLoader section={t("nav.timesheet")} />}><InsightErrorBoundary pageName={t("nav.timesheet")}><WorkforceTimesheet /></InsightErrorBoundary></Suspense>} />
             <Route path="/workforce/onboarding" element={<Suspense fallback={<SectionLoader section="Onboarding" />}><InsightErrorBoundary pageName="Onboarding"><WorkforceOnboarding /></InsightErrorBoundary></Suspense>} />
-            <Route path="/scheduling" element={<Suspense fallback={<SectionLoader section="Turnos" />}><InsightErrorBoundary pageName="Turnos"><Scheduling /></InsightErrorBoundary></Suspense>} />
-            <Route path="/availability" element={<Suspense fallback={<SectionLoader section="Disponibilidad" />}><InsightErrorBoundary pageName="Disponibilidad"><Availability /></InsightErrorBoundary></Suspense>} />
-            <Route path="/procurement" element={<Suspense fallback={<SectionLoader section="Compras" />}><InsightErrorBoundary pageName="Compras"><Procurement /></InsightErrorBoundary></Suspense>} />
-            <Route path="/procurement/cart" element={<Suspense fallback={<SectionLoader section="Carrito" />}><InsightErrorBoundary pageName="Carrito"><ProcurementCart /></InsightErrorBoundary></Suspense>} />
-            <Route path="/procurement/orders" element={<Suspense fallback={<SectionLoader section="Pedidos" />}><InsightErrorBoundary pageName="Pedidos"><ProcurementOrders /></InsightErrorBoundary></Suspense>} />
+            <Route path="/scheduling" element={<Suspense fallback={<SectionLoader section={t("nav.scheduling")} />}><InsightErrorBoundary pageName={t("nav.scheduling")}><Scheduling /></InsightErrorBoundary></Suspense>} />
+            <Route path="/availability" element={<Suspense fallback={<SectionLoader section={t("nav.availability")} />}><InsightErrorBoundary pageName={t("nav.availability")}><Availability /></InsightErrorBoundary></Suspense>} />
+            <Route path="/procurement" element={<Suspense fallback={<SectionLoader section={t("nav.procurement")} />}><InsightErrorBoundary pageName={t("nav.procurement")}><Procurement /></InsightErrorBoundary></Suspense>} />
+            <Route path="/procurement/cart" element={<Suspense fallback={<SectionLoader section={t("nav.procurement")} />}><InsightErrorBoundary pageName={t("nav.procurement")}><ProcurementCart /></InsightErrorBoundary></Suspense>} />
+            <Route path="/procurement/orders" element={<Suspense fallback={<SectionLoader section={t("nav.procurement")} />}><InsightErrorBoundary pageName={t("nav.procurement")}><ProcurementOrders /></InsightErrorBoundary></Suspense>} />
             <Route path="/payroll/*" element={<Suspense fallback={<SectionLoader section={t("payroll.payrollManagement")} />}><InsightErrorBoundary pageName={t("payroll.payrollManagement")}><Payroll /></InsightErrorBoundary></Suspense>} />
 
             {/* Integrations — Owner-only, per-section Suspense */}
@@ -273,17 +273,17 @@ function AppRoutes() {
             <Route path="/inventory-setup/menu-items" element={<Suspense fallback={<SectionLoader section={t("nav.menu")} />}><InsightErrorBoundary pageName={t("nav.menuItems")}><MenuItemsPage /></InsightErrorBoundary></Suspense>} />
 
             {/* Operations — per-section Suspense */}
-            <Route path="/operations/waste-entry" element={<Suspense fallback={<SectionLoader section="Merma" />}><InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/operations/waste-entry" element={<Suspense fallback={<SectionLoader section={t("nav.waste")} />}><InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary></Suspense>} />
             <Route path="/operations/stock-audit" element={<Suspense fallback={<SectionLoader section="Stock" />}><InsightErrorBoundary pageName="Auditoría Stock"><StockAuditPage /></InsightErrorBoundary></Suspense>} />
             <Route path="/operations/prep-list" element={<Suspense fallback={<SectionLoader section="Prep List" />}><InsightErrorBoundary pageName="Prep List"><PrepListPage /></InsightErrorBoundary></Suspense>} />
 
             {/* Settings — Owner-only, per-section Suspense */}
-            <Route path="/settings" element={<Suspense fallback={<SectionLoader section="Ajustes" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Ajustes"><SettingsPage /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/settings" element={<Suspense fallback={<SectionLoader section={t("nav.settings")} />}><OwnerOnlyRoute><InsightErrorBoundary pageName={t("nav.settings")}><SettingsPage /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
             <Route path="/admin/tools" element={<Suspense fallback={<SectionLoader section="Admin" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Admin Tools"><AdminTools /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
             <Route path="/admin/data-health" element={<Suspense fallback={<SectionLoader section="Data Health" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Data Health"><DataHealth /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
             <Route path="/debug/data-coherence" element={<Suspense fallback={<SectionLoader section="Debug" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Debug"><DebugDataCoherence /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
-            <Route path="/settings/import" element={<Suspense fallback={<SectionLoader section="Importar" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Importar Datos"><DataImport /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
-            <Route path="/settings/billing" element={<Suspense fallback={<SectionLoader section="Facturación" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Facturación"><Pricing /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/settings/import" element={<Suspense fallback={<SectionLoader section={t("common.import")} />}><OwnerOnlyRoute><InsightErrorBoundary pageName={t("settings.importData")}><DataImport /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
+            <Route path="/settings/billing" element={<Suspense fallback={<SectionLoader section={t("settings.billing")} />}><OwnerOnlyRoute><InsightErrorBoundary pageName={t("settings.billing")}><Pricing /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
             <Route path="/settings/onboarding" element={<Suspense fallback={<SectionLoader section="Onboarding" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Onboarding"><OnboardingChecklist /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
             <Route path="/pricing" element={<Navigate to="/settings/billing" replace />} />
           </Route>
@@ -291,11 +291,11 @@ function AppRoutes() {
           {/* Team (Employee Portal) — per-section Suspense */}
           <Route element={<ProtectedRoute><AppProvider><RouteErrorBoundary><TeamLayout /></RouteErrorBoundary></AppProvider></ProtectedRoute>}>
             <Route path="/team" element={<Suspense fallback={<SectionLoader section="Portal" />}><TeamHome /></Suspense>} />
-            <Route path="/team/schedule" element={<Suspense fallback={<SectionLoader section="Horarios" />}><TeamSchedule /></Suspense>} />
-            <Route path="/team/clock" element={<Suspense fallback={<SectionLoader section="Fichaje" />}><TeamClock /></Suspense>} />
-            <Route path="/team/pay" element={<Suspense fallback={<SectionLoader section="Nómina" />}><TeamPay /></Suspense>} />
-            <Route path="/team/directory" element={<Suspense fallback={<SectionLoader section="Directorio" />}><TeamDirectory /></Suspense>} />
-            <Route path="/team/news" element={<Suspense fallback={<SectionLoader section="Noticias" />}><TeamNews /></Suspense>} />
+            <Route path="/team/schedule" element={<Suspense fallback={<SectionLoader section={t("nav.schedule")} />}><TeamSchedule /></Suspense>} />
+            <Route path="/team/clock" element={<Suspense fallback={<SectionLoader section={t("nav.timesheet")} />}><TeamClock /></Suspense>} />
+            <Route path="/team/pay" element={<Suspense fallback={<SectionLoader section={t("labour.payroll")} />}><TeamPay /></Suspense>} />
+            <Route path="/team/directory" element={<Suspense fallback={<SectionLoader section={t("nav.teamRoster")} />}><TeamDirectory /></Suspense>} />
+            <Route path="/team/news" element={<Suspense fallback={<SectionLoader section={t("nav.teamRoster")} />}><TeamNews /></Suspense>} />
           </Route>
 
           {/* Kiosk Mode — fullscreen, no sidebar, auth-protected */}

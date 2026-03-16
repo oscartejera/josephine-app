@@ -137,7 +137,7 @@ export function TeamManager() {
       console.error('Error fetching team:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: 'No se pudo cargar el equipo'
       });
     } finally {
@@ -159,7 +159,7 @@ export function TeamManager() {
     if (!newMember.email || !newMember.full_name || !newMember.role_id) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: 'Por favor completa todos los campos requeridos'
       });
       return;
@@ -170,7 +170,7 @@ export function TeamManager() {
     if (!emailRegex.test(newMember.email)) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: 'Por favor ingresa un email válido'
       });
       return;
@@ -181,7 +181,7 @@ export function TeamManager() {
     if (selectedRole && LOCATION_REQUIRED_ROLES.includes(selectedRole.name) && !newMember.location_id) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: `El rol "${selectedRole.name}" requiere una ubicación específica`
       });
       return;

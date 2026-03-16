@@ -146,11 +146,11 @@ export default function PayrollHome({
 
   const handleCreateEntity = async () => {
     if (!newEntity.razon_social || !newEntity.nif || !newEntity.domicilio_fiscal) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Completa los campos obligatorios' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'Completa los campos obligatorios' });
       return;
     }
     if (!group?.id) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se ha detectado el grupo. Recarga la página.' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'No se ha detectado el grupo. Recarga la página.' });
       return;
     }
 
@@ -169,7 +169,7 @@ export default function PayrollHome({
       await refreshData();
       if (result.data) setSelectedLegalEntity(result.data);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo crear la entidad' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudo crear la entidad' });
     } finally {
       setLoading(false);
     }
@@ -177,7 +177,7 @@ export default function PayrollHome({
 
   const handleStartPayroll = async () => {
     if (!selectedLegalEntity) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Selecciona una entidad legal' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'Selecciona una entidad legal' });
       return;
     }
 
@@ -199,7 +199,7 @@ export default function PayrollHome({
       await refreshData();
       navigate('/payroll/employees');
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo iniciar la nómina' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudo iniciar la nómina' });
     } finally {
       setLoading(false);
     }
@@ -219,7 +219,7 @@ export default function PayrollHome({
       setShowResetDialog(false);
       await refreshData();
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo resetear la nómina' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'No se pudo resetear la nómina' });
     } finally {
       setLoading(false);
     }
@@ -227,7 +227,7 @@ export default function PayrollHome({
 
   const handleSeedData = async () => {
     if (!selectedLegalEntity || !group?.id) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Selecciona primero una entidad legal' });
+      toast({ variant: 'destructive', title: t("common.error"), description: 'Selecciona primero una entidad legal' });
       return;
     }
     setLoading(true);
@@ -245,7 +245,7 @@ export default function PayrollHome({
       await refreshData();
       await fetchIssuesAndKPIs();
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error al cargar datos de prueba' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'Error al cargar datos de prueba' });
     } finally {
       setLoading(false);
     }
@@ -434,7 +434,7 @@ export default function PayrollHome({
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowResetDialog(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowResetDialog(false)}>{t("common.cancel")}</Button>
                         <Button variant="destructive" onClick={handleResetPayroll} disabled={loading}>
                           {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RotateCcw className="h-4 w-4 mr-2" />}
                           Resetear

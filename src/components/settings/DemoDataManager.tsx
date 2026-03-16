@@ -118,7 +118,7 @@ export function DemoDataManager() {
 
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("common.error"),
         description: error instanceof Error ? error.message : "No se pudieron regenerar los datos demo",
       });
     } finally {
@@ -250,7 +250,7 @@ export function DemoDataManager() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction onClick={handleRegenerate}>
                 Regenerar
               </AlertDialogAction>

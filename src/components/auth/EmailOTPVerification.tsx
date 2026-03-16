@@ -69,7 +69,7 @@ export function EmailOTPVerification({
       console.error('Error sending OTP:', error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("common.error"),
         description: "No se pudo enviar el código. Intenta de nuevo."
       });
     }
@@ -147,7 +147,7 @@ export function EmailOTPVerification({
       console.error('Verification error:', error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: t("common.error"),
         description: "Ocurrió un error al verificar. Intenta de nuevo."
       });
     }

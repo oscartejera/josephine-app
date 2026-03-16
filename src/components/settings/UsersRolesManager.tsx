@@ -142,7 +142,7 @@ export function UsersRolesManager() {
       console.error('Error fetching users:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: 'No se pudieron cargar los usuarios'
       });
     } finally {
@@ -164,7 +164,7 @@ export function UsersRolesManager() {
     if (!editingUser || !newAssignment.role_id) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: 'Selecciona un rol'
       });
       return;
@@ -176,7 +176,7 @@ export function UsersRolesManager() {
     if (requiresLocation && !newAssignment.location_id) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: `El rol "${selectedRole?.name}" requiere una ubicación específica`
       });
       return;
@@ -196,7 +196,7 @@ export function UsersRolesManager() {
         if (error.message.includes('cannot have global scope')) {
           toast({
             variant: 'destructive',
-            title: 'Error',
+            title: t("common.error"),
             description: 'Este rol requiere una ubicación específica'
           });
         } else {
@@ -219,7 +219,7 @@ export function UsersRolesManager() {
       console.error('Error adding role:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: error.message || 'No se pudo asignar el rol'
       });
     } finally {
@@ -259,7 +259,7 @@ export function UsersRolesManager() {
       console.error('Error deleting role:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t("common.error"),
         description: error.message || 'No se pudo eliminar el rol'
       });
     } finally {
@@ -569,7 +569,7 @@ export function UsersRolesManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={saving}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteRole}
               disabled={saving}

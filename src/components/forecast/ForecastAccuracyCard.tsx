@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 // ── Helper: rating badge ─────────────────────────────────────
 
 function AccuracyBadge({ mape }: { mape: number | null }) {
-    if (mape === null) return <span className="text-xs text-muted-foreground">Sin datos</span>;
+    if (mape === null) return <span className="text-xs text-muted-foreground">{t("common.noData")}</span>;
     const isExcellent = mape <= 5;
     const isGood = mape <= 10;
     const label = isExcellent ? 'Excelente' : isGood ? 'Bueno' : mape <= 20 ? 'Aceptable' : 'Mejorar';

@@ -72,7 +72,7 @@ function SourceBadge({ source }: { source: 'payroll' | 'schedule' }) {
       )}
       title={isPayroll
         ? t("payroll.basedOnProcessedPayroll")
-        : "Estimado desde horarios planificados"}
+        : t("labour.estimatedFromSchedules")}
     >
       <span>{isPayroll ? '✓' : '~'}</span>
       {isPayroll ? 'Nómina' : 'Estimado'}

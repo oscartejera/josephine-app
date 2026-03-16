@@ -137,7 +137,7 @@ export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
 
         {/* Total row */}
         <div className="pt-3 border-t flex items-center justify-between font-semibold text-gray-900">
-          <span>Total</span>
+          <span>{t("common.total")}</span>
           <div className="flex items-center gap-4">
             {metricMode === 'hours' && <span>{totalHours.toFixed(1)}h</span>}
             {metricMode === 'amount' && <span>€{totalCost.toLocaleString()}</span>}

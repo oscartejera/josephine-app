@@ -304,7 +304,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                         <Textarea placeholder="Objetivos" value={goals} onChange={e => setGoals(e.target.value)} rows={2} />
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !selectedEmployee}>
                             {submitting ? 'Guardando...' : 'Guardar Evaluación'}
                         </Button>

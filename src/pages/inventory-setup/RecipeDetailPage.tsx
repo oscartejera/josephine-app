@@ -85,7 +85,7 @@ export default function RecipeDetailPage() {
             setHeaderDirty(false);
             toast({ title: 'Guardado', description: 'Receta actualizada' });
         } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message });
+            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
     };
 
@@ -105,7 +105,7 @@ export default function RecipeDetailPage() {
             setAddYieldPct('100');
             toast({ title: 'Añadido', description: 'Ingrediente añadido a la receta' });
         } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message });
+            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
     };
 
@@ -114,7 +114,7 @@ export default function RecipeDetailPage() {
             await removeIngredient.mutateAsync(ingId);
             toast({ title: 'Eliminado' });
         } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message });
+            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
     };
 
@@ -394,7 +394,7 @@ export default function RecipeDetailPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setShowAddDialog(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleAddIngredient} disabled={addIngredient.isPending}>
                             {addIngredient.isPending ? 'Añadiendo...' : 'Añadir'}
                         </Button>

@@ -421,7 +421,7 @@ export default function ProcurementCart() {
 
                 {/* Grand Total */}
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Total</span>
+                  <span className="text-lg font-semibold">{t("common.total")}</span>
                   <span className="text-2xl font-bold">€{orderSummary.total.toFixed(2)}</span>
                 </div>
 

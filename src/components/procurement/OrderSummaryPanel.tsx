@@ -134,7 +134,7 @@ export function OrderSummaryPanel({
           </div>
           <Separator />
           <div className="flex justify-between font-semibold text-base">
-            <span className="text-foreground">Total</span>
+            <span className="text-foreground">{t("common.total")}</span>
             <span className="text-foreground">€{summary.total.toFixed(2)}</span>
           </div>
         </div>

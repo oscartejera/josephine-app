@@ -947,7 +947,7 @@ export function LocationManager() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteLocation(loc.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
