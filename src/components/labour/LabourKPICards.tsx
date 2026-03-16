@@ -94,8 +94,8 @@ function KpiCardSkeleton() {
   );
 }
 
-export function LabourKPICards({
-  const { t } = useTranslation(); kpis, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
+export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
+  const { t } = useTranslation();
   if (isLoading || !kpis) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

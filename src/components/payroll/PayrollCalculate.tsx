@@ -29,11 +29,12 @@ interface Payslip {
 }
 
 export default function PayrollCalculate({
-  const { t } = useTranslation();
+  
   currentPeriod,
   currentRun,
   refreshData,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   

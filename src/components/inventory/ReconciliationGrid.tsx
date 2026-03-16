@@ -51,13 +51,14 @@ const allColumns = [
 ];
 
 export function ReconciliationGrid({
-  const { t } = useTranslation();
+  
   lines,
   totals,
   stockStatus,
   setStockStatus,
   isLoading = false
 }: ReconciliationGridProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('itemName');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');

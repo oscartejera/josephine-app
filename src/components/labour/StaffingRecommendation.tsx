@@ -57,8 +57,8 @@ function formatCurrency(v: number) {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
 }
 
-export function StaffingRecommendation({
-  const { t } = useTranslation(); locationId, dateFrom, dateTo }: StaffingRecommendationProps) {
+export function StaffingRecommendation({ locationId, dateFrom, dateTo }: StaffingRecommendationProps) {
+  const { t } = useTranslation();
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const from = dateFrom || new Date();

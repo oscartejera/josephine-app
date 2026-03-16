@@ -25,8 +25,8 @@ interface FilterChipsProps {
   onChipToggle: (chip: ChipFilter) => void;
 }
 
-export function FilterChips({
-  const { t } = useTranslation(); counts, activeChips, onChipToggle }: FilterChipsProps) {
+export function FilterChips({ counts, activeChips, onChipToggle }: FilterChipsProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2 flex-wrap py-2">
       {CHIPS.map(chip => {

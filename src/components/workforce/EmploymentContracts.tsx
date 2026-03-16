@@ -71,8 +71,8 @@ interface Props {
     locationId: string;
 }
 
-export function EmploymentContracts({
-  const { t } = useTranslation(); locationId }: Props) {
+export function EmploymentContracts({ locationId }: Props) {
+  const { t } = useTranslation();
     const { accessibleLocations } = useApp();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);

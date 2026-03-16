@@ -51,8 +51,8 @@ function getStatusBadge(status: string, expiryDate: string | null) {
     return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />Válido</Badge>;
 }
 
-export function TrainingTracker({
-  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
+export function TrainingTracker({ locationId }: { locationId: string | null }) {
+  const { t } = useTranslation();
     const { group } = useApp();
     const [records, setRecords] = useState<TrainingRecord[]>([]);
     const [employees, setEmployees] = useState<Employee[]>([]);

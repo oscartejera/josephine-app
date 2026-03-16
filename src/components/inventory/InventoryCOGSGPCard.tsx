@@ -18,7 +18,7 @@ interface InventoryCOGSGPCardProps {
 }
 
 export function InventoryCOGSGPCard({
-  const { t } = useTranslation();
+  
   viewMode,
   actualPercent,
   actualAmount,
@@ -30,6 +30,7 @@ export function InventoryCOGSGPCard({
   isLoading = false,
   currency = '€'
 }: InventoryCOGSGPCardProps) {
+  const { t } = useTranslation();
   const isCOGS = viewMode === 'COGS';
   const title = isCOGS ? 'Cost of Goods Sold' : 'Gross Profit';
   const colorClass = isCOGS ? 'text-warning' : 'text-success';

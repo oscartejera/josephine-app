@@ -65,8 +65,8 @@ interface LogWasteDialogProps {
   defaultLocationId?: string;
 }
 
-export function LogWasteDialog({
-  const { t } = useTranslation(); onSuccess, defaultLocationId }: LogWasteDialogProps) {
+export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogProps) {
+  const { t } = useTranslation();
   const { locations } = useApp();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

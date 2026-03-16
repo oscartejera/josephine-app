@@ -24,7 +24,7 @@ interface ValidationItem {
 }
 
 export default function PayrollValidate({
-  const { t } = useTranslation();
+  
   selectedLegalEntity,
   currentPeriod,
   currentRun,
@@ -32,6 +32,7 @@ export default function PayrollValidate({
   isPayrollAdmin,
   isSandboxMode,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   

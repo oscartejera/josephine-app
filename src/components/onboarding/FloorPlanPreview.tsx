@@ -31,7 +31,7 @@ const SHAPE_COLORS: Record<TableShape, string> = {
 };
 
 export function FloorPlanPreview({
-  const { t } = useTranslation();
+  
   tables,
   width = 800,
   height = 500,
@@ -40,6 +40,7 @@ export function FloorPlanPreview({
   selectedTableId,
   showGrid = true,
 }: FloorPlanPreviewProps) {
+  const { t } = useTranslation();
   const GRID_SIZE = 20;
 
   return (

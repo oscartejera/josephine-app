@@ -10,8 +10,8 @@ interface ScheduleToastProps {
   onUndo: () => void;
 }
 
-export function ScheduleToast({
-  const { t } = useTranslation(); isVisible, hoursAdded, onAccept, onUndo }: ScheduleToastProps) {
+export function ScheduleToast({ isVisible, hoursAdded, onAccept, onUndo }: ScheduleToastProps) {
+  const { t } = useTranslation();
   return (
     <AnimatePresence>
       {isVisible && (

@@ -25,8 +25,8 @@ interface ClockInPanelProps {
   locationName?: string;
 }
 
-export function ClockInPanel({
-  const { t } = useTranslation(); locationId, locationName }: ClockInPanelProps) {
+export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [employeeId, setEmployeeId] = useState<string | null>(null);

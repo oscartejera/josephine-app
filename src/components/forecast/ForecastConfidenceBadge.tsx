@@ -16,8 +16,8 @@ interface ForecastConfidenceBadgeProps {
     compact?: boolean;
 }
 
-export function ForecastConfidenceBadge({
-  const { t } = useTranslation(); className, compact = false }: ForecastConfidenceBadgeProps) {
+export function ForecastConfidenceBadge({ className, compact = false }: ForecastConfidenceBadgeProps) {
+  const { t } = useTranslation();
     const { locations } = useApp();
     const locationIds = locations.map(l => l.id);
 

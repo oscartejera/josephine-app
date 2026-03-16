@@ -20,7 +20,7 @@ interface MetricCardProps {
 }
 
 export function MetricCard({
-  const { t } = useTranslation();
+  
   title,
   value,
   subtitle,
@@ -30,6 +30,7 @@ export function MetricCard({
   className,
   children
 }: MetricCardProps) {
+  const { t } = useTranslation();
   const variantStyles = {
     default: 'border-l-primary',
     success: 'border-l-success',

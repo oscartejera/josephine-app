@@ -20,7 +20,7 @@ interface InventoryGapCardProps {
 }
 
 export function InventoryGapCard({
-  const { t } = useTranslation();
+  
   viewMode,
   gapPercent,
   gapAmount,
@@ -32,6 +32,7 @@ export function InventoryGapCard({
   dateRange,
   selectedLocations = []
 }: InventoryGapCardProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isCOGS = viewMode === 'COGS';
   const isNegative = isCOGS ? gapAmount > 0 : gapAmount < 0;

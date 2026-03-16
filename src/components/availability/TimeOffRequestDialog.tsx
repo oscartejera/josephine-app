@@ -44,11 +44,12 @@ const TYPE_CONFIG: Record<TimeOffRequest['type'], { label: string; icon: React.E
 };
 
 export function TimeOffRequestDialog({
-  const { t } = useTranslation();
+  
   isOpen,
   onClose,
   onSubmit,
 }: TimeOffRequestDialogProps) {
+  const { t } = useTranslation();
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [type, setType] = useState<TimeOffRequest['type']>('vacation');

@@ -20,12 +20,13 @@ interface AIRecommendPanelProps {
 }
 
 export function AIRecommendPanel({
-  const { t } = useTranslation();
+  
   settings,
   onSettingsChange,
   onRecommend,
   isCalculating,
 }: AIRecommendPanelProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-card rounded-xl border border-border p-4">
       <div className="flex flex-wrap items-center gap-4">

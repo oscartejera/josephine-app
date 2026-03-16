@@ -13,8 +13,8 @@ interface TopBarProps {
   onMenuClick: () => void;
 }
 
-export function TopBar({
-  const { t } = useTranslation(); onMenuClick }: TopBarProps) {
+export function TopBar({ onMenuClick }: TopBarProps) {
+  const { t } = useTranslation();
   const location = useLocation();
 
   // Generate breadcrumb from path

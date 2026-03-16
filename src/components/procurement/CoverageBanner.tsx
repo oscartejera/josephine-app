@@ -8,8 +8,8 @@ interface CoverageBannerProps {
   orderDate?: Date;
 }
 
-export function CoverageBanner({
-  const { t } = useTranslation(); coverageEndDate, hasItems, orderDate = new Date() }: CoverageBannerProps) {
+export function CoverageBanner({ coverageEndDate, hasItems, orderDate = new Date() }: CoverageBannerProps) {
+  const { t } = useTranslation();
   if (!hasItems) return null;
 
   const coverageDays = Math.ceil((coverageEndDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));

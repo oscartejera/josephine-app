@@ -22,13 +22,14 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({
-  const { t } = useTranslation();
+  
   selectedPreset,
   onPresetChange,
   startDate,
   endDate,
   onDateRangeChange,
 }: DateRangePickerProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const getDisplayText = () => {

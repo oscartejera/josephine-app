@@ -20,8 +20,8 @@ interface AccuracyPoint {
     forecast_sales: number;
 }
 
-export function ForecastAccuracyTrend({
-  const { t } = useTranslation(); locationIds }: { locationIds: string[] }) {
+export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }) {
+  const { t } = useTranslation();
     const { data: points, isLoading } = useQuery({
         queryKey: ['accuracy-trend', locationIds],
         enabled: locationIds.length > 0,

@@ -71,8 +71,8 @@ const STEPS: Step[] = [
   { id: 'inventory', title: 'Inventario', description: 'Ingredientes (opcional)', icon: Package },
 ];
 
-export function OnboardingWizard({
-  const { t } = useTranslation(); onComplete }: OnboardingWizardProps) {
+export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);

@@ -90,8 +90,8 @@ interface ScheduleSettingsSheetProps {
   locationName: string;
 }
 
-export function ScheduleSettingsSheet({
-  const { t } = useTranslation(); isOpen, onClose, locationId, locationName }: ScheduleSettingsSheetProps) {
+export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationName }: ScheduleSettingsSheetProps) {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<ScheduleSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

@@ -54,8 +54,8 @@ function formatCurrency(v: number) {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
 }
 
-export function TipDistributionConfig({
-  const { t } = useTranslation(); locationId, className }: TipDistributionConfigProps) {
+export function TipDistributionConfig({ locationId, className }: TipDistributionConfigProps) {
+  const { t } = useTranslation();
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

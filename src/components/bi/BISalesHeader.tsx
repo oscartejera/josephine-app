@@ -41,7 +41,7 @@ interface BISalesHeaderProps {
 }
 
 export function BISalesHeader({
-  const { t } = useTranslation();
+  
   dateRange,
   setDateRange,
   granularity,
@@ -54,6 +54,7 @@ export function BISalesHeader({
   isConnected = false,
   lastUpdate = null
 }: BISalesHeaderProps) {
+  const { t } = useTranslation();
   const { locations } = useApp();
   const [locationsOpen, setLocationsOpen] = useState(false);
 

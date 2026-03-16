@@ -39,8 +39,8 @@ interface CostEntry {
     id?: string;
 }
 
-export function MonthlyCostInput({
-  const { t } = useTranslation(); year, month, locationId, onSaved, className }: MonthlyCostInputProps) {
+export function MonthlyCostInput({ year, month, locationId, onSaved, className }: MonthlyCostInputProps) {
+  const { t } = useTranslation();
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const [entries, setEntries] = useState<Record<string, number>>({});

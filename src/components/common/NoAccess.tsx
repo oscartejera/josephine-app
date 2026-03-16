@@ -10,11 +10,12 @@ interface NoAccessProps {
 }
 
 export function NoAccess({
-  const { t } = useTranslation();
+  
   title = 'Acceso Denegado',
   message = 'No tienes permisos para ver esta página. Contacta a tu administrador si crees que esto es un error.',
   showBackButton = true,
 }: NoAccessProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (

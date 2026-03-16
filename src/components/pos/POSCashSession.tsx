@@ -28,11 +28,12 @@ interface POSCashSessionProps {
 }
 
 export function POSCashSession({
-  const { t } = useTranslation();
+  
   locationId,
   session,
   onSessionChange,
 }: POSCashSessionProps) {
+  const { t } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [openingCash, setOpeningCash] = useState('100');
   const [closingCash, setClosingCash] = useState('');

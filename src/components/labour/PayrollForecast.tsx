@@ -50,8 +50,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
     no_budget: { label: 'Sin presupuesto', color: 'text-gray-500', bg: 'bg-gray-100', icon: '—' },
 };
 
-export function PayrollForecast({
-  const { t } = useTranslation(); locationId }: PayrollForecastProps) {
+export function PayrollForecast({ locationId }: PayrollForecastProps) {
+  const { t } = useTranslation();
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

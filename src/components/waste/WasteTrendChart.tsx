@@ -44,11 +44,12 @@ interface WasteTrendChartProps {
 }
 
 export function WasteTrendChart({
-  const { t } = useTranslation();
+  
   trendData,
   byReason,
   isLoading = false
 }: WasteTrendChartProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card className="border-border">

@@ -24,7 +24,7 @@ interface SupplierHeaderProps {
 }
 
 export function SupplierHeader({
-  const { t } = useTranslation();
+  
   supplier,
   deliveryDaysLabel,
   orderDate,
@@ -33,6 +33,7 @@ export function SupplierHeader({
   onSearchChange,
   cutoffInfo,
 }: SupplierHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-card rounded-xl border border-border p-6 space-y-4">
       {/* Top row: Supplier info + Search + Date */}

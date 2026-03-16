@@ -57,8 +57,8 @@ function StatusBadge({ status }: { status: BudgetLocationData['status'] }) {
   );
 }
 
-export function BudgetLocationTable({
-  const { t } = useTranslation(); data, isLoading = false, currency = '€' }: BudgetLocationTableProps) {
+export function BudgetLocationTable({ data, isLoading = false, currency = '€' }: BudgetLocationTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filteredData = useMemo(() => {

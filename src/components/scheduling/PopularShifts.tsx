@@ -23,8 +23,8 @@ interface PopularShiftsProps {
   onDragStart?: (template: { startTime: string; endTime: string; hours: number; label: string }) => void;
 }
 
-export function PopularShifts({
-  const { t } = useTranslation(); onDragStart }: PopularShiftsProps) {
+export function PopularShifts({ onDragStart }: PopularShiftsProps) {
+  const { t } = useTranslation();
   const handleDragStart = (e: React.DragEvent, shift: ShiftTemplate) => {
     const payload = {
       type: 'template',

@@ -31,13 +31,14 @@ interface PayrollInput {
 }
 
 export default function PayrollInputs({
-  const { t } = useTranslation();
+  
   selectedLegalEntity,
   currentPeriod,
   currentRun,
   refreshData,
   isPayrollAdmin,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { selectedLocationId, locations } = useApp();
   const { toast } = useToast();

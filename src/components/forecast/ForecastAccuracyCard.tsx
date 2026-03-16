@@ -74,8 +74,8 @@ interface ForecastAccuracyCardProps {
     locationIds: string[];
 }
 
-export function ForecastAccuracyCard({
-  const { t } = useTranslation(); locationIds }: ForecastAccuracyCardProps) {
+export function ForecastAccuracyCard({ locationIds }: ForecastAccuracyCardProps) {
+  const { t } = useTranslation();
     const { data: rows, isLoading } = useForecastAccuracy({ locationIds });
 
     if (isLoading) {

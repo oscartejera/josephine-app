@@ -45,8 +45,8 @@ const SEVERITIES = [
     { value: 'critical', label: 'Crítico', color: 'text-red-600 bg-red-50 border-red-200' },
 ];
 
-export function ManagerLogbook({
-  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
+export function ManagerLogbook({ locationId }: { locationId: string | null }) {
+  const { t } = useTranslation();
     const { group } = useApp();
     const { user } = useAuth();
     const [entries, setEntries] = useState<LogEntry[]>([]);

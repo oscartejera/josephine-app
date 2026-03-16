@@ -150,13 +150,14 @@ function SwapRequestCard({
 }
 
 export function SwapRequestsPanel({
-  const { t } = useTranslation();
+  
   isOpen,
   onClose,
   requests,
   onApprove,
   onReject,
 }: SwapRequestsPanelProps) {
+  const { t } = useTranslation();
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const processedRequests = requests.filter(r => r.status !== 'pending');
   

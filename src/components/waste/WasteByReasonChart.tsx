@@ -46,11 +46,12 @@ interface WasteByReasonChartProps {
 }
 
 export function WasteByReasonChart({
-  const { t } = useTranslation();
+  
   byReason,
   isLoading = false,
   currency = '€'
 }: WasteByReasonChartProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card className="border-border">

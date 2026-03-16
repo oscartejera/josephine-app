@@ -34,8 +34,8 @@ function DeltaCell({ value, suffix = '%', inverse = false }: { value: number; su
   );
 }
 
-export function CashLocationTable({
-  const { t } = useTranslation(); data, isLoading = false, currency = '€' }: CashLocationTableProps) {
+export function CashLocationTable({ data, isLoading = false, currency = '€' }: CashLocationTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filteredData = useMemo(() => {

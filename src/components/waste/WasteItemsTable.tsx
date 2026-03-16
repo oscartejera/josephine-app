@@ -42,12 +42,13 @@ interface WasteItemsTableProps {
 }
 
 export function WasteItemsTable({
-  const { t } = useTranslation();
+  
   items,
   totalWastePercent,
   isLoading = false,
   currency = '€',
 }: WasteItemsTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [reasonFilter, setReasonFilter] = useState<WasteReason | 'all'>('all');
   const [sortBy, setSortBy] = useState<'value' | 'quantity' | 'percentOfSales'>('value');

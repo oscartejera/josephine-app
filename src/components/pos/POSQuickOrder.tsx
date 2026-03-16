@@ -27,12 +27,13 @@ interface CartItem {
 }
 
 export function POSQuickOrder({
-  const { t } = useTranslation();
+  
   locationId,
   products,
   cashSession,
   onRefresh,
 }: POSQuickOrderProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);

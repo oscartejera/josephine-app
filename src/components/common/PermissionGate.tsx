@@ -38,9 +38,10 @@ interface PermissionGateProps {
  * </PermissionGate>
  */
 export function PermissionGate({
-  const { t } = useTranslation();
+  
   children,
 }: PermissionGateProps) {
+  const { t } = useTranslation();
   // Always render children - no content hiding
   return <>{children}</>;
 }

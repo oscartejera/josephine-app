@@ -18,8 +18,8 @@ interface AskJosephineProps {
   salesData: any;
 }
 
-export function AskJosephine({
-  const { t } = useTranslation(); salesData }: AskJosephineProps) {
+export function AskJosephine({ salesData }: AskJosephineProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');

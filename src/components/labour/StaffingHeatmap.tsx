@@ -51,8 +51,8 @@ const STATUS_STYLES: Record<string, { label: string; bg: string; text: string; b
     no_data: { label: 'Sin datos', bg: 'bg-gray-50', text: 'text-gray-400', bar: 'bg-gray-200', emoji: '—' },
 };
 
-export function StaffingHeatmap({
-  const { t } = useTranslation(); locationId }: StaffingHeatmapProps) {
+export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
+  const { t } = useTranslation();
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

@@ -66,8 +66,8 @@ function ExplainFactor({
     );
 }
 
-export function ForecastExplainDrawer({
-  const { t } = useTranslation(); open, onClose, locationId, date }: ForecastExplainDrawerProps) {
+export function ForecastExplainDrawer({ open, onClose, locationId, date }: ForecastExplainDrawerProps) {
+  const { t } = useTranslation();
     const { data: detail, isLoading } = useQuery({
         queryKey: ['forecast-explain', locationId, date],
         enabled: open && !!locationId && !!date,

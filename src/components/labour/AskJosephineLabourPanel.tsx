@@ -105,8 +105,8 @@ async function streamInsights({
   }
 }
 
-export function AskJosephineLabourPanel({
-  const { t } = useTranslation(); open, onClose, kpis, locations }: AskJosephineLabourPanelProps) {
+export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJosephineLabourPanelProps) {
+  const { t } = useTranslation();
   const [insight, setInsight] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

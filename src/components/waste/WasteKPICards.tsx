@@ -14,13 +14,14 @@ interface WasteKPICardsProps {
 const INDUSTRY_WASTE_BENCHMARK = 5.0; // Industry avg waste% without AI forecasting
 
 export function WasteKPICards({
-  const { t } = useTranslation();
+  
   totalSales,
   totalAccountedWaste,
   wastePercentOfSales,
   isLoading = false,
   currency = '€'
 }: WasteKPICardsProps) {
+  const { t } = useTranslation();
   const formatCurrency = (value: number) => {
     return `${currency}${value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };

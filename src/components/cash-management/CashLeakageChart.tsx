@@ -13,8 +13,8 @@ interface CashLeakageChartProps {
   currency?: string;
 }
 
-export function CashLeakageChart({
-  const { t } = useTranslation(); data, isLoading = false, currency = '€' }: CashLeakageChartProps) {
+export function CashLeakageChart({ data, isLoading = false, currency = '€' }: CashLeakageChartProps) {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'eur' | 'pct'>('eur');
 
   if (isLoading) {

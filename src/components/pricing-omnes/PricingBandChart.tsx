@@ -57,8 +57,8 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   );
 }
 
-export function PricingBandChart({
-  const { t } = useTranslation(); result, loading }: PricingBandChartProps) {
+export function PricingBandChart({ result, loading }: PricingBandChartProps) {
+  const { t } = useTranslation();
   const chartData = useMemo(() => {
     if (!result) return [];
     return result.items

@@ -15,11 +15,12 @@ interface OrderSummaryDesktopProps {
 }
 
 export function OrderSummaryDesktop({
-  const { t } = useTranslation();
+  
   summary,
   onAutofill,
   onClearCart,
 }: OrderSummaryDesktopProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const itemCount = summary.items.length;
   const displayItems = summary.items.slice(0, 8);

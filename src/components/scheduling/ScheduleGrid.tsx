@@ -230,8 +230,8 @@ function DropZone({
   );
 }
 
-export function ScheduleGrid({
-  const { t } = useTranslation(); data, viewMode, positions, weatherData, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
+export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
+  const { t } = useTranslation();
   const [dragData, setDragData] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
   const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);

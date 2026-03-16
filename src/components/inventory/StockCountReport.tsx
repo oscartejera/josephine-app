@@ -30,12 +30,13 @@ interface StockCountReportProps {
 }
 
 export function StockCountReport({
-  const { t } = useTranslation();
+  
   dateRange,
   data,
   isLoading = false,
   lastUpdated
 }: StockCountReportProps) {
+  const { t } = useTranslation();
   const dateLabel = dateRange.from && dateRange.to
     ? `${format(dateRange.from, 'd')} - ${format(dateRange.to, 'd MMM')}`
     : 'Stock count';

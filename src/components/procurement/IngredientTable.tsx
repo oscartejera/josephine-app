@@ -267,7 +267,7 @@ function CategorySection({
 }
 
 export function IngredientTable({
-  const { t } = useTranslation();
+  
   skus,
   categories,
   cart,
@@ -276,6 +276,7 @@ export function IngredientTable({
   getRecommendationBreakdown,
   onUpdatePacks,
 }: IngredientTableProps) {
+  const { t } = useTranslation();
   if (skus.length === 0) {
     return (
       <div className="bg-card rounded-xl border border-border p-12 text-center">

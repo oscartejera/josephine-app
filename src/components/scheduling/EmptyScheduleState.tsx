@@ -8,8 +8,8 @@ interface EmptyScheduleStateProps {
   dailyKPIs: DayKPI[];
 }
 
-export function EmptyScheduleState({
-  const { t } = useTranslation(); weekStart, dailyKPIs }: EmptyScheduleStateProps) {
+export function EmptyScheduleState({ weekStart, dailyKPIs }: EmptyScheduleStateProps) {
+  const { t } = useTranslation();
   const days = Array.from({ length: 7 }, (_, i) => ({
     date: addDays(weekStart, i),
     dayName: format(addDays(weekStart, i), 'EEE'),

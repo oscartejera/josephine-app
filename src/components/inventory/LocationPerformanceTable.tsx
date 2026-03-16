@@ -34,7 +34,7 @@ interface LocationPerformanceTableProps {
 }
 
 export function LocationPerformanceTable({
-  const { t } = useTranslation();
+  
   viewMode,
   data,
   isLoading = false,
@@ -42,6 +42,7 @@ export function LocationPerformanceTable({
   dateRange,
   onLocationClick
 }: LocationPerformanceTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
   const isCOGS = viewMode === 'COGS';

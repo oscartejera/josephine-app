@@ -21,8 +21,8 @@ interface LocationSwitcherProps {
   side?: 'bottom' | 'right' | 'left' | 'top';
 }
 
-export function LocationSwitcher({
-  const { t } = useTranslation(); collapsed = false, align = 'start', side }: LocationSwitcherProps) {
+export function LocationSwitcher({ collapsed = false, align = 'start', side }: LocationSwitcherProps) {
+  const { t } = useTranslation();
   const {
     selectedLocationId,
     setSelectedLocationId,

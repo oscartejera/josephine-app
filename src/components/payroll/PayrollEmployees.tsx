@@ -38,12 +38,13 @@ interface Employee {
 }
 
 export default function PayrollEmployees({
-  const { t } = useTranslation();
+  
   selectedLegalEntity,
   currentRun,
   refreshData,
   isPayrollAdmin,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { selectedLocationId, locations } = useApp();
   const { toast } = useToast();

@@ -52,11 +52,12 @@ const suggestedQuestions = [
 ];
 
 export function AskJosephineSalesDrawer({
-  const { t } = useTranslation();
+  
   open,
   onOpenChange,
   salesData
 }: AskJosephineSalesDrawerProps) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);

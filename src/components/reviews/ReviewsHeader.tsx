@@ -22,7 +22,7 @@ interface ReviewsHeaderProps {
 }
 
 export function ReviewsHeader({
-  const { t } = useTranslation();
+  
   dateRange,
   dateMode,
   onDateChange,
@@ -32,6 +32,7 @@ export function ReviewsHeader({
   onLocationChange,
   lastUpdated,
 }: ReviewsHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {/* Top controls row */}

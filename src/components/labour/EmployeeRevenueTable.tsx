@@ -66,8 +66,8 @@ function RoiBadge({ roi }: { roi: number }) {
     );
 }
 
-export function EmployeeRevenueTable({
-  const { t } = useTranslation(); locationId, dateFrom, dateTo }: EmployeeRevenueTableProps) {
+export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeRevenueTableProps) {
+  const { t } = useTranslation();
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;

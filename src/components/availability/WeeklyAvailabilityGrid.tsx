@@ -39,13 +39,14 @@ const STATUS_CONFIG: Record<AvailabilityStatus, { label: string; icon: React.Ele
 };
 
 export function WeeklyAvailabilityGrid({
-  const { t } = useTranslation();
+  
   availability,
   onUpdateDay,
   hasChanges,
   onSave,
   isSaving,
 }: WeeklyAvailabilityGridProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Header */}

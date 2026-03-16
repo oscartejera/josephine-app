@@ -51,7 +51,7 @@ const MODE_BUTTONS: { key: DateMode; label: string }[] = [
 ];
 
 export function DateRangePickerNoryLike({
-  const { t } = useTranslation();
+  
   value,
   onChange,
   mode,
@@ -59,6 +59,7 @@ export function DateRangePickerNoryLike({
   isLoading = false,
   className
 }: DateRangePickerNoryLikeProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [tempRange, setTempRange] = useState<{ from?: Date; to?: Date }>({
     from: value.from,

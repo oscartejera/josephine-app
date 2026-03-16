@@ -17,8 +17,8 @@ interface CategoryBreakdownChartProps {
   className?: string;
 }
 
-export function CategoryBreakdownChart({
-  const { t } = useTranslation(); className }: CategoryBreakdownChartProps) {
+export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProps) {
+  const { t } = useTranslation();
   const { categories, loading, totalSales } = useCategorySales();
 
   if (loading) {

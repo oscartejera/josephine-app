@@ -28,7 +28,7 @@ interface SwapShiftDialogProps {
 }
 
 export function SwapShiftDialog({
-  const { t } = useTranslation();
+  
   isOpen,
   onClose,
   onSubmit,
@@ -36,6 +36,7 @@ export function SwapShiftDialog({
   myName,
   availableShifts,
 }: SwapShiftDialogProps) {
+  const { t } = useTranslation();
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   

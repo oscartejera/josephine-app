@@ -20,11 +20,12 @@ interface WasteLeaderboardProps {
 }
 
 export function WasteLeaderboard({
-  const { t } = useTranslation();
+  
   leaderboard,
   isLoading = false,
   currency = '€'
 }: WasteLeaderboardProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card className="border-border">

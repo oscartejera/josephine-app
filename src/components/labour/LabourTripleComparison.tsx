@@ -61,8 +61,8 @@ function BarRow({ label, value, maxValue, color, badge }: BarRowProps) {
     );
 }
 
-export function LabourTripleComparison({
-  const { t } = useTranslation(); kpis, isLoading }: LabourTripleComparisonProps) {
+export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparisonProps) {
+  const { t } = useTranslation();
     if (isLoading || !kpis) {
         return (
             <Card className="p-6 bg-white">

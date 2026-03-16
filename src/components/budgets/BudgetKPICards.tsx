@@ -67,8 +67,8 @@ function StatusBadge({ status }: { status: BudgetMetrics['primeStatus'] }) {
   );
 }
 
-export function BudgetKPICards({
-  const { t } = useTranslation(); metrics, activeTab, isLoading = false, currency = '€' }: BudgetKPICardsProps) {
+export function BudgetKPICards({ metrics, activeTab, isLoading = false, currency = '€' }: BudgetKPICardsProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

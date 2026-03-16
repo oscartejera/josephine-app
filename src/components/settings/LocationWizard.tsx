@@ -152,8 +152,8 @@ const SHAPE_COLORS: Record<string, string> = {
   rectangle: 'bg-violet-500/80 border-violet-600',
 };
 
-export function LocationWizard({
-  const { t } = useTranslation(); open, onOpenChange, groupId, onSuccess }: LocationWizardProps) {
+export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: LocationWizardProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   

@@ -105,8 +105,8 @@ async function streamInsights({
   }
 }
 
-export function AskJosephinePanel({
-  const { t } = useTranslation(); open, onClose, data }: AskJosephinePanelProps) {
+export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProps) {
+  const { t } = useTranslation();
   const [insight, setInsight] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -83,8 +83,8 @@ function StatusDot({ ok, label }: { ok: boolean; label: string }) {
     );
 }
 
-export function LabourComplianceDashboard({
-  const { t } = useTranslation(); locationId, weekStart }: LabourComplianceDashboardProps) {
+export function LabourComplianceDashboard({ locationId, weekStart }: LabourComplianceDashboardProps) {
+  const { t } = useTranslation();
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const ws = weekStart || startOfWeek(new Date(), { weekStartsOn: 1 });

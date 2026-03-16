@@ -17,13 +17,14 @@ interface CustomerReviewsPanelProps {
 }
 
 export function CustomerReviewsPanel({
-  const { t } = useTranslation();
+  
   reviews,
   isLoading,
   onRefine,
   onSubmit,
   maxItems = 5,
 }: CustomerReviewsPanelProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 

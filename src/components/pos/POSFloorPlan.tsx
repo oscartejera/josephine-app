@@ -18,7 +18,7 @@ interface POSFloorPlanProps {
 }
 
 export function POSFloorPlan({
-  const { t } = useTranslation();
+  
   locationId,
   floorMaps,
   tables,
@@ -26,6 +26,7 @@ export function POSFloorPlan({
   openTickets,
   onRefresh,
 }: POSFloorPlanProps) {
+  const { t } = useTranslation();
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [activeFloor, setActiveFloor] = useState(floorMaps[0]?.id);
 

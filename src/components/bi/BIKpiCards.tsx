@@ -110,8 +110,8 @@ function KpiCardSkeleton() {
   );
 }
 
-export function BIKpiCards({
-  const { t } = useTranslation(); data, isLoading, compareMode }: BIKpiCardsProps) {
+export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
+  const { t } = useTranslation();
   if (isLoading || !data) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

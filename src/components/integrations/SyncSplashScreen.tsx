@@ -26,8 +26,8 @@ interface SyncSplashScreenProps {
   message?: string;
 }
 
-export default function SyncSplashScreen({
-  const { t } = useTranslation(); message = 'Actualizando datos...' }: SyncSplashScreenProps) {
+export default function SyncSplashScreen({ message = 'Actualizando datos...' }: SyncSplashScreenProps) {
+  const { t } = useTranslation();
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * QUOTES.length));
 
   useEffect(() => {

@@ -21,8 +21,8 @@ const VIEW_OPTIONS: { value: ViewMode; label: string; icon: typeof Users }[] = [
   { value: 'stations', label: 'Stations', icon: MapPin },
 ];
 
-export function ViewModeDropdown({
-  const { t } = useTranslation(); value, onChange }: ViewModeDropdownProps) {
+export function ViewModeDropdown({ value, onChange }: ViewModeDropdownProps) {
+  const { t } = useTranslation();
   const selected = VIEW_OPTIONS.find(o => o.value === value) || VIEW_OPTIONS[0];
   const Icon = selected.icon;
   

@@ -28,8 +28,8 @@ interface CountItem {
     categoryName: string;
 }
 
-export function SmartCountingFlow({
-  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
+export function SmartCountingFlow({ locationId }: { locationId: string | null }) {
+  const { t } = useTranslation();
     const { group } = useApp();
     const [items, setItems] = useState<CountItem[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);

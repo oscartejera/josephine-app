@@ -24,8 +24,8 @@ interface HourlyForecastChartProps {
     date: Date;
 }
 
-export function HourlyForecastChart({
-  const { t } = useTranslation(); locationId, date }: HourlyForecastChartProps) {
+export function HourlyForecastChart({ locationId, date }: HourlyForecastChartProps) {
+  const { t } = useTranslation();
     const { data: rows, isLoading } = useHourlyForecast({ locationId, date });
 
     if (isLoading) {

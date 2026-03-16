@@ -251,8 +251,8 @@ function generateTheoryBasedSuggestions(
   });
 }
 
-export function DynamicPricingPanel({
-  const { t } = useTranslation(); items, stats, locationName, categoryName, omnesData }: DynamicPricingPanelProps) {
+export function DynamicPricingPanel({ items, stats, locationName, categoryName, omnesData }: DynamicPricingPanelProps) {
+  const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<PricingSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

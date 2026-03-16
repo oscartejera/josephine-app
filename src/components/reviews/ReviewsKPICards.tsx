@@ -36,8 +36,8 @@ function KPICard({ title, value, icon, isLoading }: KPICardProps) {
   );
 }
 
-export function ReviewsKPICards({
-  const { t } = useTranslation(); summary, isLoading }: ReviewsKPICardsProps) {
+export function ReviewsKPICards({ summary, isLoading }: ReviewsKPICardsProps) {
+  const { t } = useTranslation();
   const formatRating = (rating: number) => {
     return rating.toFixed(2);
   };

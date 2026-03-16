@@ -13,7 +13,7 @@ interface IngredientListProps {
 }
 
 export function IngredientList({
-  const { t } = useTranslation();
+  
   skus,
   categories,
   cart,
@@ -22,6 +22,7 @@ export function IngredientList({
   getRecommendationBreakdown,
   onUpdatePacks,
 }: IngredientListProps) {
+  const { t } = useTranslation();
   if (skus.length === 0) {
     return (
       <div className="bg-card rounded-xl border border-border p-12 text-center">

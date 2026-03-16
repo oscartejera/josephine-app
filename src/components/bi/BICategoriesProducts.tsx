@@ -35,8 +35,8 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function BICategoriesProducts({
-  const { t } = useTranslation(); data, isLoading }: BICategoriesProductsProps) {
+export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsProps) {
+  const { t } = useTranslation();
   const [productSort, setProductSort] = useState<'sales' | 'name'>('sales');
 
   if (isLoading || !data) {

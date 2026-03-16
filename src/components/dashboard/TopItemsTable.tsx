@@ -19,8 +19,8 @@ interface TopItemsTableProps {
   className?: string;
 }
 
-export function TopItemsTable({
-  const { t } = useTranslation(); items, title = "Top Items", className }: TopItemsTableProps) {
+export function TopItemsTable({ items, title = "Top Items", className }: TopItemsTableProps) {
+  const { t } = useTranslation();
   return (
     <Card className={className}>
       <CardHeader className="pb-3">

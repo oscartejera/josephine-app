@@ -14,8 +14,8 @@ function formatCurrency(value: number): string {
   return `€${value.toFixed(0)}`;
 }
 
-export function MenuEngineeringKPICards({
-  const { t } = useTranslation(); stats, loading }: MenuEngineeringKPICardsProps) {
+export function MenuEngineeringKPICards({ stats, loading }: MenuEngineeringKPICardsProps) {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

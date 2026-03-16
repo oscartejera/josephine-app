@@ -72,8 +72,8 @@ function getFoodCostHealth(pct: number): { label: string; className: string } {
   return { label: `${pct.toFixed(0)}%`, className: 'text-red-600 font-semibold' };
 }
 
-export function MenuEngineeringTable({
-  const { t } = useTranslation(); items, loading }: MenuEngineeringTableProps) {
+export function MenuEngineeringTable({ items, loading }: MenuEngineeringTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [classificationFilter, setClassificationFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('total_gross_profit');

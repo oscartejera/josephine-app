@@ -64,7 +64,7 @@ const VarianceIndicator = ({ value, inverted = false }: { value: number; inverte
 };
 
 export function LabourHourlyDrillDown({
-  const { t } = useTranslation();
+  
   open,
   onOpenChange,
   selectedDay,
@@ -75,6 +75,7 @@ export function LabourHourlyDrillDown({
   totalActualSPLH,
   totalHours,
 }: LabourHourlyDrillDownProps) {
+  const { t } = useTranslation();
   const colVariance = ((totalActualCOL - totalPlannedCOL) / totalPlannedCOL) * 100;
 
   return (

@@ -14,8 +14,8 @@ interface LabourEmptyStateProps {
   onDataSeeded: () => void;
 }
 
-export function LabourEmptyState({
-  const { t } = useTranslation(); onDataSeeded }: LabourEmptyStateProps) {
+export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
+  const { t } = useTranslation();
   const [isSeeding, setIsSeeding] = useState(false);
 
   const handleSeedData = async () => {

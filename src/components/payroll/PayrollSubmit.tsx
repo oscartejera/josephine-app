@@ -37,11 +37,12 @@ const AGENCIES = [
 ];
 
 export default function PayrollSubmit({
-  const { t } = useTranslation();
+  
   currentRun,
   refreshData,
   isSandboxMode,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<any[]>([]);

@@ -27,8 +27,8 @@ interface DemandOverlayProps {
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-export function DemandOverlay({
-  const { t } = useTranslation(); locationId, weekStart, scheduledHoursPerDay }: DemandOverlayProps) {
+export function DemandOverlay({ locationId, weekStart, scheduledHoursPerDay }: DemandOverlayProps) {
+  const { t } = useTranslation();
   const [selectedDay, setSelectedDay] = useState(0); // 0 = Monday
   const [visible, setVisible] = useState(true);
 

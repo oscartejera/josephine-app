@@ -138,8 +138,8 @@ function CustomTooltip({ active, payload, label, metricMode, chartMode }: Custom
   );
 }
 
-export function LabourChart({
-  const { t } = useTranslation(); data, isLoading, metricMode }: LabourChartProps) {
+export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
+  const { t } = useTranslation();
   const [chartMode, setChartMode] = useState<ChartMode>('splh');
   const [drillDownOpen, setDrillDownOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState<any>(null);

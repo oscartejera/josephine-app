@@ -16,7 +16,7 @@ interface IngredientRowProps {
 }
 
 export function IngredientRow({
-  const { t } = useTranslation();
+  
   sku,
   packs,
   recommendedPacks,
@@ -24,6 +24,7 @@ export function IngredientRow({
   dayLabels,
   onUpdatePacks,
 }: IngredientRowProps) {
+  const { t } = useTranslation();
   const isPaused = sku.paused;
 
   return (

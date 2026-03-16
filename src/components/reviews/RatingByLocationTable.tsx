@@ -13,8 +13,8 @@ interface RatingByLocationTableProps {
   onLocationClick: (locationId: string) => void;
 }
 
-export function RatingByLocationTable({
-  const { t } = useTranslation(); data, isLoading, onLocationClick }: RatingByLocationTableProps) {
+export function RatingByLocationTable({ data, isLoading, onLocationClick }: RatingByLocationTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filteredData = data.filter((loc) =>

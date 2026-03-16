@@ -60,7 +60,7 @@ function isOvernightShift(startTime: string): boolean {
 }
 
 export function CreateShiftDialog({
-  const { t } = useTranslation();
+  
   isOpen,
   onClose,
   onSubmit,
@@ -68,6 +68,7 @@ export function CreateShiftDialog({
   date,
   positions,
 }: CreateShiftDialogProps) {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState('09:00');
   const [role, setRole] = useState(positions[0] || 'Server');
   

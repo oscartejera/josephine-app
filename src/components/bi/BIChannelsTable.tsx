@@ -57,8 +57,8 @@ function AcsDeltaCell({ value, delta }: { value: number; delta: number }) {
   );
 }
 
-export function BIChannelsTable({
-  const { t } = useTranslation(); data, isLoading, compareMode }: BIChannelsTableProps) {
+export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTableProps) {
+  const { t } = useTranslation();
   if (isLoading || !data) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">

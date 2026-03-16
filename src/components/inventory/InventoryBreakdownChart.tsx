@@ -22,13 +22,14 @@ interface InventoryBreakdownChartProps {
 }
 
 export function InventoryBreakdownChart({
-  const { t } = useTranslation();
+  
   viewMode,
   data,
   totalSales,
   isLoading = false,
   currency = '€'
 }: InventoryBreakdownChartProps) {
+  const { t } = useTranslation();
   const isCOGS = viewMode === 'COGS';
   const title = isCOGS ? 'COGS breakdown' : 'GP breakdown';
 

@@ -39,7 +39,7 @@ const FILTER_OPTIONS: { value: FilterMode; label: string }[] = [
 ];
 
 export function InstantPLHeader({
-  const { t } = useTranslation();
+  
   dateRange,
   dateMode,
   onDateChange,
@@ -48,6 +48,7 @@ export function InstantPLHeader({
   onFilterModeChange,
   lastUpdated
 }: InstantPLHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {/* Row 1: Controls */}

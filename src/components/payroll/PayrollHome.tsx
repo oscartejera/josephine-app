@@ -28,7 +28,7 @@ interface Issue {
 }
 
 export default function PayrollHome({
-  const { t } = useTranslation();
+  
   legalEntities,
   selectedLegalEntity,
   setSelectedLegalEntity,
@@ -39,6 +39,7 @@ export default function PayrollHome({
   isPayrollAdmin,
   isSandboxMode,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { group, locations } = useApp();
   const { toast } = useToast();

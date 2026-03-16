@@ -25,7 +25,7 @@ interface MenuEngineeringHeaderProps {
 }
 
 export function MenuEngineeringHeader({
-  const { t } = useTranslation();
+  
   selectedLocationId,
   onLocationChange,
   dateRange,
@@ -39,6 +39,7 @@ export function MenuEngineeringHeader({
   loading,
   accessibleLocations,
 }: MenuEngineeringHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

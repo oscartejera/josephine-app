@@ -24,7 +24,7 @@ interface SupplierCardProps {
 }
 
 export function SupplierCard({
-  const { t } = useTranslation();
+  
   supplier,
   deliveryDaysLabel,
   orderDate,
@@ -33,6 +33,7 @@ export function SupplierCard({
   onSearchChange,
   cutoffInfo,
 }: SupplierCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       {/* Supplier Header */}

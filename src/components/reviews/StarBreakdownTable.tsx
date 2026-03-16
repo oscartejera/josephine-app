@@ -10,8 +10,8 @@ interface StarBreakdownTableProps {
   isLoading: boolean;
 }
 
-export function StarBreakdownTable({
-  const { t } = useTranslation(); data, isLoading }: StarBreakdownTableProps) {
+export function StarBreakdownTable({ data, isLoading }: StarBreakdownTableProps) {
+  const { t } = useTranslation();
   return (
     <Card className="p-5 bg-card border border-border/60 rounded-xl">
       <h3 className="text-base font-semibold text-foreground mb-4">Rating</h3>

@@ -43,7 +43,7 @@ interface InventoryHeaderProps {
 }
 
 export function InventoryHeader({
-  const { t } = useTranslation();
+  
   dateRange,
   setDateRange,
   dateMode,
@@ -60,6 +60,7 @@ export function InventoryHeader({
   showViewToggle = true,
   breadcrumbs = [{ label: 'Insights' }, { label: 'Inventory' }]
 }: InventoryHeaderProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 

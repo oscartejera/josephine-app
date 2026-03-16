@@ -180,13 +180,14 @@ function TimeOffRequestCard({
 }
 
 export function TimeOffRequestsList({
-  const { t } = useTranslation();
+  
   requests,
   isManager = false,
   onApprove,
   onReject,
   onCancel,
 }: TimeOffRequestsListProps) {
+  const { t } = useTranslation();
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const processedRequests = requests.filter(r => r.status !== 'pending');
   

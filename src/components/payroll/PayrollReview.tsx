@@ -28,12 +28,13 @@ interface LocationSummary {
 }
 
 export default function PayrollReview({
-  const { t } = useTranslation();
+  
   selectedLegalEntity,
   currentPeriod,
   currentRun,
   refreshData,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { locations } = useApp();

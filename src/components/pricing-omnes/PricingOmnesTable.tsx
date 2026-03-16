@@ -22,8 +22,8 @@ const BAND_BADGES: Record<string, { label: string; className: string }> = {
   upper: { label: 'Upper', className: 'bg-rose-500/20 text-rose-600' },
 };
 
-export function PricingOmnesTable({
-  const { t } = useTranslation(); result, loading }: PricingOmnesTableProps) {
+export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [bandFilter, setBandFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('listed_price');

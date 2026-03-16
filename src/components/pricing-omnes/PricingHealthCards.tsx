@@ -30,8 +30,8 @@ function getStateStyle(state: string) {
   return STATE_STYLES[state as keyof typeof STATE_STYLES] || STATE_STYLES.healthy;
 }
 
-export function PricingHealthCards({
-  const { t } = useTranslation(); result, topActions, loading }: PricingHealthCardsProps) {
+export function PricingHealthCards({ result, topActions, loading }: PricingHealthCardsProps) {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -11,13 +11,14 @@ interface InventorySalesCardProps {
 }
 
 export function InventorySalesCard({
-  const { t } = useTranslation();
+  
   totalSales,
   assignedSales,
   unassignedSales,
   isLoading = false,
   currency = '€'
 }: InventorySalesCardProps) {
+  const { t } = useTranslation();
   const assignedPercent = totalSales > 0 ? (assignedSales / totalSales) * 100 : 0;
   const unassignedPercent = totalSales > 0 ? (unassignedSales / totalSales) * 100 : 0;
 

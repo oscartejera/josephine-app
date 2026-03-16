@@ -56,7 +56,7 @@ interface SchedulingHeaderProps {
 }
 
 export function SchedulingHeader({
-  const { t } = useTranslation();
+  
   weekStart,
   onWeekChange,
   onGoToToday,
@@ -79,6 +79,7 @@ export function SchedulingHeader({
   onAutoFill,
   efficiency,
 }: SchedulingHeaderProps) {
+  const { t } = useTranslation();
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const weekLabel = `${format(weekStart, 'd')} - ${format(weekEnd, 'd MMM')}`;
   const weekNum = getWeek(weekStart, { weekStartsOn: 1 });

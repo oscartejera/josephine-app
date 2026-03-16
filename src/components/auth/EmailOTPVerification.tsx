@@ -17,7 +17,6 @@ interface EmailOTPVerificationProps {
 }
 
 export function EmailOTPVerification({
-  const { t } = useTranslation();
   email,
   fullName,
   password,
@@ -25,6 +24,7 @@ export function EmailOTPVerification({
   onVerified,
   onBack
 }: EmailOTPVerificationProps) {
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);

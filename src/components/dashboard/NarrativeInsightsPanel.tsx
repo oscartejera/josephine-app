@@ -21,8 +21,8 @@ function renderMarkdown(text: string): string {
     .replace(/\n/g, '<br/>');
 }
 
-export function NarrativeInsightsPanel({
-  const { t } = useTranslation(); metrics, className }: NarrativeInsightsPanelProps) {
+export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsightsPanelProps) {
+  const { t } = useTranslation();
   const { narrative, isLoading, error, generate } = useAINarratives();
   const hasGenerated = useRef(false);
 

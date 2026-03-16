@@ -18,8 +18,8 @@ interface RatingOverTimeChartProps {
   isLoading: boolean;
 }
 
-export function RatingOverTimeChart({
-  const { t } = useTranslation(); data, isLoading }: RatingOverTimeChartProps) {
+export function RatingOverTimeChart({ data, isLoading }: RatingOverTimeChartProps) {
+  const { t } = useTranslation();
   const chartData = data.map((point) => ({
     ...point,
     displayDate: format(parseISO(point.date), 'EEE dd'),

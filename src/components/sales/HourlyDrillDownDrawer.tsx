@@ -59,7 +59,7 @@ const VarianceIndicator = ({ value }: { value: number }) => {
 };
 
 export function HourlyDrillDownDrawer({
-  const { t } = useTranslation();
+  
   open,
   onOpenChange,
   selectedDay,
@@ -69,6 +69,7 @@ export function HourlyDrillDownDrawer({
   totalForecast,
   totalOrders,
 }: HourlyDrillDownDrawerProps) {
+  const { t } = useTranslation();
   const totalVariance = ((totalSales - totalForecast) / totalForecast) * 100;
   const avgCheckSize = totalSales / totalOrders;
 

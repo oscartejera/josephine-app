@@ -14,8 +14,8 @@ interface BudgetChartProps {
   currency?: string;
 }
 
-export function BudgetChart({
-  const { t } = useTranslation(); data, activeTab, isLoading = false, currency = '€' }: BudgetChartProps) {
+export function BudgetChart({ data, activeTab, isLoading = false, currency = '€' }: BudgetChartProps) {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'eur' | 'pct'>('eur');
   const [granularity, setGranularity] = useState<'daily' | 'weekly'>('daily');
 

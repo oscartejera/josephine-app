@@ -15,11 +15,12 @@ import type { PayrollContextData } from '@/pages/Payroll';
 import { useTranslation } from 'react-i18next';
 
 export default function PayrollPay({
-  const { t } = useTranslation();
+  
   currentPeriod,
   currentRun,
   refreshData,
 }: PayrollContextData) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);

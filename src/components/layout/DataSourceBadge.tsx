@@ -26,8 +26,8 @@ interface DataSourceBadgeProps {
     collapsed?: boolean;
 }
 
-export function DataSourceBadge({
-  const { t } = useTranslation(); collapsed = false }: DataSourceBadgeProps) {
+export function DataSourceBadge({ collapsed = false }: DataSourceBadgeProps) {
+  const { t } = useTranslation();
     const { dataSource, dataSourceMode, dataSourceReason, dataSourceBlocked } = useDemoMode();
 
     const isPos = dataSource === 'pos';

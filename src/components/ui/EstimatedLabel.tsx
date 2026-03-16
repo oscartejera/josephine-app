@@ -17,8 +17,8 @@ interface EstimatedLabelProps {
   className?: string;
 }
 
-export function EstimatedLabel({
-  const { t } = useTranslation(); reason, className = '' }: EstimatedLabelProps) {
+export function EstimatedLabel({ reason, className = '' }: EstimatedLabelProps) {
+  const { t } = useTranslation();
   const defaultReason = 'Este valor usa supuestos (COGS%, tarifas horarias, etc.) que pueden no reflejar tus costos reales.';
 
   return (

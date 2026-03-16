@@ -18,8 +18,8 @@ interface POSOpenTablesProps {
   onRefresh: () => void;
 }
 
-export function POSOpenTables({
-  const { t } = useTranslation(); tickets, tables, onRefresh }: POSOpenTablesProps) {
+export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps) {
+  const { t } = useTranslation();
   const getTableName = (tableId?: string) => {
     if (!tableId) return 'Sin mesa';
     return tables.find(t => t.id === tableId)?.name || 'Mesa';

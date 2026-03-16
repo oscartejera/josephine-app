@@ -41,8 +41,8 @@ const SEVERITY_STYLES = {
   },
 } as const;
 
-export function WasteAlertBanner({
-  const { t } = useTranslation(); alerts, className }: WasteAlertBannerProps) {
+export function WasteAlertBanner({ alerts, className }: WasteAlertBannerProps) {
+  const { t } = useTranslation();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   if (!alerts.length) return null;

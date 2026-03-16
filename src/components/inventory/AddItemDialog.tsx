@@ -32,8 +32,8 @@ interface AddItemDialogProps {
   onSuccess: () => void;
 }
 
-export function AddItemDialog({
-  const { t } = useTranslation(); open, onClose, onSuccess }: AddItemDialogProps) {
+export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) {
+  const { t } = useTranslation();
   const { group } = useApp();
   const [name, setName] = useState('');
   const [type, setType] = useState('food');

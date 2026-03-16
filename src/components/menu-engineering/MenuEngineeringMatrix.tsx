@@ -66,11 +66,12 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 }
 
 export function MenuEngineeringMatrix({
-  const { t } = useTranslation();
+  
   items,
   stats,
   loading,
 }: MenuEngineeringMatrixProps) {
+  const { t } = useTranslation();
   // Y-axis = unit_gross_profit (€), X-axis = popularity_pct (%)
   const scatterData = useMemo(() => {
     return items.map((item) => ({

@@ -39,8 +39,8 @@ const EVENT_TYPES = [
     { value: 'custom', label: 'Custom', icon: CalendarDays, color: 'bg-gray-100 text-gray-700' },
 ];
 
-export function EventCalendarManager({
-  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
+export function EventCalendarManager({ locationId }: { locationId: string | null }) {
+  const { t } = useTranslation();
     const { group } = useApp();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);

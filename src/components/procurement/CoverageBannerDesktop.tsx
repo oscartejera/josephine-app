@@ -10,12 +10,13 @@ interface CoverageBannerDesktopProps {
 }
 
 export function CoverageBannerDesktop({
-  const { t } = useTranslation(); 
+  
   coverageEndDate, 
   hasItems, 
   orderDate = new Date(),
   deliveryDate,
 }: CoverageBannerDesktopProps) {
+  const { t } = useTranslation();
   if (!hasItems) return null;
 
   const coverageDays = differenceInDays(coverageEndDate, orderDate);

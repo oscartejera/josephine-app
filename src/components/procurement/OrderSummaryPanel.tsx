@@ -14,11 +14,12 @@ interface OrderSummaryPanelProps {
 }
 
 export function OrderSummaryPanel({
-  const { t } = useTranslation();
+  
   summary,
   onAutofill,
   onClearCart,
 }: OrderSummaryPanelProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const itemCount = summary.items.length;
   const displayItems = summary.items.slice(0, 6);

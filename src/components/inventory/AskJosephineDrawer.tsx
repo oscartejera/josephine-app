@@ -79,7 +79,7 @@ const suggestedQuestions = [
 ];
 
 export function AskJosephineDrawer({
-  const { t } = useTranslation();
+  
   open,
   onOpenChange,
   metrics,
@@ -87,6 +87,7 @@ export function AskJosephineDrawer({
   wasteByCategory,
   locationPerformance
 }: AskJosephineDrawerProps) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);

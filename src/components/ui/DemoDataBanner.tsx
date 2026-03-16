@@ -14,8 +14,8 @@ interface DemoDataBannerProps {
     forceShow?: boolean;
 }
 
-export function DemoDataBanner({
-  const { t } = useTranslation(); message, forceShow }: DemoDataBannerProps) {
+export function DemoDataBanner({ message, forceShow }: DemoDataBannerProps) {
+  const { t } = useTranslation();
     const { dataSource } = useApp();
 
     // Show when in demo mode or forced

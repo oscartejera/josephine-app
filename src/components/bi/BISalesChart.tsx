@@ -139,8 +139,8 @@ function CustomLegend() {
   );
 }
 
-export function BISalesChart({
-  const { t } = useTranslation(); data, isLoading, granularity, dateRange }: BISalesChartProps) {
+export function BISalesChart({ data, isLoading, granularity, dateRange }: BISalesChartProps) {
+  const { t } = useTranslation();
   if (isLoading || !data) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">

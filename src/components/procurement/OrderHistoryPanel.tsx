@@ -48,8 +48,8 @@ interface OrderHistoryPanelProps {
   onReorder?: (items: { skuId: string; packs: number }[]) => void;
 }
 
-export function OrderHistoryPanel({
-  const { t } = useTranslation(); onReorder }: OrderHistoryPanelProps) {
+export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);

@@ -28,12 +28,13 @@ interface InventoryWasteOverviewProps {
 }
 
 export function InventoryWasteOverview({
-  const { t } = useTranslation();
+  
   categoryData,
   locationData,
   isLoading = false,
   currency = '€'
 }: InventoryWasteOverviewProps) {
+  const { t } = useTranslation();
   // Professional blue tones
   const accountedColor = 'hsl(199, 70%, 50%)';
   const unaccountedColor = 'hsl(199, 50%, 75%)';

@@ -75,8 +75,8 @@ function TableSkeleton() {
   );
 }
 
-export function LabourLocationsTable({
-  const { t } = useTranslation(); data, isLoading, metricMode }: LabourLocationsTableProps) {
+export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLocationsTableProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   if (isLoading) {

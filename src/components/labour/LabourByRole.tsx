@@ -56,8 +56,8 @@ function RoleSkeleton() {
   );
 }
 
-export function LabourByRole({
-  const { t } = useTranslation(); isLoading, metricMode }: LabourByRoleProps) {
+export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
+  const { t } = useTranslation();
   // Mock data - in production would come from backend
   const rolesData: RoleData[] = [
     { role: 'Chef', hours: 180, cost: 3600, salesShare: 35, col: 28.5, variance: -2.1, count: 8 },

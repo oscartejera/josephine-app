@@ -72,8 +72,8 @@ function StarRating({ value, onChange, size = 'md' }: {
     );
 }
 
-export function EmployeeReviews({
-  const { t } = useTranslation(); locationId }: { locationId: string | null }) {
+export function EmployeeReviews({ locationId }: { locationId: string | null }) {
+  const { t } = useTranslation();
     const { group } = useApp();
     const { user } = useAuth();
     const [reviews, setReviews] = useState<Review[]>([]);

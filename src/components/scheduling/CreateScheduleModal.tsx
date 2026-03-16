@@ -28,8 +28,8 @@ interface CreateScheduleModalProps {
   onComplete: () => void;
 }
 
-export function CreateScheduleModal({
-  const { t } = useTranslation(); isOpen, onComplete }: CreateScheduleModalProps) {
+export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 

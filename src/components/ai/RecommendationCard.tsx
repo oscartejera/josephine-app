@@ -74,11 +74,12 @@ const typeConfig = {
 };
 
 export function RecommendationCard({
-  const { t } = useTranslation(); 
+  
   recommendation, 
   onApprove, 
   onReject 
 }: RecommendationCardProps) {
+  const { t } = useTranslation();
   const config = typeConfig[recommendation.type];
   const Icon = config.icon;
   const isPending = recommendation.status === 'pending';

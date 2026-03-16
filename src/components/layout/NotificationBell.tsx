@@ -42,8 +42,8 @@ function formatTimeAgo(dateStr: string): string {
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
-export function NotificationBell({
-  const { t } = useTranslation(); collapsed }: { collapsed?: boolean }) {
+export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
+  const { t } = useTranslation();
     const navigate = useNavigate();
     const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
     const [open, setOpen] = useState(false);

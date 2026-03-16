@@ -19,8 +19,8 @@ interface PublishModalProps {
   mode?: 'approve' | 'publish';
 }
 
-export function PublishModal({
-  const { t } = useTranslation(); isOpen, onClose, onConfirm, locationName, mode = 'publish' }: PublishModalProps) {
+export function PublishModal({ isOpen, onClose, onConfirm, locationName, mode = 'publish' }: PublishModalProps) {
+  const { t } = useTranslation();
   const [emailBody, setEmailBody] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 

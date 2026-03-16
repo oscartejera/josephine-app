@@ -43,11 +43,12 @@ interface WasteCategoryDonutProps {
 }
 
 export function WasteCategoryDonut({
-  const { t } = useTranslation();
+  
   byCategory,
   isLoading = false,
   currency = '€'
 }: WasteCategoryDonutProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card className="border-border">

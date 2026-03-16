@@ -30,11 +30,12 @@ const QUICK_PROMPTS = [
 ];
 
 export function JosephineChat({
-  const { t } = useTranslation(); isExpanded = false, onToggleExpand, onClose }: {
+  isExpanded = false, onToggleExpand, onClose }: {
     isExpanded?: boolean;
     onToggleExpand?: () => void;
     onClose?: () => void;
 }) {
+    const { t } = useTranslation();
     const { group, selectedLocationId } = useApp();
     const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([{

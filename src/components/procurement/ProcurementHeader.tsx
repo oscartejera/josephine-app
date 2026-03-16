@@ -25,12 +25,13 @@ interface ProcurementHeaderProps {
 }
 
 export function ProcurementHeader({
-  const { t } = useTranslation();
+  
   suppliers,
   selectedSupplierId,
   onSupplierChange,
   settingsSlot,
 }: ProcurementHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between">
       <div>

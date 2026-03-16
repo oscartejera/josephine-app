@@ -134,12 +134,13 @@ function MetricRow({
 }
 
 export function LocationPLCard({
-  const { t } = useTranslation();
+  
   data,
   viewMode,
   isSelected = false,
   onClick
 }: LocationPLCardProps) {
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
 
   // Compute display values based on view mode

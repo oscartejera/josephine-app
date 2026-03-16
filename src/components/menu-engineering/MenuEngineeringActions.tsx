@@ -101,11 +101,12 @@ const PRACTICAL_ACTIONS = [
 ];
 
 export function MenuEngineeringActions({
-  const { t } = useTranslation();
+  
   itemsByClassification,
   loading,
   onSaveAction,
 }: MenuEngineeringActionsProps) {
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState<{
     classification: Classification;

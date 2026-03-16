@@ -28,8 +28,8 @@ interface Props {
   initialPrefs?: Partial<ConsentPreferences>;
 }
 
-export function CookiePreferencesDialog({
-  const { t } = useTranslation(); open, onOpenChange, onSave, initialPrefs }: Props) {
+export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPrefs }: Props) {
+  const { t } = useTranslation();
   const [analytics, setAnalytics] = useState(initialPrefs?.analytics ?? false);
   const [marketing, setMarketing] = useState(initialPrefs?.marketing ?? false);
 

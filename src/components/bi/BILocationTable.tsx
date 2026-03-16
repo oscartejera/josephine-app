@@ -48,8 +48,8 @@ function DeltaValue({ value, delta }: { value: number; delta: number }) {
   );
 }
 
-export function BILocationTable({
-  const { t } = useTranslation(); data, isLoading }: BILocationTableProps) {
+export function BILocationTable({ data, isLoading }: BILocationTableProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filteredLocations = useMemo(() => {

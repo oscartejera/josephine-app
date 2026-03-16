@@ -66,10 +66,11 @@ interface ProcurementSettingsDialogProps {
 }
 
 export function ProcurementSettingsDialog({
-  const { t } = useTranslation();
+  
   categorySettings,
   onSettingsChange,
 }: ProcurementSettingsDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [localSettings, setLocalSettings] = useState<ProcurementCategorySettings>(categorySettings);
 

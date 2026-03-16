@@ -16,11 +16,12 @@ interface LocationCardsGridProps {
 }
 
 export function LocationCardsGrid({
-  const { t } = useTranslation(); 
+  
   locations, 
   viewMode, 
   isLoading 
 }: LocationCardsGridProps) {
+  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
   if (isLoading) {

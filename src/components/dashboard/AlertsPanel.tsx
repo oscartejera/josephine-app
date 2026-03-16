@@ -18,8 +18,8 @@ interface AlertsPanelProps {
   className?: string;
 }
 
-export function AlertsPanel({
-  const { t } = useTranslation(); alerts, className }: AlertsPanelProps) {
+export function AlertsPanel({ alerts, className }: AlertsPanelProps) {
+  const { t } = useTranslation();
   const getAlertIcon = (type: Alert['type']) => {
     switch (type) {
       case 'error':
