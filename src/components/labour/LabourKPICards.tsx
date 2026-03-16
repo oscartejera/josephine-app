@@ -60,6 +60,7 @@ function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: DeltaBad
 
 /** Source badge: shows whether labour cost comes from payroll (real) or schedule (estimated) */
 function SourceBadge({ source }: { source: 'payroll' | 'schedule' }) {
+  const { t } = useTranslation();
   const isPayroll = source === 'payroll';
   return (
     <span
