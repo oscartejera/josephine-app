@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, Suspense, lazy } from "react";
+import { useTranslation } from "react-i18next";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -208,6 +209,7 @@ function RoutePerformanceTracker() {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const { t } = useTranslation();
 
   if (loading) {
     return (
