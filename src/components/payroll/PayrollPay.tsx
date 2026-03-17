@@ -57,11 +57,11 @@ export default function PayrollPay({
       setSepaXml(result.xml || null);
       setSepaFilename(result.filename || 'SEPA_nominas.xml');
       toast({
-        title: 'Fichero SEPA generado',
-        description: `${result.sepa?.numberOfTransactions || 0} transferencias por €${result.sepa?.controlSum?.toLocaleString('es-ES') || '0'}`
+        title: t('payroll.sepaGenerated'),
+        description: t('payroll.sepaTransfersSummary', { count: result.sepa?.numberOfTransactions || 0, amount: result.sepa?.controlSum?.toLocaleString('es-ES') || '0' })
       });
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'Error generando SEPA' });
+      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : t('payroll.sepaGenerateError') });
     }
     setGenerating(false);
   };
@@ -79,7 +79,7 @@ export default function PayrollPay({
     await refreshData();
     setPaying(false);
     setShowPayDialog(false);
-    toast({ title: 'Nóminas pagadas', description: `Se han marcado ${payslipCount} nóminas como pagadas.` });
+    toast({ title: t('payroll.payrollPaid'), description: t('payroll.payrollPaidDesc', { count: payslipCount }) });
   };
 
   const isPaid = currentRun?.status === 'paid';
@@ -88,10 +88,10 @@ export default function PayrollPay({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Pago de Nóminas</h2>
+        <h2 className="text-lg font-semibold">{t('payroll.payrollPayment')}</h2>
         <p className="text-sm text-muted-foreground">
           {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}
-          {' - '}Genera el fichero SEPA y confirma el pago
+          {' - '}{t('payroll.generateSepaAndConfirm')}
         </p>
       </div>
 
@@ -99,25 +99,25 @@ export default function PayrollPay({
       <div className="grid md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Empleados</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.employeesLabel')}</p>
             <p className="text-3xl font-bold">{payslipCount}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Total a Pagar</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.totalToPay')}</p>
             <p className="text-3xl font-bold text-primary">€{fmt(totalNet)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-sm text-muted-foreground">Estado</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.statusLabel')}</p>
             {isPaid ? (
               <Badge className="bg-success text-lg py-2 px-4 mt-1">
-                <CheckCircle className="h-5 w-5 mr-2" />Pagado
+                <CheckCircle className="h-5 w-5 mr-2" />{t('payroll.paid')}
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-lg py-2 px-4 mt-1">Pendiente de pago</Badge>
+              <Badge variant="outline" className="text-lg py-2 px-4 mt-1">{t('payroll.pendingPayment')}</Badge>
             )}
           </CardContent>
         </Card>
@@ -128,32 +128,31 @@ export default function PayrollPay({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Fichero SEPA (ISO 20022)
+            {t('payroll.sepaFile')}
           </CardTitle>
           <CardDescription>
-            Genera un fichero SEPA Credit Transfer (pain.001.001.03) compatible con cualquier banco español.
-            Ref: Reglamento UE 260/2012 + Norma 34 Banco de España.
+            {t('payroll.sepaDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button variant="outline" onClick={handleGenerateSEPA} disabled={generating}>
             {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-            {sepaData ? 'Regenerar SEPA' : 'Generar Fichero SEPA'}
+            {sepaData ? t('payroll.regenerateSepa') : t('payroll.generateSepaFile')}
           </Button>
 
           {sepaData && (
             <div className="border rounded-lg p-4 space-y-3">
               <div className="flex items-center gap-2 text-success">
                 <CheckCircle className="h-4 w-4" />
-                <span className="font-medium">Fichero generado correctamente</span>
+                <span className="font-medium">{t('payroll.fileGenerated')}</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div><span className="text-muted-foreground">ID Mensaje:</span> {sepaData.messageId}</div>
-                <div><span className="text-muted-foreground">Transacciones:</span> {sepaData.numberOfTransactions}</div>
-                <div><span className="text-muted-foreground">Total:</span> €{fmt(sepaData.controlSum)}</div>
-                <div><span className="text-muted-foreground">Método:</span> {sepaData.paymentMethod} ({sepaData.serviceLevel})</div>
-                <div><span className="text-muted-foreground">IBAN Ordenante:</span> {sepaData.debtorIban ? `${sepaData.debtorIban.slice(0, 4)}****${sepaData.debtorIban.slice(-4)}` : '-'}</div>
-                <div><span className="text-muted-foreground">BIC:</span> {sepaData.debtorBic || '-'}</div>
+                <div><span className="text-muted-foreground">{t('payroll.messageId')}:</span> {sepaData.messageId}</div>
+                <div><span className="text-muted-foreground">{t('payroll.transactions')}:</span> {sepaData.numberOfTransactions}</div>
+                <div><span className="text-muted-foreground">{t('common.total')}:</span> €{fmt(sepaData.controlSum)}</div>
+                <div><span className="text-muted-foreground">{t('payroll.method')}:</span> {sepaData.paymentMethod} ({sepaData.serviceLevel})</div>
+                <div><span className="text-muted-foreground">{t('payroll.debtorIban')}:</span> {sepaData.debtorIban ? `${sepaData.debtorIban.slice(0, 4)}****${sepaData.debtorIban.slice(-4)}` : '-'}</div>
+                <div><span className="text-muted-foreground">{t('payroll.bic')}:</span> {sepaData.debtorBic || '-'}</div>
               </div>
 
               {/* Download XML button */}
@@ -175,7 +174,7 @@ export default function PayrollPay({
                   className="gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Descargar XML SEPA (pain.001.001.03)
+                  {t('payroll.downloadSepaXml')}
                 </Button>
               )}
 
@@ -183,9 +182,9 @@ export default function PayrollPay({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Empleado</TableHead>
-                      <TableHead className="text-right">Importe</TableHead>
-                      <TableHead>Concepto</TableHead>
+                      <TableHead>{t('payroll.employee')}</TableHead>
+                      <TableHead className="text-right">{t('payroll.amountLabel')}</TableHead>
+                      <TableHead>{t('payroll.concept')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -199,7 +198,7 @@ export default function PayrollPay({
                     {sepaData.payments.length > 10 && (
                       <TableRow>
                         <TableCell colSpan={3} className="text-center text-muted-foreground">
-                          ... y {sepaData.payments.length - 10} más
+                          {t('payroll.andMore', { count: sepaData.payments.length - 10 })}
                         </TableCell>
                       </TableRow>
                     )}
@@ -219,9 +218,9 @@ export default function PayrollPay({
               <div className="flex items-center gap-3">
                 <BanknoteIcon className="h-8 w-8 text-primary" />
                 <div>
-                  <h3 className="font-medium">Confirmar Pago</h3>
+                  <h3 className="font-medium">{t('payroll.confirmPayment')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Marca las nóminas como pagadas una vez hayas ejecutado la transferencia.
+                    {t('payroll.confirmPaymentDesc')}
                   </p>
                 </div>
               </div>
@@ -229,21 +228,21 @@ export default function PayrollPay({
                 <DialogTrigger asChild>
                   <Button size="lg">
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Marcar como Pagado
+                    {t('payroll.markAsPaid')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Confirmar Pago</DialogTitle>
+                    <DialogTitle>{t('payroll.confirmPayment')}</DialogTitle>
                     <DialogDescription>
-                      Confirma que se ha realizado el pago de €{fmt(totalNet)} a {payslipCount} empleados.
+                      {t('payroll.confirmPaymentDialog', { amount: fmt(totalNet), count: payslipCount })}
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setShowPayDialog(false)}>{t("common.cancel")}</Button>
                     <Button onClick={handleMarkPaid} disabled={paying}>
                       {paying && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                      Confirmar Pago
+                      {t('payroll.confirmPayBtn')}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -257,9 +256,9 @@ export default function PayrollPay({
         <Card className="border-success bg-success/5">
           <CardContent className="py-8 text-center">
             <CheckCircle className="h-16 w-16 mx-auto text-success mb-4" />
-            <h3 className="text-xl font-bold text-success mb-2">Nóminas Pagadas</h3>
+            <h3 className="text-xl font-bold text-success mb-2">{t('payroll.payrollCompleted')}</h3>
             <p className="text-muted-foreground">
-              El proceso de nóminas de {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })} se ha completado correctamente.
+              {t('payroll.payrollCompletedDesc', { period: format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es }) })}
             </p>
           </CardContent>
         </Card>
@@ -267,11 +266,11 @@ export default function PayrollPay({
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/submit')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />Presentar
+          <ArrowLeft className="h-4 w-4 mr-2" />{t('payroll.submitBack')}
         </Button>
         <Button onClick={() => navigate('/payroll')} variant="default">
           <FileText className="h-4 w-4 mr-2" />
-          Volver a Inicio
+          {t('payroll.backToHome')}
         </Button>
       </div>
     </div>

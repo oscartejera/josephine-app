@@ -516,7 +516,7 @@ export default function PayrollHome({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">Configurar Certificado Digital</h3>
+                <h3 className="font-medium">{t("payroll.configureCertificate")}</h3>
                 <p className="text-sm text-muted-foreground">
                   Sube el certificado de empresa (P12/PFX) para presentar a TGSS/AEAT/SEPE
                 </p>
@@ -530,7 +530,7 @@ export default function PayrollHome({
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Configurar Certificado Digital</DialogTitle>
+                    <DialogTitle>{t("payroll.configureCertificate")}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="border-2 border-dashed rounded-lg p-8 text-center">

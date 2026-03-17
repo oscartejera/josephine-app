@@ -87,7 +87,7 @@ export function HourlyDrillDownDrawer({
           <div className="grid grid-cols-3 gap-4">
             <Card className="p-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Total Sales</p>
+                <p className="text-sm text-muted-foreground">{t("sales.totalSales")}</p>
                 <p className="text-2xl font-bold">€{totalSales.toLocaleString()}</p>
                 <VarianceIndicator value={totalVariance} />
               </div>
@@ -100,7 +100,7 @@ export function HourlyDrillDownDrawer({
             </Card>
             <Card className="p-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Total Orders</p>
+                <p className="text-sm text-muted-foreground">{t("sales.totalOrders")}</p>
                 <p className="text-2xl font-bold">{totalOrders}</p>
               </div>
             </Card>

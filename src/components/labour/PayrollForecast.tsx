@@ -215,7 +215,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
         return (
             <Card className="bg-white">
                 <CardHeader><CardTitle className="text-base">📊 Previsión de Nómina</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">No hay datos de turnos</p></CardContent>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t("labour.noShiftData")}</p></CardContent>
             </Card>
         );
     }

@@ -222,7 +222,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                 <Card>
                     <CardContent className="py-8 text-center">
                         <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                        <p className="text-muted-foreground">Sin empleados en este local</p>
+                        <p className="text-muted-foreground">{t("reviews.noEmployees")}</p>
                     </CardContent>
                 </Card>
             ) : (
@@ -249,7 +249,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                                                     <p className="text-xs text-muted-foreground">{stats.count} eval{stats.count > 1 ? 's' : ''}</p>
                                                 </>
                                             ) : (
-                                                <Badge variant="outline" className="text-xs">Sin evaluar</Badge>
+                                                <Badge variant="outline" className="text-xs">{t("reviews.notEvaluated")}</Badge>
                                             )}
                                         </div>
                                     </div>

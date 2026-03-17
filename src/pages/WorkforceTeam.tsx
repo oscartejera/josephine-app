@@ -111,18 +111,18 @@ interface LocationOption {
 
 // ─── Helpers ────────────────────────────────────────────
 const ROLE_OPTIONS = [
-    { value: 'owner', label: 'Propietario' },
-    { value: 'admin', label: 'Administrador' },
-    { value: 'ops_manager', label: 'Gerente Operaciones' },
-    { value: 'store_manager', label: 'Gerente Local' },
-    { value: 'manager', label: 'Encargado/a' },
-    { value: 'waiter', label: 'Camarero/a' },
-    { value: 'cook', label: 'Cocinero/a' },
-    { value: 'bartender', label: 'Barista' },
-    { value: 'host', label: 'Hostess' },
-    { value: 'dishwasher', label: 'Friegaplatos' },
-    { value: 'delivery', label: 'Repartidor/a' },
-    { value: 'employee', label: 'Empleado' },
+    { value: 'owner', label: t('roles.owner') },
+    { value: 'admin', label: t('roles.admin') },
+    { value: 'ops_manager', label: t('roles.opsManager') },
+    { value: 'store_manager', label: t('roles.storeManager') },
+    { value: 'manager', label: t('roles.manager') },
+    { value: 'waiter', label: t('roles.waiter') },
+    { value: 'cook', label: t('roles.cook') },
+    { value: 'bartender', label: t('roles.bartender') },
+    { value: 'host', label: t('roles.host') },
+    { value: 'dishwasher', label: t('roles.dishwasher') },
+    { value: 'delivery', label: t('roles.delivery') },
+    { value: 'employee', label: t('roles.employee') },
 ];
 
 const getRoleLabel = (role: string | null) => {
@@ -414,10 +414,10 @@ export default function WorkforceTeam() {
     // ─── Announcement type helpers ───
     const getAnnouncementStyle = (type: string) => {
         switch (type) {
-            case 'important': return { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-l-red-500', label: 'Importante' };
-            case 'celebration': return { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-l-amber-500', label: 'Celebración' };
-            case 'schedule': return { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-l-blue-500', label: 'Horarios' };
-            default: return { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-l-gray-400', label: 'Info' };
+            case 'important': return { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-l-red-500', label: t('team.important') };
+            case 'celebration': return { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-l-amber-500', label: t('team.celebration') };
+            case 'schedule': return { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-l-blue-500', label: t('team.schedules') };
+            default: return { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-l-gray-400', label: t('team.info') };
         }
     };
 
@@ -609,7 +609,7 @@ export default function WorkforceTeam() {
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEdit(emp); }}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Editar
+                                                                <Edit className="mr-2 h-4 w-4" /> {t("common.edit")}
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleActive(emp); }}>
                                                                 {emp.active ? (

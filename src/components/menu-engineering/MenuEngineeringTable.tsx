@@ -161,7 +161,7 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
                 <SortHeader field="units_sold">Sold</SortHeader>
                 <SortHeader field="popularity_pct">% Sales</SortHeader>
                 <SortHeader field="unit_gross_profit">Profit/plate</SortHeader>
-                <SortHeader field="total_gross_profit">Total Profit</SortHeader>
+                <SortHeader field="total_gross_profit">{t("menuEngineering.totalProfit")}</SortHeader>
                 <TableHead>Type</TableHead>
                 <TableHead>What to Do</TableHead>
               </TableRow>

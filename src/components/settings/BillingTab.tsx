@@ -126,7 +126,7 @@ export function BillingTab() {
           </p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Actualizar tu método de pago</li>
-            <li>Descargar facturas anteriores</li>
+            <li>{t("billing.downloadPreviousInvoices")}</li>
             <li>Cambiar o cancelar tu suscripción</li>
           </ul>
         </CardContent>

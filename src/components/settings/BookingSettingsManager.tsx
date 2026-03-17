@@ -167,7 +167,7 @@ export function BookingSettingsManager() {
       if (error) throw error;
 
       toast({
-        title: 'Guardado',
+        title: t('common.saved'),
         description: 'Los ajustes de reservas se han guardado correctamente',
       });
     } catch (err) {
@@ -221,9 +221,9 @@ export function BookingSettingsManager() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({ title: 'Copiado al portapapeles' });
+      toast({ title: t('common.copiedToClipboard') });
     } catch {
-      toast({ title: 'Error al copiar', variant: 'destructive' });
+      toast({ title: t('common.copyError'), variant: 'destructive' });
     }
   };
 

@@ -97,9 +97,9 @@ interface SyncRun {
 
 // Sync phases for the progress bar
 const SYNC_PHASES = [
-  { label: 'Conectando con Square...', target: 10, durationMs: 3_000 },
-  { label: 'Importando locales...', target: 20, durationMs: 5_000 },
-  { label: 'Importando catálogo...', target: 40, durationMs: 15_000 },
+  { label: t('square.connecting'), target: 10, durationMs: 3_000 },
+  { label: t('square.importingLocations'), target: 20, durationMs: 5_000 },
+  { label: t('square.importingCatalog'), target: 40, durationMs: 15_000 },
   { label: 'Importando pedidos...', target: 70, durationMs: 60_000 },
   { label: 'Procesando datos...', target: 90, durationMs: 40_000 },
 ];
@@ -646,7 +646,7 @@ export default function SquareIntegration() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Estado de la conexión</CardTitle>
+              <CardTitle>{t("square.connectionStatus")}</CardTitle>
               {account && (
                 <CardDescription>
                   {account.display_name && (

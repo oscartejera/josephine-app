@@ -54,7 +54,7 @@ export function OfflineBanner() {
     return (
         <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center gap-2 bg-amber-500 text-white text-sm py-2 px-4 animate-in slide-in-from-top duration-300">
             <WifiOff className="h-4 w-4" />
-            <span>Sin conexión — los datos pueden no estar actualizados</span>
+            <span>{t("common.offlineBanner")}</span>
         </div>
     );
 }

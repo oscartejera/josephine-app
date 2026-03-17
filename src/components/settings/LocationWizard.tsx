@@ -619,7 +619,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
           {currentStep === 0 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="wiz-name">Nombre del Local *</Label>
+                <Label htmlFor="wiz-name">{t("location.locationName")} *</Label>
                 <Input
                   id="wiz-name"
                   placeholder="Ej: Restaurante Centro"
@@ -629,7 +629,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="wiz-city">Ciudad</Label>
+                <Label htmlFor="wiz-city">{t("common.city")}</Label>
                 <Input
                   id="wiz-city"
                   placeholder="Ej: Madrid"
@@ -719,7 +719,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
               ))}
 
               <div className="border-t pt-4">
-                <Label className="text-sm">Añadir producto personalizado</Label>
+                <Label className="text-sm">{t("location.addCustomProduct")}</Label>
                 <div className="flex gap-2 mt-2">
                   <Input
                     placeholder={t("common.productName")}
@@ -899,7 +899,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
 
               {/* Add table form */}
               <div className="border-t pt-4">
-                <Label className="text-sm">Añadir mesa</Label>
+                <Label className="text-sm">{t("location.addTable")}</Label>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   <Input
                     placeholder="Número"
@@ -1038,7 +1038,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                 <div className="space-y-3">
                   {/* Quick add from templates */}
                   <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-                    <Label className="text-xs text-muted-foreground">Añadir rápido de sugeridos:</Label>
+                    <Label className="text-xs text-muted-foreground">{t("location.quickAddSuggested")}:</Label>
                     <div className="flex flex-wrap gap-1">
                       {Object.values(SUPPLIER_TEMPLATES).flat().slice(0, 8).map(supplier => (
                         <Button
@@ -1136,7 +1136,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
               {supplierMode === 'skip' && (
                 <div className="text-center py-8 text-muted-foreground">
                   <Truck className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                  <p className="font-medium">Configurar después</p>
+                  <p className="font-medium">{t("location.configureLater")}</p>
                   <p className="text-sm mt-1">
                     Podrás añadir proveedores desde el módulo de Procurement
                   </p>

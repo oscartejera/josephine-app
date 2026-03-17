@@ -103,7 +103,7 @@ export function DemoDataManager() {
       setLastRegenerated(now);
 
       toast({
-        title: "Datos demo regenerados",
+        title: t('settings.demoDataRegenerated'),
         description: t("settings.demoDataUpdated"),
       });
     } catch (error) {

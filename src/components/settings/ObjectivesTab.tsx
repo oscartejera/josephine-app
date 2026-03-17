@@ -81,7 +81,7 @@ export function ObjectivesTab() {
         if (error) {
             toast({ variant: "destructive", title: t("common.error"), description: "No se pudo guardar" });
         } else {
-            toast({ title: "Guardado", description: "Objetivos actualizados" });
+            toast({ title: t('common.saved'), description: t('objectives.objectivesUpdated') });
             setEditingId(null);
             fetchSettings();
         }

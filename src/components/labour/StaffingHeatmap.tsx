@@ -182,7 +182,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
         return (
             <Card className="bg-white">
                 <CardHeader><CardTitle className="text-base">🔥 Mapa de Staffing</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">No hay datos suficientes (últimas 4 semanas)</p></CardContent>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t("labour.insufficientData")}</p></CardContent>
             </Card>
         );
     }

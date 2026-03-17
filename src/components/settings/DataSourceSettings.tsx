@@ -97,7 +97,7 @@ export function DataSourceSettings() {
         });
       } else {
         toast({
-          title: 'Guardado',
+          title: t('common.saved'),
           description: 'Configuración de fuente de datos actualizada.',
         });
         refetch();
@@ -170,7 +170,7 @@ export function DataSourceSettings() {
         <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium">Estado actual:</span>
+              <span className="text-sm font-medium">{t("common.currentStatus")}:</span>
               <Badge variant={dataSource === 'pos' ? 'default' : 'secondary'}>
                 {dataSource === 'pos' ? 'POS' : 'Demo'}
               </Badge>

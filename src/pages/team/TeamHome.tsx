@@ -311,7 +311,7 @@ export default function TeamHome() {
                     </span>
                   </p>
                 ) : (
-                  <p className="text-muted-foreground">Sin turno programado</p>
+                  <p className="text-muted-foreground">{t("team.noShiftScheduled")}</p>
                 )}
               </div>
             </div>

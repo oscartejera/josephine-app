@@ -227,7 +227,7 @@ export function TeamManager() {
       console.error('Error inviting member:', error);
       toast({
         variant: 'destructive',
-        title: 'Error al invitar',
+        title: t('team.inviteError'),
         description: error.message || 'No se pudo enviar la invitación'
       });
     } finally {
@@ -279,7 +279,7 @@ export function TeamManager() {
           ) : members.length === 0 ? (
             <div className="text-center py-10">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Sin miembros del equipo</h3>
+              <h3 className="text-lg font-medium mb-2">{t("team.noTeamMembers")}</h3>
               <p className="text-muted-foreground mb-4">
                 Invita a tu primer miembro del equipo para comenzar.
               </p>
@@ -295,7 +295,7 @@ export function TeamManager() {
                   <TableHead>Miembro</TableHead>
                   <TableHead>Rol</TableHead>
                   <TableHead>Ubicación</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead>{t("common.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -319,7 +319,7 @@ export function TeamManager() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {member.roles.length === 0 ? (
-                          <span className="text-muted-foreground text-sm">Sin rol</span>
+                          <span className="text-muted-foreground text-sm">{t("team.noRole")}</span>
                         ) : (
                           member.roles.map(role => {
                             const display = ROLE_DISPLAY[role.role_name] || { label: role.role_name, variant: 'outline' as const };
@@ -389,7 +389,7 @@ export function TeamManager() {
             <>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Nombre Completo *</Label>
+                  <Label htmlFor="full_name">{t("common.fullName")} *</Label>
                   <Input
                     id="full_name"
                     placeholder={t('settings.fullName')}

@@ -286,7 +286,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                 <TableHead className="text-right">€/hora</TableHead>
                                 <TableHead className="text-right">Jornada</TableHead>
                                 <TableHead className="text-right">IRPF</TableHead>
-                                <TableHead className="text-center">Estado</TableHead>
+                                <TableHead className="text-center">{t("common.status")}</TableHead>
                                 <TableHead className="w-[80px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -303,7 +303,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12">
                                         <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                                        <p className="text-muted-foreground">No hay contratos registrados</p>
+                                        <p className="text-muted-foreground">{t("contracts.noContracts")}</p>
                                         <p className="text-xs text-muted-foreground/60">Crea el primer contrato para tu equipo</p>
                                     </TableCell>
                                 </TableRow>

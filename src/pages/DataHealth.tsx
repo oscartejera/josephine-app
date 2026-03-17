@@ -299,7 +299,7 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Total conteos:</span>{' '}
+                  <span className="text-muted-foreground">{t("dataHealth.totalCounts")}:</span>{' '}
                   <strong>{data.stock_counts.total}</strong>
                 </div>
                 <div>

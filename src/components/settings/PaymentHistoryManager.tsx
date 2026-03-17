@@ -167,7 +167,7 @@ export function PaymentHistoryManager() {
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Total Transacciones</p>
+            <p className="text-xs text-muted-foreground">{t("payments.totalTransactions")}</p>
             <p className="text-xl font-bold">{filteredPayments.length}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
@@ -175,7 +175,7 @@ export function PaymentHistoryManager() {
             <p className="text-xl font-bold">€{totalAmount.toFixed(2)}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Total Propinas</p>
+            <p className="text-xs text-muted-foreground">{t("payments.totalTips")}</p>
             <p className="text-xl font-bold">€{totalTips.toFixed(2)}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">

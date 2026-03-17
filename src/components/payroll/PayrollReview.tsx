@@ -107,14 +107,14 @@ export default function PayrollReview({
       await payrollApi.updateStatus(currentRun.id, 'approved', user?.id);
       await refreshData();
       setShowApproveDialog(false);
-      toast({ title: 'Nóminas aprobadas', description: 'Puedes proceder a la presentación' });
+      toast({ title: t('payroll.payrollApproved'), description: t('payroll.proceedToSubmission') });
       navigate('/payroll/submit');
     } catch (error) {
       // Fallback: direct status update (bypass Edge Function transition check)
       await supabase.from('payroll_runs').update({ status: 'approved', approved_at: new Date().toISOString(), ...(user?.id ? { approved_by: user.id } : {}) }).eq('id', currentRun.id);
       await refreshData();
       setShowApproveDialog(false);
-      toast({ title: 'Nóminas aprobadas', description: 'Puedes proceder a la presentación' });
+      toast({ title: t('payroll.payrollApproved'), description: t('payroll.proceedToSubmission') });
       navigate('/payroll/submit');
     } finally {
       setApproving(false);
@@ -135,7 +135,7 @@ export default function PayrollReview({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Revisión y Aprobación</h2>
+          <h2 className="text-lg font-semibold">{t('payroll.reviewAndApproval')}</h2>
           <p className="text-sm text-muted-foreground">
             {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}
           </p>
@@ -143,33 +143,33 @@ export default function PayrollReview({
         {isApproved && (
           <Badge variant="default" className="flex items-center gap-1 text-sm py-1 px-3">
             <CheckCircle className="h-4 w-4" />
-            Aprobado
+            {t('payroll.approved')}
           </Badge>
         )}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Building className="h-5 w-5" />Resumen</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Building className="h-5 w-5" />{t('payroll.summary')}</CardTitle>
           <CardDescription>{selectedLegalEntity?.razon_social}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <p className="text-2xl font-bold">{totals.employees}</p>
-              <p className="text-sm text-muted-foreground">Empleados</p>
+              <p className="text-sm text-muted-foreground">{t('payroll.employeesLabel')}</p>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <p className="text-2xl font-bold">€{fmt(totals.gross)}</p>
-              <p className="text-sm text-muted-foreground">Total Bruto</p>
+              <p className="text-sm text-muted-foreground">{t('payroll.totalGross')}</p>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <p className="text-2xl font-bold">€{fmt(totals.net)}</p>
-              <p className="text-sm text-muted-foreground">Total Neto</p>
+              <p className="text-sm text-muted-foreground">{t('payroll.totalNet')}</p>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <p className="text-2xl font-bold">€{fmt(totals.employerSS)}</p>
-              <p className="text-sm text-muted-foreground">SS Empresa</p>
+              <p className="text-sm text-muted-foreground">{t('payroll.employerSS')}</p>
             </div>
           </div>
         </CardContent>
@@ -178,17 +178,17 @@ export default function PayrollReview({
       {summaryByLocation.length > 1 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Por Local</CardTitle>
+            <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />{t('payroll.byLocation')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Local</TableHead>
-                  <TableHead className="text-center">Empleados</TableHead>
-                  <TableHead className="text-right">Bruto</TableHead>
-                  <TableHead className="text-right">Neto</TableHead>
-                  <TableHead className="text-right">SS Empresa</TableHead>
+                  <TableHead>{t('payroll.locationLabel')}</TableHead>
+                  <TableHead className="text-center">{t('payroll.employeesLabel')}</TableHead>
+                  <TableHead className="text-right">{t('payroll.gross')}</TableHead>
+                  <TableHead className="text-right">{t('payroll.net')}</TableHead>
+                  <TableHead className="text-right">{t('payroll.employerSS')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -214,32 +214,32 @@ export default function PayrollReview({
               <div className="flex items-center gap-3">
                 <Shield className="h-8 w-8 text-primary" />
                 <div>
-                  <h3 className="font-medium">Aprobar Nóminas</h3>
-                  <p className="text-sm text-muted-foreground">Una vez aprobadas, podrás presentar y pagar.</p>
+                  <h3 className="font-medium">{t('payroll.approvePayroll')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('payroll.approvePayrollDesc')}</p>
                 </div>
               </div>
               <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
                 <DialogTrigger asChild>
-                  <Button size="lg"><CheckCircle className="h-4 w-4 mr-2" />Aprobar</Button>
+                  <Button size="lg"><CheckCircle className="h-4 w-4 mr-2" />{t('payroll.approve')}</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Confirmar Aprobación</DialogTitle>
+                    <DialogTitle>{t('payroll.confirmApproval')}</DialogTitle>
                     <DialogDescription>
-                      Aprobas las nóminas de {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}?
+                      {t('payroll.confirmApprovalQuestion', { period: format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es }) })}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-3 py-4">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Empleados:</span><span className="font-medium">{totals.employees}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Total Bruto:</span><span className="font-medium">€{fmt(totals.gross)}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Total Neto:</span><span className="font-medium">€{fmt(totals.net)}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Coste Total Empresa:</span><span className="font-medium">€{fmt(totals.gross + totals.employerSS)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('payroll.employeesLabel')}:</span><span className="font-medium">{totals.employees}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('payroll.totalGross')}:</span><span className="font-medium">€{fmt(totals.gross)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('payroll.totalNet')}:</span><span className="font-medium">€{fmt(totals.net)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('payroll.totalEmployerCost')}:</span><span className="font-medium">€{fmt(totals.gross + totals.employerSS)}</span></div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setShowApproveDialog(false)}>{t("common.cancel")}</Button>
                     <Button onClick={handleApprove} disabled={approving}>
                       {approving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                      Confirmar Aprobación
+                      {t('payroll.confirmApprovalBtn')}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -251,10 +251,10 @@ export default function PayrollReview({
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/calculate')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />Calcular
+          <ArrowLeft className="h-4 w-4 mr-2" />{t('payroll.calculateBack')}
         </Button>
         <Button onClick={() => navigate('/payroll/submit')} disabled={!isApproved}>
-          Siguiente: Presentar<ArrowRight className="h-4 w-4 ml-2" />
+          {t('payroll.nextSubmit')}<ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
     </div>

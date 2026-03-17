@@ -104,7 +104,7 @@ export function SupplierIntegrationManager() {
     if (error) {
       toast({ variant: 'destructive', title: t("common.error"), description: 'No se pudo guardar la configuración' });
     } else {
-      toast({ title: 'Guardado', description: `Configuración de ${editingSupplier.name} actualizada` });
+      toast({ title: t('common.saved'), description: `Configuración de ${editingSupplier.name} actualizada` });
       setEditingSupplier(null);
       fetchSuppliers();
     }
@@ -124,7 +124,7 @@ export function SupplierIntegrationManager() {
     
     // For demo purposes, show success
     toast({ 
-      title: 'Conexión exitosa', 
+      title: t('suppliers.connectionSuccess'), 
       description: `API de ${editingSupplier.name} responde correctamente` 
     });
     
@@ -183,7 +183,7 @@ export function SupplierIntegrationManager() {
           {suppliers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Truck className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>No hay proveedores configurados</p>
+              <p>{t("suppliers.noSuppliers")}</p>
               <p className="text-sm">Añade proveedores desde el asistente de locales</p>
             </div>
           ) : (
@@ -193,7 +193,7 @@ export function SupplierIntegrationManager() {
                   <TableHead>Proveedor</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Método</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead>{t("common.status")}</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -403,7 +403,7 @@ export function SupplierIntegrationManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Teléfono de contacto</Label>
+                      <Label htmlFor="phone">{t("common.contactPhone")}</Label>
                       <Input
                         id="phone"
                         type="tel"

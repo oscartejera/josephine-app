@@ -154,7 +154,7 @@ export function AutoPurchaseOrder() {
                     <div className="text-center py-4">
                         <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
                         <p className="text-sm font-medium text-emerald-600">Todo en orden</p>
-                        <p className="text-xs text-muted-foreground">No hay items por debajo del nivel mínimo</p>
+                        <p className="text-xs text-muted-foreground">{t("inventory.noItemsBelowMinimum")}</p>
                         <Button variant="outline" size="sm" className="mt-3" onClick={scanAlerts} disabled={loading}>
                             Volver a escanear
                         </Button>

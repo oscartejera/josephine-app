@@ -79,7 +79,7 @@ export default function OnboardingChecklist() {
             setSteps([
                 {
                     id: 'pos',
-                    title: 'Conectar tu POS',
+                    title: t('onboardingChecklist.connectPOS'),
                     description: posConnected
                         ? '✓ POS conectado — los datos de ventas fluyen automáticamente'
                         : 'Conecta Square o Lightspeed para que las ventas, pagos y productos se sincronicen',
@@ -91,7 +91,7 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'employees',
-                    title: 'Crear tu equipo',
+                    title: t('onboardingChecklist.createTeam'),
                     description: hasEmployees
                         ? `✓ ${employeesRes.count} empleados activos`
                         : 'Añade empleados con nombre, rol y coste/hora para activar Labour Analytics',
@@ -103,7 +103,7 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'schedule',
-                    title: 'Crear primer horario',
+                    title: t('onboardingChecklist.createSchedule'),
                     description: hasShifts
                         ? `✓ ${shiftsRes.count} turnos creados`
                         : 'Crea turnos para tu equipo — Josephine calculará coste laboral vs ventas',
@@ -115,7 +115,7 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'suppliers',
-                    title: 'Configurar proveedores',
+                    title: t('onboardingChecklist.configureSuppliers'),
                     description: hasSuppliers
                         ? `✓ ${suppliersRes.count} proveedores registrados`
                         : 'Añade tus proveedores para activar Procurement (pedidos inteligentes)',
@@ -127,7 +127,7 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'recipes',
-                    title: 'Crear recetas con costes',
+                    title: t('onboardingChecklist.createRecipes'),
                     description: hasRecipes
                         ? `✓ ${recipesRes.count} recetas configuradas`
                         : 'Crea recetas con ingredientes y costes para calcular COGS teórico y GP%',
@@ -139,7 +139,7 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'inventory',
-                    title: 'Crear catálogo de inventario',
+                    title: t('onboardingChecklist.createInventory'),
                     description: hasInventory
                         ? `✓ ${inventoryRes.count} artículos en catálogo`
                         : 'Añade los productos que gestionas para activar Inventory Insights',
@@ -151,7 +151,7 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'budgets',
-                    title: 'Establecer presupuestos',
+                    title: t('onboardingChecklist.setBudgets'),
                     description: hasBudgets
                         ? `✓ Presupuestos configurados`
                         : 'Define metas de venta diarias/mensuales para activar Budget vs Actual',

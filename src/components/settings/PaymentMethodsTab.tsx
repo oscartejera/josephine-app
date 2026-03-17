@@ -88,7 +88,7 @@ export function PaymentMethodsTab() {
         setPaymentMethods([...paymentMethods, newMethod]);
         setNewCard({ cardNumber: '', expiryMonth: '', expiryYear: '', cvv: '', nickname: '' });
         setShowAddPayment(false);
-        toast({ title: "Payment method added", description: `${newMethod.brand} ending in ${newMethod.last4}` });
+        toast({ title: t('payments.methodAdded'), description: `${newMethod.brand} ending in ${newMethod.last4}` });
     };
 
     const handleSetDefaultPayment = (id: string) => {
@@ -96,7 +96,7 @@ export function PaymentMethodsTab() {
             ...pm,
             isDefault: pm.id === id
         })));
-        toast({ title: "Default updated", description: "Payment method set as default" });
+        toast({ title: t('payments.defaultUpdated'), description: t('payments.setAsDefault') });
     };
 
     const handleDeletePayment = () => {
@@ -111,7 +111,7 @@ export function PaymentMethodsTab() {
 
         setPaymentMethods(remaining);
         setDeletePaymentId(null);
-        toast({ title: "Deleted", description: "Payment method removed" });
+        toast({ title: t('common.deleted'), description: t('payments.methodRemoved') });
     };
 
     const getCardIcon = (brand?: string) => {

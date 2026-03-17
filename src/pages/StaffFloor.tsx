@@ -48,7 +48,7 @@ export default function StaffFloor() {
       <div className="flex-1 overflow-auto p-4">
         {floorTables.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">No hay mesas configuradas</p>
+            <p className="text-muted-foreground">{t("staff.noTablesConfigured")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">

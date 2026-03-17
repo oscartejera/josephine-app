@@ -228,8 +228,8 @@ export default function InventoryLocation() {
   }
 
   const breadcrumbs = [
-    { label: 'Insights' },
-    { label: 'Inventory', path: '/inventory' },
+    { label: t('inventory.insights') },
+    { label: t('inventory.inventory'), path: '/inventory' },
     { label: currentLocation?.name || 'Location' }
   ];
 

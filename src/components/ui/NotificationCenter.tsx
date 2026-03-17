@@ -155,7 +155,7 @@ export function NotificationCenter() {
                     {notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                             <Bell className="h-8 w-8 mb-2 opacity-30" />
-                            <p className="text-sm">Sin notificaciones</p>
+                            <p className="text-sm">{t("common.noNotifications")}</p>
                         </div>
                     ) : (
                         notifications.map(notification => (

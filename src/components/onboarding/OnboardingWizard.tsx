@@ -63,9 +63,9 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: 'business', title: 'Tu Negocio', description: 'Nombre de tu empresa', icon: Building2 },
-  { id: 'location', title: 'Tu Local', description: 'Primer establecimiento', icon: MapPin },
-  { id: 'menu', title: 'Tu Carta', description: 'Productos y precios', icon: UtensilsCrossed },
+  { id: 'business', title: t('onboarding.yourBusiness'), description: t('onboarding.companyName'), icon: Building2 },
+  { id: 'location', title: t('onboarding.yourLocation'), description: t('onboarding.firstLocation'), icon: MapPin },
+  { id: 'menu', title: t('onboarding.yourMenu'), description: t('onboarding.productsAndPrices'), icon: UtensilsCrossed },
   { id: 'team', title: 'Tu Equipo', description: 'Empleados iniciales', icon: Users },
   { id: 'floor', title: 'Tu Sala', description: 'Configuración de mesas', icon: LayoutGrid },
   { id: 'inventory', title: 'Inventario', description: 'Ingredientes (opcional)', icon: Package },
@@ -786,7 +786,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {includeInventory && (!selectedTemplate || selectedTemplate.inventory.length === 0) && (
               <div className="text-center text-muted-foreground py-8">
                 <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No hay inventario predefinido para esta plantilla</p>
+                <p>{t("onboarding.noPresetInventory")}</p>
                 <p className="text-sm">Podrás añadir ingredientes después desde el módulo de Inventario</p>
               </div>
             )}

@@ -235,7 +235,7 @@ export default function TeamPay() {
                 {Object.keys(groupedByDay).length === 0 ? (
                   <div className="text-center py-8">
                     <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-muted-foreground">Sin fichajes este mes</p>
+                    <p className="text-muted-foreground">{t("team.noClockInsThisMonth")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -299,7 +299,7 @@ export default function TeamPay() {
                 {plannedShifts.length === 0 ? (
                   <div className="text-center py-8">
                     <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-muted-foreground">Sin turnos planificados</p>
+                    <p className="text-muted-foreground">{t("team.noShiftsPlanned")}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">

@@ -204,7 +204,7 @@ export function UsersRolesManager() {
         }
       } else {
         toast({
-          title: 'Rol asignado',
+          title: t('users.roleAssigned'),
           description: 'El rol ha sido asignado correctamente'
         });
         await fetchData();
@@ -245,7 +245,7 @@ export function UsersRolesManager() {
       if (error) throw error;
 
       toast({
-        title: 'Rol eliminado',
+        title: t('users.roleRemoved'),
         description: 'El rol ha sido eliminado correctamente'
       });
 
@@ -341,7 +341,7 @@ export function UsersRolesManager() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {user.roles.length === 0 ? (
-                          <span className="text-muted-foreground text-sm">Sin roles</span>
+                          <span className="text-muted-foreground text-sm">{t("users.noRoles")}</span>
                         ) : (
                           user.roles.map(role => {
                             const display = ROLE_DISPLAY[role.role_name] || { label: role.role_name, variant: 'outline' as const };
@@ -421,7 +421,7 @@ export function UsersRolesManager() {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar Roles de Usuario</DialogTitle>
+            <DialogTitle>{t("users.editRoles")}</DialogTitle>
             <DialogDescription>
               {editingUser?.full_name || 'Usuario'}
             </DialogDescription>
@@ -432,7 +432,7 @@ export function UsersRolesManager() {
             <div>
               <Label className="mb-2 block">Roles Actuales</Label>
               {editingUser?.roles.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin roles asignados</p>
+                <p className="text-sm text-muted-foreground">{t("users.noRolesAssigned")}</p>
               ) : (
                 <div className="space-y-2">
                   {editingUser?.roles.map(role => {
@@ -481,7 +481,7 @@ export function UsersRolesManager() {
 
             {/* Add New Role */}
             <div className="pt-4 border-t">
-              <Label className="mb-2 block">Añadir Nuevo Rol</Label>
+              <Label className="mb-2 block">{t("users.addNewRole")}</Label>
               <div className="flex flex-col gap-3">
                 <Select
                   value={newAssignment.role_id}

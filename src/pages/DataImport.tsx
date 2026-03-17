@@ -460,7 +460,7 @@ export default function DataImport() {
                             {importHistory.length === 0 ? (
                                 <div className="text-center py-12 text-muted-foreground">
                                     <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                                    <p>No hay importaciones previas</p>
+                                    <p>{t("dataImport.noPreviousImports")}</p>
                                     <p className="text-sm">Sube tu primer archivo CSV para empezar</p>
                                 </div>
                             ) : (
@@ -471,7 +471,7 @@ export default function DataImport() {
                                                 <TableHead>Archivo</TableHead>
                                                 <TableHead>Ubicación</TableHead>
                                                 <TableHead>Filas</TableHead>
-                                                <TableHead>Estado</TableHead>
+                                                <TableHead>{t("common.status")}</TableHead>
                                                 <TableHead>Fecha</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -640,7 +640,7 @@ export default function DataImport() {
                                                 <TableHead>Ventas Netas</TableHead>
                                                 <TableHead>Pedidos</TableHead>
                                                 <TableHead>V. Brutas</TableHead>
-                                                <TableHead>Estado</TableHead>
+                                                <TableHead>{t("common.status")}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>

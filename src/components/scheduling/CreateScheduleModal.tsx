@@ -10,15 +10,15 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title: 'Analizando pronóstico de ventas y SPLH histórico',
+    title: t('scheduling.analyzingForecast'),
     description: 'Josephine AI analiza datos de ventas pasadas y el forecast para proyectar la demanda por franja horaria.',
   },
   {
-    title: 'Calculando niveles de dotación óptimos por estación',
+    title: t('scheduling.calculatingStaffing'),
     description: 'Asigna a las personas adecuadas en el momento correcto, optimizando eficiencia y cobertura.',
   },
   {
-    title: 'Verificando restricciones de disponibilidad y contratos',
+    title: t('scheduling.verifyingConstraints'),
     description: 'Respeta automáticamente las normas laborales, la disponibilidad del equipo y las regulaciones vigentes.',
   },
 ];

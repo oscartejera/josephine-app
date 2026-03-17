@@ -135,12 +135,12 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
     if (onReorder) {
       onReorder(order.items.map(item => ({ skuId: item.skuId, packs: item.packs })));
       toast({
-        title: 'Items added to cart',
+        title: t('procurement.itemsAddedToCart'),
         description: `${order.items.length} items from ${order.orderNumber} added to your cart`,
       });
     } else {
       toast({
-        title: 'Reorder',
+        title: t('procurement.reorder'),
         description: `Reordering ${order.items.length} items from ${order.orderNumber}`,
       });
     }
@@ -165,7 +165,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
       }
 
       toast({
-        title: 'Entrega recibida',
+        title: t('procurement.deliveryReceived'),
         description: `${order.orderNumber}: ${order.items.length} items actualizados en inventario`,
       });
     } catch (err: any) {

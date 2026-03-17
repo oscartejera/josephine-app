@@ -264,7 +264,7 @@ export default function PayrollEmployees({
                       {contract ? (
                         <Badge variant="outline">{contract.contract_type}</Badge>
                       ) : (
-                        <Badge variant="destructive" className="text-xs">Sin contrato</Badge>
+                        <Badge variant="destructive" className="text-xs">{t("payroll.noContract")}</Badge>
                       )}
                     </TableCell>
                     <TableCell>

@@ -44,7 +44,7 @@ const CERT_TYPES = [
 ];
 
 function getStatusBadge(status: string, expiryDate: string | null) {
-    if (!expiryDate) return <Badge variant="outline"><CheckCircle2 className="h-3 w-3 mr-1" />Sin caducidad</Badge>;
+    if (!expiryDate) return <Badge variant="outline"><CheckCircle2 className="h-3 w-3 mr-1" />{t("training.noExpiry")}</Badge>;
     const daysLeft = differenceInDays(new Date(expiryDate), new Date());
     if (daysLeft < 0) return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Caducado</Badge>;
     if (daysLeft < 30) return <Badge className="bg-amber-500"><Clock className="h-3 w-3 mr-1" />Caduca en {daysLeft}d</Badge>;
@@ -190,7 +190,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
             ) : records.length === 0 ? (
                 <Card><CardContent className="py-8 text-center">
                     <Shield className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                    <p className="text-muted-foreground">Sin certificados registrados</p>
+                    <p className="text-muted-foreground">{t("training.noCertificates")}</p>
                 </CardContent></Card>
             ) : (
                 <div className="space-y-2">

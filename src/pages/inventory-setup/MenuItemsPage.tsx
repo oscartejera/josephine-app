@@ -119,10 +119,10 @@ export default function MenuItemsPage() {
 
   const getStatusBadge = (item: MenuItem) => {
     if (!item.has_recipe) {
-      return <Badge variant="destructive" className="text-[10px]">Sin escandallo</Badge>;
+      return <Badge variant="destructive" className="text-[10px]">{t("menu.noRecipe")}</Badge>;
     }
     if (item.ingredient_count === 0) {
-      return <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px]">Sin ingredientes</Badge>;
+      return <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px]">{t("menu.noIngredients")}</Badge>;
     }
     return <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px]">Completo</Badge>;
   };
@@ -144,7 +144,7 @@ export default function MenuItemsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Total platos</p>
+            <p className="text-sm text-muted-foreground">{t("menu.totalDishes")}</p>
             <p className="text-2xl font-bold">{stats.total}</p>
           </CardContent>
         </Card>
@@ -211,7 +211,7 @@ export default function MenuItemsPage() {
                 <TableHead className="text-right">PVP</TableHead>
                 <TableHead className="text-right">Food Cost</TableHead>
                 <TableHead className="text-right">FC %</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="text-right">Acción</TableHead>
               </TableRow>
             </TableHeader>

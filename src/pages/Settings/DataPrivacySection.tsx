@@ -67,13 +67,13 @@ export function DataPrivacySection() {
       URL.revokeObjectURL(url);
 
       toast({
-        title: 'Datos exportados',
+        title: t('settings.dataExported'),
         description: 'Tu archivo de datos se ha descargado correctamente.',
       });
     } catch (error) {
       console.error('Export error:', error);
       toast({
-        title: 'Error al exportar',
+        title: t('settings.exportError'),
         description: 'No se pudieron exportar los datos. Inténtalo de nuevo.',
         variant: 'destructive',
       });
@@ -96,7 +96,7 @@ export function DataPrivacySection() {
       if (error) throw error;
 
       toast({
-        title: 'Solicitud registrada',
+        title: t('settings.requestRegistered'),
         description: 'Tu cuenta se eliminará en 30 días. Puedes cancelar desde este panel.',
       });
       setShowDelete(false);
@@ -117,7 +117,7 @@ export function DataPrivacySection() {
   const handleSavePreferences = (prefs: ConsentPreferences) => {
     localStorage.setItem('josephine_consent', JSON.stringify(prefs));
     setShowCookiePrefs(false);
-    toast({ title: 'Preferencias actualizadas' });
+    toast({ title: t('settings.preferencesUpdated') });
   };
 
   return (
@@ -153,7 +153,7 @@ export function DataPrivacySection() {
             <div className="flex items-center gap-3">
               <Download className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm font-medium">Exportar mis datos</p>
+                <p className="text-sm font-medium">{t("settings.exportMyData")}</p>
                 <p className="text-xs text-gray-500">
                   Descarga una copia de todos tus datos en formato JSON.
                 </p>
@@ -175,7 +175,7 @@ export function DataPrivacySection() {
             <div className="flex items-center gap-3">
               <Trash2 className="h-5 w-5 text-red-600" />
               <div>
-                <p className="text-sm font-medium text-red-900">Eliminar mi cuenta</p>
+                <p className="text-sm font-medium text-red-900">{t("settings.deleteMyAccount")}</p>
                 <p className="text-xs text-red-600/80">
                   Todos tus datos se eliminarán tras 30 días de gracia.
                 </p>

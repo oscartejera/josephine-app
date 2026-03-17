@@ -288,7 +288,7 @@ export default function ProcurementCart() {
                       <TableHead className="font-semibold">Pack Size</TableHead>
                       <TableHead className="text-center font-semibold">Quantity</TableHead>
                       <TableHead className="text-right font-semibold">Unit Price</TableHead>
-                      <TableHead className="text-right font-semibold">Subtotal</TableHead>
+                      <TableHead className="text-right font-semibold">{t("procurement.subtotal")}</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -397,7 +397,7 @@ export default function ProcurementCart() {
                 {/* Totals */}
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
+                    <span className="text-muted-foreground">{t("procurement.subtotalItems", { count: cartItems.length })}</span>
                     <span className="font-medium">€{orderSummary.subtotal.toFixed(2)}</span>
                   </div>
                   {orderSummary.deliveryFee > 0 ? (
@@ -412,7 +412,7 @@ export default function ProcurementCart() {
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total VAT (21%)</span>
+                    <span className="text-muted-foreground">{t("procurement.totalVat")}</span>
                     <span>€{orderSummary.tax.toFixed(2)}</span>
                   </div>
                 </div>

@@ -76,18 +76,18 @@ interface OnboardingTask {
 
 // ─── Onboarding template ────────────────────────────────
 const ONBOARDING_TEMPLATE: Omit<OnboardingTask, 'id'>[] = [
-    { label: 'Contrato de trabajo firmado', completed: false, category: 'docs' },
-    { label: 'Copia DNI / NIE', completed: false, category: 'docs' },
-    { label: 'Número de Seguridad Social', completed: false, category: 'docs' },
-    { label: 'Cuenta bancaria (IBAN)', completed: false, category: 'docs' },
-    { label: 'Foto para ficha empleado', completed: false, category: 'docs' },
-    { label: 'Formación PRL recibida', completed: false, category: 'training' },
-    { label: 'Carné de manipulador de alimentos', completed: false, category: 'training' },
-    { label: 'Tour del establecimiento', completed: false, category: 'training' },
-    { label: 'Protocolo de alérgenos', completed: false, category: 'training' },
-    { label: 'Uniforme entregado', completed: false, category: 'setup' },
-    { label: 'Acceso al sistema configurado', completed: false, category: 'setup' },
-    { label: 'Turno de prueba completado', completed: false, category: 'setup' },
+    { label: t('onboarding.signedContract'), completed: false, category: 'docs' },
+    { label: t('onboarding.dniCopy'), completed: false, category: 'docs' },
+    { label: t('onboarding.ssNumber'), completed: false, category: 'docs' },
+    { label: t('onboarding.bankAccount'), completed: false, category: 'docs' },
+    { label: t('onboarding.employeePhoto'), completed: false, category: 'docs' },
+    { label: t('onboarding.prlTraining'), completed: false, category: 'training' },
+    { label: t('onboarding.foodHandler'), completed: false, category: 'training' },
+    { label: t('onboarding.facilityTour'), completed: false, category: 'training' },
+    { label: t('onboarding.allergenProtocol'), completed: false, category: 'training' },
+    { label: t('onboarding.uniformDelivered'), completed: false, category: 'setup' },
+    { label: t('onboarding.systemAccess'), completed: false, category: 'setup' },
+    { label: t('onboarding.trialShift'), completed: false, category: 'setup' },
 ];
 
 // ─── Helpers ────────────────────────────────────────────
@@ -503,10 +503,10 @@ export default function WorkforceOnboarding() {
                             </p>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
                                 {[
-                                    { icon: FileText, label: 'Contratos', count: employees.length },
-                                    { icon: Shield, label: 'Certificados PRL', count: 0 },
-                                    { icon: FileCheck, label: 'DNI / NIE', count: 0 },
-                                    { icon: Briefcase, label: 'SS', count: 0 },
+                                    { icon: FileText, label: t('onboarding.contracts'), count: employees.length },
+                                    { icon: Shield, label: t('onboarding.prlCertificates'), count: 0 },
+                                    { icon: FileCheck, label: t('onboarding.dniNie'), count: 0 },
+                                    { icon: Briefcase, label: t('onboarding.ss'), count: 0 },
                                 ].map((doc) => (
                                     <Card key={doc.label}>
                                         <CardContent className="p-4 text-center">

@@ -155,7 +155,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
             ) : events.length === 0 ? (
                 <Card><CardContent className="py-8 text-center">
                     <CalendarDays className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                    <p className="text-muted-foreground">Sin eventos próximos</p>
+                    <p className="text-muted-foreground">{t("events.noUpcomingEvents")}</p>
                 </CardContent></Card>
             ) : (
                 <div className="space-y-2">

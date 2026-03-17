@@ -73,8 +73,8 @@ export default function Inventory() {
   const isCOGS = viewMode === 'COGS';
 
   const breadcrumbs = [
-    { label: 'Insights' },
-    { label: 'Inventory' }
+    { label: t('inventory.insights') },
+    { label: t('inventory.inventory') }
   ];
 
   return (

@@ -51,7 +51,7 @@ export function ExportTab() {
         a.download = filename;
         a.click();
 
-        toast({ title: "Exportado", description: `${filename} descargado` });
+        toast({ title: t('common.exported'), description: `${filename} descargado` });
     };
 
     return (

@@ -611,7 +611,7 @@ export function LocationManager() {
               
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nombre del Local *</Label>
+                  <Label htmlFor="name">{t("location.locationName")} *</Label>
                   <Input
                     id="name"
                     placeholder="Ej: Restaurante Centro"
@@ -621,7 +621,7 @@ export function LocationManager() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="city">Ciudad</Label>
+                  <Label htmlFor="city">{t("common.city")}</Label>
                   <Input
                     id="city"
                     placeholder="Ej: Madrid"
@@ -727,7 +727,7 @@ export function LocationManager() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dup-name">Nombre del nuevo local *</Label>
+              <Label htmlFor="dup-name">{t("location.newLocationName")} *</Label>
               <Input
                 id="dup-name"
                 placeholder="Ej: Restaurante Centro 2"
@@ -737,7 +737,7 @@ export function LocationManager() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="dup-city">Ciudad</Label>
+              <Label htmlFor="dup-city">{t("common.city")}</Label>
               <Input
                 id="dup-city"
                 placeholder="Ej: Madrid"
@@ -823,8 +823,8 @@ export function LocationManager() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Ciudad</TableHead>
+              <TableHead>{t("common.name")}</TableHead>
+              <TableHead>{t("common.city")}</TableHead>
               <TableHead>Zona Horaria</TableHead>
               <TableHead>Moneda</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -970,7 +970,7 @@ export function LocationManager() {
         {locations.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No hay locales configurados</p>
+            <p>{t("dashboard.noLocations")}</p>
             <p className="text-sm">Añade tu primer local para empezar</p>
           </div>
         )}

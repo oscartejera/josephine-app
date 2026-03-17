@@ -617,13 +617,13 @@ export default function WorkforceTimesheet() {
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuItem onClick={() => openEditRecord(r)}>
-                                                                    <Edit className="mr-2 h-4 w-4" /> Editar
+                                                                    <Edit className="mr-2 h-4 w-4" /> {t("common.edit")}
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     className="text-destructive"
                                                                     onClick={() => handleDeleteRecord(r.id)}
                                                                 >
-                                                                    <XCircle className="mr-2 h-4 w-4" /> Eliminar
+                                                                    <XCircle className="mr-2 h-4 w-4" /> {t("common.delete")}
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
@@ -736,7 +736,7 @@ export default function WorkforceTimesheet() {
                             <CardContent className="p-12 text-center">
                                 <CheckCircle2 className="h-12 w-12 text-emerald-500/40 mx-auto mb-3" />
                                 <p className="text-lg font-medium text-muted-foreground">{t('timesheet.noAnomalies')}</p>
-                                <p className="text-sm text-muted-foreground/60">No hay alertas esta semana</p>
+                                <p className="text-sm text-muted-foreground/60">{t("timesheet.noAlerts")}/p>
                             </CardContent>
                         </Card>
                     )}

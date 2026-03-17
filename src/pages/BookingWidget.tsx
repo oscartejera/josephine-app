@@ -243,7 +243,7 @@ export default function BookingWidget() {
                 </Label>
                 {availableSlots.length === 0 ? (
                   <Alert>
-                    <AlertDescription>No hay horarios disponibles para esta fecha</AlertDescription>
+                    <AlertDescription>{t("booking.noTimesAvailable")}</AlertDescription>
                   </Alert>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
@@ -291,7 +291,7 @@ export default function BookingWidget() {
             {/* Contact Info */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="guest_name">Nombre *</Label>
+                <Label htmlFor="guest_name">{t("booking.guestName")} *</Label>
                 <Input
                   id="guest_name"
                   value={formData.guest_name}
@@ -302,7 +302,7 @@ export default function BookingWidget() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="guest_phone">Teléfono</Label>
+                <Label htmlFor="guest_phone">{t("common.phone")}</Label>
                 <Input
                   id="guest_phone"
                   type="tel"

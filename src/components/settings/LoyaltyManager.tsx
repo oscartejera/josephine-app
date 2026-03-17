@@ -124,7 +124,7 @@ export function LoyaltyManager() {
         points_per_euro: settings.points_per_euro,
         welcome_bonus: settings.welcome_bonus,
       });
-      toast({ title: 'Configuración guardada' });
+      toast({ title: t('common.configSaved') });
     } catch (err) {
       toast({ title: t("common.error"), variant: 'destructive' });
     } finally {
@@ -134,7 +134,7 @@ export function LoyaltyManager() {
 
   const handleSaveMember = async () => {
     if (!memberForm.name || (!memberForm.email && !memberForm.phone)) {
-      toast({ title: 'Completa nombre y email o teléfono', variant: 'destructive' });
+      toast({ title: t('loyalty.completeNameAndContact'), variant: 'destructive' });
       return;
     }
 
@@ -142,10 +142,10 @@ export function LoyaltyManager() {
     try {
       if (editingMember) {
         await updateMember(editingMember.id, memberForm);
-        toast({ title: 'Miembro actualizado' });
+        toast({ title: t('loyalty.memberUpdated') });
       } else {
         await createMember(memberForm);
-        toast({ title: 'Miembro creado', description: `+${settings?.welcome_bonus || 50} puntos de bienvenida` });
+        toast({ title: t('loyalty.memberCreated'), description: `+${settings?.welcome_bonus || 50} puntos de bienvenida` });
       }
       setShowMemberDialog(false);
       setEditingMember(null);
@@ -159,7 +159,7 @@ export function LoyaltyManager() {
 
   const handleSaveReward = async () => {
     if (!rewardForm.name || rewardForm.points_cost <= 0) {
-      toast({ title: 'Completa nombre y coste en puntos', variant: 'destructive' });
+      toast({ title: t('loyalty.completeNameAndCost'), variant: 'destructive' });
       return;
     }
 
@@ -180,10 +180,10 @@ export function LoyaltyManager() {
       
       if (editingReward) {
         await updateReward(editingReward.id, rewardData);
-        toast({ title: 'Recompensa actualizada' });
+        toast({ title: t('loyalty.rewardUpdated') });
       } else {
         await createReward(rewardData);
-        toast({ title: 'Recompensa creada' });
+        toast({ title: t('loyalty.rewardCreated') });
       }
       setShowRewardDialog(false);
       setEditingReward(null);
@@ -265,7 +265,7 @@ export function LoyaltyManager() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Label>Activo</Label>
+              <Label>{t("common.active")}</Label>
               <Switch
                 checked={settings?.is_enabled || false}
                 onCheckedChange={handleToggleEnabled}
@@ -537,7 +537,7 @@ export function LoyaltyManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Nombre *</Label>
+              <Label>{t("common.name")} *</Label>
               <Input
                 value={memberForm.name}
                 onChange={(e) => setMemberForm((p) => ({ ...p, name: e.target.value }))}
@@ -555,7 +555,7 @@ export function LoyaltyManager() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Teléfono</Label>
+                <Label>{t("common.phone")}</Label>
                 <Input
                   type="tel"
                   value={memberForm.phone}
@@ -593,7 +593,7 @@ export function LoyaltyManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Nombre *</Label>
+              <Label>{t("common.name")} *</Label>
               <Input
                 value={rewardForm.name}
                 onChange={(e) => setRewardForm((p) => ({ ...p, name: e.target.value }))}

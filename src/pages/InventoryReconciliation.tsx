@@ -54,9 +54,9 @@ export default function InventoryReconciliation() {
         isLoading={isLoading}
         showViewToggle={false}
         breadcrumbs={[
-          { label: 'Counts & Waste' },
-          { label: 'Counts' },
-          { label: 'Reconciliation report' }
+          { label: t('inventory.countsAndWaste') },
+          { label: t('inventory.counts') },
+          { label: t('inventory.reconciliationReport') }
         ]}
       />
 

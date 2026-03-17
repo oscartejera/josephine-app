@@ -470,7 +470,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               onClick={() => navigate('/settings/import')}
             >
               <Upload className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Importar Datos</span>}
+              {!collapsed && <span>{t("sidebar.importData")}</span>}
             </Button>
           )}
 

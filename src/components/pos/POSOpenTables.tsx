@@ -29,7 +29,7 @@ export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium">No hay mesas abiertas</h3>
+        <h3 className="text-lg font-medium">{t("pos.noOpenTables")}</h3>
         <p className="text-muted-foreground">
           Las mesas con comandas activas aparecerán aquí
         </p>

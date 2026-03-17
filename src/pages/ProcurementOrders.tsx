@@ -418,7 +418,7 @@ export default function ProcurementOrders() {
                           </div>
                           <div className="text-center px-4 border-l border-border">
                             <p className="text-2xl font-bold text-foreground">€{supplier.totalValue.toFixed(0)}</p>
-                            <p className="text-xs text-muted-foreground">Total Value</p>
+                            <p className="text-xs text-muted-foreground">{t("procurement.totalValue")}</p>
                           </div>
                           <div className="flex gap-2 pl-4 border-l border-border">
                             <Button size="sm" onClick={() => window.location.href = `/procurement?supplier=${supplier.id}`}>

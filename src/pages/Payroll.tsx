@@ -40,14 +40,14 @@ export interface PayrollContextData {
 }
 
 const PAYROLL_STEPS = [
-  { key: 'home', label: 'Inicio', icon: Building },
-  { key: 'employees', label: 'Empleados', icon: Users },
-  { key: 'inputs', label: 'Variables', icon: FileText },
-  { key: 'validate', label: 'Validar', icon: CheckCircle },
-  { key: 'calculate', label: 'Calcular', icon: DollarSign },
-  { key: 'review', label: 'Revisar', icon: Clock },
-  { key: 'submit', label: 'Presentar', icon: Send },
-  { key: 'pay', label: 'Pagar', icon: CreditCard },
+  { key: 'home', label: t('payroll.home'), icon: Building },
+  { key: 'employees', label: t('payroll.employees'), icon: Users },
+  { key: 'inputs', label: t('payroll.variables'), icon: FileText },
+  { key: 'validate', label: t('payroll.validate'), icon: CheckCircle },
+  { key: 'calculate', label: t('payroll.calculate'), icon: DollarSign },
+  { key: 'review', label: t('payroll.review'), icon: Clock },
+  { key: 'submit', label: t('payroll.submit'), icon: Send },
+  { key: 'pay', label: t('payroll.pay'), icon: CreditCard },
 ];
 
 export default function Payroll() {

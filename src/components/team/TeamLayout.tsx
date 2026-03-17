@@ -159,7 +159,7 @@ export function TeamLayout() {
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
-          <span>Cerrar sesión</span>
+          <span>{t("common.logout")}</span>
         </Button>
       </div>
     </div>

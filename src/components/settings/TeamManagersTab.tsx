@@ -134,7 +134,7 @@ export function TeamManagersTab() {
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName">Nombre</Label>
+                            <Label htmlFor="firstName">{t("common.name")}</Label>
                             <Input
                                 id="firstName"
                                 placeholder={t('settings.firstName')}
@@ -143,7 +143,7 @@ export function TeamManagersTab() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName">Apellido</Label>
+                            <Label htmlFor="lastName">{t("common.lastName")}</Label>
                             <Input
                                 id="lastName"
                                 placeholder={t('settings.lastName')}
@@ -186,7 +186,7 @@ export function TeamManagersTab() {
                         {sending ? (
                             <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
                         ) : (
-                            <><UserPlus className="h-4 w-4 mr-2" /> Enviar invitación</>
+                            <><UserPlus className="h-4 w-4 mr-2" /> {t("team.sendInvitation")}</>
                         )}
                     </Button>
 
@@ -235,7 +235,7 @@ export function TeamManagersTab() {
                             ))}
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-red-500">Sin acceso</p>
+                            <p className="text-sm font-medium text-red-500">{t("team.noAccess")}</p>
                             {['Insights (Sales/Labour)', 'P&L', 'Payroll', 'Menu Engineering', 'Settings / Billing', 'Otros locales'].map(item => (
                                 <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span className="h-3 w-3 rounded-full bg-red-200 dark:bg-red-800 inline-flex items-center justify-center text-[8px] text-red-600">✕</span>

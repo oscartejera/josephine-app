@@ -83,7 +83,7 @@ export default function RecipeDetailPage() {
                 yield_unit: editYieldUnit,
             });
             setHeaderDirty(false);
-            toast({ title: 'Guardado', description: 'Receta actualizada' });
+            toast({ title: t('common.saved'), description: t('recipes.recipeUpdated') });
         } catch (err: any) {
             toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
@@ -103,7 +103,7 @@ export default function RecipeDetailPage() {
             setSelectedSubRecipeId('');
             setAddQty('1');
             setAddYieldPct('100');
-            toast({ title: 'Añadido', description: 'Ingrediente añadido a la receta' });
+            toast({ title: t('common.added'), description: t('recipes.ingredientAdded') });
         } catch (err: any) {
             toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
@@ -112,7 +112,7 @@ export default function RecipeDetailPage() {
     const handleRemoveIngredient = async (ingId: string) => {
         try {
             await removeIngredient.mutateAsync(ingId);
-            toast({ title: 'Eliminado' });
+            toast({ title: t('common.deleted') });
         } catch (err: any) {
             toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }
@@ -164,7 +164,7 @@ export default function RecipeDetailPage() {
                         <ChefHat className="h-6 w-6" />
                         {recipe.menu_item_name}
                     </h1>
-                    <p className="text-muted-foreground">Editar escandallo</p>
+                    <p className="text-muted-foreground">{t("recipes.editRecipe")}</p>
                 </div>
             </div>
 
@@ -176,7 +176,7 @@ export default function RecipeDetailPage() {
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <div className="md:col-span-2 space-y-2">
-                            <Label>Nombre</Label>
+                            <Label>{t("common.name")}</Label>
                             <Input value={editName} onChange={e => { setEditName(e.target.value); setHeaderDirty(true); }} />
                         </div>
                         <div className="space-y-2">
@@ -324,7 +324,7 @@ export default function RecipeDetailPage() {
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Añadir Ingrediente</DialogTitle>
+                        <DialogTitle>{t("recipes.addIngredient")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
