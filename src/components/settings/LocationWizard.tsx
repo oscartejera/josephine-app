@@ -92,8 +92,8 @@ const PRODUCT_TEMPLATES: ProductTemplate[] = [
   { name: 'Cerveza', category: 'Bebidas', selected: true },
   { name: 'Vino Tinto', category: 'Bebidas', selected: true },
   { name: 'Vino Blanco', category: 'Bebidas', selected: true },
-  { name: 'Café Solo', category: 'Bebidas', selected: true },
-  { name: 'Café con Leche', category: 'Bebidas', selected: true },
+  { name: t('settings.cafeSolo'), category: 'Bebidas', selected: true },
+  { name: t('settings.cafeConLeche'), category: 'Bebidas', selected: true },
   // Entrantes
   { name: 'Patatas Bravas', category: 'Entrantes', selected: true },
   { name: 'Croquetas', category: 'Entrantes', selected: true },
@@ -117,27 +117,27 @@ const ROLE_OPTIONS = [
   'Personal de barra',
   'Gerente',
   'Lavaplatos',
-  'Personal de preparación',
+  t('settings.personalDePreparacion'),
 ];
 
 const SUPPLIER_CATEGORIES = [
   'Frutas y Verduras',
   'Carnes',
   'Pescados y Mariscos',
-  'Lácteos',
+  t('settings.lacteos'),
   'Bebidas',
-  'Panadería',
+  t('settings.panaderia'),
   'Congelados',
   'Limpieza',
   'General',
 ];
 
 const STEPS = [
-  { id: 'info', label: 'Información', icon: Building2 },
+  { id: 'info', label: t('settings.informacion'), icon: Building2 },
   { id: 'products', label: 'Productos', icon: Package },
-  { id: 'employees', label: 'Empleados', icon: Users },
+  { id: 'employees', label: t('settings.empleados'), icon: Users },
   { id: 'tables', label: 'Mesas', icon: LayoutGrid },
-  { id: 'suppliers', label: 'Proveedores', icon: Truck },
+  { id: 'suppliers', label: t('settings.proveedores'), icon: Truck },
 ];
 
 // Canvas constants
@@ -542,7 +542,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
       if (error.code === '42501') {
         toast.error(t('locationWizard.toastNoPermissions'));
       } else {
-        toast.error(error.message || 'Error al crear el local');
+        toast.error(error.message || t('settings.errorAlCrearElLocal'));
       }
     } finally {
       setLoading(false);
@@ -622,7 +622,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                 <Label htmlFor="wiz-name">{t("location.locationName")} *</Label>
                 <Input
                   id="wiz-name"
-                  placeholder="Ej: Restaurante Centro"
+                  placeholder=t('settings.ejRestauranteCentro')
                   value={basicInfo.name}
                   onChange={(e) => setBasicInfo({ ...basicInfo, name: e.target.value })}
                   autoFocus
@@ -696,7 +696,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                         ));
                       }}
                     >
-                      {products.filter(p => p.category === category).every(p => p.selected) ? 'Deseleccionar' : 'Seleccionar'} todo
+                      {products.filter(p => p.category === category).every(p => p.selected) ? 'Deseleccionar' : t('settings.seleccionar')} todo
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -761,7 +761,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                 {employees.map((employee, index) => (
                   <div key={index} className="flex gap-2 items-center">
                     <Input
-                      placeholder="Nombre completo"
+                      placeholder=t('settings.nombreCompleto')
                       value={employee.name}
                       onChange={(e) => updateEmployee(index, 'name', e.target.value)}
                       className="flex-1"
@@ -902,7 +902,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                 <Label className="text-sm">{t("location.addTable")}</Label>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   <Input
-                    placeholder="Número"
+                    placeholder=t('settings.numero')
                     value={newTableNumber}
                     onChange={(e) => setNewTableNumber(e.target.value)}
                     className="w-24"
@@ -970,7 +970,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                   onClick={() => setSupplierMode('custom')}
                 >
                   <Plus className="h-5 w-5" />
-                  <span className="text-xs">Mis Proveedores</span>
+                  <span className="text-xs">{t('settings.misProveedores')}</span>
                 </Button>
                 <Button
                   variant={supplierMode === 'skip' ? 'default' : 'outline'}
@@ -978,7 +978,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                   onClick={() => setSupplierMode('skip')}
                 >
                   <ChevronRight className="h-5 w-5" />
-                  <span className="text-xs">Después</span>
+                  <span className="text-xs">{t('settings.despues')}</span>
                 </Button>
               </div>
 
@@ -1095,7 +1095,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                                 className="h-9"
                               />
                               <Input
-                                placeholder="Teléfono"
+                                placeholder=t('settings.telefono')
                                 value={supplier.phone}
                                 onChange={(e) => updateSupplier(index, 'phone', e.target.value)}
                                 className="h-9"
@@ -1172,7 +1172,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
               ) : (
                 <ChevronRight className="h-4 w-4 mr-1" />
               )}
-              {currentStep === STEPS.length - 1 ? 'Crear Local' : 'Siguiente'}
+              {currentStep === STEPS.length - 1 ? t('settings.crearLocal') : t('settings.siguiente')}
             </Button>
           </div>
         </div>

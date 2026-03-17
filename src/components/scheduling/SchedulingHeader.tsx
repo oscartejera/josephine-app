@@ -317,7 +317,7 @@ export function SchedulingHeader({
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[140px]">
                   <DollarSign className="h-3.5 w-3.5" />
-                  <span>Presupuesto Laboral</span>
+                  <span>{t('scheduling.presupuestoLaboral')}</span>
                 </div>
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div className={cn("h-full rounded-full transition-all duration-500", barColor)} style={{ width: `${Math.min(pct, 100)}%` }} />

@@ -124,7 +124,7 @@ export function LabourComplianceDashboard({ locationId, weekStart }: LabourCompl
                 <CardHeader><CardTitle className="text-base">Cumplimiento Laboral</CardTitle></CardHeader>
                 <CardContent>
                     <p className="text-sm text-gray-500 text-center py-4">
-                        {!locationId ? 'Selecciona una ubicación para ver compliance' : 'No hay turnos programados esta semana'}
+                        {!locationId ? t('dashboard.seleccionaUnaUbicacionParaVer') : t('dashboard.noHayTurnosProgramadosEsta')}
                     </p>
                 </CardContent>
             </Card>

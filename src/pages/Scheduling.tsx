@@ -385,7 +385,7 @@ export default function Scheduling() {
                   }
                 >
                   {actualData.status === 'published' ? 'Publicado'
-                    : actualData.status === 'approved' ? 'Aprobado'
+                    : actualData.status === 'approved' ? t('payroll.aprobado')
                       : 'Borrador'}
                 </Badge>
               )}

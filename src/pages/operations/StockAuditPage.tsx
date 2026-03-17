@@ -166,7 +166,7 @@ export default function StockAuditPage() {
                                 <AlertTriangle className="h-5 w-5 text-amber-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Ítems Críticos (&gt;5% varianza)</p>
+                                <p className="text-sm text-muted-foreground">{t('common.itemsCriticosGt5Varianza')}</p>
                                 <p className="text-2xl font-bold">{criticalItems.length}</p>
                             </div>
                         </div>
@@ -195,7 +195,7 @@ export default function StockAuditPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="text-base">{t('stockAudit.inventoryVariance')}</CardTitle>
-                            <CardDescription>Stock teórico vs real — rojo = varianza negativa &gt;5%</CardDescription>
+                            <CardDescription>{t('common.stockTeoricoVsRealRojo')}</CardDescription>
                         </div>
                         <div className="relative w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

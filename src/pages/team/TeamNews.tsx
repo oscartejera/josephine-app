@@ -104,11 +104,11 @@ export default function TeamNews() {
       case 'important':
         return 'Importante';
       case 'celebration':
-        return 'Celebración';
+        return t('team.celebracion');
       case 'schedule':
         return 'Horarios';
       default:
-        return 'Información';
+        return t('settings.informacion');
     }
   };
 
@@ -246,8 +246,8 @@ export default function TeamNews() {
             <Megaphone className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-muted-foreground">
               {announcements.length === 0
-                ? 'Tu manager aún no ha publicado novedades'
-                : 'No hay novedades en esta categoría'}
+                ? t('team.tuManagerAunNoHa')
+                : t('team.noHayNovedadesEnEsta')}
             </p>
           </CardContent>
         </Card>

@@ -45,10 +45,10 @@ function fmt(v: number) {
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string; bar: string; emoji: string }> = {
-    optimal: { label: 'Óptimo', bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-400', emoji: '✓' },
+    optimal: { label: t('team.optimo'), bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-400', emoji: '✓' },
     overstaffed: { label: 'Exceso', bg: 'bg-blue-50', text: 'text-blue-700', bar: 'bg-blue-400', emoji: '⬆' },
     understaffed: { label: 'Falta', bg: 'bg-amber-50', text: 'text-amber-700', bar: 'bg-amber-400', emoji: '⬇' },
-    no_data: { label: 'Sin datos', bg: 'bg-gray-50', text: 'text-gray-400', bar: 'bg-gray-200', emoji: '—' },
+    no_data: { label: t('team.sinDatos'), bg: 'bg-gray-50', text: 'text-gray-400', bar: 'bg-gray-200', emoji: '—' },
 };
 
 export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
@@ -101,7 +101,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
             // Aggregate by day-of-week (0=Sun, 1=Mon, ... 6=Sat)
             const TARGET_SPLH = 150;
             const OP_HOURS = { open: 10, close: 23 };
-            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const dayNames = ['Domingo', 'Lunes', 'Martes', t('settings.miercoles'), 'Jueves', 'Viernes', t('settings.sabado')];
             const buckets: Record<number, { totalSales: number; totalHours: number; count: number }> = {};
 
             // Build sales by date
@@ -160,7 +160,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
         return (
             <Card className="bg-white">
                 <CardHeader><CardTitle className="text-base">🔥 Mapa de Staffing</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">Selecciona una ubicación</p></CardContent>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t('payroll.seleccionaUnaUbicacion')}</p></CardContent>
             </Card>
         );
     }

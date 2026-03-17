@@ -138,14 +138,14 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                                 />
                                 <ExplainFactor
                                     icon={Calendar}
-                                    label="Patrón Semanal"
+                                    label=t('forecast.patronSemanal')
                                     impact={detail.weekly ? `${detail.weekly > 0 ? '+' : ''}${(detail.weekly * 100).toFixed(0)}%` : '—'}
                                     detail={`Efecto del día de la semana (${format(parseISO(date), 'EEEE', { locale: es })})`}
                                     color="bg-indigo-50 text-indigo-600"
                                 />
                                 <ExplainFactor
                                     icon={Sparkles}
-                                    label="Patrón Anual"
+                                    label=t('forecast.patronAnual')
                                     impact={detail.yearly ? `${detail.yearly > 0 ? '+' : ''}${(detail.yearly * 100).toFixed(0)}%` : '—'}
                                     detail="Efecto estacional (temporada alta/baja)"
                                     color="bg-purple-50 text-purple-600"
@@ -164,7 +164,7 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                                         icon={Calendar}
                                         label="Festivo"
                                         impact={detail.holiday_name || 'Festivo'}
-                                        detail="Los festivos modifican el patrón de demanda"
+                                        detail=t('forecast.losFestivosModificanElPatron')
                                         color="bg-rose-50 text-rose-600"
                                     />
                                 )}
@@ -180,7 +180,7 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                             {/* Natural language explanation */}
                             {detail.explanation && (
                                 <div className="bg-muted/50 rounded-lg p-3 mt-2">
-                                    <p className="text-xs font-medium text-muted-foreground mb-1">Explicación AI</p>
+                                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('forecast.explicacionAi')}</p>
                                     <p className="text-sm leading-relaxed">{detail.explanation}</p>
                                 </div>
                             )}

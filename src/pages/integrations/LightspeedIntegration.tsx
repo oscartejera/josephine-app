@@ -50,11 +50,11 @@ interface SyncRun {
 
 function statusLabel(status: string): string {
     switch (status) {
-        case 'active': return 'Conectado';
-        case 'inactive': return 'Desconectado';
-        case 'pending': return 'Pendiente';
+        case 'active': return t('integrations.conectado');
+        case 'inactive': return t('integrations.desconectado');
+        case 'pending': return t('integrations.pendiente');
         case 'running': return 'Sincronizando';
-        case 'success': return 'Completado';
+        case 'success': return t('integrations.completado');
         case 'failed': case 'error': return 'Error';
         default: return status;
     }
@@ -352,15 +352,15 @@ export default function LightspeedIntegration() {
             {/* Info Card */}
             <Card>
                 <CardHeader>
-                    <CardTitle>¿Qué se sincroniza?</CardTitle>
+                    <CardTitle>{t('integrations.queSeSincroniza')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
                     <ul className="list-disc list-inside space-y-1 ml-4">
-                        <li><strong>Ventas</strong> — Transacciones diarias, tickets, pagos</li>
-                        <li><strong>Menú</strong> — Productos, categorías, precios</li>
-                        <li><strong>Empleados</strong> — Staff, roles, turnos</li>
+                        <li><strong>{t('common.ventas')}</strong> — Transacciones diarias, tickets, pagos</li>
+                        <li><strong>{t('integrations.menu')}</strong>{t('integrations.productosCategoriasPrecios')}</li>
+                        <li><strong>{t('settings.empleados')}</strong> — Staff, roles, turnos</li>
                     </ul>
-                    <p>Los datos se normalizan al modelo canónico de Josephine (CDM) para análisis unificado.</p>
+                    <p>{t('integrations.losDatosSeNormalizanAl')}</p>
                 </CardContent>
             </Card>
         </div>

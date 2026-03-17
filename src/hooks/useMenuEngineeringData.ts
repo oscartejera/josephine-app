@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -187,7 +188,7 @@ export function useMenuEngineeringData() {
       setStats(statsData);
     } catch (err) {
       console.error('Menu engineering fetch error:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar datos');
+      setError(err instanceof Error ? err.message : t('data.errorAlCargarDatos'));
     } finally {
       setLoading(false);
     }

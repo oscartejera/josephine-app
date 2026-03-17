@@ -67,8 +67,8 @@ const OPTIONAL_FIELDS = ['orders', 'gross_sales', 'taxes', 'discounts'] as const
 const FIELD_LABELS: Record<string, string> = {
     date: 'Fecha (requerido)',
     net_sales: 'Ventas Netas (requerido)',
-    orders: 'Nº Pedidos',
-    gross_sales: 'Ventas Brutas',
+    orders: t('ai.nPedidos'),
+    gross_sales: t('ai.ventasBrutas'),
     taxes: 'Impuestos',
     discounts: 'Descuentos',
 };
@@ -85,7 +85,7 @@ const CSV_TEMPLATES: {
 }[] = [
         {
             id: 'generic',
-            name: 'Genérico',
+            name: t('ai.generico'),
             icon: '📋',
             description: 'Formato universal compatible con cualquier POS',
             headers: 'fecha,ventas_netas,pedidos,ventas_brutas,impuestos,descuentos',
@@ -106,7 +106,7 @@ const CSV_TEMPLATES: {
             name: 'Aloha (NCR)',
             icon: '🟠',
             description: 'Exporta desde Reports → Summary → Day Part Summary',
-            headers: 'Business Date;Net Revenue;Checks;Gross Revenue;Tax Total;Comp Total',
+            headers: t('ai.businessDatenetRevenuechecksgrossRevenuetaxTotalcomp'),
             sampleRow: '15/01/2026;1450.50;42;1595.55;145.05;0.00',
             separator: ';',
         },
@@ -114,8 +114,8 @@ const CSV_TEMPLATES: {
             id: 'icg',
             name: 'ICG Software',
             icon: '🔴',
-            description: 'Exporta desde Informes → Ventas → Resumen Diario',
-            headers: 'Fecha;Venta Neta;Num Tickets;Venta Bruta;IVA;Descuentos',
+            description: t('ai.exportaDesdeInformesVentasResumen'),
+            headers: t('ai.fechaventaNetanumTicketsventaBrutaivadescuentos'),
             sampleRow: '15/01/2026;1450,50;42;1595,55;145,05;0,00',
             separator: ';',
         },
@@ -123,7 +123,7 @@ const CSV_TEMPLATES: {
             id: 'cashlogy',
             name: 'Cashlogy',
             icon: '🟢',
-            description: 'Exporta desde Gestión → Informes → Resumen de Ventas',
+            description: t('ai.exportaDesdeGestionInformesResumen'),
             headers: 'FECHA;TOTAL_NETO;OPERACIONES;TOTAL_BRUTO;IMPUESTOS;DESCUENTOS',
             sampleRow: '15-01-2026;1450.50;42;1595.55;145.05;0.00',
             separator: ';',
@@ -194,7 +194,7 @@ function validateRow(row: string[], headers: string[], mapping: ColumnMapping): 
     // Check date
     const dateIdx = idx(mapping.date);
     if (dateIdx < 0 || !row[dateIdx]) {
-        errors.push('Fecha vacía');
+        errors.push(t('ai.fechaVacia'));
     } else {
         const parsed = tryParseDate(row[dateIdx]);
         if (!parsed) errors.push(`Fecha inválida: "${row[dateIdx]}"`);
@@ -203,11 +203,11 @@ function validateRow(row: string[], headers: string[], mapping: ColumnMapping): 
     // Check net_sales
     const salesIdx = idx(mapping.net_sales);
     if (salesIdx < 0 || !row[salesIdx]) {
-        errors.push('Ventas netas vacías');
+        errors.push(t('ai.ventasNetasVacias'));
     } else {
         const num = tryParseNumber(row[salesIdx]);
         if (num === null) errors.push(`Ventas netas inválidas: "${row[salesIdx]}"`);
-        else if (num < 0) errors.push('Ventas netas negativas');
+        else if (num < 0) errors.push(t('ai.ventasNetasNegativas'));
     }
 
     return { valid: errors.length === 0, errors };
@@ -392,8 +392,7 @@ export default function DataImport() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList>
                     <TabsTrigger value="import" className="gap-2">
-                        <Upload className="h-4 w-4" /> Importar
-                    </TabsTrigger>
+                        <Upload className="h-4 w-4" />{t('ai.importar')}</TabsTrigger>
                     <TabsTrigger value="templates" className="gap-2">
                         <Download className="h-4 w-4" /> Plantillas
                     </TabsTrigger>
@@ -469,10 +468,10 @@ export default function DataImport() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Archivo</TableHead>
-                                                <TableHead>Ubicación</TableHead>
+                                                <TableHead>{t('ai.ubicacion2')}</TableHead>
                                                 <TableHead>Filas</TableHead>
                                                 <TableHead>{t("common.status")}</TableHead>
-                                                <TableHead>Fecha</TableHead>
+                                                <TableHead>{t('ai.fecha')}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -519,7 +518,7 @@ export default function DataImport() {
                         {(['upload', 'mapping', 'preview', 'done'] as const).map((s, i) => (
                             <div key={s} className="flex items-center gap-2">
                                 <Badge variant={step === s ? 'default' : ((['upload', 'mapping', 'preview', 'done'].indexOf(step) > i) ? 'secondary' : 'outline')}>
-                                    {i + 1}. {s === 'upload' ? 'Subir' : s === 'mapping' ? 'Mapear' : s === 'preview' ? 'Verificar' : 'Listo'}
+                                    {i + 1}. {s === 'upload' ? t('ai.subir') : s === 'mapping' ? 'Mapear' : s === 'preview' ? 'Verificar' : 'Listo'}
                                 </Badge>
                                 {i < 3 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
                             </div>
@@ -530,8 +529,8 @@ export default function DataImport() {
                     {step === 'upload' && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Subir Archivo</CardTitle>
-                                <CardDescription>Arrastra un CSV con tus ventas diarias o haz click para seleccionar</CardDescription>
+                                <CardTitle>{t('ai.subirArchivo')}</CardTitle>
+                                <CardDescription>{t('ai.arrastraUnCsvConTus')}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div
@@ -543,7 +542,7 @@ export default function DataImport() {
                                 >
                                     <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                                     <p className="text-lg font-medium mb-1">{t("dataImport.dragFileHere")}</p>
-                                    <p className="text-sm text-muted-foreground mb-4">o haz click para seleccionar</p>
+                                    <p className="text-sm text-muted-foreground mb-4">{t('ai.oHazClickParaSeleccionar')}</p>
                                     <p className="text-xs text-muted-foreground">
                                         Formatos: CSV (.csv) · Separadores: coma, punto y coma, tabulación
                                     </p>
@@ -553,8 +552,8 @@ export default function DataImport() {
                                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-3">
                                     <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                                     <div className="text-sm text-blue-700 dark:text-blue-300">
-                                        <p className="font-medium">¿No tienes un CSV?</p>
-                                        <p>Descarga una plantilla desde la pestaña <strong>"Plantillas"</strong> compatible con tu POS.</p>
+                                        <p className="font-medium">{t('ai.noTienesUnCsv')}</p>
+                                        <p>{t('ai.descargaUnaPlantillaDesdeLa')}<strong>"Plantillas"</strong> compatible con tu POS.</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -580,7 +579,7 @@ export default function DataImport() {
                                         </div>
                                         <Select value={(mapping as any)[field] || ''} onValueChange={(v) => setMapping(prev => ({ ...prev, [field]: v }))}>
                                             <SelectTrigger className="w-64">
-                                                <SelectValue placeholder="— Seleccionar columna —" />
+                                                <SelectValue placeholder=t('ai.seleccionarColumna') />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="">— No mapear —</SelectItem>
@@ -598,7 +597,7 @@ export default function DataImport() {
                                 ))}
 
                                 <div className="flex gap-3 pt-4">
-                                    <Button variant="outline" onClick={() => setStep('upload')}>← Atrás</Button>
+                                    <Button variant="outline" onClick={() => setStep('upload')}>{t('ai.atras')}</Button>
                                     <Button disabled={!canProceedMapping} onClick={() => setStep('preview')}>
                                         Vista Previa →
                                     </Button>
@@ -611,7 +610,7 @@ export default function DataImport() {
                     {step === 'preview' && parsed && validationResults && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Vista Previa y Validación</CardTitle>
+                                <CardTitle>{t('ai.vistaPreviaYValidacion')}</CardTitle>
                                 <CardDescription>
                                     Verificamos cada fila para asegurar una importación correcta
                                 </CardDescription>
@@ -621,12 +620,12 @@ export default function DataImport() {
                                 <div className="flex gap-4 mb-4">
                                     <div className="flex items-center gap-2 text-sm">
                                         <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                        <span><strong>{validationResults.valid}</strong> filas válidas</span>
+                                        <span><strong>{validationResults.valid}</strong>{t('ai.filasValidas')}</span>
                                     </div>
                                     {validationResults.invalid > 0 && (
                                         <div className="flex items-center gap-2 text-sm text-amber-600">
                                             <AlertCircle className="h-4 w-4" />
-                                            <span><strong>{validationResults.invalid}</strong> con errores (se omitirán)</span>
+                                            <span><strong>{validationResults.invalid}</strong>{t('ai.conErroresSeOmitiran')}</span>
                                         </div>
                                     )}
                                 </div>
@@ -636,9 +635,9 @@ export default function DataImport() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="w-10">#</TableHead>
-                                                <TableHead>Fecha</TableHead>
-                                                <TableHead>Ventas Netas</TableHead>
-                                                <TableHead>Pedidos</TableHead>
+                                                <TableHead>{t('ai.fecha')}</TableHead>
+                                                <TableHead>{t('ai.ventasNetas')}</TableHead>
+                                                <TableHead>{t('ai.pedidos')}</TableHead>
                                                 <TableHead>V. Brutas</TableHead>
                                                 <TableHead>{t("common.status")}</TableHead>
                                             </TableRow>
@@ -679,12 +678,12 @@ export default function DataImport() {
                                 <p className="text-sm text-muted-foreground mt-3">
                                     Se importarán <strong>{validationResults.valid}</strong> filas válidas
                                     {selectedLocationId && selectedLocationId !== 'all' && (
-                                        <> · Ubicación: <strong>{locations.find(l => l.id === selectedLocationId)?.name || selectedLocationId.slice(0, 8)}</strong></>
+                                        <>{t('ai.ubicacion')}<strong>{locations.find(l => l.id === selectedLocationId)?.name || selectedLocationId.slice(0, 8)}</strong></>
                                     )}
                                 </p>
 
                                 <div className="flex gap-3 pt-4">
-                                    <Button variant="outline" onClick={() => setStep('mapping')}>← Atrás</Button>
+                                    <Button variant="outline" onClick={() => setStep('mapping')}>{t('ai.atras')}</Button>
                                     <Button
                                         onClick={handleImport}
                                         disabled={validationResults.valid === 0}
@@ -713,7 +712,7 @@ export default function DataImport() {
                         <Card>
                             <CardContent className="flex flex-col items-center justify-center py-16">
                                 <CheckCircle className="h-16 w-16 text-emerald-500 mb-4" />
-                                <p className="text-xl font-bold mb-2">¡Importación Completada!</p>
+                                <p className="text-xl font-bold mb-2">{t('ai.importacionCompletada')}</p>
                                 <p className="text-muted-foreground mb-6">{importCount} registros importados correctamente</p>
                                 <div className="flex gap-3">
                                     <Button variant="outline" onClick={() => { setStep('upload'); setParsed(null); }}>

@@ -135,7 +135,7 @@ export function CashLocationTable({ data, isLoading = false, currency = '€' }:
               ))}
               {/* Totals row */}
               <TableRow className="bg-muted/30 font-medium border-t-2">
-                <TableCell>Total / Average</TableCell>
+                <TableCell>{t('budgets.totalAverage')}</TableCell>
                 <TableCell className="text-right">{formatCurrency(totals.sales, currency)}</TableCell>
                 <TableCell className="text-right"><DeltaCell value={totals.salesDelta} /></TableCell>
                 <TableCell className="text-right">{totals.avgCashPct.toFixed(1)}%</TableCell>

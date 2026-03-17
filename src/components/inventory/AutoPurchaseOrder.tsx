@@ -176,7 +176,7 @@ export function AutoPurchaseOrder() {
                                     ) : (
                                         <Truck className="mr-2 h-4 w-4" />
                                     )}
-                                    {lastResult ? 'PO generada' : 'Generar PO automática'}
+                                    {lastResult ? 'PO generada' : t('inventory.generarPoAutomatica')}
                                 </Button>
                             </div>
                         </div>
@@ -187,8 +187,8 @@ export function AutoPurchaseOrder() {
                                     <TableRow>
                                         <TableHead>Item</TableHead>
                                         <TableHead className="text-right">Stock</TableHead>
-                                        <TableHead className="text-right">Mínimo</TableHead>
-                                        <TableHead className="text-right">Déficit</TableHead>
+                                        <TableHead className="text-right">{t('settings.minimo')}</TableHead>
+                                        <TableHead className="text-right">{t('inventory.deficit')}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '@/contexts/AppContext';
 import { buildQueryContext, getTopProductsRpc } from '@/data';
 import { subDays, format } from 'date-fns';
@@ -34,7 +35,7 @@ export function useCategorySales() {
       const categoryMap = new Map<string, { sales: number; units: number }>();
 
       items.forEach((item: Record<string, unknown>) => {
-        const category = (item.category as string) || 'Sin categoría';
+        const category = (item.category as string) || t('inventory.sinCategoria');
         const existing = categoryMap.get(category) || { sales: 0, units: 0 };
         existing.sales += Number(item.sales) || 0;
         existing.units += Number(item.qty) || 0;

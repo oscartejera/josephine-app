@@ -139,7 +139,7 @@ export function DataSourceSettings() {
     auto_demo_no_sync: 'Datos Demo (sin sincronización reciente)',
     manual_demo: 'Demo (selección manual)',
     manual_pos_recent: 'Datos POS (selección manual)',
-    manual_pos_blocked_no_sync: 'Bloqueado: POS seleccionado pero sin sincronización reciente',
+    manual_pos_blocked_no_sync: t('settings.bloqueadoPosSeleccionadoPeroSin'),
     legacy_pos_connected: 'Datos POS (detección automática legacy)',
     legacy_no_pos: 'Datos Demo (sin conexión POS)',
     legacy_error: 'Datos Demo (error de detección)',
@@ -202,7 +202,7 @@ export function DataSourceSettings() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="auto">Automático</SelectItem>
+                <SelectItem value="auto">{t('settings.automatico')}</SelectItem>
                 <SelectItem value="manual">Manual</SelectItem>
               </SelectContent>
             </Select>
@@ -257,11 +257,11 @@ export function DataSourceSettings() {
 
         {/* Help text */}
         <div className="p-4 bg-muted/20 rounded-lg border border-dashed">
-          <h4 className="text-sm font-medium mb-2">Cómo funciona</h4>
+          <h4 className="text-sm font-medium mb-2">{t('settings.comoFunciona')}</h4>
           <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-            <li><strong>Auto:</strong> Si Square POS se sincronizó en las últimas 24h → datos POS. Si no → datos demo.</li>
-            <li><strong>Manual → Demo:</strong> Siempre muestra datos de demostración (para formación, presentaciones, etc.).</li>
-            <li><strong>Manual → POS:</strong> Usa datos POS reales. Si la sincronización no es reciente, muestra datos demo con aviso.</li>
+            <li><strong>Auto:</strong>{t('settings.siSquarePosSeSincronizo')}</li>
+            <li><strong>Manual → Demo:</strong>{t('settings.siempreMuestraDatosDeDemostracion')}</li>
+            <li><strong>Manual → POS:</strong>{t('settings.usaDatosPosRealesSi')}</li>
           </ul>
         </div>
       </CardContent>

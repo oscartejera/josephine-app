@@ -134,7 +134,7 @@ export default function TeamPay() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Mi Nómina</h1>
+          <h1 className="text-xl font-bold">{t('team.miNomina')}</h1>
           <p className="text-sm text-muted-foreground">{t("team.hoursControl")}</p>
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function TeamPay() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Wallet className="h-4 w-4 text-green-500" />
-              <span className="text-xs text-muted-foreground">Estimación bruta</span>
+              <span className="text-xs text-muted-foreground">{t('team.estimacionBruta')}</span>
             </div>
             <p className="text-2xl font-bold">{estimatedEarnings.toFixed(0)}€</p>
             <p className="text-xs text-muted-foreground">

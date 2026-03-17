@@ -250,7 +250,7 @@ export default function KioskMode() {
                 await startCamera();
             }
         } catch (e) {
-            setError('Error al buscar empleado');
+            setError(t('pos.errorAlBuscarEmpleado'));
             setPin('');
         } finally {
             setLoading(false);
@@ -313,7 +313,7 @@ export default function KioskMode() {
                 setLastAction(null);
             }, SUCCESS_DISPLAY_MS);
         } catch (e: any) {
-            setError('Error al fichar entrada: ' + (e.message || 'desconocido'));
+            setError(t('pos.errorAlFicharEntrada') + (e.message || 'desconocido'));
         } finally {
             setLoading(false);
         }
@@ -345,7 +345,7 @@ export default function KioskMode() {
                 setLastAction(null);
             }, SUCCESS_DISPLAY_MS);
         } catch (e: any) {
-            setError('Error al fichar salida: ' + (e.message || 'desconocido'));
+            setError(t('pos.errorAlFicharSalida') + (e.message || 'desconocido'));
         } finally {
             setLoading(false);
         }

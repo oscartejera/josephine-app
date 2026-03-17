@@ -30,10 +30,10 @@ interface Supplier {
 }
 
 const INTEGRATION_TYPES = [
-  { value: 'api', label: 'API Directa', icon: Globe, description: 'Envío automático via REST API' },
-  { value: 'edi', label: 'EDI/EDIFACT', icon: Settings2, description: 'Protocolo electrónico estándar' },
-  { value: 'email', label: 'Email', icon: Mail, description: 'Envío automático por email' },
-  { value: 'manual', label: 'Manual', icon: Phone, description: 'Sin envío automático' },
+  { value: 'api', label: 'API Directa', icon: Globe, description: t('settings.envioAutomaticoViaRestApi') },
+  { value: 'edi', label: 'EDI/EDIFACT', icon: Settings2, description: t('settings.protocoloElectronicoEstandar') },
+  { value: 'email', label: 'Email', icon: Mail, description: t('settings.envioAutomaticoPorEmail') },
+  { value: 'manual', label: 'Manual', icon: Phone, description: t('settings.sinEnvioAutomatico') },
 ] as const;
 
 const API_FORMATS = [
@@ -191,10 +191,10 @@ export function SupplierIntegrationManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Proveedor</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Método</TableHead>
+                  <TableHead>{t('inventory.categoria')}</TableHead>
+                  <TableHead>{t('settings.metodo')}</TableHead>
                   <TableHead>{t("common.status")}</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="text-right">{t('settings.acciones')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,7 +209,7 @@ export function SupplierIntegrationManager() {
                         <span className="text-sm text-muted-foreground">
                           {supplier.integration_type === 'api' && supplier.api_endpoint ? 'Configurado' :
                            supplier.integration_type === 'email' && supplier.order_email ? 'Configurado' :
-                           supplier.integration_type === 'manual' ? 'Manual' : 'Pendiente'}
+                           supplier.integration_type === 'manual' ? 'Manual' : t('integrations.pendiente')}
                         </span>
                       </div>
                     </TableCell>
@@ -437,7 +437,7 @@ export function SupplierIntegrationManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="customer_id">Código EDI</Label>
+                      <Label htmlFor="customer_id">{t('settings.codigoEdi')}</Label>
                       <Input
                         id="customer_id"
                         placeholder="GLN-1234567890123"
@@ -491,7 +491,7 @@ export function SupplierIntegrationManager() {
                   Guardando...
                 </>
               ) : (
-                'Guardar'
+                t('settings.guardar')
               )}
             </Button>
           </DialogFooter>

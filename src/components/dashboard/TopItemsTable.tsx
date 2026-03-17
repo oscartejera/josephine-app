@@ -36,7 +36,7 @@ export function TopItemsTable({ items, title = "Top Items", className }: TopItem
               <TableHead className="w-12">#</TableHead>
               <TableHead>Producto</TableHead>
               <TableHead className="text-right">Uds</TableHead>
-              <TableHead className="text-right">Ventas</TableHead>
+              <TableHead className="text-right">{t('common.ventas')}</TableHead>
               <TableHead className="text-right">Margen</TableHead>
             </TableRow>
           </TableHeader>

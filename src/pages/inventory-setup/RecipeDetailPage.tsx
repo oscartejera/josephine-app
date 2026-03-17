@@ -135,7 +135,7 @@ export default function RecipeDetailPage() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">Cargando receta...</p>
+                <p className="text-muted-foreground">{t('inventory.cargandoReceta')}</p>
             </div>
         );
     }
@@ -180,7 +180,7 @@ export default function RecipeDetailPage() {
                             <Input value={editName} onChange={e => { setEditName(e.target.value); setHeaderDirty(true); }} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Categoría</Label>
+                            <Label>{t('inventory.categoria')}</Label>
                             <Select value={editCategory} onValueChange={v => { setEditCategory(v); setHeaderDirty(true); }}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -193,13 +193,13 @@ export default function RecipeDetailPage() {
                             <Input type="number" step="0.01" value={editPrice} onChange={e => { setEditPrice(e.target.value); setHeaderDirty(true); }} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Rendimiento</Label>
+                            <Label>{t('inventory.rendimiento2')}</Label>
                             <div className="flex gap-2">
                                 <Input type="number" step="0.1" className="w-20" value={editYieldQty} onChange={e => { setEditYieldQty(e.target.value); setHeaderDirty(true); }} />
                                 <Select value={editYieldUnit} onValueChange={v => { setEditYieldUnit(v); setHeaderDirty(true); }}>
                                     <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="portion">Porción</SelectItem>
+                                        <SelectItem value="portion">{t('inventory.porcion')}</SelectItem>
                                         <SelectItem value="kg">kg</SelectItem>
                                         <SelectItem value="L">Litro</SelectItem>
                                         <SelectItem value="units">Unidades</SelectItem>
@@ -225,12 +225,10 @@ export default function RecipeDetailPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="text-base">Ingredientes</CardTitle>
-                            <CardDescription>Añade ingredientes o sub-recetas con rendimiento/mermas</CardDescription>
+                            <CardDescription>{t('inventory.anadeIngredientesOSubrecetasCon')}</CardDescription>
                         </div>
                         <Button onClick={() => setShowAddDialog(true)} size="sm">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Añadir Ingrediente
-                        </Button>
+                            <Plus className="h-4 w-4 mr-2" />{t('inventory.anadirIngrediente')}</Button>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -239,11 +237,11 @@ export default function RecipeDetailPage() {
                             <TableRow>
                                 <TableHead>Ingrediente</TableHead>
                                 <TableHead className="text-right">Cant. Bruta</TableHead>
-                                <TableHead className="text-right">Rendimiento %</TableHead>
+                                <TableHead className="text-right">{t('inventory.rendimiento')}</TableHead>
                                 <TableHead className="text-right">Cant. Neta</TableHead>
                                 <TableHead>Unidad</TableHead>
                                 <TableHead className="text-right">Coste/ud (LPP)</TableHead>
-                                <TableHead className="text-right">Coste Línea</TableHead>
+                                <TableHead className="text-right">{t('inventory.costeLinea')}</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -374,11 +372,11 @@ export default function RecipeDetailPage() {
 
                         <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
-                                <Label>Cantidad Bruta</Label>
+                                <Label>{t('inventory.cantidadBruta')}</Label>
                                 <Input type="number" step="0.001" value={addQty} onChange={e => setAddQty(e.target.value)} />
                             </div>
                             <div className="space-y-2">
-                                <Label>Rendimiento %</Label>
+                                <Label>{t('inventory.rendimiento')}</Label>
                                 <Input type="number" step="1" value={addYieldPct} onChange={e => setAddYieldPct(e.target.value)} />
                             </div>
                             <div className="space-y-2">
@@ -388,7 +386,7 @@ export default function RecipeDetailPage() {
                         </div>
 
                         <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                            <strong>Cantidad Neta:</strong> {((parseFloat(addQty) || 0) * ((parseFloat(addYieldPct) || 100) / 100)).toFixed(3)} {addUnit}
+                            <strong>{t('inventory.cantidadNeta')}</strong> {((parseFloat(addQty) || 0) * ((parseFloat(addYieldPct) || 100) / 100)).toFixed(3)} {addUnit}
                             <br />
                             <strong>Ej:</strong> 1kg de cebolla con 90% de rendimiento → 0.900 kg neto (10% merma al pelar)
                         </div>
@@ -396,7 +394,7 @@ export default function RecipeDetailPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowAddDialog(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleAddIngredient} disabled={addIngredient.isPending}>
-                            {addIngredient.isPending ? 'Añadiendo...' : 'Añadir'}
+                            {addIngredient.isPending ? 'Añadiendo...' : t('inventory.anadir')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

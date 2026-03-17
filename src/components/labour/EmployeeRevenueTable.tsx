@@ -97,7 +97,7 @@ export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeR
     if (isLoading) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">🏆 Revenue por Empleado</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t('labour.revenuePorEmpleado')}</CardTitle></CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-100 rounded animate-pulse" />)}
@@ -110,7 +110,7 @@ export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeR
     if (!data || data.employees.length === 0) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">🏆 Revenue por Empleado</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t('labour.revenuePorEmpleado')}</CardTitle></CardHeader>
                 <CardContent>
                     <p className="text-sm text-gray-500 text-center py-4">
                         No hay datos de turnos para el período seleccionado
@@ -125,7 +125,7 @@ export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeR
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">🏆 Revenue por Empleado</CardTitle>
+                        <CardTitle className="text-base font-semibold">{t('labour.revenuePorEmpleado')}</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">
                             Ventas totales: {formatCurrency(data.total_sales)} • Top: {data.summary.top_performer}
                         </p>
@@ -143,7 +143,7 @@ export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeR
             <CardContent>
                 {/* Table header */}
                 <div className="grid grid-cols-8 gap-2 mb-2 pb-2 border-b border-gray-100 text-[10px] font-semibold text-gray-500 uppercase">
-                    <span className="col-span-2">Empleado</span>
+                    <span className="col-span-2">{t('payroll.empleado')}</span>
                     <span className="text-right">Horas</span>
                     <span className="text-right">Revenue</span>
                     <span className="text-right">SPLH</span>

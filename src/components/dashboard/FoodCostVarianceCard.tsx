@@ -94,7 +94,7 @@ export function FoodCostVarianceCard() {
                         <p className="text-lg font-semibold text-muted-foreground">
                             {data.theoretical_food_cost_pct.toFixed(1)}%
                         </p>
-                        <p className="text-xs text-muted-foreground">Teórico (recetas)</p>
+                        <p className="text-xs text-muted-foreground">{t('dashboard.teoricoRecetas')}</p>
                     </div>
                 </div>
 
@@ -133,7 +133,7 @@ export function FoodCostVarianceCard() {
                         <p className="text-sm font-semibold">€{data.actual_purchases.toFixed(0)}</p>
                     </div>
                     <div className="p-2 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">Teórico</p>
+                        <p className="text-xs text-muted-foreground">{t('dashboard.teorico')}</p>
                         <p className="text-sm font-semibold">€{data.theoretical_cogs.toFixed(0)}</p>
                     </div>
                     <div className="p-2 rounded-lg bg-muted/50">

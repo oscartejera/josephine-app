@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { buildQueryContext, getTopProductsRpc } from '@/data';
@@ -114,7 +115,7 @@ export function useTopProducts() {
         return {
           product_id: productId,
           product_name: item.name as string,
-          category: (item.category as string) || 'Sin categoría',
+          category: (item.category as string) || t('inventory.sinCategoria'),
           units: qty,
           sales,
           sales_share_pct: share,

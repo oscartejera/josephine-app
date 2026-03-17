@@ -77,7 +77,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
                 variance: null,
                 variancePct: null,
                 status: 'pending',
-                categoryName: item.inventory_categories?.name || 'Sin categoría',
+                categoryName: item.inventory_categories?.name || t('inventory.sinCategoria'),
             })));
         } catch (err) {
             console.error('Smart counting load error:', err);
@@ -170,7 +170,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
     const progress = items.length > 0 ? (countedCount / items.length) * 100 : 0;
 
     if (loading) {
-        return <div className="text-center py-8 text-muted-foreground">Cargando inventario...</div>;
+        return <div className="text-center py-8 text-muted-foreground">{t('inventory.cargandoInventario')}</div>;
     }
 
     // IDLE: Show start button
@@ -232,7 +232,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
                             </Button>
                             <Button onClick={submitCount} disabled={!countValue}>
                                 <ArrowRight className="h-4 w-4 mr-1" />
-                                {currentIndex < items.length - 1 ? 'Siguiente' : 'Finalizar'}
+                                {currentIndex < items.length - 1 ? t('settings.siguiente') : 'Finalizar'}
                             </Button>
                         </div>
                     </CardContent>
@@ -245,7 +245,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Revisión del Contaje</h3>
+                <h3 className="font-semibold">{t('inventory.revisionDelContaje')}</h3>
                 <div className="flex gap-2">
                     <Badge variant="outline">{countedCount} contados</Badge>
                     {varianceCount > 0 && (

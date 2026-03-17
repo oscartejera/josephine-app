@@ -1,5 +1,6 @@
 // Scheduling hook — uses resolve_data_source(org_id) via dataSource from AppContext
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { endOfWeek, addDays, format } from 'date-fns';
 import { startOfWeek } from 'date-fns';
@@ -743,7 +744,7 @@ export function useSchedulingSupabase(
 
     } catch (err) {
       console.error('[createSchedule] Exception:', err);
-      toast.error('Error al generar el horario');
+      toast.error(t('scheduling.errorAlGenerarElHorario'));
     }
   }, [locationId, weekStartISO, weekStart, refetchShifts]);
 
@@ -755,7 +756,7 @@ export function useSchedulingSupabase(
 
   const acceptSchedule = useCallback(() => {
     // Accept current state - shifts are already in DB
-    toast.success('Horario aceptado');
+    toast.success(t('scheduling.horarioAceptado'));
   }, []);
 
   // Approve schedule: draft → approved (Owner action)
@@ -773,15 +774,15 @@ export function useSchedulingSupabase(
 
       if (error) {
         console.error('[approveSchedule] Error:', error);
-        toast.error('Error al aprobar el horario');
+        toast.error(t('scheduling.errorAlAprobarElHorario'));
         return;
       }
 
       await refetchShifts();
-      toast.success('Horario aprobado — listo para publicar');
+      toast.success(t('scheduling.horarioAprobadoListoParaPublicar'));
     } catch (err) {
       console.error('[approveSchedule] Exception:', err);
-      toast.error('Error al aprobar');
+      toast.error(t('scheduling.errorAlAprobar'));
     }
   }, [locationId, weekStartISO, weekEndISO, refetchShifts]);
 
@@ -802,16 +803,16 @@ export function useSchedulingSupabase(
 
       if (error) {
         console.error('[publishSchedule] Error:', error);
-        toast.error('Error al publicar el horario');
+        toast.error(t('scheduling.errorAlPublicarElHorario'));
         return;
       }
 
       await refetchShifts();
-      toast.success('Horario publicado');
+      toast.success(t('scheduling.horarioPublicado'));
 
     } catch (err) {
       console.error('[publishSchedule] Exception:', err);
-      toast.error('Error al publicar');
+      toast.error(t('scheduling.errorAlPublicar'));
     }
   }, [locationId, weekStartISO, weekEndISO, refetchShifts]);
 

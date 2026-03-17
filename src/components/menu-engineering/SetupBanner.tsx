@@ -15,14 +15,14 @@ const STEPS = [
   {
     key: 'recipes',
     label: 'Escandallos',
-    description: 'Recetas con ingredientes',
+    description: t('menuEngineering.recetasConIngredientes'),
     icon: ChefHat,
     path: '/inventory-setup/recipes',
     check: (d: any) => d.recipes_with_ingredients_count > 0,
   },
   {
     key: 'pos',
-    label: 'Datos de ventas',
+    label: t('menuEngineering.datosDeVentas'),
     description: 'POS conectado o datos importados',
     icon: ShoppingCart,
     path: '/inventory-setup/integrations',
@@ -30,7 +30,7 @@ const STEPS = [
   },
   {
     key: 'analysis',
-    label: 'Análisis de menú',
+    label: t('menuEngineering.analisisDeMenu'),
     description: 'Menu Engineering activo',
     icon: BarChart3,
     path: '/insights/menu-engineering',

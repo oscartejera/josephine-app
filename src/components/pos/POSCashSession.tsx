@@ -101,7 +101,7 @@ export function POSCashSession({
         {session ? (
           <>
             <DoorOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Cerrar Caja</span>
+            <span className="hidden sm:inline">{t('pos.cerrarCaja')}</span>
           </>
         ) : (
           <>
@@ -115,7 +115,7 @@ export function POSCashSession({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {session ? 'Cerrar Caja' : 'Abrir Caja'}
+              {session ? t('pos.cerrarCaja') : 'Abrir Caja'}
             </DialogTitle>
             <DialogDescription>
               {session
@@ -168,7 +168,7 @@ export function POSCashSession({
               onClick={session ? handleCloseSession : handleOpenSession}
               disabled={loading}
             >
-              {loading ? 'Procesando...' : session ? 'Cerrar Caja' : 'Abrir Caja'}
+              {loading ? 'Procesando...' : session ? t('pos.cerrarCaja') : 'Abrir Caja'}
             </Button>
           </DialogFooter>
         </DialogContent>

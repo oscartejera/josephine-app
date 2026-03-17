@@ -101,7 +101,7 @@ export function PaymentHistoryManager() {
   const getMethodLabel = (method: string) => {
     switch (method) {
       case 'card':
-        return 'Tarjeta';
+        return t('settings.tarjeta');
       case 'cash':
         return 'Efectivo';
       case 'other':
@@ -171,7 +171,7 @@ export function PaymentHistoryManager() {
             <p className="text-xl font-bold">{filteredPayments.length}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Importe Total</p>
+            <p className="text-xs text-muted-foreground">{t('settings.importeTotal')}</p>
             <p className="text-xl font-bold">€{totalAmount.toFixed(2)}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
@@ -201,7 +201,7 @@ export function PaymentHistoryManager() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="card">Tarjeta</SelectItem>
+              <SelectItem value="card">{t('settings.tarjeta')}</SelectItem>
               <SelectItem value="cash">Efectivo</SelectItem>
               <SelectItem value="other">Bizum</SelectItem>
             </SelectContent>
@@ -224,9 +224,9 @@ export function PaymentHistoryManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha</TableHead>
+                <TableHead>{t('ai.fecha')}</TableHead>
                 <TableHead>Local</TableHead>
-                <TableHead>Método</TableHead>
+                <TableHead>{t('settings.metodo')}</TableHead>
                 <TableHead className="text-right">Importe</TableHead>
                 <TableHead className="text-right">Propina</TableHead>
                 <TableHead>Stripe Payment Intent ID</TableHead>

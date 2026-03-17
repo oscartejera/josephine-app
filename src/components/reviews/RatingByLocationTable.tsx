@@ -54,7 +54,7 @@ export function RatingByLocationTable({ data, isLoading, onLocationClick }: Rati
               <tr className="border-b border-border/60">
                 <th className="text-left text-xs font-medium text-muted-foreground pb-3 pr-4">Locations</th>
                 <th className="text-right text-xs font-medium text-muted-foreground pb-3 pr-4 w-20">Rating</th>
-                <th className="text-right text-xs font-medium text-muted-foreground pb-3 pr-4 w-24">Total Ratings</th>
+                <th className="text-right text-xs font-medium text-muted-foreground pb-3 pr-4 w-24">{t('reviews.totalRatings')}</th>
                 <th className="text-left text-xs font-medium text-muted-foreground pb-3 pr-4 w-48">Rating Distribution</th>
                 <th className="text-right text-xs font-medium text-muted-foreground pb-3 w-28">Response Rate</th>
               </tr>

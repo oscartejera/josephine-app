@@ -41,10 +41,10 @@ const DAYS_OF_WEEK = [
   { value: 0, label: 'Domingo' },
   { value: 1, label: 'Lunes' },
   { value: 2, label: 'Martes' },
-  { value: 3, label: 'Miércoles' },
+  { value: 3, label: t('settings.miercoles') },
   { value: 4, label: 'Jueves' },
   { value: 5, label: 'Viernes' },
-  { value: 6, label: 'Sábado' },
+  { value: 6, label: t('settings.sabado') },
 ];
 
 const DEFAULT_TIME_SLOTS = [
@@ -174,7 +174,7 @@ export function BookingSettingsManager() {
       console.error('Error saving booking settings:', err);
       toast({
         title: t("common.error"),
-        description: 'No se pudieron guardar los ajustes',
+        description: t('settings.noSePudieronGuardarLos'),
         variant: 'destructive',
       });
     } finally {
@@ -205,7 +205,7 @@ export function BookingSettingsManager() {
     : '';
 
   const embedCode = selectedLocationId
-    ? `<!-- Widget de Reservas - ${settings?.name || 'Restaurante'} -->
+    ? `<!-- Widget de Reservas - ${settings?.name || t('settings.restaurante')} -->
 <iframe 
   src="${widgetUrl}"
   width="100%" 
@@ -231,10 +231,10 @@ export function BookingSettingsManager() {
     <div className="space-y-6">
       {/* Location Selector */}
       <div className="space-y-2">
-        <Label>Selecciona ubicación</Label>
+        <Label>{t('settings.seleccionaUbicacion')}</Label>
         <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
           <SelectTrigger className="w-full max-w-xs">
-            <SelectValue placeholder="Elige una ubicación" />
+            <SelectValue placeholder=t('settings.eligeUnaUbicacion') />
           </SelectTrigger>
           <SelectContent>
             {locations.map((loc) => (
@@ -292,9 +292,9 @@ export function BookingSettingsManager() {
 
               {/* Public Info */}
               <div className="space-y-4 border-t pt-4">
-                <h4 className="font-medium">Información pública</h4>
+                <h4 className="font-medium">{t('settings.informacionPublica')}</h4>
                 <div className="space-y-2">
-                  <Label htmlFor="public_name">Nombre público</Label>
+                  <Label htmlFor="public_name">{t('settings.nombrePublico')}</Label>
                   <Input
                     id="public_name"
                     value={formData.public_name}
@@ -305,7 +305,7 @@ export function BookingSettingsManager() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Dirección</Label>
+                  <Label htmlFor="address">{t('settings.direccion')}</Label>
                   <Input
                     id="address"
                     value={formData.address}
@@ -314,7 +314,7 @@ export function BookingSettingsManager() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
+                  <Label htmlFor="phone">{t('settings.telefono')}</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -329,7 +329,7 @@ export function BookingSettingsManager() {
                 <h4 className="font-medium">{t("settings.peopleLimits")}</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Mínimo</Label>
+                    <Label>{t('settings.minimo')}</Label>
                     <Select
                       value={String(formData.booking_min_party)}
                       onValueChange={(v) =>
@@ -349,7 +349,7 @@ export function BookingSettingsManager() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Máximo</Label>
+                    <Label>{t('settings.maximo')}</Label>
                     <Select
                       value={String(formData.booking_max_party)}
                       onValueChange={(v) =>
@@ -412,7 +412,7 @@ export function BookingSettingsManager() {
 
               {/* Closed Days */}
               <div className="space-y-3 border-t pt-4">
-                <Label>Días cerrados</Label>
+                <Label>{t('settings.diasCerrados')}</Label>
                 <div className="flex flex-wrap gap-3">
                   {DAYS_OF_WEEK.map((day) => (
                     <div key={day.value} className="flex items-center gap-2">
@@ -450,7 +450,7 @@ export function BookingSettingsManager() {
                     Guardando...
                   </>
                 ) : (
-                  'Guardar Cambios'
+                  t('settings.guardarCambios')
                 )}
               </Button>
             </CardContent>
@@ -483,7 +483,7 @@ export function BookingSettingsManager() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Código iframe</Label>
+                    <Label>{t('settings.codigoIframe')}</Label>
                     <div className="relative">
                       <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
                         {embedCode}

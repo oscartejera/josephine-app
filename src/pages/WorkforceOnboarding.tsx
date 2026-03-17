@@ -105,7 +105,7 @@ const ROLE_LABELS: Record<string, string> = {
     owner: 'Propietario', admin: 'Administrador', ops_manager: 'Gerente Ops',
     store_manager: 'Gerente Local', manager: 'Encargado/a', waiter: 'Camarero/a',
     cook: 'Cocinero/a', bartender: 'Barista', host: 'Hostess',
-    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: 'Empleado',
+    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: t('payroll.empleado'),
 };
 
 // ─── Main Component ─────────────────────────────────────
@@ -265,7 +265,7 @@ export default function WorkforceOnboarding() {
                                                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                                                         <span>{done}/{tasks.length} completado</span>
                                                         {pct === 100 ? (
-                                                            <Badge variant="default" className="text-[10px] bg-emerald-500">✓ Completado</Badge>
+                                                            <Badge variant="default" className="text-[10px] bg-emerald-500">{t('team.completado')}</Badge>
                                                         ) : (
                                                             <Badge variant="outline" className="text-[10px]">En proceso</Badge>
                                                         )}
@@ -382,9 +382,7 @@ export default function WorkforceOnboarding() {
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-base flex items-center gap-2">
-                                        <Shield className="h-4 w-4 text-amber-500" />
-                                        Formación
-                                    </CardTitle>
+                                        <Shield className="h-4 w-4 text-amber-500" />{t('payroll.formacion')}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     {trainingTasks.map((task) => (
@@ -539,15 +537,15 @@ export default function WorkforceOnboarding() {
                                 <SelectContent>
                                     <SelectItem value="indefinido">{t('workforceOnboarding.permanent')}</SelectItem>
                                     <SelectItem value="temporal">Temporal</SelectItem>
-                                    <SelectItem value="practicas">Prácticas</SelectItem>
-                                    <SelectItem value="formacion">Formación</SelectItem>
+                                    <SelectItem value="practicas">{t('payroll.practicas')}</SelectItem>
+                                    <SelectItem value="formacion">{t('payroll.formacion')}</SelectItem>
                                     <SelectItem value="relevos">Relevos</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Fecha inicio</Label>
+                                <Label>{t('team.fechaInicio')}</Label>
                                 <Input
                                     type="date"
                                     value={contractForm.start_date}

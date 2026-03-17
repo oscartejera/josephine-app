@@ -51,7 +51,7 @@ export function WasteKPICards({
       {/* Total Sales */}
       <Card className="border-border">
         <CardContent className="py-4 px-5">
-          <p className="text-sm text-muted-foreground mb-1">Ventas Totales</p>
+          <p className="text-sm text-muted-foreground mb-1">{t('common.ventasTotales')}</p>
           <p className="text-2xl font-semibold text-foreground">
             {formatCurrency(totalSales)}
           </p>
@@ -71,7 +71,7 @@ export function WasteKPICards({
       {/* % of Sales */}
       <Card className="border-border">
         <CardContent className="py-4 px-5">
-          <p className="text-sm text-muted-foreground mb-1">% Merma vs Ventas</p>
+          <p className="text-sm text-muted-foreground mb-1">{t('waste.mermaVsVentas')}</p>
           <p className="text-2xl font-semibold text-foreground">
             {wastePercentOfSales.toFixed(2)}%
           </p>

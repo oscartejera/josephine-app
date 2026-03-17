@@ -52,14 +52,14 @@ const typeConfig = {
   },
   create_order: {
     icon: ShoppingCart,
-    label: 'Pedido Sugerido',
+    label: t('ai.pedidoSugerido'),
     color: 'text-purple-600',
     bgColor: 'bg-purple-50 dark:bg-purple-950/20',
     borderColor: 'border-purple-200',
   },
   push_menu_item: {
     icon: Award,
-    label: 'Optimización Menú',
+    label: t('ai.optimizacionMenu'),
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50 dark:bg-emerald-950/20',
     borderColor: 'border-emerald-200',
@@ -114,8 +114,8 @@ export function RecommendationCard({
 
           {!isPending && (
             <Badge variant={recommendation.status === 'approved' ? 'default' : 'secondary'}>
-              {recommendation.status === 'approved' ? 'Aprobado' : 
-               recommendation.status === 'rejected' ? 'Rechazado' : 'Ejecutado'}
+              {recommendation.status === 'approved' ? t('payroll.aprobado') : 
+               recommendation.status === 'rejected' ? t('ai.rechazado') : 'Ejecutado'}
             </Badge>
           )}
         </div>

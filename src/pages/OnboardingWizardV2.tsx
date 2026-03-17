@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,7 @@ const ONBOARDING_COMPLETE_KEY = 'josephine_onboarding_complete';
 const TOUR_COMPLETE_KEY = 'josephine_tour_complete';
 
 export function isOnboardingComplete(): boolean {
+  const { t } = useTranslation();
     return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true';
 }
 
@@ -122,7 +124,7 @@ export default function OnboardingWizardV2() {
     const [showTransition, setShowTransition] = useState(false);
 
     // Get restaurant name from sessionStorage (set during signup)
-    const restaurantName = sessionStorage.getItem('josephine_restaurant_name') || 'Mi Restaurante';
+    const restaurantName = sessionStorage.getItem('josephine_restaurant_name') || t('onboarding.miRestaurante');
 
     // ── Step navigation ──────────────────────────────────────────
     const nextStep = () => setStep(s => Math.min(s + 1, 2) as WizardStep);
@@ -228,7 +230,7 @@ export default function OnboardingWizardV2() {
                 >
                     <Zap className="h-8 w-8 text-indigo-500 mb-2" />
                     <p className="font-semibold">Square POS</p>
-                    <p className="text-xs text-muted-foreground">Conexión directa vía OAuth</p>
+                    <p className="text-xs text-muted-foreground">{t('onboarding.conexionDirectaViaOauth')}</p>
                     {posChoice === 'square' && <CheckCircle className="h-5 w-5 text-indigo-500 mt-2" />}
                 </button>
 
@@ -240,7 +242,7 @@ export default function OnboardingWizardV2() {
                 >
                     <Zap className="h-8 w-8 text-amber-500 mb-2" />
                     <p className="font-semibold">Lightspeed</p>
-                    <p className="text-xs text-muted-foreground">Conexión directa vía OAuth</p>
+                    <p className="text-xs text-muted-foreground">{t('onboarding.conexionDirectaViaOauth')}</p>
                     {posChoice === 'lightspeed' && <CheckCircle className="h-5 w-5 text-amber-500 mt-2" />}
                 </button>
 
@@ -251,7 +253,7 @@ export default function OnboardingWizardV2() {
                         }`}
                 >
                     <FileSpreadsheet className="h-8 w-8 text-emerald-500 mb-2" />
-                    <p className="font-semibold">Subir CSV</p>
+                    <p className="font-semibold">{t('onboarding.subirCsv')}</p>
                     <p className="text-xs text-muted-foreground">Importa datos de cualquier POS</p>
                     {posChoice === 'csv' && <CheckCircle className="h-5 w-5 text-emerald-500 mt-2" />}
                 </button>
@@ -263,7 +265,7 @@ export default function OnboardingWizardV2() {
                         }`}
                 >
                     <SkipForward className="h-8 w-8 text-slate-400 mb-2" />
-                    <p className="font-semibold">Lo haré después</p>
+                    <p className="font-semibold">{t('onboarding.loHareDespues')}</p>
                     <p className="text-xs text-muted-foreground">Empieza con datos de demo</p>
                     {posChoice === 'skip' && <CheckCircle className="h-5 w-5 text-slate-400 mt-2" />}
                 </button>
@@ -281,7 +283,7 @@ export default function OnboardingWizardV2() {
                     </div>
                     <h2 className="text-2xl font-bold">Todo listo</h2>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        <strong>{restaurantName}</strong> ya está configurado en Josephine. Tu primera previsión de ventas estará lista en <strong>menos de 24 horas</strong>.
+                        <strong>{restaurantName}</strong>{t('onboarding.yaEstaConfiguradoEnJosephine')}<strong>menos de 24 horas</strong>.
                     </p>
                 </div>
 
@@ -294,13 +296,13 @@ export default function OnboardingWizardV2() {
                                 <strong>POS:</strong>{' '}
                                 {posChoice === 'square' ? 'Square (se conectará al finalizar)' :
                                     posChoice === 'lightspeed' ? 'Lightspeed (se conectará al finalizar)' :
-                                        posChoice === 'csv' ? 'Importación CSV' : 'Se configurará después'}
+                                        posChoice === 'csv' ? t('onboarding.importacionCsv') : t('onboarding.seConfiguraraDespues')}
                             </span>
                         </div>
                         <div className="flex items-center gap-3">
                             <CheckCircle className="h-5 w-5 text-emerald-500" />
                             <span className="text-sm">
-                                <strong>Restaurante:</strong> {restaurantName}
+                                <strong>{t('onboarding.restaurante')}</strong> {restaurantName}
                             </span>
                         </div>
                     </div>
@@ -309,7 +311,7 @@ export default function OnboardingWizardV2() {
                         <div className="flex items-start gap-3">
                             <Sparkles className="h-5 w-5 text-indigo-500 mt-0.5" />
                             <div className="text-sm">
-                                <p className="font-medium text-indigo-700 dark:text-indigo-300">Tu primera previsión en 24h</p>
+                                <p className="font-medium text-indigo-700 dark:text-indigo-300">{t('onboarding.tuPrimeraPrevisionEn24h')}</p>
                                 <p className="text-indigo-600 dark:text-indigo-400 mt-1">
                                     Josephine analizará tus datos y generará tu primer forecast de ventas, labor y demanda.
                                 </p>
@@ -396,9 +398,7 @@ export default function OnboardingWizardV2() {
                     <Button
                         onClick={nextStep}
                         disabled={!canNext()}
-                    >
-                        Siguiente
-                        <ChevronRight className="h-4 w-4 ml-1" />
+                    >{t('settings.siguiente')}<ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                 </div>
             )}
@@ -441,8 +441,8 @@ export function DashboardTour() {
             disableOverlayClose
             callback={handleCallback}
             locale={{
-                back: 'Atrás',
-                close: 'Cerrar',
+                back: t('onboarding.atras'),
+                close: t('onboarding.cerrar'),
                 last: 'Listo',
                 next: 'Siguiente',
                 skip: 'Saltar tour',

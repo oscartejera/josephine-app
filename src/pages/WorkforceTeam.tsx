@@ -127,7 +127,7 @@ const ROLE_OPTIONS = [
 
 const getRoleLabel = (role: string | null) => {
     const found = ROLE_OPTIONS.find((r) => r.value === role);
-    return found ? found.label : role || 'Empleado';
+    return found ? found.label : role || t('payroll.empleado');
 };
 
 const getRoleBadgeColor = (role: string | null) => {
@@ -555,7 +555,7 @@ export default function WorkforceTeam() {
                                                 <p className="text-muted-foreground">
                                                     {search || roleFilter !== 'all'
                                                         ? 'No se encontraron empleados con esos filtros'
-                                                        : 'No hay empleados registrados'}
+                                                        : t('team.noHayEmpleadosRegistrados')}
                                                 </p>
                                             </TableCell>
                                         </TableRow>
@@ -869,7 +869,7 @@ export default function WorkforceTeam() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setAddOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleAddEmployee} disabled={saving}>
-                            {saving ? 'Guardando...' : 'Añadir'}
+                            {saving ? 'Guardando...' : t('inventory.anadir')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -930,7 +930,7 @@ export default function WorkforceTeam() {
                                 <div>
                                     <p className="text-sm font-medium">{t('workforce.employeeStatus')}</p>
                                     <p className="text-xs text-muted-foreground">
-                                        {editEmployee.active ? 'Activo — aparece en horarios y reportes' : 'Inactivo — no aparece en operaciones'}
+                                        {editEmployee.active ? t('team.activoApareceEnHorariosY') : t('team.inactivoNoApareceEnOperaciones')}
                                     </p>
                                 </div>
                                 <Switch
@@ -943,7 +943,7 @@ export default function WorkforceTeam() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditEmployee(null)}>{t("common.cancel")}</Button>
                         <Button onClick={handleEditEmployee} disabled={saving}>
-                            {saving ? 'Guardando...' : 'Guardar cambios'}
+                            {saving ? 'Guardando...' : t('team.guardarCambios')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

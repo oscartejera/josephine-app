@@ -89,12 +89,10 @@ export default function RecipesPage() {
                         <ChefHat className="h-6 w-6" />
                         Escandallos
                     </h1>
-                    <p className="text-muted-foreground">Recetas, sub-recetas y food cost — gestión profesional</p>
+                    <p className="text-muted-foreground">{t('inventory.recetasSubrecetasYFoodCost')}</p>
                 </div>
                 <Button onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nueva Receta
-                </Button>
+                    <Plus className="h-4 w-4 mr-2" />{t('inventory.nuevaReceta')}</Button>
             </div>
 
             {/* Filters */}
@@ -131,8 +129,8 @@ export default function RecipesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Categoría</TableHead>
+                                <TableHead>{t('onboarding.nombre')}</TableHead>
+                                <TableHead>{t('inventory.categoria')}</TableHead>
                                 <TableHead className="text-center">Ingredientes</TableHead>
                                 <TableHead className="text-right">Food Cost</TableHead>
                                 <TableHead className="text-right">Food Cost %</TableHead>
@@ -218,7 +216,7 @@ export default function RecipesPage() {
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Nueva Receta</DialogTitle>
+                        <DialogTitle>{t('inventory.nuevaReceta')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
@@ -231,7 +229,7 @@ export default function RecipesPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Categoría</Label>
+                                <Label>{t('inventory.categoria')}</Label>
                                 <Select value={newRecipe.category} onValueChange={v => setNewRecipe({ ...newRecipe, category: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
@@ -250,7 +248,7 @@ export default function RecipesPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Rendimiento (qty)</Label>
+                                <Label>{t('inventory.rendimientoQty')}</Label>
                                 <Input
                                     type="number" step="0.1" placeholder="1"
                                     value={newRecipe.yield_qty}
@@ -262,7 +260,7 @@ export default function RecipesPage() {
                                 <Select value={newRecipe.yield_unit} onValueChange={v => setNewRecipe({ ...newRecipe, yield_unit: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="portion">Porción</SelectItem>
+                                        <SelectItem value="portion">{t('inventory.porcion')}</SelectItem>
                                         <SelectItem value="kg">kg</SelectItem>
                                         <SelectItem value="L">Litro</SelectItem>
                                         <SelectItem value="units">Unidades</SelectItem>
@@ -282,7 +280,7 @@ export default function RecipesPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowCreateDialog(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleCreate} disabled={createRecipe.isPending}>
-                            {createRecipe.isPending ? 'Creando...' : 'Crear Receta'}
+                            {createRecipe.isPending ? 'Creando...' : t('inventory.crearReceta')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -85,7 +85,7 @@ export default function BookingWidget() {
 
       setReservation(result);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Error al crear la reserva');
+      setSubmitError(err instanceof Error ? err.message : t('settings.errorAlCrearLaReserva'));
     } finally {
       setSubmitting(false);
     }
@@ -118,7 +118,7 @@ export default function BookingWidget() {
           <CardContent className="pt-6">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error || 'Restaurante no encontrado'}</AlertDescription>
+              <AlertDescription>{error || t('settings.restauranteNoEncontrado')}</AlertDescription>
             </Alert>
           </CardContent>
         </Card>
@@ -135,7 +135,7 @@ export default function BookingWidget() {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">¡Reserva Confirmada!</CardTitle>
+            <CardTitle className="text-2xl">{t('settings.reservaConfirmada')}</CardTitle>
             <CardDescription>
               Recibirás un email de confirmación en {formData.guest_email}
             </CardDescription>
@@ -365,7 +365,7 @@ export default function BookingWidget() {
                   Reservando...
                 </>
               ) : (
-                'Confirmar Reserva'
+                t('settings.confirmarReserva')
               )}
             </Button>
           </form>

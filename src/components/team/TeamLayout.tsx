@@ -22,9 +22,9 @@ import { useTranslation } from 'react-i18next';
 
 const teamNavItems = [
   { icon: Home, label: 'Inicio', path: '/team' },
-  { icon: Calendar, label: 'Mi Horario', path: '/team/schedule' },
+  { icon: Calendar, label: t('team.miHorario'), path: '/team/schedule' },
   { icon: Clock, label: 'Fichaje', path: '/team/clock' },
-  { icon: Wallet, label: 'Mi Nómina', path: '/team/pay' },
+  { icon: Wallet, label: t('team.miNomina'), path: '/team/pay' },
   { icon: Users, label: 'Equipo', path: '/team/directory' },
   { icon: Megaphone, label: 'Novedades', path: '/team/news' },
 ];
@@ -49,10 +49,10 @@ export function TeamLayout() {
       ops_manager: 'Gerente de Operaciones',
       store_manager: 'Gerente de Local',
       finance: 'Finanzas',
-      hr_payroll: 'RRHH / Nóminas',
-      employee: 'Empleado',
+      hr_payroll: t('team.rrhhNominas'),
+      employee: t('payroll.empleado'),
     };
-    return role ? labels[role] || role : 'Empleado';
+    return role ? labels[role] || role : t('payroll.empleado');
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -70,9 +70,9 @@ export function TeamLayout() {
   const getBreadcrumb = () => {
     const breadcrumbMap: Record<string, string> = {
       '/team': 'Inicio',
-      '/team/schedule': 'Mi Horario',
+      '/team/schedule': t('team.miHorario'),
       '/team/clock': 'Fichaje',
-      '/team/pay': 'Mi Nómina',
+      '/team/pay': t('team.miNomina'),
       '/team/directory': 'Equipo',
       '/team/news': 'Novedades',
     };
@@ -104,7 +104,7 @@ export function TeamLayout() {
           </Avatar>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">
-              {profile?.full_name || 'Usuario'}
+              {profile?.full_name || t('settings.usuario')}
             </p>
             <p className="text-xs text-muted-foreground">
               {getRoleLabel(primaryRole)}

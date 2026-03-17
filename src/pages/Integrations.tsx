@@ -14,7 +14,7 @@ const availableIntegrations = [
   {
     id: 'square',
     name: 'Square POS',
-    description: 'Sincroniza pedidos, catálogo y pagos desde Square',
+    description: t('integrations.sincronizaPedidosCatalogoYPagos'),
     icon: '🔷',
     status: 'available',
     path: '/integrations/square',
@@ -22,7 +22,7 @@ const availableIntegrations = [
   {
     id: 'lightspeed',
     name: 'Lightspeed Restaurant',
-    description: 'Sincroniza ventas, menú y empleados desde Lightspeed POS',
+    description: t('integrations.sincronizaVentasMenuYEmpleados'),
     icon: '⚡',
     status: 'available',
     path: '/integrations/lightspeed',
@@ -30,7 +30,7 @@ const availableIntegrations = [
   {
     id: 'oracle',
     name: 'Oracle Simphony',
-    description: 'Próximamente - Integración con Oracle Simphony POS',
+    description: t('integrations.proximamenteIntegracionConOracleSimphony'),
     icon: '🏛️',
     status: 'coming_soon',
     path: null,
@@ -38,7 +38,7 @@ const availableIntegrations = [
   {
     id: 'toast',
     name: 'Toast POS',
-    description: 'Próximamente - Integración con Toast',
+    description: t('integrations.proximamenteIntegracionConToast'),
     icon: '🍞',
     status: 'coming_soon',
     path: null,
@@ -81,7 +81,7 @@ export default function Integrations() {
                 {integration.status === 'available' ? (
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 ) : (
-                  <Badge variant="secondary">Próximamente</Badge>
+                  <Badge variant="secondary">{t('integrations.proximamente')}</Badge>
                 )}
               </div>
             </CardHeader>
@@ -91,7 +91,7 @@ export default function Integrations() {
 
       <Card>
         <CardHeader>
-          <CardTitle>¿Qué son las Integraciones?</CardTitle>
+          <CardTitle>{t('integrations.queSonLasIntegraciones')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>

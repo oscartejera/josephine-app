@@ -46,7 +46,7 @@ export function OfflineBanner() {
         return (
             <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center gap-2 bg-green-600 text-white text-sm py-2 px-4 animate-in slide-in-from-top duration-300">
                 <Wifi className="h-4 w-4" />
-                <span>Conexión restaurada — datos actualizándose</span>
+                <span>{t('errors.conexionRestauradaDatosActualizandose')}</span>
             </div>
         );
     }

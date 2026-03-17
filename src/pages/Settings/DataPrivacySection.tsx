@@ -124,7 +124,7 @@ export function DataPrivacySection() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Privacidad y Datos</CardTitle>
+          <CardTitle className="text-base">{t('settings.privacidadYDatos')}</CardTitle>
           <CardDescription>
             Gestiona tus datos personales según tus derechos RGPD.
           </CardDescription>
@@ -139,7 +139,7 @@ export function DataPrivacySection() {
                 <p className="text-xs text-gray-500">
                   {currentConsent
                     ? `Analíticas: ${currentConsent.analytics ? 'Sí' : 'No'} · Marketing: ${currentConsent.marketing ? 'Sí' : 'No'}`
-                    : 'Sin configurar'}
+                    : t('settings.sinConfigurar')}
                 </p>
               </div>
             </div>

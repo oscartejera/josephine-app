@@ -89,7 +89,7 @@ export default function TeamDirectory() {
       store_manager: 'Gerente de Local',
       finance: 'Finanzas',
       hr_payroll: 'RRHH',
-      employee: 'Empleado',
+      employee: t('payroll.empleado'),
       waiter: 'Camarero/a',
       cook: 'Cocinero/a',
       bartender: 'Barista',
@@ -98,7 +98,7 @@ export default function TeamDirectory() {
       dishwasher: 'Friegaplatos',
       delivery: 'Repartidor/a',
     };
-    return role ? labels[role] || role : 'Empleado';
+    return role ? labels[role] || role : t('payroll.empleado');
   };
 
   const getRoleColor = (role: string | null) => {
@@ -184,7 +184,7 @@ export default function TeamDirectory() {
           <CardContent className="p-8 text-center">
             <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-muted-foreground">
-              {search ? 'No se encontraron resultados' : 'No hay miembros del equipo'}
+              {search ? 'No se encontraron resultados' : t('team.noHayMiembrosDelEquipo')}
             </p>
           </CardContent>
         </Card>

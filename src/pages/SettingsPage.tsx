@@ -42,7 +42,7 @@ export default function SettingsPage() {
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
           <TabsTrigger value="datasource">{t('settings.dataSource', 'Fuente de Datos')}</TabsTrigger>
           <TabsTrigger value="privacy">Privacidad</TabsTrigger>
-          <TabsTrigger value="billing">Facturación</TabsTrigger>
+          <TabsTrigger value="billing">{t('common.facturacion')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">

@@ -133,7 +133,7 @@ export default function MenuItemsPage() {
       <div>
         <div className="flex items-center gap-2">
           <UtensilsCrossed className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Carta del Menú</h1>
+          <h1 className="text-2xl font-bold">{t('common.cartaDelMenu')}</h1>
         </div>
         <p className="mt-1 text-muted-foreground">
           Todos tus platos del POS — vincula cada uno con un escandallo para calcular food cost.
@@ -207,12 +207,12 @@ export default function MenuItemsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Plato</TableHead>
-                <TableHead>Categoría</TableHead>
+                <TableHead>{t('inventory.categoria')}</TableHead>
                 <TableHead className="text-right">PVP</TableHead>
                 <TableHead className="text-right">Food Cost</TableHead>
                 <TableHead className="text-right">FC %</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
-                <TableHead className="text-right">Acción</TableHead>
+                <TableHead className="text-right">{t('inventory.accion')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

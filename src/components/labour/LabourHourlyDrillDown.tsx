@@ -105,7 +105,7 @@ export function LabourHourlyDrillDown({
             </Card>
             <Card className="p-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Total Hours</p>
+                <p className="text-sm text-muted-foreground">{t('labour.totalHours')}</p>
                 <p className="text-2xl font-bold">{totalHours.toFixed(1)}h</p>
               </div>
             </Card>

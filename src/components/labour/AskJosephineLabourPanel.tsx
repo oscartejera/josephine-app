@@ -215,7 +215,7 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
           {isLoading && !insight && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Analizando métricas laborales...</span>
+              <span className="ml-2 text-muted-foreground">{t('labour.analizandoMetricasLaborales')}</span>
             </div>
           )}
 

@@ -195,7 +195,7 @@ export default function PayrollHome({
         currentPeriod.month
       );
       
-      toast({ title: 'Nómina iniciada', description: `Período ${format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}` });
+      toast({ title: t('payroll.nominaIniciada'), description: `Período ${format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}` });
       await refreshData();
       navigate('/payroll/employees');
     } catch (error) {
@@ -215,7 +215,7 @@ export default function PayrollHome({
       await supabase.from('compliance_submissions').delete().eq('payroll_run_id', currentRun.id);
       await supabase.from('payroll_runs').delete().eq('id', currentRun.id);
       
-      toast({ title: 'Nómina reseteada', description: 'Se ha eliminado la nómina del período. Puedes empezar de nuevo.' });
+      toast({ title: t('payroll.nominaReseteada'), description: 'Se ha eliminado la nómina del período. Puedes empezar de nuevo.' });
       setShowResetDialog(false);
       await refreshData();
     } catch (error) {
@@ -239,7 +239,7 @@ export default function PayrollHome({
         currentPeriod.month,
       );
       toast({ 
-        title: 'Datos de prueba cargados', 
+        title: t('payroll.datosDePruebaCargados'), 
         description: result.message || `${result.employees_count} empleados con contratos y datos legales` 
       });
       await refreshData();
@@ -301,7 +301,7 @@ export default function PayrollHome({
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label>Razón Social *</Label>
+                      <Label>{t('payroll.razonSocial')}</Label>
                       <Input value={newEntity.razon_social} onChange={(e) => setNewEntity({...newEntity, razon_social: e.target.value})} placeholder="Restaurantes XYZ S.L." />
                     </div>
                     <div>
@@ -359,13 +359,13 @@ export default function PayrollHome({
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Bruto Total</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.brutoTotal')}</p>
             <p className="text-2xl font-bold">€{kpis.totalGross.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Neto Total</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.netoTotal')}</p>
             <p className="text-2xl font-bold text-success">€{kpis.totalNet.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
@@ -377,13 +377,13 @@ export default function PayrollHome({
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">IRPF Total</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.irpfTotal')}</p>
             <p className="text-2xl font-bold">€{kpis.totalIRPF.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Empleados</p>
+            <p className="text-sm text-muted-foreground">{t('settings.empleados')}</p>
             <p className="text-2xl font-bold">{employeeCount}</p>
           </CardContent>
         </Card>
@@ -394,7 +394,7 @@ export default function PayrollHome({
         {/* Current Run Status */}
         <Card>
           <CardHeader>
-            <CardTitle>Estado del Período</CardTitle>
+            <CardTitle>{t('payroll.estadoDelPeriodo')}</CardTitle>
             <CardDescription>
               {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}
             </CardDescription>
@@ -407,7 +407,7 @@ export default function PayrollHome({
                     {currentRun.status === 'draft' && 'Borrador'}
                     {currentRun.status === 'validated' && 'Validado'}
                     {currentRun.status === 'calculated' && 'Calculado'}
-                    {currentRun.status === 'approved' && 'Aprobado'}
+                    {currentRun.status === 'approved' && t('payroll.aprobado')}
                     {currentRun.status === 'submitted' && 'Presentado'}
                     {currentRun.status === 'paid' && 'Pagado'}
                   </Badge>
@@ -422,13 +422,13 @@ export default function PayrollHome({
                   </Button>
                   <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="icon" title="Resetear nómina">
+                      <Button variant="outline" size="icon" title=t('payroll.resetearNomina2')>
                         <RotateCcw className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Resetear Nómina</DialogTitle>
+                        <DialogTitle>{t('payroll.resetearNomina')}</DialogTitle>
                         <DialogDescription>
                           Se eliminarán todos los datos de esta nómina (nóminas calculadas, presentaciones, etc.) y podrás empezar de nuevo.
                         </DialogDescription>
@@ -544,7 +544,7 @@ export default function PayrollHome({
                       </Button>
                     </div>
                     <div>
-                      <Label>Contraseña del certificado</Label>
+                      <Label>{t('payroll.contrasenaDelCertificado')}</Label>
                       <Input type="password" placeholder="••••••••" />
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -567,7 +567,7 @@ export default function PayrollHome({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">Datos de Prueba</h3>
+                <h3 className="font-medium">{t('payroll.datosDePrueba')}</h3>
                 <p className="text-sm text-muted-foreground">
                   Carga 20 empleados con contratos, NIF/NSS/IBAN y variables mensuales para hacer una prueba completa.
                 </p>

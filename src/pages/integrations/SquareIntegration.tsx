@@ -208,7 +208,7 @@ export default function SquareIntegration() {
   const completeProgressAnimation = useCallback(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
     setSyncProgress(100);
-    setSyncPhaseLabel('Sincronización completada');
+    setSyncPhaseLabel(t('integrations.sincronizacionCompletada'));
     setSyncComplete(true);
   }, []);
 
@@ -628,11 +628,11 @@ export default function SquareIntegration() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">Josephine sincronizará:</p>
+            <p className="text-sm text-muted-foreground">{t('integrations.josephineSincronizara')}</p>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
               <li>{t("integrations.localesAndLocations")}</li>
               <li>{t("integrations.productCatalogFull")}</li>
-              <li>Pedidos y transacciones (hasta 1 año de histórico)</li>
+              <li>{t('integrations.pedidosYTransaccionesHasta1')}</li>
               <li>{t("integrations.paymentMethodsAndAmounts")}</li>
             </ul>
             <p className="text-sm text-muted-foreground">

@@ -165,7 +165,7 @@ export function UsersRolesManager() {
       toast({
         variant: 'destructive',
         title: t("common.error"),
-        description: 'Selecciona un rol'
+        description: t('settings.seleccionaUnRol')
       });
       return;
     }
@@ -197,7 +197,7 @@ export function UsersRolesManager() {
           toast({
             variant: 'destructive',
             title: t("common.error"),
-            description: 'Este rol requiere una ubicación específica'
+            description: t('settings.esteRolRequiereUnaUbicacion')
           });
         } else {
           throw error;
@@ -260,7 +260,7 @@ export function UsersRolesManager() {
       toast({
         variant: 'destructive',
         title: t("common.error"),
-        description: error.message || 'No se pudo eliminar el rol'
+        description: error.message || t('settings.noSePudoEliminarEl')
       });
     } finally {
       setSaving(false);
@@ -314,7 +314,7 @@ export function UsersRolesManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Usuario</TableHead>
+                  <TableHead>{t('settings.usuario')}</TableHead>
                   <TableHead>Roles</TableHead>
                   <TableHead>Scope</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
@@ -331,9 +331,9 @@ export function UsersRolesManager() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium">{user.full_name || 'Usuario'}</p>
+                          <p className="font-medium">{user.full_name || t('settings.usuario')}</p>
                           {user.id === currentUser?.id && (
-                            <p className="text-xs text-muted-foreground">(Tú)</p>
+                            <p className="text-xs text-muted-foreground">{t('settings.tu')}</p>
                           )}
                         </div>
                       </div>
@@ -406,7 +406,7 @@ export function UsersRolesManager() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {role.description || 'Sin descripción'}
+                        {role.description || t('settings.sinDescripcion')}
                       </p>
                     </div>
                   );
@@ -423,7 +423,7 @@ export function UsersRolesManager() {
           <DialogHeader>
             <DialogTitle>{t("users.editRoles")}</DialogTitle>
             <DialogDescription>
-              {editingUser?.full_name || 'Usuario'}
+              {editingUser?.full_name || t('settings.usuario')}
             </DialogDescription>
           </DialogHeader>
 
@@ -468,7 +468,7 @@ export function UsersRolesManager() {
                           size="sm"
                           onClick={() => confirmDeleteRole(role.id)}
                           disabled={isCurrentUser && isOnlyOwner}
-                          title={isCurrentUser && isOnlyOwner ? 'No puedes eliminar tu propio rol de owner' : 'Eliminar rol'}
+                          title={isCurrentUser && isOnlyOwner ? t('settings.noPuedesEliminarTuPropio') : t('settings.eliminarRol')}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -563,7 +563,7 @@ export function UsersRolesManager() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar este rol?</AlertDialogTitle>
+            <AlertDialogTitle>{t('settings.eliminarEsteRol')}</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción eliminará el rol del usuario. Podrás volver a asignarlo después.
             </AlertDialogDescription>

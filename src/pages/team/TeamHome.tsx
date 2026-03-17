@@ -214,7 +214,7 @@ export default function TeamHome() {
 
   const greeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Buenos días';
+    if (hour < 12) return t('team.buenosDias');
     if (hour < 20) return 'Buenas tardes';
     return 'Buenas noches';
   };
@@ -237,7 +237,7 @@ export default function TeamHome() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Fichaje Rápido</span>
+              <span className="font-semibold">{t('team.fichajeRapido')}</span>
             </div>
             <span className="text-2xl font-bold font-mono">
               {format(currentTime, 'HH:mm')}
@@ -247,7 +247,7 @@ export default function TeamHome() {
           {geoLocation && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
               <MapPin className="h-3 w-3" />
-              <span>Ubicación detectada</span>
+              <span>{t('team.ubicacionDetectada')}</span>
             </div>
           )}
 
@@ -255,7 +255,7 @@ export default function TeamHome() {
             <div className="space-y-3">
               <div className="flex items-center justify-between bg-primary/5 rounded-lg p-3">
                 <div>
-                  <p className="text-xs text-muted-foreground">Turno activo</p>
+                  <p className="text-xs text-muted-foreground">{t('team.turnoActivo')}</p>
                   <p className="font-semibold">
                     Desde {format(new Date(activeRecord.clock_in), 'HH:mm')}
                   </p>
@@ -349,7 +349,7 @@ export default function TeamHome() {
         <Card>
           <CardHeader className="pb-2 px-4 pt-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Próximos turnos</CardTitle>
+              <CardTitle className="text-base">{t('team.proximosTurnos')}</CardTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -397,7 +397,7 @@ export default function TeamHome() {
               <TrendingUp className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-sm font-medium">Mi Nómina</p>
+              <p className="text-sm font-medium">{t('team.miNomina')}</p>
               <p className="text-xs text-muted-foreground">{t("team.hoursAndPay")}</p>
             </div>
           </CardContent>

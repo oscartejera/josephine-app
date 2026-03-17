@@ -22,7 +22,7 @@ const REASON_LABELS: Record<string, string> = {
   manual_pos_blocked_no_sync: 'POS solicitado pero sync caducado',
   legacy_pos_connected: 'POS conectado (legacy)',
   legacy_no_pos: 'Sin POS (legacy)',
-  no_session: 'Sin sesión',
+  no_session: t('data.sinSesion'),
   loading: 'Cargando...',
 };
 

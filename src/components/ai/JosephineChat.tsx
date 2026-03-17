@@ -23,7 +23,7 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-    { label: '📊 Ventas hoy', prompt: '¿Cómo van las ventas de hoy comparadas con la semana pasada?', icon: TrendingUp },
+    { label: t('ai.ventasHoy'), prompt: '¿Cómo van las ventas de hoy comparadas con la semana pasada?', icon: TrendingUp },
     { label: '👥 Labour cost', prompt: '¿Cuál es el coste de personal actual vs el presupuesto? ¿Estamos dentro del objetivo?', icon: Users },
     { label: '📦 Stock bajo', prompt: '¿Qué ingredientes están por debajo del nivel mínimo y necesito pedir?', icon: Package },
     { label: '✨ Briefing', prompt: 'Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predicción para mañana.', icon: Sparkles },

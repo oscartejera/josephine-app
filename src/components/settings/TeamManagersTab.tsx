@@ -105,7 +105,7 @@ export function TeamManagersTab() {
             await loadManagers();
         } catch (err: any) {
             console.error('Invite error:', err);
-            toast.error(err.message || 'Error al invitar manager');
+            toast.error(err.message || t('team.errorAlInvitarManager'));
         }
         setSending(false);
     };
@@ -154,7 +154,7 @@ export function TeamManagersTab() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="location">Ubicación</Label>
+                        <Label htmlFor="location">{t('ai.ubicacion2')}</Label>
                         <select
                             id="location"
                             value={locationId}

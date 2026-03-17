@@ -47,7 +47,7 @@ export function OnboardingChecklist() {
         },
         {
             id: 'team',
-            title: 'Añadir tu equipo',
+            title: t('onboarding.anadirTuEquipo'),
             description: 'Invita a managers y empleados',
             icon: Users,
             path: '/workforce/team',
@@ -61,8 +61,8 @@ export function OnboardingChecklist() {
         },
         {
             id: 'inventory',
-            title: 'Configurar inventario',
-            description: 'Crea artículos y recetas',
+            title: t('onboarding.configurarInventario'),
+            description: t('onboarding.creaArticulosYRecetas'),
             icon: Upload,
             path: '/inventory-setup/items',
             checkFn: async () => {
@@ -76,7 +76,7 @@ export function OnboardingChecklist() {
         {
             id: 'forecast',
             title: 'Tu primer forecast',
-            description: 'Estará listo cuando tengamos 7 días de datos',
+            description: t('onboarding.estaraListoCuandoTengamos7'),
             icon: BarChart3,
             path: '/insights/sales',
             checkFn: async () => {

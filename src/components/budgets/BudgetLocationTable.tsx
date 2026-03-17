@@ -163,7 +163,7 @@ export function BudgetLocationTable({ data, isLoading = false, currency = '€' 
               ))}
               {/* Totals row */}
               <TableRow className="bg-muted/30 font-medium border-t-2">
-                <TableCell>Total / Average</TableCell>
+                <TableCell>{t('budgets.totalAverage')}</TableCell>
                 <TableCell className="text-right border-l">{formatCurrency(totals.salesActual, currency)}</TableCell>
                 <TableCell className="text-right text-muted-foreground">{formatCurrency(totals.salesBudget, currency)}</TableCell>
                 <TableCell className="text-right"><DeltaCell value={totals.salesVarPct} /></TableCell>

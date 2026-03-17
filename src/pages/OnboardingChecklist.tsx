@@ -81,7 +81,7 @@ export default function OnboardingChecklist() {
                     id: 'pos',
                     title: t('onboardingChecklist.connectPOS'),
                     description: posConnected
-                        ? '✓ POS conectado — los datos de ventas fluyen automáticamente'
+                        ? t('onboarding.posConectadoLosDatosDe')
                         : 'Conecta Square o Lightspeed para que las ventas, pagos y productos se sincronicen',
                     icon: <Wifi className="h-5 w-5" />,
                     link: '/settings',
@@ -94,7 +94,7 @@ export default function OnboardingChecklist() {
                     title: t('onboardingChecklist.createTeam'),
                     description: hasEmployees
                         ? `✓ ${employeesRes.count} empleados activos`
-                        : 'Añade empleados con nombre, rol y coste/hora para activar Labour Analytics',
+                        : t('onboarding.anadeEmpleadosConNombreRol'),
                     icon: <Users className="h-5 w-5" />,
                     link: '/workforce',
                     category: 'team',
@@ -106,7 +106,7 @@ export default function OnboardingChecklist() {
                     title: t('onboardingChecklist.createSchedule'),
                     description: hasShifts
                         ? `✓ ${shiftsRes.count} turnos creados`
-                        : 'Crea turnos para tu equipo — Josephine calculará coste laboral vs ventas',
+                        : t('onboarding.creaTurnosParaTuEquipo'),
                     icon: <Calendar className="h-5 w-5" />,
                     link: '/scheduling',
                     category: 'team',
@@ -130,7 +130,7 @@ export default function OnboardingChecklist() {
                     title: t('onboardingChecklist.createRecipes'),
                     description: hasRecipes
                         ? `✓ ${recipesRes.count} recetas configuradas`
-                        : 'Crea recetas con ingredientes y costes para calcular COGS teórico y GP%',
+                        : t('onboarding.creaRecetasConIngredientesY'),
                     icon: <ChefHat className="h-5 w-5" />,
                     link: '/inventory-setup/recipes',
                     category: 'inventory',
@@ -142,7 +142,7 @@ export default function OnboardingChecklist() {
                     title: t('onboardingChecklist.createInventory'),
                     description: hasInventory
                         ? `✓ ${inventoryRes.count} artículos en catálogo`
-                        : 'Añade los productos que gestionas para activar Inventory Insights',
+                        : t('onboarding.anadeLosProductosQueGestionas'),
                     icon: <Package className="h-5 w-5" />,
                     link: '/inventory-setup/items',
                     category: 'inventory',
@@ -174,9 +174,9 @@ export default function OnboardingChecklist() {
     const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
     const categories = [
-        { id: 'connection', label: '🔌 Conexión', color: 'text-blue-600' },
+        { id: 'connection', label: t('onboarding.conexion'), color: 'text-blue-600' },
         { id: 'team', label: '👥 Equipo', color: 'text-violet-600' },
-        { id: 'inventory', label: '📦 Inventario', color: 'text-emerald-600' },
+        { id: 'inventory', label: t('onboarding.inventario2'), color: 'text-emerald-600' },
         { id: 'intelligence', label: '📊 Inteligencia', color: 'text-amber-600' },
     ];
 

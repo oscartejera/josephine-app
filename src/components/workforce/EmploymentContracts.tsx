@@ -49,12 +49,12 @@ interface Contract {
 const CONTRACT_TYPES = [
     { value: 'indefinido', label: 'Indefinido' },
     { value: 'temporal', label: 'Temporal' },
-    { value: 'practicas', label: 'Prácticas' },
-    { value: 'formacion', label: 'Formación' },
+    { value: 'practicas', label: t('payroll.practicas') },
+    { value: 'formacion', label: t('payroll.formacion') },
     { value: 'fijo_discontinuo', label: 'Fijo Discontinuo' },
     { value: 'por_obra', label: 'Por Obra' },
     { value: 'interinidad', label: 'Interinidad' },
-    { value: 'autonomo', label: 'Autónomo' },
+    { value: 'autonomo', label: t('team.autonomo') },
 ];
 
 const getContractLabel = (type: string) =>
@@ -280,7 +280,7 @@ export function EmploymentContracts({ locationId }: Props) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[220px]">Empleado</TableHead>
+                                <TableHead className="w-[220px]">{t('payroll.empleado')}</TableHead>
                                 <TableHead>Tipo</TableHead>
                                 <TableHead className="text-right">Salario/mes</TableHead>
                                 <TableHead className="text-right">€/hora</TableHead>
@@ -373,11 +373,11 @@ export function EmploymentContracts({ locationId }: Props) {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle>{editingId ? 'Editar contrato' : 'Nuevo contrato'}</DialogTitle>
+                        <DialogTitle>{editingId ? t('team.editarContrato') : 'Nuevo contrato'}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
-                            <Label>Empleado</Label>
+                            <Label>{t('payroll.empleado')}</Label>
                             <Select value={form.employee_id} onValueChange={v => setForm(f => ({ ...f, employee_id: v }))} disabled={!!editingId}>
                                 <SelectTrigger>
                                     <SelectValue placeholder={t('contracts.selectEmployee')} />
@@ -443,7 +443,7 @@ export function EmploymentContracts({ locationId }: Props) {
                         <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSave} disabled={saving}>
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {editingId ? 'Guardar cambios' : 'Crear contrato'}
+                            {editingId ? t('team.guardarCambios') : t('team.crearContrato')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

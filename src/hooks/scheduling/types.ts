@@ -124,7 +124,7 @@ export interface Location {
 
 // Constants
 export const DEPARTMENTS = ['BOH', 'FOH'];
-export const STATIONS = ['Cocina', 'Prep', 'Bar', 'Sala', 'Limpieza'];
+export const STATIONS = [t('scheduling.cocina'), 'Prep', 'Bar', 'Sala', 'Limpieza'];
 export const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // UUID validation regex
@@ -136,7 +136,7 @@ export const LEGACY_LOCATION_ALIASES: Record<string, string[]> = {
     'westside': ['westside', 'west'],
     'central': ['central', 'centro', 'downtown'],
     'hq': ['hq', 'headquarters', 'main'],
-    'chamberi': ['chamberi', 'chamberí'],
-    'malasana': ['malasana', 'malasaña'],
+    'chamberi': ['chamberi', t('scheduling.chamberi')],
+    'malasana': ['malasana', t('scheduling.malasana')],
     'salamanca': ['salamanca'],
 };

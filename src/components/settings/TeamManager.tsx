@@ -171,7 +171,7 @@ export function TeamManager() {
       toast({
         variant: 'destructive',
         title: t("common.error"),
-        description: 'Por favor ingresa un email válido'
+        description: t('team.porFavorIngresaUnEmail')
       });
       return;
     }
@@ -210,7 +210,7 @@ export function TeamManager() {
 
       setInviteSuccess(true);
       toast({
-        title: '¡Usuario invitado!',
+        title: t('team.usuarioInvitado'),
         description: `Se ha enviado un email a ${newMember.email} con las credenciales de acceso.`
       });
 
@@ -228,7 +228,7 @@ export function TeamManager() {
       toast({
         variant: 'destructive',
         title: t('team.inviteError'),
-        description: error.message || 'No se pudo enviar la invitación'
+        description: error.message || t('team.noSePudoEnviarLa')
       });
     } finally {
       setInviting(false);
@@ -294,7 +294,7 @@ export function TeamManager() {
                 <TableRow>
                   <TableHead>Miembro</TableHead>
                   <TableHead>Rol</TableHead>
-                  <TableHead>Ubicación</TableHead>
+                  <TableHead>{t('ai.ubicacion2')}</TableHead>
                   <TableHead>{t("common.status")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -309,9 +309,9 @@ export function TeamManager() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium">{member.full_name || 'Usuario'}</p>
+                          <p className="font-medium">{member.full_name || t('settings.usuario')}</p>
                           {member.id === currentUser?.id && (
-                            <p className="text-xs text-muted-foreground">(Tú)</p>
+                            <p className="text-xs text-muted-foreground">{t('settings.tu')}</p>
                           )}
                         </div>
                       </div>
@@ -380,7 +380,7 @@ export function TeamManager() {
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">¡Invitación Enviada!</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('team.invitacionEnviada')}</h3>
               <p className="text-muted-foreground">
                 Se ha enviado un email a <strong>{newMember.email}</strong> con las credenciales de acceso.
               </p>

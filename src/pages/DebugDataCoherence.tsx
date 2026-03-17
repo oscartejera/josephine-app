@@ -80,10 +80,10 @@ export default function DebugDataCoherence() {
             onChange={(e) => setDays(Number(e.target.value))}
             className="border rounded px-2 py-1 text-sm"
           >
-            <option value={7}>7 días</option>
-            <option value={14}>14 días</option>
-            <option value={30}>30 días</option>
-            <option value={60}>60 días</option>
+            <option value={7}>{t('data.7Dias')}</option>
+            <option value={14}>{t('data.14Dias')}</option>
+            <option value={30}>{t('data.30Dias')}</option>
+            <option value={60}>{t('data.60Dias')}</option>
           </select>
           <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
@@ -129,7 +129,7 @@ export default function DebugDataCoherence() {
                   <strong>{data.resolved_source.mode}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Razón:</span>{' '}
+                  <span className="text-muted-foreground">{t('data.razon')}</span>{' '}
                   <strong>{data.resolved_source.reason}</strong>
                 </div>
                 <div>

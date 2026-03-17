@@ -208,8 +208,8 @@ export function AIImpactCard() {
                     />
                     <ImpactKPI
                         icon={Target}
-                        label="Precisión Forecast"
-                        value={data.mape !== null ? `${(100 - data.mape).toFixed(0)}%` : 'Sin datos'}
+                        label=t('forecast.precisionForecast')
+                        value={data.mape !== null ? `${(100 - data.mape).toFixed(0)}%` : t('team.sinDatos')}
                         subtitle={data.mape !== null ? `MAPE: ${data.mape.toFixed(1)}%` : 'Ejecuta backfill_forecast_accuracy()'}
                         color="bg-violet-50 text-violet-600"
                     />

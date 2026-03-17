@@ -136,7 +136,7 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="share">% Ventas</SelectItem>
+                <SelectItem value="share">{t('dashboard.ventas')}</SelectItem>
                 <SelectItem value="gp_eur">GP €</SelectItem>
                 <SelectItem value="gp_pct">GP %</SelectItem>
               </SelectContent>

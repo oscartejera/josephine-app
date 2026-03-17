@@ -135,7 +135,7 @@ export default function PayrollEmployees({
         iban: legalData.iban || undefined,
         domicilio: legalData.domicilio || undefined,
       });
-      toast({ title: 'Guardado', description: 'Datos legales actualizados' });
+      toast({ title: 'Guardado', description: t('payroll.datosLegalesActualizados') });
       fetchEmployees();
       setEditingEmployee(null);
     } catch (error) {
@@ -218,14 +218,14 @@ export default function PayrollEmployees({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Empleado</TableHead>
+                <TableHead>{t('payroll.empleado')}</TableHead>
                 <TableHead>Puesto</TableHead>
                 <TableHead>NIF</TableHead>
                 <TableHead>NSS</TableHead>
                 <TableHead>IBAN</TableHead>
                 <TableHead>Contrato</TableHead>
                 <TableHead>Salario</TableHead>
-                <TableHead className="text-center">Estado</TableHead>
+                <TableHead className="text-center">{t('team.estado')}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -349,7 +349,7 @@ export default function PayrollEmployees({
                             <div className="space-y-4">
                               <h4 className="font-medium flex items-center gap-2">
                                 <FileText className="h-4 w-4" />
-                                {contract ? 'Contrato Activo' : 'Crear Contrato'}
+                                {contract ? t('payroll.contratoActivo') : 'Crear Contrato'}
                               </h4>
                               <div>
                                 <Label>Tipo de Contrato</Label>
@@ -363,13 +363,13 @@ export default function PayrollEmployees({
                                   <SelectContent>
                                     <SelectItem value="indefinido">Indefinido</SelectItem>
                                     <SelectItem value="temporal">Temporal</SelectItem>
-                                    <SelectItem value="formacion">Formación</SelectItem>
-                                    <SelectItem value="practicas">Prácticas</SelectItem>
+                                    <SelectItem value="formacion">{t('payroll.formacion')}</SelectItem>
+                                    <SelectItem value="practicas">{t('payroll.practicas')}</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div>
-                                <Label>Salario Base Mensual (€)</Label>
+                                <Label>{t('payroll.salarioBaseMensual')}</Label>
                                 <Input 
                                   type="number"
                                   value={contractData.base_salary_monthly}
@@ -414,9 +414,7 @@ export default function PayrollEmployees({
                                 />
                               </div>
                               {!contract && (
-                                <Button onClick={handleCreateContract} className="w-full" disabled={!isPayrollAdmin}>
-                                  Crear Contrato
-                                </Button>
+                                <Button onClick={handleCreateContract} className="w-full" disabled={!isPayrollAdmin}>{t('payroll.crearContrato')}</Button>
                               )}
                             </div>
                           </div>

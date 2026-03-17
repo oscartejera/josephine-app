@@ -1,6 +1,7 @@
 // Scheduling module — pure utility functions
 
 import { addDays, format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import type { Location, Shift, DayKPI } from './types';
 import { UUID_REGEX, LEGACY_LOCATION_ALIASES, DAY_NAMES } from './types';
 
@@ -70,7 +71,7 @@ export function fixEncoding(name: string): string {
 export function getDepartment(roleName: string): string {
     const r = (roleName || '').toLowerCase();
     // Kitchen (BOH)
-    if (['chef', 'cocinero/a', 'preparación', 'lavaplatos', 'prep cook', 'sous chef', 'chef de partida', 'dishwasher'].includes(r)) {
+    if (['chef', 'cocinero/a', t('waste.preparacion'), 'lavaplatos', 'prep cook', 'sous chef', 'chef de partida', 'dishwasher'].includes(r)) {
         return 'Kitchen';
     }
     // Bar
@@ -87,14 +88,14 @@ export function getDepartment(roleName: string): string {
 
 export function getStation(roleName: string): string {
     const map: Record<string, string> = {
-        'Chef': 'Cocina',
-        'Cocinero/a': 'Cocina',
-        'Sous Chef': 'Cocina',
-        'Chef de Partida': 'Cocina',
+        'Chef': t('scheduling.cocina'),
+        'Cocinero/a': t('scheduling.cocina'),
+        'Sous Chef': t('scheduling.cocina'),
+        'Chef de Partida': t('scheduling.cocina'),
         'Prep Cook': 'Prep',
-        'Preparación': 'Prep',
-        'Dishwasher': 'Cocina',
-        'Lavaplatos': 'Cocina',
+        t('scheduling.preparacion'): 'Prep',
+        'Dishwasher': t('scheduling.cocina'),
+        'Lavaplatos': t('scheduling.cocina'),
         'Server': 'Sala',
         'Camarero/a': 'Sala',
         'Bartender': 'Bar',

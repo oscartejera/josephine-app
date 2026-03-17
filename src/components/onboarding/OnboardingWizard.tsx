@@ -66,9 +66,9 @@ const STEPS: Step[] = [
   { id: 'business', title: t('onboarding.yourBusiness'), description: t('onboarding.companyName'), icon: Building2 },
   { id: 'location', title: t('onboarding.yourLocation'), description: t('onboarding.firstLocation'), icon: MapPin },
   { id: 'menu', title: t('onboarding.yourMenu'), description: t('onboarding.productsAndPrices'), icon: UtensilsCrossed },
-  { id: 'team', title: 'Tu Equipo', description: 'Empleados iniciales', icon: Users },
-  { id: 'floor', title: 'Tu Sala', description: 'Configuración de mesas', icon: LayoutGrid },
-  { id: 'inventory', title: 'Inventario', description: 'Ingredientes (opcional)', icon: Package },
+  { id: 'team', title: 'Tu Equipo', description: t('onboarding.empleadosIniciales'), icon: Users },
+  { id: 'floor', title: 'Tu Sala', description: t('onboarding.configuracionDeMesas'), icon: LayoutGrid },
+  { id: 'inventory', title: t('onboarding.inventario'), description: 'Ingredientes (opcional)', icon: Package },
 ];
 
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
@@ -401,7 +401,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       }
 
       toast.success(t('onboardingWizard.toastComplete'), {
-        description: 'Tu negocio está listo para empezar',
+        description: t('onboarding.tuNegocioEstaListoPara'),
       });
 
       // Refresh profile to update group_id
@@ -411,7 +411,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     } catch (error) {
       console.error('Onboarding error:', error);
       toast.error(t('onboardingWizard.toastError'), {
-        description: 'Por favor, inténtalo de nuevo',
+        description: t('onboarding.porFavorIntentaloDeNuevo'),
       });
     } finally {
       setLoading(false);
@@ -425,14 +425,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold">¡Bienvenido a Josephine!</h2>
+              <h2 className="text-2xl font-bold">{t('onboarding.bienvenidoAJosephine')}</h2>
               <p className="text-muted-foreground mt-2">
                 Vamos a configurar tu negocio en pocos minutos
               </p>
             </div>
             <div className="space-y-4 max-w-md mx-auto">
               <div className="space-y-2">
-                <Label htmlFor="business-name">Nombre de tu empresa o grupo</Label>
+                <Label htmlFor="business-name">{t('onboarding.nombreDeTuEmpresaO')}</Label>
                 <Input
                   id="business-name"
                   placeholder="Ej: Restaurantes García S.L."
@@ -459,7 +459,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             </div>
             <div className="grid gap-4 max-w-lg mx-auto">
               <div className="space-y-2">
-                <Label htmlFor="location-name">Nombre del local</Label>
+                <Label htmlFor="location-name">{t('onboarding.nombreDelLocal')}</Label>
                 <Input
                   id="location-name"
                   placeholder="Ej: La Taberna Centro"
@@ -581,7 +581,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {selectedTemplate?.id === 'custom' && (
               <div className="text-center text-muted-foreground py-8">
                 <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Podrás añadir productos después desde el módulo de Menú</p>
+                <p>{t('onboarding.podrasAnadirProductosDespuesDesde')}</p>
               </div>
             )}
           </div>
@@ -602,7 +602,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div key={index} className="flex gap-3 items-start p-3 border rounded-lg">
                   <div className="flex-1 grid grid-cols-3 gap-3">
                     <Input
-                      placeholder="Nombre"
+                      placeholder=t('onboarding.nombre')
                       value={employee.name}
                       onChange={(e) => updateEmployee(index, 'name', e.target.value)}
                     />
@@ -715,7 +715,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
               {/* Preview */}
               <div className="space-y-2">
-                <Label>Previsualización</Label>
+                <Label>{t('onboarding.previsualizacion')}</Label>
                 <FloorPlanPreview
                   tables={getTablesPreview()}
                   className="min-h-[300px]"
@@ -729,7 +729,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold">Inventario</h2>
+              <h2 className="text-2xl font-bold">{t('onboarding.inventario')}</h2>
               <p className="text-muted-foreground mt-2">
                 Configura tus ingredientes base (opcional)
               </p>
@@ -787,7 +787,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <div className="text-center text-muted-foreground py-8">
                 <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>{t("onboarding.noPresetInventory")}</p>
-                <p className="text-sm">Podrás añadir ingredientes después desde el módulo de Inventario</p>
+                <p className="text-sm">{t('onboarding.podrasAnadirIngredientesDespuesDesde')}</p>
               </div>
             )}
           </div>

@@ -44,8 +44,8 @@ function fmt(v: number) {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
     under_budget: { label: 'Bajo presupuesto', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: '✓' },
-    on_track: { label: 'En línea', color: 'text-blue-700', bg: 'bg-blue-100', icon: '→' },
-    warning: { label: 'Atención', color: 'text-amber-700', bg: 'bg-amber-100', icon: '⚠' },
+    on_track: { label: t('payroll.enLinea'), color: 'text-blue-700', bg: 'bg-blue-100', icon: '→' },
+    warning: { label: t('payroll.atencion'), color: 'text-amber-700', bg: 'bg-amber-100', icon: '⚠' },
     over_budget: { label: 'Sobre presupuesto', color: 'text-red-700', bg: 'bg-red-100', icon: '✗' },
     no_budget: { label: 'Sin presupuesto', color: 'text-gray-500', bg: 'bg-gray-100', icon: '—' },
 };
@@ -192,8 +192,8 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
     if (!effectiveLocationId) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">📊 Previsión de Nómina</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">Selecciona una ubicación</p></CardContent>
+                <CardHeader><CardTitle className="text-base">{t('payroll.previsionDeNomina')}</CardTitle></CardHeader>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t('payroll.seleccionaUnaUbicacion')}</p></CardContent>
             </Card>
         );
     }
@@ -201,7 +201,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
     if (isLoading) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">📊 Previsión de Nómina</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t('payroll.previsionDeNomina')}</CardTitle></CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         {[1, 2, 3].map(i => <div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />)}
@@ -214,7 +214,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
     if (!data) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">📊 Previsión de Nómina</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t('payroll.previsionDeNomina')}</CardTitle></CardHeader>
                 <CardContent><p className="text-sm text-gray-500 text-center py-4">{t("labour.noShiftData")}</p></CardContent>
             </Card>
         );
@@ -230,7 +230,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">📊 Previsión de Nómina</CardTitle>
+                        <CardTitle className="text-base font-semibold">{t('payroll.previsionDeNomina')}</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">
                             {format(new Date(data.period.year, data.period.month - 1), 'MMMM yyyy', { locale: es })}
                             {' · '} Día {data.days.elapsed} de {data.days.total}
@@ -250,12 +250,12 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                         <div className="text-[10px] text-emerald-500">{data.worked.hours}h trabajadas</div>
                     </div>
                     <div className="text-center p-3 bg-blue-50/50 rounded-xl">
-                        <div className="text-[10px] font-semibold text-blue-600 uppercase">Pendiente</div>
+                        <div className="text-[10px] font-semibold text-blue-600 uppercase">{t('integrations.pendiente')}</div>
                         <div className="text-xl font-bold text-blue-700 mt-1">{fmt(data.remaining.cost)}</div>
                         <div className="text-[10px] text-blue-500">{data.remaining.hours}h planificadas</div>
                     </div>
                     <div className="text-center p-3 bg-indigo-50/50 rounded-xl border-2 border-indigo-200">
-                        <div className="text-[10px] font-semibold text-indigo-600 uppercase">Proyección mes</div>
+                        <div className="text-[10px] font-semibold text-indigo-600 uppercase">{t('payroll.proyeccionMes')}</div>
                         <div className="text-xl font-bold text-indigo-700 mt-1">{fmt(data.projected.total_cost)}</div>
                         <div className="text-[10px] text-indigo-500">{fmt(data.projected.daily_run_rate)}/día</div>
                     </div>
@@ -293,7 +293,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 {data.budget.amount > 0 && (
                     <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg">
                         <div className="text-sm text-gray-600">
-                            <span className="font-medium">Presupuesto:</span> {fmt(data.budget.amount)}
+                            <span className="font-medium">{t('payroll.presupuesto')}</span> {fmt(data.budget.amount)}
                         </div>
                         <div className="text-sm">
                             <span className={cn("font-bold", statusCfg.color)}>

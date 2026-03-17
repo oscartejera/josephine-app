@@ -37,7 +37,7 @@ export function LocationSwitcher({ collapsed = false, align = 'start', side }: L
   const selectedLocationLabel =
     selectedLocationId === 'all'
       ? 'Todos los locales'
-      : accessibleLocations.find(l => l.id === selectedLocationId)?.name || 'Seleccionar local';
+      : accessibleLocations.find(l => l.id === selectedLocationId)?.name || t('common.seleccionarLocal');
 
   // Keyboard shortcut: Cmd+L / Ctrl+L to toggle location switcher
   useEffect(() => {

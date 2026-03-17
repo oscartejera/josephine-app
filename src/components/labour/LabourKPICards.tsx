@@ -75,7 +75,7 @@ function SourceBadge({ source }: { source: 'payroll' | 'schedule' }) {
         : t("labour.estimatedFromSchedules")}
     >
       <span>{isPayroll ? '✓' : '~'}</span>
-      {isPayroll ? 'Nómina' : 'Estimado'}
+      {isPayroll ? t('labour.nomina') : 'Estimado'}
     </span>
   );
 }
@@ -286,7 +286,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
                 : kpis.prime_cost_pct <= 65 ? "bg-amber-100 text-amber-700"
                   : "bg-red-100 text-red-700"
             )}>
-              {kpis.prime_cost_pct <= 60 ? '✓ Óptimo' : kpis.prime_cost_pct <= 65 ? '~ Vigilar' : '✗ Alto'}
+              {kpis.prime_cost_pct <= 60 ? t('labour.optimo') : kpis.prime_cost_pct <= 65 ? '~ Vigilar' : '✗ Alto'}
             </span>
           </div>
 

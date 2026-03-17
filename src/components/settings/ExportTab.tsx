@@ -74,7 +74,7 @@ export function ExportTab() {
                         </Button>
                     </Card>
                     <Card className="p-4">
-                        <h3 className="font-medium mb-2">Empleados</h3>
+                        <h3 className="font-medium mb-2">{t('settings.empleados')}</h3>
                         <p className="text-sm text-muted-foreground mb-4">{t("settings.employeeList")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('employees')}>
                             <Download className="h-4 w-4 mr-2" />
@@ -82,7 +82,7 @@ export function ExportTab() {
                         </Button>
                     </Card>
                     <Card className="p-4">
-                        <h3 className="font-medium mb-2">Inventario</h3>
+                        <h3 className="font-medium mb-2">{t('onboarding.inventario')}</h3>
                         <p className="text-sm text-muted-foreground mb-4">{t("settings.inventoryItems")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('inventory')}>
                             <Download className="h-4 w-4 mr-2" />

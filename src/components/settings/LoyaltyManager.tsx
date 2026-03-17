@@ -329,7 +329,7 @@ export function LoyaltyManager() {
           <TabsList>
             <TabsTrigger value="members">Miembros</TabsTrigger>
             <TabsTrigger value="rewards">Recompensas</TabsTrigger>
-            <TabsTrigger value="settings">Configuración</TabsTrigger>
+            <TabsTrigger value="settings">{t('settings.configuracion2')}</TabsTrigger>
           </TabsList>
 
           {/* Members Tab */}
@@ -533,7 +533,7 @@ export function LoyaltyManager() {
       <Dialog open={showMemberDialog} onOpenChange={setShowMemberDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingMember ? 'Editar Miembro' : 'Nuevo Miembro'}</DialogTitle>
+            <DialogTitle>{editingMember ? t('settings.editarMiembro') : 'Nuevo Miembro'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -541,7 +541,7 @@ export function LoyaltyManager() {
               <Input
                 value={memberForm.name}
                 onChange={(e) => setMemberForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="Nombre completo"
+                placeholder=t('settings.nombreCompleto')
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -579,7 +579,7 @@ export function LoyaltyManager() {
             </Button>
             <Button onClick={handleSaveMember} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              {editingMember ? 'Guardar' : 'Crear'}
+              {editingMember ? t('settings.guardar') : t('settings.crear')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -589,7 +589,7 @@ export function LoyaltyManager() {
       <Dialog open={showRewardDialog} onOpenChange={setShowRewardDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingReward ? 'Editar Recompensa' : 'Nueva Recompensa'}</DialogTitle>
+            <DialogTitle>{editingReward ? t('settings.editarRecompensa') : 'Nueva Recompensa'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -601,7 +601,7 @@ export function LoyaltyManager() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Descripción</Label>
+              <Label>{t('settings.descripcion')}</Label>
               <Textarea
                 value={rewardForm.description}
                 onChange={(e) => setRewardForm((p) => ({ ...p, description: e.target.value }))}
@@ -660,7 +660,7 @@ export function LoyaltyManager() {
             </Button>
             <Button onClick={handleSaveReward} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              {editingReward ? 'Guardar' : 'Crear'}
+              {editingReward ? t('settings.guardar') : t('settings.crear')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -698,7 +698,7 @@ export function LoyaltyManager() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Descripción</Label>
+              <Label>{t('settings.descripcion')}</Label>
               <Input
                 value={pointsForm.description}
                 onChange={(e) => setPointsForm((p) => ({ ...p, description: e.target.value }))}

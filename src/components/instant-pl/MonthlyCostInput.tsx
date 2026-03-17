@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
 const COGS_CATEGORIES = [
-    { key: 'food', label: 'Alimentación', icon: '🍖', description: 'Materias primas' },
+    { key: 'food', label: t('common.alimentacion'), icon: '🍖', description: 'Materias primas' },
     { key: 'beverage', label: 'Bebidas', icon: '🍷', description: 'Vinos, refrescos, café' },
     { key: 'packaging', label: 'Packaging', icon: '📦', description: 'Envases, bolsas, cajas' },
     { key: 'supplies', label: 'Suministros', icon: '🧴', description: 'Limpieza, desechables' },
@@ -163,7 +163,7 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
 
                         {/* Total row */}
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                            <span className="text-sm font-semibold text-gray-700">Total COGS</span>
+                            <span className="text-sm font-semibold text-gray-700">{t('common.totalCogs')}</span>
                             <span className="text-lg font-bold text-gray-900">
                                 {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalCogs)}
                             </span>
@@ -180,7 +180,7 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
                                     : "bg-indigo-600 hover:bg-indigo-700"
                             )}
                         >
-                            {saving ? 'Guardando...' : saved ? '✓ Guardado' : 'Guardar COGS'}
+                            {saving ? 'Guardando...' : saved ? '✓ Guardado' : t('common.guardarCogs')}
                         </Button>
                     </>
                 )}

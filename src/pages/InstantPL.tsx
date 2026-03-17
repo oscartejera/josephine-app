@@ -103,7 +103,7 @@ export default function InstantPL() {
           variant="outline"
           size="sm"
           onClick={() => {
-            const orgName = group?.name || 'Restaurante';
+            const orgName = group?.name || t('settings.restaurante');
             const period = format(dateRange.from, 'MMMM yyyy', { locale: es });
             const dateRangeStr = `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`;
             const totalSales = locations.reduce((s, l) => s + (l.salesActual || 0), 0);

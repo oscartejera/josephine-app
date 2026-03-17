@@ -209,7 +209,7 @@ export default function Dashboard() {
               <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-300">KPIs temporalmente no disponibles</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">{kpiError instanceof Error ? kpiError.message : 'Error al cargar indicadores'}</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400">{kpiError instanceof Error ? kpiError.message : t('dashboard.errorAlCargarIndicadores')}</p>
               </div>
               <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetch()}>
                 Reintentar

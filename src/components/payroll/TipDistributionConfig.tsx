@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 const DISTRIBUTION_METHODS = [
     { value: 'hours_worked', label: 'Por horas trabajadas', description: 'Proporcional a las horas de cada persona' },
     { value: 'equal_split', label: 'Reparto equitativo', description: 'Igual para todos los que trabajaron' },
-    { value: 'role_weighted', label: 'Por rol/puesto', description: 'Pesos diferentes según el puesto' },
+    { value: 'role_weighted', label: 'Por rol/puesto', description: t('payroll.pesosDiferentesSegunElPuesto') },
 ] as const;
 
 interface TipDistributionConfigProps {
@@ -138,9 +138,9 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
     if (!effectiveLocationId) {
         return (
             <Card className={cn("bg-white", className)}>
-                <CardHeader><CardTitle className="text-base">💰 Distribución de Propinas</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t('payroll.distribucionDePropinas')}</CardTitle></CardHeader>
                 <CardContent>
-                    <p className="text-sm text-gray-500 text-center py-4">Selecciona una ubicación</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('payroll.seleccionaUnaUbicacion')}</p>
                 </CardContent>
             </Card>
         );
@@ -151,7 +151,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">💰 Distribución de Propinas</CardTitle>
+                        <CardTitle className="text-base font-semibold">{t('payroll.distribucionDePropinas')}</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">Configura reglas y distribuye propinas</p>
                     </div>
                     {result && (
@@ -165,7 +165,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
                 {/* Input row */}
                 <div className="grid grid-cols-3 gap-3">
                     <div>
-                        <Label className="text-xs font-medium text-gray-600">Fecha</Label>
+                        <Label className="text-xs font-medium text-gray-600">{t('ai.fecha')}</Label>
                         <Input
                             type="date"
                             value={tipDate}
@@ -174,7 +174,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
                         />
                     </div>
                     <div>
-                        <Label className="text-xs font-medium text-gray-600">Total Propinas</Label>
+                        <Label className="text-xs font-medium text-gray-600">{t('payroll.totalPropinas')}</Label>
                         <div className="relative mt-1">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
                             <Input
@@ -206,7 +206,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
 
                 {/* Method selector */}
                 <div className="space-y-2">
-                    <Label className="text-xs font-medium text-gray-600">Método de distribución</Label>
+                    <Label className="text-xs font-medium text-gray-600">{t('payroll.metodoDeDistribucion')}</Label>
                     <div className="grid grid-cols-3 gap-2">
                         {DISTRIBUTION_METHODS.map(m => (
                             <button

@@ -180,7 +180,7 @@ export function LocationManager() {
       if (error.code === '42501') {
         toast.error(t('locationManager.toastNoPermissions'));
       } else {
-        toast.error(error.message || 'Error al crear el local');
+        toast.error(error.message || t('settings.errorAlCrearElLocal'));
       }
     } finally {
       setLoading(false);
@@ -469,7 +469,7 @@ export function LocationManager() {
 
       // Build success message
       const parts: string[] = [];
-      if (copiedItems.settings) parts.push('configuración');
+      if (copiedItems.settings) parts.push(t('settings.configuracion'));
       if (copiedItems.products > 0) parts.push(`${copiedItems.products} productos`);
       if (copiedItems.employees > 0) parts.push(`${copiedItems.employees} empleados`);
       if (copiedItems.floorMaps > 0) parts.push(`${copiedItems.floorMaps} planos con ${copiedItems.tables} mesas`);
@@ -487,7 +487,7 @@ export function LocationManager() {
       window.location.reload();
     } catch (error: any) {
       console.error('Error duplicating location:', error);
-      toast.error(error.message || 'Error al duplicar el local');
+      toast.error(error.message || t('settings.errorAlDuplicarElLocal'));
     } finally {
       setLoading(false);
     }
@@ -519,7 +519,7 @@ export function LocationManager() {
       window.location.reload();
     } catch (error: any) {
       console.error('Error updating location:', error);
-      toast.error(error.message || 'Error al actualizar el local');
+      toast.error(error.message || t('settings.errorAlActualizarElLocal'));
     } finally {
       setLoading(false);
     }
@@ -547,7 +547,7 @@ export function LocationManager() {
       window.location.reload();
     } catch (error: any) {
       console.error('Error deleting location:', error);
-      toast.error(error.message || 'Error al eliminar el local');
+      toast.error(error.message || t('settings.errorAlEliminarElLocal'));
     } finally {
       setLoading(false);
     }
@@ -614,7 +614,7 @@ export function LocationManager() {
                   <Label htmlFor="name">{t("location.locationName")} *</Label>
                   <Input
                     id="name"
-                    placeholder="Ej: Restaurante Centro"
+                    placeholder=t('settings.ejRestauranteCentro')
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
@@ -676,7 +676,7 @@ export function LocationManager() {
                     <li>{t("settings.floorPlan5Tables")}</li>
                     <li>{t("settings.objectivesConfig")}</li>
                     <li>{t("settings.payrollConfig")}</li>
-                    <li>Conexión con POS y KDS</li>
+                    <li>{t('settings.conexionConPosYKds')}</li>
                   </ul>
                 </div>
               </div>
@@ -714,7 +714,7 @@ export function LocationManager() {
               <Label>{t("settings.sourceLocation")}</Label>
               <Select value={sourceLocationId} onValueChange={setSourceLocationId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el local a copiar" />
+                  <SelectValue placeholder=t('settings.seleccionaElLocalACopiar') />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map(loc => (
@@ -730,7 +730,7 @@ export function LocationManager() {
               <Label htmlFor="dup-name">{t("location.newLocationName")} *</Label>
               <Input
                 id="dup-name"
-                placeholder="Ej: Restaurante Centro 2"
+                placeholder=t('settings.ejRestauranteCentro2')
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -747,7 +747,7 @@ export function LocationManager() {
             </div>
 
             <div className="space-y-3">
-              <Label>¿Qué copiar?</Label>
+              <Label>{t('settings.queCopiar')}</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -827,7 +827,7 @@ export function LocationManager() {
               <TableHead>{t("common.city")}</TableHead>
               <TableHead>Zona Horaria</TableHead>
               <TableHead>Moneda</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead className="text-right">{t('settings.acciones')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -890,7 +890,7 @@ export function LocationManager() {
                           onClick={() => handleEditLocation(loc.id)}
                           disabled={loading}
                         >
-                          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar'}
+                          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('settings.guardar')}
                         </Button>
                       </>
                     ) : (
@@ -937,7 +937,7 @@ export function LocationManager() {
                                 <ul className="list-disc list-inside text-sm">
                                   <li>{t("settings.allTicketsAndSales")}</li>
                                   <li>{t("settings.assignedEmployees")}</li>
-                                  <li>Turnos, horarios y nóminas</li>
+                                  <li>{t('settings.turnosHorariosYNominas')}</li>
                                   <li>{t("settings.inventoryAndOrders")}</li>
                                   <li>{t("settings.tablesAndFloorPlans")}</li>
                                 </ul>

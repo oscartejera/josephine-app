@@ -244,7 +244,7 @@ export default function PayrollInputs({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Empleado</TableHead>
+                <TableHead>{t('payroll.empleado')}</TableHead>
                 <TableHead className="text-right">H. Regulares</TableHead>
                 <TableHead className="text-right">H. Nocturnas</TableHead>
                 <TableHead className="text-right">H. Festivos</TableHead>

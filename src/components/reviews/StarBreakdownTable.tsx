@@ -28,7 +28,7 @@ export function StarBreakdownTable({ data, isLoading }: StarBreakdownTableProps)
             <thead>
               <tr className="border-b border-border/60">
                 <th className="text-left text-xs font-medium text-muted-foreground pb-2 pr-4">Rating</th>
-                <th className="text-right text-xs font-medium text-muted-foreground pb-2 pr-4 w-24">Total ratings</th>
+                <th className="text-right text-xs font-medium text-muted-foreground pb-2 pr-4 w-24">{t('reviews.totalRatings2')}</th>
                 <th className="text-left text-xs font-medium text-muted-foreground pb-2 w-48">% of rating</th>
               </tr>
             </thead>

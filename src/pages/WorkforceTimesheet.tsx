@@ -138,7 +138,7 @@ const ROLE_LABELS: Record<string, string> = {
     owner: 'Propietario', admin: 'Administrador', ops_manager: 'Gerente Ops',
     store_manager: 'Gerente Local', manager: 'Encargado/a', waiter: 'Camarero/a',
     cook: 'Cocinero/a', bartender: 'Barista', host: 'Hostess',
-    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: 'Empleado',
+    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: t('payroll.empleado'),
 };
 
 // ─── Main Component ─────────────────────────────────────
@@ -373,8 +373,8 @@ export default function WorkforceTimesheet() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                         {isToday(weekStart) || (weekStart <= new Date() && new Date() <= weekEnd)
-                            ? 'Semana actual'
-                            : format(weekStart, "'Semana del' d 'de' MMMM", { locale: es })}
+                            ? t('team.semanaActual')
+                            : format(weekStart, "t('team.semanaDel') d 'de' MMMM", { locale: es })}
                     </p>
                 </div>
                 <Button variant="outline" size="icon" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>

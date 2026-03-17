@@ -38,10 +38,10 @@ const PLANS: Plan[] = [
         icon: Zap,
         color: 'text-gray-500',
         features: [
-            '1 ubicación',
-            'Dashboard básico',
-            'Ventas e inventario',
-            'Hasta 30 días de histórico',
+            t('pricing.1Ubicacion'),
+            t('pricing.dashboardBasico'),
+            t('pricing.ventasEInventario'),
+            t('pricing.hasta30DiasDeHistorico'),
             'Soporte por email',
         ],
     },
@@ -60,8 +60,8 @@ const PLANS: Plan[] = [
             'Auto-scheduling',
             'Josephine Chat AI',
             'Procurement AI',
-            'Histórico ilimitado',
-            'Exportar CSV/PDF',
+            t('pricing.historicoIlimitado'),
+            t('pricing.exportarCsvpdf'),
             'Soporte prioritario',
         ],
     },
@@ -143,7 +143,7 @@ export default function Pricing() {
             }
         } catch (err: any) {
             console.error('Stripe checkout error:', err);
-            toast.error(`Error: ${err?.message || 'Error al conectar con Stripe'}`);
+            toast.error(`Error: ${err?.message || t('pricing.errorAlConectarConStripe')}`);
         } finally {
             setLoading(null);
         }
@@ -169,7 +169,7 @@ export default function Pricing() {
                         >
                             {plan.highlighted && (
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                                    <Badge className="bg-violet-600 text-white">Más Popular</Badge>
+                                    <Badge className="bg-violet-600 text-white">{t('pricing.masPopular')}</Badge>
                                 </div>
                             )}
                             <CardHeader className="text-center pb-2">
@@ -219,16 +219,16 @@ export default function Pricing() {
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
                     <div>
-                        <p className="font-medium">¿Puedo cambiar de plan en cualquier momento?</p>
-                        <p className="text-muted-foreground">Sí. Los upgrades son inmediatos y los downgrades se aplican al final del período.</p>
+                        <p className="font-medium">{t('pricing.puedoCambiarDePlanEn')}</p>
+                        <p className="text-muted-foreground">{t('pricing.siLosUpgradesSonInmediatos')}</p>
                     </div>
                     <div>
-                        <p className="font-medium">¿Hay período de prueba?</p>
+                        <p className="font-medium">{t('pricing.hayPeriodoDePrueba')}</p>
                         <p className="text-muted-foreground">El plan Starter es gratuito para siempre. Pro y Enterprise tienen 14 días de prueba gratis.</p>
                     </div>
                     <div>
-                        <p className="font-medium">¿Cómo funciona la facturación?</p>
-                        <p className="text-muted-foreground">Cobramos mensualmente via Stripe. Recibirás factura automáticamente.</p>
+                        <p className="font-medium">{t('pricing.comoFuncionaLaFacturacion')}</p>
+                        <p className="text-muted-foreground">{t('pricing.cobramosMensualmenteViaStripeRecibiras')}</p>
                     </div>
                 </CardContent>
             </Card>

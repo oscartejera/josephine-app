@@ -137,7 +137,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
               <SelectContent>
                 <SelectItem value="Pescados y Mariscos">Pescados y Mariscos</SelectItem>
                 <SelectItem value="Carnes">Carnes</SelectItem>
-                <SelectItem value="Charcutería">Charcutería</SelectItem>
+                <SelectItem value=t('inventory.charcuteria')>{t('inventory.charcuteria')}</SelectItem>
                 <SelectItem value="Verduras">Verduras</SelectItem>
                 <SelectItem value="Secos">Secos</SelectItem>
                 <SelectItem value="Aceites">Aceites</SelectItem>
@@ -145,7 +145,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
                 <SelectItem value="Vinos">Vinos</SelectItem>
                 <SelectItem value="Refrescos">Refrescos</SelectItem>
                 <SelectItem value="Limpieza">Limpieza</SelectItem>
-                <SelectItem value="Papelería">Papelería</SelectItem>
+                <SelectItem value=t('inventory.papeleria')>{t('inventory.papeleria')}</SelectItem>
                 <SelectItem value="Desechables">Desechables</SelectItem>
               </SelectContent>
             </Select>

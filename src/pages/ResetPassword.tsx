@@ -37,7 +37,7 @@ export default function ResetPassword() {
       toast({
         variant: "destructive",
         title: t("common.error"),
-        description: "Las contraseñas no coinciden"
+        description: t('auth.lasContrasenasNoCoinciden')
       });
       return;
     }
@@ -46,7 +46,7 @@ export default function ResetPassword() {
       toast({
         variant: "destructive",
         title: t("common.error"),
-        description: "La contraseña debe tener al menos 6 caracteres"
+        description: t('auth.laContrasenaDebeTenerAl')
       });
       return;
     }
@@ -100,7 +100,7 @@ export default function ResetPassword() {
               <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-6 h-6 text-primary" />
               </div>
-              <CardTitle className="text-2xl font-display">Contraseña actualizada</CardTitle>
+              <CardTitle className="text-2xl font-display">{t('auth.contrasenaActualizada')}</CardTitle>
               <CardDescription>{t("auth.passwordChanged")}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -122,13 +122,13 @@ export default function ResetPassword() {
             <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
               <ChefHat className="w-6 h-6 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl font-display">Nueva contraseña</CardTitle>
+            <CardTitle className="text-2xl font-display">{t('auth.nuevaContrasena')}</CardTitle>
             <CardDescription>{t("auth.enterNewPassword")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Nueva contraseña</Label>
+                <Label htmlFor="password">{t('auth.nuevaContrasena')}</Label>
                 <Input
                   id="password"
                   type="password"

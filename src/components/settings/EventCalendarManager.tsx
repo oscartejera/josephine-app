@@ -151,7 +151,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
 
             {/* Events list */}
             {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Cargando eventos...</div>
+                <div className="text-center py-8 text-muted-foreground">{t('settings.cargandoEventos')}</div>
             ) : events.length === 0 ? (
                 <Card><CardContent className="py-8 text-center">
                     <CalendarDays className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
@@ -174,7 +174,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                             <p className="text-xs text-muted-foreground">
                                                 {format(new Date(event.event_date), "d MMM yyyy", { locale: es })}
                                                 {event.city && ` · ${event.city}`}
-                                                {event.recurrence !== 'none' && ` · ${event.recurrence === 'yearly' ? 'Anual' : event.recurrence}`}
+                                                {event.recurrence !== 'none' && ` · ${event.recurrence === 'yearly' ? t('settings.anual') : event.recurrence}`}
                                             </p>
                                         </div>
                                     </div>
@@ -212,7 +212,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                 <Select value={impactMultiplier} onValueChange={setImpactMultiplier}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="0.50">-50% (cerrado/mínimo)</SelectItem>
+                                        <SelectItem value="0.50">{t('settings.50Cerradominimo')}</SelectItem>
                                         <SelectItem value="0.70">-30%</SelectItem>
                                         <SelectItem value="0.80">-20%</SelectItem>
                                         <SelectItem value="0.90">-10%</SelectItem>
@@ -231,9 +231,9 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">Una vez</SelectItem>
-                                        <SelectItem value="weekly">Semanal</SelectItem>
-                                        <SelectItem value="monthly">Mensual</SelectItem>
-                                        <SelectItem value="yearly">Anual</SelectItem>
+                                        <SelectItem value="weekly">{t('settings.semanal')}</SelectItem>
+                                        <SelectItem value="monthly">{t('settings.mensual')}</SelectItem>
+                                        <SelectItem value="yearly">{t('settings.anual')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -243,7 +243,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !eventName.trim() || !eventDate}>
-                            {submitting ? 'Guardando...' : 'Guardar'}
+                            {submitting ? 'Guardando...' : t('settings.guardar')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

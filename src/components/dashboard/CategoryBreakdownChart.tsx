@@ -88,7 +88,7 @@ export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProp
     <Card className={className}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Ventas por Categoría</CardTitle>
+          <CardTitle className="text-lg">{t('dashboard.ventasPorCategoria')}</CardTitle>
           <span className="text-sm text-muted-foreground">
             Total: {formatCurrency(totalSales)}
           </span>

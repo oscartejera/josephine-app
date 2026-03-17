@@ -331,7 +331,7 @@ export default function AdminTools() {
                   <Database className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">30 Días Rápido</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('admin.30DiasRapido')}</h3>
                   <p className="text-sm text-gray-600 mt-1">
                     Para testing rápido
                   </p>
@@ -341,7 +341,7 @@ export default function AdminTools() {
               <div className="space-y-2 text-sm text-gray-700">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-emerald-600" />
-                  <span>Últimos 30 días con actuals</span>
+                  <span>{t('admin.ultimos30DiasConActuals')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -398,7 +398,7 @@ export default function AdminTools() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {seedResult.period && (
                   <div>
-                    <span className="text-gray-600">Periodo:</span>
+                    <span className="text-gray-600">{t('admin.periodo')}</span>
                     <span className="font-semibold ml-2">{seedResult.period}</span>
                   </div>
                 )}
@@ -475,7 +475,7 @@ export default function AdminTools() {
 
                 {forecastResult.results && forecastResult.results.length > 0 && (
                   <div className="bg-white rounded-lg p-3 space-y-2">
-                    <p className="font-medium text-gray-900 text-sm">Resultados por location:</p>
+                    <p className="font-medium text-gray-900 text-sm">{t('admin.resultadosPorLocation')}</p>
                     {forecastResult.results.map((r: any, i: number) => (
                       <div key={i} className="text-xs space-y-1 border-b border-gray-100 pb-2 last:border-0">
                         <p className="font-semibold text-gray-900">{r.location_name}</p>
@@ -487,7 +487,7 @@ export default function AdminTools() {
                         </div>
                         {r.sample_forecast && r.sample_forecast.length > 0 && (
                           <div className="mt-2 bg-gray-50 p-2 rounded">
-                            <p className="font-medium mb-1">Próximos 7 días:</p>
+                            <p className="font-medium mb-1">{t('admin.proximos7Dias')}</p>
                             {r.sample_forecast.slice(0, 3).map((f: any, j: number) => (
                               <div key={j} className="text-[10px] text-gray-600">
                                 {f.date}: €{f.forecast.toFixed(0)} - {f.explanation}
@@ -562,7 +562,7 @@ export default function AdminTools() {
 
                 {v5Result.results && v5Result.results.length > 0 && (
                   <div className="bg-white rounded-lg p-3 space-y-3">
-                    <p className="font-medium text-gray-900 text-sm">Resultados por location:</p>
+                    <p className="font-medium text-gray-900 text-sm">{t('admin.resultadosPorLocation')}</p>
                     {v5Result.results.map((r: any, i: number) => (
                       <div key={i} className="text-xs space-y-2 border-b border-gray-100 pb-3 last:border-0">
                         <p className="font-semibold text-gray-900 text-sm">{r.location_name}</p>
@@ -654,7 +654,7 @@ export default function AdminTools() {
                 <ol className="list-decimal list-inside space-y-1 text-gray-600">
                   <li>Ir a Supabase Dashboard → SQL Editor</li>
                   <li>Ejecutar: <code className="bg-gray-100 px-1 rounded">SELECT * FROM seed_josephine_demo_data();</code></li>
-                  <li>O usar el botón "30 Días Rápido" arriba</li>
+                  <li>{t('admin.oUsarElBoton30')}</li>
                 </ol>
               </div>
             </div>
@@ -670,7 +670,7 @@ export default function AdminTools() {
           <div>
             <p className="font-medium text-gray-900 mb-1">📊 18 Meses (Recomendado para demos):</p>
             <ul className="list-disc list-inside space-y-1 ml-4 text-gray-600">
-              <li>Todo 2025 con datos históricos (baseline)</li>
+              <li>{t('admin.todo2025ConDatosHistoricos')}</li>
               <li>Enero-Febrero 2026 con actuals</li>
               <li>Marzo-Junio 2026 con forecast</li>
               <li>Permite comparaciones YoY (vs Last Year)</li>
@@ -679,9 +679,9 @@ export default function AdminTools() {
           </div>
 
           <div>
-            <p className="font-medium text-gray-900 mb-1">⚡ 30 Días (Para testing rápido):</p>
+            <p className="font-medium text-gray-900 mb-1">{t('admin.30DiasParaTestingRapido')}</p>
             <ul className="list-disc list-inside space-y-1 ml-4 text-gray-600">
-              <li>Últimos 30 días con actuals</li>
+              <li>{t('admin.ultimos30DiasConActuals')}</li>
               <li>Suficiente para ver todas las funcionalidades</li>
               <li>~4,680 registros, tarda 30 segundos</li>
               <li>Ideal para desarrollo y testing</li>
@@ -691,9 +691,9 @@ export default function AdminTools() {
           <div className="pt-3 border-t">
             <p className="font-medium text-gray-900 mb-1">⚠️ Importante:</p>
             <ul className="list-disc list-inside space-y-1 ml-4 text-gray-600">
-              <li>Esto borrará datos demo previos</li>
+              <li>{t('admin.estoBorraraDatosDemoPrevios')}</li>
               <li>NO afecta datos reales de POS conectados</li>
-              <li>Solo borra locations: "La Taberna Centro", "Chamberí", "Malasaña"</li>
+              <li>Solo borra locations: "La Taberna Centro", t('admin.chamberi'), t('admin.malasana')</li>
               <li>Puedes regenerar cuantas veces necesites</li>
             </ul>
           </div>
@@ -709,8 +709,8 @@ export default function AdminTools() {
             <h4 className="font-medium text-gray-900 mb-2">Master Data:</h4>
             <ul className="space-y-1 text-sm text-gray-700">
               <li>✓ 3 Locations (Madrid + Salamanca)</li>
-              <li>✓ 70 Empleados con roles realistas</li>
-              <li>✓ 10 Productos del menú español</li>
+              <li>{t('admin.70EmpleadosConRolesRealistas')}</li>
+              <li>{t('admin.10ProductosDelMenuEspanol')}</li>
             </ul>
           </div>
 
@@ -718,9 +718,9 @@ export default function AdminTools() {
             <h4 className="font-medium text-gray-900 mb-2">Facts Data:</h4>
             <ul className="space-y-1 text-sm text-gray-700">
               <li>✓ facts_sales_15m (cada 15min)</li>
-              <li>✓ facts_labor_daily (por día)</li>
+              <li>{t('admin.factslabordailyPorDia')}</li>
               <li>✓ Patrones realistas (weekends, peaks)</li>
-              <li>✓ Coherencia matemática garantizada</li>
+              <li>{t('admin.coherenciaMatematicaGarantizada')}</li>
             </ul>
           </div>
         </div>

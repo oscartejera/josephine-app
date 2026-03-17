@@ -42,7 +42,7 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
             <Card className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-semibold text-gray-700">Forecast por Hora</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">{t('forecast.forecastPorHora')}</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
                     No hay datos horarios disponibles para esta fecha.
@@ -71,7 +71,7 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-indigo-500" />
-                    <h3 className="text-sm font-semibold text-gray-700">Forecast por Hora</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">{t('forecast.forecastPorHora')}</h3>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
@@ -108,7 +108,7 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
                                         <p className="font-semibold mb-1">{d.hour}</p>
                                         <p>Forecast: <strong>€{d.sales.toLocaleString('es-ES')}</strong></p>
                                         <p>Mix: <strong>{d.mix.toFixed(1)}%</strong></p>
-                                        {d.isPeak && <p className="text-indigo-600 font-medium">Hora punta</p>}
+                                        {d.isPeak && <p className="text-indigo-600 font-medium">{t('forecast.horaPunta')}</p>}
                                     </div>
                                 );
                             }}

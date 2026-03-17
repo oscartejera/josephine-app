@@ -103,8 +103,8 @@ export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-violet-500" />
-                    <h3 className="text-sm font-semibold text-gray-700">Tendencia de Precisión</h3>
-                    <span className="text-xs text-muted-foreground">(últimos 90 días)</span>
+                    <h3 className="text-sm font-semibold text-gray-700">{t('forecast.tendenciaDePrecision')}</h3>
+                    <span className="text-xs text-muted-foreground">{t('forecast.ultimos90Dias')}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                     <span className="text-muted-foreground">

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 const staffNavItems = [
   { icon: Map, label: 'Mesas', path: 'floor' },
   { icon: Clock, label: 'Fichaje', path: 'clock' },
-  { icon: KDSIcon, label: 'Cocina', path: 'kds' },
+  { icon: KDSIcon, label: t('scheduling.cocina'), path: 'kds' },
 ];
 
 export function StaffLayout() {
@@ -34,10 +34,10 @@ export function StaffLayout() {
       ops_manager: 'Gerente de Operaciones',
       store_manager: 'Gerente de Local',
       finance: 'Finanzas',
-      hr_payroll: 'RRHH / Nóminas',
-      employee: 'Empleado',
+      hr_payroll: t('team.rrhhNominas'),
+      employee: t('payroll.empleado'),
     };
-    return role ? labels[role] || role : 'Empleado';
+    return role ? labels[role] || role : t('payroll.empleado');
   };
 
   const NavContent = () => (
@@ -84,7 +84,7 @@ export function StaffLayout() {
       <div className="border-t border-border p-4">
         <div className="mb-3">
           <p className="text-sm font-medium truncate">
-            {profile?.full_name || 'Usuario'}
+            {profile?.full_name || t('settings.usuario')}
           </p>
           <p className="text-xs text-muted-foreground">
             {getRoleLabel(primaryRole)}

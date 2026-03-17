@@ -37,8 +37,8 @@ const CERT_TYPES = [
     { value: 'food_safety', label: 'Seguridad Alimentaria' },
     { value: 'alcohol', label: 'Servicio de Alcohol' },
     { value: 'first_aid', label: 'Primeros Auxilios' },
-    { value: 'fire', label: 'Prevención de Incendios' },
-    { value: 'allergen', label: 'Alérgenos' },
+    { value: 'fire', label: t('team.prevencionDeIncendios') },
+    { value: 'allergen', label: t('team.alergenos') },
     { value: 'haccp', label: 'HACCP/APPCC' },
     { value: 'custom', label: 'Otro' },
 ];
@@ -48,7 +48,7 @@ function getStatusBadge(status: string, expiryDate: string | null) {
     const daysLeft = differenceInDays(new Date(expiryDate), new Date());
     if (daysLeft < 0) return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Caducado</Badge>;
     if (daysLeft < 30) return <Badge className="bg-amber-500"><Clock className="h-3 w-3 mr-1" />Caduca en {daysLeft}d</Badge>;
-    return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />Válido</Badge>;
+    return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />{t('team.valido')}</Badge>;
 }
 
 export function TrainingTracker({ locationId }: { locationId: string | null }) {
@@ -172,7 +172,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-green-600">{records.length - expiredCount - expiringCount}</p>
-                    <p className="text-xs text-muted-foreground">Válidos</p>
+                    <p className="text-xs text-muted-foreground">{t('team.validos')}</p>
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-amber-600">{expiringCount}</p>
@@ -186,7 +186,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
 
             {/* Records list */}
             {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+                <div className="text-center py-8 text-muted-foreground">{t('settings.cargando')}</div>
             ) : records.length === 0 ? (
                 <Card><CardContent className="py-8 text-center">
                     <Shield className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
@@ -251,7 +251,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !selectedEmployee || !certName.trim()}>
-                            {submitting ? 'Guardando...' : 'Guardar'}
+                            {submitting ? 'Guardando...' : t('settings.guardar')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

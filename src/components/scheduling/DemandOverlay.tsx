@@ -25,7 +25,7 @@ interface DemandOverlayProps {
   scheduledHoursPerDay?: number[];
 }
 
-const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const DAY_LABELS = ['Lun', 'Mar', t('scheduling.mie'), 'Jue', 'Vie', t('scheduling.sab'), 'Dom'];
 
 export function DemandOverlay({ locationId, weekStart, scheduledHoursPerDay }: DemandOverlayProps) {
   const { t } = useTranslation();

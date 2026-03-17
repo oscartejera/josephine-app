@@ -329,7 +329,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   <Package className="h-4 w-4 shrink-0" />
                   {!collapsed && (
                     <>
-                      <span className="flex-1 text-left">Gestión de Coste</span>
+                      <span className="flex-1 text-left">{t('common.gestionDeCoste')}</span>
                       <ChevronDown className={cn(
                         "h-4 w-4 shrink-0 transition-transform duration-200",
                         costExpanded && "rotate-180"
@@ -378,7 +378,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                     onClick={() => navigate('/inventory-setup/menu-items')}
                   >
                     <UtensilsCrossed className="h-4 w-4 shrink-0" />
-                    <span>Carta del Menú</span>
+                    <span>{t('common.cartaDelMenu')}</span>
                   </Button>
                 )}
 
@@ -539,7 +539,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               onClick={() => navigate('/settings/billing')}
             >
               <CreditCard className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Facturación</span>}
+              {!collapsed && <span>{t('common.facturacion')}</span>}
             </Button>
           )}
         </nav>

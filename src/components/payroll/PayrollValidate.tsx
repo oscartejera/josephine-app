@@ -74,8 +74,8 @@ export default function PayrollValidate({
     
     results.push({
       id: 'nif',
-      category: 'Datos Legales',
-      description: 'Empleados con NIF',
+      category: t('payroll.datosLegales'),
+      description: t('payroll.empleadosConNif'),
       severity: critSeverity,
       status: missingNif.length === 0 ? 'pass' : 'fail',
       details: missingNif.length > 0 ? `${missingNif.length} empleado(s) sin NIF${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
@@ -84,8 +84,8 @@ export default function PayrollValidate({
     
     results.push({
       id: 'nss',
-      category: 'Datos Legales',
-      description: 'Empleados con NSS',
+      category: t('payroll.datosLegales'),
+      description: t('payroll.empleadosConNss'),
       severity: critSeverity,
       status: missingNss.length === 0 ? 'pass' : 'fail',
       details: missingNss.length > 0 ? `${missingNss.length} empleado(s) sin NSS${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
@@ -94,8 +94,8 @@ export default function PayrollValidate({
     
     results.push({
       id: 'iban',
-      category: 'Datos Bancarios',
-      description: 'Empleados con IBAN',
+      category: t('payroll.datosBancarios'),
+      description: t('payroll.empleadosConIban'),
       severity: 'warning',
       status: missingIban.length === 0 ? 'pass' : 'fail',
       details: missingIban.length > 0 ? `${missingIban.length} empleado(s) sin IBAN (no se podrá generar SEPA)` : undefined,
@@ -179,7 +179,7 @@ export default function PayrollValidate({
     results.push({
       id: 'ccc',
       category: 'Entidad',
-      description: 'Código Cuenta Cotización',
+      description: t('payroll.codigoCuentaCotizacion'),
       severity: critSeverity,
       status: hasCCC ? 'pass' : 'fail',
       details: !hasCCC ? `Entidad sin CCC${isSandboxMode ? ' (sandbox: presentaciones se simularán)' : ''}` : undefined,
@@ -195,8 +195,8 @@ export default function PayrollValidate({
     if (criticalFails.length > 0) {
       toast({ 
         variant: 'destructive', 
-        title: 'Validación fallida', 
-        description: 'Hay errores críticos que deben resolverse antes de continuar' 
+        title: t('payroll.validacionFallida'), 
+        description: t('payroll.hayErroresCriticosQueDeben') 
       });
       return;
     }
@@ -219,7 +219,7 @@ export default function PayrollValidate({
     await refreshData();
     setValidating(false);
     
-    toast({ title: 'Validación completada', description: 'Puedes proceder al cálculo' });
+    toast({ title: t('payroll.validacionCompletada'), description: t('payroll.puedesProcederAlCalculo') });
     navigate('/payroll/calculate');
   };
 
@@ -234,7 +234,7 @@ export default function PayrollValidate({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold">Validación Pre-Cálculo</h2>
+              <h2 className="text-lg font-semibold">{t('payroll.validacionPrecalculo')}</h2>
               <p className="text-sm text-muted-foreground">
                 {passCount} de {validations.length} comprobaciones pasadas
               </p>
@@ -261,9 +261,9 @@ export default function PayrollValidate({
                   {severity === 'critical' && <XCircle className="h-5 w-5 text-destructive" />}
                   {severity === 'warning' && <AlertTriangle className="h-5 w-5 text-warning" />}
                   {severity === 'info' && <CheckCircle className="h-5 w-5 text-info" />}
-                  {severity === 'critical' && 'Crítico'}
+                  {severity === 'critical' && t('payroll.critico')}
                   {severity === 'warning' && 'Advertencias'}
-                  {severity === 'info' && 'Información'}
+                  {severity === 'info' && t('settings.informacion')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -324,7 +324,7 @@ export default function PayrollValidate({
           onClick={handleValidate}
           disabled={criticalFails.length > 0 || validating}
         >
-          {criticalFails.length > 0 ? 'Resolver errores críticos' : 'Validar y Continuar'}
+          {criticalFails.length > 0 ? t('payroll.resolverErroresCriticos') : 'Validar y Continuar'}
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>

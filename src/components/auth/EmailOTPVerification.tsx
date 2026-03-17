@@ -62,7 +62,7 @@ export function EmailOTPVerification({
       if (error) throw error;
 
       toast({
-        title: "Código enviado",
+        title: t('auth.codigoEnviado'),
         description: `Hemos enviado un código de 6 dígitos a ${email}`
       });
     } catch (error: any) {
@@ -88,8 +88,8 @@ export function EmailOTPVerification({
     if (code.length !== 6) {
       toast({
         variant: "destructive",
-        title: "Código incompleto",
-        description: "Por favor ingresa el código de 6 dígitos"
+        title: t('auth.codigoIncompleto'),
+        description: t('auth.porFavorIngresaElCodigo')
       });
       return;
     }
@@ -105,8 +105,8 @@ export function EmailOTPVerification({
       if (verifyError || !verifyData?.valid) {
         toast({
           variant: "destructive",
-          title: "Código inválido",
-          description: "El código es incorrecto o ha expirado"
+          title: t('auth.codigoInvalido'),
+          description: t('auth.elCodigoEsIncorrectoO')
         });
         setLoading(false);
         return;
@@ -138,7 +138,7 @@ export function EmailOTPVerification({
       }
 
       toast({
-        title: "Cuenta creada",
+        title: t('auth.cuentaCreada'),
         description: "Tu cuenta ha sido verificada y creada exitosamente."
       });
 

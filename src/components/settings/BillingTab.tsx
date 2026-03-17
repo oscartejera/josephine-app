@@ -22,10 +22,10 @@ const PLAN_META: Record<string, { label: string; icon: typeof Zap; color: string
 const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   active: { label: 'Activa', variant: 'default' },
   trialing: { label: 'Prueba gratis', variant: 'secondary' },
-  past_due: { label: 'Pago pendiente', variant: 'destructive' },
+  past_due: { label: t('settings.pagoPendiente'), variant: 'destructive' },
   canceled: { label: 'Cancelada', variant: 'destructive' },
   incomplete: { label: 'Incompleta', variant: 'outline' },
-  none: { label: 'Sin suscripción', variant: 'outline' },
+  none: { label: t('settings.sinSuscripcion'), variant: 'outline' },
 };
 
 export function BillingTab() {
@@ -48,7 +48,7 @@ export function BillingTab() {
       });
 
       if (error || data?.error) {
-        toast.error(data?.error || error?.message || 'No se pudo abrir el portal de facturación');
+        toast.error(data?.error || error?.message || t('settings.noSePudoAbrirEl'));
         return;
       }
 
@@ -56,7 +56,7 @@ export function BillingTab() {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Error al conectar con Stripe');
+      toast.error(err?.message || t('pricing.errorAlConectarConStripe'));
     } finally {
       setPortalLoading(false);
     }
@@ -75,7 +75,7 @@ export function BillingTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Estado:</span>
+            <span className="text-sm text-muted-foreground">{t('settings.estado')}</span>
             <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
           </div>
 

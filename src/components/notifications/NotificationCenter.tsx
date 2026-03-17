@@ -54,7 +54,7 @@ export function NotificationCenter() {
             {unreadCount > 0 && (
               <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-8 px-2">
                 <CheckCheck className="h-4 w-4 mr-1" />
-                <span className="text-xs">Marcar leídas</span>
+                <span className="text-xs">{t('notifications.marcarLeidas')}</span>
               </Button>
             )}
             {notifications.length > 0 && (

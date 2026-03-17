@@ -225,7 +225,7 @@ export default function Payroll() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold">Nóminas</h1>
+          <h1 className="text-2xl font-display font-bold">{t('payroll.nominas')}</h1>
           <p className="text-muted-foreground">
             Gestión de nóminas y presentaciones oficiales (España)
           </p>

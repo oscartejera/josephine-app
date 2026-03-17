@@ -1,0 +1,1378 @@
+{
+  "lib/onboardingTemplates.ts": [
+    {
+      "line": 36,
+      "text": "Restaurante Español"
+    },
+    {
+      "line": 37,
+      "text": "Tapas, raciones y menú del día"
+    },
+    {
+      "line": 41,
+      "text": "Tortilla Española"
+    },
+    {
+      "line": 43,
+      "text": "Croquetas de Jamón"
+    },
+    {
+      "line": 46,
+      "text": "Jamón Ibérico"
+    },
+    {
+      "line": 49,
+      "text": "Pimientos de Padrón"
+    },
+    {
+      "line": 56,
+      "text": "Secreto Ibérico"
+    },
+    {
+      "line": 66,
+      "text": "Cerveza Caña"
+    },
+    {
+      "line": 69,
+      "text": "Sangría (jarra)"
+    },
+    {
+      "line": 70,
+      "text": "Café Solo"
+    },
+    {
+      "line": 71,
+      "text": "Café con Leche"
+    },
+    {
+      "line": 76,
+      "text": "Lácteos"
+    },
+    {
+      "line": 78,
+      "text": "Azafrán"
+    },
+    {
+      "line": 83,
+      "text": "Jamón Ibérico"
+    },
+    {
+      "line": 86,
+      "text": "Jefe de Cocina"
+    },
+    {
+      "line": 88,
+      "text": "Ayudante de Cocina"
+    },
+    {
+      "line": 96,
+      "text": "Cafetería"
+    },
+    {
+      "line": 97,
+      "text": "Cafés, desayunos y meriendas"
+    },
+    {
+      "line": 101,
+      "text": "Café Solo"
+    },
+    {
+      "line": 101,
+      "text": "Cafés"
+    },
+    {
+      "line": 102,
+      "text": "Café con Leche"
+    },
+    {
+      "line": 102,
+      "text": "Cafés"
+    },
+    {
+      "line": 103,
+      "text": "Cafés"
+    },
+    {
+      "line": 104,
+      "text": "Cafés"
+    },
+    {
+      "line": 105,
+      "text": "Cafés"
+    },
+    {
+      "line": 106,
+      "text": "Cafés"
+    },
+    {
+      "line": 107,
+      "text": "Té / Infusión"
+    },
+    {
+      "line": 107,
+      "text": "Cafés"
+    },
+    {
+      "line": 118,
+      "text": "Bocadillo de Jamón"
+    },
+    {
+      "line": 121,
+      "text": "Tarta del Día"
+    },
+    {
+      "line": 131,
+      "text": "Café en Grano"
+    },
+    {
+      "line": 132,
+      "text": "Lácteos"
+    },
+    {
+      "line": 133,
+      "text": "Lácteos"
+    },
+    {
+      "line": 135,
+      "text": "Bollería"
+    },
+    {
+      "line": 137,
+      "text": "Lácteos"
+    },
+    {
+      "line": 138,
+      "text": "Lácteos"
+    },
+    {
+      "line": 154,
+      "text": "Caña"
+    },
+    {
+      "line": 156,
+      "text": "Cerveza Botellín"
+    },
+    {
+      "line": 174,
+      "text": "Café"
+    },
+    {
+      "line": 187,
+      "text": "Tónica (pack 24)"
+    },
+    {
+      "line": 200,
+      "text": "Combos, burgers y comida rápida"
+    },
+    {
+      "line": 204,
+      "text": "Hamburguesa Clásica"
+    },
+    {
+      "line": 210,
+      "text": "Combo Clásico"
+    },
+    {
+      "line": 221,
+      "text": "Refresco Pequeño"
+    },
+    {
+      "line": 233,
+      "text": "Lácteos"
+    },
+    {
+      "line": 263,
+      "text": "España (Península)"
+    },
+    {
+      "line": 264,
+      "text": "España (Canarias)"
+    },
+    {
+      "line": 270,
+      "text": "México"
+    },
+    {
+      "line": 277,
+      "text": "$ Dólar"
+    }
+  ],
+  "lib/supplierTemplates.ts": [
+    {
+      "line": 31,
+      "text": "Lácteos"
+    },
+    {
+      "line": 32,
+      "text": "Panadería"
+    },
+    {
+      "line": 34,
+      "text": "Café"
+    },
+    {
+      "line": 62,
+      "text": "Sysco España"
+    },
+    {
+      "line": 103,
+      "text": "Heineken España"
+    },
+    {
+      "line": 132,
+      "text": "Pernod Ricard España"
+    },
+    {
+      "line": 144,
+      "text": "Lácteos"
+    },
+    {
+      "line": 154,
+      "text": "Lácteos"
+    },
+    {
+      "line": 164,
+      "text": "Lácteos"
+    },
+    {
+      "line": 173,
+      "text": "Lácteos"
+    },
+    {
+      "line": 184,
+      "text": "Panadería"
+    },
+    {
+      "line": 194,
+      "text": "Panadería"
+    },
+    {
+      "line": 203,
+      "text": "Panadería"
+    },
+    {
+      "line": 243,
+      "text": "Nestlé Professional"
+    },
+    {
+      "line": 244,
+      "text": "Café"
+    },
+    {
+      "line": 253,
+      "text": "Lavazza España"
+    },
+    {
+      "line": 254,
+      "text": "Café"
+    },
+    {
+      "line": 262,
+      "text": "Cafés Candelas"
+    },
+    {
+      "line": 263,
+      "text": "Café"
+    },
+    {
+      "line": 271,
+      "text": "Illy España"
+    },
+    {
+      "line": 272,
+      "text": "Café"
+    },
+    {
+      "line": 282,
+      "text": "Grupo Norteños"
+    },
+    {
+      "line": 285,
+      "text": "norteños.es"
+    },
+    {
+      "line": 286,
+      "text": "pedidos@norteños.es"
+    },
+    {
+      "line": 291,
+      "text": "Frigoríficos Costa Brava"
+    },
+    {
+      "line": 311,
+      "text": "Mercabarna Distribución"
+    },
+    {
+      "line": 317,
+      "text": "Cataluña"
+    },
+    {
+      "line": 317,
+      "text": "Aragón"
+    },
+    {
+      "line": 321,
+      "text": "Agrícola Famosa"
+    },
+    {
+      "line": 345,
+      "text": "Agrícola Famosa"
+    },
+    {
+      "line": 346,
+      "text": "Nestlé Professional"
+    },
+    {
+      "line": 346,
+      "text": "Lavazza España"
+    },
+    {
+      "line": 347,
+      "text": "Heineken España"
+    },
+    {
+      "line": 348,
+      "text": "Sysco España"
+    }
+  ],
+  "pages/PrivacyPolicy.tsx": [
+    {
+      "line": 33,
+      "text": "Política de Privacidad"
+    },
+    {
+      "line": 34,
+      "text": "Última actualización: Marzo 2025"
+    },
+    {
+      "line": 52,
+      "text": "2. Datos que recopilamos"
+    },
+    {
+      "line": 54,
+      "text": "Datos de cuenta:"
+    },
+    {
+      "line": 54,
+      "text": "nombre, email, contraseña (hash)."
+    },
+    {
+      "line": 55,
+      "text": "Datos del negocio:"
+    },
+    {
+      "line": 56,
+      "text": "Datos de uso:"
+    },
+    {
+      "line": 56,
+      "text": "páginas visitadas, acciones realizadas (solo con consentimiento)."
+    },
+    {
+      "line": 57,
+      "text": "Datos técnicos:"
+    },
+    {
+      "line": 57,
+      "text": "dirección IP, navegador, dispositivo."
+    },
+    {
+      "line": 64,
+      "text": "Ejecución del contrato:"
+    },
+    {
+      "line": 65,
+      "text": "para cookies analíticas y de marketing."
+    },
+    {
+      "line": 66,
+      "text": "Interés legítimo:"
+    },
+    {
+      "line": 74,
+      "text": "necesarias para la autenticación y funcionamiento. No requieren consentimiento."
+    },
+    {
+      "line": 75,
+      "text": "Analíticas:"
+    },
+    {
+      "line": 75,
+      "text": "miden el uso de la aplicación para mejorarla. Requieren consentimiento."
+    },
+    {
+      "line": 89,
+      "text": "Rectificación:"
+    },
+    {
+      "line": 90,
+      "text": "Supresión:"
+    },
+    {
+      "line": 90,
+      "text": "solicitar la eliminación de tus datos (\"derecho al olvido\")."
+    },
+    {
+      "line": 92,
+      "text": "Oposición:"
+    },
+    {
+      "line": 93,
+      "text": "Limitación:"
+    },
+    {
+      "line": 106,
+      "text": "6. Retención de datos"
+    }
+  ],
+  "components/settings/DataSourceSettings.tsx": [
+    {
+      "line": 96,
+      "text": "No se pudo guardar la configuración de fuente de datos."
+    },
+    {
+      "line": 101,
+      "text": "Configuración de fuente de datos actualizada."
+    },
+    {
+      "line": 110,
+      "text": "Error inesperado al guardar."
+    },
+    {
+      "line": 138,
+      "text": "Datos POS (sincronización reciente)"
+    },
+    {
+      "line": 139,
+      "text": "Datos Demo (sin sincronización reciente)"
+    },
+    {
+      "line": 140,
+      "text": "Demo (selección manual)"
+    },
+    {
+      "line": 141,
+      "text": "Datos POS (selección manual)"
+    },
+    {
+      "line": 143,
+      "text": "Datos POS (detección automática legacy)"
+    },
+    {
+      "line": 144,
+      "text": "Datos Demo (sin conexión POS)"
+    },
+    {
+      "line": 145,
+      "text": "Datos Demo (error de detección)"
+    },
+    {
+      "line": 146,
+      "text": "Datos Demo (sin sesión)"
+    },
+    {
+      "line": 147,
+      "text": "Cargando..."
+    },
+    {
+      "line": 211,
+      "text": "Usa datos POS si hay una sincronización en las últimas 24h, si no datos demo."
+    },
+    {
+      "line": 212,
+      "text": "Elige manualmente qué fuente de datos usar."
+    }
+  ],
+  "lib/demoDataGenerator.ts": [
+    {
+      "line": 89,
+      "text": "María García"
+    },
+    {
+      "line": 89,
+      "text": "Carlos López"
+    },
+    {
+      "line": 89,
+      "text": "Ana Martínez"
+    },
+    {
+      "line": 89,
+      "text": "José Rodríguez"
+    },
+    {
+      "line": 90,
+      "text": "Laura Sánchez"
+    },
+    {
+      "line": 90,
+      "text": "Miguel Fernández"
+    },
+    {
+      "line": 91,
+      "text": "Elena Díaz"
+    },
+    {
+      "line": 91,
+      "text": "Isabel Jiménez"
+    },
+    {
+      "line": 92,
+      "text": "Lucía Navarro"
+    },
+    {
+      "line": 133,
+      "text": "Café con Leche"
+    },
+    {
+      "line": 136,
+      "text": "Croquetas Jamón"
+    },
+    {
+      "line": 139,
+      "text": "Jamón Ibérico"
+    },
+    {
+      "line": 144,
+      "text": "Secreto Ibérico"
+    }
+  ],
+  "lib/pricing-omnes-engine.ts": [
+    {
+      "line": 278,
+      "text": "Rango de precios demasiado amplio (ratio > 3.0). Riesgo de percepción incoherente."
+    },
+    {
+      "line": 279,
+      "text": "Banda media débil. Mover productos hacia precios intermedios."
+    },
+    {
+      "line": 280,
+      "text": "Demasiados productos en banda baja. Riesgo de canibalización."
+    },
+    {
+      "line": 282,
+      "text": "Clientes eligen platos más baratos (ratio ${cr.ratio}). Revisar percepción de valor."
+    },
+    {
+      "line": 283,
+      "text": "Clientes pagan más que la media de carta (ratio ${cr.ratio}). Oportunidad de subida."
+    },
+    {
+      "line": 344,
+      "text": "Ratio ${result.price_range_ratio} (< 2.5). Añadir opciones premium o de entrada para ampli"
+    },
+    {
+      "line": 351,
+      "text": "Reducir dispersión de precios"
+    },
+    {
+      "line": 369,
+      "text": "Reducir concentración en banda baja"
+    },
+    {
+      "line": 370,
+      "text": "${result.lower_band_pct}% de productos en banda baja. Riesgo de canibalización y márgenes "
+    },
+    {
+      "line": 377,
+      "text": "Reducir concentración en banda alta"
+    },
+    {
+      "line": 387,
+      "text": "Revisar percepción de precio"
+    },
+    {
+      "line": 388,
+      "text": "Ratio ${result.category_ratio} (< 0.90). Los clientes eligen platos más baratos. Revisar p"
+    },
+    {
+      "line": 396,
+      "text": "Ratio ${result.category_ratio} (> 1.00). Clientes dispuestos a pagar más. Considerar subid"
+    }
+  ],
+  "components/payroll/PayrollValidate.tsx": [
+    {
+      "line": 81,
+      "text": " (sandbox: se usarán valores estimados)"
+    },
+    {
+      "line": 81,
+      "text": "${missingNif.length} empleado(s) sin NIF${isSandboxMode ? ' (sandbox: se usarán valores es"
+    },
+    {
+      "line": 91,
+      "text": " (sandbox: se usarán valores estimados)"
+    },
+    {
+      "line": 91,
+      "text": "${missingNss.length} empleado(s) sin NSS${isSandboxMode ? ' (sandbox: se usarán valores es"
+    },
+    {
+      "line": 101,
+      "text": "${missingIban.length} empleado(s) sin IBAN (no se podrá generar SEPA)"
+    },
+    {
+      "line": 125,
+      "text": " (sandbox: se usarán salarios del convenio)"
+    },
+    {
+      "line": 125,
+      "text": "${missingContract.length} empleado(s) sin contrato activo${isSandboxMode ? ' (sandbox: se "
+    },
+    {
+      "line": 171,
+      "text": " (sandbox: se usarán horas de contrato)"
+    },
+    {
+      "line": 171,
+      "text": "No hay variables cargadas${isSandboxMode ? ' (sandbox: se usarán horas de contrato)' : ''}"
+    },
+    {
+      "line": 185,
+      "text": " (sandbox: presentaciones se simularán)"
+    },
+    {
+      "line": 185,
+      "text": "Entidad sin CCC${isSandboxMode ? ' (sandbox: presentaciones se simularán)' : ''}"
+    }
+  ],
+  "components/dashboard/ExecutiveBriefing.tsx": [
+    {
+      "line": 59,
+      "text": "Revisa la distribución de turnos en ${loc.name} para esta semana. Objetivo: ${locTarget}%."
+    },
+    {
+      "line": 66,
+      "text": "Ventas ${salesVar.toFixed(0)}% por debajo del presupuesto"
+    },
+    {
+      "line": 68,
+      "text": "Evalúa acciones comerciales en ${loc.name}: promociones, eventos o ajustes de carta para r"
+    },
+    {
+      "line": 78,
+      "text": "⚠️ ${loc.name}: coste laboral +${labourVar.toFixed(0)}% sobre presupuesto. Revisa horas ex"
+    },
+    {
+      "line": 99,
+      "text": "El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (Labor €${Math.round(totalLa"
+    },
+    {
+      "line": 106,
+      "text": "No se han registrado ventas. Verifica la conexión POS o que los datos estén sincronizados."
+    },
+    {
+      "line": 108,
+      "text": "⚠️ Sin datos de ventas: revisa que el POS esté conectado y sincronizando correctamente. Si"
+    },
+    {
+      "line": 112,
+      "text": "Todos los locales operan dentro de los márgenes objetivo. Excelente jornada."
+    },
+    {
+      "line": 116,
+      "text": "No se requieren ajustes inmediatos. Mantén la estrategia actual."
+    },
+    {
+      "line": 241,
+      "text": "Verifica que los datos de ventas y labor estén sincronizados."
+    }
+  ],
+  "components/settings/LocationWizard.tsx": [
+    {
+      "line": 72,
+      "text": "España (Madrid)"
+    },
+    {
+      "line": 74,
+      "text": "Francia (París)"
+    },
+    {
+      "line": 75,
+      "text": "Alemania (Berlín)"
+    },
+    {
+      "line": 77,
+      "text": "EEUU (Los Ángeles)"
+    },
+    {
+      "line": 78,
+      "text": "México (Ciudad de México)"
+    },
+    {
+      "line": 83,
+      "text": "$ Dólar"
+    },
+    {
+      "line": 337,
+      "text": "${template.name} ya está en tu lista"
+    },
+    {
+      "line": 348,
+      "text": "${template.name} añadido"
+    },
+    {
+      "line": 537,
+      "text": "¡Local \"${basicInfo.name}\" creado con ${selectedProducts.length} productos, ${tables.lengt"
+    },
+    {
+      "line": 1071,
+      "text": "Nombre *"
+    }
+  ],
+  "pages/OnboardingWizardV2.tsx": [
+    {
+      "line": 39,
+      "text": "Aquí tienes el menú principal. Navega entre las distintas secciones de Josephine."
+    },
+    {
+      "line": 45,
+      "text": "El Control Tower es tu centro de mando. Aquí ves un resumen de todo tu negocio."
+    },
+    {
+      "line": 50,
+      "text": "Las tarjetas KPI muestran métricas clave: ventas, personal, costes y previsiones."
+    },
+    {
+      "line": 55,
+      "text": "En Insights encontrarás análisis detallados: ventas, personal, P&L, reseñas, inventario y "
+    },
+    {
+      "line": 60,
+      "text": "Workforce gestiona tu equipo: turnos, fichajes, onboarding y más."
+    },
+    {
+      "line": 138,
+      "text": "${pos === 'square' ? 'Square' : 'Lightspeed'} seleccionado. Lo conectaremos después."
+    },
+    {
+      "line": 297,
+      "text": "Square (se conectará al finalizar)"
+    },
+    {
+      "line": 298,
+      "text": "Lightspeed (se conectará al finalizar)"
+    },
+    {
+      "line": 447,
+      "text": "Siguiente"
+    }
+  ],
+  "components/integrations/SyncSplashScreen.tsx": [
+    {
+      "line": 13,
+      "text": "Calculando cuántas servilletas necesitas mañana..."
+    },
+    {
+      "line": 14,
+      "text": "Analizando por qué todos piden postre los viernes..."
+    },
+    {
+      "line": 15,
+      "text": "Prediciendo la próxima tendencia gastronómica..."
+    },
+    {
+      "line": 17,
+      "text": "Tu sous-chef digital está calentando motores..."
+    },
+    {
+      "line": 18,
+      "text": "Optimizando el flujo de la cocina con matemáticas..."
+    },
+    {
+      "line": 20,
+      "text": "La IA ya sabe qué van a pedir antes que ellos..."
+    },
+    {
+      "line": 21,
+      "text": "Sincronizando datos más rápido que un camarero veterano..."
+    },
+    {
+      "line": 22,
+      "text": "Procesando números como si fueran mise en place..."
+    }
+  ],
+  "components/ai/JosephineChat.tsx": [
+    {
+      "line": 27,
+      "text": "¿Cuál es el coste de personal actual vs el presupuesto? ¿Estamos dentro del objetivo?"
+    },
+    {
+      "line": 28,
+      "text": "¿Qué ingredientes están por debajo del nivel mínimo y necesito pedir?"
+    },
+    {
+      "line": 29,
+      "text": "Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predicción para"
+    },
+    {
+      "line": 44,
+      "text": "¡Hola! 👋 Soy **Josephine**, tu asistente de operaciones. Pregúntame sobre ventas, persona"
+    },
+    {
+      "line": 86,
+      "text": "No he podido obtener la información en este momento. Intenta de nuevo."
+    },
+    {
+      "line": 122,
+      "text": "No se pudo conectar con el asistente AI. Verifica que OPENAI_API_KEY esté configurado en S"
+    },
+    {
+      "line": 122,
+      "text": "⚠️ Error: ${err.message || 'No se pudo conectar con el asistente AI. Verifica que OPENAI_A"
+    }
+  ],
+  "components/settings/LocationManager.tsx": [
+    {
+      "line": 35,
+      "text": "España (Madrid)"
+    },
+    {
+      "line": 37,
+      "text": "Francia (París)"
+    },
+    {
+      "line": 38,
+      "text": "Alemania (Berlín)"
+    },
+    {
+      "line": 40,
+      "text": "EEUU (Los Ángeles)"
+    },
+    {
+      "line": 41,
+      "text": "México (Ciudad de México)"
+    },
+    {
+      "line": 46,
+      "text": "$ Dólar (USD)"
+    }
+  ],
+  "lib/data-generator/year-data-generator.ts": [
+    {
+      "line": 114,
+      "text": "Jamón Ibérico"
+    },
+    {
+      "line": 115,
+      "text": "Croquetas de Jamón"
+    },
+    {
+      "line": 116,
+      "text": "Chuletón de Buey"
+    },
+    {
+      "line": 119,
+      "text": "Tortilla Española"
+    },
+    {
+      "line": 303,
+      "text": "Salmón"
+    },
+    {
+      "line": 303,
+      "text": "Jamón"
+    }
+  ],
+  "pages/integrations/SquareIntegration.tsx": [
+    {
+      "line": 55,
+      "text": "La sincronización está tardando demasiado. Verifica el historial en unos minutos."
+    },
+    {
+      "line": 104,
+      "text": "Procesando datos..."
+    },
+    {
+      "line": 302,
+      "text": "Sincronización inicial en curso..."
+    },
+    {
+      "line": 354,
+      "text": "Cargando tus datos de Square..."
+    },
+    {
+      "line": 475,
+      "text": "Ya hay una sincronización activa. Espera a que termine."
+    },
+    {
+      "line": 672,
+      "text": "Sincronización en curso..."
+    }
+  ],
+  "pages/DataImport.tsx": [
+    {
+      "line": 68,
+      "text": "Fecha (requerido)"
+    },
+    {
+      "line": 69,
+      "text": "Ventas Netas (requerido)"
+    },
+    {
+      "line": 200,
+      "text": "Fecha inválida: \"${row[dateIdx]}\""
+    },
+    {
+      "line": 209,
+      "text": "Ventas netas inválidas: \"${row[salesIdx]}\""
+    },
+    {
+      "line": 418,
+      "text": "Importar"
+    }
+  ],
+  "components/bi/AskJosephinePanel.tsx": [
+    {
+      "line": 166,
+      "text": "¿Por qué las ventas están por encima/debajo del forecast?"
+    },
+    {
+      "line": 167,
+      "text": "¿Cuáles son los principales drivers de ventas?"
+    },
+    {
+      "line": 168,
+      "text": "¿Qué productos están underperforming?"
+    },
+    {
+      "line": 169,
+      "text": "¿Cómo podemos mejorar el ticket medio?"
+    }
+  ],
+  "components/InsightErrorBoundary.tsx": [
+    {
+      "line": 88,
+      "text": "${this.props.pageName} — Error al cargar datos"
+    },
+    {
+      "line": 92,
+      "text": "Reintento automático ${this.state.retryCount + 1} de ${MAX_RETRIES}…"
+    },
+    {
+      "line": 96,
+      "text": "Los reintentos automáticos se agotaron. Puedes reintentar manualmente."
+    },
+    {
+      "line": 97,
+      "text": "Se produjo un error inesperado al cargar esta sección."
+    }
+  ],
+  "components/inventory/AskJosephineDrawer.tsx": [
+    {
+      "line": 75,
+      "text": "¿Por qué mi COGS actual está por encima del teórico?"
+    },
+    {
+      "line": 76,
+      "text": "¿Cuáles son las principales fuentes de merma?"
+    },
+    {
+      "line": 77,
+      "text": "¿Qué categoría tiene mayor varianza?"
+    },
+    {
+      "line": 113,
+      "text": "Analiza mi situación actual de inventario y dame un resumen ejecutivo con los puntos clave"
+    }
+  ],
+  "components/labour/AskJosephineLabourPanel.tsx": [
+    {
+      "line": 180,
+      "text": "¿Por qué el COL% está por encima/debajo del objetivo?"
+    },
+    {
+      "line": 181,
+      "text": "¿Qué locations necesitan ajustes de staffing?"
+    },
+    {
+      "line": 182,
+      "text": "¿Cómo puedo mejorar el SPLH en las peores locations?"
+    },
+    {
+      "line": 183,
+      "text": "¿Cuánto podría ahorrar optimizando turnos?"
+    }
+  ],
+  "components/payroll/PayrollCalculate.tsx": [
+    {
+      "line": 103,
+      "text": "No hay nómina iniciada para este período. Vuelve a Inicio y pulsa "
+    },
+    {
+      "line": 119,
+      "text": "Se han calculado ${result.employees_calculated || 0} nóminas. Total neto: €${result.totals"
+    },
+    {
+      "line": 126,
+      "text": "Error al calcular nóminas."
+    },
+    {
+      "line": 244,
+      "text": "Calcular Nóminas"
+    }
+  ],
+  "components/sales/AskJosephineSalesDrawer.tsx": [
+    {
+      "line": 48,
+      "text": "¿Por qué bajaron las ventas el miércoles?"
+    },
+    {
+      "line": 49,
+      "text": "¿Qué canal está teniendo mejor desempeño?"
+    },
+    {
+      "line": 51,
+      "text": "¿Cómo está el ticket promedio comparado con forecast?"
+    },
+    {
+      "line": 83,
+      "text": "Analiza mi situación actual de ventas y dame un resumen ejecutivo con los puntos clave y r"
+    }
+  ],
+  "hooks/useSchedulingSupabase.ts": [
+    {
+      "line": 558,
+      "text": "0 horas: No hay ventas proyectadas cargadas para esta semana."
+    },
+    {
+      "line": 562,
+      "text": "0 horas: No hay empleados activos asignados a este local."
+    },
+    {
+      "line": 639,
+      "text": "${dayISO}: El presupuesto (Target COL% ${targetCol}%) es demasiado bajo para cubrir un tur"
+    },
+    {
+      "line": 652,
+      "text": "${dayISO}: No hay empleados disponibles."
+    }
+  ],
+  "pages/Settings/DataPrivacySection.tsx": [
+    {
+      "line": 77,
+      "text": "No se pudieron exportar los datos. Inténtalo de nuevo."
+    },
+    {
+      "line": 100,
+      "text": "Tu cuenta se eliminará en 30 días. Puedes cancelar desde este panel."
+    },
+    {
+      "line": 107,
+      "text": "No se pudo procesar la solicitud. Inténtalo de nuevo."
+    },
+    {
+      "line": 141,
+      "text": "Analíticas: ${currentConsent.analytics ? 'Sí' : 'No'} · Marketing: ${currentConsent.market"
+    }
+  ],
+  "components/auth/EmailOTPVerification.tsx": [
+    {
+      "line": 66,
+      "text": "Hemos enviado un código de 6 dígitos a ${email}"
+    },
+    {
+      "line": 73,
+      "text": "No se pudo enviar el código. Intenta de nuevo."
+    },
+    {
+      "line": 151,
+      "text": "Ocurrió un error al verificar. Intenta de nuevo."
+    }
+  ],
+  "hooks/useGlobalRealtimeNotifications.ts": [
+    {
+      "line": 76,
+      "text": "Ventas diarias de €${amount.toFixed(2)}"
+    },
+    {
+      "line": 98,
+      "text": "${item.name} está por debajo del nivel PAR (${item.current_stock}/${item.par_level})"
+    },
+    {
+      "line": 135,
+      "text": "El pedido cambió a estado: ${statusLabels[order.status || ''] || order.status}"
+    }
+  ],
+  "pages/inventory-setup/RecipesPage.tsx": [
+    {
+      "line": 58,
+      "text": "Receta \"${newRecipe.menu_item_name}\" creada"
+    },
+    {
+      "line": 68,
+      "text": "¿Eliminar la receta \"${name}\"?"
+    },
+    {
+      "line": 71,
+      "text": "Receta \"${name}\" eliminada"
+    }
+  ],
+  "pages/KioskMode.tsx": [
+    {
+      "line": 147,
+      "text": "No se pudo acceder a la cámara. Permite el acceso para fichar."
+    },
+    {
+      "line": 228,
+      "text": "PIN no reconocido. Inténtalo de nuevo."
+    },
+    {
+      "line": 271,
+      "text": "Debes tomar una foto para fichar. Permite el acceso a la cámara."
+    }
+  ],
+  "pages/Reviews.tsx": [
+    {
+      "line": 148,
+      "text": "¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que disfrutas"
+    },
+    {
+      "line": 149,
+      "text": "Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opinión es mu"
+    },
+    {
+      "line": 150,
+      "text": "Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!"
+    }
+  ],
+  "pages/ReviewsAll.tsx": [
+    {
+      "line": 117,
+      "text": "¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que disfrutas"
+    },
+    {
+      "line": 118,
+      "text": "Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opinión es mu"
+    },
+    {
+      "line": 119,
+      "text": "Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!"
+    }
+  ],
+  "components/errors/ModuleErrorBoundary.tsx": [
+    {
+      "line": 81,
+      "text": "Reintentando automáticamente (${this.state.retryCount + 1}/${MAX_RETRIES})…"
+    },
+    {
+      "line": 83,
+      "text": "Los reintentos automáticos se agotaron."
+    }
+  ],
+  "components/inventory/AddItemDialog.tsx": [
+    {
+      "line": 110,
+      "text": "e.g., Salmón Fresco"
+    },
+    {
+      "line": 161,
+      "text": "e.g., Pescaderías del Norte"
+    }
+  ],
+  "components/inventory/AutoPurchaseOrder.tsx": [
+    {
+      "line": 70,
+      "text": "${result.length} items por debajo del nivel mínimo"
+    },
+    {
+      "line": 113,
+      "text": "Orden de compra creada con ${result.totalLines} líneas"
+    }
+  ],
+  "components/inventory/SmartCountingFlow.tsx": [
+    {
+      "line": 221,
+      "text": "Cantidad en ${current.unit}"
+    },
+    {
+      "line": 298,
+      "text": "Guardar ${countedCount} contajes"
+    }
+  ],
+  "components/payroll/PayrollHome.tsx": [
+    {
+      "line": 102,
+      "text": "${totalEmps - withIban} empleado(s) sin IBAN (no se podrá generar SEPA)"
+    },
+    {
+      "line": 279,
+      "text": "Selecciona entidad..."
+    }
+  ],
+  "components/settings/LoyaltyManager.tsx": [
+    {
+      "line": 204,
+      "text": "${pointsForm.points > 0 ? '+' : ''}${pointsForm.points} puntos añadidos"
+    },
+    {
+      "line": 600,
+      "text": "Café gratis, 10% descuento..."
+    }
+  ],
+  "components/settings/UsersRolesManager.tsx": [
+    {
+      "line": 180,
+      "text": "El rol \"${selectedRole?.name}\" requiere una ubicación específica"
+    },
+    {
+      "line": 505,
+      "text": " (requiere ubicación)"
+    }
+  ],
+  "hooks/useAIPredictiveOrdering.ts": [
+    {
+      "line": 74,
+      "text": "No hay datos de forecast. Usando estimación por defecto."
+    },
+    {
+      "line": 89,
+      "text": "No hay recetas configuradas."
+    }
+  ],
+  "lib/pdfReports.ts": [
+    {
+      "line": 120,
+      "text": "Periodo: ${data.period}"
+    },
+    {
+      "line": 230,
+      "text": "Periodo: ${data.period}"
+    }
+  ],
+  "pages/OnboardingChecklist.tsx": [
+    {
+      "line": 121,
+      "text": "Añade tus proveedores para activar Procurement (pedidos inteligentes)"
+    },
+    {
+      "line": 144,
+      "text": "✓ ${inventoryRes.count} artículos en catálogo"
+    }
+  ],
+  "pages/Scheduling.tsx": [
+    {
+      "line": 311,
+      "text": "} añadido${count > 1 ? "
+    },
+    {
+      "line": 311,
+      "text": "Auto-fill: ${count} turno${count > 1 ? 's' : ''} añadido${count > 1 ? 's' : ''}"
+    }
+  ],
+  "components/common/NoAccess.tsx": [
+    {
+      "line": 15,
+      "text": "No tienes permisos para ver esta página. Contacta a tu administrador si crees que esto es "
+    }
+  ],
+  "components/forecast/ForecastExplainDrawer.tsx": [
+    {
+      "line": 143,
+      "text": "Efecto del día de la semana (${format(parseISO(date), 'EEEE', { locale: es })})"
+    }
+  ],
+  "components/layout/DataSourceBadge.tsx": [
+    {
+      "line": 54,
+      "text": "Razón: ${reasonLabel}"
+    }
+  ],
+  "components/onboarding/OnboardingWizard.tsx": [
+    {
+      "line": 438,
+      "text": "Ej: Restaurantes García S.L."
+    }
+  ],
+  "components/payroll/PayrollEmployees.tsx": [
+    {
+      "line": 201,
+      "text": "Buscar empleado..."
+    }
+  ],
+  "components/pos/POSCashSession.tsx": [
+    {
+      "line": 122,
+      "text": "Introduce el efectivo contado para cerrar la sesión."
+    }
+  ],
+  "components/pos/POSQuickOrder.tsx": [
+    {
+      "line": 89,
+      "text": "Buscar producto..."
+    }
+  ],
+  "components/pricing-omnes/PricingOmnesTable.tsx": [
+    {
+      "line": 82,
+      "text": "Buscar..."
+    }
+  ],
+  "components/scheduling/CreateScheduleModal.tsx": [
+    {
+      "line": 22,
+      "text": "Respeta automáticamente las normas laborales, la disponibilidad del equipo y las regulacio"
+    }
+  ],
+  "components/scheduling/PublishModal.tsx": [
+    {
+      "line": 78,
+      "text": "Añade un mensaje con la notificación del horario..."
+    }
+  ],
+  "components/settings/BookingSettingsManager.tsx": [
+    {
+      "line": 441,
+      "text": "Información importante que los clientes deben saber..."
+    }
+  ],
+  "components/settings/TeamManager.tsx": [
+    {
+      "line": 185,
+      "text": "El rol \"${selectedRole.name}\" requiere una ubicación específica"
+    }
+  ],
+  "components/ui/DataSourceBadge.tsx": [
+    {
+      "line": 26,
+      "text": "Cargando..."
+    }
+  ],
+  "components/ui/DemoDataBanner.tsx": [
+    {
+      "line": 29,
+      "text": "Estás viendo datos de demostración. Conecta tu POS para ver datos reales."
+    }
+  ],
+  "pages/integrations/LightspeedIntegration.tsx": [
+    {
+      "line": 213,
+      "text": "¿Desconectar Lightspeed? Los datos sincronizados se mantendrán."
+    }
+  ],
+  "pages/inventory-setup/RecipeDetailPage.tsx": [
+    {
+      "line": 252,
+      "text": "Añadir Ingrediente"
+    }
+  ],
+  "pages/Pricing.tsx": [
+    {
+      "line": 227,
+      "text": "El plan Starter es gratuito para siempre. Pro y Enterprise tienen 14 días de prueba gratis"
+    }
+  ],
+  "pages/ResetPassword.tsx": [
+    {
+      "line": 27,
+      "text": "El enlace de recuperación ha expirado o es inválido. Por favor solicita uno nuevo."
+    }
+  ],
+  "pages/WorkforceTeam.tsx": [
+    {
+      "line": 317,
+      "text": "${form.full_name} añadido al equipo"
+    }
+  ]
+}

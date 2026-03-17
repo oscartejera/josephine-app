@@ -189,9 +189,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                     <h3 className="text-lg font-semibold">{t("workforce.teamPerformance")}</h3>
                 </div>
                 <Button size="sm" onClick={() => setDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Nueva Evaluación
-                </Button>
+                    <Plus className="h-4 w-4 mr-1" />{t('team.nuevaEvaluacion')}</Button>
             </div>
 
             {/* Team Summary */}
@@ -199,7 +197,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                 <Card>
                     <CardContent className="py-3 px-4 text-center">
                         <p className="text-2xl font-bold">{teamAvg > 0 ? teamAvg.toFixed(1) : '—'}</p>
-                        <p className="text-xs text-muted-foreground">Promedio Equipo</p>
+                        <p className="text-xs text-muted-foreground">{t('team.promedioEquipo')}</p>
                         {teamAvg > 0 && <StarRating value={Math.round(teamAvg)} size="sm" />}
                     </CardContent>
                 </Card>
@@ -264,7 +262,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Nueva Evaluación</DialogTitle>
+                        <DialogTitle>{t('team.nuevaEvaluacion')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
@@ -281,12 +279,12 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                         </Select>
 
                         <div>
-                            <label className="text-sm font-medium mb-1 block">Puntuación General</label>
+                            <label className="text-sm font-medium mb-1 block">{t('team.puntuacionGeneral')}</label>
                             <StarRating value={overallRating} onChange={setOverallRating} />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Categorías</label>
+                            <label className="text-sm font-medium">{t('team.categorias')}</label>
                             {REVIEW_CATEGORIES.map(cat => (
                                 <div key={cat.key} className="flex items-center justify-between">
                                     <span className="text-sm text-muted-foreground">{cat.label}</span>
@@ -306,7 +304,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !selectedEmployee}>
-                            {submitting ? 'Guardando...' : 'Guardar Evaluación'}
+                            {submitting ? 'Guardando...' : t('team.guardarEvaluacion')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

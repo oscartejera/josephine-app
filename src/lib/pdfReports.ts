@@ -7,6 +7,7 @@
  */
 
 import jsPDF from 'jspdf';
+import { useTranslation } from 'react-i18next';
 import autoTable from 'jspdf-autotable';
 
 // ── Josephine brand config ──
@@ -108,7 +109,7 @@ export interface PLData {
 export function generatePLReport(data: PLData): void {
     const doc = new jsPDF();
 
-    addHeader(doc, 'P&L — Cuenta de Resultados', data.dateRange, data.orgName);
+    addHeader(doc, t('common.plCuentaDeResultados'), data.dateRange, data.orgName);
 
     let y = 42;
 
@@ -124,7 +125,7 @@ export function generatePLReport(data: PLData): void {
         startY: y,
         head: [['INGRESOS', '', '']],
         body: [
-            ['Ventas Netas', '', fmt(data.revenue.netSales)],
+            [t('ai.ventasNetas'), '', fmt(data.revenue.netSales)],
             ['Otros Ingresos', '', fmt(data.revenue.otherIncome)],
             [{ content: 'TOTAL INGRESOS', styles: { fontStyle: 'bold' } }, '', { content: fmt(data.revenue.totalRevenue), styles: { fontStyle: 'bold' } }],
         ],
@@ -221,7 +222,7 @@ export interface PayrollData {
 export function generatePayrollReport(data: PayrollData): void {
     const doc = new jsPDF();
 
-    addHeader(doc, 'Informe de Nomina', data.dateRange, data.orgName);
+    addHeader(doc, t('common.informeDeNomina'), data.dateRange, data.orgName);
 
     let y = 42;
     doc.setFontSize(14);
@@ -231,7 +232,7 @@ export function generatePayrollReport(data: PayrollData): void {
 
     autoTable(doc, {
         startY: y,
-        head: [['Empleado', 'Puesto', 'Horas', 'Tarifa/h', 'Bruto', 'SS', 'Neto']],
+        head: [[t('payroll.empleado'), 'Puesto', 'Horas', 'Tarifa/h', 'Bruto', 'SS', 'Neto']],
         body: [
             ...data.employees.map(e => [
                 e.name, e.role,
@@ -301,7 +302,7 @@ export function generateWeeklySummaryReport(data: WeeklySummaryData): void {
     const doc = new jsPDF();
 
     const dateRange = `${new Date(data.weekStart).toLocaleDateString('es-ES')} - ${new Date(data.weekEnd).toLocaleDateString('es-ES')}`;
-    addHeader(doc, 'Resumen Semanal', dateRange, data.orgName);
+    addHeader(doc, t('common.resumenSemanal'), dateRange, data.orgName);
 
     let y = 42;
 
@@ -314,8 +315,8 @@ export function generateWeeklySummaryReport(data: WeeklySummaryData): void {
     autoTable(doc, {
         startY: y,
         body: [
-            ['Ventas Totales', fmt(data.totals.totalSales)],
-            ['Pedidos Totales', data.totals.totalOrders.toString()],
+            [t('common.ventasTotales'), fmt(data.totals.totalSales)],
+            [t('common.pedidosTotales'), data.totals.totalOrders.toString()],
             ['Ticket Medio', fmt(data.totals.avgCheck)],
             ['COGS', fmt(data.totals.totalCogs)],
             ['Coste de Personal', fmt(data.totals.totalLabour)],
@@ -333,12 +334,12 @@ export function generateWeeklySummaryReport(data: WeeklySummaryData): void {
     // Daily breakdown table
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Desglose Diario', 14, y);
+    doc.text(t('common.desgloseDiario'), 14, y);
     y += 8;
 
     autoTable(doc, {
         startY: y,
-        head: [['Dia', 'Ventas', 'Pedidos', 'Labor', 'COGS', 'Prime%']],
+        head: [['Dia', t('common.ventas'), t('ai.pedidos'), 'Labor', 'COGS', 'Prime%']],
         body: data.days.map(d => {
             const primePct = d.netSales > 0 ? ((d.labourCost + d.cogs) / d.netSales * 100) : 0;
             return [

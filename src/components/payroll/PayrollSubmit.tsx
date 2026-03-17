@@ -18,7 +18,7 @@ const AGENCIES = [
     nameKey: 'payroll.agencyTGSS', 
     descriptionKey: 'payroll.agencyTGSSDesc',
     regulation: 'LGSS Art. 22 + Orden ESS/484/2013',
-    filings: ['RLC - Liquidación Cotizaciones', 'RNT - Relación Nominal Trabajadores'],
+    filings: [t('payroll.rlcLiquidacionCotizaciones'), t('payroll.rntRelacionNominalTrabajadores')],
   },
   { 
     id: 'AEAT', 

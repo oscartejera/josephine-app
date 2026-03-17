@@ -133,7 +133,7 @@ export function POSQuickOrder({
       {/* Cart section */}
       <div className="w-80 flex flex-col bg-card">
         <div className="p-4 border-b">
-          <h3 className="font-semibold">Pedido Rápido</h3>
+          <h3 className="font-semibold">{t('pos.pedidoRapido')}</h3>
         </div>
 
         <ScrollArea className="flex-1">
