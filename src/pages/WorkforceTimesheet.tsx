@@ -736,7 +736,7 @@ export default function WorkforceTimesheet() {
                             <CardContent className="p-12 text-center">
                                 <CheckCircle2 className="h-12 w-12 text-emerald-500/40 mx-auto mb-3" />
                                 <p className="text-lg font-medium text-muted-foreground">{t('timesheet.noAnomalies')}</p>
-                                <p className="text-sm text-muted-foreground/60">{t("timesheet.noAlerts")}/p>
+                                <p className="text-sm text-muted-foreground/60">{t("timesheet.noAlerts")}</p>
                             </CardContent>
                         </Card>
                     )}
