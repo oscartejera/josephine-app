@@ -4,9 +4,9 @@ import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { useTranslation } from 'react-i18next';
 const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>{t('ui.checkbox.reactcomponentpropswithoutref')}<typeof CheckboxPrimitive.Root>
+  React.ElementRef<typeof CheckboxPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 >(({ className, ...props }, ref) => (
   <CheckboxPrimitive.Root
     ref={ref}

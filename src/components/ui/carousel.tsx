@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-import { useTranslation } from 'react-i18next';
 type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
 type CarouselOptions = UseCarouselParameters[0];
@@ -19,7 +18,8 @@ type CarouselProps = {
 };
 
 type CarouselContextProps = {
-  carouselRef: ReturnType<typeof useEmblaCarousel>{t('ui.carousel.0ApiReturntype')}<typeof useEmblaCarousel>[1];
+  carouselRef: ReturnType<typeof useEmblaCarousel>[0];
+  api: ReturnType<typeof useEmblaCarousel>[1];
   scrollPrev: () => void;
   scrollNext: () => void;
   canScrollPrev: boolean;
@@ -29,7 +29,6 @@ type CarouselContextProps = {
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
 
 function useCarousel() {
-  const { t } = useTranslation();
   const context = React.useContext(CarouselContext);
 
   if (!context) {
@@ -187,7 +186,7 @@ const CarouselPrevious = React.forwardRef<HTMLButtonElement, React.ComponentProp
         {...props}
       >
         <ArrowLeft className="h-4 w-4" />
-        <span className="sr-only">{t('ui.carousel.previousSlide')}</span>
+        <span className="sr-only">Previous slide</span>
       </Button>
     );
   },
@@ -215,7 +214,7 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ComponentProps<ty
         {...props}
       >
         <ArrowRight className="h-4 w-4" />
-        <span className="sr-only">{t('ui.carousel.nextSlide')}</span>
+        <span className="sr-only">Next slide</span>
       </Button>
     );
   },

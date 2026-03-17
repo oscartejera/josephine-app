@@ -12,12 +12,11 @@ import { Review } from '@/hooks/useReviewsData';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface ReviewCardProps {
   review: Review;
-  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => {t('reviews.ReviewCard.promise')}<string>;
-  onSubmit: (reviewId: string, replyText: string) => {t('reviews.ReviewCard.promise1')}<void>;
+  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => Promise<string>;
+  onSubmit: (reviewId: string, replyText: string) => Promise<void>;
 }
 
 const REFINE_OPTIONS = [
@@ -27,7 +26,6 @@ const REFINE_OPTIONS = [
 ];
 
 export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
-  const { t } = useTranslation();
   const [replyText, setReplyText] = useState(review.owner_reply?.text || '');
   const [isRefining, setIsRefining] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,9 +40,9 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
     try {
       const refined = await onRefine(review.id, tone, replyText || 'Thank you for your feedback!');
       setReplyText(refined);
-      toast.success(t('reviewCard.toastRefineSuccess'));
+      toast.success('Reply refined successfully');
     } catch (error) {
-      toast.error(t('reviewCard.toastRefineError'));
+      toast.error('Failed to refine reply');
     } finally {
       setIsRefining(false);
     }
@@ -52,15 +50,15 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
 
   const handleSubmit = async () => {
     if (!replyText.trim()) {
-      toast.error(t('reviewCard.toastEnterReply'));
+      toast.error('Please enter a reply');
       return;
     }
     setIsSubmitting(true);
     try {
       await onSubmit(review.id, replyText);
-      toast.success(t('reviewCard.toastReplySubmitted'));
+      toast.success('Reply submitted successfully');
     } catch (error) {
-      toast.error(t('reviewCard.toastReplyDraft'));
+      toast.error('Couldn\'t publish — saved as draft');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +107,7 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
       {/* Published badge */}
       {isPublished && (
         <Badge variant="secondary" className="mb-3 bg-success/10 text-success border-0">
-          {t('reviews.ReviewCard.replied')}
+          Replied
         </Badge>
       )}
 
@@ -117,7 +115,7 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
       <Textarea
         value={replyText}
         onChange={(e) => setReplyText(e.target.value)}
-        placeholder={t('reviews.ReviewCard.writeYourReply')}
+        placeholder="Write your reply..."
         className="min-h-[80px] text-sm resize-none mb-3"
         disabled={isRefining || isSubmitting}
       />
@@ -162,7 +160,7 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
             </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-2 py-1.5">
-              {t('reviews.ReviewCard.rewriteAs')}
+              Rewrite as
             </p>
             <div className="space-y-0.5">
               {REFINE_OPTIONS.map((option) => (

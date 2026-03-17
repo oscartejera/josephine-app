@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
-import { useTranslation } from 'react-i18next';
 
 interface LocationSetting {
     id: string;
@@ -20,11 +19,12 @@ interface LocationSetting {
 }
 
 export function ObjectivesTab() {
-  const { t } = useTranslation();
     const { locations } = useApp();
     const { isOwner, hasPermission } = usePermissions();
     const { toast } = useToast();
-    const [settings, setSettings] = useState<LocationSetting[]>{t('settings.ObjectivesTab.constLoadingSetloadingUsestatetrueConst')}<string | null>(null);
+    const [settings, setSettings] = useState<LocationSetting[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [editValues, setEditValues] = useState({ target_gp: '', target_col: '', default_cogs: '', hourly_cost: '' });
 
     const isAdmin = isOwner || hasPermission(PERMISSIONS.SETTINGS_USERS_MANAGE);
@@ -77,9 +77,9 @@ export function ObjectivesTab() {
             .eq('id', id);
 
         if (error) {
-            toast({ variant: "destructive", title: t("common.error"), description: "No se pudo guardar" });
+            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar" });
         } else {
-            toast({ title: t('common.saved'), description: t('objectives.objectivesUpdated') });
+            toast({ title: "Guardado", description: "Objetivos actualizados" });
             setEditingId(null);
             fetchSettings();
         }
@@ -92,19 +92,19 @@ export function ObjectivesTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Target className="h-5 w-5" />
-                        {t('settings.ObjectivesTab.objetivosPlPorLocal')}
+                        Objetivos P&L por Local
                     </CardTitle>
-                    <CardDescription>{t("settings.kpiObjectivesDesc")}</CardDescription>
+                    <CardDescription>Define los KPIs objetivo para cada local. Estos valores se usan en el scheduling y forecast.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>{t('settings.ObjectivesTab.local')}</TableHead>
-                                <TableHead className="text-right">{t('settings.ObjectivesTab.targetGp')}</TableHead>
-                                <TableHead className="text-right">{t('settings.ObjectivesTab.targetCol')}</TableHead>
-                                <TableHead className="text-right">{t('settings.ObjectivesTab.cogs')}</TableHead>
-                                <TableHead className="text-right">{t('settings.ObjectivesTab.hMedio')}</TableHead>
+                                <TableHead>Local</TableHead>
+                                <TableHead className="text-right">Target GP%</TableHead>
+                                <TableHead className="text-right">Target COL%</TableHead>
+                                <TableHead className="text-right">COGS %</TableHead>
+                                <TableHead className="text-right">€/h Medio</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -169,7 +169,7 @@ export function ObjectivesTab() {
                                                 </Button>
                                             ) : (
                                                 <Button size="sm" variant="ghost" onClick={() => handleEdit(setting)}>
-                                                    {t('settings.ObjectivesTab.editar')}
+                                                    Editar
                                                 </Button>
                                             )
                                         )}
@@ -186,9 +186,9 @@ export function ObjectivesTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <span className="text-lg">📊</span>
-                        {t('settings.ObjectivesTab.impactoEnScheduling')}
+                        Impacto en Scheduling
                     </CardTitle>
-                    <CardDescription>{t("settings.objectivesImpact")}</CardDescription>
+                    <CardDescription>Cómo los objetivos afectan la generación automática de turnos</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -202,19 +202,19 @@ export function ObjectivesTab() {
                                     <div className="font-medium text-sm">{s.location_name}</div>
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">{t('settings.ObjectivesTab.targetCol1')}</span>
+                                            <span className="text-muted-foreground">Target COL%</span>
                                             <span className="font-semibold text-emerald-600">{s.target_col_percent}%</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">{t("settings.weeklyBudgetEst")}</span>
+                                            <span className="text-muted-foreground">Budget semanal (est.)</span>
                                             <span className="font-medium">~€{weeklyBudget.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">{t("settings.maxHoursWeek")}</span>
+                                            <span className="text-muted-foreground">Max horas/semana</span>
                                             <span className="font-medium">~{maxHours}h</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">{t('settings.ObjectivesTab.splhObjetivo')}</span>
+                                            <span className="text-muted-foreground">SPLH objetivo</span>
                                             <span className="font-medium">€{splhTarget}/h</span>
                                         </div>
                                     </div>
@@ -223,7 +223,7 @@ export function ObjectivesTab() {
                         })}
                     </div>
                     <p className="text-xs text-muted-foreground mt-4">
-                        {t('settings.ObjectivesTab.estimacionesBasadasEnVentasPromedio')}
+                        * Estimaciones basadas en ventas promedio de ~€3,500/día. El AI Scheduler usa el forecast real de cada día para calcular los turnos óptimos.
                     </p>
                 </CardContent>
             </Card>

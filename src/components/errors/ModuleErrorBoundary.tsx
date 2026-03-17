@@ -7,7 +7,6 @@
 
 import React from 'react';
 import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   moduleName: string;
@@ -78,9 +77,9 @@ export class ModuleErrorBoundary extends React.Component<Props, State> {
               </p>
               <p className="text-xs text-amber-700 mt-0.5">
                 {this.state.retrying && canAutoRetry
-                  ? t('common.autoRetrying', { current: this.state.retryCount + 1, max: MAX_RETRIES })
+                  ? `Reintentando automáticamente (${this.state.retryCount + 1}/${MAX_RETRIES})…`
                   : this.state.retryCount >= MAX_RETRIES
-                    ? t('common.autoRetriesExhausted')
+                    ? 'Los reintentos automáticos se agotaron.'
                     : this.state.error?.message?.slice(0, 120)}
               </p>
             </div>

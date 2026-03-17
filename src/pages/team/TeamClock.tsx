@@ -4,12 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 export default function TeamClock() {
-  const { t } = useTranslation();
   const { user } = useAuth();
-  const [locationId, setLocationId] = useState<string | null>{t('team.TeamClock.nullConstLocationnameSetlocationnameUses')}<string>('');
+  const [locationId, setLocationId] = useState<string | null>(null);
+  const [locationName, setLocationName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,7 +59,7 @@ export default function TeamClock() {
           <CardContent className="p-8 text-center">
             <Clock className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-muted-foreground">
-              {t('team.TeamClock.noEstasAsignadoANingun')}
+              No estás asignado a ningún local como empleado.
             </p>
           </CardContent>
         </Card>
@@ -71,9 +70,9 @@ export default function TeamClock() {
   return (
     <div className="p-4 lg:p-6 max-w-md mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl font-bold">{t('team.TeamClock.fichaje')}</h1>
+        <h1 className="text-xl font-bold">Fichaje</h1>
         <p className="text-sm text-muted-foreground">
-          {t('team.TeamClock.registraTuEntradaYSalida')}
+          Registra tu entrada y salida
         </p>
       </div>
       <ClockInPanel locationId={locationId} locationName={locationName} />

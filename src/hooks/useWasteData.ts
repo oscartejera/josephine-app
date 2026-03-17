@@ -1,6 +1,5 @@
 // Migrated to sales_daily_unified contract view
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,10 +71,10 @@ function normalizeReason(rawReason: string | null | undefined): WasteReason {
   const lower = rawReason.toLowerCase().trim();
 
   // Map various formats to standard reasons
-  if (lower === 'broken' || lower === 'rotura' || lower === t('waste.danado') || lower === 'deterioro') {
+  if (lower === 'broken' || lower === 'rotura' || lower === 'dañado' || lower === 'deterioro') {
     return 'broken';
   }
-  if (lower === 'end of day' || lower === 'end_of_day' || lower === t('waste.sobreproduccion') || lower === t('waste.finDeDia')) {
+  if (lower === 'end of day' || lower === 'end_of_day' || lower === 'sobreproducción' || lower === 'fin de día') {
     return 'end_of_day';
   }
   if (lower === 'expired' || lower === 'caducado' || lower === 'caducidad') {
@@ -84,7 +83,7 @@ function normalizeReason(rawReason: string | null | undefined): WasteReason {
   if (lower === 'theft' || lower === 'robo' || lower === 'hurto') {
     return 'theft';
   }
-  if (lower === 'other' || lower === 'otro' || lower === 'otros' || lower.includes('error') || lower.includes(t('waste.devolucion')) || lower.includes(t('waste.preparacion'))) {
+  if (lower === 'other' || lower === 'otro' || lower === 'otros' || lower.includes('error') || lower.includes('devolución') || lower.includes('preparación')) {
     return 'other';
   }
   // Default fallback
@@ -96,7 +95,6 @@ export function useWasteData(
   _dateMode: DateMode, // Reserved for future use
   selectedLocations: string[]
 ) {
-  const { t } = useTranslation();
   const { locations, dataSource, loading: appLoading } = useApp();
   const { session } = useAuth();
   const dsLegacy = toLegacyDataSource(dataSource);
@@ -107,7 +105,11 @@ export function useWasteData(
     totalAccountedWaste: 0,
     wastePercentOfSales: 0
   });
-  const [trendData, setTrendData] = useState<WasteTrendData[]>{t('hooks.useWasteData.constByreasonSetbyreasonUsestate')}<WasteByReason[]>{t('hooks.useWasteData.constBycategorySetbycategoryUsestate')}<WasteByCategory[]>{t('hooks.useWasteData.constLeaderboardSetleaderboardUsestate')}<WasteLeaderboard[]>{t('hooks.useWasteData.constItemsSetitemsUsestate')}<WasteItem[]>([]);
+  const [trendData, setTrendData] = useState<WasteTrendData[]>([]);
+  const [byReason, setByReason] = useState<WasteByReason[]>([]);
+  const [byCategory, setByCategory] = useState<WasteByCategory[]>([]);
+  const [leaderboard, setLeaderboard] = useState<WasteLeaderboard[]>([]);
+  const [items, setItems] = useState<WasteItem[]>([]);
 
   const locationIds = useMemo(() => {
     if (selectedLocations.length === 0) {
@@ -141,7 +143,7 @@ export function useWasteData(
         .gte('date', fromDate)
         .lte('date', toDate);
 
-      if (locationIds.length > {t('hooks.useWasteData.0Locationidslength')} < locations.length) {
+      if (locationIds.length > 0 && locationIds.length < locations.length) {
         salesQuery = salesQuery.in('location_id', locationIds);
       }
 
@@ -155,7 +157,7 @@ export function useWasteData(
         .gte('created_at', `${fromDate}T00:00:00`)
         .lte('created_at', `${toDate}T23:59:59`);
 
-      if (locationIds.length > {t('hooks.useWasteData.0Locationidslength1')} < locations.length) {
+      if (locationIds.length > 0 && locationIds.length < locations.length) {
         wasteQuery = wasteQuery.in('location_id', locationIds);
       }
 
@@ -245,11 +247,11 @@ export function useWasteData(
       });
 
       const mockEmployees = [
-        { name: t('waste.carlosMartin'), initials: 'CM' },
-        { name: t('waste.anaLopez'), initials: 'AL' },
-        { name: t('waste.mariaGarcia'), initials: 'MG' },
+        { name: 'Carlos Martín', initials: 'CM' },
+        { name: 'Ana López', initials: 'AL' },
+        { name: 'María García', initials: 'MG' },
         { name: 'David Ruiz', initials: 'DR' },
-        { name: t('waste.lauraSanchez'), initials: 'LS' }
+        { name: 'Laura Sánchez', initials: 'LS' }
       ];
 
       const leaderboardData: WasteLeaderboard[] = [];

@@ -7,7 +7,6 @@
 
 import React from 'react';
 import { AlertOctagon, RefreshCw, Home } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   children: React.ReactNode;
@@ -55,10 +54,11 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
             </div>
 
             <h1 className="text-xl font-bold text-gray-900 mb-2">
-              {t('errors.GlobalErrorBoundary.algoSalioMal')}
+              Algo salió mal
             </h1>
             <p className="text-sm text-gray-500 mb-2">
-              {t('errors.GlobalErrorBoundary.seHaProducidoUnError')}
+              Se ha producido un error inesperado en la aplicación.
+              Nuestro equipo ha sido notificado.
             </p>
             <p className="text-xs text-gray-400 font-mono mb-6 break-all">
               {this.state.error?.message?.slice(0, 200)}
@@ -70,14 +70,14 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
               >
                 <Home className="h-4 w-4" />
-                {t('errors.GlobalErrorBoundary.irAlInicio')}
+                Ir al inicio
               </button>
               <button
                 onClick={this.handleReload}
                 className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
               >
                 <RefreshCw className="h-4 w-4" />
-                {t('errors.GlobalErrorBoundary.recargarPagina')}
+                Recargar página
               </button>
             </div>
 
@@ -85,7 +85,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
               <p className="mt-6 text-xs text-gray-400">
                 Si el error persiste, contacta con soporte:{' '}
                 <a href="mailto:soporte@josephine.app" className="underline">
-                  {t('errors.GlobalErrorBoundary.soportejosephineapp')}
+                  soporte@josephine.app
                 </a>
               </p>
             )}

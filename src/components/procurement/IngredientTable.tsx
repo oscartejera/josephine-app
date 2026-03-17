@@ -6,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
-import { useTranslation } from 'react-i18next';
 
 interface IngredientTableProps {
   skus: IngredientSku[];
@@ -58,7 +57,7 @@ function IngredientRowDesktop({
                 <TooltipTrigger>
                   <Badge variant="secondary" className="gap-1 text-xs">
                     <Pause className="h-3 w-3" />
-                    {t('procurement.IngredientTable.paused')}
+                    Paused
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -114,7 +113,7 @@ function IngredientRowDesktop({
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2">
-          {recommendedPacks > {t('procurement.IngredientTable.0Packs0Ispaused')}
+          {recommendedPacks > 0 && packs === 0 && !isPaused && (
             <Button
               variant="outline"
               size="sm"
@@ -133,7 +132,7 @@ function IngredientRowDesktop({
       {/* Daily usage row */}
       <div className="px-6 pb-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground shrink-0">{t('procurement.IngredientTable.dailyUsage')}</span>
+          <span className="text-xs text-muted-foreground shrink-0">Daily usage:</span>
           <div className="flex gap-1 overflow-x-auto">
             {dayLabels.map((day, i) => (
               <div
@@ -152,18 +151,18 @@ function IngredientRowDesktop({
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:text-primary/80 ml-auto">
                   <HelpCircle className="h-3.5 w-3.5 mr-1" />
-                  {t('procurement.IngredientTable.why')}
+                  Why?
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80" side="left" align="start">
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">{t('procurement.IngredientTable.aiRecommendationBreakdown')}</h4>
+                  <h4 className="font-semibold text-sm">AI Recommendation Breakdown</h4>
                   <p className="text-xs text-muted-foreground">
-                    {t('procurement.IngredientTable.basedOnForecastRecipeUsage')}
+                    Based on forecast + recipe usage + current stock, this covers you until the recommended horizon.
                   </p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t('procurement.IngredientTable.forecastUsage')}</span>
+                      <span className="text-muted-foreground">Forecast Usage:</span>
                       <span className="font-medium">{breakdown.forecastUsage.toFixed(1)} {sku.unit}</span>
                     </div>
                     <div className="flex justify-between">
@@ -171,7 +170,7 @@ function IngredientRowDesktop({
                       <span className="font-medium text-destructive">+{(breakdown.forecastUsage * breakdown.wasteFactor).toFixed(1)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t('procurement.IngredientTable.adjustedForecast')}</span>
+                      <span className="text-muted-foreground">Adjusted Forecast:</span>
                       <span className="font-medium">{breakdown.adjustedForecast.toFixed(1)} {sku.unit}</span>
                     </div>
                     {breakdown.safetyStock > 0 && (
@@ -182,21 +181,21 @@ function IngredientRowDesktop({
                     )}
                     <div className="border-t border-border pt-2 space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t('procurement.IngredientTable.onHand')}</span>
+                        <span className="text-muted-foreground">On Hand:</span>
                         <span className="font-medium text-success">-{breakdown.onHand.toFixed(1)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t('procurement.IngredientTable.onOrder')}</span>
+                        <span className="text-muted-foreground">On Order:</span>
                         <span className="font-medium text-success">-{breakdown.onOrder.toFixed(1)}</span>
                       </div>
                     </div>
                     <div className="border-t border-border pt-2">
                       <div className="flex justify-between font-semibold">
-                        <span>{t('procurement.IngredientTable.netNeeded')}</span>
+                        <span>Net Needed:</span>
                         <span>{breakdown.netNeeded.toFixed(1)} {sku.unit}</span>
                       </div>
                       <div className="flex justify-between font-semibold text-primary mt-1">
-                        <span>{t('procurement.IngredientTable.recommended')}</span>
+                        <span>Recommended:</span>
                         <span>{breakdown.recommendedPacks} packs</span>
                       </div>
                     </div>
@@ -221,7 +220,9 @@ function CategorySection({
   onUpdatePacks,
 }: CategorySectionProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const itemsInCart = skus.filter(s => (cart.get(s.id) || 0) > {t('procurement.IngredientTable.0lengthReturn')}
+  const itemsInCart = skus.filter(s => (cart.get(s.id) || 0) > 0).length;
+
+  return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <CollapsibleTrigger asChild>
@@ -265,7 +266,6 @@ function CategorySection({
 }
 
 export function IngredientTable({
-  
   skus,
   categories,
   cart,
@@ -274,11 +274,10 @@ export function IngredientTable({
   getRecommendationBreakdown,
   onUpdatePacks,
 }: IngredientTableProps) {
-  const { t } = useTranslation();
   if (skus.length === 0) {
     return (
       <div className="bg-card rounded-xl border border-border p-12 text-center">
-        <p className="text-muted-foreground">{t('procurement.IngredientTable.noIngredientsFoundMatchingYour')}</p>
+        <p className="text-muted-foreground">No ingredients found matching your search.</p>
       </div>
     );
   }

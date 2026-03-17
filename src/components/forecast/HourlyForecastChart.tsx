@@ -9,7 +9,6 @@ import { Card } from '@/components/ui/card';
 import { useHourlyForecast, type HourlyForecastRow } from '@/hooks/useHourlyForecast';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Clock } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 // ── Colors ───────────────────────────────────────────────────
 
@@ -25,7 +24,6 @@ interface HourlyForecastChartProps {
 }
 
 export function HourlyForecastChart({ locationId, date }: HourlyForecastChartProps) {
-  const { t } = useTranslation();
     const { data: rows, isLoading } = useHourlyForecast({ locationId, date });
 
     if (isLoading) {
@@ -42,10 +40,10 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
             <Card className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-semibold text-gray-700">{t('forecast.forecastPorHora')}</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">Forecast por Hora</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    {t('forecast.HourlyForecastChart.noHayDatosHorariosDisponibles')}
+                    No hay datos horarios disponibles para esta fecha.
                 </p>
             </Card>
         );
@@ -71,7 +69,7 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-indigo-500" />
-                    <h3 className="text-sm font-semibold text-gray-700">{t('forecast.forecastPorHora')}</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">Forecast por Hora</h3>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
@@ -106,9 +104,9 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
                                 return (
                                     <div className="bg-white border rounded-lg shadow-xl p-3 text-sm">
                                         <p className="font-semibold mb-1">{d.hour}</p>
-                                        <p>{t('forecast.HourlyForecastChart.forecast')} <strong>€{d.sales.toLocaleString('es-ES')}</strong></p>
-                                        <p>{t('forecast.HourlyForecastChart.mix')} <strong>{d.mix.toFixed(1)}%</strong></p>
-                                        {d.isPeak && <p className="text-indigo-600 font-medium">{t('forecast.horaPunta')}</p>}
+                                        <p>Forecast: <strong>€{d.sales.toLocaleString('es-ES')}</strong></p>
+                                        <p>Mix: <strong>{d.mix.toFixed(1)}%</strong></p>
+                                        {d.isPeak && <p className="text-indigo-600 font-medium">Hora punta</p>}
                                     </div>
                                 );
                             }}

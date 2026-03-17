@@ -9,18 +9,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CheckCircle, Send } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (emailBody: string) => {t('scheduling.PublishModal.promise')}<void>;
+  onConfirm: (emailBody: string) => Promise<void>;
   locationName: string;
   mode?: 'approve' | 'publish';
 }
 
 export function PublishModal({ isOpen, onClose, onConfirm, locationName, mode = 'publish' }: PublishModalProps) {
-  const { t } = useTranslation();
   const [emailBody, setEmailBody] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -45,12 +43,12 @@ export function PublishModal({ isOpen, onClose, onConfirm, locationName, mode = 
               {isApprove ? (
                 <>
                   <CheckCircle className="h-5 w-5 text-amber-500" />
-                  {t('scheduling.PublishModal.aprobarHorario')}
+                  Aprobar horario
                 </>
               ) : (
                 <>
                   <Send className="h-5 w-5 text-primary" />
-                  {t('scheduling.PublishModal.publicarHorario')}
+                  Publicar horario
                 </>
               )}
             </DialogTitle>
@@ -61,21 +59,21 @@ export function PublishModal({ isOpen, onClose, onConfirm, locationName, mode = 
           <p className="text-sm text-muted-foreground">
             {isApprove ? (
               <>
-                {t('scheduling.PublishModal.aprobarLosTurnosDe')} <strong>{locationName}</strong>{t('scheduling.PublishModal.unaVezAprobadosLosManagers')}
+                ¿Aprobar los turnos de <strong>{locationName}</strong>? Una vez aprobados, los managers podrán publicarlos a los empleados.
               </>
             ) : (
               <>
-                {t('scheduling.PublishModal.losTurnosDe')} <strong>{locationName}</strong> {t('scheduling.PublishModal.seranEnviadosATodosLos')}
+                Los turnos de <strong>{locationName}</strong> serán enviados a todos los empleados.
               </>
             )}
           </p>
 
           {!isApprove && (
             <div className="space-y-2">
-              <Label htmlFor="email-body">{t('scheduling.PublishModal.mensajeOpcional')}</Label>
+              <Label htmlFor="email-body">Mensaje (opcional)</Label>
               <Textarea
                 id="email-body"
-                placeholder={t('scheduling.anadeUnMensajeConLa')}
+                placeholder="Añade un mensaje con la notificación del horario..."
                 value={emailBody}
                 onChange={(e) => setEmailBody(e.target.value)}
                 rows={4}
@@ -86,7 +84,7 @@ export function PublishModal({ isOpen, onClose, onConfirm, locationName, mode = 
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose} disabled={isProcessing}>
-            {t('scheduling.PublishModal.cancelar')}
+            Cancelar
           </Button>
           <Button
             onClick={handleConfirm}

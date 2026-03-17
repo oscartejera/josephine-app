@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { BISalesData, CompareMode } from '@/hooks/useBISalesData';
-import { useTranslation } from 'react-i18next';
 
 interface BIChannelsTableProps {
   data: BISalesData | undefined;
@@ -28,7 +27,8 @@ function formatCurrency(value: number): string {
 }
 
 function DeltaCell({ value, delta }: { value: number; delta: number }) {
-  const isPositive = delta >{t('bi.BIChannelsTable.0Return')}
+  const isPositive = delta >= 0;
+  return (
     <div className="text-right">
       <div className="font-medium">{formatCurrency(value)}</div>
       <div className={cn(
@@ -42,7 +42,8 @@ function DeltaCell({ value, delta }: { value: number; delta: number }) {
 }
 
 function AcsDeltaCell({ value, delta }: { value: number; delta: number }) {
-  const isPositive = delta >{t('bi.BIChannelsTable.0Return1')}
+  const isPositive = delta >= 0;
+  return (
     <div className="text-right">
       <div className="font-medium">€{value.toFixed(2)}</div>
       <div className={cn(
@@ -56,12 +57,11 @@ function AcsDeltaCell({ value, delta }: { value: number; delta: number }) {
 }
 
 export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTableProps) {
-  const { t } = useTranslation();
   if (isLoading || !data) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>{t('bi.BIChannelsTable.channels')}</CardTitle>
+          <CardTitle>Channels</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[200px] w-full" />
@@ -77,24 +77,26 @@ export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTabl
   const totalProjected = data.channels.reduce((sum, c) => sum + c.projectedSales, 0);
   const totalOrders = data.channels.reduce((sum, c) => sum + c.orders, 0);
   const avgAcs = totalOrders > 0 ? totalSales / totalOrders : 0;
-  const avgProjectedAcs = data.channels.reduce((sum, c) => {t('bi.BIChannelsTable.sumCprojectedacs0DatachannelslengthRetur')}
+  const avgProjectedAcs = data.channels.reduce((sum, c) => sum + c.projectedAcs, 0) / data.channels.length;
+
+  return (
     <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden">
       <CardHeader className="pb-0">
-        <CardTitle className="text-lg font-semibold">{t('bi.BIChannelsTable.channels1')}</CardTitle>
+        <CardTitle className="text-lg font-semibold">Channels</CardTitle>
       </CardHeader>
       <CardContent className="p-0 pt-4">
         <Table>
           <TableHeader>
             <TableRow className="border-b-0 bg-muted/30">
               <TableHead className="w-[140px]"></TableHead>
-              <TableHead colSpan={2} className="text-center border-l">{t('bi.BIChannelsTable.sales')}</TableHead>
-              <TableHead colSpan={2} className="text-center border-l">{t('bi.BIChannelsTable.avgCheckSize')}</TableHead>
+              <TableHead colSpan={2} className="text-center border-l">Sales</TableHead>
+              <TableHead colSpan={2} className="text-center border-l">Avg check size</TableHead>
             </TableRow>
             <TableRow>
-              <TableHead className="font-medium">{t('bi.BIChannelsTable.channel')}</TableHead>
-              <TableHead className="text-right border-l">{t('bi.BIChannelsTable.actual')}</TableHead>
+              <TableHead className="font-medium">Channel</TableHead>
+              <TableHead className="text-right border-l">Actual</TableHead>
               <TableHead className="text-right">{projectedLabel}</TableHead>
-              <TableHead className="text-right border-l">{t('bi.BIChannelsTable.actual1')}</TableHead>
+              <TableHead className="text-right border-l">Actual</TableHead>
               <TableHead className="text-right">{projectedLabel}</TableHead>
             </TableRow>
           </TableHeader>
@@ -118,7 +120,7 @@ export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTabl
             ))}
             {/* Total row */}
             <TableRow className="bg-muted/30 font-semibold">
-              <TableCell>{t("common.total")}</TableCell>
+              <TableCell>Total</TableCell>
               <TableCell className="text-right border-l">{formatCurrency(totalSales)}</TableCell>
               <TableCell className="text-right">{formatCurrency(totalProjected)}</TableCell>
               <TableCell className="text-right border-l">€{avgAcs.toFixed(2)}</TableCell>

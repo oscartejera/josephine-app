@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,30 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChefHat, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailOTPVerification } from '@/components/auth/EmailOTPVerification';
-import { Progress } from '@/components/ui/progress';
 
 type SignupStep = 'form' | 'verify';
 
-function getPasswordStrength(pw: string): { score: number; label: string; key: string } {
-  let score = 0;
-  if (pw.length >= 6) score++;
-  if (pw.length >{t('signup.10ScoreIfAztestpwScore')} <= 1) return { score: 20, label: 'weak', key: 'auth.passwordWeak' };
-  if (score <= 2) return { score: 40, label: 'fair', key: 'auth.passwordFair' };
-  if (score <= 3) return { score: 60, label: 'good', key: 'auth.passwordGood' };
-  if (score <= 4) return { score: 80, label: 'strong', key: 'auth.passwordStrong' };
-  return { score: 100, label: 'very-strong', key: 'auth.passwordVeryStrong' };
-}
-
-const strengthColors: Record<string, string> = {
-  weak: 'bg-red-500',
-  fair: 'bg-orange-500',
-  good: 'bg-yellow-500',
-  strong: 'bg-green-500',
-  'very-strong': 'bg-emerald-500',
-};
-
 export default function Signup() {
-  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -42,7 +21,6 @@ export default function Signup() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signInWithGoogle } = useAuth();
-  const pwStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +28,8 @@ export default function Signup() {
     if (!email || !password || !fullName) {
       toast({
         variant: "destructive",
-        title: t('auth.fieldsRequired'),
-        description: t('auth.completeAllFields')
+        title: "Campos requeridos",
+        description: "Por favor completa todos los campos"
       });
       return;
     }
@@ -59,8 +37,8 @@ export default function Signup() {
     if (password.length < 6) {
       toast({
         variant: "destructive",
-        title: t('auth.passwordTooShort'),
-        description: t('auth.passwordMinLength')
+        title: "Contraseña muy corta",
+        description: "La contraseña debe tener al menos 6 caracteres"
       });
       return;
     }
@@ -99,46 +77,46 @@ export default function Signup() {
           <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
             <ChefHat className="w-6 h-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-display">{t('auth.createAccount')}</CardTitle>
-          <CardDescription>{t('auth.startManaging')}</CardDescription>
+          <CardTitle className="text-2xl font-display">Crear cuenta</CardTitle>
+          <CardDescription>Comienza a gestionar tu restaurante</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">{t('auth.fullName')}</Label>
+              <Label htmlFor="fullName">Nombre completo</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder={t('auth.fullNamePlaceholder')}
+                placeholder="Juan García"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="restaurantName">{t('auth.restaurantName')}</Label>
+              <Label htmlFor="restaurantName">Nombre del restaurante</Label>
               <Input
                 id="restaurantName"
                 type="text"
-                placeholder={t('auth.restaurantNamePlaceholder')}
+                placeholder="La Buena Mesa"
                 value={restaurantName}
                 onChange={(e) => setRestaurantName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">{t('auth.email')}</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder={t('auth.emailPlaceholder')}
+                placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.password')}</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
@@ -148,26 +126,13 @@ export default function Signup() {
                 required
                 minLength={6}
               />
-              {password.length > 0 && (
-                <div className="space-y-1 pt-1">
-                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${strengthColors[pwStrength.label]}`}
-                      style={{ width: `${pwStrength.score}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t(pwStrength.key)}
-                  </p>
-                </div>
-              )}
               <p className="text-xs text-muted-foreground">
-                {t('auth.passwordMinLength')}
+                Mínimo 6 caracteres
               </p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t('auth.continue')}
+              Continuar
             </Button>
           </form>
 
@@ -176,7 +141,7 @@ export default function Signup() {
               <div className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">{t('auth.or')}</span>
+              <span className="bg-card px-2 text-muted-foreground">o</span>
             </div>
           </div>
 
@@ -192,13 +157,13 @@ export default function Signup() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            {t('auth.continueWithGoogle')}
+            Continuar con Google
           </Button>
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            {t('auth.haveAccount')}{' '}
+            ¿Ya tienes cuenta?{' '}
             <Link to="/login" className="text-primary hover:underline">
-              {t('auth.login')}
+              Iniciar sesión
             </Link>
           </div>
         </CardContent>

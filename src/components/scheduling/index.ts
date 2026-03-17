@@ -10,4 +10,3 @@ export { SwapShiftDialog } from './SwapShiftDialog';
 export { SwapRequestsPanel } from './SwapRequestsPanel';
 export { PopularShifts } from './PopularShifts';
 export { ScheduleSettingsSheet } from './ScheduleSettingsSheet';
-export { DemandOverlay } from './DemandOverlay';

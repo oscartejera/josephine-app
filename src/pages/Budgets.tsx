@@ -5,10 +5,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { BudgetKPICards, BudgetChart, BudgetLocationTable } from '@/components/budgets';
 import { useBudgetsData, type BudgetTab } from '@/hooks/useBudgetsData';
-import { useTranslation } from 'react-i18next';
 
 export default function Budgets() {
-  const { t } = useTranslation();
   const { hasPermission, loading: permLoading } = usePermissions();
 
   const initialDateRange = useMemo((): DateRangeValue => {
@@ -16,7 +14,10 @@ export default function Budgets() {
     return { from: startOfMonth(today), to: endOfMonth(today) };
   }, []);
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>{t('budgets.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('budgets.monthlyConstSelectedlocationsUsestate')}<string[]>{t('budgets.constActivetabSetactivetabUsestate')}<BudgetTab>('sales');
+  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [selectedLocations] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<BudgetTab>('sales');
 
   const { isLoading, metrics, dailyData, locationData } = useBudgetsData(dateRange, selectedLocations);
 
@@ -28,8 +29,8 @@ export default function Budgets() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t('budgets.budgets')}</h1>
-          <p className="text-sm text-muted-foreground">{t("budgets.comparePerformance")}</p>
+          <h1 className="text-2xl font-bold">Budgets</h1>
+          <p className="text-sm text-muted-foreground">Compare actual performance vs budget</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <DateRangePickerNoryLike
@@ -43,10 +44,10 @@ export default function Budgets() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as BudgetTab)}>
         <TabsList>
-          <TabsTrigger value="sales">{t('budgets.sales')}</TabsTrigger>
-          <TabsTrigger value="labour">{t('budgets.labour')}</TabsTrigger>
-          <TabsTrigger value="cogs">{t('budgets.cogs')}</TabsTrigger>
-          <TabsTrigger value="prime">{t('budgets.primeCost')}</TabsTrigger>
+          <TabsTrigger value="sales">Sales</TabsTrigger>
+          <TabsTrigger value="labour">Labour</TabsTrigger>
+          <TabsTrigger value="cogs">COGS</TabsTrigger>
+          <TabsTrigger value="prime">Prime Cost</TabsTrigger>
         </TabsList>
       </Tabs>
 

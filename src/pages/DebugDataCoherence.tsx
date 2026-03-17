@@ -14,7 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
-import { useTranslation } from 'react-i18next';
 
 interface AuditCheck {
   name: string;
@@ -33,7 +32,6 @@ interface AuditResult {
 }
 
 export default function DebugDataCoherence() {
-  const { t } = useTranslation();
   const { profile } = useAuth();
   const { locations } = useApp();
   const [days, setDays] = useState(30);
@@ -68,9 +66,9 @@ export default function DebugDataCoherence() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t('debugDataCoherence.dataCoherenceAudit')}</h1>
+          <h1 className="text-2xl font-bold">Data Coherence Audit</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {t('debugDataCoherence.verificaIntegridadDeDatosEntre')}
+            Verifica integridad de datos entre tablas unificadas
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -80,14 +78,14 @@ export default function DebugDataCoherence() {
             onChange={(e) => setDays(Number(e.target.value))}
             className="border rounded px-2 py-1 text-sm"
           >
-            <option value={7}>{t('data.7Dias')}</option>
-            <option value={14}>{t('data.14Dias')}</option>
-            <option value={30}>{t('data.30Dias')}</option>
-            <option value={60}>{t('data.60Dias')}</option>
+            <option value={7}>7 días</option>
+            <option value={14}>14 días</option>
+            <option value={30}>30 días</option>
+            <option value={60}>60 días</option>
           </select>
           <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            {t('debugDataCoherence.auditar')}
+            Auditar
           </Button>
         </div>
       </div>
@@ -97,7 +95,7 @@ export default function DebugDataCoherence() {
           <CardContent className="pt-4">
             <p className="text-destructive flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              {t('debugDataCoherence.errorEjecutandoAuditVerificaQue')}
+              Error ejecutando audit. Verifica que las migraciones estén aplicadas.
             </p>
           </CardContent>
         </Card>
@@ -108,10 +106,10 @@ export default function DebugDataCoherence() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{t('debugDataCoherence.resultadoGlobal')}</CardTitle>
+                <CardTitle className="text-lg">Resultado Global</CardTitle>
                 <Badge variant={data.all_pass ? 'default' : 'destructive'} className="text-sm">
                   {data.all_pass ? (
-                    <><CheckCircle className="h-4 w-4 mr-1" /> {t('debugDataCoherence.allPass')}</>
+                    <><CheckCircle className="h-4 w-4 mr-1" /> ALL PASS</>
                   ) : (
                     <><XCircle className="h-4 w-4 mr-1" /> FAIL</>
                   )}
@@ -121,19 +119,19 @@ export default function DebugDataCoherence() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">{t('debugDataCoherence.dataSource')}</span>{' '}
+                  <span className="text-muted-foreground">Data source:</span>{' '}
                   <strong>{data.resolved_source.data_source}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('debugDataCoherence.modo')}</span>{' '}
+                  <span className="text-muted-foreground">Modo:</span>{' '}
                   <strong>{data.resolved_source.mode}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('data.razon')}</span>{' '}
+                  <span className="text-muted-foreground">Razón:</span>{' '}
                   <strong>{data.resolved_source.reason}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('debugDataCoherence.rango')}</span>{' '}
+                  <span className="text-muted-foreground">Rango:</span>{' '}
                   <strong>{data.date_range.from} → {data.date_range.to}</strong>
                 </div>
               </div>
@@ -167,7 +165,7 @@ export default function DebugDataCoherence() {
       {!data && !isLoading && !isError && (
         <Card>
           <CardContent className="pt-6 text-center text-muted-foreground">
-            {t('debugDataCoherence.hazClicEnAuditarPara')}
+            Haz clic en "Auditar" para ejecutar la verificación de coherencia.
           </CardContent>
         </Card>
       )}

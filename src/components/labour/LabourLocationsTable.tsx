@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { LabourLocationRow, MetricMode } from '@/hooks/useLabourData';
-import { useTranslation } from 'react-i18next';
 
 interface LabourLocationsTableProps {
   data: LabourLocationRow[];
@@ -44,7 +43,9 @@ interface DeltaChipProps {
 function DeltaChip({ value, inverted = false }: DeltaChipProps) {
   const safeValue = value ?? 0;
   const isPositive = inverted ? safeValue <= 0 : safeValue >= 0;
-  const arrow = safeValue >{t('labour.LabourLocationsTable.0Return')}
+  const arrow = safeValue >= 0 ? '↑' : '↓';
+
+  return (
     <span className={cn(
       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium",
       isPositive
@@ -74,7 +75,6 @@ function TableSkeleton() {
 }
 
 export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLocationsTableProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -85,7 +85,7 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardContent className="p-8 text-center text-muted-foreground">
-          {t('labour.LabourLocationsTable.noLocationDataAvailableFor')}
+          No location data available for the selected period.
         </CardContent>
       </Card>
     );
@@ -118,7 +118,7 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
   return (
     <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">{t('labour.LabourLocationsTable.performanceByLocation')}</CardTitle>
+        <CardTitle className="text-lg font-semibold">Performance by Location</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
@@ -127,10 +127,10 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th rowSpan={2} className="text-left font-medium text-muted-foreground px-4 py-3 sticky left-0 bg-muted/30">
-                  {t('labour.LabourLocationsTable.location')}
+                  Location
                 </th>
                 <th colSpan={2} className="text-center font-medium text-muted-foreground px-2 py-2 border-l border-border">
-                  {t('labour.LabourLocationsTable.sales')}
+                  Sales
                 </th>
                 <th colSpan={2} className="text-center font-medium text-muted-foreground px-2 py-2 border-l border-border">
                   {colLabel}
@@ -140,12 +140,12 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
                 </th>
               </tr>
               <tr className="border-b border-border bg-muted/20">
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">{t('labour.LabourLocationsTable.actual')}</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">{t('labour.LabourLocationsTable.projected')}</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">{t('labour.LabourLocationsTable.actual1')}</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">{t('labour.LabourLocationsTable.projected1')}</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">{t('labour.LabourLocationsTable.actual2')}</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">{t('labour.LabourLocationsTable.projected2')}</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">Actual</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">Projected</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">Actual</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">Projected</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">Actual</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">Projected</th>
               </tr>
             </thead>
             <tbody>

@@ -1,5 +1,5 @@
 /**
- * EstimatedLabel — Shows t("labour.estimated") badge with tooltip for KPIs
+ * EstimatedLabel — Shows "Estimado" badge with tooltip for KPIs
  * that depend on assumptions (COGS%, hourly rates, channel ratios).
  */
 
@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface EstimatedLabelProps {
   reason?: string;
@@ -18,7 +17,6 @@ interface EstimatedLabelProps {
 }
 
 export function EstimatedLabel({ reason, className = '' }: EstimatedLabelProps) {
-  const { t } = useTranslation();
   const defaultReason = 'Este valor usa supuestos (COGS%, tarifas horarias, etc.) que pueden no reflejar tus costos reales.';
 
   return (
@@ -27,7 +25,7 @@ export function EstimatedLabel({ reason, className = '' }: EstimatedLabelProps) 
         <TooltipTrigger asChild>
           <span className={`inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium ${className}`}>
             <Info className="h-3 w-3" />
-            {t('ui.EstimatedLabel.estimado')}
+            Estimado
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs text-xs">

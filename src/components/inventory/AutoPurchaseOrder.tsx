@@ -16,7 +16,6 @@ import {
 import { Loader2, PackageSearch, Truck, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface LowStockAlert {
     itemId: string;
@@ -29,9 +28,13 @@ interface LowStockAlert {
 }
 
 export function AutoPurchaseOrder() {
-  const { t } = useTranslation();
     const { selectedLocationId, accessibleLocations } = useApp();
-    const [alerts, setAlerts] = useState<LowStockAlert[]>{t('inventory.AutoPurchaseOrder.constLoadingSetloadingUsestatefalseConst')}<{ id: string; totalLines: number } | null>{t('inventory.AutoPurchaseOrder.nullConstResolvedorgidSetresolvedorgidUs')}<string>('');
+    const [alerts, setAlerts] = useState<LowStockAlert[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [scanned, setScanned] = useState(false);
+    const [generating, setGenerating] = useState(false);
+    const [lastResult, setLastResult] = useState<{ id: string; totalLines: number } | null>(null);
+    const [resolvedOrgId, setResolvedOrgId] = useState<string>('');
 
     const locationIds = selectedLocationId === 'all'
         ? accessibleLocations.map(l => l.id)
@@ -60,13 +63,13 @@ export function AutoPurchaseOrder() {
             setAlerts(result);
             setScanned(true);
             if (result.length === 0) {
-                toast.success(t('autoPurchase.toastNoAlerts'));
+                toast.success('¡No hay alertas de stock bajo!');
             } else {
-                toast.info(t('inventory.itemsBelowMinimum', { count: result.length }));
+                toast.info(`${result.length} items por debajo del nivel mínimo`);
             }
         } catch (err) {
             console.error('Error scanning alerts:', err);
-            toast.error(t('autoPurchase.toastScanError'));
+            toast.error('Error al escanear inventario');
         }
         setLoading(false);
     };
@@ -85,7 +88,7 @@ export function AutoPurchaseOrder() {
 
             const supplierId = supplierData?.id;
             if (!supplierId) {
-                toast.error(t('autoPurchase.toastNoSuppliers'));
+                toast.error('No hay proveedores configurados');
                 setGenerating(false);
                 return;
             }
@@ -105,10 +108,10 @@ export function AutoPurchaseOrder() {
 
             const result = await createPurchaseOrderDraftFromAlerts(ctx, draft);
             setLastResult({ id: result.id, totalLines: result.totalLines });
-            toast.success(t('inventory.purchaseOrderCreated', { count: result.totalLines }));
+            toast.success(`Orden de compra creada con ${result.totalLines} líneas`);
         } catch (err) {
             console.error('Error generating PO:', err);
-            toast.error(t('autoPurchase.toastGenOrderError'));
+            toast.error('Error al generar orden de compra');
         }
         setGenerating(false);
     };
@@ -119,7 +122,7 @@ export function AutoPurchaseOrder() {
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Truck className="h-4 w-4 text-primary" />
-                        {t('inventory.AutoPurchaseOrder.autoreposicionInteligente')}
+                        Auto-Reposición Inteligente
                     </CardTitle>
                     {lastResult && (
                         <Badge variant="outline" className="border-emerald-200 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 gap-1">
@@ -134,7 +137,7 @@ export function AutoPurchaseOrder() {
                     <div className="text-center py-4">
                         <PackageSearch className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
                         <p className="text-sm text-muted-foreground mb-3">
-                            {t('inventory.AutoPurchaseOrder.escaneaElInventarioParaDetectar')}
+                            Escanea el inventario para detectar items bajo mínimos y genera automáticamente una orden de compra
                         </p>
                         <Button onClick={scanAlerts} disabled={loading}>
                             {loading ? (
@@ -145,13 +148,13 @@ export function AutoPurchaseOrder() {
                             Escanear inventario
                         </Button>
                     </div>
-                {t('inventory.AutoPurchaseOrder.alertslength0')}
+                ) : alerts.length === 0 ? (
                     <div className="text-center py-4">
                         <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-emerald-600">{t('inventory.AutoPurchaseOrder.todoEnOrden')}</p>
-                        <p className="text-xs text-muted-foreground">{t("inventory.noItemsBelowMinimum")}</p>
+                        <p className="text-sm font-medium text-emerald-600">Todo en orden</p>
+                        <p className="text-xs text-muted-foreground">No hay items por debajo del nivel mínimo</p>
                         <Button variant="outline" size="sm" className="mt-3" onClick={scanAlerts} disabled={loading}>
-                            {t('inventory.AutoPurchaseOrder.volverAEscanear')}
+                            Volver a escanear
                         </Button>
                     </div>
                 ) : (
@@ -163,7 +166,7 @@ export function AutoPurchaseOrder() {
                             </Badge>
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={scanAlerts} disabled={loading || generating}>
-                                    {t('inventory.AutoPurchaseOrder.reescanear')}
+                                    Reescanear
                                 </Button>
                                 <Button size="sm" onClick={generatePO} disabled={generating || !!lastResult}>
                                     {generating ? (
@@ -171,7 +174,7 @@ export function AutoPurchaseOrder() {
                                     ) : (
                                         <Truck className="mr-2 h-4 w-4" />
                                     )}
-                                    {lastResult ? 'PO generada' : t('inventory.generarPoAutomatica')}
+                                    {lastResult ? 'PO generada' : 'Generar PO automática'}
                                 </Button>
                             </div>
                         </div>
@@ -180,10 +183,10 @@ export function AutoPurchaseOrder() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>{t('inventory.AutoPurchaseOrder.item')}</TableHead>
-                                        <TableHead className="text-right">{t('inventory.AutoPurchaseOrder.stock')}</TableHead>
-                                        <TableHead className="text-right">{t('settings.minimo')}</TableHead>
-                                        <TableHead className="text-right">{t('inventory.deficit')}</TableHead>
+                                        <TableHead>Item</TableHead>
+                                        <TableHead className="text-right">Stock</TableHead>
+                                        <TableHead className="text-right">Mínimo</TableHead>
+                                        <TableHead className="text-right">Déficit</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

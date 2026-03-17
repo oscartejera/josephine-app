@@ -5,7 +5,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import type { BudgetDailyData, BudgetTab } from '@/hooks/useBudgetsData';
-import { useTranslation } from 'react-i18next';
 
 interface BudgetChartProps {
   data: BudgetDailyData[];
@@ -15,8 +14,8 @@ interface BudgetChartProps {
 }
 
 export function BudgetChart({ data, activeTab, isLoading = false, currency = 'â‚¬' }: BudgetChartProps) {
-  const { t } = useTranslation();
-  const [viewMode, setViewMode] = useState<'eur' | 'pct'>{t('budgets.BudgetChart.eurConstGranularitySetgranularityUsestat')}<'daily' | 'weekly'>('daily');
+  const [viewMode, setViewMode] = useState<'eur' | 'pct'>('eur');
+  const [granularity, setGranularity] = useState<'daily' | 'weekly'>('daily');
 
   if (isLoading) {
     return (
@@ -73,8 +72,8 @@ export function BudgetChart({ data, activeTab, isLoading = false, currency = 'â‚
         <CardTitle className="text-base font-medium">{tabLabels[activeTab]} - Actual vs Budget</CardTitle>
         <div className="flex gap-2">
           <ToggleGroup type="single" value={granularity} onValueChange={(v) => v && setGranularity(v as 'daily' | 'weekly')}>
-            <ToggleGroupItem value="daily" className="text-xs px-3">{t('budgets.BudgetChart.daily')}</ToggleGroupItem>
-            <ToggleGroupItem value="weekly" className="text-xs px-3">{t('budgets.BudgetChart.weekly')}</ToggleGroupItem>
+            <ToggleGroupItem value="daily" className="text-xs px-3">Daily</ToggleGroupItem>
+            <ToggleGroupItem value="weekly" className="text-xs px-3">Weekly</ToggleGroupItem>
           </ToggleGroup>
           {activeTab !== 'prime' && (
             <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'eur' | 'pct')}>

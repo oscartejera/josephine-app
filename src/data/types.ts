@@ -270,7 +270,8 @@ export interface SalesTimeseriesRpcResult {
     forecast_orders: number;
     lower: number;
     upper: number;
-  }>{t('data.types.dailyArray')}<{
+  }>;
+  daily: Array<{
     date: string;
     actual_sales: number;
     actual_orders: number;
@@ -278,7 +279,8 @@ export interface SalesTimeseriesRpcResult {
     forecast_orders: number;
     lower: number;
     upper: number;
-  }>{t('data.types.busyhoursArray')}<{
+  }>;
+  busy_hours: Array<{
     date: string;
     hour: number;
     forecast_sales: number;

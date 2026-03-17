@@ -17,10 +17,8 @@ import { ReviewCard } from '@/components/reviews/ReviewCard';
 import { useReviewsData, Platform } from '@/hooks/useReviewsData';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useTranslation } from 'react-i18next';
 
 export default function ReviewsAll() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { locations } = useApp();
@@ -44,7 +42,12 @@ export default function ReviewsAll() {
     };
   };
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>{t('reviewsAll.getinitialdaterangeConstDatemodeSetdatem')}<DateMode>{t('reviewsAll.monthlyConstPlatformSetplatformUsestate')}<Platform>{t('reviewsAll.searchparamsgetplatformAsPlatformAllCons')}<string>(
+  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [platform, setPlatform] = useState<Platform>(
+    (searchParams.get('platform') as Platform) || 'all'
+  );
+  const [locationId, setLocationId] = useState<string>(
     searchParams.get('location') || 'all'
   );
 
@@ -111,7 +114,7 @@ export default function ReviewsAll() {
         const fallback: Record<string, string> = {
           friendly: `¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que disfrutaste de tu experiencia. ¡Te esperamos pronto! 😊`,
           professional: `Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opinión es muy importante para nosotros y nos ayuda a seguir mejorando.`,
-          concise: t('reviews.replyQuick', { author: review.author_name }),
+          concise: `Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!`,
         };
         return fallback[tone] || currentText;
       }
@@ -153,11 +156,11 @@ export default function ReviewsAll() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-muted-foreground">{t('reviewsAll.insights')}</span>
+              <span className="text-muted-foreground">Insights</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{t('reviewsAll.reviews')}</span>
+              <span className="text-muted-foreground">Reviews</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-foreground">{t('reviewsAll.allReviews')}</span>
+              <span className="font-medium text-foreground">All Reviews</span>
             </div>
           </div>
 
@@ -174,22 +177,22 @@ export default function ReviewsAll() {
           <div className="flex items-center gap-2">
             <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
               <SelectTrigger className="h-9 w-[150px] text-sm">
-                <SelectValue placeholder={t('reviews.allPlatforms')} />
+                <SelectValue placeholder="All Platforms" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('reviewsAll.allPlatforms')}</SelectItem>
-                <SelectItem value="google">{t('reviewsAll.google')}</SelectItem>
-                <SelectItem value="tripadvisor">{t('reviewsAll.tripadvisor')}</SelectItem>
-                <SelectItem value="thefork">{t('reviewsAll.thefork')}</SelectItem>
+                <SelectItem value="all">All Platforms</SelectItem>
+                <SelectItem value="google">Google</SelectItem>
+                <SelectItem value="tripadvisor">TripAdvisor</SelectItem>
+                <SelectItem value="thefork">TheFork</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={locationId} onValueChange={setLocationId}>
               <SelectTrigger className="h-9 w-[150px] text-sm">
-                <SelectValue placeholder={t('reviews.allLocations')} />
+                <SelectValue placeholder="All Locations" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('reviewsAll.allLocations')}</SelectItem>
+                <SelectItem value="all">All Locations</SelectItem>
                 {locations.map((loc) => (
                   <SelectItem key={loc.id} value={loc.id}>
                     {loc.name}
@@ -202,7 +205,7 @@ export default function ReviewsAll() {
 
         {/* Title */}
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">{t('reviewsAll.allReviews1')}</h1>
+          <h1 className="text-2xl font-semibold text-foreground">All Reviews</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {reviews.length} reviews in this period
           </p>
@@ -228,7 +231,7 @@ export default function ReviewsAll() {
           ))}
           {reviews.length === 0 && (
             <Card className="col-span-full p-8 text-center">
-              <p className="text-muted-foreground">{t("reviews.noReviewsForPeriod")}</p>
+              <p className="text-muted-foreground">No reviews found for this period</p>
             </Card>
           )}
         </div>

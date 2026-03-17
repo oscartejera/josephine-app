@@ -19,7 +19,6 @@ import { useInventoryData } from '@/hooks/useInventoryData';
 import { getDemoGenerator } from '@/lib/demoDataGenerator';
 import { useApp } from '@/contexts/AppContext';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
-import { useTranslation } from 'react-i18next';
 
 // Validate locationId format (demo IDs or UUIDs)
 function isValidLocationId(id: string | undefined): boolean {
@@ -31,7 +30,6 @@ function isValidLocationId(id: string | undefined): boolean {
 }
 
 export default function InventoryLocation() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { locationId } = useParams<{ locationId: string }>();
   const [searchParams] = useSearchParams();
@@ -58,7 +56,11 @@ export default function InventoryLocation() {
     };
   }, []); // Only compute once on mount
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>{t('inventoryLocation.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('inventoryLocation.monthlyConstViewmodeSetviewmodeUsestate')}<ViewMode>{t('inventoryLocation.gpConstJosephineopenSetjosephineopenUses')}<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [viewMode, setViewMode] = useState<ViewMode>('GP');
+  const [josephineOpen, setJosephineOpen] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
 
   // Validate locationId - memoized
   const isValidLocation = useMemo(() => isValidLocationId(locationId), [locationId]);
@@ -176,14 +178,14 @@ export default function InventoryLocation() {
             <div className="flex flex-col items-center text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-destructive" />
               <div>
-                <h2 className="text-lg font-semibold">{t('inventoryLocation.invalidLocation')}</h2>
+                <h2 className="text-lg font-semibold">Invalid Location</h2>
                 <p className="text-muted-foreground mt-1">
                   The location "{locationId}" could not be found or is invalid.
                 </p>
               </div>
               <Button onClick={handleBackToAllLocations} className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                {t('inventoryLocation.backToAllLocations')}
+                Back to All Locations
               </Button>
             </div>
           </CardContent>
@@ -201,7 +203,7 @@ export default function InventoryLocation() {
             <div className="flex flex-col items-center text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-amber-500" />
               <div>
-                <h2 className="text-lg font-semibold">{t("common.somethingWentWrong")}</h2>
+                <h2 className="text-lg font-semibold">Something went wrong</h2>
                 <p className="text-muted-foreground mt-1">
                   {pageError}
                 </p>
@@ -209,11 +211,11 @@ export default function InventoryLocation() {
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleBackToAllLocations} className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
-                  {t('inventoryLocation.backToInventory')}
+                  Back to Inventory
                 </Button>
                 <Button onClick={handleRetry} className="gap-2">
                   <RefreshCw className="h-4 w-4" />
-                  {t('inventoryLocation.retry')}
+                  Retry
                 </Button>
               </div>
             </div>
@@ -224,8 +226,8 @@ export default function InventoryLocation() {
   }
 
   const breadcrumbs = [
-    { label: t('inventory.insights') },
-    { label: t('inventory.inventory'), path: '/inventory' },
+    { label: 'Insights' },
+    { label: 'Inventory', path: '/inventory' },
     { label: currentLocation?.name || 'Location' }
   ];
 
@@ -256,7 +258,7 @@ export default function InventoryLocation() {
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t('inventoryLocation.allLocations')}
+          All locations
         </Button>
         
         <Button 
@@ -265,7 +267,7 @@ export default function InventoryLocation() {
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
-          {t('inventoryLocation.reconciliationReport')}
+          Reconciliation Report
         </Button>
       </div>
 

@@ -13,7 +13,6 @@ import { Truck, Settings2, Mail, Globe, Phone, CheckCircle2, AlertCircle, Loader
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { useTranslation } from 'react-i18next';
 
 interface Supplier {
   id: string;
@@ -30,10 +29,10 @@ interface Supplier {
 }
 
 const INTEGRATION_TYPES = [
-  { value: 'api', label: 'API Directa', icon: Globe, description: t('settings.envioAutomaticoViaRestApi') },
-  { value: 'edi', label: 'EDI/EDIFACT', icon: Settings2, description: t('settings.protocoloElectronicoEstandar') },
-  { value: 'email', label: 'Email', icon: Mail, description: t('settings.envioAutomaticoPorEmail') },
-  { value: 'manual', label: 'Manual', icon: Phone, description: t('settings.sinEnvioAutomatico') },
+  { value: 'api', label: 'API Directa', icon: Globe, description: 'Envío automático via REST API' },
+  { value: 'edi', label: 'EDI/EDIFACT', icon: Settings2, description: 'Protocolo electrónico estándar' },
+  { value: 'email', label: 'Email', icon: Mail, description: 'Envío automático por email' },
+  { value: 'manual', label: 'Manual', icon: Phone, description: 'Sin envío automático' },
 ] as const;
 
 const API_FORMATS = [
@@ -43,8 +42,9 @@ const API_FORMATS = [
 ] as const;
 
 export function SupplierIntegrationManager() {
-  const { t } = useTranslation();
-  const [suppliers, setSuppliers] = useState<Supplier[]>{t('settings.SupplierIntegrationManager.constLoadingSetloadingUsestatetrueConst')}<Supplier | null>(null);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [testingConnection, setTestingConnection] = useState(false);
@@ -63,7 +63,7 @@ export function SupplierIntegrationManager() {
       .order('name');
     
     if (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: 'No se pudieron cargar los proveedores' });
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron cargar los proveedores' });
     } else {
       // Map to include category as null since it doesn't exist in DB
       const mapped: Supplier[] = (data || []).map((s: any) => ({
@@ -100,9 +100,9 @@ export function SupplierIntegrationManager() {
       .eq('id', editingSupplier.id);
 
     if (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: t('settings.no_se_pudo_guardar_la_configuracion') });
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar la configuración' });
     } else {
-      toast({ title: t('common.saved'), description: `Configuración de ${editingSupplier.name} actualizada` });
+      toast({ title: 'Guardado', description: `Configuración de ${editingSupplier.name} actualizada` });
       setEditingSupplier(null);
       fetchSuppliers();
     }
@@ -111,7 +111,7 @@ export function SupplierIntegrationManager() {
 
   const handleTestConnection = async () => {
     if (!editingSupplier?.api_endpoint) {
-      toast({ variant: 'destructive', title: t("common.error"), description: 'Configura primero el endpoint de la API' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Configura primero el endpoint de la API' });
       return;
     }
     
@@ -122,7 +122,7 @@ export function SupplierIntegrationManager() {
     
     // For demo purposes, show success
     toast({ 
-      title: t('suppliers.connectionSuccess'), 
+      title: 'Conexión exitosa', 
       description: `API de ${editingSupplier.name} responde correctamente` 
     });
     
@@ -132,7 +132,13 @@ export function SupplierIntegrationManager() {
   const getIntegrationBadge = (type: string) => {
     switch (type) {
       case 'api':
-        return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">API</Badge>{t('settings.SupplierIntegrationManager.caseEdiReturn')} <Badge variant="outline" className="bg-secondary text-secondary-foreground">EDI</Badge>{t('settings.SupplierIntegrationManager.caseEmailReturn')} <Badge variant="outline" className="bg-accent text-accent-foreground">{t('settings.SupplierIntegrationManager.email')}</Badge>{t('settings.SupplierIntegrationManager.defaultReturn')} <Badge variant="secondary">{t('settings.SupplierIntegrationManager.manual')}</Badge>;
+        return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">API</Badge>;
+      case 'edi':
+        return <Badge variant="outline" className="bg-secondary text-secondary-foreground">EDI</Badge>;
+      case 'email':
+        return <Badge variant="outline" className="bg-accent text-accent-foreground">Email</Badge>;
+      default:
+        return <Badge variant="secondary">Manual</Badge>;
     }
   };
 
@@ -165,28 +171,28 @@ export function SupplierIntegrationManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Truck className="h-5 w-5" />
-            {t('settings.SupplierIntegrationManager.integracionDeProveedores')}
+            Integración de Proveedores
           </CardTitle>
           <CardDescription>
-            {t('settings.SupplierIntegrationManager.configuraElMetodoDeEnvio')}
+            Configura el método de envío de pedidos para cada proveedor
           </CardDescription>
         </CardHeader>
         <CardContent>
           {suppliers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Truck className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>{t("suppliers.noSuppliers")}</p>
-              <p className="text-sm">{t("settings.addSuppliersFromWizard")}</p>
+              <p>No hay proveedores configurados</p>
+              <p className="text-sm">Añade proveedores desde el asistente de locales</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('settings.SupplierIntegrationManager.proveedor')}</TableHead>
-                  <TableHead>{t('inventory.categoria')}</TableHead>
-                  <TableHead>{t('settings.metodo')}</TableHead>
-                  <TableHead>{t("common.status")}</TableHead>
-                  <TableHead className="text-right">{t('settings.acciones')}</TableHead>
+                  <TableHead>Proveedor</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Método</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -201,14 +207,14 @@ export function SupplierIntegrationManager() {
                         <span className="text-sm text-muted-foreground">
                           {supplier.integration_type === 'api' && supplier.api_endpoint ? 'Configurado' :
                            supplier.integration_type === 'email' && supplier.order_email ? 'Configurado' :
-                           supplier.integration_type === 'manual' ? 'Manual' : t('integrations.pendiente')}
+                           supplier.integration_type === 'manual' ? 'Manual' : 'Pendiente'}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)}>
                         <Settings2 className="h-4 w-4 mr-1" />
-                        {t('settings.SupplierIntegrationManager.configurar')}
+                        Configurar
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -228,7 +234,7 @@ export function SupplierIntegrationManager() {
               Configurar {editingSupplier?.name}
             </DialogTitle>
             <DialogDescription>
-              {t('settings.SupplierIntegrationManager.defineComoSeEnvianLos')}
+              Define cómo se envían los pedidos a este proveedor
             </DialogDescription>
           </DialogHeader>
 
@@ -237,7 +243,7 @@ export function SupplierIntegrationManager() {
               <div className="space-y-6 pr-4">
                 {/* Integration Type */}
                 <div className="space-y-3">
-                  <Label>{t("settings.shippingMethod")}</Label>
+                  <Label>Método de envío</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {INTEGRATION_TYPES.map((type) => {
                       const Icon = type.icon;
@@ -272,7 +278,7 @@ export function SupplierIntegrationManager() {
                 {editingSupplier.integration_type === 'api' && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="api_endpoint">{t('settings.SupplierIntegrationManager.apiEndpoint')}</Label>
+                      <Label htmlFor="api_endpoint">API Endpoint</Label>
                       <Input
                         id="api_endpoint"
                         placeholder="https://api.proveedor.com/orders"
@@ -282,7 +288,7 @@ export function SupplierIntegrationManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="api_format">{t('settings.SupplierIntegrationManager.formato')}</Label>
+                      <Label htmlFor="api_format">Formato</Label>
                       <Select
                         value={editingSupplier.api_format || 'json'}
                         onValueChange={(val) => setEditingSupplier({ ...editingSupplier, api_format: val as any })}
@@ -299,7 +305,7 @@ export function SupplierIntegrationManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="api_key">{t('settings.SupplierIntegrationManager.apiKeyOpcional')}</Label>
+                      <Label htmlFor="api_key">API Key (opcional)</Label>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Input
@@ -319,20 +325,20 @@ export function SupplierIntegrationManager() {
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {t('settings.SupplierIntegrationManager.lasCredencialesSeAlmacenanDe')}
+                        Las credenciales se almacenan de forma segura
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="customer_id">{t('settings.SupplierIntegrationManager.idDeCliente')}</Label>
+                      <Label htmlFor="customer_id">ID de Cliente</Label>
                       <Input
                         id="customer_id"
-                        placeholder={t('settings.SupplierIntegrationManager.rest12345')}
+                        placeholder="REST-12345"
                         value={editingSupplier.customer_id || ''}
                         onChange={(e) => setEditingSupplier({ ...editingSupplier, customer_id: e.target.value })}
                       />
                       <p className="text-xs text-muted-foreground">
-                        {t('settings.SupplierIntegrationManager.tuIdentificadorEnElSistema')}
+                        Tu identificador en el sistema del proveedor
                       </p>
                     </div>
 
@@ -345,12 +351,12 @@ export function SupplierIntegrationManager() {
                       {testingConnection ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {t('settings.SupplierIntegrationManager.probandoConexion')}
+                          Probando conexión...
                         </>
                       ) : (
                         <>
                           <TestTube className="h-4 w-4 mr-2" />
-                          {t('settings.SupplierIntegrationManager.probarConexion')}
+                          Probar conexión
                         </>
                       )}
                     </Button>
@@ -361,18 +367,18 @@ export function SupplierIntegrationManager() {
                 {editingSupplier.integration_type === 'email' && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="order_email">{t("settings.orderEmail")}</Label>
+                      <Label htmlFor="order_email">Email de pedidos</Label>
                       <Input
                         id="order_email"
                         type="email"
-                        placeholder={t('settings.SupplierIntegrationManager.pedidosproveedorcom')}
+                        placeholder="pedidos@proveedor.com"
                         value={editingSupplier.order_email || ''}
                         onChange={(e) => setEditingSupplier({ ...editingSupplier, order_email: e.target.value })}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="order_whatsapp">{t('settings.SupplierIntegrationManager.whatsappOpcional')}</Label>
+                      <Label htmlFor="order_whatsapp">WhatsApp (opcional)</Label>
                       <Input
                         id="order_whatsapp"
                         type="tel"
@@ -389,12 +395,13 @@ export function SupplierIntegrationManager() {
                   <div className="space-y-4">
                     <div className="p-4 bg-muted/50 rounded-lg">
                       <p className="text-sm text-muted-foreground">
-                        {t('settings.SupplierIntegrationManager.losPedidosSeGuardaranPero')}
+                        Los pedidos se guardarán pero no se enviarán automáticamente.
+                        Podrás descargarlos y enviarlos manualmente.
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t("common.contactPhone")}</Label>
+                      <Label htmlFor="phone">Teléfono de contacto</Label>
                       <Input
                         id="phone"
                         type="tel"
@@ -405,7 +412,7 @@ export function SupplierIntegrationManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="website">{t("settings.orderWebsite")}</Label>
+                      <Label htmlFor="website">Web de pedidos</Label>
                       <Input
                         id="website"
                         type="url"
@@ -422,22 +429,23 @@ export function SupplierIntegrationManager() {
                   <div className="space-y-4">
                     <div className="p-4 bg-accent border border-border rounded-lg">
                       <p className="text-sm text-accent-foreground">
-                        {t('settings.SupplierIntegrationManager.laIntegracionEdiRequiereConfiguracion')}
+                        La integración EDI requiere configuración adicional con el proveedor.
+                        Contacta con su departamento de IT para obtener las credenciales.
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="customer_id">{t('settings.codigoEdi')}</Label>
+                      <Label htmlFor="customer_id">Código EDI</Label>
                       <Input
                         id="customer_id"
-                        placeholder={t('settings.SupplierIntegrationManager.gln1234567890123')}
+                        placeholder="GLN-1234567890123"
                         value={editingSupplier.customer_id || ''}
                         onChange={(e) => setEditingSupplier({ ...editingSupplier, customer_id: e.target.value })}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="api_endpoint">{t('settings.SupplierIntegrationManager.endpointEdicomvan')}</Label>
+                      <Label htmlFor="api_endpoint">Endpoint EDICOM/VAN</Label>
                       <Input
                         id="api_endpoint"
                         placeholder="https://edicom.com/endpoint"
@@ -453,16 +461,16 @@ export function SupplierIntegrationManager() {
                 {/* Fallback Email */}
                 {editingSupplier.integration_type !== 'email' && editingSupplier.integration_type !== 'manual' && (
                   <div className="space-y-2">
-                    <Label htmlFor="fallback_email">{t("settings.fallbackEmail")}</Label>
+                    <Label htmlFor="fallback_email">Email de respaldo</Label>
                     <Input
                       id="fallback_email"
                       type="email"
-                      placeholder={t('settings.SupplierIntegrationManager.pedidosproveedorcom1')}
+                      placeholder="pedidos@proveedor.com"
                       value={editingSupplier.order_email || ''}
                       onChange={(e) => setEditingSupplier({ ...editingSupplier, order_email: e.target.value })}
                     />
                     <p className="text-xs text-muted-foreground">
-                      {t('settings.SupplierIntegrationManager.seUsaraSiFallaEl')}
+                      Se usará si falla el método principal
                     </p>
                   </div>
                 )}
@@ -472,16 +480,16 @@ export function SupplierIntegrationManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingSupplier(null)}>
-              {t('settings.SupplierIntegrationManager.cancelar')}
+              Cancelar
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t('settings.SupplierIntegrationManager.guardando')}
+                  Guardando...
                 </>
               ) : (
-                t('settings.guardar')
+                'Guardar'
               )}
             </Button>
           </DialogFooter>

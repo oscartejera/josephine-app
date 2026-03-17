@@ -20,7 +20,6 @@ import { es } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { resetDemoGenerator } from '@/lib/demoDataGenerator';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 export type ViewMode = 'COGS' | 'GP';
 
@@ -43,7 +42,6 @@ interface InventoryHeaderProps {
 }
 
 export function InventoryHeader({
-  
   dateRange,
   setDateRange,
   dateMode,
@@ -60,13 +58,12 @@ export function InventoryHeader({
   showViewToggle = true,
   breadcrumbs = [{ label: 'Insights' }, { label: 'Inventory' }]
 }: InventoryHeaderProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleReseedData = () => {
     resetDemoGenerator();
-    toast.success(t('inventoryHeader.toastRegenerated'), {
+    toast.success('Demo data regenerated', {
       description: 'New realistic data has been generated for all locations.'
     });
     if (onReseedData) {
@@ -104,10 +101,10 @@ export function InventoryHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => navigate('/inventory')}>
-                    {t('inventory.InventoryHeader.inventoryOverview')}
+                    Inventory Overview
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/inventory/reconciliation')}>
-                    {t('inventory.InventoryHeader.reconciliationReport')}
+                    Reconciliation Report
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -145,12 +142,12 @@ export function InventoryHeader({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                     </span>
-                    {t('inventory.InventoryHeader.live')}
+                    Live
                   </>
                 ) : (
                   <>
                     <WifiOff className="h-3 w-3" />
-                    {t('inventory.InventoryHeader.offline')}
+                    Offline
                   </>
                 )}
               </Badge>
@@ -159,7 +156,7 @@ export function InventoryHeader({
               {isConnected ? (
                 <p>Real-time inventory updates active{lastUpdated ? `. Last update: ${formatDistanceToNow(lastUpdated, { addSuffix: true })}` : ''}</p>
               ) : (
-                <p>{t('inventory.InventoryHeader.connectingToRealtimeUpdates')}</p>
+                <p>Connecting to real-time updates...</p>
               )}
             </TooltipContent>
           </Tooltip>
@@ -196,7 +193,7 @@ export function InventoryHeader({
             className="bg-gradient-primary text-white gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            {t('inventory.InventoryHeader.askJosephine')}
+            Ask Josephine
           </Button>
 
           {/* Actions menu */}
@@ -209,7 +206,7 @@ export function InventoryHeader({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleReseedData}>
                 <Database className="h-4 w-4 mr-2" />
-                {t('inventory.InventoryHeader.reseedDemoData')}
+                Reseed demo data
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

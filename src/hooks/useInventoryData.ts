@@ -17,19 +17,28 @@ import type { InventoryMetrics, CategoryBreakdown, WasteByCategory, WasteByLocat
 import { defaultMetrics } from './inventory/types';
 
 
-import { useTranslation } from 'react-i18next';
 export function useInventoryData(
   dateRange: DateRangeValue,
   dateMode: DateMode,
   viewMode: ViewMode,
   selectedLocations: string[]
 ) {
-  const { t } = useTranslation();
   const { locations, group, loading: appLoading, dataSource } = useApp();
   const { session } = useAuth();
   const dsLegacy = toLegacyDataSource(dataSource);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>{t('hooks.useInventoryData.nullConstHasrealdataSethasrealdataUsesta')}<Error | null>{t('hooks.useInventoryData.nullConstIsconnectedSetisconnectedUsesta')}<InventoryMetrics>{t('hooks.useInventoryData.defaultmetricsConstCategorybreakdownSetc')}<CategoryBreakdown[]>{t('hooks.useInventoryData.constWastebycategorySetwastebycategoryUs')}<WasteByCategory[]>{t('hooks.useInventoryData.constWastebylocationSetwastebylocationUs')}<WasteByLocation[]>{t('hooks.useInventoryData.constLocationperformanceSetlocationperfo')}<LocationPerformance[]>{t('hooks.useInventoryData.trackIfWeveFetchedTo')}<string>('');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [hasRealData, setHasRealData] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [metrics, setMetrics] = useState<InventoryMetrics>(defaultMetrics);
+  const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
+  const [wasteByCategory, setWasteByCategory] = useState<WasteByCategory[]>([]);
+  const [wasteByLocation, setWasteByLocation] = useState<WasteByLocation[]>([]);
+  const [locationPerformance, setLocationPerformance] = useState<LocationPerformance[]>([]);
+
+  // Track if we've fetched to avoid loops
+  const fetchedRef = useRef<string>('');
   const isMountedRef = useRef(true);
 
   // Create a stable cache key for the current request — includes locations count
@@ -96,7 +105,7 @@ export function useInventoryData(
           .gte('date', fromDateStr)
           .lte('date', toDateStr);
 
-        if (effectiveLocationIds.length > {t('hooks.useInventoryData.0Effectivelocationidslength')} < locations.length) {
+        if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
           salesQuery = salesQuery.in('location_id', effectiveLocationIds);
         }
 
@@ -206,7 +215,7 @@ export function useInventoryData(
       .gte('day', fromDateStr)
       .lte('day', toDateStr);
 
-    if (effectiveLocationIds.length > {t('hooks.useInventoryData.0Effectivelocationidslength1')} < locations.length) {
+    if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
       prodQuery = prodQuery.in('location_id', effectiveLocationIds);
     }
 
@@ -222,7 +231,7 @@ export function useInventoryData(
       .gte('created_at', `${fromDateStr}T00:00:00`)
       .lte('created_at', `${toDateStr}T23:59:59`);
 
-    if (effectiveLocationIds.length > {t('hooks.useInventoryData.0Effectivelocationidslength2')} < locations.length) {
+    if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
       wasteQuery = wasteQuery.in('location_id', effectiveLocationIds);
     }
 
@@ -245,7 +254,18 @@ export function useInventoryData(
     const theoreticalCOGS = totalSales * cogsRatio;
 
     // Waste
-    const totalWaste = (wasteEvents || []).reduce((sum, w) => {t('hooks.useInventoryData.sumWwastevalue00Actual')} < 0 ? Math.abs(gapCOGS) : 0;
+    const totalWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
+    // Actual COGS = theoretical + waste
+    const actualCOGS = theoreticalCOGS + totalWaste;
+
+    // GP = Sales - COGS
+    const theoreticalGP = totalSales - theoreticalCOGS;
+    const actualGP = totalSales - actualCOGS;
+    const gapCOGS = actualCOGS - theoreticalCOGS;   // = totalWaste
+
+    const accountedWaste = totalWaste;
+    const unaccountedWaste = 0;
+    const surplus = gapCOGS < 0 ? Math.abs(gapCOGS) : 0;
 
     setMetrics({
       totalSales,
@@ -287,7 +307,8 @@ export function useInventoryData(
     };
 
     // Accumulate COGS per bucket from product_sales_daily_unified
-    const categorySalesMap = new Map<string, number>{t('hooks.useInventoryData.constCategorycogsmapNewMap')}<string, number>();
+    const categorySalesMap = new Map<string, number>();
+    const categoryCOGSMap = new Map<string, number>();
     (productSales || []).forEach((row: any) => {
       const mappedCat = mapToBucket(row.product_category);
       const sales = Number(row.net_sales) || 0;
@@ -335,14 +356,18 @@ export function useInventoryData(
     })));
 
     // ── Per-location sales, COGS, waste maps ──
-    const salesByLoc = new Map<string, number>{t('hooks.useInventoryData.constCogsbylocNewMap')}<string, number>{t('hooks.useInventoryData.fromProductViewConstCogspctbyloc')}<string, number>{t('hooks.useInventoryData.cogsRatioPerLocationConst')}<string, { accounted: number; unaccounted: number }>();
+    const salesByLoc = new Map<string, number>();
+    const cogsByLoc = new Map<string, number>();     // from product view
+    const cogsPctByLoc = new Map<string, number>();  // COGS ratio per location
+    const wasteByLoc = new Map<string, { accounted: number; unaccounted: number }>();
 
     tickets.forEach(t => {
       salesByLoc.set(t.location_id, (salesByLoc.get(t.location_id) || 0) + (t.net_total || t.gross_total || 0));
     });
 
     // Per-location COGS from product view
-    const locProductSalesMap = new Map<string, number>{t('hooks.useInventoryData.constLocproductcogsmapNewMap')}<string, number>();
+    const locProductSalesMap = new Map<string, number>();
+    const locProductCOGSMap = new Map<string, number>();
     (productSales || []).forEach((row: any) => {
       const lid = row.location_id;
       locProductSalesMap.set(lid, (locProductSalesMap.get(lid) || 0) + (Number(row.net_sales) || 0));

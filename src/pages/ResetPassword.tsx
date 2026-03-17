@@ -7,10 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChefHat, Loader2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useTranslation } from 'react-i18next';
 
 export default function ResetPassword() {
-  const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +22,7 @@ export default function ResetPassword() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError(t('auth.resetLinkExpired'));
+        setError('El enlace de recuperación ha expirado o es inválido. Por favor solicita uno nuevo.');
       }
     };
     checkSession();
@@ -36,8 +34,8 @@ export default function ResetPassword() {
     if (password !== confirmPassword) {
       toast({
         variant: "destructive",
-        title: t("common.error"),
-        description: t('auth.lasContrasenasNoCoinciden')
+        title: "Error",
+        description: "Las contraseñas no coinciden"
       });
       return;
     }
@@ -45,8 +43,8 @@ export default function ResetPassword() {
     if (password.length < 6) {
       toast({
         variant: "destructive",
-        title: t("common.error"),
-        description: t('auth.laContrasenaDebeTenerAl')
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres"
       });
       return;
     }
@@ -58,7 +56,7 @@ export default function ResetPassword() {
     if (error) {
       toast({
         variant: "destructive",
-        title: t("common.error"),
+        title: "Error",
         description: error.message
       });
     } else {
@@ -77,12 +75,12 @@ export default function ResetPassword() {
               <div className="mx-auto w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-4">
                 <ChefHat className="w-6 h-6 text-destructive" />
               </div>
-              <CardTitle className="text-2xl font-display">{t('resetPassword.enlaceExpirado')}</CardTitle>
+              <CardTitle className="text-2xl font-display">Enlace expirado</CardTitle>
               <CardDescription>{error}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full" onClick={() => navigate('/login')}>
-                {t('resetPassword.volverAlInicioDeSesion')}
+                Volver al inicio de sesión
               </Button>
             </CardContent>
           </Card>
@@ -100,12 +98,12 @@ export default function ResetPassword() {
               <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-6 h-6 text-primary" />
               </div>
-              <CardTitle className="text-2xl font-display">{t('auth.contrasenaActualizada')}</CardTitle>
-              <CardDescription>{t("auth.passwordChanged")}</CardDescription>
+              <CardTitle className="text-2xl font-display">Contraseña actualizada</CardTitle>
+              <CardDescription>Tu contraseña ha sido cambiada exitosamente</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full" onClick={() => navigate('/dashboard')}>
-                {t('resetPassword.irAlDashboard')}
+                Ir al dashboard
               </Button>
             </CardContent>
           </Card>
@@ -122,13 +120,13 @@ export default function ResetPassword() {
             <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
               <ChefHat className="w-6 h-6 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl font-display">{t('auth.nuevaContrasena')}</CardTitle>
-            <CardDescription>{t("auth.enterNewPassword")}</CardDescription>
+            <CardTitle className="text-2xl font-display">Nueva contraseña</CardTitle>
+            <CardDescription>Ingresa tu nueva contraseña</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">{t('auth.nuevaContrasena')}</Label>
+                <Label htmlFor="password">Nueva contraseña</Label>
                 <Input
                   id="password"
                   type="password"
@@ -141,7 +139,7 @@ export default function ResetPassword() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
+                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
                 <Input
                   id="confirmPassword"
                   type="password"

@@ -12,7 +12,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
 import { format, subDays } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 
 interface LocationHealth {
     locationId: string;
@@ -28,7 +27,6 @@ interface LocationHealth {
 }
 
 export function LocationHealthIndicators() {
-  const { t } = useTranslation();
     const { accessibleLocations } = useApp();
     const [healthData, setHealthData] = useState<LocationHealth[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -83,7 +81,7 @@ export function LocationHealthIndicators() {
 
                     if (primePct > 65) issues.push(`Prime Cost ${primePct.toFixed(0)}%`);
                     if (colPct > 35) issues.push(`COL% ${colPct.toFixed(0)}%`);
-                    if (splh > {t('dashboard.LocationHealthIndicators.0Splh')} < 40) issues.push(`SPLH €${splh.toFixed(0)}`);
+                    if (splh > 0 && splh < 40) issues.push(`SPLH €${splh.toFixed(0)}`);
 
                     let status: LocationHealth['status'] = 'healthy';
                     if (issues.length > 0) status = 'warning';
@@ -120,7 +118,7 @@ export function LocationHealthIndicators() {
             <Card>
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <MapPin className="h-4 w-4" /> {t('dashboard.LocationHealthIndicators.saludDeLocales')}
+                        <MapPin className="h-4 w-4" /> Salud de Locales
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -139,7 +137,7 @@ export function LocationHealthIndicators() {
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <MapPin className="h-4 w-4" /> {t('dashboard.LocationHealthIndicators.saludDeLocales1')}
+                        <MapPin className="h-4 w-4" /> Salud de Locales
                     </CardTitle>
                     {atRiskCount > 0 && (
                         <Badge variant="destructive" className="text-[10px]">
@@ -162,7 +160,7 @@ export function LocationHealthIndicators() {
                         <div className="flex items-center gap-2">
                             {loc.status === 'critical' ? (
                                 <AlertTriangle className="h-4 w-4 text-red-500" />
-                            {t('dashboard.LocationHealthIndicators.locstatusWarning')}
+                            ) : loc.status === 'warning' ? (
                                 <TrendingDown className="h-4 w-4 text-amber-500" />
                             ) : (
                                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />

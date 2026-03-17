@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils';
 import type { BISalesData } from '@/hooks/useBISalesData';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface BILocationTableProps {
   data: BISalesData | undefined;
@@ -32,7 +31,8 @@ function formatCurrency(value: number): string {
 }
 
 function DeltaValue({ value, delta }: { value: number; delta: number }) {
-  const isPositive = delta >{t('bi.BILocationTable.0Return')}
+  const isPositive = delta >= 0;
+  return (
     <div className="text-right">
       <div className="font-medium">{formatCurrency(value)}</div>
       {delta !== 0 && (
@@ -48,7 +48,6 @@ function DeltaValue({ value, delta }: { value: number; delta: number }) {
 }
 
 export function BILocationTable({ data, isLoading }: BILocationTableProps) {
-  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filteredLocations = useMemo(() => {
@@ -90,7 +89,7 @@ export function BILocationTable({ data, isLoading }: BILocationTableProps) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t('bi.BILocationTable.salesByLocation')}</CardTitle>
+          <CardTitle>Sales by location</CardTitle>
           <Skeleton className="h-9 w-[200px]" />
         </CardHeader>
         <CardContent>
@@ -103,11 +102,11 @@ export function BILocationTable({ data, isLoading }: BILocationTableProps) {
   return (
     <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
-        <CardTitle className="text-lg font-semibold">{t('bi.BILocationTable.salesByLocation1')}</CardTitle>
+        <CardTitle className="text-lg font-semibold">Sales by location</CardTitle>
         <div className="relative w-[220px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('bi.BILocationTable.searchByLocation')}
+            placeholder="Search by location"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -119,29 +118,29 @@ export function BILocationTable({ data, isLoading }: BILocationTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="min-w-[160px]">{t('bi.BILocationTable.locations')}</TableHead>
-                <TableHead colSpan={2} className="text-center border-l">{t('bi.BILocationTable.sales')}</TableHead>
-                <TableHead colSpan={3} className="text-center border-l">{t('bi.BILocationTable.channels')}</TableHead>
-                <TableHead colSpan={3} className="text-center border-l">{t('bi.BILocationTable.other')}</TableHead>
+                <TableHead className="min-w-[160px]">Locations</TableHead>
+                <TableHead colSpan={2} className="text-center border-l">Sales</TableHead>
+                <TableHead colSpan={3} className="text-center border-l">Channels</TableHead>
+                <TableHead colSpan={3} className="text-center border-l">Other</TableHead>
               </TableRow>
               <TableRow>
                 <TableHead></TableHead>
-                <TableHead className="text-right border-l">{t('bi.BILocationTable.actual')}</TableHead>
-                <TableHead className="text-right">{t('bi.BILocationTable.forecasted')}</TableHead>
-                <TableHead className="text-right border-l">{t('bi.BILocationTable.dinein')}</TableHead>
-                <TableHead className="text-right">{t('bi.BILocationTable.delivery')}</TableHead>
-                <TableHead className="text-right">{t('bi.BILocationTable.pickup')}</TableHead>
-                <TableHead className="text-right border-l">{t('bi.BILocationTable.orders')}</TableHead>
-                <TableHead className="text-right">{t('bi.BILocationTable.acs')}</TableHead>
+                <TableHead className="text-right border-l">Actual</TableHead>
+                <TableHead className="text-right">Forecasted</TableHead>
+                <TableHead className="text-right border-l">Dine-in</TableHead>
+                <TableHead className="text-right">Delivery</TableHead>
+                <TableHead className="text-right">Pick-up</TableHead>
+                <TableHead className="text-right border-l">Orders</TableHead>
+                <TableHead className="text-right">ACS</TableHead>
                 <TableHead className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    {t('bi.BILocationTable.dwell')}
+                    Dwell
                     <Tooltip>
                       <TooltipTrigger>
                         <Info className="h-3 w-3 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{t('bi.BILocationTable.averageDwellTimeForDinein')}</p>
+                        <p>Average dwell time for dine-in</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -173,7 +172,7 @@ export function BILocationTable({ data, isLoading }: BILocationTableProps) {
               {/* Summary row */}
               {totals && (
                 <TableRow className="bg-muted/30 font-semibold">
-                  <TableCell>{t('bi.BILocationTable.sumAvg')}</TableCell>
+                  <TableCell>SUM / AVG</TableCell>
                   <TableCell className="text-right border-l">{formatCurrency(totals.salesActual)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(totals.salesForecast)}</TableCell>
                   <TableCell className="text-right border-l">{formatCurrency(totals.dineIn)}</TableCell>

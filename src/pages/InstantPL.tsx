@@ -23,17 +23,21 @@ import {
   PLDateRange
 } from '@/hooks/useInstantPLData';
 import { DateMode, ChartGranularity, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
-import { useTranslation } from 'react-i18next';
 
 export default function InstantPL() {
-  const { t } = useTranslation();
   const { group } = useApp();
   // Date range state (default: current month)
   const [dateRange, setDateRange] = useState<PLDateRange>(() => ({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   }));
-  const [dateMode, setDateMode] = useState<DateMode>{t('instantPL.monthlyFilterModeStateBestworstall')}<FilterMode>{t('instantPL.allActiveChipsStateConst')}<ChipFilter[]>(['all_locations']);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+
+  // Filter mode state (Best/Worst/All)
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
+
+  // Active chips state
+  const [activeChips, setActiveChips] = useState<ChipFilter[]>(['all_locations']);
 
   // Fetch data
   const { locations, chipCounts, lastUpdated, isLoading, isError } = useInstantPLData({
@@ -97,7 +101,7 @@ export default function InstantPL() {
           variant="outline"
           size="sm"
           onClick={() => {
-            const orgName = group?.name || t('settings.restaurante');
+            const orgName = group?.name || 'Restaurante';
             const period = format(dateRange.from, 'MMMM yyyy', { locale: es });
             const dateRangeStr = `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`;
             const totalSales = locations.reduce((s, l) => s + (l.salesActual || 0), 0);
@@ -124,7 +128,7 @@ export default function InstantPL() {
           disabled={isLoading || locations.length === 0}
         >
           <Download className="h-4 w-4 mr-2" />
-          {t('instantPL.exportarPlPdf')}
+          Exportar P&L (PDF)
         </Button>
       </div>
 
@@ -152,7 +156,7 @@ export default function InstantPL() {
       {isError && (
         <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-center">
           <p className="text-destructive font-medium">
-            {t('instantPL.failedToLoadPlData')}
+            Failed to load P&L data. Please try again.
           </p>
         </div>
       )}

@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTranslation } from 'react-i18next';
 
 interface TeamMember {
   id: string;
@@ -25,7 +24,6 @@ interface TeamMember {
 }
 
 export default function TeamDirectory() {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [search, setSearch] = useState('');
@@ -89,7 +87,7 @@ export default function TeamDirectory() {
       store_manager: 'Gerente de Local',
       finance: 'Finanzas',
       hr_payroll: 'RRHH',
-      employee: t('payroll.empleado'),
+      employee: 'Empleado',
       waiter: 'Camarero/a',
       cook: 'Cocinero/a',
       bartender: 'Barista',
@@ -98,7 +96,7 @@ export default function TeamDirectory() {
       dishwasher: 'Friegaplatos',
       delivery: 'Repartidor/a',
     };
-    return role ? labels[role] || role : t('payroll.empleado');
+    return role ? labels[role] || role : 'Empleado';
   };
 
   const getRoleColor = (role: string | null) => {
@@ -144,7 +142,7 @@ export default function TeamDirectory() {
     <div className="p-4 lg:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold">{t('team.TeamDirectory.equipo')}</h1>
+        <h1 className="text-xl font-bold">Equipo</h1>
         <p className="text-sm text-muted-foreground flex items-center gap-1">
           <MapPin className="h-3 w-3" />
           {locationName} · {members.length} personas
@@ -155,7 +153,7 @@ export default function TeamDirectory() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={t('teamDirectory.searchPlaceholder')}
+          placeholder="Buscar compañero/a..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10"
@@ -179,12 +177,12 @@ export default function TeamDirectory() {
             </Card>
           ))}
         </div>
-      {t('team.TeamDirectory.filteredmemberslength0')}
+      ) : filteredMembers.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-muted-foreground">
-              {search ? 'No se encontraron resultados' : t('team.noHayMiembrosDelEquipo')}
+              {search ? 'No se encontraron resultados' : 'No hay miembros del equipo'}
             </p>
           </CardContent>
         </Card>

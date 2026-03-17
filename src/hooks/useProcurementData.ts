@@ -29,18 +29,27 @@ import {
   dbSupplierToSupplier,
 } from './procurement/utils';
 
-import { useTranslation } from 'react-i18next';
 // ============= Main Hook =============
 
 
 export function useProcurementData() {
-  const { t } = useTranslation();
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string>{t('hooks.useProcurementData.constOrderdateSetorderdateUsestate')}<Date>{t('hooks.useProcurementData.newDateConstCartSetcart')}<Map<string, number>>{t('hooks.useProcurementData.newMapConstSearchquerySetsearchquery')}<RecommendationSettings>({
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
+  const [orderDate, setOrderDate] = useState<Date>(new Date());
+  const [cart, setCart] = useState<Map<string, number>>(new Map());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasRealData, setHasRealData] = useState(false);
+  const [recommendationSettings, setRecommendationSettings] = useState<RecommendationSettings>({
     horizon: 7,
     includeSafetyStock: true,
     roundToPacks: true,
   });
-  const [categorySettings, setCategorySettings] = useState<ProcurementCategorySettings>{t('hooks.useProcurementData.defaultcategorysettingsStateForDataFrom')}<Supplier[]>{t('hooks.useProcurementData.fallbacksuppliersConstRealinventoryitems')}<IngredientSku[]>([]);
+  const [categorySettings, setCategorySettings] = useState<ProcurementCategorySettings>(DEFAULT_CATEGORY_SETTINGS);
+
+  // State for data from Supabase
+  const [suppliers, setSuppliers] = useState<Supplier[]>(FALLBACK_SUPPLIERS);
+  const [realInventoryItems, setRealInventoryItems] = useState<IngredientSku[]>([]);
 
   // Fetch suppliers and inventory from Supabase
   useEffect(() => {
@@ -229,7 +238,9 @@ export function useProcurementData() {
   // AI Recommend function
   const aiRecommend = useCallback(async () => {
     setIsCalculating(true);
-    await new Promise(resolve => {t('hooks.useProcurementData.settimeoutresolve1500ConstNewcartNew')}<string, number>();
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const newCart = new Map<string, number>();
     const supplierSkus = skusWithCategorySettings.filter(sku => sku.supplierId === selectedSupplierId);
 
     supplierSkus.forEach(sku => {

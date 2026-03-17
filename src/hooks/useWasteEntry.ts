@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,11 +16,11 @@ export type WasteReasonCode =
 export const WASTE_REASONS: { code: WasteReasonCode; label: string; icon: string; color: string }[] = [
     { code: 'spillage', label: 'Derrame', icon: '💧', color: 'bg-blue-500' },
     { code: 'expiry', label: 'Caducidad', icon: '📅', color: 'bg-amber-500' },
-    { code: 'kitchen_error', label: t('waste.errorCocina'), icon: '🍳', color: 'bg-red-500' },
-    { code: 'courtesy', label: t('waste.cortesia'), icon: '🎁', color: 'bg-purple-500' },
+    { code: 'kitchen_error', label: 'Error Cocina', icon: '🍳', color: 'bg-red-500' },
+    { code: 'courtesy', label: 'Cortesía', icon: '🎁', color: 'bg-purple-500' },
     { code: 'theft', label: 'Robo', icon: '🚨', color: 'bg-rose-600' },
     { code: 'broken', label: 'Rotura', icon: '💥', color: 'bg-orange-500' },
-    { code: 'end_of_day', label: t('waste.finDeDia2'), icon: '🌙', color: 'bg-indigo-500' },
+    { code: 'end_of_day', label: 'Fin de día', icon: '🌙', color: 'bg-indigo-500' },
     { code: 'other', label: 'Otro', icon: '📋', color: 'bg-gray-500' },
 ];
 

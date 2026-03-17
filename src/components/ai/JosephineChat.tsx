@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Bot, Send, User, Loader2, Sparkles, TrendingUp, Users, Package, X, Maximize2, Minimize2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface Message {
     id: string;
@@ -23,30 +22,29 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-    { label: t('ai.ventasHoy'), prompt: '¿Cómo van las ventas de hoy comparadas con la semana pasada?', icon: TrendingUp },
-    { label: '👥 Labour cost', prompt: t('ai.cualEsElCosteDe'), icon: Users },
-    { label: '📦 Stock bajo', prompt: t('ai.suggestedIngredients'), icon: Package },
-    { label: '✨ Briefing', prompt: t('ai.dame_un_resumen_ejecutivo_del_dia_de_hoy_ventas_pe'), icon: Sparkles },
+    { label: '📊 Ventas hoy', prompt: '¿Cómo van las ventas de hoy comparadas con la semana pasada?', icon: TrendingUp },
+    { label: '👥 Labour cost', prompt: '¿Cuál es el coste de personal actual vs el presupuesto? ¿Estamos dentro del objetivo?', icon: Users },
+    { label: '📦 Stock bajo', prompt: '¿Qué ingredientes están por debajo del nivel mínimo y necesito pedir?', icon: Package },
+    { label: '✨ Briefing', prompt: 'Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predicción para mañana.', icon: Sparkles },
 ];
 
-export function JosephineChat({
-  isExpanded = false, onToggleExpand, onClose }: {
+export function JosephineChat({ isExpanded = false, onToggleExpand, onClose }: {
     isExpanded?: boolean;
     onToggleExpand?: () => void;
     onClose?: () => void;
 }) {
-    const { t } = useTranslation();
     const { group, selectedLocationId } = useApp();
     const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([{
         id: 'welcome',
         role: 'assistant',
-        content: t('ai.hola_soy_josephine_tu_asistente_de_operaciones_pre'),
+        content: '¡Hola! 👋 Soy **Josephine**, tu asistente de operaciones. Pregúntame sobre ventas, personal, inventario, o pídeme un resumen del día.',
         createdAt: new Date(),
     }]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const scrollRef = useRef<HTMLDivElement>{t('ai.JosephineChat.nullConstInputrefUseref')}<HTMLInputElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -82,7 +80,7 @@ export function JosephineChat({
             });
 
             const reply = res.data?.insight || res.data?.narrative || res.data?.text
-                || t('ai.errorRetry');
+                || 'No he podido obtener la información en este momento. Intenta de nuevo.';
 
             const assistantMsg: Message = {
                 id: crypto.randomUUID(),
@@ -142,8 +140,8 @@ export function JosephineChat({
                             <Bot className="h-4 w-4 text-white" />
                         </div>
                         <div>
-                            <CardTitle className="text-sm">{t('ai.JosephineChat.josephineAi')}</CardTitle>
-                            <p className="text-[10px] text-muted-foreground">{t('ai.JosephineChat.asistenteDeOperaciones')}</p>
+                            <CardTitle className="text-sm">Josephine AI</CardTitle>
+                            <p className="text-[10px] text-muted-foreground">Asistente de operaciones</p>
                         </div>
                     </div>
                     <div className="flex gap-1">
@@ -190,7 +188,7 @@ export function JosephineChat({
                                 </AvatarFallback>
                             </Avatar>
                             <div className="bg-muted rounded-xl px-3 py-2 text-sm">
-                                <span className="text-muted-foreground">{t('ai.JosephineChat.pensando')}</span>
+                                <span className="text-muted-foreground">Pensando...</span>
                             </div>
                         </div>
                     )}
@@ -221,7 +219,7 @@ export function JosephineChat({
                     ref={inputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    placeholder={t('ai.JosephineChat.preguntaAlgoSobreElNegocio')}
+                    placeholder="Pregunta algo sobre el negocio..."
                     disabled={loading}
                     className="text-sm"
                 />

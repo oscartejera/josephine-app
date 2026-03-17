@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 
-import { useTranslation } from 'react-i18next';
 export interface LoyaltySettings {
   id: string;
   group_id: string;
@@ -69,9 +68,10 @@ export interface LoyaltyRedemption {
 }
 
 export function useLoyaltyData() {
-  const { t } = useTranslation();
   const { group } = useApp();
-  const [settings, setSettings] = useState<LoyaltySettings | null>{t('hooks.useLoyaltyData.nullConstMembersSetmembersUsestate')}<LoyaltyMember[]>{t('hooks.useLoyaltyData.constRewardsSetrewardsUsestate')}<LoyaltyReward[]>([]);
+  const [settings, setSettings] = useState<LoyaltySettings | null>(null);
+  const [members, setMembers] = useState<LoyaltyMember[]>([]);
+  const [rewards, setRewards] = useState<LoyaltyReward[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {

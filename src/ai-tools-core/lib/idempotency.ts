@@ -7,7 +7,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sha256Hex } from "./runtime.ts";
 import type { ToolName } from "./version.ts";
 
-import { useTranslation } from 'react-i18next';
 export interface IdempotencyRecord {
   tool_name: string;
   idempotency_key: string;
@@ -24,7 +23,8 @@ export interface IdempotencyRecord {
  */
 export async function computeRequestHash(
   toolName: string,
-  input: Record<string, any>{t('ai-tools-core.lib.idempotency.promise')}<string> {
+  input: Record<string, any>,
+): Promise<string> {
   const cleaned = { ...input };
   delete cleaned.confirm;
   delete cleaned.idempotencyKey;
@@ -79,7 +79,9 @@ export async function storeIdempotency(
   idempotencyKey: string,
   requestHash: string,
   reason: string,
-  actor: Record<string, unknown> {t('ai-tools-core.lib.idempotency.nullResultjsonUnknownPromise')}<void> {
+  actor: Record<string, unknown> | null,
+  resultJson: unknown,
+): Promise<void> {
   const { error } = await supabase.from("mcp_idempotency_keys").upsert(
     {
       tool_name: toolName,

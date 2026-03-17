@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, ChevronRight, Package, ChefHat, ShoppingCart, BarChart3 } from 'lucide-react';
 import { useSetupCompleteness } from '@/hooks/useSetupCompleteness';
-import { useTranslation } from 'react-i18next';
 
 const STEPS = [
   {
@@ -15,14 +14,14 @@ const STEPS = [
   {
     key: 'recipes',
     label: 'Escandallos',
-    description: t('menuEngineering.recetasConIngredientes'),
+    description: 'Recetas con ingredientes',
     icon: ChefHat,
     path: '/inventory-setup/recipes',
     check: (d: any) => d.recipes_with_ingredients_count > 0,
   },
   {
     key: 'pos',
-    label: t('menuEngineering.datosDeVentas'),
+    label: 'Datos de ventas',
     description: 'POS conectado o datos importados',
     icon: ShoppingCart,
     path: '/inventory-setup/integrations',
@@ -30,7 +29,7 @@ const STEPS = [
   },
   {
     key: 'analysis',
-    label: t('menuEngineering.analisisDeMenu'),
+    label: 'Análisis de menú',
     description: 'Menu Engineering activo',
     icon: BarChart3,
     path: '/insights/menu-engineering',
@@ -39,7 +38,6 @@ const STEPS = [
 ];
 
 export function SetupBanner() {
-  const { t } = useTranslation();
   const { data, isLoading } = useSetupCompleteness();
 
   if (isLoading || !data) return null;

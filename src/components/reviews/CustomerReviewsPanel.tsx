@@ -6,25 +6,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ReviewCard } from './ReviewCard';
 import { Review } from '@/hooks/useReviewsData';
-import { useTranslation } from 'react-i18next';
 
 interface CustomerReviewsPanelProps {
   reviews: Review[];
   isLoading: boolean;
-  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => {t('reviews.CustomerReviewsPanel.promise')}<string>;
-  onSubmit: (reviewId: string, replyText: string) => {t('reviews.CustomerReviewsPanel.promise1')}<void>;
+  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => Promise<string>;
+  onSubmit: (reviewId: string, replyText: string) => Promise<void>;
   maxItems?: number;
 }
 
 export function CustomerReviewsPanel({
-  
   reviews,
   isLoading,
   onRefine,
   onSubmit,
   maxItems = 5,
 }: CustomerReviewsPanelProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -40,10 +37,10 @@ export function CustomerReviewsPanel({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Star className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-semibold text-foreground">{t('reviews.CustomerReviewsPanel.customerReviews')}</h3>
+          <h3 className="text-base font-semibold text-foreground">Customer Reviews</h3>
         </div>
         <Button variant="ghost" size="sm" className="gap-1" onClick={handleSeeAll}>
-          {t('reviews.CustomerReviewsPanel.seeAll')}
+          See All
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -68,7 +65,7 @@ export function CustomerReviewsPanel({
             ))}
             {displayedReviews.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">{t("reviews.noReviewsForPeriod")}</p>
+                <p className="text-sm text-muted-foreground">No reviews found for this period</p>
               </div>
             )}
           </div>

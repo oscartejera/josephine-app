@@ -7,13 +7,11 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export default function SquareOAuthCallback() {
-  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -66,13 +64,13 @@ export default function SquareOAuthCallback() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4 max-w-md p-6">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-          <h2 className="text-xl font-semibold">{t('integrations.SquareOAuthCallback.errorConectandoSquare')}</h2>
+          <h2 className="text-xl font-semibold">Error conectando Square</h2>
           <p className="text-muted-foreground">{error}</p>
           <button
             className="text-primary underline"
             onClick={() => navigate('/integrations/square')}
           >
-            {t('integrations.SquareOAuthCallback.volverAIntentar')}
+            Volver a intentar
           </button>
         </div>
       </div>
@@ -83,8 +81,8 @@ export default function SquareOAuthCallback() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-        <h2 className="text-xl font-semibold">{t('integrations.SquareOAuthCallback.conectandoConSquare')}</h2>
-        <p className="text-muted-foreground">{t('integrations.SquareOAuthCallback.intercambiandoCredencialesNoCierresEsta')}</p>
+        <h2 className="text-xl font-semibold">Conectando con Square...</h2>
+        <p className="text-muted-foreground">Intercambiando credenciales. No cierres esta ventana.</p>
       </div>
     </div>
   );

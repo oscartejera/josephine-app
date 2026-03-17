@@ -12,13 +12,23 @@ import {
   type PricingAction,
 } from '@/lib/pricing-omnes-engine';
 
-import { useTranslation } from 'react-i18next';
 export function usePricingOmnesData() {
-  const { t } = useTranslation();
   const { accessibleLocations, dataSource, loading: appLoading } = useApp();
   const { profile } = useAuth();
 
-  const [result, setResult] = useState<PricingOmnesCategoryResult | null>{t('hooks.usePricingOmnesData.nullConstTopactionsSettopactionsUsestate')}<PricingAction[]>{t('hooks.usePricingOmnesData.constLoadingSetloadingUsestatetrueConst')}<string | null>{t('hooks.usePricingOmnesData.nullFiltersSharedWithMe')}<string | null>{t('hooks.usePricingOmnesData.nullConstDatefromSetdatefromUsestate')}<Date>(() => {t('hooks.usePricingOmnesData.startofmonthnewDateConstDatetoSetdateto')}<Date>(() => {t('hooks.usePricingOmnesData.endofmonthnewDateConstSelectedcategorySe')}<string | null>{t('hooks.usePricingOmnesData.nullCategoriesFromItemsConst')}<string[]>([]);
+  const [result, setResult] = useState<PricingOmnesCategoryResult | null>(null);
+  const [topActions, setTopActions] = useState<PricingAction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filters (shared with ME page)
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date>(() => startOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState<Date>(() => endOfMonth(new Date()));
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Categories from items
+  const [categories, setCategories] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
     if (appLoading) return;

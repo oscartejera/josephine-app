@@ -16,7 +16,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { Shift, Employee } from '@/hooks/useSchedulingSupabase';
-import { useTranslation } from 'react-i18next';
 
 interface SwapShiftDialogProps {
   isOpen: boolean;
@@ -28,7 +27,6 @@ interface SwapShiftDialogProps {
 }
 
 export function SwapShiftDialog({
-  
   isOpen,
   onClose,
   onSubmit,
@@ -36,7 +34,6 @@ export function SwapShiftDialog({
   myName,
   availableShifts,
 }: SwapShiftDialogProps) {
-  const { t } = useTranslation();
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   
@@ -62,7 +59,7 @@ export function SwapShiftDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5 text-primary" />
-            {t('scheduling.SwapShiftDialog.requestShiftSwap')}
+            Request Shift Swap
           </DialogTitle>
           <DialogDescription>
             Select a colleague's shift to propose a swap
@@ -72,7 +69,7 @@ export function SwapShiftDialog({
         <div className="space-y-4 py-2">
           {/* My shift card */}
           <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <div className="text-xs text-muted-foreground mb-1">{t('scheduling.SwapShiftDialog.yourShift')}</div>
+            <div className="text-xs text-muted-foreground mb-1">Your shift</div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
                 {myName.split(' ').map(n => n[0]).join('')}
@@ -95,11 +92,11 @@ export function SwapShiftDialog({
           
           {/* Available shifts to swap with */}
           <div>
-            <Label className="text-sm mb-2 block">{t("scheduling.selectShiftToSwap")}</Label>
+            <Label className="text-sm mb-2 block">Select shift to swap with</Label>
             <ScrollArea className="h-[200px] border rounded-lg p-2">
               {availableShifts.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-8">
-                  {t('scheduling.SwapShiftDialog.noAvailableShiftsToSwap')}
+                  No available shifts to swap with this week
                 </div>
               ) : (
                 <RadioGroup value={selectedShiftId || ''} onValueChange={setSelectedShiftId}>
@@ -143,11 +140,11 @@ export function SwapShiftDialog({
           <div className="space-y-2">
             <Label htmlFor="reason" className="flex items-center gap-2 text-sm">
               <MessageSquare className="h-4 w-4" />
-              {t('scheduling.SwapShiftDialog.reasonOptional')}
+              Reason (optional)
             </Label>
             <Textarea
               id="reason"
-              placeholder={t('scheduling.SwapShiftDialog.egDoctorsAppointmentOnThursday')}
+              placeholder="E.g., Doctor's appointment on Thursday..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={2}
@@ -158,10 +155,10 @@ export function SwapShiftDialog({
         
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            {t('scheduling.SwapShiftDialog.cancel')}
+            Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={!selectedShiftId}>
-            {t('scheduling.SwapShiftDialog.sendRequest')}
+            Send Request
           </Button>
         </DialogFooter>
       </DialogContent>

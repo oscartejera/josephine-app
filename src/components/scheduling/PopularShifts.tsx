@@ -1,6 +1,5 @@
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface ShiftTemplate {
   id: string;
@@ -24,7 +23,6 @@ interface PopularShiftsProps {
 }
 
 export function PopularShifts({ onDragStart }: PopularShiftsProps) {
-  const { t } = useTranslation();
   const handleDragStart = (e: React.DragEvent, shift: ShiftTemplate) => {
     const payload = {
       type: 'template',
@@ -40,7 +38,7 @@ export function PopularShifts({ onDragStart }: PopularShiftsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">{t('scheduling.PopularShifts.popularShifts')}</span>
+      <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Popular Shifts</span>
       <div className="flex items-center gap-1.5 overflow-x-auto">
         {POPULAR_SHIFTS.map((shift) => (
           <div

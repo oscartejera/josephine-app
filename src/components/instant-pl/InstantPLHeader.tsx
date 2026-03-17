@@ -20,7 +20,6 @@ import {
 import { FilterMode } from '@/hooks/useInstantPLData';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 
 interface InstantPLHeaderProps {
   dateRange: DateRangeValue;
@@ -39,7 +38,6 @@ const FILTER_OPTIONS: { value: FilterMode; label: string }[] = [
 ];
 
 export function InstantPLHeader({
-  
   dateRange,
   dateMode,
   onDateChange,
@@ -48,7 +46,6 @@ export function InstantPLHeader({
   onFilterModeChange,
   lastUpdated
 }: InstantPLHeaderProps) {
-  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {/* Row 1: Controls */}
@@ -57,9 +54,9 @@ export function InstantPLHeader({
         <div className="flex items-center gap-3 flex-wrap">
           {/* Breadcrumbs */}
           <nav className="flex items-center gap-1 text-sm">
-            <span className="text-muted-foreground">{t('instant-pl.InstantPLHeader.insights')}</span>
+            <span className="text-muted-foreground">Insights</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-            <span className="font-medium">{t('instant-pl.InstantPLHeader.instantPl')}</span>
+            <span className="font-medium">Instant P&L</span>
           </nav>
 
           <div className="h-5 w-px bg-border mx-1" />
@@ -77,12 +74,12 @@ export function InstantPLHeader({
           {/* Compare dropdown */}
           <Select defaultValue="forecast">
             <SelectTrigger className="h-8 w-[160px] text-sm border-border/60">
-              <SelectValue placeholder={t('instant-pl.InstantPLHeader.compare')} />
+              <SelectValue placeholder="Compare" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="forecast">{t('instant-pl.InstantPLHeader.compareForecast')}</SelectItem>
-              <SelectItem value="previous_period">{t('instant-pl.InstantPLHeader.previousPeriod')}</SelectItem>
-              <SelectItem value="previous_year">{t('instant-pl.InstantPLHeader.previousYear')}</SelectItem>
+              <SelectItem value="forecast">Compare: Forecast</SelectItem>
+              <SelectItem value="previous_period">Previous period</SelectItem>
+              <SelectItem value="previous_year">Previous year</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -122,7 +119,7 @@ export function InstantPLHeader({
 
       {/* Row 2: Title + Last updated */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('instant-pl.InstantPLHeader.instantPl1')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Instant P&L</h1>
         {lastUpdated && (
           <p className="text-sm text-muted-foreground mt-1">
             Updated at end of day {format(lastUpdated, 'dd MMM yyyy')}

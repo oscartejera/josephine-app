@@ -1,7 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import type { TableShape } from '@/lib/onboardingTemplates';
-import { useTranslation } from 'react-i18next';
 
 export interface TablePreview {
   id: string;
@@ -31,7 +30,6 @@ const SHAPE_COLORS: Record<TableShape, string> = {
 };
 
 export function FloorPlanPreview({
-  
   tables,
   width = 800,
   height = 500,
@@ -40,7 +38,6 @@ export function FloorPlanPreview({
   selectedTableId,
   showGrid = true,
 }: FloorPlanPreviewProps) {
-  const { t } = useTranslation();
   const GRID_SIZE = 20;
 
   return (
@@ -82,7 +79,7 @@ export function FloorPlanPreview({
       <div className="absolute inset-0" style={{ padding: '10px' }}>
         {tables.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            {t('onboarding.FloorPlanPreview.anadeMesasParaVerLa')}
+            Añade mesas para ver la previsualización
           </div>
         ) : (
           tables.map((table) => {
@@ -126,15 +123,15 @@ export function FloorPlanPreview({
         <div className="absolute bottom-2 right-2 flex gap-2 text-[10px] bg-background/80 backdrop-blur-sm rounded px-2 py-1">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-sm bg-blue-500" />
-            <span>{t('onboarding.FloorPlanPreview.cuadrada')}</span>
+            <span>Cuadrada</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-emerald-500" />
-            <span>{t('onboarding.FloorPlanPreview.redonda')}</span>
+            <span>Redonda</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-sm bg-violet-500" />
-            <span>{t('onboarding.FloorPlanPreview.rectangular')}</span>
+            <span>Rectangular</span>
           </div>
         </div>
       )}

@@ -25,7 +25,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTranslation } from 'react-i18next';
 
 interface PlannedShift {
   id: string;
@@ -39,12 +38,13 @@ interface PlannedShift {
 }
 
 export default function TeamSchedule() {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const [currentWeekStart, setCurrentWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
-  const [shifts, setShifts] = useState<PlannedShift[]>{t('team.TeamSchedule.constEmployeeidSetemployeeidUsestate')}<string | null>{t('team.TeamSchedule.nullConstSelecteddaySetselecteddayUsesta')}<Date>(new Date());
+  const [shifts, setShifts] = useState<PlannedShift[]>([]);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
 
   const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
@@ -87,12 +87,16 @@ export default function TeamSchedule() {
 
   const totalWeekHours = shifts
     .filter((s) => s.status === 'published')
-    .reduce((sum, s) => {t('team.TeamSchedule.sumSplannedhours00Const')}
+    .reduce((sum, s) => sum + (s.planned_hours || 0), 0);
+
+  const selectedDayShifts = getShiftsForDay(selectedDay);
+
+  return (
     <div className="p-4 lg:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">{t('team.miHorario')}</h1>
+          <h1 className="text-xl font-bold">Mi Horario</h1>
           <p className="text-sm text-muted-foreground">
             {format(currentWeekStart, "d MMM", { locale: es })} -{' '}
             {format(weekEnd, "d MMM yyyy", { locale: es })}
@@ -117,7 +121,11 @@ export default function TeamSchedule() {
         <div className="flex gap-1 flex-1 mx-2">
           {weekDays.map((day) => {
             const dayShifts = getShiftsForDay(day);
-            const hasShift = dayShifts.length > {t('team.TeamSchedule.0ConstIsselectedIssamedaydaySelectedday')}
+            const hasShift = dayShifts.length > 0;
+            const isSelected = isSameDay(day, selectedDay);
+            const today = isToday(day);
+
+            return (
               <button
                 key={day.toISOString()}
                 onClick={() => setSelectedDay(day)}
@@ -220,9 +228,9 @@ export default function TeamSchedule() {
           <Card>
             <CardContent className="p-6 text-center">
               <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-muted-foreground">{t('scheduling.diaLibre')}</p>
+              <p className="text-muted-foreground">Día libre</p>
               <p className="text-xs text-muted-foreground/60">
-                {t('team.TeamSchedule.noTienesTurnosProgramados')}
+                No tienes turnos programados
               </p>
             </CardContent>
           </Card>
@@ -232,7 +240,7 @@ export default function TeamSchedule() {
       {/* Week Overview */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold mb-3">{t('scheduling.resumenSemanal')}</h3>
+          <h3 className="text-sm font-semibold mb-3">Resumen semanal</h3>
           <div className="space-y-2">
             {weekDays.map((day) => {
               const dayShifts = getShiftsForDay(day);
@@ -263,7 +271,7 @@ export default function TeamSchedule() {
                       </Badge>
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-foreground">{t('team.TeamSchedule.libre')}</span>
+                    <span className="text-xs text-muted-foreground">Libre</span>
                   )}
                 </div>
               );

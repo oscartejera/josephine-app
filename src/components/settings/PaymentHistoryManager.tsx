@@ -12,7 +12,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useApp } from '@/contexts/AppContext';
-import { useTranslation } from 'react-i18next';
 
 interface Payment {
   id: string;
@@ -34,9 +33,13 @@ interface Payment {
 }
 
 export function PaymentHistoryManager() {
-  const { t } = useTranslation();
   const { locations } = useApp();
-  const [payments, setPayments] = useState<Payment[]>{t('settings.PaymentHistoryManager.constLoadingSetloadingUsestatetrueConst')}<string>{t('settings.PaymentHistoryManager.allConstLocationfilterSetlocationfilterU')}<string>{t('settings.PaymentHistoryManager.allConstCopiedidSetcopiedidUsestate')}<string | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [methodFilter, setMethodFilter] = useState<string>('all');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPayments();
@@ -63,7 +66,7 @@ export function PaymentHistoryManager() {
       setPayments(data || []);
     } catch (error) {
       console.error('Error fetching payments:', error);
-      toast.error(t('paymentHistory.toastLoadError'));
+      toast.error('Error al cargar los pagos');
     } finally {
       setLoading(false);
     }
@@ -73,24 +76,30 @@ export function PaymentHistoryManager() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(text);
-      toast.success(t('paymentHistory.toastCopied'));
+      toast.success('ID copiado al portapapeles');
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      toast.error(t('paymentHistory.toastCopyError'));
+      toast.error('Error al copiar');
     }
   };
 
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'card':
-        return <CreditCard className="h-4 w-4" />{t('settings.PaymentHistoryManager.caseCashReturn')} <Banknote className="h-4 w-4" />{t('settings.PaymentHistoryManager.caseOtherReturn')} <Smartphone className="h-4 w-4" />{t('settings.PaymentHistoryManager.defaultReturn')} <CreditCard className="h-4 w-4" />;
+        return <CreditCard className="h-4 w-4" />;
+      case 'cash':
+        return <Banknote className="h-4 w-4" />;
+      case 'other':
+        return <Smartphone className="h-4 w-4" />;
+      default:
+        return <CreditCard className="h-4 w-4" />;
     }
   };
 
   const getMethodLabel = (method: string) => {
     switch (method) {
       case 'card':
-        return t('settings.tarjeta');
+        return 'Tarjeta';
       case 'cash':
         return 'Efectivo';
       case 'other':
@@ -122,7 +131,7 @@ export function PaymentHistoryManager() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("settings.paymentHistory")}</CardTitle>
+          <CardTitle>Histórico de Pagos</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {[...Array(5)].map((_, i) => (
@@ -140,15 +149,15 @@ export function PaymentHistoryManager() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              {t('settings.PaymentHistoryManager.historicoDePagos')}
+              Histórico de Pagos
             </CardTitle>
             <CardDescription>
-              {t('settings.PaymentHistoryManager.transaccionesProcesadasConIdsDe')}
+              Transacciones procesadas con IDs de Stripe
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={fetchPayments}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            {t('settings.PaymentHistoryManager.actualizar')}
+            Actualizar
           </Button>
         </div>
       </CardHeader>
@@ -156,19 +165,19 @@ export function PaymentHistoryManager() {
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">{t("payments.totalTransactions")}</p>
+            <p className="text-xs text-muted-foreground">Total Transacciones</p>
             <p className="text-xl font-bold">{filteredPayments.length}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">{t('settings.importeTotal')}</p>
+            <p className="text-xs text-muted-foreground">Importe Total</p>
             <p className="text-xl font-bold">€{totalAmount.toFixed(2)}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">{t("payments.totalTips")}</p>
+            <p className="text-xs text-muted-foreground">Total Propinas</p>
             <p className="text-xl font-bold">€{totalTips.toFixed(2)}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">{t("settings.stripePayments")}</p>
+            <p className="text-xs text-muted-foreground">Pagos con Stripe</p>
             <p className="text-xl font-bold">{cardPayments.filter(p => p.stripe_payment_intent_id).length}</p>
           </div>
         </div>
@@ -178,7 +187,7 @@ export function PaymentHistoryManager() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t("settings.searchByStripeOrTicket")}
+              placeholder="Buscar por ID de Stripe o Ticket..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9"
@@ -186,21 +195,21 @@ export function PaymentHistoryManager() {
           </div>
           <Select value={methodFilter} onValueChange={setMethodFilter}>
             <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder={t('settings.paymentMethod')} />
+              <SelectValue placeholder="Método" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('settings.PaymentHistoryManager.todos')}</SelectItem>
-              <SelectItem value="card">{t('settings.tarjeta')}</SelectItem>
-              <SelectItem value="cash">{t('settings.PaymentHistoryManager.efectivo')}</SelectItem>
-              <SelectItem value="other">{t('settings.PaymentHistoryManager.bizum')}</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="card">Tarjeta</SelectItem>
+              <SelectItem value="cash">Efectivo</SelectItem>
+              <SelectItem value="other">Bizum</SelectItem>
             </SelectContent>
           </Select>
           <Select value={locationFilter} onValueChange={setLocationFilter}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={t('settings.location')} />
+              <SelectValue placeholder="Local" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("settings.allLocations")}</SelectItem>
+              <SelectItem value="all">Todos los locales</SelectItem>
               {locations.map(loc => (
                 <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
               ))}
@@ -213,19 +222,19 @@ export function PaymentHistoryManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('ai.fecha')}</TableHead>
-                <TableHead>{t('settings.PaymentHistoryManager.local')}</TableHead>
-                <TableHead>{t('settings.metodo')}</TableHead>
-                <TableHead className="text-right">{t('settings.PaymentHistoryManager.importe')}</TableHead>
-                <TableHead className="text-right">{t('settings.PaymentHistoryManager.propina')}</TableHead>
-                <TableHead>{t('settings.PaymentHistoryManager.stripePaymentIntentId')}</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Local</TableHead>
+                <TableHead>Método</TableHead>
+                <TableHead className="text-right">Importe</TableHead>
+                <TableHead className="text-right">Propina</TableHead>
+                <TableHead>Stripe Payment Intent ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPayments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {t('settings.PaymentHistoryManager.noSeEncontraronPagos')}
+                    No se encontraron pagos
                   </TableCell>
                 </TableRow>
               ) : (

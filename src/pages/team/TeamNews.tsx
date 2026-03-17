@@ -17,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTranslation } from 'react-i18next';
 
 type AnnouncementType = 'info' | 'important' | 'celebration' | 'schedule';
 
@@ -32,7 +31,6 @@ interface Announcement {
 }
 
 export default function TeamNews() {
-  const { t } = useTranslation();
   const [tab, setTab] = useState('all');
   const { user } = useAuth();
 
@@ -56,7 +54,13 @@ export default function TeamNews() {
   const getTypeIcon = (type: AnnouncementType) => {
     switch (type) {
       case 'important':
-        return <AlertTriangle className="h-4 w-4" />{t('team.TeamNews.caseCelebrationReturn')} <PartyPopper className="h-4 w-4" />{t('team.TeamNews.caseScheduleReturn')} <Calendar className="h-4 w-4" />{t('team.TeamNews.defaultReturn')} <Info className="h-4 w-4" />;
+        return <AlertTriangle className="h-4 w-4" />;
+      case 'celebration':
+        return <PartyPopper className="h-4 w-4" />;
+      case 'schedule':
+        return <Calendar className="h-4 w-4" />;
+      default:
+        return <Info className="h-4 w-4" />;
     }
   };
 
@@ -98,11 +102,11 @@ export default function TeamNews() {
       case 'important':
         return 'Importante';
       case 'celebration':
-        return t('team.celebracion');
+        return 'Celebración';
       case 'schedule':
         return 'Horarios';
       default:
-        return t('settings.informacion');
+        return 'Información';
     }
   };
 
@@ -126,19 +130,19 @@ export default function TeamNews() {
     <div className="p-4 lg:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold">{t('team.TeamNews.novedades')}</h1>
+        <h1 className="text-xl font-bold">Novedades</h1>
         <p className="text-sm text-muted-foreground">
-          {t('team.TeamNews.anunciosYNoticiasDelEquipo')}
+          Anuncios y noticias del equipo
         </p>
       </div>
 
       {/* Filter Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="all">{t('team.TeamNews.todos')}</TabsTrigger>
-          <TabsTrigger value="important">{t('team.TeamNews.importantes')}</TabsTrigger>
-          <TabsTrigger value="schedule">{t('team.TeamNews.horarios')}</TabsTrigger>
-          <TabsTrigger value="celebration">{t('team.TeamNews.equipo')}</TabsTrigger>
+          <TabsTrigger value="all">Todos</TabsTrigger>
+          <TabsTrigger value="important">Importantes</TabsTrigger>
+          <TabsTrigger value="schedule">Horarios</TabsTrigger>
+          <TabsTrigger value="celebration">Equipo</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -147,7 +151,7 @@ export default function TeamNews() {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
             <Pin className="h-3 w-3" />
-            <span>{t('team.TeamNews.fijados')}</span>
+            <span>Fijados</span>
           </div>
           {pinned.map((item) => {
             const style = getTypeStyle(item.type);
@@ -190,7 +194,7 @@ export default function TeamNews() {
           {pinned.length > 0 && (
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <Bell className="h-3 w-3" />
-              <span>{t('team.TeamNews.recientes')}</span>
+              <span>Recientes</span>
             </div>
           )}
           {rest.map((item) => {
@@ -240,8 +244,8 @@ export default function TeamNews() {
             <Megaphone className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-muted-foreground">
               {announcements.length === 0
-                ? t('team.tuManagerAunNoHa')
-                : t('team.noHayNovedadesEnEsta')}
+                ? 'Tu manager aún no ha publicado novedades'
+                : 'No hay novedades en esta categoría'}
             </p>
           </CardContent>
         </Card>

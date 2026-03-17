@@ -4,7 +4,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { ViewMode } from './InventoryHeader';
 import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 
 interface InventoryGapCardProps {
   viewMode: ViewMode;
@@ -20,7 +19,6 @@ interface InventoryGapCardProps {
 }
 
 export function InventoryGapCard({
-  
   viewMode,
   gapPercent,
   gapAmount,
@@ -32,10 +30,9 @@ export function InventoryGapCard({
   dateRange,
   selectedLocations = []
 }: InventoryGapCardProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const isCOGS = viewMode === 'COGS';
-  const isNegative = isCOGS ? gapAmount > {t('inventory.InventoryGapCard.0Gapamount')} < 0;
+  const isNegative = isCOGS ? gapAmount > 0 : gapAmount < 0;
 
   // Ensure gap = accounted + unaccounted + surplus
   // Recalculate to ensure consistency
@@ -95,7 +92,7 @@ export function InventoryGapCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{t('inventory.InventoryGapCard.gap')}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">Gap</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Main gap values */}
@@ -136,21 +133,21 @@ export function InventoryGapCard({
           >
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-info" />
-              <span className="text-muted-foreground hover:text-foreground">{t('inventory.InventoryGapCard.accountedWaste')}</span>
+              <span className="text-muted-foreground hover:text-foreground">Accounted waste</span>
             </div>
             <span className="font-medium">{currency}{accountedWaste.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
           </button>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-info/40" />
-              <span className="text-muted-foreground">{t('inventory.InventoryGapCard.unaccountedWaste')}</span>
+              <span className="text-muted-foreground">Unaccounted waste</span>
             </div>
             <span className="font-medium">{currency}{adjustedUnaccounted.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-muted-foreground/30" />
-              <span className="text-muted-foreground">{t('inventory.InventoryGapCard.surplus')}</span>
+              <span className="text-muted-foreground">Surplus</span>
             </div>
             <span className={cn(
               "font-medium",

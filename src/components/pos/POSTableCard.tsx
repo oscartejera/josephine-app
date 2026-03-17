@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Clock, ChefHat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { POSTable } from '@/hooks/usePOSData';
-import { useTranslation } from 'react-i18next';
 
 interface TableKDSInfo {
   hasActiveOrders: boolean;
@@ -26,13 +25,11 @@ interface POSTableCardProps {
 }
 
 export function POSTableCard({
-  
   table,
   isSelected,
   onClick,
   kdsInfo,
 }: POSTableCardProps) {
-  const { t } = useTranslation();
   const getStatusColor = () => {
     if (kdsInfo?.allReady) return 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30';
     if (kdsInfo?.preparingCount) return 'border-amber-500 bg-amber-50 dark:bg-amber-950/30';

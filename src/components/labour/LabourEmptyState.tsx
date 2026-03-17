@@ -8,14 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Database, BarChart3 } from 'lucide-react';
 import { seedLabourDemoData } from '@/hooks/useLabourData';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface LabourEmptyStateProps {
   onDataSeeded: () => void;
 }
 
 export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
-  const { t } = useTranslation();
   const [isSeeding, setIsSeeding] = useState(false);
 
   const handleSeedData = async () => {
@@ -26,11 +24,11 @@ export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
         toast.success(`Demo data generated: ${result.locations} locations, ${result.days} days`);
         onDataSeeded();
       } else {
-        toast.error(t('labourEmpty.toastSeedError'));
+        toast.error('Failed to seed demo data');
       }
     } catch (error) {
       console.error('Seed error:', error);
-      toast.error(t('labourEmpty.toastGenError'));
+      toast.error('Error generating demo data');
     } finally {
       setIsSeeding(false);
     }
@@ -43,9 +41,9 @@ export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
           <BarChart3 className="h-8 w-8 text-muted-foreground" />
         </div>
         
-        <h3 className="text-xl font-semibold mb-2">{t('labour.LabourEmptyState.noLabourDataAvailable')}</h3>
+        <h3 className="text-xl font-semibold mb-2">No Labour Data Available</h3>
         <p className="text-muted-foreground mb-6 max-w-md">
-          {t('labour.LabourEmptyState.theresNoLabourDataFor')}
+          There's no labour data for the selected date range. Generate demo data to explore the Labour dashboard with realistic metrics.
         </p>
         
         <Button 
@@ -57,18 +55,18 @@ export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
           {isSeeding ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              {t('labour.LabourEmptyState.generating')}
+              Generating...
             </>
           ) : (
             <>
               <Database className="h-4 w-4" />
-              {t('labour.LabourEmptyState.generateDemoData')}
+              Generate Demo Data
             </>
           )}
         </Button>
         
         <p className="text-xs text-muted-foreground mt-4">
-          {t('labour.LabourEmptyState.thisWillCreate30Days')}
+          This will create 30 days of realistic POS and forecast data for all locations.
         </p>
       </CardContent>
     </Card>

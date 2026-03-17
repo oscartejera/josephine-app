@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ChevronDown, Filter, MoreHorizontal, Search, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReconciliationLine } from '@/hooks/useReconciliationData';
-import { useTranslation } from 'react-i18next';
 
 interface ReconciliationGridProps {
   lines: ReconciliationLine[];
@@ -51,16 +50,16 @@ const allColumns = [
 ];
 
 export function ReconciliationGrid({
-  
   lines,
   totals,
   stockStatus,
   setStockStatus,
   isLoading = false
 }: ReconciliationGridProps) {
-  const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<SortField>{t('inventory.ReconciliationGrid.itemnameConstSortdirectionSetsortdirecti')}<SortDirection>{t('inventory.ReconciliationGrid.ascConstVisiblecolumnsSetvisiblecolumnsU')}<string[]>(
+  const [sortField, setSortField] = useState<SortField>('itemName');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
     allColumns.map(c => c.key)
   );
 
@@ -153,21 +152,21 @@ export function ReconciliationGrid({
               className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('counted')}
             >
-              {t('inventory.ReconciliationGrid.counted')}
+              Counted
             </Badge>
             <Badge 
               variant={stockStatus === 'uncounted' ? 'default' : 'outline'}
               className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('uncounted')}
             >
-              {t('inventory.ReconciliationGrid.uncounted')}
+              Uncounted
             </Badge>
             <Badge 
               variant={stockStatus === 'all' ? 'default' : 'outline'}
               className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('all')}
             >
-              {t('inventory.ReconciliationGrid.all')}
+              All
             </Badge>
           </div>
 
@@ -175,7 +174,7 @@ export function ReconciliationGrid({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                {t('inventory.ReconciliationGrid.columns')}
+                Columns
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -197,12 +196,12 @@ export function ReconciliationGrid({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                {t('inventory.ReconciliationGrid.unit')}
+                Unit
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>{t('inventory.ReconciliationGrid.allUnits')}</DropdownMenuItem>
+              <DropdownMenuItem>All units</DropdownMenuItem>
               <DropdownMenuItem>kg</DropdownMenuItem>
               <DropdownMenuItem>L</DropdownMenuItem>
               <DropdownMenuItem>units</DropdownMenuItem>
@@ -210,12 +209,12 @@ export function ReconciliationGrid({
           </DropdownMenu>
 
           <Badge variant="outline" className="text-muted-foreground">
-            {t('inventory.ReconciliationGrid.9More')}
+            +9 more
           </Badge>
 
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="h-3.5 w-3.5" />
-            {t('inventory.ReconciliationGrid.filters')}
+            Filters
           </Button>
 
           <div className="flex-1" />
@@ -224,7 +223,7 @@ export function ReconciliationGrid({
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('inventory.ReconciliationGrid.searchItems')}
+              placeholder="Search items..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 border-border/60"
@@ -234,13 +233,13 @@ export function ReconciliationGrid({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                {t('inventory.ReconciliationGrid.reconciliation')}
+                Reconciliation
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>{t('inventory.ReconciliationGrid.exportCsv')}</DropdownMenuItem>
-              <DropdownMenuItem>{t('inventory.ReconciliationGrid.printReport')}</DropdownMenuItem>
+              <DropdownMenuItem>Export CSV</DropdownMenuItem>
+              <DropdownMenuItem>Print report</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -321,7 +320,7 @@ export function ReconciliationGrid({
               {/* Totals row */}
               <TableRow className="font-semibold border-t-2 border-border bg-muted/30 sticky bottom-0 hover:bg-muted/30">
                 {visibleColumns.includes('itemName') && (
-                  <TableCell className="sticky left-0 bg-muted/30 z-10 text-sm">{t("common.total")}</TableCell>
+                  <TableCell className="sticky left-0 bg-muted/30 z-10 text-sm">Total</TableCell>
                 )}
                 {visibleColumns.includes('unit') && <TableCell className="text-sm">—</TableCell>}
                 {visibleColumns.includes('varianceQty') && (

@@ -1,87 +1,42 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChefHat, Loader2, ArrowLeft, Users, ChevronRight, ShieldAlert } from 'lucide-react';
+import { ChefHat, Loader2, ArrowLeft, Users, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 
+
 const DEMO_PASSWORD = 'Demo1234!';
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_SECONDS = 30;
 
 export default function Login() {
-  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState<string | null>{t('login.nullConstShowforgotpasswordSetshowforgot')}<number | null>{t('login.nullConstLockdownsecondsSetlockdownsecon')}<ReturnType<typeof setInterval> | null>(null);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Lockdown countdown timer
-  useEffect(() => {
-    if (lockedUntil && lockedUntil > Date.now()) {
-      const tick = () => {
-        const remaining = Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
-        setLockdownSeconds(remaining);
-        if (remaining <= 0) {
-          setLockedUntil(null);
-          setFailedAttempts(0);
-          if (lockTimerRef.current) clearInterval(lockTimerRef.current);
-        }
-      };
-      tick();
-      lockTimerRef.current = setInterval(tick, 1000);
-      return () => { if (lockTimerRef.current) clearInterval(lockTimerRef.current); };
-    }
-  }, [lockedUntil]);
-
-  const isLockedOut = lockedUntil !== null && lockedUntil > Date.now();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (isLockedOut) {
-      toast({
-        variant: "destructive",
-        title: t('auth.loginError'),
-        description: t('auth.tooManyAttempts', { seconds: lockdownSeconds }),
-      });
-      return;
-    }
-
     setLoading(true);
 
     const { error } = await signIn(email, password);
 
     if (error) {
-      const newAttempts = failedAttempts + 1;
-      setFailedAttempts(newAttempts);
-
-      if (newAttempts >= MAX_ATTEMPTS) {
-        setLockedUntil(Date.now() + LOCKOUT_SECONDS * 1000);
-        toast({
-          variant: "destructive",
-          title: t('auth.loginError'),
-          description: t('auth.tooManyAttempts', { seconds: LOCKOUT_SECONDS }),
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: t('auth.loginError'),
-          description: `${error.message}\n${t('auth.remainingAttempts', { count: MAX_ATTEMPTS - newAttempts })}`,
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Error al iniciar sesión",
+        description: error.message
+      });
     } else {
-      setFailedAttempts(0);
-      setLockedUntil(null);
       navigate('/');
     }
 
@@ -92,8 +47,8 @@ export default function Login() {
     setDemoLoading(demoEmail);
     console.log('[demo-login] clicked', { demoEmail });
     toast({
-      title: t('auth.startingDemo'),
-      description: t('auth.enteringAs', { email: demoEmail }),
+      title: 'Iniciando demo…',
+      description: `Entrando como ${demoEmail}`,
     });
 
     try {
@@ -113,13 +68,13 @@ export default function Login() {
       if (error) {
         toast({
           variant: "destructive",
-          title: t('auth.demoLoginError'),
+          title: "Error al iniciar sesión demo",
           description: error.message
         });
       } else {
         toast({
-          title: t('auth.welcomeDemo'),
-          description: t('auth.exploreJosephine')
+          title: "¡Bienvenido al modo demo!",
+          description: "Explora Josephine con datos de ejemplo"
         });
         navigate('/');
       }
@@ -127,8 +82,8 @@ export default function Login() {
       console.error('Demo login error:', err);
       toast({
         variant: "destructive",
-        title: t('auth.demoLoginError'),
-        description: t('auth.demoLoginFailed')
+        title: "Error",
+        description: "No se pudo iniciar sesión en modo demo"
       });
     }
 
@@ -141,8 +96,8 @@ export default function Login() {
     if (!email) {
       toast({
         variant: "destructive",
-        title: t('auth.loginError'),
-        description: t('auth.enterEmail')
+        title: "Error",
+        description: "Por favor ingresa tu email"
       });
       return;
     }
@@ -156,7 +111,7 @@ export default function Login() {
     if (error) {
       toast({
         variant: "destructive",
-        title: t("common.error"),
+        title: "Error",
         description: error.message
       });
     } else {
@@ -177,21 +132,21 @@ export default function Login() {
                 <ChefHat className="w-6 h-6 text-primary-foreground" />
               </div>
               <CardTitle className="text-2xl font-display">
-                {resetEmailSent ? t('auth.emailSent') : t('auth.recoverPassword')}
+                {resetEmailSent ? "Email enviado" : "Recuperar contraseña"}
               </CardTitle>
               <CardDescription>
                 {resetEmailSent
-                  ? t('auth.checkInbox')
-                  : t('auth.sendResetEmail')
+                  ? "Revisa tu bandeja de entrada para continuar"
+                  : "Te enviaremos un enlace para restablecer tu contraseña"
                 }
               </CardDescription>
             </CardHeader>
             <CardContent>
               {resetEmailSent ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground text-center"
-                    dangerouslySetInnerHTML={{ __html: t('auth.resetEmailSentMsg', { email }) }}
-                  />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Hemos enviado un email a <strong>{email}</strong> con instrucciones para restablecer tu contraseña.
+                  </p>
                   <Button
                     variant="outline"
                     className="w-full"
@@ -201,17 +156,17 @@ export default function Login() {
                     }}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('auth.backToLogin')}
+                    Volver al inicio de sesión
                   </Button>
                 </div>
               ) : (
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reset-email">{t('auth.email')}</Label>
+                    <Label htmlFor="reset-email">Email</Label>
                     <Input
                       id="reset-email"
                       type="email"
-                      placeholder={t('auth.emailPlaceholder')}
+                      placeholder="tu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -220,7 +175,7 @@ export default function Login() {
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {t('auth.sendResetLink')}
+                    Enviar enlace de recuperación
                   </Button>
                   <Button
                     type="button"
@@ -229,7 +184,7 @@ export default function Login() {
                     onClick={() => setShowForgotPassword(false)}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('auth.goBack')}
+                    Volver
                   </Button>
                 </form>
               )}
@@ -248,17 +203,17 @@ export default function Login() {
             <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
               <ChefHat className="w-6 h-6 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl font-display">{t('auth.welcomeJosephine')}</CardTitle>
-            <CardDescription>{t('auth.smartManagement')}</CardDescription>
+            <CardTitle className="text-2xl font-display">Bienvenido a Josephine</CardTitle>
+            <CardDescription>Gestión inteligente para tu restaurante</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">{t('auth.email')}</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={t('auth.emailPlaceholder')}
+                  placeholder="tu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -267,13 +222,13 @@ export default function Login() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">{t('auth.password')}</Label>
+                  <Label htmlFor="password">Contraseña</Label>
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
                     className="text-sm text-primary hover:underline"
                   >
-                    {t('auth.forgotPassword')}
+                    ¿Olvidaste tu contraseña?
                   </button>
                 </div>
                 <Input
@@ -286,16 +241,9 @@ export default function Login() {
                   disabled={loading}
                 />
               </div>
-              {isLockedOut && (
-                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-md p-3">
-                  <ShieldAlert className="h-4 w-4 flex-shrink-0" />
-                  <span>{t('auth.tooManyAttempts', { seconds: lockdownSeconds })}</span>
-                </div>
-              )}
-
-              <Button type="submit" className="w-full" disabled={loading || isLockedOut}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t('auth.login')}
+                Iniciar sesión
               </Button>
             </form>
 
@@ -304,7 +252,7 @@ export default function Login() {
                 <div className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">{t('auth.or')}</span>
+                <span className="bg-card px-2 text-muted-foreground">o</span>
               </div>
             </div>
 
@@ -320,13 +268,13 @@ export default function Login() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
-              {t('auth.continueWithGoogle')}
+              Continuar con Google
             </Button>
 
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              {t('auth.noAccount')}{' '}
+              ¿No tienes cuenta?{' '}
               <Link to="/signup" className="text-primary hover:underline">
-                {t('auth.registerNow')}
+                Regístrate
               </Link>
             </div>
           </CardContent>
@@ -344,8 +292,8 @@ export default function Login() {
                 <Users className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-sm">{t('auth.tryJosephine')}</p>
-                <p className="text-xs text-muted-foreground">{t('auth.accessDemoMode')}</p>
+                <p className="font-semibold text-sm">Probar Josephine</p>
+                <p className="text-xs text-muted-foreground">Accede al modo demo con datos de ejemplo</p>
               </div>
             </div>
             {demoLoading ? (

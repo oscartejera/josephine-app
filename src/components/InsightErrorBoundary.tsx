@@ -10,7 +10,6 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
     pageName: string;
@@ -71,7 +70,9 @@ export class InsightErrorBoundary extends React.Component<Props, State> {
     render() {
         if (this.state.hasError) {
             const isRpcError = this.state.error?.name === 'RpcContractError';
-            const autoRetriesExhausted = this.state.retryCount >{t('insightErrorBoundary.maxretriesReturn')}
+            const autoRetriesExhausted = this.state.retryCount >= MAX_RETRIES;
+
+            return (
                 <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
                     <div className="rounded-full bg-amber-100 p-4 mb-4">
                         {this.state.retrying ? (
@@ -83,16 +84,16 @@ export class InsightErrorBoundary extends React.Component<Props, State> {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                         {this.state.retrying
                             ? `${this.props.pageName} — Reintentando…`
-                            : t('common.errorLoadingData', { pageName: this.props.pageName })}
+                            : `${this.props.pageName} — Error al cargar datos`}
                     </h3>
                     <p className="text-sm text-gray-500 max-w-md mb-1">
                         {this.state.retrying
-                            ? t('common.autoRetryCount', { current: this.state.retryCount + 1, max: MAX_RETRIES })
+                            ? `Reintento automático ${this.state.retryCount + 1} de ${MAX_RETRIES}…`
                             : isRpcError
                                 ? 'Los datos del servidor no coinciden con el formato esperado. Esto suele pasar tras un cambio en la base de datos.'
                                 : autoRetriesExhausted
-                                    ? t('common.autoRetryExhausted')
-                                    : t('common.unexpectedSectionError')}
+                                    ? 'Los reintentos automáticos se agotaron. Puedes reintentar manualmente.'
+                                    : 'Se produjo un error inesperado al cargar esta sección.'}
                     </p>
                     <p className="text-xs text-gray-400 font-mono mb-6 max-w-lg break-all">
                         {this.state.error?.message?.slice(0, 200)}
@@ -104,7 +105,7 @@ export class InsightErrorBoundary extends React.Component<Props, State> {
                         disabled={this.state.retrying}
                     >
                         <RefreshCw className="h-4 w-4" />
-                        {t('insightErrorBoundary.reintentar')}
+                        Reintentar
                     </Button>
                 </div>
             );

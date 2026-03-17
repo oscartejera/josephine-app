@@ -14,7 +14,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Users, Plus, Pencil, Trash2, Shield, MapPin, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import { useTranslation } from 'react-i18next';
 
 interface UserWithRoles {
   id: string;
@@ -56,13 +55,22 @@ const ROLE_DISPLAY: Record<string, { label: string; variant: 'default' | 'second
 };
 
 export function UsersRolesManager() {
-  const { t } = useTranslation();
   const { locations, group } = useApp();
   const { user: currentUser } = useAuth();
   const { isOwner, hasPermission } = usePermissions();
   const { toast } = useToast();
 
-  const [users, setUsers] = useState<UserWithRoles[]>{t('settings.UsersRolesManager.constRolesSetrolesUsestate')}<Role[]>{t('settings.UsersRolesManager.constLoadingSetloadingUsestatetrueConst')}<UserWithRoles | null>{t('settings.UsersRolesManager.nullConstShoweditdialogSetshoweditdialog')}<string | null>{t('settings.UsersRolesManager.nullConstSavingSetsavingUsestatefalse')}<RoleAssignment>({
+  const [users, setUsers] = useState<UserWithRoles[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<UserWithRoles | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // New role assignment state
+  const [newAssignment, setNewAssignment] = useState<RoleAssignment>({
     role_id: '',
     location_id: null
   });
@@ -132,7 +140,7 @@ export function UsersRolesManager() {
       console.error('Error fetching users:', error);
       toast({
         variant: 'destructive',
-        title: t("common.error"),
+        title: 'Error',
         description: 'No se pudieron cargar los usuarios'
       });
     } finally {
@@ -154,8 +162,8 @@ export function UsersRolesManager() {
     if (!editingUser || !newAssignment.role_id) {
       toast({
         variant: 'destructive',
-        title: t("common.error"),
-        description: t('settings.seleccionaUnRol')
+        title: 'Error',
+        description: 'Selecciona un rol'
       });
       return;
     }
@@ -166,8 +174,8 @@ export function UsersRolesManager() {
     if (requiresLocation && !newAssignment.location_id) {
       toast({
         variant: 'destructive',
-        title: t("common.error"),
-        description: t('settings.roleRequiresLocation', { role: selectedRole?.name })
+        title: 'Error',
+        description: `El rol "${selectedRole?.name}" requiere una ubicación específica`
       });
       return;
     }
@@ -186,15 +194,15 @@ export function UsersRolesManager() {
         if (error.message.includes('cannot have global scope')) {
           toast({
             variant: 'destructive',
-            title: t("common.error"),
-            description: t('settings.esteRolRequiereUnaUbicacion')
+            title: 'Error',
+            description: 'Este rol requiere una ubicación específica'
           });
         } else {
           throw error;
         }
       } else {
         toast({
-          title: t('users.roleAssigned'),
+          title: 'Rol asignado',
           description: 'El rol ha sido asignado correctamente'
         });
         await fetchData();
@@ -209,7 +217,7 @@ export function UsersRolesManager() {
       console.error('Error adding role:', error);
       toast({
         variant: 'destructive',
-        title: t("common.error"),
+        title: 'Error',
         description: error.message || 'No se pudo asignar el rol'
       });
     } finally {
@@ -235,7 +243,7 @@ export function UsersRolesManager() {
       if (error) throw error;
 
       toast({
-        title: t('users.roleRemoved'),
+        title: 'Rol eliminado',
         description: 'El rol ha sido eliminado correctamente'
       });
 
@@ -249,8 +257,8 @@ export function UsersRolesManager() {
       console.error('Error deleting role:', error);
       toast({
         variant: 'destructive',
-        title: t("common.error"),
-        description: error.message || t('settings.noSePudoEliminarEl')
+        title: 'Error',
+        description: error.message || 'No se pudo eliminar el rol'
       });
     } finally {
       setSaving(false);
@@ -267,7 +275,7 @@ export function UsersRolesManager() {
       <Card>
         <CardContent className="py-10 text-center">
           <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">{t("settings.noUserPermission")}</p>
+          <p className="text-muted-foreground">No tienes permisos para gestionar usuarios</p>
         </CardContent>
       </Card>
     );
@@ -281,7 +289,7 @@ export function UsersRolesManager() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                {t('settings.UsersRolesManager.usuariosYRoles')}
+                Usuarios y Roles
               </CardTitle>
               <CardDescription>
                 Gestiona los usuarios y sus permisos en {group?.name || 'tu grupo'}
@@ -289,7 +297,7 @@ export function UsersRolesManager() {
             </div>
             <Button disabled>
               <Plus className="h-4 w-4 mr-2" />
-              {t('settings.UsersRolesManager.invitarUsuario')}
+              Invitar Usuario
             </Button>
           </div>
         </CardHeader>
@@ -304,9 +312,9 @@ export function UsersRolesManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('settings.usuario')}</TableHead>
-                  <TableHead>{t('settings.UsersRolesManager.roles')}</TableHead>
-                  <TableHead>{t('settings.UsersRolesManager.scope')}</TableHead>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Roles</TableHead>
+                  <TableHead>Scope</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -321,9 +329,9 @@ export function UsersRolesManager() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium">{user.full_name || t('settings.usuario')}</p>
+                          <p className="font-medium">{user.full_name || 'Usuario'}</p>
                           {user.id === currentUser?.id && (
-                            <p className="text-xs text-muted-foreground">{t('settings.tu')}</p>
+                            <p className="text-xs text-muted-foreground">(Tú)</p>
                           )}
                         </div>
                       </div>
@@ -331,7 +339,7 @@ export function UsersRolesManager() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {user.roles.length === 0 ? (
-                          <span className="text-muted-foreground text-sm">{t("users.noRoles")}</span>
+                          <span className="text-muted-foreground text-sm">Sin roles</span>
                         ) : (
                           user.roles.map(role => {
                             const display = ROLE_DISPLAY[role.role_name] || { label: role.role_name, variant: 'outline' as const };
@@ -356,7 +364,7 @@ export function UsersRolesManager() {
                             ) : (
                               <>
                                 <Globe className="h-3 w-3" />
-                                {t('settings.UsersRolesManager.global')}
+                                Global
                               </>
                             )}
                           </div>
@@ -380,7 +388,7 @@ export function UsersRolesManager() {
 
           {canViewRoles && (
             <div className="mt-6 pt-6 border-t">
-              <h4 className="font-medium mb-3">{t('settings.UsersRolesManager.rolesDisponibles')}</h4>
+              <h4 className="font-medium mb-3">Roles Disponibles</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {roles.map(role => {
                   const display = ROLE_DISPLAY[role.name] || { label: role.name, variant: 'outline' as const };
@@ -396,7 +404,7 @@ export function UsersRolesManager() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {role.description || t('settings.sinDescripcion')}
+                        {role.description || 'Sin descripción'}
                       </p>
                     </div>
                   );
@@ -411,18 +419,18 @@ export function UsersRolesManager() {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("users.editRoles")}</DialogTitle>
+            <DialogTitle>Editar Roles de Usuario</DialogTitle>
             <DialogDescription>
-              {editingUser?.full_name || t('settings.usuario')}
+              {editingUser?.full_name || 'Usuario'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Current Roles */}
             <div>
-              <Label className="mb-2 block">{t('settings.UsersRolesManager.rolesActuales')}</Label>
+              <Label className="mb-2 block">Roles Actuales</Label>
               {editingUser?.roles.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("users.noRolesAssigned")}</p>
+                <p className="text-sm text-muted-foreground">Sin roles asignados</p>
               ) : (
                 <div className="space-y-2">
                   {editingUser?.roles.map(role => {
@@ -448,7 +456,7 @@ export function UsersRolesManager() {
                             ) : (
                               <span className="flex items-center gap-1">
                                 <Globe className="h-3 w-3" />
-                                {t('settings.UsersRolesManager.todasLasUbicaciones')}
+                                Todas las ubicaciones
                               </span>
                             )}
                           </span>
@@ -458,7 +466,7 @@ export function UsersRolesManager() {
                           size="sm"
                           onClick={() => confirmDeleteRole(role.id)}
                           disabled={isCurrentUser && isOnlyOwner}
-                          title={isCurrentUser && isOnlyOwner ? t('settings.noPuedesEliminarTuPropio') : t('settings.eliminarRol')}
+                          title={isCurrentUser && isOnlyOwner ? 'No puedes eliminar tu propio rol de owner' : 'Eliminar rol'}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -471,14 +479,14 @@ export function UsersRolesManager() {
 
             {/* Add New Role */}
             <div className="pt-4 border-t">
-              <Label className="mb-2 block">{t("users.addNewRole")}</Label>
+              <Label className="mb-2 block">Añadir Nuevo Rol</Label>
               <div className="flex flex-col gap-3">
                 <Select
                   value={newAssignment.role_id}
                   onValueChange={(value) => setNewAssignment({ ...newAssignment, role_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t('settings.selectRole')} />
+                    <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
                   <SelectContent>
                     {roles.map(role => {
@@ -492,7 +500,7 @@ export function UsersRolesManager() {
                           disabled={alreadyHas && !LOCATION_REQUIRED_ROLES.includes(role.name)}
                         >
                           {display.label}
-                          {LOCATION_REQUIRED_ROLES.includes(role.name) && t('settings.requiresLocation')}
+                          {LOCATION_REQUIRED_ROLES.includes(role.name) && ' (requiere ubicación)'}
                         </SelectItem>
                       );
                     })}
@@ -508,14 +516,14 @@ export function UsersRolesManager() {
                   })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t('settings.selectScope')} />
+                    <SelectValue placeholder="Seleccionar scope" />
                   </SelectTrigger>
                   <SelectContent>
                     {!requiresLocation && (
                       <SelectItem value="global">
                         <span className="flex items-center gap-2">
                           <Globe className="h-3 w-3" />
-                          {t('settings.UsersRolesManager.todasLasUbicaciones1')}
+                          Todas las ubicaciones
                         </span>
                       </SelectItem>
                     )}
@@ -535,7 +543,7 @@ export function UsersRolesManager() {
                   disabled={!newAssignment.role_id || saving}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  {t('settings.UsersRolesManager.anadirRol')}
+                  Añadir Rol
                 </Button>
               </div>
             </div>
@@ -543,7 +551,7 @@ export function UsersRolesManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              {t('settings.UsersRolesManager.cerrar')}
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -553,19 +561,19 @@ export function UsersRolesManager() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('settings.eliminarEsteRol')}</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar este rol?</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('settings.UsersRolesManager.estaAccionEliminaraElRol')}
+              Esta acción eliminará el rol del usuario. Podrás volver a asignarlo después.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteRole}
               disabled={saving}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t('settings.UsersRolesManager.eliminar')}
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

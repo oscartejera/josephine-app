@@ -18,7 +18,6 @@ import {
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface HourlyData {
   hour: string;
@@ -47,7 +46,10 @@ const COLORS = {
 };
 
 const VarianceIndicator = ({ value }: { value: number }) => {
-  const isPositive = value >{t('sales.HourlyDrillDownDrawer.0ConstIconIspositiveTrendingup')}
+  const isPositive = value >= 0;
+  const Icon = isPositive ? TrendingUp : TrendingDown;
+  
+  return (
     <span className={cn('inline-flex items-center gap-1 text-xs font-medium', isPositive ? 'text-emerald-600' : 'text-rose-600')}>
       <Icon className="h-3 w-3" />
       {isPositive ? '+' : ''}{value.toFixed(2)}%
@@ -56,7 +58,6 @@ const VarianceIndicator = ({ value }: { value: number }) => {
 };
 
 export function HourlyDrillDownDrawer({
-  
   open,
   onOpenChange,
   selectedDay,
@@ -66,7 +67,6 @@ export function HourlyDrillDownDrawer({
   totalForecast,
   totalOrders,
 }: HourlyDrillDownDrawerProps) {
-  const { t } = useTranslation();
   const totalVariance = ((totalSales - totalForecast) / totalForecast) * 100;
   const avgCheckSize = totalSales / totalOrders;
 
@@ -84,20 +84,20 @@ export function HourlyDrillDownDrawer({
           <div className="grid grid-cols-3 gap-4">
             <Card className="p-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">{t("sales.totalSales")}</p>
+                <p className="text-sm text-muted-foreground">Total Sales</p>
                 <p className="text-2xl font-bold">€{totalSales.toLocaleString()}</p>
                 <VarianceIndicator value={totalVariance} />
               </div>
             </Card>
             <Card className="p-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">{t('sales.HourlyDrillDownDrawer.avgCheck')}</p>
+                <p className="text-sm text-muted-foreground">Avg Check</p>
                 <p className="text-2xl font-bold">€{avgCheckSize.toFixed(2)}</p>
               </div>
             </Card>
             <Card className="p-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">{t("sales.totalOrders")}</p>
+                <p className="text-sm text-muted-foreground">Total Orders</p>
                 <p className="text-2xl font-bold">{totalOrders}</p>
               </div>
             </Card>
@@ -105,7 +105,7 @@ export function HourlyDrillDownDrawer({
 
           {/* Hourly Chart */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">{t('sales.HourlyDrillDownDrawer.salesVForecastByHour')}</h3>
+            <h3 className="text-lg font-semibold mb-4">Sales v Forecast by Hour</h3>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={hourlyData}>
@@ -123,23 +123,23 @@ export function HourlyDrillDownDrawer({
                               <div className="flex items-center justify-between gap-4">
                                 <span className="flex items-center gap-2">
                                   <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.actual}}></div>
-                                  {t('sales.HourlyDrillDownDrawer.actual')}
+                                  Actual:
                                 </span>
                                 <span className="font-semibold">€{payload[0].value}</span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
                                 <span className="flex items-center gap-2">
                                   <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.forecast}}></div>
-                                  {t('sales.HourlyDrillDownDrawer.forecast')}
+                                  Forecast:
                                 </span>
                                 <span className="font-semibold">€{payload[1].value}</span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span>{t('sales.HourlyDrillDownDrawer.avgCheck1')}</span>
+                                <span>Avg Check:</span>
                                 <span className="font-semibold">€{payload[0].payload.avgCheck.toFixed(2)}</span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span>{t('sales.HourlyDrillDownDrawer.orders')}</span>
+                                <span>Orders:</span>
                                 <span className="font-semibold">{payload[0].payload.orders}</span>
                               </div>
                               <div className="pt-1 border-t">
@@ -163,17 +163,17 @@ export function HourlyDrillDownDrawer({
 
           {/* Hourly Data Table */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">{t('sales.HourlyDrillDownDrawer.detailedBreakdown')}</h3>
+            <h3 className="text-lg font-semibold mb-4">Detailed Breakdown</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.hour')}</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.actual1')}</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.forecast1')}</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.variance')}</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.orders1')}</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.avgCheck2')}</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">Hour</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Actual</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Forecast</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Variance</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Orders</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Avg Check</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,7 +192,7 @@ export function HourlyDrillDownDrawer({
                 </tbody>
                 <tfoot>
                   <tr className="bg-muted/50 font-bold">
-                    <td className="py-2 px-3">{t("common.total")}</td>
+                    <td className="py-2 px-3">Total</td>
                     <td className="py-2 px-3 text-right">€{totalSales.toLocaleString()}</td>
                     <td className="py-2 px-3 text-right">€{totalForecast.toLocaleString()}</td>
                     <td className="py-2 px-3 text-right">

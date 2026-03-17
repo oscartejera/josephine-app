@@ -19,10 +19,8 @@ import { AutoPurchaseOrder } from '@/components/inventory/AutoPurchaseOrder';
 import { useInventoryData } from '@/hooks/useInventoryData';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
-import { useTranslation } from 'react-i18next';
 
 export default function Inventory() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -47,7 +45,10 @@ export default function Inventory() {
     };
   }, []); // Only compute once on mount
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>{t('inventory.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('inventory.monthlyConstViewmodeSetviewmodeUsestate')}<ViewMode>{t('inventory.gpConstSelectedlocationsSetselectedlocat')}<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [viewMode, setViewMode] = useState<ViewMode>('GP');
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [josephineOpen, setJosephineOpen] = useState(false);
   const [smartCountOpen, setSmartCountOpen] = useState(false);
 
@@ -70,8 +71,8 @@ export default function Inventory() {
   const isCOGS = viewMode === 'COGS';
 
   const breadcrumbs = [
-    { label: t('inventory.insights') },
-    { label: t('inventory.inventory') }
+    { label: 'Insights' },
+    { label: 'Inventory' }
   ];
 
   return (
@@ -105,7 +106,7 @@ export default function Inventory() {
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
-          {t('inventory.reconciliationReport')}
+          Reconciliation Report
         </Button>
         <Button
           variant="outline"
@@ -113,7 +114,7 @@ export default function Inventory() {
           className="gap-2"
         >
           <ClipboardCheck className="h-4 w-4" />
-          {t('inventory.smartCounting')}
+          Smart Counting
         </Button>
       </div>
 

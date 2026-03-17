@@ -4,10 +4,8 @@ import { useApp } from '@/contexts/AppContext';
 import { Store, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useTranslation } from 'react-i18next';
 
 export default function POS() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { locations, loading } = useApp();
   
@@ -29,7 +27,7 @@ export default function POS() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-center">{t('pos.seleccionaUnLocal')}</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Selecciona un Local</h1>
         
         <div className="grid gap-4">
           {locations.map((location) => (

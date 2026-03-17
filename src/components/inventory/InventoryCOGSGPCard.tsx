@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { ViewMode } from './InventoryHeader';
-import { useTranslation } from 'react-i18next';
 
 interface InventoryCOGSGPCardProps {
   viewMode: ViewMode;
@@ -18,7 +17,6 @@ interface InventoryCOGSGPCardProps {
 }
 
 export function InventoryCOGSGPCard({
-  
   viewMode,
   actualPercent,
   actualAmount,
@@ -30,7 +28,6 @@ export function InventoryCOGSGPCard({
   isLoading = false,
   currency = '€'
 }: InventoryCOGSGPCardProps) {
-  const { t } = useTranslation();
   const isCOGS = viewMode === 'COGS';
   const title = isCOGS ? 'Cost of Goods Sold' : 'Gross Profit';
   const colorClass = isCOGS ? 'text-warning' : 'text-success';
@@ -39,7 +36,7 @@ export function InventoryCOGSGPCard({
 
   // For COGS: gap is actual - theoretical (positive = bad)
   // For GP: gap is theoretical - actual (positive = bad)
-  const isGapNegative = isCOGS ? gapAmount > {t('inventory.InventoryCOGSGPCard.0Gapamount')} < 0;
+  const isGapNegative = isCOGS ? gapAmount > 0 : gapAmount < 0;
 
   if (isLoading) {
     return (
@@ -61,7 +58,9 @@ export function InventoryCOGSGPCard({
   }
 
   const actualBarWidth = totalSales > 0 ? Math.min((actualAmount / totalSales) * 100 * (isCOGS ? 3 : 1.5), 100) : 0;
-  const theoreticalBarWidth = totalSales > {t('inventory.InventoryCOGSGPCard.0MathmintheoreticalamountTotalsales100Is')}
+  const theoreticalBarWidth = totalSales > 0 ? Math.min((theoreticalAmount / totalSales) * 100 * (isCOGS ? 3 : 1.5), 100) : 0;
+
+  return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
@@ -72,7 +71,7 @@ export function InventoryCOGSGPCard({
           <div className="flex items-baseline justify-between mb-1.5">
             <div className="flex items-baseline gap-2">
               <span className={cn("text-2xl font-bold", colorClass)}>{actualPercent.toFixed(1)}%</span>
-              <span className="text-sm text-muted-foreground">{t('inventory.InventoryCOGSGPCard.actual')}</span>
+              <span className="text-sm text-muted-foreground">Actual</span>
             </div>
             <span className="text-sm font-medium">{currency}{actualAmount.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
           </div>
@@ -89,7 +88,7 @@ export function InventoryCOGSGPCard({
           <div className="flex items-baseline justify-between mb-1.5">
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-semibold text-muted-foreground">{theoreticalPercent.toFixed(1)}%</span>
-              <span className="text-sm text-muted-foreground">{t('inventory.InventoryCOGSGPCard.theoretical')}</span>
+              <span className="text-sm text-muted-foreground">Theoretical</span>
             </div>
             <span className="text-sm font-medium text-muted-foreground">{currency}{theoreticalAmount.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
           </div>
@@ -104,7 +103,7 @@ export function InventoryCOGSGPCard({
         {/* Gap */}
         <div className="pt-2 border-t">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t('inventory.InventoryCOGSGPCard.gap')}</span>
+            <span className="text-sm text-muted-foreground">Gap</span>
             <div className="flex items-center gap-3">
               <span className={cn(
                 "text-sm font-medium",

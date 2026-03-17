@@ -7,7 +7,6 @@ import { LocationPLCard } from './LocationPLCard';
 import { LocationPLMetrics, ViewMode } from '@/hooks/useInstantPLData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface LocationCardsGridProps {
   locations: LocationPLMetrics[];
@@ -15,13 +14,11 @@ interface LocationCardsGridProps {
   isLoading: boolean;
 }
 
-export function LocationCardsGrid({
-  
+export function LocationCardsGrid({ 
   locations, 
   viewMode, 
   isLoading 
 }: LocationCardsGridProps) {
-  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
   if (isLoading) {
@@ -40,9 +37,9 @@ export function LocationCardsGrid({
     return (
       <div className="flex items-center justify-center h-[300px] bg-card rounded-xl border border-border/60">
         <div className="text-center">
-          <p className="text-muted-foreground">{t('instant-pl.LocationCardsGrid.noLocationsMatchTheSelected')}</p>
+          <p className="text-muted-foreground">No locations match the selected filters</p>
           <p className="text-sm text-muted-foreground/70 mt-1">
-            {t('instant-pl.LocationCardsGrid.tryAdjustingYourFilterCriteria')}
+            Try adjusting your filter criteria
           </p>
         </div>
       </div>

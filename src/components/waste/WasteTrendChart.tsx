@@ -19,7 +19,6 @@ import {
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import type { WasteTrendData, WasteReason, WasteByReason } from '@/hooks/useWasteData';
-import { useTranslation } from 'react-i18next';
 
 const REASON_COLORS: Record<WasteReason, string> = {
   broken: '#22c55e',      // Green
@@ -44,12 +43,10 @@ interface WasteTrendChartProps {
 }
 
 export function WasteTrendChart({
-  
   trendData,
   byReason,
   isLoading = false
 }: WasteTrendChartProps) {
-  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card className="border-border">
@@ -71,10 +68,14 @@ export function WasteTrendChart({
   }));
 
   // Get max value for Y axis
-  const allValues = trendData.flatMap(d => {t('waste.WasteTrendChart.dbrokenDendofdayDexpiredDtheftDother')}
+  const allValues = trendData.flatMap(d => [d.broken, d.end_of_day, d.expired, d.theft, d.other]);
+  const maxValue = Math.max(...allValues, 1);
+  const yAxisMax = Math.ceil(maxValue / 10) * 10 + 10;
+
+  return (
     <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">{t('waste.WasteTrendChart.wasteByReasonTrend')}</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">Waste by Reason trend</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px]">
@@ -135,8 +136,8 @@ export function WasteTrendChart({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteTrendChart.reason')}</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteTrendChart.logged')}</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">Reason</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Logged</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

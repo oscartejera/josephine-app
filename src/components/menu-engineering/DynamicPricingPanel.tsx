@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import type { MenuEngineeringItem, MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
-import { useTranslation } from 'react-i18next';
 
 interface PricingSuggestion {
   product: string;
@@ -191,7 +190,7 @@ function generateTheoryBasedSuggestions(
       ? (item.unit_food_cost / item.selling_price_ex_vat) * 100
       : 0;
 
-    if (fcPct > {t('menu-engineering.DynamicPricingPanel.35Itemtotalgrossprofit')} < 0) {
+    if (fcPct > 35 || item.total_gross_profit < 0) {
       results.push({
         product: item.name,
         current_price: item.selling_price_ex_vat,
@@ -252,8 +251,11 @@ function generateTheoryBasedSuggestions(
 }
 
 export function DynamicPricingPanel({ items, stats, locationName, categoryName, omnesData }: DynamicPricingPanelProps) {
-  const { t } = useTranslation();
-  const [suggestions, setSuggestions] = useState<PricingSuggestion[]>{t('menu-engineering.DynamicPricingPanel.constIsloadingSetisloadingUsestatefalseC')}<string | null>{t('menu-engineering.DynamicPricingPanel.nullConstHasgeneratedSethasgeneratedUses')}<'ai' | 'local' | null>(null);
+  const [suggestions, setSuggestions] = useState<PricingSuggestion[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [source, setSource] = useState<'ai' | 'local' | null>(null);
 
   const generateSuggestions = useCallback(async () => {
     if (!stats || items.length === 0) return;
@@ -355,7 +357,7 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" />
-            {t('menu-engineering.DynamicPricingPanel.aiPricingAdvisor')}
+            AI Pricing Advisor
           </CardTitle>
           <Button
             variant={hasGenerated ? 'outline' : 'default'}
@@ -386,10 +388,10 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
           <div className="py-6 text-center space-y-2">
             <ChefHat className="h-8 w-8 mx-auto text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
-              {t('menu-engineering.DynamicPricingPanel.getPersonalizedPricingRecommendationsBas')}
+              Get personalized pricing recommendations based on your menu performance data.
             </p>
             <p className="text-xs text-muted-foreground">
-              {t('menu-engineering.DynamicPricingPanel.usesMenuEngineeringClassificationOmnes')}
+              Uses Menu Engineering classification + OMNES price structure analysis
             </p>
           </div>
         )}
@@ -409,7 +411,7 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
             <div>
               <p className="text-sm text-destructive">{error}</p>
               <Button variant="link" size="sm" className="px-0 h-auto text-xs" onClick={generateSuggestions}>
-                {t('menu-engineering.DynamicPricingPanel.retry')}
+                Retry
               </Button>
             </div>
           </div>
@@ -421,7 +423,7 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
             {/* Impact summary */}
             {totalImpact > 0 && (
               <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
-                <span className="text-sm font-medium">{t('menu-engineering.DynamicPricingPanel.estimatedMonthlyImpact')}</span>
+                <span className="text-sm font-medium">Estimated monthly impact</span>
                 <span className="text-lg font-bold text-emerald-600">
                   +€{totalImpact.toLocaleString()}
                 </span>
@@ -461,9 +463,9 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
                     {/* Price change */}
                     <div className="text-right shrink-0">
                       {isRemoval ? (
-                        <div className="text-xs text-red-600 font-medium">{t('menu-engineering.DynamicPricingPanel.remove')}</div>
-                      {t('menu-engineering.DynamicPricingPanel.isnochange')}
-                        <div className="text-xs text-muted-foreground">{t('menu-engineering.DynamicPricingPanel.noPriceChange')}</div>
+                        <div className="text-xs text-red-600 font-medium">Remove</div>
+                      ) : isNoChange ? (
+                        <div className="text-xs text-muted-foreground">No price change</div>
                       ) : (
                         <>
                           <div className="flex items-center gap-1.5 text-sm">
@@ -497,7 +499,7 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
             {/* OMNES insights */}
             {insightSuggestions.length > 0 && (
               <div className="space-y-2 pt-2 border-t border-border/50">
-                <p className="text-xs font-medium text-muted-foreground">{t('menu-engineering.DynamicPricingPanel.priceStructureInsightsOmnes')}</p>
+                <p className="text-xs font-medium text-muted-foreground">Price structure insights (OMNES)</p>
                 {insightSuggestions.map((insight, idx) => (
                   <div key={idx} className="p-2.5 bg-muted/30 rounded-lg text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">{insight.product}</span>
@@ -510,7 +512,8 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
 
             {/* Footer */}
             <p className="text-[11px] text-muted-foreground text-center pt-2">
-              {t('menu-engineering.DynamicPricingPanel.recommendationsBasedOnKasavanasmith1982')}
+              Recommendations based on Kasavana-Smith (1982) classification and OMNES pricing methodology.
+              Review before applying changes in your POS.
             </p>
           </div>
         )}
@@ -518,7 +521,7 @@ export function DynamicPricingPanel({ items, stats, locationName, categoryName, 
         {/* No suggestions */}
         {hasGenerated && suggestions.length === 0 && !error && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {t('menu-engineering.DynamicPricingPanel.noPricingRecommendationsForCurrent')}
+            No pricing recommendations for current data. Your menu looks well-balanced.
           </p>
         )}
       </CardContent>

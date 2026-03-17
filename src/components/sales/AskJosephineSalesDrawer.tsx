@@ -6,7 +6,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, Send, Loader2, User, Bot, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -52,13 +51,15 @@ const suggestedQuestions = [
 ];
 
 export function AskJosephineSalesDrawer({
-  
   open,
   onOpenChange,
   salesData
 }: AskJosephineSalesDrawerProps) {
-  const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>{t('sales.AskJosephineSalesDrawer.constInputSetinputUsestateConst')}<string | null>{t('sales.AskJosephineSalesDrawer.nullConstScrollrefUseref')}<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Auto-scroll to bottom when messages change
@@ -76,7 +77,7 @@ export function AskJosephineSalesDrawer({
   }, [open]);
 
   const sendInitialAnalysis = async () => {
-    const initialQuestion = t('sales.analiza_mi_situacion_actual_de_ventas_y_dame_un_re');
+    const initialQuestion = "Analiza mi situación actual de ventas y dame un resumen ejecutivo con los puntos clave y recomendaciones.";
     await streamChat(initialQuestion, true);
   };
 
@@ -198,7 +199,7 @@ export function AskJosephineSalesDrawer({
       setError(errorMessage);
       toast({
         variant: 'destructive',
-        title: t("common.error"),
+        title: 'Error',
         description: errorMessage
       });
       // Remove the empty assistant message if there was an error
@@ -287,7 +288,7 @@ export function AskJosephineSalesDrawer({
         <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            {t('sales.AskJosephineSalesDrawer.askJosephine')}
+            Ask Josephine
           </SheetTitle>
         </SheetHeader>
 
@@ -298,7 +299,8 @@ export function AskJosephineSalesDrawer({
               <div className="text-center py-8">
                 <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary/30" />
                 <p className="text-muted-foreground mb-6">
-                  {t('sales.AskJosephineSalesDrawer.holaSoyJosephineTuAsistente')}
+                  Hola! Soy Josephine, tu asistente de ventas. 
+                  Puedo analizar tus datos de ventas y ayudarte a entender el rendimiento de tu negocio.
                 </p>
                 <div className="space-y-2">
                   {suggestedQuestions.map((q, i) => (
@@ -364,7 +366,7 @@ export function AskJosephineSalesDrawer({
                 <div className="bg-muted rounded-lg px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {t('sales.AskJosephineSalesDrawer.analizandoTusVentas')}
+                    Analizando tus ventas...
                   </div>
                 </div>
               </div>
@@ -381,7 +383,7 @@ export function AskJosephineSalesDrawer({
 
         {/* Input area */}
         <div className="border-t p-4">
-          {messages.length > {t('sales.AskJosephineSalesDrawer.0Isstreaming')}
+          {messages.length > 0 && !isStreaming && (
             <div className="flex flex-wrap gap-2 mb-3">
               {suggestedQuestions.slice(0, 2).map((q, i) => (
                 <Button
@@ -401,7 +403,7 @@ export function AskJosephineSalesDrawer({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t('sales.AskJosephineSalesDrawer.escribeTuPregunta')}
+              placeholder="Escribe tu pregunta..."
               className="min-h-[44px] max-h-32 resize-none"
               disabled={isStreaming}
             />

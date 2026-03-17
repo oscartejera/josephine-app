@@ -21,7 +21,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import SyncSplashScreen from '@/components/integrations/SyncSplashScreen';
-import { useTranslation } from 'react-i18next';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -52,7 +51,7 @@ async function invokeEdgeFunction(name: string, body: Record<string, unknown>, t
     return data;
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      throw new Error(t('integrations.syncTakingTooLong'));
+      throw new Error('La sincronización está tardando demasiado. Verifica el historial en unos minutos.');
     }
     throw err;
   } finally {
@@ -97,11 +96,11 @@ interface SyncRun {
 
 // Sync phases for the progress bar
 const SYNC_PHASES = [
-  { label: t('square.connecting'), target: 10, durationMs: 3_000 },
-  { label: t('square.importingLocations'), target: 20, durationMs: 5_000 },
-  { label: t('square.importingCatalog'), target: 40, durationMs: 15_000 },
+  { label: 'Conectando con Square...', target: 10, durationMs: 3_000 },
+  { label: 'Importando locales...', target: 20, durationMs: 5_000 },
+  { label: 'Importando catálogo...', target: 40, durationMs: 15_000 },
   { label: 'Importando pedidos...', target: 70, durationMs: 60_000 },
-  { label: t('integrations.processingData'), target: 90, durationMs: 40_000 },
+  { label: 'Procesando datos...', target: 90, durationMs: 40_000 },
 ];
 
 /** True when the sync status represents a terminal state. */
@@ -139,7 +138,6 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
 }
 
 export default function SquareIntegration() {
-  const { t } = useTranslation();
   const { profile } = useAuth();
   const { group } = useApp();
   const orgId = group?.id || profile?.group_id || null;
@@ -147,7 +145,23 @@ export default function SquareIntegration() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [integration, setIntegration] = useState<Integration | null>{t('integrations.SquareIntegration.nullConstAccountSetaccountUsestate')}<IntegrationAccount | null>{t('integrations.SquareIntegration.nullConstSyncrunsSetsyncrunsUsestate')}<SyncRun[]>{t('integrations.SquareIntegration.constLoadingSetloadingUsestatetrueConst')}<ReturnType<typeof setInterval>>{t('integrations.SquareIntegration.splashScreenStateConstShowsplash')}<ReturnType<typeof setTimeout>>();
+  const [integration, setIntegration] = useState<Integration | null>(null);
+  const [account, setAccount] = useState<IntegrationAccount | null>(null);
+  const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  // Progress bar state
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncPhaseLabel, setSyncPhaseLabel] = useState('');
+  const [syncComplete, setSyncComplete] = useState(false);
+  const progressTimer = useRef<ReturnType<typeof setInterval>>();
+
+  // Splash screen state
+  const [showSplash, setShowSplash] = useState(false);
+  const [splashMessage, setSplashMessage] = useState('');
+  const splashSafetyTimer = useRef<ReturnType<typeof setTimeout>>();
 
   /** Show splash with an auto-dismiss safety net. */
   const showSplashScreen = useCallback((msg: string, maxMs = 8_000) => {
@@ -181,7 +195,7 @@ export default function SquareIntegration() {
       current = prevTarget + (target - prevTarget) * phaseProgress;
       setSyncProgress(Math.min(Math.round(current), 90));
 
-      if (phaseProgress >{t('integrations.SquareIntegration.095Phase')} < SYNC_PHASES.length - 1) {
+      if (phaseProgress >= 0.95 && phase < SYNC_PHASES.length - 1) {
         phase++;
         elapsedInPhase = 0;
         setSyncPhaseLabel(SYNC_PHASES[phase].label);
@@ -192,7 +206,7 @@ export default function SquareIntegration() {
   const completeProgressAnimation = useCallback(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
     setSyncProgress(100);
-    setSyncPhaseLabel(t('integrations.sincronizacionCompletada'));
+    setSyncPhaseLabel('Sincronización completada');
     setSyncComplete(true);
   }, []);
 
@@ -282,8 +296,8 @@ export default function SquareIntegration() {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (searchParams.get('connected') === 'true') {
-      toast.success(t('square.toastConnected'), {
-        description: t('integrations.initialSyncInProgress'),
+      toast.success('Square conectado correctamente', {
+        description: 'Sincronización inicial en curso...',
       });
       setSyncing(true);
       startProgressAnimation();
@@ -333,9 +347,9 @@ export default function SquareIntegration() {
           clearInterval(poll);
           if (isSyncSuccess(latest.status)) {
             completeProgressAnimation();
-            toast.success(t('square.toastImported'));
+            toast.success('Datos importados correctamente');
             setTimeout(() => {
-              showSplashScreen(t('integrations.loadingSquareData'));
+              showSplashScreen('Cargando tus datos de Square...');
               queryClient.invalidateQueries();
               setTimeout(() => {
                 hideSplashScreen();
@@ -344,7 +358,7 @@ export default function SquareIntegration() {
             }, 1500);
           } else {
             resetSyncState();
-            toast.error(t('square.toastSyncInitialError'), {
+            toast.error('Error en la sincronización inicial', {
               description: latest.error || 'Error desconocido',
             });
           }
@@ -359,7 +373,7 @@ export default function SquareIntegration() {
         setTimeout(() => {
           hideSplashScreen();
           setSyncing(false);
-          toast.info(t('square.toastDataAvailable'));
+          toast.info('Datos disponibles. Puedes sincronizar manualmente si necesitas actualizar.');
         }, 1500);
       }, 30_000);
 
@@ -370,7 +384,7 @@ export default function SquareIntegration() {
     }
 
     if (searchParams.get('error')) {
-      toast.error(t('square.toastConnectError'), {
+      toast.error('Error conectando Square', {
         description: searchParams.get('error'),
       });
       setSearchParams({});
@@ -382,7 +396,7 @@ export default function SquareIntegration() {
   // ---------------------------------------------------------------------------
   const handleConnect = async () => {
     if (!orgId) {
-      toast.error(t('square.toastOrgNotFound'));
+      toast.error('No se encontró la organización. Recarga la página.');
       return;
     }
 
@@ -421,7 +435,7 @@ export default function SquareIntegration() {
       window.location.href = data.authUrl;
     } catch (err: any) {
       console.error('OAuth start error:', err);
-      toast.error(t('square.toastStartError'), { description: err.message });
+      toast.error('Error iniciando conexión', { description: err.message });
       setConnecting(false);
     }
   };
@@ -455,8 +469,8 @@ export default function SquareIntegration() {
 
       if (data.message === 'Sync already running') {
         stopProgressAnimation();
-        toast.info(t('square.toastSyncing'), {
-          description: t('integrations.syncAlreadyActive'),
+        toast.info('Sincronización en curso', {
+          description: 'Ya hay una sincronización activa. Espera a que termine.',
         });
         setSyncing(false);
         return;
@@ -466,11 +480,11 @@ export default function SquareIntegration() {
       completeProgressAnimation();
 
       if (data.stats) {
-        toast.success(t('square.toastSyncComplete'), {
+        toast.success('Sincronización completada', {
           description: `${data.stats.locations || 0} locales, ${data.stats.items || 0} productos, ${data.stats.orders || 0} pedidos`,
         });
       } else {
-        toast.success(t('square.toastSyncComplete'));
+        toast.success('Sincronización completada');
       }
 
       // Refresh all data via splash
@@ -487,7 +501,7 @@ export default function SquareIntegration() {
     } catch (err: any) {
       console.error('Sync error:', err);
       stopProgressAnimation();
-      toast.error(t('square.toastSyncFailed'), { description: err.message });
+      toast.error('Error sincronizando', { description: err.message });
       setSyncing(false);
     }
   };
@@ -514,12 +528,12 @@ export default function SquareIntegration() {
 
       setTimeout(() => {
         hideSplashScreen();
-        toast.info(t('square.toastDisconnected'));
+        toast.info('Square desconectado. Mostrando datos de demostración.');
       }, 2500);
     } catch (err: any) {
       console.error('Disconnect error:', err);
       hideSplashScreen();
-      toast.error(t('square.toastDisconnectError'), { description: err.message });
+      toast.error('Error al desconectar', { description: err.message });
     }
   };
 
@@ -556,21 +570,21 @@ export default function SquareIntegration() {
           <div>
             <h1 className="text-2xl font-display font-bold flex items-center gap-2">
               <span className="text-3xl">🔷</span>
-              {t('integrations.SquareIntegration.squarePos')}
+              Square POS
             </h1>
-            <p className="text-muted-foreground">{t("integrations.squareAutoSync")}</p>
+            <p className="text-muted-foreground">Sincronización automática con Square</p>
           </div>
         </div>
 
         {isConnected ? (
           <Badge variant="default" className="gap-2 bg-green-600">
             <CheckCircle className="h-4 w-4" />
-            {t('integrations.SquareIntegration.conectado')}
+            Conectado
           </Badge>
-        {t('integrations.SquareIntegration.isconnectednoaccount')}
+        ) : isConnectedNoAccount ? (
           <Badge variant="secondary" className="gap-2">
             <AlertTriangle className="h-4 w-4" />
-            {t('integrations.SquareIntegration.conectadoSinCuenta')}
+            Conectado (sin cuenta)
           </Badge>
         ) : (
           <Button onClick={handleConnect} size="lg" disabled={connecting}>
@@ -606,21 +620,21 @@ export default function SquareIntegration() {
       {!isConnected && !isConnectedNoAccount && (
         <Card>
           <CardHeader>
-            <CardTitle>{t("integrations.connectSquare")}</CardTitle>
+            <CardTitle>Conecta tu cuenta de Square</CardTitle>
             <CardDescription>
-              {t('integrations.SquareIntegration.sincronizaProductosPedidosYPagos')}
+              Sincroniza productos, pedidos y pagos automáticamente desde Square POS
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t('integrations.josephineSincronizara')}</p>
+            <p className="text-sm text-muted-foreground">Josephine sincronizará:</p>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>{t("integrations.localesAndLocations")}</li>
-              <li>{t("integrations.productCatalogFull")}</li>
-              <li>{t('integrations.pedidosYTransaccionesHasta1')}</li>
-              <li>{t("integrations.paymentMethodsAndAmounts")}</li>
+              <li>Locales y ubicaciones</li>
+              <li>Catálogo de productos (items y categorías)</li>
+              <li>Pedidos y transacciones (hasta 1 año de histórico)</li>
+              <li>Métodos de pago y cantidades</li>
             </ul>
             <p className="text-sm text-muted-foreground">
-              {t('integrations.SquareIntegration.losDatosSeNormalizanAl')}
+              Los datos se normalizan al modelo canónico (CDM) para análisis unificado.
             </p>
           </CardContent>
         </Card>
@@ -630,7 +644,7 @@ export default function SquareIntegration() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>{t("square.connectionStatus")}</CardTitle>
+              <CardTitle>Estado de la conexión</CardTitle>
               {account && (
                 <CardDescription>
                   {account.display_name && (
@@ -641,7 +655,8 @@ export default function SquareIntegration() {
               )}
               {isConnectedNoAccount && (
                 <CardDescription className="text-amber-600">
-                  {t('integrations.SquareIntegration.laIntegracionEstaActivaPero')}
+                  La integración está activa pero no se encontró una cuenta de Square.
+                  Intenta desconectar y volver a conectar.
                 </CardDescription>
               )}
             </CardHeader>
@@ -652,10 +667,10 @@ export default function SquareIntegration() {
                 ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
-                {syncing ? 'Sincronizando...' : isRunningFromDB ? t('integrations.syncInProgress') : 'Sincronizar ahora'}
+                {syncing ? 'Sincronizando...' : isRunningFromDB ? 'Sincronización en curso...' : 'Sincronizar ahora'}
               </Button>
               <Button variant="destructive" size="sm" onClick={handleDisconnect}>
-                {t('integrations.SquareIntegration.desconectar')}
+                Desconectar
               </Button>
             </CardContent>
           </Card>
@@ -664,13 +679,13 @@ export default function SquareIntegration() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                {t('integrations.SquareIntegration.historialDeSincronizacion')}
+                Historial de sincronización
               </CardTitle>
             </CardHeader>
             <CardContent>
               {syncRuns.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">
-                  {t('integrations.SquareIntegration.conectadoSinSincronizacionesTodaviaHaz')}
+                  Conectado, sin sincronizaciones todavía. Haz clic en "Sincronizar ahora" para importar datos.
                 </p>
               ) : (
                 <div className="space-y-3">

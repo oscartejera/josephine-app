@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, UserPlus, Mail, MapPin, Globe, Shield, Loader2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 interface TeamMember {
   id: string;
@@ -51,13 +50,13 @@ const ROLE_DISPLAY: Record<string, { label: string; variant: 'default' | 'second
 };
 
 export function TeamManager() {
-  const { t } = useTranslation();
   const { locations, group } = useApp();
   const { user: currentUser, session } = useAuth();
   const { isOwner, hasPermission } = usePermissions();
   const { toast } = useToast();
 
-  const [members, setMembers] = useState<TeamMember[]>{t('settings.TeamManager.constRolesSetrolesUsestate')}<Role[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviting, setInviting] = useState(false);
@@ -136,7 +135,7 @@ export function TeamManager() {
       console.error('Error fetching team:', error);
       toast({
         variant: 'destructive',
-        title: t("common.error"),
+        title: 'Error',
         description: 'No se pudo cargar el equipo'
       });
     } finally {
@@ -158,7 +157,7 @@ export function TeamManager() {
     if (!newMember.email || !newMember.full_name || !newMember.role_id) {
       toast({
         variant: 'destructive',
-        title: t("common.error"),
+        title: 'Error',
         description: 'Por favor completa todos los campos requeridos'
       });
       return;
@@ -169,8 +168,8 @@ export function TeamManager() {
     if (!emailRegex.test(newMember.email)) {
       toast({
         variant: 'destructive',
-        title: t("common.error"),
-        description: t('team.porFavorIngresaUnEmail')
+        title: 'Error',
+        description: 'Por favor ingresa un email válido'
       });
       return;
     }
@@ -180,8 +179,8 @@ export function TeamManager() {
     if (selectedRole && LOCATION_REQUIRED_ROLES.includes(selectedRole.name) && !newMember.location_id) {
       toast({
         variant: 'destructive',
-        title: t("common.error"),
-        description: t('settings.roleRequiresLocation', { role: selectedRole.name })
+        title: 'Error',
+        description: `El rol "${selectedRole.name}" requiere una ubicación específica`
       });
       return;
     }
@@ -209,7 +208,7 @@ export function TeamManager() {
 
       setInviteSuccess(true);
       toast({
-        title: t('team.usuarioInvitado'),
+        title: '¡Usuario invitado!',
         description: `Se ha enviado un email a ${newMember.email} con las credenciales de acceso.`
       });
 
@@ -226,8 +225,8 @@ export function TeamManager() {
       console.error('Error inviting member:', error);
       toast({
         variant: 'destructive',
-        title: t('team.inviteError'),
-        description: error.message || t('team.noSePudoEnviarLa')
+        title: 'Error al invitar',
+        description: error.message || 'No se pudo enviar la invitación'
       });
     } finally {
       setInviting(false);
@@ -242,7 +241,7 @@ export function TeamManager() {
       <Card>
         <CardContent className="py-10 text-center">
           <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">{t("settings.noTeamPermission")}</p>
+          <p className="text-muted-foreground">No tienes permisos para gestionar el equipo</p>
         </CardContent>
       </Card>
     );
@@ -256,7 +255,7 @@ export function TeamManager() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                {t('settings.TeamManager.equipo')}
+                Equipo
               </CardTitle>
               <CardDescription>
                 Gestiona los miembros del equipo de {group?.name || 'tu grupo'}
@@ -264,7 +263,7 @@ export function TeamManager() {
             </div>
             <Button onClick={handleOpenInvite}>
               <UserPlus className="h-4 w-4 mr-2" />
-              {t('settings.TeamManager.invitarMiembro')}
+              Invitar Miembro
             </Button>
           </div>
         </CardHeader>
@@ -275,26 +274,26 @@ export function TeamManager() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          {t('settings.TeamManager.memberslength0')}
+          ) : members.length === 0 ? (
             <div className="text-center py-10">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">{t("team.noTeamMembers")}</h3>
+              <h3 className="text-lg font-medium mb-2">Sin miembros del equipo</h3>
               <p className="text-muted-foreground mb-4">
-                {t('settings.TeamManager.invitaATuPrimerMiembro')}
+                Invita a tu primer miembro del equipo para comenzar.
               </p>
               <Button onClick={handleOpenInvite}>
                 <UserPlus className="h-4 w-4 mr-2" />
-                {t('settings.TeamManager.invitarMiembro1')}
+                Invitar Miembro
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('settings.TeamManager.miembro')}</TableHead>
-                  <TableHead>{t('settings.TeamManager.rol')}</TableHead>
-                  <TableHead>{t('ai.ubicacion2')}</TableHead>
-                  <TableHead>{t("common.status")}</TableHead>
+                  <TableHead>Miembro</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Ubicación</TableHead>
+                  <TableHead>Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -308,9 +307,9 @@ export function TeamManager() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium">{member.full_name || t('settings.usuario')}</p>
+                          <p className="font-medium">{member.full_name || 'Usuario'}</p>
                           {member.id === currentUser?.id && (
-                            <p className="text-xs text-muted-foreground">{t('settings.tu')}</p>
+                            <p className="text-xs text-muted-foreground">(Tú)</p>
                           )}
                         </div>
                       </div>
@@ -318,7 +317,7 @@ export function TeamManager() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {member.roles.length === 0 ? (
-                          <span className="text-muted-foreground text-sm">{t("team.noRole")}</span>
+                          <span className="text-muted-foreground text-sm">Sin rol</span>
                         ) : (
                           member.roles.map(role => {
                             const display = ROLE_DISPLAY[role.role_name] || { label: role.role_name, variant: 'outline' as const };
@@ -342,7 +341,7 @@ export function TeamManager() {
                           ) : (
                             <>
                               <Globe className="h-3 w-3" />
-                              {t('settings.TeamManager.global')}
+                              Global
                             </>
                           )}
                         </div>
@@ -350,7 +349,7 @@ export function TeamManager() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        {t('settings.TeamManager.activo')}
+                        Activo
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -367,10 +366,10 @@ export function TeamManager() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              {t('settings.TeamManager.invitarNuevoMiembro')}
+              Invitar Nuevo Miembro
             </DialogTitle>
             <DialogDescription>
-              {t('settings.TeamManager.elNuevoMiembroRecibiraUn')}
+              El nuevo miembro recibirá un email con sus credenciales de acceso.
             </DialogDescription>
           </DialogHeader>
 
@@ -379,19 +378,19 @@ export function TeamManager() {
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">{t('team.invitacionEnviada')}</h3>
+              <h3 className="text-lg font-semibold mb-2">¡Invitación Enviada!</h3>
               <p className="text-muted-foreground">
-                {t('settings.TeamManager.seHaEnviadoUnEmail')} <strong>{newMember.email}</strong> {t('settings.TeamManager.conLasCredencialesDeAcceso')}
+                Se ha enviado un email a <strong>{newMember.email}</strong> con las credenciales de acceso.
               </p>
             </div>
           ) : (
             <>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">{t("common.fullName")} *</Label>
+                  <Label htmlFor="full_name">Nombre Completo *</Label>
                   <Input
                     id="full_name"
-                    placeholder={t('settings.fullName')}
+                    placeholder="Juan García"
                     value={newMember.full_name}
                     onChange={(e) => setNewMember({ ...newMember, full_name: e.target.value })}
                     disabled={inviting}
@@ -399,13 +398,13 @@ export function TeamManager() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">{t('settings.TeamManager.email')}</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder={t('settings.emailPlaceholder')}
+                      placeholder="juan@ejemplo.com"
                       className="pl-10"
                       value={newMember.email}
                       onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
@@ -415,14 +414,14 @@ export function TeamManager() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="role">{t('settings.TeamManager.rol1')}</Label>
+                  <Label htmlFor="role">Rol *</Label>
                   <Select
                     value={newMember.role_id}
                     onValueChange={(value) => setNewMember({ ...newMember, role_id: value, location_id: null })}
                     disabled={inviting}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={t('settings.selectRole')} />
+                      <SelectValue placeholder="Seleccionar rol" />
                     </SelectTrigger>
                     <SelectContent>
                       {roles.filter(r => r.name !== 'owner').map(role => {
@@ -460,14 +459,14 @@ export function TeamManager() {
                     disabled={inviting}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={t('settings.selectLocation')} />
+                      <SelectValue placeholder="Seleccionar ubicación" />
                     </SelectTrigger>
                     <SelectContent>
                       {!requiresLocation && (
                         <SelectItem value="global">
                           <span className="flex items-center gap-2">
                             <Globe className="h-3 w-3" />
-                            {t('settings.TeamManager.todasLasUbicaciones')}
+                            Todas las ubicaciones
                           </span>
                         </SelectItem>
                       )}
@@ -486,18 +485,18 @@ export function TeamManager() {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowInviteDialog(false)} disabled={inviting}>
-                  {t('settings.TeamManager.cancelar')}
+                  Cancelar
                 </Button>
                 <Button onClick={handleInvite} disabled={inviting}>
                   {inviting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t('settings.TeamManager.enviando')}
+                      Enviando...
                     </>
                   ) : (
                     <>
                       <Mail className="h-4 w-4 mr-2" />
-                      {t('settings.TeamManager.enviarInvitacion')}
+                      Enviar Invitación
                     </>
                   )}
                 </Button>

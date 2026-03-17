@@ -18,10 +18,8 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, TrendingUp } from 'lucide-react';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
-import { useTranslation } from 'react-i18next';
 
 export default function Reviews() {
-  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { group, locations } = useApp();
 
@@ -45,7 +43,12 @@ export default function Reviews() {
     };
   };
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>{t('reviews.getinitialdaterangeConstDatemodeSetdatem')}<DateMode>{t('reviews.monthlyConstPlatformSetplatformUsestate')}<Platform>{t('reviews.searchparamsgetplatformAsPlatformAllCons')}<string>(
+  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [platform, setPlatform] = useState<Platform>(
+    (searchParams.get('platform') as Platform) || 'all'
+  );
+  const [locationId, setLocationId] = useState<string>(
     searchParams.get('location') || 'all'
   );
 
@@ -142,7 +145,7 @@ export default function Reviews() {
         const fallback: Record<string, string> = {
           friendly: `¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que disfrutaste de tu experiencia. ¡Te esperamos pronto! 😊`,
           professional: `Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opinión es muy importante para nosotros y nos ayuda a seguir mejorando.`,
-          concise: t('reviews.replyQuick', { author: review.author_name }),
+          concise: `Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!`,
         };
         return fallback[tone] || currentText;
       }
@@ -220,7 +223,7 @@ export default function Reviews() {
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="h-5 w-5 text-orange-500" />
-          <h3 className="text-lg font-semibold">{t('reviews.busyHoursForecast')}</h3>
+          <h3 className="text-lg font-semibold">Busy Hours (Forecast)</h3>
         </div>
         {busyLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -256,7 +259,7 @@ export default function Reviews() {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">
-            {t('reviews.noForecastDataAvailableFor')}
+            No forecast data available for this period
           </p>
         )}
       </Card>

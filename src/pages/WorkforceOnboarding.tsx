@@ -53,7 +53,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 // ─── Types ──────────────────────────────────────────────
 interface Employee {
@@ -76,18 +75,18 @@ interface OnboardingTask {
 
 // ─── Onboarding template ────────────────────────────────
 const ONBOARDING_TEMPLATE: Omit<OnboardingTask, 'id'>[] = [
-    { label: t('onboarding.signedContract'), completed: false, category: 'docs' },
-    { label: t('onboarding.dniCopy'), completed: false, category: 'docs' },
-    { label: t('onboarding.ssNumber'), completed: false, category: 'docs' },
-    { label: t('onboarding.bankAccount'), completed: false, category: 'docs' },
-    { label: t('onboarding.employeePhoto'), completed: false, category: 'docs' },
-    { label: t('onboarding.prlTraining'), completed: false, category: 'training' },
-    { label: t('onboarding.foodHandler'), completed: false, category: 'training' },
-    { label: t('onboarding.facilityTour'), completed: false, category: 'training' },
-    { label: t('onboarding.allergenProtocol'), completed: false, category: 'training' },
-    { label: t('onboarding.uniformDelivered'), completed: false, category: 'setup' },
-    { label: t('onboarding.systemAccess'), completed: false, category: 'setup' },
-    { label: t('onboarding.trialShift'), completed: false, category: 'setup' },
+    { label: 'Contrato de trabajo firmado', completed: false, category: 'docs' },
+    { label: 'Copia DNI / NIE', completed: false, category: 'docs' },
+    { label: 'Número de Seguridad Social', completed: false, category: 'docs' },
+    { label: 'Cuenta bancaria (IBAN)', completed: false, category: 'docs' },
+    { label: 'Foto para ficha empleado', completed: false, category: 'docs' },
+    { label: 'Formación PRL recibida', completed: false, category: 'training' },
+    { label: 'Carné de manipulador de alimentos', completed: false, category: 'training' },
+    { label: 'Tour del establecimiento', completed: false, category: 'training' },
+    { label: 'Protocolo de alérgenos', completed: false, category: 'training' },
+    { label: 'Uniforme entregado', completed: false, category: 'setup' },
+    { label: 'Acceso al sistema configurado', completed: false, category: 'setup' },
+    { label: 'Turno de prueba completado', completed: false, category: 'setup' },
 ];
 
 // ─── Helpers ────────────────────────────────────────────
@@ -99,18 +98,22 @@ const AVATAR_COLORS = [
     'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-rose-500',
 ];
 const getAvatarColor = (name: string) =>
-    {t('workforceOnboarding.avatarcolorsnamecharcodeat0Avatarcolorsl')}<string, string> = {
+    AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+
+const ROLE_LABELS: Record<string, string> = {
     owner: 'Propietario', admin: 'Administrador', ops_manager: 'Gerente Ops',
     store_manager: 'Gerente Local', manager: 'Encargado/a', waiter: 'Camarero/a',
     cook: 'Cocinero/a', bartender: 'Barista', host: 'Hostess',
-    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: t('payroll.empleado'),
+    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: 'Empleado',
 };
 
 // ─── Main Component ─────────────────────────────────────
 export default function WorkforceOnboarding() {
-  const { t } = useTranslation();
     const { accessibleLocations } = useApp();
-    const [employees, setEmployees] = useState<Employee[]>{t('workforceOnboarding.constLoadingSetloadingUsestatetrueConst')}<Employee | null>{t('workforceOnboarding.nullConstOnboardingtasksSetonboardingtas')}<OnboardingTask[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+    const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>([]);
     const [contractOpen, setContractOpen] = useState(false);
     const [contractForm, setContractForm] = useState({
         type: 'indefinido',
@@ -193,10 +196,10 @@ export default function WorkforceOnboarding() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                         <Briefcase className="h-6 w-6 text-primary" />
-                        {t('workforceOnboarding.onboardingDocumentos')}
+                        Onboarding & Documentos
                     </h1>
                     <p className="text-muted-foreground">
-                        {t('workforceOnboarding.gestionDeIncorporacionesYDocumentacion')}
+                        Gestión de incorporaciones y documentación del equipo
                     </p>
                 </div>
             </div>
@@ -215,11 +218,11 @@ export default function WorkforceOnboarding() {
                     </TabsTrigger>
                     <TabsTrigger value="contracts" className="gap-2">
                         <FileText className="h-4 w-4" />
-                        {t('workforceOnboarding.contratos')}
+                        Contratos
                     </TabsTrigger>
                     <TabsTrigger value="documents" className="gap-2">
                         <Shield className="h-4 w-4" />
-                        {t('workforceOnboarding.documentos')}
+                        Documentos
                     </TabsTrigger>
                 </TabsList>
 
@@ -260,9 +263,9 @@ export default function WorkforceOnboarding() {
                                                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                                                         <span>{done}/{tasks.length} completado</span>
                                                         {pct === 100 ? (
-                                                            <Badge variant="default" className="text-[10px] bg-emerald-500">{t('team.completado')}</Badge>
+                                                            <Badge variant="default" className="text-[10px] bg-emerald-500">✓ Completado</Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="text-[10px]">{t('workforceOnboarding.enProceso')}</Badge>
+                                                            <Badge variant="outline" className="text-[10px]">En proceso</Badge>
                                                         )}
                                                     </div>
                                                 </CardContent>
@@ -273,9 +276,9 @@ export default function WorkforceOnboarding() {
                                     <Card className="col-span-full">
                                         <CardContent className="p-12 text-center">
                                             <UserPlus className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
-                                            <p className="text-lg font-medium text-muted-foreground">{t('workforceOnboarding.noRecentOnboardings')}</p>
+                                            <p className="text-lg font-medium text-muted-foreground">Sin incorporaciones recientes</p>
                                             <p className="text-sm text-muted-foreground/60">
-                                                {t('workforceOnboarding.losEmpleadosAnadidosEnLos')}
+                                                Los empleados añadidos en los últimos 30 días aparecerán aquí
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -285,7 +288,7 @@ export default function WorkforceOnboarding() {
                             {/* All employees for onboarding */}
                             {employees.length > recentEmployees.length && (
                                 <div>
-                                    <h3 className="text-sm font-medium text-muted-foreground mb-3">{t('workforceOnboarding.allEmployees')}</h3>
+                                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Todos los empleados</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {employees.filter((e) => !recentEmployees.includes(e)).slice(0, 12).map((emp) => (
                                             <Card
@@ -313,10 +316,11 @@ export default function WorkforceOnboarding() {
                                 </div>
                             )}
                         </>
-                    {t('workforceOnboarding.onboardingDetailForSelectedEmployee')}
+                    ) : (
+                        // Onboarding detail for selected employee
                         <div className="space-y-4">
                             <Button variant="ghost" size="sm" onClick={() => setSelectedEmployee(null)}>
-                                {t('workforceOnboarding.volverAlListado')}
+                                ← Volver al listado
                             </Button>
 
                             <div className="flex items-center gap-4">
@@ -345,7 +349,7 @@ export default function WorkforceOnboarding() {
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <FileText className="h-4 w-4 text-blue-500" />
-                                        {t('workforceOnboarding.documentacion')}
+                                        Documentación
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
@@ -376,7 +380,9 @@ export default function WorkforceOnboarding() {
                             <Card>
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-base flex items-center gap-2">
-                                        <Shield className="h-4 w-4 text-amber-500" />{t('payroll.formacion')}</CardTitle>
+                                        <Shield className="h-4 w-4 text-amber-500" />
+                                        Formación
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     {trainingTasks.map((task) => (
@@ -407,7 +413,7 @@ export default function WorkforceOnboarding() {
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <Briefcase className="h-4 w-4 text-purple-500" />
-                                        {t('workforceOnboarding.configuracion')}
+                                        Configuración
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
@@ -443,7 +449,7 @@ export default function WorkforceOnboarding() {
                         <p className="text-sm text-muted-foreground">{employees.length} empleados activos</p>
                         <Button onClick={() => setContractOpen(true)}>
                             <FileText className="mr-2 h-4 w-4" />
-                            {t('workforceOnboarding.nuevoContrato')}
+                            Nuevo contrato
                         </Button>
                     </div>
 
@@ -486,17 +492,19 @@ export default function WorkforceOnboarding() {
                         <CardContent className="p-12 text-center">
                             <Upload className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
                             <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                                {t('workforceOnboarding.gestionDocumental')}
+                                Gestión documental
                             </h3>
                             <p className="text-sm text-muted-foreground/60 max-w-md mx-auto mb-4">
-                                {t('workforceOnboarding.subeYGestionaContratosDocumentos')}
+                                Sube y gestiona contratos, documentos de identidad, certificados y más.
+                                Los documentos se almacenarán de forma segura y solo serán accesibles por los
+                                administradores.
                             </p>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
                                 {[
-                                    { icon: FileText, label: t('onboarding.contracts'), count: employees.length },
-                                    { icon: Shield, label: t('onboarding.prlCertificates'), count: 0 },
-                                    { icon: FileCheck, label: t('onboarding.dniNie'), count: 0 },
-                                    { icon: Briefcase, label: t('onboarding.ss'), count: 0 },
+                                    { icon: FileText, label: 'Contratos', count: employees.length },
+                                    { icon: Shield, label: 'Certificados PRL', count: 0 },
+                                    { icon: FileCheck, label: 'DNI / NIE', count: 0 },
+                                    { icon: Briefcase, label: 'SS', count: 0 },
                                 ].map((doc) => (
                                     <Card key={doc.label}>
                                         <CardContent className="p-4 text-center">
@@ -518,26 +526,26 @@ export default function WorkforceOnboarding() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <FileText className="h-5 w-5" />
-                            {t('workforceOnboarding.nuevoContrato1')}
+                            Nuevo contrato
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>{t('workforceOnboarding.contractType')}</Label>
+                            <Label>Tipo de contrato</Label>
                             <Select value={contractForm.type} onValueChange={(v) => setContractForm((f) => ({ ...f, type: v }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="indefinido">{t('workforceOnboarding.permanent')}</SelectItem>
-                                    <SelectItem value="temporal">{t('workforceOnboarding.temporal')}</SelectItem>
-                                    <SelectItem value="practicas">{t('payroll.practicas')}</SelectItem>
-                                    <SelectItem value="formacion">{t('payroll.formacion')}</SelectItem>
-                                    <SelectItem value="relevos">{t('workforceOnboarding.relevos')}</SelectItem>
+                                    <SelectItem value="indefinido">Indefinido</SelectItem>
+                                    <SelectItem value="temporal">Temporal</SelectItem>
+                                    <SelectItem value="practicas">Prácticas</SelectItem>
+                                    <SelectItem value="formacion">Formación</SelectItem>
+                                    <SelectItem value="relevos">Relevos</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>{t('team.fechaInicio')}</Label>
+                                <Label>Fecha inicio</Label>
                                 <Input
                                     type="date"
                                     value={contractForm.start_date}
@@ -545,7 +553,7 @@ export default function WorkforceOnboarding() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('workforceOnboarding.horassemana')}</Label>
+                                <Label>Horas/semana</Label>
                                 <Input
                                     type="number"
                                     value={contractForm.hours_per_week}
@@ -554,19 +562,19 @@ export default function WorkforceOnboarding() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>{t('workforceOnboarding.notas')}</Label>
+                            <Label>Notas</Label>
                             <Textarea
                                 value={contractForm.notes}
                                 onChange={(e) => setContractForm((f) => ({ ...f, notes: e.target.value }))}
-                                placeholder={t("workforce.contractNotes")}
+                                placeholder="Observaciones del contrato..."
                                 rows={3}
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setContractOpen(false)}>{t("common.cancel")}</Button>
-                        <Button onClick={() => { toast.success(t('workforceOnboarding.toastContractRegistered')); setContractOpen(false); }}>
-                            {t('workforceOnboarding.guardarContrato')}
+                        <Button variant="outline" onClick={() => setContractOpen(false)}>Cancelar</Button>
+                        <Button onClick={() => { toast.success('Contrato registrado (demo)'); setContractOpen(false); }}>
+                            Guardar contrato
                         </Button>
                     </DialogFooter>
                 </DialogContent>

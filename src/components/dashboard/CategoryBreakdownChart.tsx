@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useCategorySales } from '@/hooks/useCategorySales';
-import { useTranslation } from 'react-i18next';
 
 const CATEGORY_COLORS: Record<string, string> = {
   'Bebidas': 'hsl(var(--chart-4))',
@@ -18,7 +17,6 @@ interface CategoryBreakdownChartProps {
 }
 
 export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProps) {
-  const { t } = useTranslation();
   const { categories, loading, totalSales } = useCategorySales();
 
   if (loading) {
@@ -54,13 +52,13 @@ export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProp
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium text-sm">{data.category}</p>
           <p className="text-sm text-muted-foreground">
-            {t('dashboard.CategoryBreakdownChart.ventas')} <span className="font-semibold text-foreground">{formatCurrency(data.sales)}</span>
+            Ventas: <span className="font-semibold text-foreground">{formatCurrency(data.sales)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            {t('dashboard.CategoryBreakdownChart.unidades')} <span className="font-semibold text-foreground">{data.units.toLocaleString('es-ES')}</span>
+            Unidades: <span className="font-semibold text-foreground">{data.units.toLocaleString('es-ES')}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            {t('dashboard.CategoryBreakdownChart.porcentaje')} <span className="font-semibold text-foreground">{data.percentage.toFixed(1)}%</span>
+            Porcentaje: <span className="font-semibold text-foreground">{data.percentage.toFixed(1)}%</span>
           </p>
         </div>
       );
@@ -82,11 +80,13 @@ export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProp
         </div>
       ))}
     </div>
-  {t('dashboard.CategoryBreakdownChart.return')}
+  );
+
+  return (
     <Card className={className}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{t('dashboard.ventasPorCategoria')}</CardTitle>
+          <CardTitle className="text-lg">Ventas por Categoría</CardTitle>
           <span className="text-sm text-muted-foreground">
             Total: {formatCurrency(totalSales)}
           </span>
@@ -95,7 +95,7 @@ export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProp
       <CardContent>
         {categories.length === 0 ? (
           <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-            {t('dashboard.CategoryBreakdownChart.noHayDatosDeVentas')}
+            No hay datos de ventas por categoría
           </div>
         ) : (
           <>

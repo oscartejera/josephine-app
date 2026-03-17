@@ -16,13 +16,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { DayAvailability, AvailabilityStatus } from '@/hooks/useAvailabilityData';
-import { useTranslation } from 'react-i18next';
 
 interface WeeklyAvailabilityGridProps {
   availability: DayAvailability[];
   onUpdateDay: (dayIndex: number, updates: Partial<DayAvailability>) => void;
   hasChanges: boolean;
-  onSave: () => {t('availability.WeeklyAvailabilityGrid.promise')}<void>;
+  onSave: () => Promise<void>;
   isSaving?: boolean;
 }
 
@@ -39,26 +38,24 @@ const STATUS_CONFIG: Record<AvailabilityStatus, { label: string; icon: React.Ele
 };
 
 export function WeeklyAvailabilityGrid({
-  
   availability,
   onUpdateDay,
   hasChanges,
   onSave,
   isSaving,
 }: WeeklyAvailabilityGridProps) {
-  const { t } = useTranslation();
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
         <div>
-          <h3 className="font-semibold text-lg">{t('availability.WeeklyAvailabilityGrid.weeklyAvailability')}</h3>
-          <p className="text-sm text-muted-foreground">{t('availability.WeeklyAvailabilityGrid.setYourDefaultWorkingHours')}</p>
+          <h3 className="font-semibold text-lg">Weekly Availability</h3>
+          <p className="text-sm text-muted-foreground">Set your default working hours for each day</p>
         </div>
         <div className="flex items-center gap-3">
           {hasChanges && (
             <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
-              {t('availability.WeeklyAvailabilityGrid.unsavedChanges')}
+              Unsaved changes
             </Badge>
           )}
           <Button onClick={onSave} disabled={!hasChanges || isSaving}>
@@ -69,7 +66,7 @@ export function WeeklyAvailabilityGrid({
       
       {/* Legend */}
       <div className="p-4 border-b border-border bg-muted/10 flex items-center gap-6 text-sm">
-        <span className="text-muted-foreground">{t('availability.WeeklyAvailabilityGrid.status')}</span>
+        <span className="text-muted-foreground">Status:</span>
         {Object.entries(STATUS_CONFIG).map(([status, config]) => {
           const Icon = config.icon;
           return (
@@ -135,7 +132,7 @@ export function WeeklyAvailabilityGrid({
                       onValueChange={(value) => onUpdateDay(day.dayIndex, { startTime: value })}
                     >
                       <SelectTrigger className="w-[100px]">
-                        <SelectValue placeholder={t('availability.WeeklyAvailabilityGrid.start')} />
+                        <SelectValue placeholder="Start" />
                       </SelectTrigger>
                       <SelectContent>
                         {TIME_OPTIONS.map(time => (
@@ -149,7 +146,7 @@ export function WeeklyAvailabilityGrid({
                       onValueChange={(value) => onUpdateDay(day.dayIndex, { endTime: value })}
                     >
                       <SelectTrigger className="w-[100px]">
-                        <SelectValue placeholder={t('availability.WeeklyAvailabilityGrid.end')} />
+                        <SelectValue placeholder="End" />
                       </SelectTrigger>
                       <SelectContent>
                         {TIME_OPTIONS.map(time => (
@@ -168,7 +165,7 @@ export function WeeklyAvailabilityGrid({
                 </>
               ) : (
                 <div className="col-span-2 text-sm text-muted-foreground italic">
-                  {t('availability.WeeklyAvailabilityGrid.notAvailableThisDay')}
+                  Not available this day
                 </div>
               )}
             </div>

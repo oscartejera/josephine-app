@@ -45,7 +45,9 @@ const COLORS = {
 };
 
 const VarianceIndicator = ({ value }: { value: number }) => {
-  const isPositive = value >{t('sales.0ConstIconIspositiveTrendingup')}
+  const isPositive = value >= 0;
+  const Icon = isPositive ? TrendingUp : TrendingDown;
+  return (
     <span className={cn('inline-flex items-center gap-1 text-xs font-medium', isPositive ? 'text-emerald-600' : 'text-rose-600')}>
       <Icon className="h-3 w-3" />
       {isPositive ? '+' : ''}{value.toFixed(2)}%
@@ -54,7 +56,12 @@ const VarianceIndicator = ({ value }: { value: number }) => {
 };
 
 export default function Sales() {
-  const [dateMode, setDateMode] = useState<DateMode>{t('sales.monthlyConstStartdateSetstartdateUsestat')}<CompareMode>{t('sales.forecastConstAskjosephineopenSetaskjosep')}<string | null>(null);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [startDate, setStartDate] = useState(subDays(new Date(), 29));
+  const [endDate, setEndDate] = useState(new Date());
+  const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
+  const [askJosephineOpen, setAskJosephineOpen] = useState(false);
+  const [explainDate, setExplainDate] = useState<string | null>(null);
   const { t } = useTranslation();
 
   const { selectedLocationId, accessibleLocations, loading: appLoading } = useApp();
@@ -156,7 +163,7 @@ export default function Sales() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              {t('sales.live')}
+              Live
             </span>
           )}
           <ForecastConfidenceBadge />
@@ -226,7 +233,7 @@ export default function Sales() {
               </div>
             ) : (
               <div className="pt-2 text-xs text-gray-400 italic">
-                {t('sales.channelSplitRequiresPosChannel')}
+                Channel split requires POS channel tracking
               </div>
             )}
           </div>

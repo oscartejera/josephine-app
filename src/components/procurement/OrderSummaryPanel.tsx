@@ -5,7 +5,6 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import type { OrderSummary } from '@/hooks/useProcurementData';
-import { useTranslation } from 'react-i18next';
 
 interface OrderSummaryPanelProps {
   summary: OrderSummary;
@@ -14,17 +13,18 @@ interface OrderSummaryPanelProps {
 }
 
 export function OrderSummaryPanel({
-  
   summary,
   onAutofill,
   onClearCart,
 }: OrderSummaryPanelProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const itemCount = summary.items.length;
   const displayItems = summary.items.slice(0, 6);
   const moreCount = summary.items.length - 6;
-  const meetsMinOrder = summary.subtotal >{t('procurement.OrderSummaryPanel.summaryminorderConstAmountneededSummarym')}
+  const meetsMinOrder = summary.subtotal >= summary.minOrder;
+  const amountNeeded = summary.minOrder - summary.subtotal;
+
+  return (
     <div className="bg-card rounded-xl border border-border overflow-hidden sticky top-6">
       <div className="p-4 border-b border-border bg-muted/30">
         <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -38,18 +38,18 @@ export function OrderSummaryPanel({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Truck className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.supplier')}</span>
+            <span className="text-muted-foreground">Supplier:</span>
             <span className="font-medium text-foreground">{summary.supplierName}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.delivery')}</span>
+            <span className="text-muted-foreground">Delivery:</span>
             <span className="font-medium text-foreground">{format(summary.deliveryDate, 'd MMM yyyy')}</span>
           </div>
           {itemCount > 0 && (
             <div className="flex items-center gap-2 text-sm">
               <Shield className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.coverage')}</span>
+              <span className="text-muted-foreground">Coverage:</span>
               <span className="font-medium text-success">Until {format(summary.coverageEndDate, 'EEE d MMM')}</span>
             </div>
           )}
@@ -101,7 +101,7 @@ export function OrderSummaryPanel({
           </div>
         ) : (
           <div className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">{t("procurement.noItemsInCart")}</p>
+            <p className="text-sm text-muted-foreground">No items in cart</p>
           </div>
         )}
 
@@ -110,28 +110,28 @@ export function OrderSummaryPanel({
         {/* Totals */}
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.subtotal')}</span>
+            <span className="text-muted-foreground">Subtotal</span>
             <span className="text-foreground">€{summary.subtotal.toFixed(2)}</span>
           </div>
           {summary.deliveryFee > 0 && (
             <div className="flex justify-between text-warning">
-              <span>{t('procurement.OrderSummaryPanel.deliveryFee')}</span>
+              <span>Delivery fee</span>
               <span>€{summary.deliveryFee.toFixed(2)}</span>
             </div>
           )}
-          {summary.deliveryFee === 0 && summary.subtotal >{t('procurement.OrderSummaryPanel.summaryminorder')}
+          {summary.deliveryFee === 0 && summary.subtotal >= summary.minOrder && (
             <div className="flex justify-between text-success">
-              <span>{t('procurement.OrderSummaryPanel.delivery1')}</span>
-              <span>{t('procurement.OrderSummaryPanel.free')}</span>
+              <span>Delivery</span>
+              <span>FREE</span>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.vat21')}</span>
+            <span className="text-muted-foreground">VAT (21%)</span>
             <span className="text-foreground">€{summary.tax.toFixed(2)}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-semibold text-base">
-            <span className="text-foreground">{t("common.total")}</span>
+            <span className="text-foreground">Total</span>
             <span className="text-foreground">€{summary.total.toFixed(2)}</span>
           </div>
         </div>
@@ -145,7 +145,7 @@ export function OrderSummaryPanel({
             disabled={itemCount === 0}
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
-            {t('procurement.OrderSummaryPanel.viewShoppingCart')}
+            View Shopping Cart
           </Button>
           <Button 
             variant="outline" 
@@ -153,7 +153,7 @@ export function OrderSummaryPanel({
             onClick={onAutofill}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            {t('procurement.OrderSummaryPanel.quickAutofill')}
+            Quick Autofill
           </Button>
           {itemCount > 0 && (
             <Button 
@@ -161,7 +161,7 @@ export function OrderSummaryPanel({
               className="w-full text-muted-foreground"
               onClick={onClearCart}
             >
-              {t('procurement.OrderSummaryPanel.clearCart')}
+              Clear Cart
             </Button>
           )}
         </div>

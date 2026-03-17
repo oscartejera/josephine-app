@@ -3,7 +3,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, CartesianGrid } from 'recharts';
 import type { ViewMode } from './InventoryHeader';
-import { useTranslation } from 'react-i18next';
 
 interface CategoryBreakdown {
   category: string;
@@ -22,14 +21,12 @@ interface InventoryBreakdownChartProps {
 }
 
 export function InventoryBreakdownChart({
-  
   viewMode,
   data,
   totalSales,
   isLoading = false,
   currency = '€'
 }: InventoryBreakdownChartProps) {
-  const { t } = useTranslation();
   const isCOGS = viewMode === 'COGS';
   const title = isCOGS ? 'COGS breakdown' : 'GP breakdown';
 
@@ -74,11 +71,11 @@ export function InventoryBreakdownChart({
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: actualColor }} />
-            <span className="text-muted-foreground">{t('inventory.InventoryBreakdownChart.actual')}</span>
+            <span className="text-muted-foreground">Actual</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: theoreticalColor }} />
-            <span className="text-muted-foreground">{t('inventory.InventoryBreakdownChart.theoretical')}</span>
+            <span className="text-muted-foreground">Theoretical</span>
           </div>
         </div>
 
@@ -119,10 +116,10 @@ export function InventoryBreakdownChart({
           <Table>
             <TableHeader>
               <TableRow className="border-b border-border/50">
-                <TableHead className="w-[120px] text-xs font-medium text-muted-foreground">{t('inventory.InventoryBreakdownChart.category')}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryBreakdownChart.actual1')}</TableHead>
+                <TableHead className="w-[120px] text-xs font-medium text-muted-foreground">Category</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">Actual %</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Actual {currency}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryBreakdownChart.theoretical1')}</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">Theoretical %</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Theoretical {currency}</TableHead>
               </TableRow>
             </TableHeader>
@@ -138,7 +135,7 @@ export function InventoryBreakdownChart({
               ))}
               {/* Total row */}
               <TableRow className="border-t-2 border-border bg-muted/20">
-                <TableCell className="py-2.5 font-semibold text-sm text-muted-foreground">{t("common.total")}</TableCell>
+                <TableCell className="py-2.5 font-semibold text-sm text-muted-foreground">Total</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{totals.actualPercent.toFixed(1)}%</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{currency}{totals.actualAmount.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{totals.theoreticalPercent.toFixed(1)}%</TableCell>

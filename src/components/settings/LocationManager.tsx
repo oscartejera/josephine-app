@@ -15,7 +15,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Building2, Plus, Trash2, Edit2, MapPin, Clock, Loader2, Check, AlertTriangle, Copy, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { LocationWizard } from './LocationWizard';
-import { useTranslation } from 'react-i18next';
 
 interface LocationFormData {
   name: string;
@@ -32,18 +31,18 @@ interface DuplicateOptions {
 }
 
 const TIMEZONES = [
-  { value: 'Europe/Madrid', label: t('settings.countrySpain') },
+  { value: 'Europe/Madrid', label: 'España (Madrid)' },
   { value: 'Europe/London', label: 'Reino Unido (Londres)' },
-  { value: 'Europe/Paris', label: t('settings.countryFrance') },
-  { value: 'Europe/Berlin', label: t('settings.countryGermany') },
+  { value: 'Europe/Paris', label: 'Francia (París)' },
+  { value: 'Europe/Berlin', label: 'Alemania (Berlín)' },
   { value: 'America/New_York', label: 'EEUU (Nueva York)' },
-  { value: 'America/Los_Angeles', label: t('settings.countryUS') },
-  { value: 'America/Mexico_City', label: t('settings.countryMexico') },
+  { value: 'America/Los_Angeles', label: 'EEUU (Los Ángeles)' },
+  { value: 'America/Mexico_City', label: 'México (Ciudad de México)' },
 ];
 
 const CURRENCIES = [
   { value: 'EUR', label: '€ Euro (EUR)' },
-  { value: 'USD', label: t('settings.currencyDollarUsd') },
+  { value: 'USD', label: '$ Dólar (USD)' },
   { value: 'GBP', label: '£ Libra (GBP)' },
   { value: 'MXN', label: '$ Peso Mexicano (MXN)' },
 ];
@@ -63,22 +62,26 @@ const initialDuplicateOptions: DuplicateOptions = {
 };
 
 export function LocationManager() {
-  const { t } = useTranslation();
   const { locations, group } = useApp();
   const { profile } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<string | null>{t('settings.LocationManager.nullConstFormdataSetformdataUsestate')}<LocationFormData>{t('settings.LocationManager.initialformdataConstSourcelocationidSets')}<string>{t('settings.LocationManager.constDuplicateoptionsSetduplicateoptions')}<DuplicateOptions>{t('settings.LocationManager.initialduplicateoptionsConstLoadingSetlo')}<string | null>(null);
+  const [editingLocation, setEditingLocation] = useState<string | null>(null);
+  const [formData, setFormData] = useState<LocationFormData>(initialFormData);
+  const [sourceLocationId, setSourceLocationId] = useState<string>('');
+  const [duplicateOptions, setDuplicateOptions] = useState<DuplicateOptions>(initialDuplicateOptions);
+  const [loading, setLoading] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const handleAddLocation = async () => {
     if (!formData.name.trim()) {
-      toast.error(t('locationManager.toastNameRequired'));
+      toast.error('El nombre del local es obligatorio');
       return;
     }
 
     if (!group?.id) {
-      toast.error(t('locationManager.toastGroupNotFound'));
+      toast.error('No se encontró el grupo');
       return;
     }
 
@@ -87,7 +90,7 @@ export function LocationManager() {
       // Verificar sesión activa antes de insertar
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error(t('locationManager.toastSessionExpired'));
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
         setLoading(false);
         return;
       }
@@ -100,7 +103,7 @@ export function LocationManager() {
         .single();
 
       if (userProfile?.group_id !== group.id) {
-        toast.error(t('locationManager.toastPermissionsError'));
+        toast.error('Error de permisos. Recarga la página e intenta de nuevo.');
         setLoading(false);
         return;
       }
@@ -173,9 +176,9 @@ export function LocationManager() {
     } catch (error: any) {
       console.error('Error creating location:', error);
       if (error.code === '42501') {
-        toast.error(t('locationManager.toastNoPermissions'));
+        toast.error('No tienes permisos para crear locales. Verifica que tienes rol de propietario.');
       } else {
-        toast.error(error.message || t('settings.errorAlCrearElLocal'));
+        toast.error(error.message || 'Error al crear el local');
       }
     } finally {
       setLoading(false);
@@ -184,17 +187,17 @@ export function LocationManager() {
 
   const handleDuplicateLocation = async () => {
     if (!formData.name.trim()) {
-      toast.error(t('locationManager.toastNameRequired'));
+      toast.error('El nombre del local es obligatorio');
       return;
     }
 
     if (!sourceLocationId) {
-      toast.error(t('locationManager.toastSelectSource'));
+      toast.error('Selecciona un local de origen');
       return;
     }
 
     if (!group?.id) {
-      toast.error(t('locationManager.toastGroupNotFound'));
+      toast.error('No se encontró el grupo');
       return;
     }
 
@@ -203,7 +206,7 @@ export function LocationManager() {
       // Verificar sesión activa antes de insertar
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error(t('locationManager.toastSessionExpired'));
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
         setLoading(false);
         return;
       }
@@ -216,7 +219,7 @@ export function LocationManager() {
         .single();
 
       if (userProfile?.group_id !== group.id) {
-        toast.error(t('locationManager.toastPermissionsError'));
+        toast.error('Error de permisos. Recarga la página e intenta de nuevo.');
         setLoading(false);
         return;
       }
@@ -464,7 +467,7 @@ export function LocationManager() {
 
       // Build success message
       const parts: string[] = [];
-      if (copiedItems.settings) parts.push(t('settings.configuracion'));
+      if (copiedItems.settings) parts.push('configuración');
       if (copiedItems.products > 0) parts.push(`${copiedItems.products} productos`);
       if (copiedItems.employees > 0) parts.push(`${copiedItems.employees} empleados`);
       if (copiedItems.floorMaps > 0) parts.push(`${copiedItems.floorMaps} planos con ${copiedItems.tables} mesas`);
@@ -482,7 +485,7 @@ export function LocationManager() {
       window.location.reload();
     } catch (error: any) {
       console.error('Error duplicating location:', error);
-      toast.error(error.message || t('settings.errorAlDuplicarElLocal'));
+      toast.error(error.message || 'Error al duplicar el local');
     } finally {
       setLoading(false);
     }
@@ -490,7 +493,7 @@ export function LocationManager() {
 
   const handleEditLocation = async (locationId: string) => {
     if (!formData.name.trim()) {
-      toast.error(t('locationManager.toastNameRequired'));
+      toast.error('El nombre del local es obligatorio');
       return;
     }
 
@@ -508,13 +511,13 @@ export function LocationManager() {
 
       if (error) throw error;
 
-      toast.success(t('locationManager.toastUpdated'));
+      toast.success('Local actualizado');
       setEditingLocation(null);
       setFormData(initialFormData);
       window.location.reload();
     } catch (error: any) {
       console.error('Error updating location:', error);
-      toast.error(error.message || t('settings.errorAlActualizarElLocal'));
+      toast.error(error.message || 'Error al actualizar el local');
     } finally {
       setLoading(false);
     }
@@ -524,7 +527,7 @@ export function LocationManager() {
     const location = locations.find(l => l.id === locationId);
     
     if (locations.length <= 1) {
-      toast.error(t('locationManager.toastCannotDelete'));
+      toast.error('No puedes eliminar el único local del grupo');
       return;
     }
 
@@ -542,7 +545,7 @@ export function LocationManager() {
       window.location.reload();
     } catch (error: any) {
       console.error('Error deleting location:', error);
-      toast.error(error.message || t('settings.errorAlEliminarElLocal'));
+      toast.error(error.message || 'Error al eliminar el local');
     } finally {
       setLoading(false);
     }
@@ -580,46 +583,46 @@ export function LocationManager() {
               Locales de {group?.name || 'Grupo'}
             </CardTitle>
             <CardDescription>
-              {t('settings.LocationManager.gestionaLosLocalesDeTu')}
+              Gestiona los locales de tu grupo. Cada local tiene su propio POS, KDS, inventario y métricas.
             </CardDescription>
           </div>
           
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowWizard(true)}>
               <Sparkles className="h-4 w-4 mr-2" />
-              {t('settings.LocationManager.wizardGuiado')}
+              Wizard Guiado
             </Button>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
                 <Button onClick={() => setFormData(initialFormData)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  {t('settings.LocationManager.anadirRapido')}
+                  Añadir Rápido
                 </Button>
               </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t('settings.LocationManager.nuevoLocal')}</DialogTitle>
+                <DialogTitle>Nuevo Local</DialogTitle>
                 <DialogDescription>
-                  {t('settings.LocationManager.creaUnNuevoLocalPara')}
+                  Crea un nuevo local para tu grupo. Se configurará automáticamente con POS, KDS y estructura de datos lista para usar.
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t("location.locationName")} *</Label>
+                  <Label htmlFor="name">Nombre del Local *</Label>
                   <Input
                     id="name"
-                    placeholder={t('settings.ejRestauranteCentro')}
+                    placeholder="Ej: Restaurante Centro"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="city">{t("common.city")}</Label>
+                  <Label htmlFor="city">Ciudad</Label>
                   <Input
                     id="city"
-                    placeholder={t('settings.LocationManager.ejMadrid')}
+                    placeholder="Ej: Madrid"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   />
@@ -627,7 +630,7 @@ export function LocationManager() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{t('settings.LocationManager.zonaHoraria')}</Label>
+                    <Label>Zona Horaria</Label>
                     <Select 
                       value={formData.timezone} 
                       onValueChange={(v) => setFormData({ ...formData, timezone: v })}
@@ -646,7 +649,7 @@ export function LocationManager() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>{t('settings.LocationManager.moneda')}</Label>
+                    <Label>Moneda</Label>
                     <Select 
                       value={formData.currency} 
                       onValueChange={(v) => setFormData({ ...formData, currency: v })}
@@ -666,19 +669,19 @@ export function LocationManager() {
                 </div>
 
                 <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">{t("settings.autoCreated")}:</p>
+                  <p className="font-medium text-foreground mb-1">Se creará automáticamente:</p>
                   <ul className="list-disc list-inside space-y-0.5">
-                    <li>{t("settings.floorPlan5Tables")}</li>
-                    <li>{t("settings.objectivesConfig")}</li>
-                    <li>{t("settings.payrollConfig")}</li>
-                    <li>{t('settings.conexionConPosYKds')}</li>
+                    <li>Plano de sala con 5 mesas de ejemplo</li>
+                    <li>Configuración de objetivos (GP, COL)</li>
+                    <li>Configuración de nóminas (España)</li>
+                    <li>Conexión con POS y KDS</li>
                   </ul>
                 </div>
               </div>
               
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  {t('settings.LocationManager.cancelar')}
+                  Cancelar
                 </Button>
                 <Button onClick={handleAddLocation} disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
@@ -697,19 +700,19 @@ export function LocationManager() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Copy className="h-5 w-5" />
-              {t('settings.LocationManager.duplicarLocal')}
+              Duplicar Local
             </DialogTitle>
             <DialogDescription>
-              {t('settings.LocationManager.creaUnNuevoLocalCopiando')}
+              Crea un nuevo local copiando la configuración de uno existente. No se copiarán datos históricos (ventas, tickets, turnos).
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>{t("settings.sourceLocation")}</Label>
+              <Label>Local de origen</Label>
               <Select value={sourceLocationId} onValueChange={setSourceLocationId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t('settings.seleccionaElLocalACopiar')} />
+                  <SelectValue placeholder="Selecciona el local a copiar" />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map(loc => (
@@ -722,27 +725,27 @@ export function LocationManager() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dup-name">{t("location.newLocationName")} *</Label>
+              <Label htmlFor="dup-name">Nombre del nuevo local *</Label>
               <Input
                 id="dup-name"
-                placeholder={t('settings.ejRestauranteCentro2')}
+                placeholder="Ej: Restaurante Centro 2"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="dup-city">{t("common.city")}</Label>
+              <Label htmlFor="dup-city">Ciudad</Label>
               <Input
                 id="dup-city"
-                placeholder={t('settings.LocationManager.ejMadrid1')}
+                placeholder="Ej: Madrid"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               />
             </div>
 
             <div className="space-y-3">
-              <Label>{t('settings.queCopiar')}</Label>
+              <Label>¿Qué copiar?</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -753,7 +756,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-products" className="text-sm cursor-pointer">
-                    {t('settings.LocationManager.productosYCategorias')}
+                    Productos y categorías
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -765,7 +768,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-employees" className="text-sm cursor-pointer">
-                    {t('settings.LocationManager.empleadosSinDatosDeNomina')}
+                    Empleados (sin datos de nómina)
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -777,7 +780,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-floormaps" className="text-sm cursor-pointer">
-                    {t('settings.LocationManager.planosDeSalaYMesas')}
+                    Planos de sala y mesas
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -789,7 +792,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-settings" className="text-sm cursor-pointer">
-                    {t('settings.LocationManager.configuracionObjetivosGpColNominas')}
+                    Configuración (objetivos GP, COL, nóminas)
                   </label>
                 </div>
               </div>
@@ -797,14 +800,14 @@ export function LocationManager() {
 
             <div className="bg-muted/50 border border-border rounded-lg p-3 text-sm">
               <p className="text-muted-foreground">
-                <strong className="text-foreground">{t('settings.LocationManager.nota')}</strong> {t('settings.LocationManager.elNuevoLocalEmpezaraSin')}
+                <strong className="text-foreground">Nota:</strong> El nuevo local empezará sin datos históricos. Los datos de ventas, inventario y turnos se generarán desde cero.
               </p>
             </div>
           </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
-              {t('settings.LocationManager.cancelar1')}
+              Cancelar
             </Button>
             <Button onClick={handleDuplicateLocation} disabled={loading || !sourceLocationId}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
@@ -818,11 +821,11 @@ export function LocationManager() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("common.name")}</TableHead>
-              <TableHead>{t("common.city")}</TableHead>
-              <TableHead>{t('settings.LocationManager.zonaHoraria1')}</TableHead>
-              <TableHead>{t('settings.LocationManager.moneda1')}</TableHead>
-              <TableHead className="text-right">{t('settings.acciones')}</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Ciudad</TableHead>
+              <TableHead>Zona Horaria</TableHead>
+              <TableHead>Moneda</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -848,7 +851,7 @@ export function LocationManager() {
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       className="h-8 w-32"
-                      placeholder={t('settings.LocationManager.ciudad')}
+                      placeholder="Ciudad"
                     />
                   ) : (
                     <div className="flex items-center gap-1">
@@ -860,7 +863,7 @@ export function LocationManager() {
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-muted-foreground" />
-                    {t('settings.LocationManager.europemadrid')}
+                    Europe/Madrid
                   </div>
                 </TableCell>
                 <TableCell>
@@ -878,14 +881,14 @@ export function LocationManager() {
                             setFormData(initialFormData);
                           }}
                         >
-                          {t('settings.LocationManager.cancelar2')}
+                          Cancelar
                         </Button>
                         <Button 
                           size="sm"
                           onClick={() => handleEditLocation(loc.id)}
                           disabled={loading}
                         >
-                          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('settings.guardar')}
+                          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar'}
                         </Button>
                       </>
                     ) : (
@@ -894,7 +897,7 @@ export function LocationManager() {
                           size="sm" 
                           variant="ghost"
                           onClick={() => openDuplicateDialog(loc)}
-                          title={t('settings.LocationManager.duplicarLocal1')}
+                          title="Duplicar local"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -928,21 +931,21 @@ export function LocationManager() {
                                 ¿Eliminar "{loc.name}"?
                               </AlertDialogTitle>
                               <AlertDialogDescription className="space-y-2">
-                                <p>{t("settings.deleteWarning")}:</p>
+                                <p>Esta acción eliminará permanentemente:</p>
                                 <ul className="list-disc list-inside text-sm">
-                                  <li>{t("settings.allTicketsAndSales")}</li>
-                                  <li>{t("settings.assignedEmployees")}</li>
-                                  <li>{t('settings.turnosHorariosYNominas')}</li>
-                                  <li>{t("settings.inventoryAndOrders")}</li>
-                                  <li>{t("settings.tablesAndFloorPlans")}</li>
+                                  <li>Todos los tickets y ventas del local</li>
+                                  <li>Empleados asignados a este local</li>
+                                  <li>Turnos, horarios y nóminas</li>
+                                  <li>Inventario y pedidos</li>
+                                  <li>Configuración de mesas y planos</li>
                                 </ul>
                                 <p className="font-medium text-destructive">
-                                  {t('settings.LocationManager.estaAccionNoSePuede')}
+                                  Esta acción no se puede deshacer.
                                 </p>
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteLocation(loc.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -965,8 +968,8 @@ export function LocationManager() {
         {locations.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>{t("dashboard.noLocations")}</p>
-            <p className="text-sm">{t("settings.addFirstLocation")}</p>
+            <p>No hay locales configurados</p>
+            <p className="text-sm">Añade tu primer local para empezar</p>
           </div>
         )}
       </CardContent>

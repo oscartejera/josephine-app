@@ -10,7 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { CACHE } from '@/data/cache-config';
 import { format } from 'date-fns';
 
-import { useTranslation } from 'react-i18next';
 // ── Types ─────────────────────────────────────────────────────
 
 export interface HourlyForecastRow {
@@ -33,7 +32,6 @@ export function useHourlyForecast({
     date,
     enabled = true,
 }: UseHourlyForecastParams) {
-  const { t } = useTranslation();
     const dateStr = format(date, 'yyyy-MM-dd');
 
     return useQuery({
@@ -42,7 +40,7 @@ export function useHourlyForecast({
             type RpcFn = (
                 name: string,
                 params: Record<string, unknown>,
-            ) => {t('hooks.useHourlyForecast.promiselike')}<{ data: unknown; error: { message: string } | null }>;
+            ) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
             const rpc: RpcFn = supabase.rpc as unknown as RpcFn;
 
             const { data, error } = await rpc('get_hourly_forecast', {

@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -50,11 +49,11 @@ interface SyncRun {
 
 function statusLabel(status: string): string {
     switch (status) {
-        case 'active': return t('integrations.conectado');
-        case 'inactive': return t('integrations.desconectado');
-        case 'pending': return t('integrations.pendiente');
+        case 'active': return 'Conectado';
+        case 'inactive': return 'Desconectado';
+        case 'pending': return 'Pendiente';
         case 'running': return 'Sincronizando';
-        case 'success': return t('integrations.completado');
+        case 'success': return 'Completado';
         case 'failed': case 'error': return 'Error';
         default: return status;
     }
@@ -70,12 +69,13 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
 }
 
 export default function LightspeedIntegration() {
-  const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { selectedLocationId } = useApp();
 
-    const [integration, setIntegration] = useState<Integration | null>{t('integrations.LightspeedIntegration.nullConstAccountSetaccountUsestate')}<IntegrationAccount | null>{t('integrations.LightspeedIntegration.nullConstSyncrunsSetsyncrunsUsestate')}<SyncRun[]>([]);
+    const [integration, setIntegration] = useState<Integration | null>(null);
+    const [account, setAccount] = useState<IntegrationAccount | null>(null);
+    const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
     const [syncing, setSyncing] = useState(false);
@@ -140,7 +140,7 @@ export default function LightspeedIntegration() {
     // Show success toast if just connected
     useEffect(() => {
         if (searchParams.get('connected') === 'true') {
-            toast.success(t('lightspeed.toastConnected'));
+            toast.success('¡Lightspeed conectado correctamente!');
         }
     }, [searchParams]);
 
@@ -169,7 +169,7 @@ export default function LightspeedIntegration() {
             const { authUrl } = await response.json();
             window.location.href = authUrl;
         } catch (e: any) {
-            toast.error(t('lightspeed.toastConnectError') + ': ' + e.message);
+            toast.error('Error al iniciar conexión: ' + e.message);
             setConnecting(false);
         }
     };
@@ -196,10 +196,10 @@ export default function LightspeedIntegration() {
                 throw new Error(err.error || 'Sync failed');
             }
 
-            toast.success(t('lightspeed.toastSyncComplete'));
+            toast.success('Sincronización completada');
             loadData();
         } catch (e: any) {
-            toast.error(t('lightspeed.toastSyncError') + ': ' + e.message);
+            toast.error('Error en sincronización: ' + e.message);
         } finally {
             setSyncing(false);
         }
@@ -208,14 +208,14 @@ export default function LightspeedIntegration() {
     // Disconnect
     const handleDisconnect = async () => {
         if (!integration) return;
-        if (!confirm(t('integrations.disconnectLightspeed'))) return;
+        if (!confirm('¿Desconectar Lightspeed? Los datos sincronizados se mantendrán.')) return;
 
         await supabase.from('integrations').update({
             status: 'inactive',
             is_enabled: false,
         }).eq('id', integration.id);
 
-        toast.success(t('lightspeed.toastDisconnected'));
+        toast.success('Lightspeed desconectado');
         loadData();
     };
 
@@ -239,10 +239,10 @@ export default function LightspeedIntegration() {
                 <div className="flex-1">
                     <h1 className="text-2xl font-display font-bold flex items-center gap-2">
                         <Zap className="h-6 w-6 text-yellow-500" />
-                        {t('integrations.LightspeedIntegration.lightspeedRestaurant')}
+                        Lightspeed Restaurant
                     </h1>
                     <p className="text-muted-foreground">
-                        {t('integrations.LightspeedIntegration.sincronizaVentasMenuYEmpleados')}
+                        Sincroniza ventas, menú y empleados desde Lightspeed POS
                     </p>
                 </div>
                 {integration && (
@@ -257,7 +257,7 @@ export default function LightspeedIntegration() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Plug2 className="h-5 w-5" />
-                        {t('integrations.LightspeedIntegration.conexion')}
+                        Conexión
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -279,14 +279,14 @@ export default function LightspeedIntegration() {
                                 </Button>
                                 <Button variant="outline" onClick={handleDisconnect} className="text-red-600">
                                     <Unplug className="h-4 w-4 mr-2" />
-                                    {t('integrations.LightspeedIntegration.desconectar')}
+                                    Desconectar
                                 </Button>
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-4">
                             <p className="text-muted-foreground">
-                                {t('integrations.LightspeedIntegration.conectaTuCuentaDeLightspeed')}
+                                Conecta tu cuenta de Lightspeed Restaurant para sincronizar automáticamente tus datos de ventas, menú y empleados.
                             </p>
                             <Button size="lg" onClick={handleConnect} disabled={connecting}>
                                 {connecting ? (
@@ -307,7 +307,7 @@ export default function LightspeedIntegration() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <RefreshCw className="h-5 w-5" />
-                            {t('integrations.LightspeedIntegration.historialDeSincronizacion')}
+                            Historial de Sincronización
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -320,7 +320,7 @@ export default function LightspeedIntegration() {
                                         <div className="flex items-center gap-3">
                                             {run.status === 'success' ? (
                                                 <CheckCircle className="h-5 w-5 text-emerald-500" />
-                                            {t('integrations.LightspeedIntegration.runstatusRunning')}
+                                            ) : run.status === 'running' ? (
                                                 <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
                                             ) : (
                                                 <XCircle className="h-5 w-5 text-red-500" />
@@ -350,15 +350,15 @@ export default function LightspeedIntegration() {
             {/* Info Card */}
             <Card>
                 <CardHeader>
-                    <CardTitle>{t('integrations.queSeSincroniza')}</CardTitle>
+                    <CardTitle>¿Qué se sincroniza?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
                     <ul className="list-disc list-inside space-y-1 ml-4">
-                        <li><strong>{t('common.ventas')}</strong> {t('integrations.LightspeedIntegration.transaccionesDiariasTicketsPagos')}</li>
-                        <li><strong>{t('integrations.menu')}</strong>{t('integrations.productosCategoriasPrecios')}</li>
-                        <li><strong>{t('settings.empleados')}</strong> {t('integrations.LightspeedIntegration.staffRolesTurnos')}</li>
+                        <li><strong>Ventas</strong> — Transacciones diarias, tickets, pagos</li>
+                        <li><strong>Menú</strong> — Productos, categorías, precios</li>
+                        <li><strong>Empleados</strong> — Staff, roles, turnos</li>
                     </ul>
-                    <p>{t('integrations.losDatosSeNormalizanAl')}</p>
+                    <p>Los datos se normalizan al modelo canónico de Josephine (CDM) para análisis unificado.</p>
                 </CardContent>
             </Card>
         </div>

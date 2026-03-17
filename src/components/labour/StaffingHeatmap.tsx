@@ -13,7 +13,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface StaffingHeatmapProps {
     locationId?: string | null;
@@ -45,14 +44,13 @@ function fmt(v: number) {
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string; bar: string; emoji: string }> = {
-    optimal: { label: t('team.optimo'), bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-400', emoji: '✓' },
+    optimal: { label: 'Óptimo', bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-400', emoji: '✓' },
     overstaffed: { label: 'Exceso', bg: 'bg-blue-50', text: 'text-blue-700', bar: 'bg-blue-400', emoji: '⬆' },
     understaffed: { label: 'Falta', bg: 'bg-amber-50', text: 'text-amber-700', bar: 'bg-amber-400', emoji: '⬇' },
-    no_data: { label: t('team.sinDatos'), bg: 'bg-gray-50', text: 'text-gray-400', bar: 'bg-gray-200', emoji: '—' },
+    no_data: { label: 'Sin datos', bg: 'bg-gray-50', text: 'text-gray-400', bar: 'bg-gray-200', emoji: '—' },
 };
 
 export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
-  const { t } = useTranslation();
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;
@@ -101,7 +99,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
             // Aggregate by day-of-week (0=Sun, 1=Mon, ... 6=Sat)
             const TARGET_SPLH = 150;
             const OP_HOURS = { open: 10, close: 23 };
-            const dayNames = ['Domingo', 'Lunes', 'Martes', t('settings.miercoles'), 'Jueves', 'Viernes', t('settings.sabado')];
+            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
             const buckets: Record<number, { totalSales: number; totalHours: number; count: number }> = {};
 
             // Build sales by date
@@ -129,7 +127,8 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
                 const avgStaff = avgHours / (OP_HOURS.close - OP_HOURS.open || 1);
                 const splh = avgHours > 0 ? Math.round(avgSales / avgHours) : 0;
                 const status: DayData['status'] = avgHours === 0 ? 'no_data'
-                    : splh > {t('labour.StaffingHeatmap.targetsplh12UnderstaffedSplh')} < TARGET_SPLH * 0.8 ? 'overstaffed'
+                    : splh > TARGET_SPLH * 1.2 ? 'understaffed'
+                        : splh < TARGET_SPLH * 0.8 ? 'overstaffed'
                             : 'optimal';
                 return {
                     day_of_week: dayNum,
@@ -158,8 +157,8 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
     if (!effectiveLocationId) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('labour.StaffingHeatmap.mapaDeStaffing')}</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t('payroll.seleccionaUnaUbicacion')}</p></CardContent>
+                <CardHeader><CardTitle className="text-base">🔥 Mapa de Staffing</CardTitle></CardHeader>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">Selecciona una ubicación</p></CardContent>
             </Card>
         );
     }
@@ -167,7 +166,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
     if (isLoading) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('labour.StaffingHeatmap.mapaDeStaffing1')}</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">🔥 Mapa de Staffing</CardTitle></CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-7 gap-2">
                         {[1, 2, 3, 4, 5, 6, 7].map(i => <div key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />)}
@@ -180,8 +179,8 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
     if (!data || data.days.length === 0) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('labour.StaffingHeatmap.mapaDeStaffing2')}</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t("labour.insufficientData")}</p></CardContent>
+                <CardHeader><CardTitle className="text-base">🔥 Mapa de Staffing</CardTitle></CardHeader>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">No hay datos suficientes (últimas 4 semanas)</p></CardContent>
             </Card>
         );
     }
@@ -200,7 +199,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">{t('labour.StaffingHeatmap.mapaDeStaffing3')}</CardTitle>
+                        <CardTitle className="text-base font-semibold">🔥 Mapa de Staffing</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">
                             Análisis de las últimas 4 semanas • SPLH objetivo: €{data.target_splh}
                         </p>
@@ -236,7 +235,9 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
                 <div className="grid grid-cols-7 gap-2">
                     {orderedDays.map(day => {
                         const style = STATUS_STYLES[day.status] || STATUS_STYLES.no_data;
-                        const salesPct = maxSales > {t('labour.StaffingHeatmap.0DayavgdailysalesMaxsales1000')}
+                        const salesPct = maxSales > 0 ? (day.avg_daily_sales / maxSales) * 100 : 0;
+
+                        return (
                             <div key={day.day_of_week} className={cn(
                                 "rounded-xl p-3 text-center transition-all hover:shadow-md border",
                                 style.bg,
@@ -284,7 +285,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
                 {/* Recommendations */}
                 {(data.summary.overstaffed_days > 0 || data.summary.understaffed_days > 0) && (
                     <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-200/50">
-                        <div className="text-xs font-semibold text-indigo-700 mb-1">{t('labour.StaffingHeatmap.recomendaciones')}</div>
+                        <div className="text-xs font-semibold text-indigo-700 mb-1">💡 Recomendaciones</div>
                         <ul className="space-y-1">
                             {orderedDays.filter(d => d.status === 'overstaffed').map(d => (
                                 <li key={d.day_of_week} className="text-[11px] text-indigo-600">
@@ -302,7 +303,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
 
                 {/* Footer */}
                 <div className="text-[10px] text-gray-400">
-                    {t('labour.StaffingHeatmap.basadoEnVentasPromedioY')}
+                    Basado en ventas promedio y personal programado de las últimas 4 semanas
                 </div>
             </CardContent>
         </Card>

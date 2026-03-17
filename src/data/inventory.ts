@@ -15,7 +15,6 @@ import {
   type PurchaseOrderResult,
 } from './types';
 
-import { useTranslation } from 'react-i18next';
 // ─── getLowStockAlerts ──────────────────────────────────────────────────────
 
 /**
@@ -73,7 +72,7 @@ async function getLowStockAlertsFallback(
     .filter((r: any) => {
       const stock = Number(r.current_stock) || 0;
       const par = Number(r.par_level) || 0;
-      return par > {t('data.inventory.0Stock')} < par;
+      return par > 0 && stock < par;
     })
     .map((r: any) => ({
       itemId: r.id,

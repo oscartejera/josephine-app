@@ -16,7 +16,6 @@ import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { GraduationCap, Plus, AlertTriangle, CheckCircle2, Clock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface TrainingRecord {
     id: string;
@@ -37,20 +36,24 @@ const CERT_TYPES = [
     { value: 'food_safety', label: 'Seguridad Alimentaria' },
     { value: 'alcohol', label: 'Servicio de Alcohol' },
     { value: 'first_aid', label: 'Primeros Auxilios' },
-    { value: 'fire', label: t('team.prevencionDeIncendios') },
-    { value: 'allergen', label: t('team.alergenos') },
+    { value: 'fire', label: 'Prevención de Incendios' },
+    { value: 'allergen', label: 'Alérgenos' },
     { value: 'haccp', label: 'HACCP/APPCC' },
     { value: 'custom', label: 'Otro' },
 ];
 
 function getStatusBadge(status: string, expiryDate: string | null) {
-    if (!expiryDate) return <Badge variant="outline"><CheckCircle2 className="h-3 w-3 mr-1" />{t("training.noExpiry")}</Badge>{t('workforce.TrainingTracker.constDaysleftDifferenceindaysnewDateexpi')} < 0) return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />{t('workforce.TrainingTracker.caducado')}</Badge>{t('workforce.TrainingTracker.ifDaysleft')} < 30) return <Badge className="bg-amber-500"><Clock className="h-3 w-3 mr-1" />Caduca en {daysLeft}d</Badge>{t('workforce.TrainingTracker.return')} <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />{t('team.valido')}</Badge>;
+    if (!expiryDate) return <Badge variant="outline"><CheckCircle2 className="h-3 w-3 mr-1" />Sin caducidad</Badge>;
+    const daysLeft = differenceInDays(new Date(expiryDate), new Date());
+    if (daysLeft < 0) return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Caducado</Badge>;
+    if (daysLeft < 30) return <Badge className="bg-amber-500"><Clock className="h-3 w-3 mr-1" />Caduca en {daysLeft}d</Badge>;
+    return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />Válido</Badge>;
 }
 
 export function TrainingTracker({ locationId }: { locationId: string | null }) {
-  const { t } = useTranslation();
     const { group } = useApp();
-    const [records, setRecords] = useState<TrainingRecord[]>{t('workforce.TrainingTracker.constEmployeesSetemployeesUsestate')}<Employee[]>([]);
+    const [records, setRecords] = useState<TrainingRecord[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -111,12 +114,12 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                 status,
             });
             if (error) throw error;
-            toast.success(t('trainingTracker.toastCertAdded'));
+            toast.success('Certificado añadido');
             setDialogOpen(false);
             resetForm();
             loadData();
         } catch (err: any) {
-            toast.error(t('trainingTracker.toastError'), { description: err.message });
+            toast.error('Error', { description: err.message });
         } finally {
             setSubmitting(false);
         }
@@ -138,7 +141,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
     const expiringCount = records.filter(r => {
         if (!r.expiry_date) return false;
         const d = differenceInDays(new Date(r.expiry_date), new Date());
-        return d >{t('workforce.TrainingTracker.0D')} < 30;
+        return d >= 0 && d < 30;
     }).length;
 
     return (
@@ -146,7 +149,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <GraduationCap className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">{t("workforce.trainingAndCerts")}</h3>
+                    <h3 className="text-lg font-semibold">Formación y Certificados</h3>
                     {(expiredCount + expiringCount) > 0 && (
                         <Badge variant="destructive" className="rounded-full">
                             {expiredCount + expiringCount} atención
@@ -155,7 +158,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                 </div>
                 <Button size="sm" onClick={() => setDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />
-                    {t('workforce.TrainingTracker.anadirCertificado')}
+                    Añadir Certificado
                 </Button>
             </div>
 
@@ -163,29 +166,29 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
             <div className="grid grid-cols-4 gap-3">
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold">{records.length}</p>
-                    <p className="text-xs text-muted-foreground">{t("common.total")}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-green-600">{records.length - expiredCount - expiringCount}</p>
-                    <p className="text-xs text-muted-foreground">{t('team.validos')}</p>
+                    <p className="text-xs text-muted-foreground">Válidos</p>
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-amber-600">{expiringCount}</p>
-                    <p className="text-xs text-muted-foreground">{t('workforce.TrainingTracker.caducando')}</p>
+                    <p className="text-xs text-muted-foreground">Caducando</p>
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-red-600">{expiredCount}</p>
-                    <p className="text-xs text-muted-foreground">{t('workforce.TrainingTracker.caducados')}</p>
+                    <p className="text-xs text-muted-foreground">Caducados</p>
                 </CardContent></Card>
             </div>
 
             {/* Records list */}
             {loading ? (
-                <div className="text-center py-8 text-muted-foreground">{t('settings.cargando')}</div>
-            {t('workforce.TrainingTracker.recordslength0')}
+                <div className="text-center py-8 text-muted-foreground">Cargando...</div>
+            ) : records.length === 0 ? (
                 <Card><CardContent className="py-8 text-center">
                     <Shield className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                    <p className="text-muted-foreground">{t("training.noCertificates")}</p>
+                    <p className="text-muted-foreground">Sin certificados registrados</p>
                 </CardContent></Card>
             ) : (
                 <div className="space-y-2">
@@ -221,32 +224,32 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
             {/* Add Dialog */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>{t('workforce.TrainingTracker.nuevoCertificado')}</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>Nuevo Certificado</DialogTitle></DialogHeader>
                     <div className="space-y-3 py-2">
                         <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                            <SelectTrigger><SelectValue placeholder={t("labour.employee")} /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Empleado" /></SelectTrigger>
                             <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>)}</SelectContent>
                         </Select>
-                        <Input placeholder={t("workforce.certificateName")} value={certName} onChange={e => setCertName(e.target.value)} />
+                        <Input placeholder="Nombre del certificado" value={certName} onChange={e => setCertName(e.target.value)} />
                         <Select value={certType} onValueChange={setCertType}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>{CERT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                         </Select>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">{t("workforce.issueDate")}</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">Fecha emisión</label>
                                 <Input type="date" value={issuedDate} onChange={e => setIssuedDate(e.target.value)} />
                             </div>
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">{t("workforce.expiryDate")}</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">Fecha caducidad</label>
                                 <Input type="date" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} />
                             </div>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
+                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !selectedEmployee || !certName.trim()}>
-                            {submitting ? 'Guardando...' : t('settings.guardar')}
+                            {submitting ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

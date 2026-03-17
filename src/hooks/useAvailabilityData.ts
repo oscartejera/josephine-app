@@ -15,7 +15,6 @@ import {
   type TimeOffRequest,
 } from '@/stores/availabilityStore';
 
-import { useTranslation } from 'react-i18next';
 export type { DayAvailability, TimeOffRequest };
 export type AvailabilityStatus = 'available' | 'unavailable' | 'preferred';
 
@@ -81,7 +80,6 @@ export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { 
   // Load real employees from DB
   useEffect(() => {
     async function fetchEmployees() {
-  const { t } = useTranslation();
       try {
         const { data, error } = await supabase
           .from('employees')
@@ -134,7 +132,11 @@ export function useAvailabilityData(weekStart: Date = startOfWeek(new Date(), { 
   const pendingRequests = useMemo(() => getPendingTimeOffRequests(), [timeOffRequests]);
 
   const myRequests = useMemo(() =>
-    {t('hooks.useAvailabilityData.getemployeetimeoffrequestscurrentemploye')}<DayAvailability>) => {
+    getEmployeeTimeOffRequests(currentEmployee.id),
+    [currentEmployee.id, timeOffRequests]
+  );
+
+  const updateDayAvailability = useCallback((dayIndex: number, updates: Partial<DayAvailability>) => {
     setAvailability(prev =>
       prev.map(day =>
         day.dayIndex === dayIndex ? { ...day, ...updates } : day

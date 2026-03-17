@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useGlobalRealtimeNotifications } from '@/hooks/useGlobalRealtimeNotifications';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from 'react-i18next';
 
 function PageSkeleton() {
   return (
@@ -23,7 +22,6 @@ function PageSkeleton() {
 }
 
 export function DashboardLayout() {
-  const { t } = useTranslation();
   useGlobalRealtimeNotifications();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

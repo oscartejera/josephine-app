@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Copy, ExternalLink, Globe, Check, Loader2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface BookingSettings {
   id: string;
@@ -41,10 +40,10 @@ const DAYS_OF_WEEK = [
   { value: 0, label: 'Domingo' },
   { value: 1, label: 'Lunes' },
   { value: 2, label: 'Martes' },
-  { value: 3, label: t('settings.miercoles') },
+  { value: 3, label: 'Miércoles' },
   { value: 4, label: 'Jueves' },
   { value: 5, label: 'Viernes' },
-  { value: 6, label: t('settings.sabado') },
+  { value: 6, label: 'Sábado' },
 ];
 
 const DEFAULT_TIME_SLOTS = [
@@ -53,10 +52,10 @@ const DEFAULT_TIME_SLOTS = [
 ];
 
 export function BookingSettingsManager() {
-  const { t } = useTranslation();
   const { locations } = useApp();
   const { toast } = useToast();
-  const [selectedLocationId, setSelectedLocationId] = useState<string>{t('settings.BookingSettingsManager.constSettingsSetsettingsUsestate')}<BookingSettings | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const [settings, setSettings] = useState<BookingSettings | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -127,7 +126,7 @@ export function BookingSettingsManager() {
       } catch (err) {
         console.error('Error fetching booking settings:', err);
         toast({
-          title: t("common.error"),
+          title: 'Error',
           description: 'No se pudieron cargar los ajustes de reservas',
           variant: 'destructive',
         });
@@ -166,14 +165,14 @@ export function BookingSettingsManager() {
       if (error) throw error;
 
       toast({
-        title: t('common.saved'),
+        title: 'Guardado',
         description: 'Los ajustes de reservas se han guardado correctamente',
       });
     } catch (err) {
       console.error('Error saving booking settings:', err);
       toast({
-        title: t("common.error"),
-        description: t('settings.noSePudieronGuardarLos'),
+        title: 'Error',
+        description: 'No se pudieron guardar los ajustes',
         variant: 'destructive',
       });
     } finally {
@@ -204,14 +203,14 @@ export function BookingSettingsManager() {
     : '';
 
   const embedCode = selectedLocationId
-    ? `<!-- Widget de Reservas - ${settings?.name || t('settings.restaurante')} -->
+    ? `<!-- Widget de Reservas - ${settings?.name || 'Restaurante'} -->
 <iframe 
   src="${widgetUrl}"
   width="100%" 
   height="700"
   frameborder="0"
   style="border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
-  title={t('settings.BookingSettingsManager.reservarMesa')}
+  title="Reservar mesa"
 ></iframe>`
     : '';
 
@@ -220,9 +219,9 @@ export function BookingSettingsManager() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({ title: t('common.copiedToClipboard') });
+      toast({ title: 'Copiado al portapapeles' });
     } catch {
-      toast({ title: t('common.copyError'), variant: 'destructive' });
+      toast({ title: 'Error al copiar', variant: 'destructive' });
     }
   };
 
@@ -230,10 +229,10 @@ export function BookingSettingsManager() {
     <div className="space-y-6">
       {/* Location Selector */}
       <div className="space-y-2">
-        <Label>{t('settings.seleccionaUbicacion')}</Label>
+        <Label>Selecciona ubicación</Label>
         <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
           <SelectTrigger className="w-full max-w-xs">
-            <SelectValue placeholder={t('settings.eligeUnaUbicacion')} />
+            <SelectValue placeholder="Elige una ubicación" />
           </SelectTrigger>
           <SelectContent>
             {locations.map((loc) => (
@@ -247,7 +246,7 @@ export function BookingSettingsManager() {
 
       {!selectedLocationId && (
         <Alert>
-          <AlertDescription>{t("settings.selectLocationForBooking")}</AlertDescription>
+          <AlertDescription>Selecciona una ubicación para configurar las reservas online</AlertDescription>
         </Alert>
       )}
 
@@ -266,19 +265,19 @@ export function BookingSettingsManager() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="h-5 w-5" />
-                {t('settings.BookingSettingsManager.configuracionDeReservasOnline')}
+                Configuración de Reservas Online
               </CardTitle>
               <CardDescription>
-                {t('settings.BookingSettingsManager.configuraComoLosClientesPueden')}
+                Configura cómo los clientes pueden hacer reservas desde tu web
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Enable Toggle */}
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>{t("settings.enableOnlineBooking")}</Label>
+                  <Label>Habilitar reservas online</Label>
                   <p className="text-sm text-muted-foreground">
-                    {t('settings.BookingSettingsManager.losClientesPodranReservarDesde')}
+                    Los clientes podrán reservar desde tu web
                   </p>
                 </div>
                 <Switch
@@ -291,9 +290,9 @@ export function BookingSettingsManager() {
 
               {/* Public Info */}
               <div className="space-y-4 border-t pt-4">
-                <h4 className="font-medium">{t('settings.informacionPublica')}</h4>
+                <h4 className="font-medium">Información pública</h4>
                 <div className="space-y-2">
-                  <Label htmlFor="public_name">{t('settings.nombrePublico')}</Label>
+                  <Label htmlFor="public_name">Nombre público</Label>
                   <Input
                     id="public_name"
                     value={formData.public_name}
@@ -304,16 +303,16 @@ export function BookingSettingsManager() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">{t('settings.direccion')}</Label>
+                  <Label htmlFor="address">Dirección</Label>
                   <Input
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
-                    placeholder={t('settings.BookingSettingsManager.callePrincipal123')}
+                    placeholder="Calle Principal, 123"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">{t('settings.telefono')}</Label>
+                  <Label htmlFor="phone">Teléfono</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -325,10 +324,10 @@ export function BookingSettingsManager() {
 
               {/* Party Size */}
               <div className="space-y-4 border-t pt-4">
-                <h4 className="font-medium">{t("settings.peopleLimits")}</h4>
+                <h4 className="font-medium">Límites de personas</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{t('settings.minimo')}</Label>
+                    <Label>Mínimo</Label>
                     <Select
                       value={String(formData.booking_min_party)}
                       onValueChange={(v) =>
@@ -348,7 +347,7 @@ export function BookingSettingsManager() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('settings.maximo')}</Label>
+                    <Label>Máximo</Label>
                     <Select
                       value={String(formData.booking_max_party)}
                       onValueChange={(v) =>
@@ -372,7 +371,7 @@ export function BookingSettingsManager() {
 
               {/* Advance Days */}
               <div className="space-y-2 border-t pt-4">
-                <Label>{t("settings.maxAdvanceDays")}</Label>
+                <Label>Días de antelación máximos</Label>
                 <Select
                   value={String(formData.booking_advance_days)}
                   onValueChange={(v) =>
@@ -394,7 +393,7 @@ export function BookingSettingsManager() {
 
               {/* Time Slots */}
               <div className="space-y-3 border-t pt-4">
-                <Label>{t('settings.BookingSettingsManager.horariosDisponibles')}</Label>
+                <Label>Horarios disponibles</Label>
                 <div className="flex flex-wrap gap-2">
                   {DEFAULT_TIME_SLOTS.map((slot) => (
                     <Badge
@@ -411,7 +410,7 @@ export function BookingSettingsManager() {
 
               {/* Closed Days */}
               <div className="space-y-3 border-t pt-4">
-                <Label>{t('settings.diasCerrados')}</Label>
+                <Label>Días cerrados</Label>
                 <div className="flex flex-wrap gap-3">
                   {DAYS_OF_WEEK.map((day) => (
                     <div key={day.value} className="flex items-center gap-2">
@@ -430,14 +429,14 @@ export function BookingSettingsManager() {
 
               {/* Notes */}
               <div className="space-y-2 border-t pt-4">
-                <Label htmlFor="booking_notes">{t("settings.customerNotes")}</Label>
+                <Label htmlFor="booking_notes">Notas para clientes</Label>
                 <Textarea
                   id="booking_notes"
                   value={formData.booking_notes}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, booking_notes: e.target.value }))
                   }
-                  placeholder={t('settings.informacionImportanteQueLosClientes')}
+                  placeholder="Información importante que los clientes deben saber..."
                   rows={3}
                 />
               </div>
@@ -446,10 +445,10 @@ export function BookingSettingsManager() {
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('settings.BookingSettingsManager.guardando')}
+                    Guardando...
                   </>
                 ) : (
-                  t('settings.guardarCambios')
+                  'Guardar Cambios'
                 )}
               </Button>
             </CardContent>
@@ -458,16 +457,16 @@ export function BookingSettingsManager() {
           {/* Embed Code */}
           <Card>
             <CardHeader>
-              <CardTitle>{t('settings.BookingSettingsManager.widgetEmbebible')}</CardTitle>
+              <CardTitle>Widget Embebible</CardTitle>
               <CardDescription>
-                {t('settings.BookingSettingsManager.copiaEsteCodigoHtmlY')}
+                Copia este código HTML y pégalo en tu web para que los clientes puedan reservar
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {formData.booking_enabled ? (
                 <>
                   <div className="space-y-2">
-                    <Label>{t('settings.BookingSettingsManager.urlDirecta')}</Label>
+                    <Label>URL directa</Label>
                     <div className="flex gap-2">
                       <Input value={widgetUrl} readOnly className="font-mono text-sm" />
                       <Button variant="outline" size="icon" onClick={() => copyToClipboard(widgetUrl)}>
@@ -482,7 +481,7 @@ export function BookingSettingsManager() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>{t('settings.codigoIframe')}</Label>
+                    <Label>Código iframe</Label>
                     <div className="relative">
                       <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto whitespace-pre-wrap">
                         {embedCode}
@@ -494,21 +493,21 @@ export function BookingSettingsManager() {
                         onClick={() => copyToClipboard(embedCode)}
                       >
                         <Copy className="h-3 w-3 mr-1" />
-                        {t('settings.BookingSettingsManager.copiar')}
+                        Copiar
                       </Button>
                     </div>
                   </div>
 
                   <Alert>
                     <AlertDescription>
-                      {t('settings.BookingSettingsManager.elWidgetSeAdaptaAutomaticamente')}
+                      El widget se adapta automáticamente al ancho del contenedor donde lo insertes.
                     </AlertDescription>
                   </Alert>
                 </>
               ) : (
                 <Alert>
                   <AlertDescription>
-                    {t('settings.BookingSettingsManager.habilitaLasReservasOnlinePara')}
+                    Habilita las reservas online para obtener el código del widget
                   </AlertDescription>
                 </Alert>
               )}

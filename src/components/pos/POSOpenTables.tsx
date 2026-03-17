@@ -10,7 +10,6 @@ import { Clock, Users, Receipt } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { POSTicket, POSTable } from '@/hooks/usePOSData';
-import { useTranslation } from 'react-i18next';
 
 interface POSOpenTablesProps {
   tickets: POSTicket[];
@@ -19,7 +18,6 @@ interface POSOpenTablesProps {
 }
 
 export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps) {
-  const { t } = useTranslation();
   const getTableName = (tableId?: string) => {
     if (!tableId) return 'Sin mesa';
     return tables.find(t => t.id === tableId)?.name || 'Mesa';
@@ -29,9 +27,9 @@ export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium">{t("pos.noOpenTables")}</h3>
+        <h3 className="text-lg font-medium">No hay mesas abiertas</h3>
         <p className="text-muted-foreground">
-          {t('pos.POSOpenTables.lasMesasConComandasActivas')}
+          Las mesas con comandas activas aparecerán aquí
         </p>
       </div>
     );
@@ -70,7 +68,7 @@ export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps
             <span className="text-xl font-bold">
               €{ticket.total_amount.toFixed(2)}
             </span>
-            <Button size="sm">{t('pos.POSOpenTables.verDetalle')}</Button>
+            <Button size="sm">Ver detalle</Button>
           </div>
         </Card>
       ))}

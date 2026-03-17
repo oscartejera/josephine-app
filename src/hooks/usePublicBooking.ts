@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { addDays, format, isBefore, startOfDay } from 'date-fns';
 
-import { useTranslation } from 'react-i18next';
 export interface ReservationResult {
   id: string;
   location_name: string;
@@ -48,8 +47,10 @@ interface CreateReservationData {
 }
 
 export function usePublicBooking(locationId?: string) {
-  const { t } = useTranslation();
-  const [location, setLocation] = useState<LocationBookingInfo | null>{t('hooks.usePublicBooking.nullConstLoadingSetloadingUsestatetrue')}<string | null>{t('hooks.usePublicBooking.nullConstOccupiedslotsSetoccupiedslotsUs')}<Record<string, string[]>>({});
+  const [location, setLocation] = useState<LocationBookingInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [occupiedSlots, setOccupiedSlots] = useState<Record<string, string[]>>({});
 
   // Load location data
   useEffect(() => {

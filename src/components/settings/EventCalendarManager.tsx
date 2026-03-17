@@ -15,7 +15,6 @@ import { format, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarDays, Plus, Trophy, Music, Landmark, Sun, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface CalendarEvent {
     id: string;
@@ -40,7 +39,6 @@ const EVENT_TYPES = [
 ];
 
 export function EventCalendarManager({ locationId }: { locationId: string | null }) {
-  const { t } = useTranslation();
     const { group } = useApp();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -92,12 +90,12 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                 source: 'manual',
             });
             if (error) throw error;
-            toast.success(t('eventCalendar.toastAdded'));
+            toast.success('Evento añadido');
             setDialogOpen(false);
             resetForm();
             loadEvents();
         } catch (err: any) {
-            toast.error(t('eventCalendar.toastError'), { description: err.message });
+            toast.error('Error', { description: err.message });
         } finally {
             setSubmitting(false);
         }
@@ -106,7 +104,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
     const deleteEvent = async (id: string) => {
         await supabase.from('event_calendar').update({ is_active: false }).eq('id', id);
         loadEvents();
-        toast.success(t('eventCalendar.toastDeleted'));
+        toast.success('Evento eliminado');
     };
 
     const resetForm = () => {
@@ -120,7 +118,8 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
 
     // Impact color
     const getImpactColor = (m: number) => {
-        if (m >{t('settings.EventCalendarManager.12ReturnTextgreen600IfM')} <= 0.8) return 'text-red-600';
+        if (m >= 1.2) return 'text-green-600';
+        if (m <= 0.8) return 'text-red-600';
         return 'text-muted-foreground';
     };
 
@@ -135,26 +134,26 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">{t('settings.EventCalendarManager.calendarioDeEventos')}</h3>
+                    <h3 className="text-lg font-semibold">Calendario de Eventos</h3>
                     <Badge variant="outline">{events.length} próximos</Badge>
                 </div>
                 <Button size="sm" onClick={() => setDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />
-                    {t('settings.EventCalendarManager.anadirEvento')}
+                    Añadir Evento
                 </Button>
             </div>
 
             <p className="text-sm text-muted-foreground">
-                {t('settings.EventCalendarManager.losEventosAfectanAutomaticamenteAl')}
+                Los eventos afectan automáticamente al forecast de ventas. Un impacto de +20% significa que se espera un 20% más de ventas ese día.
             </p>
 
             {/* Events list */}
             {loading ? (
-                <div className="text-center py-8 text-muted-foreground">{t('settings.cargandoEventos')}</div>
-            {t('settings.EventCalendarManager.eventslength0')}
+                <div className="text-center py-8 text-muted-foreground">Cargando eventos...</div>
+            ) : events.length === 0 ? (
                 <Card><CardContent className="py-8 text-center">
                     <CalendarDays className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                    <p className="text-muted-foreground">{t("events.noUpcomingEvents")}</p>
+                    <p className="text-muted-foreground">Sin eventos próximos</p>
                 </CardContent></Card>
             ) : (
                 <div className="space-y-2">
@@ -173,7 +172,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                             <p className="text-xs text-muted-foreground">
                                                 {format(new Date(event.event_date), "d MMM yyyy", { locale: es })}
                                                 {event.city && ` · ${event.city}`}
-                                                {event.recurrence !== 'none' && ` · ${event.recurrence === 'yearly' ? t('settings.anual') : event.recurrence}`}
+                                                {event.recurrence !== 'none' && ` · ${event.recurrence === 'yearly' ? 'Anual' : event.recurrence}`}
                                             </p>
                                         </div>
                                     </div>
@@ -197,9 +196,9 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
             {/* Add Dialog */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>{t('settings.EventCalendarManager.nuevoEvento')}</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>Nuevo Evento</DialogTitle></DialogHeader>
                     <div className="space-y-3 py-2">
-                        <Input placeholder={t("settings.eventName")} value={eventName} onChange={e => setEventName(e.target.value)} />
+                        <Input placeholder="Nombre del evento" value={eventName} onChange={e => setEventName(e.target.value)} />
                         <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
                         <Select value={eventType} onValueChange={setEventType}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -207,15 +206,15 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                         </Select>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">{t("settings.salesImpact")}</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">Impacto en ventas</label>
                                 <Select value={impactMultiplier} onValueChange={setImpactMultiplier}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="0.50">{t('settings.50Cerradominimo')}</SelectItem>
+                                        <SelectItem value="0.50">-50% (cerrado/mínimo)</SelectItem>
                                         <SelectItem value="0.70">-30%</SelectItem>
                                         <SelectItem value="0.80">-20%</SelectItem>
                                         <SelectItem value="0.90">-10%</SelectItem>
-                                        <SelectItem value="1.00">{t('settings.EventCalendarManager.normal0')}</SelectItem>
+                                        <SelectItem value="1.00">Normal (0%)</SelectItem>
                                         <SelectItem value="1.10">+10%</SelectItem>
                                         <SelectItem value="1.20">+20%</SelectItem>
                                         <SelectItem value="1.30">+30%</SelectItem>
@@ -225,24 +224,24 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                 </Select>
                             </div>
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">{t('settings.EventCalendarManager.recurrencia')}</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">Recurrencia</label>
                                 <Select value={recurrence} onValueChange={setRecurrence}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="none">{t('settings.EventCalendarManager.unaVez')}</SelectItem>
-                                        <SelectItem value="weekly">{t('settings.semanal')}</SelectItem>
-                                        <SelectItem value="monthly">{t('settings.mensual')}</SelectItem>
-                                        <SelectItem value="yearly">{t('settings.anual')}</SelectItem>
+                                        <SelectItem value="none">Una vez</SelectItem>
+                                        <SelectItem value="weekly">Semanal</SelectItem>
+                                        <SelectItem value="monthly">Mensual</SelectItem>
+                                        <SelectItem value="yearly">Anual</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
-                        <Input placeholder={t('settings.EventCalendarManager.ciudadOpcional')} value={city} onChange={e => setCity(e.target.value)} />
+                        <Input placeholder="Ciudad (opcional)" value={city} onChange={e => setCity(e.target.value)} />
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
+                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !eventName.trim() || !eventDate}>
-                            {submitting ? 'Guardando...' : t('settings.guardar')}
+                            {submitting ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

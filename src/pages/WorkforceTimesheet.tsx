@@ -70,7 +70,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 // ─── Types ──────────────────────────────────────────────
 interface TimesheetRecord {
@@ -138,15 +137,18 @@ const ROLE_LABELS: Record<string, string> = {
     owner: 'Propietario', admin: 'Administrador', ops_manager: 'Gerente Ops',
     store_manager: 'Gerente Local', manager: 'Encargado/a', waiter: 'Camarero/a',
     cook: 'Cocinero/a', bartender: 'Barista', host: 'Hostess',
-    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: t('payroll.empleado'),
+    dishwasher: 'Friegaplatos', delivery: 'Repartidor/a', employee: 'Empleado',
 };
 
 // ─── Main Component ─────────────────────────────────────
 export default function WorkforceTimesheet() {
-  const { t } = useTranslation();
     const { accessibleLocations, selectedLocationId } = useApp();
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
-    const [records, setRecords] = useState<TimesheetRecord[]>{t('workforceTimesheet.constShiftsSetshiftsUsestate')}<PlannedShift[]>{t('workforceTimesheet.constLoadingSetloadingUsestatetrueConst')}<TimesheetRecord | null>(null);
+    const [records, setRecords] = useState<TimesheetRecord[]>([]);
+    const [shifts, setShifts] = useState<PlannedShift[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [locationFilter, setLocationFilter] = useState('all');
+    const [editRecord, setEditRecord] = useState<TimesheetRecord | null>(null);
     const [editForm, setEditForm] = useState({ clock_in: '', clock_out: '', notes: '' });
 
     const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -298,9 +300,9 @@ export default function WorkforceTimesheet() {
             .eq('id', editRecord.id);
 
         if (error) {
-            toast.error(t('timesheet.toastUpdateError'));
+            toast.error('Error al actualizar fichaje');
         } else {
-            toast.success(t('timesheet.toastUpdated'));
+            toast.success('Fichaje actualizado');
             setEditRecord(null);
             fetchData();
         }
@@ -313,9 +315,9 @@ export default function WorkforceTimesheet() {
             .eq('id', id);
 
         if (error) {
-            toast.error(t('timesheet.toastDeleteError'));
+            toast.error('Error al eliminar');
         } else {
-            toast.success(t('timesheet.toastDeleted'));
+            toast.success('Fichaje eliminado');
             fetchData();
         }
     };
@@ -337,9 +339,9 @@ export default function WorkforceTimesheet() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                         <FileText className="h-6 w-6 text-primary" />
-                        {t('workforceTimesheet.timesheet')}
+                        Timesheet
                     </h1>
-                    <p className="text-muted-foreground">{t('timesheet.subtitle')}</p>
+                    <p className="text-muted-foreground">Revisión y control de fichajes</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {accessibleLocations.length > 1 && (
@@ -348,7 +350,7 @@ export default function WorkforceTimesheet() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">{t('timesheet.allLocations')}</SelectItem>
+                                <SelectItem value="all">Todos los locales</SelectItem>
                                 {accessibleLocations.map((l) => (
                                     <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                                 ))}
@@ -369,8 +371,8 @@ export default function WorkforceTimesheet() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                         {isToday(weekStart) || (weekStart <= new Date() && new Date() <= weekEnd)
-                            ? t('team.semanaActual')
-                            : format(weekStart, "t('team.semanaDel') d 'de' MMMM", { locale: es })}
+                            ? 'Semana actual'
+                            : format(weekStart, "'Semana del' d 'de' MMMM", { locale: es })}
                     </p>
                 </div>
                 <Button variant="outline" size="icon" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
@@ -383,7 +385,7 @@ export default function WorkforceTimesheet() {
                 <Card>
                     <CardContent className="p-4">
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> {t('workforceTimesheet.horasReales')}
+                            <Clock className="h-3 w-3" /> Horas reales
                         </p>
                         <p className="text-2xl font-bold mt-1">{stats.totalHours}h</p>
                         <p className="text-xs text-muted-foreground">
@@ -393,20 +395,20 @@ export default function WorkforceTimesheet() {
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">{t('timesheet.labourCost')}</p>
+                        <p className="text-xs text-muted-foreground">Coste laboral</p>
                         <p className="text-2xl font-bold mt-1">{stats.totalCost}€</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">{t('timesheet.clockIns')}</p>
+                        <p className="text-xs text-muted-foreground">Fichajes</p>
                         <p className="text-2xl font-bold mt-1">{stats.records}</p>
                     </CardContent>
                 </Card>
                 <Card className={stats.incomplete > 0 ? 'border-amber-500/50' : ''}>
                     <CardContent className="p-4">
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <AlertTriangle className="h-3 w-3 text-amber-500" /> {t('workforceTimesheet.incompletos')}
+                            <AlertTriangle className="h-3 w-3 text-amber-500" /> Incompletos
                         </p>
                         <p className="text-2xl font-bold mt-1">{stats.incomplete}</p>
                     </CardContent>
@@ -414,7 +416,7 @@ export default function WorkforceTimesheet() {
                 <Card className={stats.late > 0 ? 'border-red-500/50' : ''}>
                     <CardContent className="p-4">
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <XCircle className="h-3 w-3 text-red-500" /> {t('workforceTimesheet.retrasos')}
+                            <XCircle className="h-3 w-3 text-red-500" /> Retrasos
                         </p>
                         <p className="text-2xl font-bold mt-1">{stats.late}</p>
                     </CardContent>
@@ -426,11 +428,11 @@ export default function WorkforceTimesheet() {
                 <TabsList>
                     <TabsTrigger value="byEmployee" className="gap-2">
                         <Calendar className="h-4 w-4" />
-                        {t('workforceTimesheet.porEmpleado')}
+                        Por empleado
                     </TabsTrigger>
                     <TabsTrigger value="allRecords" className="gap-2">
                         <Clock className="h-4 w-4" />
-                        {t('workforceTimesheet.todosLosFichajes')}
+                        Todos los fichajes
                     </TabsTrigger>
                     <TabsTrigger value="alerts" className="gap-2">
                         <AlertTriangle className="h-4 w-4" />
@@ -448,11 +450,12 @@ export default function WorkforceTimesheet() {
                     {loading ? (
                         [...Array(3)].map((_, i) => (
                             <Card key={i}><CardContent className="p-4"><div className="animate-pulse h-16 bg-muted rounded" /></CardContent></Card>
-                        {t('workforceTimesheet.byemployeelength0')}
+                        ))
+                    ) : byEmployee.length === 0 ? (
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <Clock className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
-                                <p className="text-lg font-medium text-muted-foreground">{t('timesheet.noClockIns')}</p>
+                                <p className="text-lg font-medium text-muted-foreground">Sin fichajes esta semana</p>
                             </CardContent>
                         </Card>
                     ) : (
@@ -498,7 +501,8 @@ export default function WorkforceTimesheet() {
                                                     if (!r.clock_out) return sum;
                                                     return sum + differenceInMinutes(new Date(r.clock_out), new Date(r.clock_in));
                                                 }, 0);
-                                                const hasIncomplete = dayRecords.some((r) => {t('workforceTimesheet.rclockoutReturn')}
+                                                const hasIncomplete = dayRecords.some((r) => !r.clock_out);
+                                                return (
                                                     <div
                                                         key={day.toISOString()}
                                                         className={cn(
@@ -537,13 +541,13 @@ export default function WorkforceTimesheet() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[200px]">{t('timesheet.tableEmployee')}</TableHead>
-                                        <TableHead>{t('timesheet.tableDate')}</TableHead>
-                                        <TableHead>{t('timesheet.tableClockIn')}</TableHead>
-                                        <TableHead>{t('timesheet.tableClockOut')}</TableHead>
-                                        <TableHead className="text-right">{t('timesheet.tableDuration')}</TableHead>
-                                        <TableHead className="text-right">{t('timesheet.tableCost')}</TableHead>
-                                        <TableHead>{t('timesheet.tableSource')}</TableHead>
+                                        <TableHead className="w-[200px]">Empleado</TableHead>
+                                        <TableHead>Fecha</TableHead>
+                                        <TableHead>Entrada</TableHead>
+                                        <TableHead>Salida</TableHead>
+                                        <TableHead className="text-right">Duración</TableHead>
+                                        <TableHead className="text-right">Coste</TableHead>
+                                        <TableHead>Fuente</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -553,10 +557,11 @@ export default function WorkforceTimesheet() {
                                             <TableRow key={i}>
                                                 <TableCell colSpan={8}><div className="animate-pulse h-8 bg-muted rounded" /></TableCell>
                                             </TableRow>
-                                        {t('workforceTimesheet.filteredrecordslength0')}
+                                        ))
+                                    ) : filteredRecords.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                                                {t('workforceTimesheet.sinFichajesEstaSemana')}
+                                                Sin fichajes esta semana
                                             </TableCell>
                                         </TableRow>
                                     ) : (
@@ -587,7 +592,7 @@ export default function WorkforceTimesheet() {
                                                     </TableCell>
                                                     <TableCell className="font-mono text-sm">
                                                         {r.clock_out ? format(new Date(r.clock_out), 'HH:mm') : (
-                                                            <Badge variant="outline" className="text-amber-600 border-amber-300">{t('timesheet.active')}</Badge>
+                                                            <Badge variant="outline" className="text-amber-600 border-amber-300">Activo</Badge>
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-right font-mono text-sm">
@@ -610,13 +615,13 @@ export default function WorkforceTimesheet() {
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuItem onClick={() => openEditRecord(r)}>
-                                                                    <Edit className="mr-2 h-4 w-4" /> {t("common.edit")}
+                                                                    <Edit className="mr-2 h-4 w-4" /> Editar
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     className="text-destructive"
                                                                     onClick={() => handleDeleteRecord(r.id)}
                                                                 >
-                                                                    <XCircle className="mr-2 h-4 w-4" /> {t("common.delete")}
+                                                                    <XCircle className="mr-2 h-4 w-4" /> Eliminar
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
@@ -659,7 +664,7 @@ export default function WorkforceTimesheet() {
                                             </div>
                                         </div>
                                         <Button size="sm" variant="outline" onClick={() => openEditRecord(r)}>
-                                            {t('workforceTimesheet.corregir')}
+                                            Corregir
                                         </Button>
                                     </div>
                                 ))}
@@ -728,8 +733,8 @@ export default function WorkforceTimesheet() {
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <CheckCircle2 className="h-12 w-12 text-emerald-500/40 mx-auto mb-3" />
-                                <p className="text-lg font-medium text-muted-foreground">{t('timesheet.noAnomalies')}</p>
-                                <p className="text-sm text-muted-foreground/60">{t("timesheet.noAlerts")}</p>
+                                <p className="text-lg font-medium text-muted-foreground">Todo en orden</p>
+                                <p className="text-sm text-muted-foreground/60">No hay alertas esta semana</p>
                             </CardContent>
                         </Card>
                     )}
@@ -747,7 +752,7 @@ export default function WorkforceTimesheet() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>{t('timesheet.clockInTime')}</Label>
+                            <Label>Hora de entrada</Label>
                             <Input
                                 type="datetime-local"
                                 value={editForm.clock_in}
@@ -755,7 +760,7 @@ export default function WorkforceTimesheet() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>{t('timesheet.clockOutTime')}</Label>
+                            <Label>Hora de salida</Label>
                             <Input
                                 type="datetime-local"
                                 value={editForm.clock_out}
@@ -764,8 +769,8 @@ export default function WorkforceTimesheet() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditRecord(null)}>{t("common.cancel")}</Button>
-                        <Button onClick={handleEditRecord}>{t("common.save")}</Button>
+                        <Button variant="outline" onClick={() => setEditRecord(null)}>Cancelar</Button>
+                        <Button onClick={handleEditRecord}>Guardar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

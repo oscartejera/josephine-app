@@ -12,7 +12,6 @@ import {
     UserPlus, Shield, MapPin, Loader2,
     Mail, Copy, CheckCircle, Users, Trash2
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface ManagerEntry {
     id: string;
@@ -24,14 +23,15 @@ interface ManagerEntry {
 }
 
 export function TeamManagersTab() {
-  const { t } = useTranslation();
     const { user, profile } = useAuth();
     const { locations } = useApp();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [locationId, setLocationId] = useState('');
     const [sending, setSending] = useState(false);
-    const [managers, setManagers] = useState<ManagerEntry[]>{t('settings.TeamManagersTab.constLoadingmanagersSetloadingmanagersUs')}<{ email: string; password: string } | null>(null);
+    const [managers, setManagers] = useState<ManagerEntry[]>([]);
+    const [loadingManagers, setLoadingManagers] = useState(true);
+    const [lastCreated, setLastCreated] = useState<{ email: string; password: string } | null>(null);
 
     // Generate email preview
     const sanitize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
@@ -83,7 +83,7 @@ export function TeamManagersTab() {
 
     const handleInvite = async () => {
         if (!firstName.trim() || !lastName.trim() || !locationId) {
-            toast.error(t('teamManagers.toastCompleteFields'));
+            toast.error('Completa nombre, apellido y ubicación');
             return;
         }
 
@@ -103,7 +103,7 @@ export function TeamManagersTab() {
             await loadManagers();
         } catch (err: any) {
             console.error('Invite error:', err);
-            toast.error(err.message || t('team.errorAlInvitarManager'));
+            toast.error(err.message || 'Error al invitar manager');
         }
         setSending(false);
     };
@@ -111,7 +111,7 @@ export function TeamManagersTab() {
     const copyEmail = () => {
         if (lastCreated) {
             navigator.clipboard.writeText(lastCreated.email);
-            toast.success(t('teamManagers.toastEmailCopied'));
+            toast.success('Email copiado');
         }
     };
 
@@ -122,28 +122,29 @@ export function TeamManagersTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <UserPlus className="h-5 w-5 text-indigo-500" />
-                        {t('settings.TeamManagersTab.invitarManager')}
+                        Invitar Manager
                     </CardTitle>
                     <CardDescription>
-                        {t('settings.TeamManagersTab.creaUnaCuentaDeManager')}
+                        Crea una cuenta de manager con acceso limitado a una ubicación específica.
+                        Recibirá un email con sus credenciales.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName">{t("common.name")}</Label>
+                            <Label htmlFor="firstName">Nombre</Label>
                             <Input
                                 id="firstName"
-                                placeholder={t('settings.firstName')}
+                                placeholder="María"
                                 value={firstName}
                                 onChange={e => setFirstName(e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName">{t("common.lastName")}</Label>
+                            <Label htmlFor="lastName">Apellido</Label>
                             <Input
                                 id="lastName"
-                                placeholder={t('settings.lastName')}
+                                placeholder="García"
                                 value={lastName}
                                 onChange={e => setLastName(e.target.value)}
                             />
@@ -151,14 +152,14 @@ export function TeamManagersTab() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="location">{t('ai.ubicacion2')}</Label>
+                        <Label htmlFor="location">Ubicación</Label>
                         <select
                             id="location"
                             value={locationId}
                             onChange={e => setLocationId(e.target.value)}
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         >
-                            <option value="">{t("settings.selectLocation")}</option>
+                            <option value="">Selecciona una ubicación</option>
                             {locations?.map(loc => (
                                 <option key={loc.id} value={loc.id}>{loc.name}</option>
                             ))}
@@ -170,7 +171,7 @@ export function TeamManagersTab() {
                         <div className="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg">
                             <Mail className="h-4 w-4 text-indigo-500 shrink-0" />
                             <span className="text-sm text-indigo-700 dark:text-indigo-300">
-                                {t('settings.TeamManagersTab.email')} <strong>{emailPreview}</strong>
+                                Email: <strong>{emailPreview}</strong>
                             </span>
                         </div>
                     )}
@@ -181,9 +182,9 @@ export function TeamManagersTab() {
                         className="w-full sm:w-auto"
                     >
                         {sending ? (
-                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t('settings.TeamManagersTab.enviando')}</>
+                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
                         ) : (
-                            <><UserPlus className="h-4 w-4 mr-2" /> {t("team.sendInvitation")}</>
+                            <><UserPlus className="h-4 w-4 mr-2" /> Enviar invitación</>
                         )}
                     </Button>
 
@@ -193,7 +194,7 @@ export function TeamManagersTab() {
                             <div className="flex items-center gap-2 mb-2">
                                 <CheckCircle className="h-4 w-4 text-emerald-500" />
                                 <span className="font-medium text-emerald-700 dark:text-emerald-300 text-sm">
-                                    {t('settings.TeamManagersTab.managerInvitadoCorrectamente')}
+                                    Manager invitado correctamente
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -205,7 +206,7 @@ export function TeamManagersTab() {
                                 </Button>
                             </div>
                             <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                                {t('settings.TeamManagersTab.lasCredencialesSeHanEnviado')}
+                                Las credenciales se han enviado por email.
                             </p>
                         </div>
                     )}
@@ -217,13 +218,13 @@ export function TeamManagersTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5 text-amber-500" />
-                        {t('settings.TeamManagersTab.permisosDelManager')}
+                        Permisos del Manager
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-2 sm:grid-cols-2">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-emerald-600">{t("settings.hasAccess")}</p>
+                            <p className="text-sm font-medium text-emerald-600">Tiene acceso</p>
                             {['Dashboard (su local)', 'Scheduling', 'Inventory / Waste', 'Procurement', 'Reviews', 'Equipo (solo ver)'].map(item => (
                                 <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <CheckCircle className="h-3 w-3 text-emerald-500" />
@@ -232,7 +233,7 @@ export function TeamManagersTab() {
                             ))}
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-red-500">{t("team.noAccess")}</p>
+                            <p className="text-sm font-medium text-red-500">Sin acceso</p>
                             {['Insights (Sales/Labour)', 'P&L', 'Payroll', 'Menu Engineering', 'Settings / Billing', 'Otros locales'].map(item => (
                                 <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span className="h-3 w-3 rounded-full bg-red-200 dark:bg-red-800 inline-flex items-center justify-center text-[8px] text-red-600">✕</span>
@@ -249,17 +250,17 @@ export function TeamManagersTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Users className="h-5 w-5 text-slate-500" />
-                        {t('settings.TeamManagersTab.managersActivos')}
+                        Managers activos
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {loadingManagers ? (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                            <Loader2 className="h-4 w-4 animate-spin" /> {t('settings.TeamManagersTab.cargando')}
+                            <Loader2 className="h-4 w-4 animate-spin" /> Cargando...
                         </div>
-                    {t('settings.TeamManagersTab.managerslength0')}
+                    ) : managers.length === 0 ? (
                         <p className="text-sm text-muted-foreground py-4">
-                            {t('settings.TeamManagersTab.noHayManagersInvitadosAun')}
+                            No hay managers invitados aún. Usa el formulario de arriba para invitar al primero.
                         </p>
                     ) : (
                         <div className="space-y-3">
@@ -274,7 +275,7 @@ export function TeamManagersTab() {
                                         <div>
                                             <p className="text-sm font-medium">{m.full_name}</p>
                                             <div className="flex items-center gap-2">
-                                                <Badge variant="secondary" className="text-xs">{t('settings.TeamManagersTab.manager')}</Badge>
+                                                <Badge variant="secondary" className="text-xs">Manager</Badge>
                                                 {m.location_name && (
                                                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                                         <MapPin className="h-3 w-3" /> {m.location_name}

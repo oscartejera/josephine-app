@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Info, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { PricingOmnesCategoryResult, PricingAction } from '@/lib/pricing-omnes-engine';
-import { useTranslation } from 'react-i18next';
 
 interface PricingHealthCardsProps {
   result: PricingOmnesCategoryResult | null;
@@ -31,7 +30,6 @@ function getStateStyle(state: string) {
 }
 
 export function PricingHealthCards({ result, topActions, loading }: PricingHealthCardsProps) {
-  const { t } = useTranslation();
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -56,7 +54,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
         <Card className="border-l-4 border-l-violet-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">{t('pricing-omnes.PricingHealthCards.priceRangeRatio')}</span>
+              <span className="text-sm font-medium text-muted-foreground">Price Range Ratio</span>
               <Badge className={`text-xs ${priceState.bg} ${priceState.color} border-0`}>
                 {priceState.label}
               </Badge>
@@ -72,7 +70,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
         <Card className="border-l-4 border-l-indigo-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">{t('pricing-omnes.PricingHealthCards.bandDistribution')}</span>
+              <span className="text-sm font-medium text-muted-foreground">Band Distribution</span>
               <Badge className={`text-xs ${bandState.bg} ${bandState.color} border-0`}>
                 {bandState.label}
               </Badge>
@@ -108,7 +106,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
         <Card className="border-l-4 border-l-fuchsia-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">{t('pricing-omnes.PricingHealthCards.categoryRatio')}</span>
+              <span className="text-sm font-medium text-muted-foreground">Category Ratio</span>
               <Badge className={`text-xs ${healthState.bg} ${healthState.color} border-0`}>
                 {healthState.label}
               </Badge>
@@ -124,7 +122,7 @@ export function PricingHealthCards({ result, topActions, loading }: PricingHealt
       {/* Top Actions */}
       {topActions.length > 0 && (
         <div className="flex flex-wrap gap-2 px-1">
-          <span className="text-xs font-medium text-muted-foreground self-center">{t('pricing-omnes.PricingHealthCards.actions')}</span>
+          <span className="text-xs font-medium text-muted-foreground self-center">🎯 Actions:</span>
           {topActions.map((action, i) => (
             <div key={i} className="flex items-start gap-2 bg-muted/50 rounded-lg px-3 py-1.5 text-xs max-w-sm">
               <span className="font-medium shrink-0">{action.title}</span>

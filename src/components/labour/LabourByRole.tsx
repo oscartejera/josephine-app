@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { MetricMode } from '@/hooks/useLabourData';
-import { useTranslation } from 'react-i18next';
 
 interface RoleData {
   role: string;
@@ -35,7 +34,10 @@ const ROLE_COLORS = {
 };
 
 const VarianceIndicator = ({ value, inverted = false }: { value: number; inverted?: boolean }) => {
-  const isPositive = inverted ? value <= 0 : value >{t('labour.LabourByRole.0ConstIconIspositiveTrendingup')}
+  const isPositive = inverted ? value <= 0 : value >= 0;
+  const Icon = isPositive ? TrendingUp : TrendingDown;
+  
+  return (
     <span className={cn('inline-flex items-center gap-1 text-xs font-medium', isPositive ? 'text-emerald-600' : 'text-rose-600')}>
       <Icon className="h-3 w-3" />
       {isPositive ? '+' : ''}{value.toFixed(2)}%
@@ -54,7 +56,6 @@ function RoleSkeleton() {
 }
 
 export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
-  const { t } = useTranslation();
   // Mock data - in production would come from backend
   const rolesData: RoleData[] = [
     { role: 'Chef', hours: 180, cost: 3600, salesShare: 35, col: 28.5, variance: -2.1, count: 8 },
@@ -70,7 +71,7 @@ export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
   if (isLoading) {
     return (
       <Card className="p-6 bg-white">
-        <h3 className="text-base font-semibold text-gray-900 mb-4">{t('labour.LabourByRole.labourByRole')}</h3>
+        <h3 className="text-base font-semibold text-gray-900 mb-4">Labour by Role</h3>
         <RoleSkeleton />
       </Card>
     );
@@ -78,7 +79,7 @@ export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
 
   return (
     <Card className="p-6 bg-white">
-      <h3 className="text-base font-semibold text-gray-900 mb-4">{t('labour.LabourByRole.labourByRole1')}</h3>
+      <h3 className="text-base font-semibold text-gray-900 mb-4">Labour by Role</h3>
       
       <div className="space-y-4">
         {rolesData.map((role) => {
@@ -134,7 +135,7 @@ export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
 
         {/* Total row */}
         <div className="pt-3 border-t flex items-center justify-between font-semibold text-gray-900">
-          <span>{t("common.total")}</span>
+          <span>Total</span>
           <div className="flex items-center gap-4">
             {metricMode === 'hours' && <span>{totalHours.toFixed(1)}h</span>}
             {metricMode === 'amount' && <span>€{totalCost.toLocaleString()}</span>}

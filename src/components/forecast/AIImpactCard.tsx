@@ -16,7 +16,6 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { startOfMonth, format, subMonths } from 'date-fns';
 import { Sparkles, TrendingDown, Clock, Target, ShieldCheck } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 const INDUSTRY_COL_BENCHMARK = 30;     // Industry avg COL% without AI
 const INDUSTRY_WASTE_BENCHMARK = 5;    // Industry avg waste% without AI
@@ -39,7 +38,9 @@ function useAIImpactData(): { data: ImpactMetrics | null; isLoading: boolean } {
 
     return useQuery({
         queryKey: ['ai-impact', locationIds],
-        enabled: locationIds.length > {t('forecast.AIImpactCard.0SessionStaletime560')}<ImpactMetrics> => {
+        enabled: locationIds.length > 0 && !!session,
+        staleTime: 5 * 60 * 1000,
+        queryFn: async (): Promise<ImpactMetrics> => {
             const now = new Date();
             const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
             const today = format(now, 'yyyy-MM-dd');
@@ -147,7 +148,6 @@ function ImpactKPI({
 }
 
 export function AIImpactCard() {
-  const { t } = useTranslation();
     const { data, isLoading } = useAIImpactData();
 
     if (isLoading) {
@@ -179,8 +179,8 @@ export function AIImpactCard() {
             <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-violet-500" />
-                    {t('forecast.AIImpactCard.josephineAiImpact')}
-                    <span className="text-xs font-normal text-muted-foreground">{t('forecast.AIImpactCard.esteMes')}</span>
+                    Josephine AI Impact
+                    <span className="text-xs font-normal text-muted-foreground">— este mes</span>
                 </CardTitle>
                 {totalSavings > 0 && (
                     <p className="text-xs text-emerald-600 font-medium">
@@ -192,30 +192,30 @@ export function AIImpactCard() {
                 <div className="grid grid-cols-2 gap-4">
                     <ImpactKPI
                         icon={TrendingDown}
-                        label={t('forecast.AIImpactCard.ahorroLaboral')}
+                        label="Ahorro Laboral"
                         value={data.labourSavings > 0 ? `+${fmt(data.labourSavings)}` : '—'}
                         subtitle={`COL ${data.actualCol.toFixed(1)}% vs ${INDUSTRY_COL_BENCHMARK}% benchmark`}
                         color="bg-emerald-50 text-emerald-600"
                     />
                     <ImpactKPI
                         icon={ShieldCheck}
-                        label={t('forecast.AIImpactCard.ahorroMerma')}
+                        label="Ahorro Merma"
                         value={data.wasteSavings > 0 ? `+${fmt(data.wasteSavings)}` : '—'}
                         subtitle={`Waste ${data.actualWaste.toFixed(1)}% vs ${INDUSTRY_WASTE_BENCHMARK}% benchmark`}
                         color="bg-blue-50 text-blue-600"
                     />
                     <ImpactKPI
                         icon={Target}
-                        label={t('forecast.precisionForecast')}
-                        value={data.mape !== null ? `${(100 - data.mape).toFixed(0)}%` : t('team.sinDatos')}
+                        label="Precisión Forecast"
+                        value={data.mape !== null ? `${(100 - data.mape).toFixed(0)}%` : 'Sin datos'}
                         subtitle={data.mape !== null ? `MAPE: ${data.mape.toFixed(1)}%` : 'Ejecuta backfill_forecast_accuracy()'}
                         color="bg-violet-50 text-violet-600"
                     />
                     <ImpactKPI
                         icon={Clock}
-                        label={t('forecast.AIImpactCard.adminAhorrado')}
+                        label="Admin Ahorrado"
                         value={data.adminHoursSaved > 0 ? `${data.adminHoursSaved}h` : '—'}
-                        subtitle={t('forecast.AIImpactCard.horasAhorradasEnScheduling')}
+                        subtitle="Horas ahorradas en scheduling"
                         color="bg-amber-50 text-amber-600"
                     />
                 </div>

@@ -1,7 +1,6 @@
 // Payroll API client - calls the payroll_api Edge Function
 import { supabase } from '@/integrations/supabase/client';
 
-import { useTranslation } from 'react-i18next';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -12,7 +11,7 @@ interface PayrollApiResponse<T = any> {
   [key: string]: any;
 }
 
-async function callPayrollApi<T = any>{t('lib.payroll-api.actionStringBodyRecord')}<string, any> = {}): Promise<PayrollApiResponse<T>> {
+async function callPayrollApi<T = any>(action: string, body: Record<string, any> = {}): Promise<PayrollApiResponse<T>> {
   // Use anon key for Authorization - the Edge Function uses service role key internally
   // This avoids 401 errors from expired user session tokens
   const response = await fetch(`${SUPABASE_URL}/functions/v1/payroll_api`, {

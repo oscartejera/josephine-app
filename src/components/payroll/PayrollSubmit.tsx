@@ -10,42 +10,40 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
-import { useTranslation } from 'react-i18next';
 
 const AGENCIES = [
   { 
     id: 'TGSS', 
-    nameKey: 'payroll.agencyTGSS', 
-    descriptionKey: 'payroll.agencyTGSSDesc',
+    name: 'Seguridad Social', 
+    description: 'Liquidación de cuotas a través del Sistema RED (Liquidación Directa)',
     regulation: 'LGSS Art. 22 + Orden ESS/484/2013',
-    filings: [t('payroll.rlcLiquidacionCotizaciones'), t('payroll.rntRelacionNominalTrabajadores')],
+    filings: ['RLC - Liquidación Cotizaciones', 'RNT - Relación Nominal Trabajadores'],
   },
   { 
     id: 'AEAT', 
-    nameKey: 'payroll.agencyAEAT', 
-    descriptionKey: 'payroll.agencyAEATDesc',
+    name: 'Agencia Tributaria', 
+    description: 'Retenciones e ingresos a cuenta del IRPF',
     regulation: 'Modelo 111 - Orden EHA/586/2011',
     filings: ['Modelo 111 - Retenciones IRPF'],
   },
   { 
     id: 'SEPE', 
-    nameKey: 'payroll.agencySEPE', 
-    descriptionKey: 'payroll.agencySEPEDesc',
+    name: 'SEPE Certific@2', 
+    description: 'Certificados de empresa para prestaciones de desempleo',
     regulation: 'Art. 267 LGSS + RD 625/1985',
     filings: ['Certificado de empresa'],
   },
 ];
 
 export default function PayrollSubmit({
-  
   currentRun,
   refreshData,
   isSandboxMode,
 }: PayrollContextData) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [submissions, setSubmissions] = useState<any[]>{t('payroll.PayrollSubmit.constLoadingagencySetloadingagencyUsesta')}<string | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loadingAgency, setLoadingAgency] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentRun) fetchSubmissions();
@@ -67,8 +65,8 @@ export default function PayrollSubmit({
     try {
       await payrollApi.createSubmission(currentRun.id, agencyId, isSandboxMode);
       toast({ 
-        title: isSandboxMode ? t('payroll.simulationCompleted') : t('payroll.submitted'), 
-        description: `${agencyId} - ${isSandboxMode ? t('payroll.simulatedOk') : t('payroll.sentOk')}` 
+        title: isSandboxMode ? 'Simulación completada' : 'Presentado', 
+        description: `${agencyId} - ${isSandboxMode ? 'Simulado OK' : 'Enviado correctamente'}` 
       });
       await fetchSubmissions();
       
@@ -84,10 +82,10 @@ export default function PayrollSubmit({
           await supabase.from('payroll_runs').update({ status: 'submitted' }).eq('id', currentRun.id);
         }
         await refreshData();
-        toast({ title: t('payroll.allSubmissionsComplete'), description: t('payroll.proceedToPayment') });
+        toast({ title: 'Todas las presentaciones completadas', description: 'Puedes proceder al pago.' });
       }
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : t('payroll.submissionError') });
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error al presentar' });
     }
     setLoadingAgency(null);
   };
@@ -105,19 +103,21 @@ export default function PayrollSubmit({
     return submissions.find(s => s.agency === agencyId);
   };
 
-  const allDone = AGENCIES.every(a => {t('payroll.PayrollSubmit.getagencystatusaidstatusAcceptedReturn')}
+  const allDone = AGENCIES.every(a => getAgencyStatus(a.id)?.status === 'accepted');
+
+  return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{t('payroll.officialSubmission')}</h2>
+          <h2 className="text-lg font-semibold">Presentación Oficial</h2>
           <p className="text-sm text-muted-foreground">
-            {isSandboxMode ? t('payroll.sandboxMode') : t('payroll.realSubmission')}
+            {isSandboxMode ? 'Modo Sandbox - Las presentaciones se simularán sin envío real' : 'Envío real a organismos oficiales'}
           </p>
         </div>
         {!allDone && (
           <Button onClick={handleSubmitAll} disabled={!!loadingAgency}>
             {loadingAgency && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {t('payroll.submitAll')}
+            Presentar Todo
           </Button>
         )}
       </div>
@@ -132,11 +132,11 @@ export default function PayrollSubmit({
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  {t(agency.nameKey)}
+                  {agency.name}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{t(agency.descriptionKey)}</p>
+                <p className="text-sm text-muted-foreground">{agency.description}</p>
                 <p className="text-xs text-muted-foreground italic">{agency.regulation}</p>
                 
                 <div className="space-y-1">
@@ -147,13 +147,13 @@ export default function PayrollSubmit({
                 
                 <div className="flex items-center gap-2">
                   {submission?.status === 'accepted' ? (
-                    <Badge className="bg-success"><CheckCircle className="h-3 w-3 mr-1" />{t('payroll.accepted')}</Badge>
-                  {t('payroll.PayrollSubmit.submissionstatusRejected')}
-                    <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />{t('payroll.rejected')}</Badge>
-                  {t('payroll.PayrollSubmit.submissionstatusSent')}
-                    <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />{t('payroll.pending')}</Badge>
+                    <Badge className="bg-success"><CheckCircle className="h-3 w-3 mr-1" />Aceptado</Badge>
+                  ) : submission?.status === 'rejected' ? (
+                    <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Rechazado</Badge>
+                  ) : submission?.status === 'sent' ? (
+                    <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendiente</Badge>
                   ) : (
-                    <Badge variant="outline">{t("payroll.notSubmitted")}</Badge>
+                    <Badge variant="outline">Sin presentar</Badge>
                   )}
                 </div>
                 
@@ -170,7 +170,7 @@ export default function PayrollSubmit({
                     ) : (
                       <Send className="h-4 w-4 mr-2" />
                     )}
-                    {isSandboxMode ? t('payroll.simulate') : t('payroll.submit')}
+                    {isSandboxMode ? 'Simular' : 'Presentar'}
                   </Button>
                 )}
               </CardContent>
@@ -181,10 +181,10 @@ export default function PayrollSubmit({
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/review')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />{t('payroll.reviewBack')}
+          <ArrowLeft className="h-4 w-4 mr-2" />Revisar
         </Button>
         <Button onClick={() => navigate('/payroll/pay')} disabled={!allDone}>
-          {t('payroll.nextPay')}<ArrowRight className="h-4 w-4 ml-2" />
+          Siguiente: Pagar<ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
     </div>

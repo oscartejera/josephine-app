@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { RecommendationSettings } from '@/hooks/useProcurementData';
-import { useTranslation } from 'react-i18next';
 
 interface AIRecommendPanelProps {
   settings: RecommendationSettings;
@@ -20,13 +19,11 @@ interface AIRecommendPanelProps {
 }
 
 export function AIRecommendPanel({
-  
   settings,
   onSettingsChange,
   onRecommend,
   isCalculating,
 }: AIRecommendPanelProps) {
-  const { t } = useTranslation();
   return (
     <div className="bg-card rounded-xl border border-border p-4">
       <div className="flex flex-wrap items-center gap-4">
@@ -40,7 +37,7 @@ export function AIRecommendPanel({
           {isCalculating ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              {t('procurement.AIRecommendPanel.calculatingCoverage')}
+              Calculating coverage...
             </>
           ) : (
             <>
@@ -52,7 +49,7 @@ export function AIRecommendPanel({
 
         {/* Horizon Selector */}
         <div className="flex items-center gap-2">
-          <Label className="text-sm text-muted-foreground whitespace-nowrap">{t('procurement.AIRecommendPanel.horizon')}</Label>
+          <Label className="text-sm text-muted-foreground whitespace-nowrap">Horizon:</Label>
           <Select 
             value={settings.horizon.toString()} 
             onValueChange={(v) => onSettingsChange({ ...settings, horizon: parseInt(v) as 7 | 14 | 30 })}
@@ -61,9 +58,9 @@ export function AIRecommendPanel({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">{t('procurement.AIRecommendPanel.7Days')}</SelectItem>
-              <SelectItem value="14">{t('procurement.AIRecommendPanel.14Days')}</SelectItem>
-              <SelectItem value="30">{t('procurement.AIRecommendPanel.30Days')}</SelectItem>
+              <SelectItem value="7">7 days</SelectItem>
+              <SelectItem value="14">14 days</SelectItem>
+              <SelectItem value="30">30 days</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -76,7 +73,7 @@ export function AIRecommendPanel({
             onCheckedChange={(checked) => onSettingsChange({ ...settings, includeSafetyStock: checked })}
           />
           <Label htmlFor="safety-stock" className="text-sm cursor-pointer">
-            {t('procurement.AIRecommendPanel.includeSafetyStock')}
+            Include safety stock
           </Label>
         </div>
 
@@ -88,7 +85,7 @@ export function AIRecommendPanel({
             onCheckedChange={(checked) => onSettingsChange({ ...settings, roundToPacks: checked })}
           />
           <Label htmlFor="round-packs" className="text-sm cursor-pointer">
-            {t('procurement.AIRecommendPanel.roundToPacks')}
+            Round to packs
           </Label>
         </div>
       </div>

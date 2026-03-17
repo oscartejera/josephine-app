@@ -1,7 +1,6 @@
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 interface NoAccessProps {
   title?: string;
@@ -10,12 +9,10 @@ interface NoAccessProps {
 }
 
 export function NoAccess({
-  
   title = 'Acceso Denegado',
-  message = t('common.no_tienes_permisos_para_ver_esta_pagina_contacta_a'),
+  message = 'No tienes permisos para ver esta página. Contacta a tu administrador si crees que esto es un error.',
   showBackButton = true,
 }: NoAccessProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -39,7 +36,7 @@ export function NoAccess({
           className="gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t('common.NoAccess.volver')}
+          Volver
         </Button>
       )}
     </div>

@@ -13,7 +13,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
-import { useTranslation } from 'react-i18next';
 
 interface Payslip {
   id: string;
@@ -29,12 +28,10 @@ interface Payslip {
 }
 
 export default function PayrollCalculate({
-  
   currentPeriod,
   currentRun,
   refreshData,
 }: PayrollContextData) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -99,8 +96,8 @@ export default function PayrollCalculate({
     if (!currentRun) {
       toast({ 
         variant: 'destructive', 
-        title: t("common.error"), 
-        description: t('payroll.noHayNominaIniciadaPara') 
+        title: 'Error', 
+        description: 'No hay nómina iniciada para este período. Vuelve a Inicio y pulsa "Iniciar nómina del mes".' 
       });
       return;
     }
@@ -115,15 +112,15 @@ export default function PayrollCalculate({
       
       setCalculated(true);
       toast({ 
-        title: t('payroll.calculoCompletado'), 
+        title: 'Cálculo completado', 
         description: `Se han calculado ${result.employees_calculated || 0} nóminas. Total neto: €${result.totals?.net_pay?.toLocaleString('es-ES') || '0'}` 
       });
     } catch (error) {
       console.error('Payroll calculation error:', error);
       toast({ 
         variant: 'destructive', 
-        title: t('payroll.errorAlCalcular'), 
-        description: error instanceof Error ? error.message : t('payroll.calculateError') 
+        title: 'Error al calcular', 
+        description: error instanceof Error ? error.message : 'Error al calcular nóminas.' 
       });
     } finally {
       setCalculating(false);
@@ -144,7 +141,7 @@ export default function PayrollCalculate({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{t('payroll.calculoDeNominas')}</h2>
+          <h2 className="text-lg font-semibold">Cálculo de Nóminas</h2>
           <p className="text-sm text-muted-foreground">
             {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}
           </p>
@@ -152,12 +149,14 @@ export default function PayrollCalculate({
         
         {!calculated && !calculating && (
           <Button onClick={handleCalculate}>
-            <Calculator className="h-4 w-4 mr-2" />{t('payroll.calcularNominas')}</Button>
+            <Calculator className="h-4 w-4 mr-2" />
+            Calcular Nóminas
+          </Button>
         )}
         {calculated && (
           <Button onClick={handleCalculate} variant="outline">
             <Calculator className="h-4 w-4 mr-2" />
-            {t('payroll.PayrollCalculate.recalcular')}
+            Recalcular
           </Button>
         )}
       </div>
@@ -167,31 +166,31 @@ export default function PayrollCalculate({
         <div className="grid grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('payroll.totalBruto')}</p>
+              <p className="text-sm text-muted-foreground">Total Bruto</p>
               <p className="text-2xl font-bold">€{fmt(totals.gross)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('payroll.ssEmpleado')}</p>
+              <p className="text-sm text-muted-foreground">SS Empleado</p>
               <p className="text-2xl font-bold">€{fmt(totals.employeeSS)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('payroll.PayrollCalculate.ssEmpresa')}</p>
+              <p className="text-sm text-muted-foreground">SS Empresa</p>
               <p className="text-2xl font-bold">€{fmt(totals.employerSS)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('payroll.PayrollCalculate.irpf')}</p>
+              <p className="text-sm text-muted-foreground">IRPF</p>
               <p className="text-2xl font-bold">€{fmt(totals.irpf)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('payroll.totalNeto')}</p>
+              <p className="text-sm text-muted-foreground">Total Neto</p>
               <p className="text-2xl font-bold text-success">€{fmt(totals.net)}</p>
             </CardContent>
           </Card>
@@ -202,19 +201,19 @@ export default function PayrollCalculate({
       {calculated && (
         <Card>
           <CardHeader>
-            <CardTitle>{t('payroll.nominasCalculadas')}</CardTitle>
+            <CardTitle>Nóminas Calculadas</CardTitle>
             <CardDescription>{payslips.length} empleados</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('payroll.empleado')}</TableHead>
-                  <TableHead className="text-right">{t('payroll.PayrollCalculate.bruto')}</TableHead>
-                  <TableHead className="text-right">{t('payroll.PayrollCalculate.ssEmp')}</TableHead>
-                  <TableHead className="text-right">{t('payroll.PayrollCalculate.irpf1')}</TableHead>
-                  <TableHead className="text-right">{t('payroll.PayrollCalculate.otrasDed')}</TableHead>
-                  <TableHead className="text-right">{t('payroll.PayrollCalculate.neto')}</TableHead>
+                  <TableHead>Empleado</TableHead>
+                  <TableHead className="text-right">Bruto</TableHead>
+                  <TableHead className="text-right">SS Emp.</TableHead>
+                  <TableHead className="text-right">IRPF</TableHead>
+                  <TableHead className="text-right">Otras Ded.</TableHead>
+                  <TableHead className="text-right">Neto</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -239,12 +238,14 @@ export default function PayrollCalculate({
         <Card>
           <CardContent className="py-12 text-center">
             <Calculator className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">{t('payroll.PayrollCalculate.listoParaCalcular')}</h3>
+            <h3 className="text-lg font-medium mb-2">Listo para calcular</h3>
             <p className="text-muted-foreground mb-4">
-              Pulsa "{t('payroll.calculatePayrolls')}" para generar los cálculos del período.
+              Pulsa "Calcular Nóminas" para generar los cálculos del período.
             </p>
             <Button onClick={handleCalculate} size="lg">
-              <Calculator className="h-4 w-4 mr-2" />{t('payroll.calcularNominas')}</Button>
+              <Calculator className="h-4 w-4 mr-2" />
+              Calcular Nóminas
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -253,8 +254,8 @@ export default function PayrollCalculate({
         <Card>
           <CardContent className="py-12 text-center">
             <Loader2 className="h-12 w-12 mx-auto text-primary mb-4 animate-spin" />
-            <h3 className="text-lg font-medium">{t('payroll.calculandoNominas')}</h3>
-            <p className="text-muted-foreground">{t('payroll.aplicandoLegislacionEspanolaVigente')}</p>
+            <h3 className="text-lg font-medium">Calculando nóminas...</h3>
+            <p className="text-muted-foreground">Aplicando legislación española vigente</p>
           </CardContent>
         </Card>
       )}
@@ -262,10 +263,10 @@ export default function PayrollCalculate({
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/validate')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('payroll.PayrollCalculate.validar')}
+          Validar
         </Button>
         <Button onClick={() => navigate('/payroll/review')} disabled={!calculated}>
-          {t('payroll.PayrollCalculate.siguienteRevisar')}
+          Siguiente: Revisar
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>

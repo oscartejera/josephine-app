@@ -38,7 +38,6 @@ import {
   SAMPLE_SKUS_FOR_PREVIEW,
   calculateRecommendation,
 } from '@/lib/procurementConstants';
-import { useTranslation } from 'react-i18next';
 
 // Re-export types for backwards compatibility
 export type { CategorySettings, ProcurementCategorySettings };
@@ -66,11 +65,9 @@ interface ProcurementSettingsDialogProps {
 }
 
 export function ProcurementSettingsDialog({
-  
   categorySettings,
   onSettingsChange,
 }: ProcurementSettingsDialogProps) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [localSettings, setLocalSettings] = useState<ProcurementCategorySettings>(categorySettings);
 
@@ -122,14 +119,14 @@ export function ProcurementSettingsDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Settings className="h-4 w-4" />
-          {t('procurement.ProcurementSettingsDialog.settings')}
+          Settings
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle>{t('procurement.ProcurementSettingsDialog.procurementSettings')}</DialogTitle>
+          <DialogTitle>Procurement Settings</DialogTitle>
           <DialogDescription>
-            {t('procurement.ProcurementSettingsDialog.configureWasteFactorsSafetyStock')}
+            Configure waste factors, safety stock, and yield factors for each category.
           </DialogDescription>
         </DialogHeader>
 
@@ -143,20 +140,20 @@ export function ProcurementSettingsDialog({
                 disabled={!hasModifications}
               >
                 <RotateCcw className="h-4 w-4" />
-                {t('procurement.ProcurementSettingsDialog.resetAllToDefaults')}
+                Reset All to Defaults
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{t("procurement.resetSettings")}</AlertDialogTitle>
+                <AlertDialogTitle>Reset all settings?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {t('procurement.ProcurementSettingsDialog.thisWillResetAllCategory')}
+                  This will reset all category settings (waste factors, safety stock, and yield factors) to their default values. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>{t('procurement.ProcurementSettingsDialog.cancel')}</AlertDialogCancel>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleReset}>
-                  {t('procurement.ProcurementSettingsDialog.resetAll')}
+                  Reset All
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -195,7 +192,7 @@ export function ProcurementSettingsDialog({
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold text-foreground">{category}</h4>
                       {isModified && (
-                        <Badge variant="secondary" className="text-xs">{t('procurement.ProcurementSettingsDialog.modified')}</Badge>
+                        <Badge variant="secondary" className="text-xs">Modified</Badge>
                       )}
                     </div>
                     {isModified && (
@@ -205,7 +202,7 @@ export function ProcurementSettingsDialog({
                         onClick={() => handleResetCategory(category)}
                         className="h-7 text-xs text-muted-foreground"
                       >
-                        {t('procurement.ProcurementSettingsDialog.reset')}
+                        Reset
                       </Button>
                     )}
                   </div>
@@ -217,12 +214,12 @@ export function ProcurementSettingsDialog({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Label className="text-sm text-muted-foreground inline-flex items-center gap-1 cursor-help">
-                              {t('procurement.ProcurementSettingsDialog.wasteFactor')}
+                              Waste Factor
                               <HelpCircle className="h-3 w-3" />
                             </Label>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-[220px]">
-                            <p className="text-xs">{t('procurement.ProcurementSettingsDialog.expectedPercentageOfProductLost')}</p>
+                            <p className="text-xs">Expected percentage of product lost to spoilage, breakage, or expiration. Higher values order more to compensate.</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -247,12 +244,12 @@ export function ProcurementSettingsDialog({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Label className="text-sm text-muted-foreground inline-flex items-center gap-1 cursor-help">
-                              {t('procurement.ProcurementSettingsDialog.safetyStock')}
+                              Safety Stock
                               <HelpCircle className="h-3 w-3" />
                             </Label>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-[220px]">
-                            <p className="text-xs">{t('procurement.ProcurementSettingsDialog.extraBufferInventoryKeptTo')}</p>
+                            <p className="text-xs">Extra buffer inventory kept to handle unexpected demand spikes or delivery delays. Added on top of forecasted needs.</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -277,12 +274,12 @@ export function ProcurementSettingsDialog({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Label className="text-sm text-muted-foreground inline-flex items-center gap-1 cursor-help">
-                              {t('procurement.ProcurementSettingsDialog.yieldFactor')}
+                              Yield Factor
                               <HelpCircle className="h-3 w-3" />
                             </Label>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-[220px]">
-                            <p className="text-xs">{t('procurement.ProcurementSettingsDialog.usablePercentageAfterTrimmingOr')}</p>
+                            <p className="text-xs">Usable percentage after trimming or preparation. 80% yield means 20% is lost during prep (e.g., peeling vegetables).</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -310,7 +307,7 @@ export function ProcurementSettingsDialog({
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">{t('procurement.ProcurementSettingsDialog.recommended')}</span>
+                        <span className="text-muted-foreground">Recommended:</span>
                         <span className="font-semibold text-foreground">
                           {currentImpact.recommendedPacks} packs
                         </span>
@@ -332,7 +329,7 @@ export function ProcurementSettingsDialog({
                       {packsDiff === 0 && isModified && (
                         <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                           <Minus className="h-3 w-3" />
-                          {t('procurement.ProcurementSettingsDialog.noChange')}
+                          No change
                         </div>
                       )}
                     </div>
@@ -347,10 +344,10 @@ export function ProcurementSettingsDialog({
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => setOpen(false)}>
-            {t('procurement.ProcurementSettingsDialog.cancel1')}
+            Cancel
           </Button>
           <Button onClick={handleSave}>
-            {t('procurement.ProcurementSettingsDialog.saveSettings')}
+            Save Settings
           </Button>
         </div>
       </DialogContent>

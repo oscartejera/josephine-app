@@ -1,6 +1,5 @@
 import React from 'react';
 import { usePermissions, PermissionKey } from '@/hooks/usePermissions';
-import { useTranslation } from 'react-i18next';
 
 interface PermissionGateProps {
   /** Single permission required */
@@ -38,10 +37,8 @@ interface PermissionGateProps {
  * </PermissionGate>
  */
 export function PermissionGate({
-  
   children,
 }: PermissionGateProps) {
-  const { t } = useTranslation();
   // Always render children - no content hiding
   return <>{children}</>;
 }
@@ -52,7 +49,7 @@ export function PermissionGate({
  * 
  * Use this to DISABLE actions (not hide them):
  * const canPublish = usePermissionCheck({ permission: 'scheduling.publish' });
- * <Button disabled={!canPublish}>{t('common.PermissionGate.publish')}</Button>
+ * <Button disabled={!canPublish}>Publish</Button>
  */
 export function usePermissionCheck(options: {
   permission?: PermissionKey;

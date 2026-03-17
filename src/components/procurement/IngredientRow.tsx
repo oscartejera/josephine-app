@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
-import { useTranslation } from 'react-i18next';
 
 interface IngredientRowProps {
   sku: IngredientSku;
@@ -16,7 +15,6 @@ interface IngredientRowProps {
 }
 
 export function IngredientRow({
-  
   sku,
   packs,
   recommendedPacks,
@@ -24,7 +22,6 @@ export function IngredientRow({
   dayLabels,
   onUpdatePacks,
 }: IngredientRowProps) {
-  const { t } = useTranslation();
   const isPaused = sku.paused;
 
   return (
@@ -39,7 +36,7 @@ export function IngredientRow({
                 <TooltipTrigger>
                   <Badge variant="secondary" className="gap-1">
                     <Pause className="h-3 w-3" />
-                    {t('procurement.IngredientRow.paused')}
+                    Paused
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -54,7 +51,7 @@ export function IngredientRow({
           
           {/* Daily usage row */}
           <div className="mt-3 flex items-center gap-1">
-            <span className="text-xs text-muted-foreground mr-2 shrink-0">{t('procurement.IngredientRow.dailyUsage')}</span>
+            <span className="text-xs text-muted-foreground mr-2 shrink-0">Daily usage:</span>
             <div className="flex gap-1 overflow-x-auto">
               {dayLabels.map((day, i) => (
                 <div
@@ -73,15 +70,15 @@ export function IngredientRow({
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground ml-2">
                     <HelpCircle className="h-3 w-3 mr-1" />
-                    {t('procurement.IngredientRow.why')}
+                    Why?
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80" side="right" align="start">
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-sm">{t('procurement.IngredientRow.recommendationBreakdown')}</h4>
+                    <h4 className="font-semibold text-sm">Recommendation Breakdown</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t('procurement.IngredientRow.forecastUsage')}</span>
+                        <span className="text-muted-foreground">Forecast Usage:</span>
                         <span className="font-medium">{breakdown.forecastUsage.toFixed(1)} {sku.unit}</span>
                       </div>
                       <div className="flex justify-between">
@@ -100,21 +97,21 @@ export function IngredientRow({
                       )}
                       <div className="border-t border-border pt-2">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">{t('procurement.IngredientRow.onHand')}</span>
+                          <span className="text-muted-foreground">On Hand:</span>
                           <span className="font-medium text-success">-{breakdown.onHand.toFixed(1)} {sku.unit}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">{t('procurement.IngredientRow.onOrder')}</span>
+                          <span className="text-muted-foreground">On Order:</span>
                           <span className="font-medium text-success">-{breakdown.onOrder.toFixed(1)} {sku.unit}</span>
                         </div>
                       </div>
                       <div className="border-t border-border pt-2">
                         <div className="flex justify-between font-semibold">
-                          <span>{t('procurement.IngredientRow.netNeeded')}</span>
+                          <span>Net Needed:</span>
                           <span>{breakdown.netNeeded.toFixed(1)} {sku.unit}</span>
                         </div>
                         <div className="flex justify-between font-semibold text-primary">
-                          <span>{t('procurement.IngredientRow.recommended')}</span>
+                          <span>Recommended:</span>
                           <span>{breakdown.recommendedPacks} packs ({(breakdown.recommendedPacks * sku.packSizeUnits).toFixed(1)} {sku.unit})</span>
                         </div>
                       </div>
@@ -162,7 +159,7 @@ export function IngredientRow({
             </p>
           </div>
           
-          {recommendedPacks > {t('procurement.IngredientRow.0Packs0Ispaused')}
+          {recommendedPacks > 0 && packs === 0 && !isPaused && (
             <Button
               variant="ghost"
               size="sm"

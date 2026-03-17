@@ -25,7 +25,6 @@ import {
 } from 'recharts';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import type { WasteByCategory } from '@/hooks/useWasteData';
-import { useTranslation } from 'react-i18next';
 
 const CATEGORY_COLORS = [
   '#22c55e',  // Green - Frozen
@@ -43,12 +42,10 @@ interface WasteCategoryDonutProps {
 }
 
 export function WasteCategoryDonut({
-  
   byCategory,
   isLoading = false,
   currency = '€'
 }: WasteCategoryDonutProps) {
-  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card className="border-border">
@@ -72,18 +69,18 @@ export function WasteCategoryDonut({
     <Card className="border-border">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-foreground">{t("waste.byIngredientCategory")}</CardTitle>
+          <CardTitle className="text-sm font-medium text-foreground">Waste by ingredient category</CardTitle>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               className="h-7 text-xs gap-1.5 font-normal"
             >
-              {t('waste.WasteCategoryDonut.category')}
+              Category
               <ChevronDown className="h-3 w-3" />
             </Button>
             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground">
-              {t('waste.WasteCategoryDonut.seeAll')}
+              See all
               <ArrowRight className="h-3 w-3" />
             </Button>
           </div>
@@ -125,9 +122,9 @@ export function WasteCategoryDonut({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteCategoryDonut.itemCategory')}</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteCategoryDonut.ofTotalWaste')}</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteCategoryDonut.value')}</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">Item category</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">% of total waste</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Value</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

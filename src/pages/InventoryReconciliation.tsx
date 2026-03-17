@@ -7,17 +7,18 @@ import { useReconciliationData } from '@/hooks/useReconciliationData';
 import { useInventoryData } from '@/hooks/useInventoryData';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import type { ViewMode } from '@/components/inventory/InventoryHeader';
-import { useTranslation } from 'react-i18next';
 
 export default function InventoryReconciliation() {
-  const { t } = useTranslation();
   const today = new Date();
   
   const [dateRange, setDateRange] = useState<DateRangeValue>({
     from: startOfMonth(today),
     to: endOfMonth(today)
   });
-  const [dateMode, setDateMode] = useState<DateMode>{t('inventoryReconciliation.monthlyConstViewmodeSetviewmodeUsestate')}<ViewMode>{t('inventoryReconciliation.cogsConstSelectedlocationsSetselectedloc')}<string[]>{t('inventoryReconciliation.constStockstatusSetstockstatusUsestate')}<'counted' | 'uncounted' | 'all'>('counted');
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [viewMode, setViewMode] = useState<ViewMode>('COGS');
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [stockStatus, setStockStatus] = useState<'counted' | 'uncounted' | 'all'>('counted');
   const [josephineOpen, setJosephineOpen] = useState(false);
 
   const { isLoading, lastUpdated, lines, totals } = useReconciliationData(
@@ -51,9 +52,9 @@ export default function InventoryReconciliation() {
         isLoading={isLoading}
         showViewToggle={false}
         breadcrumbs={[
-          { label: t('inventory.countsAndWaste') },
-          { label: t('inventory.counts') },
-          { label: t('inventory.reconciliationReport') }
+          { label: 'Counts & Waste' },
+          { label: 'Counts' },
+          { label: 'Reconciliation report' }
         ]}
       />
 

@@ -18,7 +18,6 @@ import {
   Cell,
 } from 'recharts';
 import type { WasteReason, WasteByReason } from '@/hooks/useWasteData';
-import { useTranslation } from 'react-i18next';
 
 const REASON_COLORS: Record<WasteReason, string> = {
   broken: '#22c55e',      // Green
@@ -46,12 +45,10 @@ interface WasteByReasonChartProps {
 }
 
 export function WasteByReasonChart({
-  
   byReason,
   isLoading = false,
   currency = '€'
 }: WasteByReasonChartProps) {
-  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card className="border-border">
@@ -83,7 +80,7 @@ export function WasteByReasonChart({
   return (
     <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">{t("waste.byReasonValue")}</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">Waste by Reason Value</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px]">
@@ -135,8 +132,8 @@ export function WasteByReasonChart({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteByReasonChart.reason')}</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteByReasonChart.amount')}</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">Reason</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

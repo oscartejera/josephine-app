@@ -25,7 +25,6 @@ import {
     Star,
     Loader2,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface ChecklistStep {
     id: string;
@@ -39,7 +38,6 @@ interface ChecklistStep {
 }
 
 export default function OnboardingChecklist() {
-  const { t } = useTranslation();
     const navigate = useNavigate();
     const { dataSource, locations, group } = useApp();
     const [steps, setSteps] = useState<ChecklistStep[]>([]);
@@ -79,9 +77,9 @@ export default function OnboardingChecklist() {
             setSteps([
                 {
                     id: 'pos',
-                    title: t('onboardingChecklist.connectPOS'),
+                    title: 'Conectar tu POS',
                     description: posConnected
-                        ? t('onboarding.posConectadoLosDatosDe')
+                        ? '✓ POS conectado — los datos de ventas fluyen automáticamente'
                         : 'Conecta Square o Lightspeed para que las ventas, pagos y productos se sincronicen',
                     icon: <Wifi className="h-5 w-5" />,
                     link: '/settings',
@@ -91,10 +89,10 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'employees',
-                    title: t('onboardingChecklist.createTeam'),
+                    title: 'Crear tu equipo',
                     description: hasEmployees
                         ? `✓ ${employeesRes.count} empleados activos`
-                        : t('onboarding.anadeEmpleadosConNombreRol'),
+                        : 'Añade empleados con nombre, rol y coste/hora para activar Labour Analytics',
                     icon: <Users className="h-5 w-5" />,
                     link: '/workforce',
                     category: 'team',
@@ -103,10 +101,10 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'schedule',
-                    title: t('onboardingChecklist.createSchedule'),
+                    title: 'Crear primer horario',
                     description: hasShifts
                         ? `✓ ${shiftsRes.count} turnos creados`
-                        : t('onboarding.creaTurnosParaTuEquipo'),
+                        : 'Crea turnos para tu equipo — Josephine calculará coste laboral vs ventas',
                     icon: <Calendar className="h-5 w-5" />,
                     link: '/scheduling',
                     category: 'team',
@@ -115,10 +113,10 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'suppliers',
-                    title: t('onboardingChecklist.configureSuppliers'),
+                    title: 'Configurar proveedores',
                     description: hasSuppliers
                         ? `✓ ${suppliersRes.count} proveedores registrados`
-                        : t('onboarding.addSuppliersForProcurement'),
+                        : 'Añade tus proveedores para activar Procurement (pedidos inteligentes)',
                     icon: <Package className="h-5 w-5" />,
                     link: '/procurement',
                     category: 'inventory',
@@ -127,10 +125,10 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'recipes',
-                    title: t('onboardingChecklist.createRecipes'),
+                    title: 'Crear recetas con costes',
                     description: hasRecipes
                         ? `✓ ${recipesRes.count} recetas configuradas`
-                        : t('onboarding.creaRecetasConIngredientesY'),
+                        : 'Crea recetas con ingredientes y costes para calcular COGS teórico y GP%',
                     icon: <ChefHat className="h-5 w-5" />,
                     link: '/inventory-setup/recipes',
                     category: 'inventory',
@@ -139,10 +137,10 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'inventory',
-                    title: t('onboardingChecklist.createInventory'),
+                    title: 'Crear catálogo de inventario',
                     description: hasInventory
-                        ? t('onboarding.itemsInCatalog', { count: inventoryRes.count })
-                        : t('onboarding.anadeLosProductosQueGestionas'),
+                        ? `✓ ${inventoryRes.count} artículos en catálogo`
+                        : 'Añade los productos que gestionas para activar Inventory Insights',
                     icon: <Package className="h-5 w-5" />,
                     link: '/inventory-setup/items',
                     category: 'inventory',
@@ -151,7 +149,7 @@ export default function OnboardingChecklist() {
                 },
                 {
                     id: 'budgets',
-                    title: t('onboardingChecklist.setBudgets'),
+                    title: 'Establecer presupuestos',
                     description: hasBudgets
                         ? `✓ Presupuestos configurados`
                         : 'Define metas de venta diarias/mensuales para activar Budget vs Actual',
@@ -174,9 +172,9 @@ export default function OnboardingChecklist() {
     const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
     const categories = [
-        { id: 'connection', label: t('onboarding.conexion'), color: 'text-blue-600' },
+        { id: 'connection', label: '🔌 Conexión', color: 'text-blue-600' },
         { id: 'team', label: '👥 Equipo', color: 'text-violet-600' },
-        { id: 'inventory', label: t('onboarding.inventario2'), color: 'text-emerald-600' },
+        { id: 'inventory', label: '📦 Inventario', color: 'text-emerald-600' },
         { id: 'intelligence', label: '📊 Inteligencia', color: 'text-amber-600' },
     ];
 
@@ -184,9 +182,9 @@ export default function OnboardingChecklist() {
         <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold">{t("onboarding.configTitle")}</h1>
+                <h1 className="text-2xl font-bold">Configuración de Josephine</h1>
                 <p className="text-muted-foreground mt-1">
-                    {t('onboardingChecklist.sigueEstosPasosParaActivar')}
+                    Sigue estos pasos para activar todas las funcionalidades de Josephine para tu restaurante.
                 </p>
             </div>
 
@@ -194,7 +192,7 @@ export default function OnboardingChecklist() {
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">{t("onboarding.configProgress")}</span>
+                        <span className="text-sm font-medium">Progreso de configuración</span>
                         <Badge variant={progressPercent === 100 ? 'default' : 'secondary'}>
                             {completedCount}/{totalCount} completados
                         </Badge>
@@ -207,7 +205,7 @@ export default function OnboardingChecklist() {
                     </div>
                     {progressPercent === 100 && (
                         <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-2 font-medium">
-                            {t('onboardingChecklist.todoConfiguradoJosephineEstaLista')}
+                            🎉 ¡Todo configurado! Josephine está lista para producción.
                         </p>
                     )}
                 </CardContent>
@@ -217,7 +215,7 @@ export default function OnboardingChecklist() {
             {loading ? (
                 <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground">{t("onboarding.verifyingConfig")}</span>
+                    <span className="ml-2 text-muted-foreground">Verificando configuración...</span>
                 </div>
             ) : (
                 categories.map(cat => {
@@ -281,7 +279,7 @@ export default function OnboardingChecklist() {
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-blue-500" />
-                        {t('onboardingChecklist.seActivanAutomaticamenteAlConectar')}
+                        Se activan automáticamente al conectar el POS
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -308,9 +306,9 @@ export default function OnboardingChecklist() {
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <Star className="h-5 w-5 text-amber-500" />
-                        {t('onboardingChecklist.proximamente')}
+                        Próximamente
                     </CardTitle>
-                    <CardDescription>{t("onboarding.pendingIntegrations")}</CardDescription>
+                    <CardDescription>Integraciones externas pendientes</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">

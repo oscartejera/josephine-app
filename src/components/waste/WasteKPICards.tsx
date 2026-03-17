@@ -1,7 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingDown, TrendingUp } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface WasteKPICardsProps {
   totalSales: number;
@@ -14,14 +13,12 @@ interface WasteKPICardsProps {
 const INDUSTRY_WASTE_BENCHMARK = 5.0; // Industry avg waste% without AI forecasting
 
 export function WasteKPICards({
-  
   totalSales,
   totalAccountedWaste,
   wastePercentOfSales,
   isLoading = false,
   currency = '€'
 }: WasteKPICardsProps) {
-  const { t } = useTranslation();
   const formatCurrency = (value: number) => {
     return `${currency}${value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
@@ -51,7 +48,7 @@ export function WasteKPICards({
       {/* Total Sales */}
       <Card className="border-border">
         <CardContent className="py-4 px-5">
-          <p className="text-sm text-muted-foreground mb-1">{t('common.ventasTotales')}</p>
+          <p className="text-sm text-muted-foreground mb-1">Ventas Totales</p>
           <p className="text-2xl font-semibold text-foreground">
             {formatCurrency(totalSales)}
           </p>
@@ -61,7 +58,7 @@ export function WasteKPICards({
       {/* Total Accounted Waste */}
       <Card className="border-border">
         <CardContent className="py-4 px-5">
-          <p className="text-sm text-muted-foreground mb-1">{t('waste.WasteKPICards.mermaRegistrada')}</p>
+          <p className="text-sm text-muted-foreground mb-1">Merma Registrada</p>
           <p className="text-2xl font-semibold text-foreground">
             {formatCurrency(totalAccountedWaste)}
           </p>
@@ -71,7 +68,7 @@ export function WasteKPICards({
       {/* % of Sales */}
       <Card className="border-border">
         <CardContent className="py-4 px-5">
-          <p className="text-sm text-muted-foreground mb-1">{t('waste.mermaVsVentas')}</p>
+          <p className="text-sm text-muted-foreground mb-1">% Merma vs Ventas</p>
           <p className="text-2xl font-semibold text-foreground">
             {wastePercentOfSales.toFixed(2)}%
           </p>
@@ -90,7 +87,7 @@ export function WasteKPICards({
             ) : (
               <TrendingUp className="h-3.5 w-3.5 text-amber-500" />
             )}
-            <p className="text-sm text-muted-foreground">{t('waste.WasteKPICards.ahorroPorForecast')}</p>
+            <p className="text-sm text-muted-foreground">Ahorro por Forecast</p>
           </div>
           <p className={`text-2xl font-semibold ${isSaving ? 'text-emerald-500' : 'text-amber-500'}`}>
             {isSaving ? '+' : ''}{formatCurrency(Math.abs(savingsAmount))}

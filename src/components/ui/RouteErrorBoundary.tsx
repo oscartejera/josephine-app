@@ -1,7 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   children: ReactNode;
@@ -31,7 +30,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4">
           <AlertTriangle className="h-12 w-12 text-destructive" />
-          <h2 className="text-xl font-semibold">{t("common.somethingWentWrong")}</h2>
+          <h2 className="text-xl font-semibold">Something went wrong</h2>
           <p className="text-muted-foreground text-center max-w-md">
             {this.state.error?.message || 'An unexpected error occurred.'}
           </p>
@@ -39,7 +38,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
             variant="outline"
             onClick={() => this.setState({ hasError: false, error: null })}
           >
-            {t('ui.RouteErrorBoundary.reintentar')}
+            Reintentar
           </Button>
         </div>
       );

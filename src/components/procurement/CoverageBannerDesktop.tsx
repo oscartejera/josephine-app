@@ -1,6 +1,5 @@
 import { CheckCircle, Calendar, TrendingUp } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 
 interface CoverageBannerDesktopProps {
   coverageEndDate: Date;
@@ -9,14 +8,12 @@ interface CoverageBannerDesktopProps {
   deliveryDate?: Date;
 }
 
-export function CoverageBannerDesktop({
-  
+export function CoverageBannerDesktop({ 
   coverageEndDate, 
   hasItems, 
   orderDate = new Date(),
   deliveryDate,
 }: CoverageBannerDesktopProps) {
-  const { t } = useTranslation();
   if (!hasItems) return null;
 
   const coverageDays = differenceInDays(coverageEndDate, orderDate);
@@ -36,7 +33,7 @@ export function CoverageBannerDesktop({
               <span className="text-success">{format(coverageEndDate, 'EEEE d MMMM')}</span>
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {t('procurement.CoverageBannerDesktop.basedOnYourForecastDemand')}
+              Based on your forecast demand, recipe usage, and current stock levels
             </p>
           </div>
         </div>
@@ -44,7 +41,7 @@ export function CoverageBannerDesktop({
           <Calendar className="h-5 w-5 text-success" />
           <div className="text-right">
             <p className="text-2xl font-bold text-success">{coverageDays}</p>
-            <p className="text-xs text-muted-foreground">{t('procurement.CoverageBannerDesktop.daysCovered')}</p>
+            <p className="text-xs text-muted-foreground">days covered</p>
           </div>
         </div>
       </div>

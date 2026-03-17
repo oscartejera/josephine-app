@@ -173,7 +173,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
               <ChefHat className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-lg">{t('layout.AppSidebar.josephine')}</span>
+            <span className="font-display font-bold text-lg">Josephine</span>
           </div>
         )}
         <div className="flex items-center gap-1">
@@ -329,7 +329,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                   <Package className="h-4 w-4 shrink-0" />
                   {!collapsed && (
                     <>
-                      <span className="flex-1 text-left">{t('common.gestionDeCoste')}</span>
+                      <span className="flex-1 text-left">Gestión de Coste</span>
                       <ChevronDown className={cn(
                         "h-4 w-4 shrink-0 transition-transform duration-200",
                         costExpanded && "rotate-180"
@@ -378,7 +378,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                     onClick={() => navigate('/inventory-setup/menu-items')}
                   >
                     <UtensilsCrossed className="h-4 w-4 shrink-0" />
-                    <span>{t('common.cartaDelMenu')}</span>
+                    <span>Carta del Menú</span>
                   </Button>
                 )}
 
@@ -470,7 +470,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               onClick={() => navigate('/settings/import')}
             >
               <Upload className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t("sidebar.importData")}</span>}
+              {!collapsed && <span>Importar Datos</span>}
             </Button>
           )}
 
@@ -539,7 +539,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               onClick={() => navigate('/settings/billing')}
             >
               <CreditCard className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t('common.facturacion')}</span>}
+              {!collapsed && <span>Facturación</span>}
             </Button>
           )}
         </nav>

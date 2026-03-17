@@ -1,7 +1,6 @@
 import { Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useTranslation } from 'react-i18next';
 
 interface ScheduleToastProps {
   isVisible: boolean;
@@ -11,7 +10,6 @@ interface ScheduleToastProps {
 }
 
 export function ScheduleToast({ isVisible, hoursAdded, onAccept, onUndo }: ScheduleToastProps) {
-  const { t } = useTranslation();
   return (
     <AnimatePresence>
       {isVisible && (
@@ -34,7 +32,7 @@ export function ScheduleToast({ isVisible, hoursAdded, onAccept, onUndo }: Sched
                   {hoursAdded} hours added
                 </h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t('scheduling.ScheduleToast.adjustYourScheduleAsNeeded')}
+                  Adjust your schedule as needed. The more you tweak, the smarter our engine gets.
                 </p>
                 
                 {/* Actions */}
@@ -43,13 +41,13 @@ export function ScheduleToast({ isVisible, hoursAdded, onAccept, onUndo }: Sched
                     onClick={onAccept}
                     className="bg-primary hover:bg-primary/90"
                   >
-                    {t('scheduling.ScheduleToast.accept')}
+                    Accept
                   </Button>
                   <Button
                     variant="outline"
                     onClick={onUndo}
                   >
-                    {t('scheduling.ScheduleToast.undo')}
+                    Undo
                   </Button>
                 </div>
               </div>

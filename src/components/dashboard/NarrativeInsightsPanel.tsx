@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAINarratives } from '@/hooks/useAINarratives';
 import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
-import { useTranslation } from 'react-i18next';
 
 interface NarrativeInsightsPanelProps {
   metrics: DashboardMetricsForAI | null;
@@ -14,11 +13,14 @@ interface NarrativeInsightsPanelProps {
 
 function renderMarkdown(text: string): string {
   return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>{t('dashboard.NarrativeInsightsPanel.replaceng')}<br/>{t('dashboard.NarrativeInsightsPanel.replacenG')}<br/>{t('dashboard.NarrativeInsightsPanel.replacenng')}<br/><br/>{t('dashboard.NarrativeInsightsPanel.replaceng1')}<br/>');
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n•/g, '<br/>•')
+    .replace(/\n- /g, '<br/>• ')
+    .replace(/\n\n/g, '<br/><br/>')
+    .replace(/\n/g, '<br/>');
 }
 
 export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsightsPanelProps) {
-  const { t } = useTranslation();
   const { narrative, isLoading, error, generate } = useAINarratives();
   const hasGenerated = useRef(false);
 
@@ -43,7 +45,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-violet-500" />
-            {t('dashboard.NarrativeInsightsPanel.josephineDice')}
+            Josephine dice...
           </CardTitle>
           <Button
             variant="ghost"
@@ -62,7 +64,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
         {isLoading && !narrative && (
           <div className="flex items-center gap-3 py-6">
             <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
-            <span className="text-sm text-muted-foreground">{t('dashboard.NarrativeInsightsPanel.analizandoTusOperaciones')}</span>
+            <span className="text-sm text-muted-foreground">Analizando tus operaciones...</span>
           </div>
         )}
 
@@ -73,7 +75,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
             <div>
               <p className="text-sm text-destructive">{error}</p>
               <Button variant="link" size="sm" className="px-0 h-auto text-xs" onClick={handleRefresh}>
-                {t('dashboard.NarrativeInsightsPanel.reintentar')}
+                Reintentar
               </Button>
             </div>
           </div>
@@ -95,7 +97,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
         {/* Empty state - no metrics yet */}
         {!metrics && !isLoading && !error && (
           <p className="text-sm text-muted-foreground py-4">
-            {t('dashboard.NarrativeInsightsPanel.cargandoDatosDelDashboard')}
+            Cargando datos del dashboard...
           </p>
         )}
       </CardContent>

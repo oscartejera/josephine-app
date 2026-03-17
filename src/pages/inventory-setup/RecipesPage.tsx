@@ -12,12 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Search, ChefHat, Trash2, Pencil } from 'lucide-react';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 const CATEGORIES = ['Main', 'Starter', 'Dessert', 'Beverage', 'Sauce', 'Prep', 'Side', 'Other'];
 
 export default function RecipesPage() {
-  const { t } = useTranslation();
     const navigate = useNavigate();
     const { recipes, isLoading, createRecipe, deleteRecipe } = useRecipes();
     const { toast } = useToast();
@@ -43,7 +41,7 @@ export default function RecipesPage() {
 
     const handleCreate = async () => {
         if (!newRecipe.menu_item_name.trim()) {
-            toast({ variant: 'destructive', title: t("common.error"), description: 'El nombre es obligatorio' });
+            toast({ variant: 'destructive', title: 'Error', description: 'El nombre es obligatorio' });
             return;
         }
         try {
@@ -55,22 +53,22 @@ export default function RecipesPage() {
                 yield_unit: newRecipe.yield_unit,
                 is_sub_recipe: newRecipe.is_sub_recipe,
             });
-            toast({ title: 'Creado', description: t('inventory.recipeCreated', { name: newRecipe.menu_item_name }) });
+            toast({ title: 'Creado', description: `Receta "${newRecipe.menu_item_name}" creada` });
             setShowCreateDialog(false);
             setNewRecipe({ menu_item_name: '', selling_price: '', category: 'Main', yield_qty: '1', yield_unit: 'portion', is_sub_recipe: false });
             navigate(`/inventory-setup/recipes/${result.id}`);
         } catch (err: any) {
-            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
+            toast({ variant: 'destructive', title: 'Error', description: err.message });
         }
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(t('inventory.deleteRecipeConfirm', { name }))) return;
+        if (!confirm(`¿Eliminar la receta "${name}"?`)) return;
         try {
             await deleteRecipe.mutateAsync(id);
-            toast({ title: 'Eliminado', description: t('inventory.recipeDeleted', { name }) });
+            toast({ title: 'Eliminado', description: `Receta "${name}" eliminada` });
         } catch (err: any) {
-            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
+            toast({ variant: 'destructive', title: 'Error', description: err.message });
         }
     };
 
@@ -87,12 +85,14 @@ export default function RecipesPage() {
                 <div>
                     <h1 className="text-2xl font-display font-bold flex items-center gap-2">
                         <ChefHat className="h-6 w-6" />
-                        {t('inventory-setup.RecipesPage.escandallos')}
+                        Escandallos
                     </h1>
-                    <p className="text-muted-foreground">{t('inventory.recetasSubrecetasYFoodCost')}</p>
+                    <p className="text-muted-foreground">Recetas, sub-recetas y food cost — gestión profesional</p>
                 </div>
                 <Button onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="h-4 w-4 mr-2" />{t('inventory.nuevaReceta')}</Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nueva Receta
+                </Button>
             </div>
 
             {/* Filters */}
@@ -100,7 +100,7 @@ export default function RecipesPage() {
                 <div className="relative flex-1 min-w-[200px] max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder={t('recipes.searchPlaceholder')}
+                        placeholder="Buscar recetas..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
@@ -108,10 +108,10 @@ export default function RecipesPage() {
                 </div>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder={t('recipes.category')} />
+                        <SelectValue placeholder="Categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">{t('inventory-setup.RecipesPage.todas')}</SelectItem>
+                        <SelectItem value="all">Todas</SelectItem>
                         {CATEGORIES.map(c => (
                             <SelectItem key={c} value={c}>{c}</SelectItem>
                         ))}
@@ -119,7 +119,7 @@ export default function RecipesPage() {
                 </Select>
                 <div className="flex items-center gap-2">
                     <Switch checked={showSubRecipes} onCheckedChange={setShowSubRecipes} id="show-sub" />
-                    <Label htmlFor="show-sub" className="text-sm">{t('inventory-setup.RecipesPage.mostrarSubrecetas')}</Label>
+                    <Label htmlFor="show-sub" className="text-sm">Mostrar sub-recetas</Label>
                 </div>
             </div>
 
@@ -129,13 +129,13 @@ export default function RecipesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>{t('onboarding.nombre')}</TableHead>
-                                <TableHead>{t('inventory.categoria')}</TableHead>
-                                <TableHead className="text-center">{t('inventory-setup.RecipesPage.ingredientes')}</TableHead>
-                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.foodCost')}</TableHead>
-                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.foodCost1')}</TableHead>
-                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.pvp')}</TableHead>
-                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.yield')}</TableHead>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>Categoría</TableHead>
+                                <TableHead className="text-center">Ingredientes</TableHead>
+                                <TableHead className="text-right">Food Cost</TableHead>
+                                <TableHead className="text-right">Food Cost %</TableHead>
+                                <TableHead className="text-right">PVP</TableHead>
+                                <TableHead className="text-right">Yield</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -143,16 +143,16 @@ export default function RecipesPage() {
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                                        {t('inventory-setup.RecipesPage.cargandoRecetas')}
+                                        Cargando recetas...
                                     </TableCell>
                                 </TableRow>
-                            {t('inventory-setup.RecipesPage.filteredlength0')}
+                            ) : filtered.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                                         <ChefHat className="h-10 w-10 mx-auto mb-3 opacity-30" />
                                         <p>No hay recetas{search ? ` que coincidan con "${search}"` : ''}</p>
                                         <Button variant="link" onClick={() => setShowCreateDialog(true)}>
-                                            {t('inventory-setup.RecipesPage.crearPrimeraReceta')}
+                                            Crear primera receta
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -167,7 +167,7 @@ export default function RecipesPage() {
                                             <div className="flex items-center gap-2">
                                                 {recipe.menu_item_name}
                                                 {recipe.is_sub_recipe && (
-                                                    <Badge variant="outline" className="text-xs">{t('inventory-setup.RecipesPage.subreceta')}</Badge>
+                                                    <Badge variant="outline" className="text-xs">Sub-receta</Badge>
                                                 )}
                                             </div>
                                         </TableCell>
@@ -216,20 +216,20 @@ export default function RecipesPage() {
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('inventory.nuevaReceta')}</DialogTitle>
+                        <DialogTitle>Nueva Receta</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
-                            <Label>{t("recipes.dishName")}</Label>
+                            <Label>Nombre del plato *</Label>
                             <Input
-                                placeholder={t('recipes.namePlaceholder')}
+                                placeholder="Ej: Pasta Carbonara"
                                 value={newRecipe.menu_item_name}
                                 onChange={e => setNewRecipe({ ...newRecipe, menu_item_name: e.target.value })}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>{t('inventory.categoria')}</Label>
+                                <Label>Categoría</Label>
                                 <Select value={newRecipe.category} onValueChange={v => setNewRecipe({ ...newRecipe, category: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
@@ -238,7 +238,7 @@ export default function RecipesPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('inventory-setup.RecipesPage.pvp')}</Label>
+                                <Label>PVP (€)</Label>
                                 <Input
                                     type="number" step="0.01" placeholder="12.50"
                                     value={newRecipe.selling_price}
@@ -248,7 +248,7 @@ export default function RecipesPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>{t('inventory.rendimientoQty')}</Label>
+                                <Label>Rendimiento (qty)</Label>
                                 <Input
                                     type="number" step="0.1" placeholder="1"
                                     value={newRecipe.yield_qty}
@@ -256,14 +256,14 @@ export default function RecipesPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>{t("recipes.yieldUnit")}</Label>
+                                <Label>Unidad de rendimiento</Label>
                                 <Select value={newRecipe.yield_unit} onValueChange={v => setNewRecipe({ ...newRecipe, yield_unit: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="portion">{t('inventory.porcion')}</SelectItem>
+                                        <SelectItem value="portion">Porción</SelectItem>
                                         <SelectItem value="kg">kg</SelectItem>
-                                        <SelectItem value="L">{t('inventory-setup.RecipesPage.litro')}</SelectItem>
-                                        <SelectItem value="units">{t('inventory-setup.RecipesPage.unidades')}</SelectItem>
+                                        <SelectItem value="L">Litro</SelectItem>
+                                        <SelectItem value="units">Unidades</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -274,13 +274,13 @@ export default function RecipesPage() {
                                 onCheckedChange={v => setNewRecipe({ ...newRecipe, is_sub_recipe: v })}
                                 id="is-sub"
                             />
-                            <Label htmlFor="is-sub">{t('inventory-setup.RecipesPage.esSubrecetaPuedeUsarseComo')}</Label>
+                            <Label htmlFor="is-sub">Es sub-receta (puede usarse como ingrediente de otra receta)</Label>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowCreateDialog(false)}>{t("common.cancel")}</Button>
+                        <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
                         <Button onClick={handleCreate} disabled={createRecipe.isPending}>
-                            {createRecipe.isPending ? 'Creando...' : t('inventory.crearReceta')}
+                            {createRecipe.isPending ? 'Creando...' : 'Crear Receta'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

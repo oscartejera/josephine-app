@@ -8,13 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plug2, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 const availableIntegrations = [
   {
     id: 'square',
     name: 'Square POS',
-    description: t('integrations.sincronizaPedidosCatalogoYPagos'),
+    description: 'Sincroniza pedidos, catálogo y pagos desde Square',
     icon: '🔷',
     status: 'available',
     path: '/integrations/square',
@@ -22,7 +21,7 @@ const availableIntegrations = [
   {
     id: 'lightspeed',
     name: 'Lightspeed Restaurant',
-    description: t('integrations.sincronizaVentasMenuYEmpleados'),
+    description: 'Sincroniza ventas, menú y empleados desde Lightspeed POS',
     icon: '⚡',
     status: 'available',
     path: '/integrations/lightspeed',
@@ -30,7 +29,7 @@ const availableIntegrations = [
   {
     id: 'oracle',
     name: 'Oracle Simphony',
-    description: t('integrations.proximamenteIntegracionConOracleSimphony'),
+    description: 'Próximamente - Integración con Oracle Simphony POS',
     icon: '🏛️',
     status: 'coming_soon',
     path: null,
@@ -38,7 +37,7 @@ const availableIntegrations = [
   {
     id: 'toast',
     name: 'Toast POS',
-    description: t('integrations.proximamenteIntegracionConToast'),
+    description: 'Próximamente - Integración con Toast',
     icon: '🍞',
     status: 'coming_soon',
     path: null,
@@ -46,7 +45,6 @@ const availableIntegrations = [
 ];
 
 export default function Integrations() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -54,10 +52,10 @@ export default function Integrations() {
       <div>
         <h1 className="text-2xl font-display font-bold flex items-center gap-2">
           <Plug2 className="h-6 w-6" />
-          {t('integrations.integraciones')}
+          Integraciones
         </h1>
         <p className="text-muted-foreground">
-          {t('integrations.conectaJosephineConSistemasPos')}
+          Conecta Josephine con sistemas POS externos
         </p>
       </div>
 
@@ -81,7 +79,7 @@ export default function Integrations() {
                 {integration.status === 'available' ? (
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 ) : (
-                  <Badge variant="secondary">{t('integrations.proximamente')}</Badge>
+                  <Badge variant="secondary">Próximamente</Badge>
                 )}
               </div>
             </CardHeader>
@@ -91,20 +89,22 @@ export default function Integrations() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('integrations.queSonLasIntegraciones')}</CardTitle>
+          <CardTitle>¿Qué son las Integraciones?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            {t('integrations.lasIntegracionesPermitenAJosephine')}
+            Las integraciones permiten a Josephine conectarse con sistemas POS externos
+            para sincronizar automáticamente:
           </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
-            <li>{t("integrations.productCatalog")}</li>
-            <li>{t("integrations.ordersAndTickets")}</li>
-            <li>{t("integrations.paymentsAndTransactions")}</li>
-            <li>{t("integrations.locationInfo")}</li>
+            <li>Catálogo de productos y menú</li>
+            <li>Pedidos y tickets</li>
+            <li>Pagos y transacciones</li>
+            <li>Información de ubicaciones</li>
           </ul>
           <p>
-            {t('integrations.losDatosSeNormalizanA')}
+            Los datos se normalizan a un modelo canónico (CDM) que permite análisis
+            unificado independientemente del sistema POS que uses.
           </p>
         </CardContent>
       </Card>

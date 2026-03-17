@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
 
 interface Notification {
     id: string;
@@ -42,11 +41,16 @@ interface Notification {
 }
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-    announcement: <Megaphone className="h-4 w-4 text-blue-500" />{t('ui.NotificationCenter.schedule')} <Calendar className="h-4 w-4 text-violet-500" />{t('ui.NotificationCenter.timeoff')} <Clock className="h-4 w-4 text-amber-500" />{t('ui.NotificationCenter.sales')} <DollarSign className="h-4 w-4 text-emerald-500" />{t('ui.NotificationCenter.alert')} <AlertTriangle className="h-4 w-4 text-red-500" />{t('ui.NotificationCenter.info')} <Info className="h-4 w-4 text-muted-foreground" />{t('ui.NotificationCenter.review')} <MessageSquare className="h-4 w-4 text-orange-500" />,
+    announcement: <Megaphone className="h-4 w-4 text-blue-500" />,
+    schedule: <Calendar className="h-4 w-4 text-violet-500" />,
+    timeoff: <Clock className="h-4 w-4 text-amber-500" />,
+    sales: <DollarSign className="h-4 w-4 text-emerald-500" />,
+    alert: <AlertTriangle className="h-4 w-4 text-red-500" />,
+    info: <Info className="h-4 w-4 text-muted-foreground" />,
+    review: <MessageSquare className="h-4 w-4 text-orange-500" />,
 };
 
 export function NotificationCenter() {
-  const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -130,7 +134,7 @@ export function NotificationCenter() {
             <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <h3 className="font-semibold text-sm">{t('ui.NotificationCenter.notificaciones')}</h3>
+                    <h3 className="font-semibold text-sm">Notificaciones</h3>
                     {unreadCount > 0 && (
                         <Button
                             variant="ghost"
@@ -139,7 +143,7 @@ export function NotificationCenter() {
                             onClick={() => markAllRead.mutate()}
                         >
                             <CheckCheck className="h-3 w-3" />
-                            {t('ui.NotificationCenter.marcarTodas')}
+                            Marcar todas
                         </Button>
                     )}
                 </div>
@@ -149,7 +153,7 @@ export function NotificationCenter() {
                     {notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                             <Bell className="h-8 w-8 mb-2 opacity-30" />
-                            <p className="text-sm">{t("common.noNotifications")}</p>
+                            <p className="text-sm">Sin notificaciones</p>
                         </div>
                     ) : (
                         notifications.map(notification => (

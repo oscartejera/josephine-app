@@ -29,7 +29,6 @@ import {
     CheckCircle,
     AlertCircle,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 // ── Types ─────────────────────────────────────────────────────────
 interface Employee {
@@ -54,8 +53,28 @@ const SUCCESS_DISPLAY_MS = 3_000; // Show success for 3 seconds
 const CAMERA_TIMEOUT_MS = 15_000; // 15 seconds max for camera
 
 export default function KioskMode() {
-  const { t } = useTranslation();
-    const { locationId } = useParams<{ locationId: string }>{t('kioskMode.constNavigateUsenavigateStateConst')}<Employee | null>{t('kioskMode.nullConstActiveclockinSetactiveclockinUs')}<string | null>{t('kioskMode.nullConstShowcameraSetshowcameraUsestate')}<Blob | null>{t('kioskMode.nullConstPhotopreviewSetphotopreviewUses')}<string | null>{t('kioskMode.nullConstLastactionSetlastactionUsestate')}<ClockAction | null>{t('kioskMode.nullConstCurrenttimeSetcurrenttimeUsesta')}<string | null>{t('kioskMode.nullRefsConstLocktimerrefUseref')}<NodeJS.Timeout | null>{t('kioskMode.nullConstVideorefUseref')}<HTMLVideoElement | null>{t('kioskMode.nullConstCanvasrefUseref')}<HTMLCanvasElement | null>{t('kioskMode.nullConstStreamrefUseref')}<MediaStream | null>(null);
+    const { locationId } = useParams<{ locationId: string }>();
+    const navigate = useNavigate();
+
+    // ── State ─────────────────────────────────────────────────────
+    const [locked, setLocked] = useState(true);
+    const [pin, setPin] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [employee, setEmployee] = useState<Employee | null>(null);
+    const [activeClockIn, setActiveClockIn] = useState<string | null>(null);
+    const [showCamera, setShowCamera] = useState(false);
+    const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [lastAction, setLastAction] = useState<ClockAction | null>(null);
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [locationName, setLocationName] = useState('');
+    const [error, setError] = useState<string | null>(null);
+
+    // ── Refs ──────────────────────────────────────────────────────
+    const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
 
     // ── Clock ────────────────────────────────────────────────────
     useEffect(() => {
@@ -123,7 +142,7 @@ export default function KioskMode() {
             setShowCamera(true);
         } catch (err) {
             console.error('Camera error:', err);
-            setError(t('workforce.cameraAccessDenied'));
+            setError('No se pudo acceder a la cámara. Permite el acceso para fichar.');
         }
     };
 
@@ -204,7 +223,7 @@ export default function KioskMode() {
                 .single() as any);
 
             if (err || !data) {
-                setError(t('workforce.pinNotRecognized'));
+                setError('PIN no reconocido. Inténtalo de nuevo.');
                 setPin('');
                 setLoading(false);
                 return;
@@ -229,7 +248,7 @@ export default function KioskMode() {
                 await startCamera();
             }
         } catch (e) {
-            setError(t('pos.errorAlBuscarEmpleado'));
+            setError('Error al buscar empleado');
             setPin('');
         } finally {
             setLoading(false);
@@ -247,7 +266,7 @@ export default function KioskMode() {
             // Capture photo (mandatory)
             const photo = await capturePhoto();
             if (!photo) {
-                setError(t('workforce.photoRequiredForClock'));
+                setError('Debes tomar una foto para fichar. Permite el acceso a la cámara.');
                 setLoading(false);
                 return;
             }
@@ -292,7 +311,7 @@ export default function KioskMode() {
                 setLastAction(null);
             }, SUCCESS_DISPLAY_MS);
         } catch (e: any) {
-            setError(t('pos.errorAlFicharEntrada') + (e.message || 'desconocido'));
+            setError('Error al fichar entrada: ' + (e.message || 'desconocido'));
         } finally {
             setLoading(false);
         }
@@ -324,7 +343,7 @@ export default function KioskMode() {
                 setLastAction(null);
             }, SUCCESS_DISPLAY_MS);
         } catch (e: any) {
-            setError(t('pos.errorAlFicharSalida') + (e.message || 'desconocido'));
+            setError('Error al fichar salida: ' + (e.message || 'desconocido'));
         } finally {
             setLoading(false);
         }
@@ -354,7 +373,7 @@ export default function KioskMode() {
                         </p>
                     </div>
                     <p className="text-slate-500 text-lg">{locationName || 'Josephine'}</p>
-                    <p className="text-slate-600 text-sm mt-8">{t("kiosk.tapToUnlock")}</p>
+                    <p className="text-slate-600 text-sm mt-8">Toca para desbloquear</p>
                 </div>
             </div>
         );
@@ -381,7 +400,7 @@ export default function KioskMode() {
                     {lastAction.photoUrl && (
                         <img
                             src={lastAction.photoUrl}
-                            alt={t("workforce.clockPhoto")}
+                            alt="Foto de fichaje"
                             className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-emerald-500/30"
                         />
                     )}
@@ -489,14 +508,14 @@ export default function KioskMode() {
                                 onClick={handleClear}
                                 className="text-slate-500 hover:text-white"
                             >
-                                {t('kioskMode.cancelar')}
+                                Cancelar
                             </Button>
                         </div>
                     ) : (
                         <div className="text-center space-y-4">
                             <Unlock className="h-16 w-16 text-slate-600 mx-auto" />
                             <p className="text-xl text-slate-400">
-                                {t('kioskMode.introduceTuPinDe6')}
+                                Introduce tu PIN de 6 dígitos
                             </p>
                             {error && (
                                 <div className="flex items-center gap-2 text-red-400 justify-center">

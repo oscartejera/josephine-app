@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface StaffingRecommendationProps {
     locationId: string | null;
@@ -49,7 +48,7 @@ interface StaffingResult {
 const STATUS_CONFIG = {
     overstaffed: { text: 'Exceso', bg: 'bg-amber-100', color: 'text-amber-700', icon: '⬆' },
     understaffed: { text: 'Falta', bg: 'bg-red-100', color: 'text-red-700', icon: '⬇' },
-    optimal: { text: t('team.optimo'), bg: 'bg-emerald-100', color: 'text-emerald-700', icon: '✓' },
+    optimal: { text: 'Óptimo', bg: 'bg-emerald-100', color: 'text-emerald-700', icon: '✓' },
     no_schedule: { text: 'Sin horario', bg: 'bg-gray-100', color: 'text-gray-500', icon: '—' },
 };
 
@@ -58,7 +57,6 @@ function formatCurrency(v: number) {
 }
 
 export function StaffingRecommendation({ locationId, dateFrom, dateTo }: StaffingRecommendationProps) {
-  const { t } = useTranslation();
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const from = dateFrom || new Date();
@@ -84,7 +82,7 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
     if (isLoading) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('team.recomendacionDePersonal2')}</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">Recomendación de Personal</CardTitle></CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         {[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />)}
@@ -97,10 +95,10 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
     if (!data || data.days.length === 0) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('team.recomendacionDePersonal2')}</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">Recomendación de Personal</CardTitle></CardHeader>
                 <CardContent>
                     <p className="text-sm text-gray-500 text-center py-4">
-                        {!locationId ? t('payroll.seleccionaUnaUbicacion') : t('team.noHayPrevisionDeVentas')}
+                        {!locationId ? 'Selecciona una ubicación' : 'No hay previsión de ventas disponible'}
                     </p>
                 </CardContent>
             </Card>
@@ -112,7 +110,7 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">{t('team.recomendacionDePersonal')}</CardTitle>
+                        <CardTitle className="text-base font-semibold">📊 Recomendación de Personal</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">
                             SPLH objetivo: €{data.target_splh} • Turno medio: {data.avg_shift_hours}h
                         </p>
@@ -134,13 +132,13 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
             <CardContent>
                 {/* Table header */}
                 <div className="grid grid-cols-7 gap-2 mb-2 text-[10px] font-semibold text-gray-500 uppercase">
-                    <span>{t('team.dia')}</span>
-                    <span className="text-right">{t('team.prevision')}</span>
-                    <span className="text-right">{t('labour.StaffingRecommendation.horasRec')}</span>
-                    <span className="text-right">{t('labour.StaffingRecommendation.personalRec')}</span>
-                    <span className="text-right">{t('labour.StaffingRecommendation.horasProg')}</span>
-                    <span className="text-right">{t('labour.StaffingRecommendation.delta')}</span>
-                    <span className="text-center">{t('team.estado')}</span>
+                    <span>Día</span>
+                    <span className="text-right">Previsión</span>
+                    <span className="text-right">Horas rec.</span>
+                    <span className="text-right">Personal rec.</span>
+                    <span className="text-right">Horas prog.</span>
+                    <span className="text-right">Delta</span>
+                    <span className="text-center">Estado</span>
                 </div>
 
                 {/* Day rows */}
@@ -165,7 +163,7 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
                                     {day.scheduled_hours > 0 ? `${day.scheduled_hours}h` : '—'}
                                 </span>
                                 <span className={cn("text-right font-medium",
-                                    day.delta_hours > {t('labour.StaffingRecommendation.0Textamber600Daydeltahours')} < 0 ? 'text-red-600' : 'text-emerald-600'
+                                    day.delta_hours > 0 ? 'text-amber-600' : day.delta_hours < 0 ? 'text-red-600' : 'text-emerald-600'
                                 )}>
                                     {day.delta_hours > 0 ? '+' : ''}{day.delta_hours.toFixed(1)}h
                                 </span>
@@ -179,8 +177,8 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
 
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                    <span>{t('team.basadoEnPrevisionDeVentas')}</span>
-                    <span>{t('labour.StaffingRecommendation.objetivosConfigurablesEnAjustesReglas')}</span>
+                    <span>Basado en previsión de ventas × SPLH objetivo</span>
+                    <span>Objetivos configurables en Ajustes → Reglas Laborales</span>
                 </div>
             </CardContent>
         </Card>

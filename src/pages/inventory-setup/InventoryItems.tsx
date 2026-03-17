@@ -36,14 +36,23 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, MoreVertical, ArrowUpDown } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 const ITEMS_PER_PAGE = 50;
 
 export default function InventoryItems() {
-  const { t } = useTranslation();
   const { locations } = useApp();
-  const [items, setItems] = useState<any[]>{t('inventory-setup.InventoryItems.constLoadingSetloadingUsestatetrueConst')}<string[]>{t('inventory-setup.InventoryItems.constCategoriesSetcategoriesUsestate')}<{ id: string; name: string }[]>{t('inventory-setup.InventoryItems.constSuppliersSetsuppliersUsestate')}<{ id: string; name: string }[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSupplier, setSelectedSupplier] = useState('all');
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
 
   // Load items from Supabase
   useEffect(() => {
@@ -141,7 +150,7 @@ export default function InventoryItems() {
 
   // Export to PDF
   const handleExportPDF = () => {
-    toast.info(t('inventoryItems.toastGeneratingPdf'));
+    toast.info('Generating PDF...');
 
     // Simple CSV export for now (PDF library would add ~200KB)
     const headers = ['Name', 'Type', 'Category', 'Supplier', 'Order Unit', 'Price', 'VAT Rate'];
@@ -168,7 +177,7 @@ export default function InventoryItems() {
     a.click();
     URL.revokeObjectURL(url);
 
-    toast.success(t('inventoryItems.toastExported'));
+    toast.success('Exported successfully');
   };
 
   return (
@@ -177,15 +186,15 @@ export default function InventoryItems() {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-muted-foreground mb-1">
-            {t('inventory-setup.InventoryItems.inventorySetupItems')}
+            Inventory Setup / Items
           </div>
-          <h1 className="text-3xl font-bold">{t('inventory-setup.InventoryItems.inventoryItems')}</h1>
+          <h1 className="text-3xl font-bold">Inventory Items</h1>
         </div>
 
         <div className="flex items-center gap-2">
           <Button onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            {t('inventory-setup.InventoryItems.addItem')}
+            Add item
           </Button>
 
           <DropdownMenu>
@@ -197,7 +206,7 @@ export default function InventoryItems() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportPDF}>
                 <FileDown className="h-4 w-4 mr-2" />
-                {t('inventory-setup.InventoryItems.exportToCsv')}
+                Export to CSV
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -209,7 +218,7 @@ export default function InventoryItems() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('inventoryItems.searchPlaceholder')}
+            placeholder="Search by name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -218,10 +227,10 @@ export default function InventoryItems() {
 
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger>
-            <SelectValue placeholder={t('inventoryItems.category')} />
+            <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('inventory-setup.InventoryItems.allCategories')}</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
             {categories.map(c => (
               <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
             ))}
@@ -230,10 +239,10 @@ export default function InventoryItems() {
 
         <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
           <SelectTrigger>
-            <SelectValue placeholder={t('inventoryItems.supplier')} />
+            <SelectValue placeholder="Supplier" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('inventory-setup.InventoryItems.allSuppliers')}</SelectItem>
+            <SelectItem value="all">All Suppliers</SelectItem>
             {suppliers.map(s => (
               <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
             ))}
@@ -242,10 +251,10 @@ export default function InventoryItems() {
 
         <Select value={selectedLocation} onValueChange={setSelectedLocation}>
           <SelectTrigger>
-            <SelectValue placeholder={t('inventoryItems.allLocations')} />
+            <SelectValue placeholder="All Locations" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('inventory-setup.InventoryItems.allLocations')}</SelectItem>
+            <SelectItem value="all">All Locations</SelectItem>
             {locations.map(l => (
               <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
             ))}
@@ -266,15 +275,15 @@ export default function InventoryItems() {
               </TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                  {t('inventory-setup.InventoryItems.name')} <ArrowUpDown className="h-3 w-3" />
+                  Name <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
-              <TableHead>{t('inventory-setup.InventoryItems.type')}</TableHead>
-              <TableHead>{t('inventory-setup.InventoryItems.category')}</TableHead>
-              <TableHead>{t('inventory-setup.InventoryItems.mainSupplier')}</TableHead>
-              <TableHead>{t('inventory-setup.InventoryItems.orderUnit')}</TableHead>
-              <TableHead className="text-right">{t('inventory-setup.InventoryItems.price')}</TableHead>
-              <TableHead className="text-right">{t('inventory-setup.InventoryItems.vatRate')}</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Main Supplier</TableHead>
+              <TableHead>Order Unit</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead className="text-right">VAT Rate</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

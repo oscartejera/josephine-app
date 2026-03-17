@@ -11,7 +11,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSetupCompleteness } from '@/hooks/useSetupCompleteness';
-import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
   id: string;
@@ -26,7 +25,6 @@ interface MenuItem {
 }
 
 export default function MenuItemsPage() {
-  const { t } = useTranslation();
   const { profile } = useAuth();
   const orgId = profile?.group_id;
   const [search, setSearch] = useState('');
@@ -119,12 +117,12 @@ export default function MenuItemsPage() {
 
   const getStatusBadge = (item: MenuItem) => {
     if (!item.has_recipe) {
-      return <Badge variant="destructive" className="text-[10px]">{t("menu.noRecipe")}</Badge>;
+      return <Badge variant="destructive" className="text-[10px]">Sin escandallo</Badge>;
     }
     if (item.ingredient_count === 0) {
-      return <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px]">{t("menu.noIngredients")}</Badge>;
+      return <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px]">Sin ingredientes</Badge>;
     }
-    return <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px]">{t('inventory-setup.MenuItemsPage.completo')}</Badge>;
+    return <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px]">Completo</Badge>;
   };
 
   return (
@@ -133,10 +131,10 @@ export default function MenuItemsPage() {
       <div>
         <div className="flex items-center gap-2">
           <UtensilsCrossed className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">{t('common.cartaDelMenu')}</h1>
+          <h1 className="text-2xl font-bold">Carta del Menú</h1>
         </div>
         <p className="mt-1 text-muted-foreground">
-          {t('inventory-setup.MenuItemsPage.todosTusPlatosDelPos')}
+          Todos tus platos del POS — vincula cada uno con un escandallo para calcular food cost.
         </p>
       </div>
 
@@ -144,13 +142,13 @@ export default function MenuItemsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t("menu.totalDishes")}</p>
+            <p className="text-sm text-muted-foreground">Total platos</p>
             <p className="text-2xl font-bold">{stats.total}</p>
           </CardContent>
         </Card>
         <Card className={stats.withRecipe < stats.total ? 'border-amber-200' : ''}>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t('inventory-setup.MenuItemsPage.conEscandallo')}</p>
+            <p className="text-sm text-muted-foreground">Con escandallo</p>
             <p className="text-2xl font-bold">
               {stats.withRecipe}
               <span className="ml-1 text-sm font-normal text-muted-foreground">/ {stats.total}</span>
@@ -159,7 +157,7 @@ export default function MenuItemsPage() {
         </Card>
         <Card className={stats.withIngredients < stats.withRecipe ? 'border-amber-200' : ''}>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t('inventory-setup.MenuItemsPage.conIngredientes')}</p>
+            <p className="text-sm text-muted-foreground">Con ingredientes</p>
             <p className="text-2xl font-bold">
               {stats.withIngredients}
               <span className="ml-1 text-sm font-normal text-muted-foreground">/ {stats.withRecipe}</span>
@@ -168,7 +166,7 @@ export default function MenuItemsPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t("menu.avgFoodCost")}</p>
+            <p className="text-sm text-muted-foreground">Food cost medio</p>
             <p className={`text-2xl font-bold ${getFoodCostColor(stats.avgFoodCost)}`}>
               {stats.avgFoodCost > 0 ? `${stats.avgFoodCost}%` : '—'}
             </p>
@@ -181,7 +179,7 @@ export default function MenuItemsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder={t('menuItems.searchPlaceholder')}
+            placeholder="Buscar platos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -189,10 +187,10 @@ export default function MenuItemsPage() {
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder={t('menuItems.category')} />
+            <SelectValue placeholder="Categoría" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('inventory-setup.MenuItemsPage.todas')}</SelectItem>
+            <SelectItem value="all">Todas</SelectItem>
             {categories.map(c => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
             ))}
@@ -206,26 +204,26 @@ export default function MenuItemsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('inventory-setup.MenuItemsPage.plato')}</TableHead>
-                <TableHead>{t('inventory.categoria')}</TableHead>
-                <TableHead className="text-right">{t('inventory-setup.MenuItemsPage.pvp')}</TableHead>
-                <TableHead className="text-right">{t('inventory-setup.MenuItemsPage.foodCost')}</TableHead>
-                <TableHead className="text-right">{t('inventory-setup.MenuItemsPage.fc')}</TableHead>
-                <TableHead>{t("common.status")}</TableHead>
-                <TableHead className="text-right">{t('inventory.accion')}</TableHead>
+                <TableHead>Plato</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead className="text-right">PVP</TableHead>
+                <TableHead className="text-right">Food Cost</TableHead>
+                <TableHead className="text-right">FC %</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acción</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                    {t('inventory-setup.MenuItemsPage.cargandoCarta')}
+                    Cargando carta...
                   </TableCell>
                 </TableRow>
-              {t('inventory-setup.MenuItemsPage.filteredlength0')}
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                    {t('inventory-setup.MenuItemsPage.noSeEncontraronPlatos')}
+                    No se encontraron platos
                   </TableCell>
                 </TableRow>
               ) : (
@@ -250,14 +248,14 @@ export default function MenuItemsPage() {
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/inventory-setup/recipes/${item.recipe_id}`}>
                             <ChefHat className="mr-1 h-3.5 w-3.5" />
-                            {t('inventory-setup.MenuItemsPage.verReceta')}
+                            Ver receta
                           </Link>
                         </Button>
                       ) : (
                         <Button variant="outline" size="sm" asChild>
                           <Link to="/inventory-setup/recipes">
                             <AlertCircle className="mr-1 h-3.5 w-3.5" />
-                            {t('inventory-setup.MenuItemsPage.crearEscandallo')}
+                            Crear escandallo
                           </Link>
                         </Button>
                       )}

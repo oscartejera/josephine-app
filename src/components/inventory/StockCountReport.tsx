@@ -6,7 +6,6 @@ import { ExternalLink, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
-import { useTranslation } from 'react-i18next';
 
 export interface StockCountRow {
   id: string;
@@ -30,13 +29,11 @@ interface StockCountReportProps {
 }
 
 export function StockCountReport({
-  
   dateRange,
   data,
   isLoading = false,
   lastUpdated
 }: StockCountReportProps) {
-  const { t } = useTranslation();
   const dateLabel = dateRange.from && dateRange.to
     ? `${format(dateRange.from, 'd')} - ${format(dateRange.to, 'd MMM')}`
     : 'Stock count';
@@ -78,7 +75,7 @@ export function StockCountReport({
           </div>
           <Button variant="outline" size="sm" className="gap-1.5">
             <ExternalLink className="h-3.5 w-3.5" />
-            {t('inventory.StockCountReport.fullReport')}
+            Full report
           </Button>
         </div>
       </CardHeader>
@@ -88,31 +85,31 @@ export function StockCountReport({
             <TableHeader>
               <TableRow className="bg-muted/30 border-b border-border/50">
                 <TableHead className="sticky left-0 bg-muted/30 min-w-[200px] text-xs font-medium text-muted-foreground py-3">
-                  {t('inventory.StockCountReport.itemName')}
+                  Item Name
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.varianceQty')}
+                  Variance Qty
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.openingQty')}
+                  Opening Qty
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.deliveries')}
+                  Deliveries
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.netTransferredQty')}
+                  Net Transferred Qty
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.closingQty')}
+                  Closing Qty
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.usedQty')}
+                  Used Qty
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.salesQty')}
+                  Sales Qty
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  {t('inventory.StockCountReport.batchBalance')}
+                  Batch Balance
                 </TableHead>
               </TableRow>
             </TableHeader>

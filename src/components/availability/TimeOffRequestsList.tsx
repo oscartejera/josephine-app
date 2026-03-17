@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { TimeOffRequest } from '@/hooks/useAvailabilityData';
-import { useTranslation } from 'react-i18next';
 
 interface TimeOffRequestsListProps {
   requests: TimeOffRequest[];
@@ -142,11 +141,11 @@ function TimeOffRequestCard({
                 onClick={onReject}
               >
                 <X className="h-4 w-4 mr-1" />
-                {t('availability.TimeOffRequestsList.reject')}
+                Reject
               </Button>
               <Button size="sm" onClick={onApprove}>
                 <Check className="h-4 w-4 mr-1" />
-                {t('availability.TimeOffRequestsList.approve')}
+                Approve
               </Button>
             </>
           ) : (
@@ -154,20 +153,20 @@ function TimeOffRequestCard({
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="outline" className="text-destructive hover:text-destructive">
                   <Trash2 className="h-4 w-4 mr-1" />
-                  {t('availability.TimeOffRequestsList.cancelRequest')}
+                  Cancel Request
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t('availability.TimeOffRequestsList.cancelTimeOffRequest')}</AlertDialogTitle>
+                  <AlertDialogTitle>Cancel Time Off Request?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {t('availability.TimeOffRequestsList.areYouSureYouWant')}
+                    Are you sure you want to cancel this time off request? This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{t('availability.TimeOffRequestsList.keepRequest')}</AlertDialogCancel>
+                  <AlertDialogCancel>Keep Request</AlertDialogCancel>
                   <AlertDialogAction onClick={onCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    {t('availability.TimeOffRequestsList.cancelRequest1')}
+                    Cancel Request
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -180,14 +179,12 @@ function TimeOffRequestCard({
 }
 
 export function TimeOffRequestsList({
-  
   requests,
   isManager = false,
   onApprove,
   onReject,
   onCancel,
 }: TimeOffRequestsListProps) {
-  const { t } = useTranslation();
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const processedRequests = requests.filter(r => r.status !== 'pending');
   
@@ -195,7 +192,7 @@ export function TimeOffRequestsList({
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Calendar className="h-10 w-10 mx-auto mb-3 opacity-30" />
-        <p className="text-sm">{t('availability.TimeOffRequestsList.noTimeOffRequests')}</p>
+        <p className="text-sm">No time off requests</p>
         <p className="text-xs mt-1">
           {isManager 
             ? "Employee requests will appear here"

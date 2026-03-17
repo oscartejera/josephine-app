@@ -13,7 +13,6 @@ import {
 } from 'recharts';
 import type { BISalesData, BIDateRange } from '@/hooks/useBISalesData';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface BISalesChartProps {
   data: BISalesData | undefined;
@@ -41,7 +40,9 @@ function CustomTooltip({ active, payload, label }: any) {
   const avgCheckForecast = payload.find((p: any) => p.dataKey === 'avgCheckForecast')?.value || 0;
 
   const salesDelta = forecast > 0 ? ((actual - forecast) / forecast) * 100 : 0;
-  const acsDelta = avgCheckForecast > {t('bi.BISalesChart.0AvgchecksizeAvgcheckforecastAvgcheckfor')}
+  const acsDelta = avgCheckForecast > 0 ? ((avgCheckSize - avgCheckForecast) / avgCheckForecast) * 100 : 0;
+
+  return (
     <div className="bg-card border border-[hsl(var(--bi-border))] rounded-xl shadow-lg p-4 min-w-[220px]">
       <div className="flex items-center justify-between gap-4 mb-3 pb-2 border-b">
         <span className="font-semibold">Sales ({label})</span>
@@ -59,21 +60,21 @@ function CustomTooltip({ active, payload, label }: any) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-[hsl(var(--bi-actual))]" />
-            <span>{t('bi.BISalesChart.actual')}</span>
+            <span>Actual</span>
           </div>
           <span className="font-medium">{formatCurrency(actual)}</span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-[hsl(var(--bi-forecast-live))]" />
-            <span>{t('bi.BISalesChart.forecastLive')}</span>
+            <span>Forecast (Live)</span>
           </div>
           <span className="font-medium">{formatCurrency(forecastLive)}</span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-[hsl(var(--bi-forecast))]" />
-            <span>{t('bi.BISalesChart.forecast')}</span>
+            <span>Forecast</span>
           </div>
           <span className="font-medium">{formatCurrency(forecast)}</span>
         </div>
@@ -81,7 +82,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
       <div className="mt-3 pt-3 border-t">
         <div className="flex items-center justify-between gap-4 mb-2">
-          <span className="text-sm font-medium">{t('bi.BISalesChart.avgCheckSize')}</span>
+          <span className="text-sm font-medium">Avg Check Size</span>
           <span className={cn(
             "text-xs px-2 py-0.5 rounded-full font-medium",
             acsDelta >= 0 
@@ -95,14 +96,14 @@ function CustomTooltip({ active, payload, label }: any) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[hsl(var(--bi-acs))]" />
-              <span>{t('bi.BISalesChart.avgCheckSize1')}</span>
+              <span>Avg Check Size</span>
             </div>
             <span className="font-medium">€{avgCheckSize.toFixed(2)}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[hsl(var(--bi-acs-forecast))]" />
-              <span>{t('bi.BISalesChart.avgCheckForecast')}</span>
+              <span>Avg Check Forecast</span>
             </div>
             <span className="font-medium">€{avgCheckForecast.toFixed(2)}</span>
           </div>
@@ -138,12 +139,11 @@ function CustomLegend() {
 }
 
 export function BISalesChart({ data, isLoading, granularity, dateRange }: BISalesChartProps) {
-  const { t } = useTranslation();
   if (isLoading || !data) {
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>{t('bi.BISalesChart.salesVForecast')}</CardTitle>
+          <CardTitle>Sales v Forecast</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[350px] w-full" />
@@ -155,7 +155,7 @@ export function BISalesChart({ data, isLoading, granularity, dateRange }: BISale
   return (
     <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">{t('bi.BISalesChart.salesVForecast1')}</CardTitle>
+        <CardTitle className="text-lg font-semibold">Sales v Forecast</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>

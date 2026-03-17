@@ -6,7 +6,6 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import type { OrderSummary } from '@/hooks/useProcurementData';
-import { useTranslation } from 'react-i18next';
 
 interface OrderSummaryDesktopProps {
   summary: OrderSummary;
@@ -15,17 +14,18 @@ interface OrderSummaryDesktopProps {
 }
 
 export function OrderSummaryDesktop({
-  
   summary,
   onAutofill,
   onClearCart,
 }: OrderSummaryDesktopProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const itemCount = summary.items.length;
   const displayItems = summary.items.slice(0, 8);
   const moreCount = summary.items.length - 8;
-  const meetsMinOrder = summary.subtotal >{t('procurement.OrderSummaryDesktop.summaryminorderConstAmountneededSummarym')}
+  const meetsMinOrder = summary.subtotal >= summary.minOrder;
+  const amountNeeded = summary.minOrder - summary.subtotal;
+
+  return (
     <div className="bg-card rounded-xl border border-border overflow-hidden sticky top-6">
       {/* Header */}
       <div className="p-5 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
@@ -43,7 +43,7 @@ export function OrderSummaryDesktop({
               <Package className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <span className="text-muted-foreground">{t('procurement.OrderSummaryDesktop.supplier')}</span>
+              <span className="text-muted-foreground">Supplier</span>
               <p className="font-medium text-foreground">{summary.supplierName}</p>
             </div>
           </div>
@@ -52,7 +52,7 @@ export function OrderSummaryDesktop({
               <Calendar className="h-4 w-4 text-info" />
             </div>
             <div>
-              <span className="text-muted-foreground">{t('procurement.OrderSummaryDesktop.delivery')}</span>
+              <span className="text-muted-foreground">Delivery</span>
               <p className="font-medium text-foreground">{format(summary.deliveryDate, 'EEEE, d MMM yyyy')}</p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export function OrderSummaryDesktop({
                 <Shield className="h-4 w-4 text-success" />
               </div>
               <div>
-                <span className="text-muted-foreground">{t('procurement.OrderSummaryDesktop.coverage')}</span>
+                <span className="text-muted-foreground">Coverage</span>
                 <p className="font-medium text-success">Until {format(summary.coverageEndDate, 'EEE d MMM')}</p>
               </div>
             </div>
@@ -74,7 +74,7 @@ export function OrderSummaryDesktop({
         {/* Min order progress */}
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{t('procurement.OrderSummaryDesktop.minOrderValue')}</span>
+            <span className="text-muted-foreground">Min. order value</span>
             <span className="font-medium">€{summary.minOrder.toFixed(0)}</span>
           </div>
           <Progress value={summary.minOrderProgress} className="h-2.5" />
@@ -125,8 +125,8 @@ export function OrderSummaryDesktop({
         ) : (
           <div className="py-8 text-center">
             <ShoppingCart className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">{t("procurement.noItemsInCart")}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t('procurement.OrderSummaryDesktop.useAiRecommendToAutofill')}</p>
+            <p className="text-sm text-muted-foreground">No items in cart</p>
+            <p className="text-xs text-muted-foreground mt-1">Use AI Recommend to auto-fill</p>
           </div>
         )}
 
@@ -135,28 +135,28 @@ export function OrderSummaryDesktop({
         {/* Totals */}
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('procurement.OrderSummaryDesktop.subtotal')}</span>
+            <span className="text-muted-foreground">Subtotal</span>
             <span className="text-foreground font-medium">€{summary.subtotal.toFixed(2)}</span>
           </div>
           {summary.deliveryFee > 0 && (
             <div className="flex justify-between text-warning">
-              <span>{t('procurement.OrderSummaryDesktop.deliveryFee')}</span>
+              <span>Delivery fee</span>
               <span>€{summary.deliveryFee.toFixed(2)}</span>
             </div>
           )}
-          {summary.deliveryFee === 0 && summary.subtotal >{t('procurement.OrderSummaryDesktop.summaryminorder')}
+          {summary.deliveryFee === 0 && summary.subtotal >= summary.minOrder && (
             <div className="flex justify-between text-success">
-              <span>{t('procurement.OrderSummaryDesktop.delivery1')}</span>
-              <span className="font-medium">{t('procurement.OrderSummaryDesktop.free')}</span>
+              <span>Delivery</span>
+              <span className="font-medium">FREE</span>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('procurement.OrderSummaryDesktop.vat21')}</span>
+            <span className="text-muted-foreground">VAT (21%)</span>
             <span className="text-foreground">€{summary.tax.toFixed(2)}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-semibold text-lg pt-1">
-            <span className="text-foreground">{t("common.total")}</span>
+            <span className="text-foreground">Total</span>
             <span className="text-foreground">€{summary.total.toFixed(2)}</span>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function OrderSummaryDesktop({
             disabled={itemCount === 0}
           >
             <ShoppingCart className="h-5 w-5 mr-2" />
-            {t('procurement.OrderSummaryDesktop.viewShoppingCart')}
+            View Shopping Cart
           </Button>
           <Button 
             variant="outline" 
@@ -178,7 +178,7 @@ export function OrderSummaryDesktop({
             onClick={onAutofill}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            {t('procurement.OrderSummaryDesktop.quickAutofill')}
+            Quick Autofill
           </Button>
           {itemCount > 0 && (
             <Button 
@@ -186,7 +186,7 @@ export function OrderSummaryDesktop({
               className="w-full text-muted-foreground hover:text-destructive"
               onClick={onClearCart}
             >
-              {t('procurement.OrderSummaryDesktop.clearCart')}
+              Clear Cart
             </Button>
           )}
         </div>

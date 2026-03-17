@@ -25,7 +25,6 @@ import PayrollReview from '@/components/payroll/PayrollReview';
 import PayrollSubmit from '@/components/payroll/PayrollSubmit';
 import PayrollPay from '@/components/payroll/PayrollPay';
 import { TipDistributionConfig } from '@/components/payroll/TipDistributionConfig';
-import { useTranslation } from 'react-i18next';
 
 export interface PayrollContextData {
   legalEntities: any[];
@@ -34,36 +33,42 @@ export interface PayrollContextData {
   currentPeriod: { year: number; month: number };
   setCurrentPeriod: (period: { year: number; month: number }) => void;
   currentRun: any;
-  refreshData: () => {t('payroll.promise')}<void>;
+  refreshData: () => Promise<void>;
   isPayrollAdmin: boolean;
   isSandboxMode: boolean;
 }
 
 const PAYROLL_STEPS = [
-  { key: 'home', label: t('payroll.home'), icon: Building },
-  { key: 'employees', label: t('payroll.employees'), icon: Users },
-  { key: 'inputs', label: t('payroll.variables'), icon: FileText },
-  { key: 'validate', label: t('payroll.validate'), icon: CheckCircle },
-  { key: 'calculate', label: t('payroll.calculate'), icon: DollarSign },
-  { key: 'review', label: t('payroll.review'), icon: Clock },
-  { key: 'submit', label: t('payroll.submit'), icon: Send },
-  { key: 'pay', label: t('payroll.pay'), icon: CreditCard },
+  { key: 'home', label: 'Inicio', icon: Building },
+  { key: 'employees', label: 'Empleados', icon: Users },
+  { key: 'inputs', label: 'Variables', icon: FileText },
+  { key: 'validate', label: 'Validar', icon: CheckCircle },
+  { key: 'calculate', label: 'Calcular', icon: DollarSign },
+  { key: 'review', label: 'Revisar', icon: Clock },
+  { key: 'submit', label: 'Presentar', icon: Send },
+  { key: 'pay', label: 'Pagar', icon: CreditCard },
 ];
 
 export default function Payroll() {
-  const { t } = useTranslation();
   const { group } = useApp();
   const { hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
-  const [legalEntities, setLegalEntities] = useState<any[]>{t('payroll.constSelectedlegalentitySetselectedlegal')}<any>(null);
+  const [legalEntities, setLegalEntities] = useState<any[]>([]);
+  const [selectedLegalEntity, setSelectedLegalEntity] = useState<any>(null);
   const [currentPeriod, setCurrentPeriod] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() + 1 };
   });
-  const [currentRun, setCurrentRun] = useState<any>{t('payroll.nullConstLoadingSetloadingUsestatetrue')}<any>(null);
+  const [currentRun, setCurrentRun] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isSandboxMode, setIsSandboxMode] = useState(true);
+  const [schemaReady, setSchemaReady] = useState(false);
+
+  // Use ref to track selected entity across async calls (avoids stale closure)
+  const selectedEntityRef = useRef<any>(null);
   selectedEntityRef.current = selectedLegalEntity;
 
   const isPayrollAdmin = hasRole('owner_admin') || hasRole('owner') || hasRole('admin');
@@ -191,9 +196,9 @@ export default function Payroll() {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">{t('payroll.accesoRestringido')}</h2>
+            <h2 className="text-xl font-bold mb-2">Acceso Restringido</h2>
             <p className="text-muted-foreground">
-              {t('payroll.noTienesPermisosParaAcceder')}
+              No tienes permisos para acceder al módulo de nóminas.
             </p>
           </CardContent>
         </Card>
@@ -218,15 +223,15 @@ export default function Payroll() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold">{t('payroll.nominas')}</h1>
+          <h1 className="text-2xl font-display font-bold">Nóminas</h1>
           <p className="text-muted-foreground">
-            {t('payroll.gestionDeNominasYPresentaciones')}
+            Gestión de nóminas y presentaciones oficiales (España)
           </p>
         </div>
         <div className="flex items-center gap-4">
           {isSandboxMode && (
             <Badge variant="outline" className="bg-warning/10 text-warning border-warning">
-              {t('payroll.modoSandbox')}
+              Modo Sandbox
             </Badge>
           )}
           <div className="flex items-center gap-2 text-sm">
@@ -243,9 +248,10 @@ export default function Payroll() {
         <Alert className="border-warning bg-warning/5">
           <AlertTriangle className="h-4 w-4 text-warning" />
           <AlertDescription className="text-warning">
-            <strong>{t('payroll.modoSandboxActivo')}</strong> {t('payroll.noHayCertificadosConfiguradosLas')}
+            <strong>Modo Sandbox activo:</strong> No hay certificados configurados.
+            Las presentaciones se simularán sin envío real a TGSS/AEAT/SEPE.
             <Button variant="link" className="text-warning p-0 h-auto ml-2" onClick={() => navigateToStep('home')}>
-              {t('payroll.configurarCertificados')}
+              Configurar certificados →
             </Button>
           </AlertDescription>
         </Alert>

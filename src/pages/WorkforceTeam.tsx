@@ -69,7 +69,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 // ─── Types ──────────────────────────────────────────────
 interface Employee {
@@ -111,23 +110,23 @@ interface LocationOption {
 
 // ─── Helpers ────────────────────────────────────────────
 const ROLE_OPTIONS = [
-    { value: 'owner', label: t('roles.owner') },
-    { value: 'admin', label: t('roles.admin') },
-    { value: 'ops_manager', label: t('roles.opsManager') },
-    { value: 'store_manager', label: t('roles.storeManager') },
-    { value: 'manager', label: t('roles.manager') },
-    { value: 'waiter', label: t('roles.waiter') },
-    { value: 'cook', label: t('roles.cook') },
-    { value: 'bartender', label: t('roles.bartender') },
-    { value: 'host', label: t('roles.host') },
-    { value: 'dishwasher', label: t('roles.dishwasher') },
-    { value: 'delivery', label: t('roles.delivery') },
-    { value: 'employee', label: t('roles.employee') },
+    { value: 'owner', label: 'Propietario' },
+    { value: 'admin', label: 'Administrador' },
+    { value: 'ops_manager', label: 'Gerente Operaciones' },
+    { value: 'store_manager', label: 'Gerente Local' },
+    { value: 'manager', label: 'Encargado/a' },
+    { value: 'waiter', label: 'Camarero/a' },
+    { value: 'cook', label: 'Cocinero/a' },
+    { value: 'bartender', label: 'Barista' },
+    { value: 'host', label: 'Hostess' },
+    { value: 'dishwasher', label: 'Friegaplatos' },
+    { value: 'delivery', label: 'Repartidor/a' },
+    { value: 'employee', label: 'Empleado' },
 ];
 
 const getRoleLabel = (role: string | null) => {
     const found = ROLE_OPTIONS.find((r) => r.value === role);
-    return found ? found.label : role || t('payroll.empleado');
+    return found ? found.label : role || 'Empleado';
 };
 
 const getRoleBadgeColor = (role: string | null) => {
@@ -160,9 +159,22 @@ const getAvatarColor = (name: string) =>
 
 // ─── Main Component ─────────────────────────────────────
 export default function WorkforceTeam() {
-  const { t } = useTranslation();
     const { accessibleLocations, selectedLocationId } = useApp();
-    const [employees, setEmployees] = useState<Employee[]>{t('workforceTeam.constClockedinSetclockedinUsestate')}<ClockRecord[]>{t('workforceTeam.constAnnouncementsSetannouncementsUsesta')}<Announcement[]>{t('workforceTeam.constLocationsSetlocationsUsestate')}<LocationOption[]>{t('workforceTeam.constOrgidSetorgidUsestate')}<string | null>{t('workforceTeam.nullConstLoadingSetloadingUsestatetrue')}<Employee | null>(null);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [clockedIn, setClockedIn] = useState<ClockRecord[]>([]);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [locations, setLocations] = useState<LocationOption[]>([]);
+    const [orgId, setOrgId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [roleFilter, setRoleFilter] = useState('all');
+    const [locationFilter, setLocationFilter] = useState('all');
+    const [showInactive, setShowInactive] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    // Modals
+    const [addOpen, setAddOpen] = useState(false);
+    const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
     const [announcementOpen, setAnnouncementOpen] = useState(false);
 
     // Form state
@@ -286,7 +298,7 @@ export default function WorkforceTeam() {
     // ─── Add Employee ───
     const handleAddEmployee = async () => {
         if (!form.full_name.trim() || !form.location_id) {
-            toast.error(t('workforce.toastNameLocationRequired'));
+            toast.error('Nombre y local son obligatorios');
             return;
         }
         setSaving(true);
@@ -298,9 +310,9 @@ export default function WorkforceTeam() {
             active: true,
         });
         if (error) {
-            toast.error(t('workforce.toastAddError'));
+            toast.error('Error al añadir empleado');
         } else {
-            toast.success(t('workforce.employeeAddedToTeam', { name: form.full_name }));
+            toast.success(`${form.full_name} añadido al equipo`);
             setForm({ full_name: '', role_name: 'employee', location_id: '', hourly_cost: '' });
             setAddOpen(false);
             fetchEmployees();
@@ -323,9 +335,9 @@ export default function WorkforceTeam() {
             .eq('id', editEmployee.id);
 
         if (error) {
-            toast.error(t('workforce.toastUpdateError'));
+            toast.error('Error al actualizar');
         } else {
-            toast.success(t('workforce.toastUpdated'));
+            toast.success('Empleado actualizado');
             setEditEmployee(null);
             fetchEmployees();
         }
@@ -339,7 +351,7 @@ export default function WorkforceTeam() {
             .eq('id', emp.id);
 
         if (error) {
-            toast.error(t('workforce.toastStatusError'));
+            toast.error('Error al cambiar estado');
         } else {
             toast.success(emp.active ? `${emp.full_name} desactivado` : `${emp.full_name} reactivado`);
             fetchEmployees();
@@ -359,7 +371,7 @@ export default function WorkforceTeam() {
     // ─── Announcements ───
     const handleCreateAnnouncement = async () => {
         if (!announcementForm.title.trim()) {
-            toast.error(t('workforce.toastTitleRequired'));
+            toast.error('El título es obligatorio');
             return;
         }
         setSaving(true);
@@ -372,9 +384,9 @@ export default function WorkforceTeam() {
             org_id: orgId,
         });
         if (error) {
-            toast.error(t('workforce.toastAnnouncementError'));
+            toast.error('Error al crear anuncio');
         } else {
-            toast.success(t('workforce.toastAnnouncementPublished'));
+            toast.success('Anuncio publicado');
             setAnnouncementForm({ title: '', body: '', type: 'info', pinned: false, location_id: '' });
             setAnnouncementOpen(false);
             fetchAnnouncements();
@@ -385,9 +397,9 @@ export default function WorkforceTeam() {
     const handleDeleteAnnouncement = async (id: string) => {
         const { error } = await supabase.from('announcements').delete().eq('id', id);
         if (error) {
-            toast.error(t('workforce.toastDeleteError'));
+            toast.error('Error al eliminar');
         } else {
-            toast.success(t('workforce.toastAnnouncementDeleted'));
+            toast.success('Anuncio eliminado');
             fetchAnnouncements();
         }
     };
@@ -400,10 +412,10 @@ export default function WorkforceTeam() {
     // ─── Announcement type helpers ───
     const getAnnouncementStyle = (type: string) => {
         switch (type) {
-            case 'important': return { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-l-red-500', label: t('team.important') };
-            case 'celebration': return { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-l-amber-500', label: t('team.celebration') };
-            case 'schedule': return { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-l-blue-500', label: t('team.schedules') };
-            default: return { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-l-gray-400', label: t('team.info') };
+            case 'important': return { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-l-red-500', label: 'Importante' };
+            case 'celebration': return { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-l-amber-500', label: 'Celebración' };
+            case 'schedule': return { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-l-blue-500', label: 'Horarios' };
+            default: return { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-l-gray-400', label: 'Info' };
         }
     };
 
@@ -413,14 +425,14 @@ export default function WorkforceTeam() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">{t('workforce.title')}</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Equipo</h1>
                     <p className="text-muted-foreground">
                         {activeCount} empleados activos · {clockedIn.length} trabajando ahora
                     </p>
                 </div>
                 <Button onClick={() => { setForm({ full_name: '', role_name: 'employee', location_id: locations[0]?.id || '', hourly_cost: '' }); setAddOpen(true); }}>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    {t('workforceTeam.anadirEmpleado')}
+                    Añadir empleado
                 </Button>
             </div>
 
@@ -429,7 +441,7 @@ export default function WorkforceTeam() {
                 <TabsList>
                     <TabsTrigger value="roster" className="gap-2">
                         <Users className="h-4 w-4" />
-                        {t('workforceTeam.directorio')}
+                        Directorio
                     </TabsTrigger>
                     <TabsTrigger value="working" className="gap-2">
                         <Clock className="h-4 w-4" />
@@ -442,23 +454,23 @@ export default function WorkforceTeam() {
                     </TabsTrigger>
                     <TabsTrigger value="news" className="gap-2">
                         <Megaphone className="h-4 w-4" />
-                        {t('workforceTeam.anuncios')}
+                        Anuncios
                     </TabsTrigger>
                     <TabsTrigger value="logbook" className="gap-2">
                         <BookOpen className="h-4 w-4" />
-                        {t('workforceTeam.logbook')}
+                        Logbook
                     </TabsTrigger>
                     <TabsTrigger value="reviews" className="gap-2">
                         <TrendingUp className="h-4 w-4" />
-                        {t('workforceTeam.rendimiento')}
+                        Rendimiento
                     </TabsTrigger>
                     <TabsTrigger value="training" className="gap-2">
                         <GraduationCap className="h-4 w-4" />
-                        {t('workforceTeam.formacion')}
+                        Formación
                     </TabsTrigger>
                     <TabsTrigger value="contracts" className="gap-2">
                         <FileText className="h-4 w-4" />
-                        {t('workforceTeam.contratos')}
+                        Contratos
                     </TabsTrigger>
                 </TabsList>
 
@@ -469,7 +481,7 @@ export default function WorkforceTeam() {
                         <div className="relative flex-1 min-w-[200px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder={t("common.searchByName")}
+                                placeholder="Buscar por nombre..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="pl-10"
@@ -477,10 +489,10 @@ export default function WorkforceTeam() {
                         </div>
                         <Select value={roleFilter} onValueChange={setRoleFilter}>
                             <SelectTrigger className="w-[160px]">
-                                <SelectValue placeholder={t('workforce.filterRole')} />
+                                <SelectValue placeholder="Rol" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">{t('workforce.allRoles')}</SelectItem>
+                                <SelectItem value="all">Todos los roles</SelectItem>
                                 {ROLE_OPTIONS.map((r) => (
                                     <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                                 ))}
@@ -489,10 +501,10 @@ export default function WorkforceTeam() {
                         {locations.length > 1 && (
                             <Select value={locationFilter} onValueChange={setLocationFilter}>
                                 <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder={t('workforce.filterLocation')} />
+                                    <SelectValue placeholder="Local" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">{t('workforce.allLocations')}</SelectItem>
+                                    <SelectItem value="all">Todos los locales</SelectItem>
                                     {locations.map((l) => (
                                         <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                                     ))}
@@ -506,7 +518,7 @@ export default function WorkforceTeam() {
                                 onCheckedChange={setShowInactive}
                             />
                             <Label htmlFor="show-inactive" className="text-sm text-muted-foreground cursor-pointer">
-                                {t('workforceTeam.inactivos')}
+                                Inactivos
                             </Label>
                         </div>
                     </div>
@@ -517,11 +529,11 @@ export default function WorkforceTeam() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[280px]">{t('workforce.tableEmployee')}</TableHead>
-                                        <TableHead>{t('workforce.tableRole')}</TableHead>
-                                        <TableHead>{t('workforce.tableLocation')}</TableHead>
-                                        <TableHead className="text-right">{t('workforce.tableCostHour')}</TableHead>
-                                        <TableHead className="text-center">{t('workforce.tableStatus')}</TableHead>
+                                        <TableHead className="w-[280px]">Empleado</TableHead>
+                                        <TableHead>Rol</TableHead>
+                                        <TableHead>Local</TableHead>
+                                        <TableHead className="text-right">Coste/h</TableHead>
+                                        <TableHead className="text-center">Estado</TableHead>
                                         <TableHead className="w-[60px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -533,14 +545,15 @@ export default function WorkforceTeam() {
                                                     <div className="animate-pulse h-10 bg-muted rounded" />
                                                 </TableCell>
                                             </TableRow>
-                                        {t('workforceTeam.filteredemployeeslength0')}
+                                        ))
+                                    ) : filteredEmployees.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={6} className="text-center py-12">
                                                 <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
                                                 <p className="text-muted-foreground">
                                                     {search || roleFilter !== 'all'
                                                         ? 'No se encontraron empleados con esos filtros'
-                                                        : t('team.noHayEmpleadosRegistrados')}
+                                                        : 'No hay empleados registrados'}
                                                 </p>
                                             </TableCell>
                                         </TableRow>
@@ -594,13 +607,13 @@ export default function WorkforceTeam() {
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEdit(emp); }}>
-                                                                <Edit className="mr-2 h-4 w-4" /> {t("common.edit")}
+                                                                <Edit className="mr-2 h-4 w-4" /> Editar
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleActive(emp); }}>
                                                                 {emp.active ? (
-                                                                    <><XCircle className="mr-2 h-4 w-4" /> {t('workforceTeam.desactivar')}</>
+                                                                    <><XCircle className="mr-2 h-4 w-4" /> Desactivar</>
                                                                 ) : (
-                                                                    <><CheckCircle2 className="mr-2 h-4 w-4" /> {t('workforceTeam.reactivar')}</>
+                                                                    <><CheckCircle2 className="mr-2 h-4 w-4" /> Reactivar</>
                                                                 )}
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
@@ -644,7 +657,7 @@ export default function WorkforceTeam() {
                         </p>
                         <Button variant="outline" size="sm" onClick={fetchClockedIn}>
                             <RefreshCw className="mr-2 h-3 w-3" />
-                            {t('workforceTeam.actualizar')}
+                            Actualizar
                         </Button>
                     </div>
 
@@ -652,8 +665,8 @@ export default function WorkforceTeam() {
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <Clock className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
-                                <p className="text-lg font-medium text-muted-foreground">{t('workforce.noClockedIn')}</p>
-                                <p className="text-sm text-muted-foreground/60">{t('workforce.noClockedInDesc')}</p>
+                                <p className="text-lg font-medium text-muted-foreground">Nadie fichado ahora</p>
+                                <p className="text-sm text-muted-foreground/60">Los empleados aparecerán aquí al fichar entrada</p>
                             </CardContent>
                         </Card>
                     ) : (
@@ -662,7 +675,8 @@ export default function WorkforceTeam() {
                                 const elapsed = differenceInMinutes(currentTime, new Date(record.clock_in));
                                 const hours = Math.floor(elapsed / 60);
                                 const mins = elapsed % 60;
-                                const isLong = elapsed > 480; // > {t('workforceTeam.8hReturn')}
+                                const isLong = elapsed > 480; // > 8h
+                                return (
                                     <Card
                                         key={record.id}
                                         className={cn(
@@ -712,7 +726,7 @@ export default function WorkforceTeam() {
                         <p className="text-sm text-muted-foreground">{announcements.length} anuncios</p>
                         <Button onClick={() => setAnnouncementOpen(true)}>
                             <Plus className="mr-2 h-4 w-4" />
-                            {t('workforceTeam.nuevoAnuncio')}
+                            Nuevo anuncio
                         </Button>
                     </div>
 
@@ -720,8 +734,8 @@ export default function WorkforceTeam() {
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <Megaphone className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
-                                <p className="text-lg font-medium text-muted-foreground">{t('workforce.noAnnouncements')}</p>
-                                <p className="text-sm text-muted-foreground/60">{t('workforce.noAnnouncementsDesc')}</p>
+                                <p className="text-lg font-medium text-muted-foreground">Sin anuncios</p>
+                                <p className="text-sm text-muted-foreground/60">Crea el primer anuncio para tu equipo</p>
                             </CardContent>
                         </Card>
                     ) : (
@@ -763,7 +777,7 @@ export default function WorkforceTeam() {
                                                             onClick={() => handleDeleteAnnouncement(a.id)}
                                                         >
                                                             <Trash2 className="mr-2 h-4 w-4" />
-                                                            {t('workforceTeam.eliminar')}
+                                                            Eliminar
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -803,21 +817,21 @@ export default function WorkforceTeam() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <UserPlus className="h-5 w-5" />
-                            {t('workforceTeam.nuevoEmpleado')}
+                            Nuevo empleado
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>{t('workforce.fullNameRequired')}</Label>
+                            <Label>Nombre completo *</Label>
                             <Input
                                 value={form.full_name}
                                 onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-                                placeholder={t('workforce.namePlaceholder')}
+                                placeholder="María López García"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>{t('workforce.role')}</Label>
+                                <Label>Rol</Label>
                                 <Select value={form.role_name} onValueChange={(v) => setForm((f) => ({ ...f, role_name: v }))}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
@@ -828,7 +842,7 @@ export default function WorkforceTeam() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('workforce.costHour')}</Label>
+                                <Label>Coste/hora (€)</Label>
                                 <Input
                                     type="number"
                                     step="0.01"
@@ -839,9 +853,9 @@ export default function WorkforceTeam() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>{t('workforce.locationRequired')}</Label>
+                            <Label>Local *</Label>
                             <Select value={form.location_id} onValueChange={(v) => setForm((f) => ({ ...f, location_id: v }))}>
-                                <SelectTrigger><SelectValue placeholder={t('workforce.selectLocation')} /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Seleccionar local" /></SelectTrigger>
                                 <SelectContent>
                                     {locations.map((l) => (
                                         <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
@@ -851,9 +865,9 @@ export default function WorkforceTeam() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setAddOpen(false)}>{t("common.cancel")}</Button>
+                        <Button variant="outline" onClick={() => setAddOpen(false)}>Cancelar</Button>
                         <Button onClick={handleAddEmployee} disabled={saving}>
-                            {saving ? 'Guardando...' : t('inventory.anadir')}
+                            {saving ? 'Guardando...' : 'Añadir'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -865,12 +879,12 @@ export default function WorkforceTeam() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Edit className="h-5 w-5" />
-                            {t('workforceTeam.editarEmpleado')}
+                            Editar empleado
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>{t('workforce.fullName')}</Label>
+                            <Label>Nombre completo</Label>
                             <Input
                                 value={form.full_name}
                                 onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
@@ -878,7 +892,7 @@ export default function WorkforceTeam() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>{t('workforceTeam.rol')}</Label>
+                                <Label>Rol</Label>
                                 <Select value={form.role_name} onValueChange={(v) => setForm((f) => ({ ...f, role_name: v }))}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
@@ -889,7 +903,7 @@ export default function WorkforceTeam() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('workforceTeam.costehora')}</Label>
+                                <Label>Coste/hora (€)</Label>
                                 <Input
                                     type="number"
                                     step="0.01"
@@ -899,7 +913,7 @@ export default function WorkforceTeam() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>{t('workforce.filterLocation')}</Label>
+                            <Label>Local</Label>
                             <Select value={form.location_id} onValueChange={(v) => setForm((f) => ({ ...f, location_id: v }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -912,9 +926,9 @@ export default function WorkforceTeam() {
                         {editEmployee && (
                             <div className="flex items-center justify-between rounded-lg border p-3">
                                 <div>
-                                    <p className="text-sm font-medium">{t('workforce.employeeStatus')}</p>
+                                    <p className="text-sm font-medium">Estado del empleado</p>
                                     <p className="text-xs text-muted-foreground">
-                                        {editEmployee.active ? t('team.activoApareceEnHorariosY') : t('team.inactivoNoApareceEnOperaciones')}
+                                        {editEmployee.active ? 'Activo — aparece en horarios y reportes' : 'Inactivo — no aparece en operaciones'}
                                     </p>
                                 </div>
                                 <Switch
@@ -925,9 +939,9 @@ export default function WorkforceTeam() {
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditEmployee(null)}>{t("common.cancel")}</Button>
+                        <Button variant="outline" onClick={() => setEditEmployee(null)}>Cancelar</Button>
                         <Button onClick={handleEditEmployee} disabled={saving}>
-                            {saving ? 'Guardando...' : t('team.guardarCambios')}
+                            {saving ? 'Guardando...' : 'Guardar cambios'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -939,46 +953,46 @@ export default function WorkforceTeam() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Megaphone className="h-5 w-5" />
-                            {t('workforceTeam.nuevoAnuncio1')}
+                            Nuevo anuncio
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>{t('workforce.announcementTitle')}</Label>
+                            <Label>Título *</Label>
                             <Input
                                 value={announcementForm.title}
                                 onChange={(e) => setAnnouncementForm((f) => ({ ...f, title: e.target.value }))}
-                                placeholder={t("workforce.announcementTitle")}
+                                placeholder="Título del anuncio"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>{t('workforce.announcementContent')}</Label>
+                            <Label>Contenido</Label>
                             <Textarea
                                 value={announcementForm.body}
                                 onChange={(e) => setAnnouncementForm((f) => ({ ...f, body: e.target.value }))}
-                                placeholder={t('workforce.announcementPlaceholder')}
+                                placeholder="Escribe el mensaje para tu equipo..."
                                 rows={4}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>{t('workforce.announcementType')}</Label>
+                                <Label>Tipo</Label>
                                 <Select value={announcementForm.type} onValueChange={(v) => setAnnouncementForm((f) => ({ ...f, type: v }))}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="info">{t("common.information")}</SelectItem>
-                                        <SelectItem value="important">{t('workforce.typeImportant')}</SelectItem>
-                                        <SelectItem value="schedule">{t('workforce.typeSchedule')}</SelectItem>
-                                        <SelectItem value="celebration">{t('workforce.typeCelebration')}</SelectItem>
+                                        <SelectItem value="info">Información</SelectItem>
+                                        <SelectItem value="important">Importante</SelectItem>
+                                        <SelectItem value="schedule">Horarios</SelectItem>
+                                        <SelectItem value="celebration">Celebración</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('workforce.locationOptional')}</Label>
+                                <Label>Local (opcional)</Label>
                                 <Select value={announcementForm.location_id} onValueChange={(v) => setAnnouncementForm((f) => ({ ...f, location_id: v }))}>
-                                    <SelectTrigger><SelectValue placeholder={t('workforce.all')} /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">{t("common.allLocations")}</SelectItem>
+                                        <SelectItem value="">Todos los locales</SelectItem>
                                         {locations.map((l) => (
                                             <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                                         ))}
@@ -992,11 +1006,11 @@ export default function WorkforceTeam() {
                                 checked={announcementForm.pinned}
                                 onCheckedChange={(v) => setAnnouncementForm((f) => ({ ...f, pinned: v }))}
                             />
-                            <Label htmlFor="pin" className="cursor-pointer">{t('workforce.pinTop')}</Label>
+                            <Label htmlFor="pin" className="cursor-pointer">Fijar en la parte superior</Label>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setAnnouncementOpen(false)}>{t("common.cancel")}</Button>
+                        <Button variant="outline" onClick={() => setAnnouncementOpen(false)}>Cancelar</Button>
                         <Button onClick={handleCreateAnnouncement} disabled={saving}>
                             {saving ? 'Publicando...' : 'Publicar anuncio'}
                         </Button>

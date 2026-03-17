@@ -19,7 +19,6 @@ import { Wallet, DoorOpen, DoorClosed } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { CashSession } from '@/hooks/usePOSData';
-import { useTranslation } from 'react-i18next';
 
 interface POSCashSessionProps {
   locationId: string;
@@ -28,12 +27,10 @@ interface POSCashSessionProps {
 }
 
 export function POSCashSession({
-  
   locationId,
   session,
   onSessionChange,
 }: POSCashSessionProps) {
-  const { t } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [openingCash, setOpeningCash] = useState('100');
   const [closingCash, setClosingCash] = useState('');
@@ -53,11 +50,11 @@ export function POSCashSession({
 
       if (error) throw error;
 
-      toast.success(t('pos.toastCajaAbierta'));
+      toast.success('Caja abierta');
       onSessionChange();
       setDialogOpen(false);
     } catch (error: any) {
-      toast.error(t('pos.toastError') + ': ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -80,11 +77,11 @@ export function POSCashSession({
 
       if (error) throw error;
 
-      toast.success(t('pos.toastCajaCerrada'));
+      toast.success('Caja cerrada');
       onSessionChange();
       setDialogOpen(false);
     } catch (error: any) {
-      toast.error(t('pos.toastError') + ': ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -101,12 +98,12 @@ export function POSCashSession({
         {session ? (
           <>
             <DoorOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('pos.cerrarCaja')}</span>
+            <span className="hidden sm:inline">Cerrar Caja</span>
           </>
         ) : (
           <>
             <DoorClosed className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('pos.POSCashSession.abrirCaja')}</span>
+            <span className="hidden sm:inline">Abrir Caja</span>
           </>
         )}
       </Button>
@@ -115,11 +112,11 @@ export function POSCashSession({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {session ? t('pos.cerrarCaja') : 'Abrir Caja'}
+              {session ? 'Cerrar Caja' : 'Abrir Caja'}
             </DialogTitle>
             <DialogDescription>
               {session
-                ? t('pos.cashCountInstructions')
+                ? 'Introduce el efectivo contado para cerrar la sesión.'
                 : 'Introduce el efectivo inicial para abrir la caja.'}
             </DialogDescription>
           </DialogHeader>
@@ -128,13 +125,13 @@ export function POSCashSession({
             {session ? (
               <>
                 <div className="grid gap-2">
-                  <Label>{t('pos.POSCashSession.efectivoInicial')}</Label>
+                  <Label>Efectivo inicial</Label>
                   <div className="text-2xl font-bold">
                     €{session.opening_cash.toFixed(2)}
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="closing-cash">{t('pos.POSCashSession.efectivoContado')}</Label>
+                  <Label htmlFor="closing-cash">Efectivo contado</Label>
                   <Input
                     id="closing-cash"
                     type="number"
@@ -147,7 +144,7 @@ export function POSCashSession({
               </>
             ) : (
               <div className="grid gap-2">
-                <Label htmlFor="opening-cash">{t('pos.POSCashSession.efectivoInicial1')}</Label>
+                <Label htmlFor="opening-cash">Efectivo inicial</Label>
                 <Input
                   id="opening-cash"
                   type="number"
@@ -162,13 +159,13 @@ export function POSCashSession({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              {t('pos.POSCashSession.cancelar')}
+              Cancelar
             </Button>
             <Button
               onClick={session ? handleCloseSession : handleOpenSession}
               disabled={loading}
             >
-              {loading ? 'Procesando...' : session ? t('pos.cerrarCaja') : 'Abrir Caja'}
+              {loading ? 'Procesando...' : session ? 'Cerrar Caja' : 'Abrir Caja'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -12,14 +12,12 @@ import {
 } from '@/components/ui/popover';
 import { Sparkles, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface AskJosephineProps {
   salesData: any;
 }
 
 export function AskJosephine({ salesData }: AskJosephineProps) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -56,15 +54,15 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
       <PopoverTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Sparkles className="h-4 w-4 text-purple-500" />
-          {t('sales.AskJosephine.askJosephine')}
+          Ask Josephine
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px]" align="end">
         <div className="space-y-4">
           <div>
-            <h4 className="font-semibold mb-2">{t("sales.askAboutSales")}</h4>
+            <h4 className="font-semibold mb-2">Ask about your sales</h4>
             <p className="text-sm text-muted-foreground">
-              {t('sales.AskJosephine.getAiInsightsBasedOn')}
+              Get AI insights based on your data
             </p>
           </div>
 
@@ -102,7 +100,7 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
                 handleAsk();
               }}
             >
-              {t('sales.AskJosephine.whyDidSalesChange')}
+              Why did sales change?
             </Button>
             <Button
               variant="outline"
@@ -112,7 +110,7 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
                 handleAsk();
               }}
             >
-              {t('sales.AskJosephine.recommendations')}
+              Recommendations
             </Button>
           </div>
         </div>

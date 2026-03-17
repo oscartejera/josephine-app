@@ -17,7 +17,6 @@ import {
   Sparkles 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface Recommendation {
   id: string;
@@ -52,14 +51,14 @@ const typeConfig = {
   },
   create_order: {
     icon: ShoppingCart,
-    label: t('ai.pedidoSugerido'),
+    label: 'Pedido Sugerido',
     color: 'text-purple-600',
     bgColor: 'bg-purple-50 dark:bg-purple-950/20',
     borderColor: 'border-purple-200',
   },
   push_menu_item: {
     icon: Award,
-    label: t('ai.optimizacionMenu'),
+    label: 'Optimización Menú',
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50 dark:bg-emerald-950/20',
     borderColor: 'border-emerald-200',
@@ -73,13 +72,11 @@ const typeConfig = {
   },
 };
 
-export function RecommendationCard({
-  
+export function RecommendationCard({ 
   recommendation, 
   onApprove, 
   onReject 
 }: RecommendationCardProps) {
-  const { t } = useTranslation();
   const config = typeConfig[recommendation.type];
   const Icon = config.icon;
   const isPending = recommendation.status === 'pending';
@@ -114,8 +111,8 @@ export function RecommendationCard({
 
           {!isPending && (
             <Badge variant={recommendation.status === 'approved' ? 'default' : 'secondary'}>
-              {recommendation.status === 'approved' ? t('payroll.aprobado') : 
-               recommendation.status === 'rejected' ? t('ai.rechazado') : 'Ejecutado'}
+              {recommendation.status === 'approved' ? 'Aprobado' : 
+               recommendation.status === 'rejected' ? 'Rechazado' : 'Ejecutado'}
             </Badge>
           )}
         </div>
@@ -132,7 +129,7 @@ export function RecommendationCard({
           <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
-                {t('ai.RecommendationCard.impactoEstimado')}
+                Impacto Estimado:
               </span>
               <div className="flex items-center gap-1">
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
@@ -146,19 +143,19 @@ export function RecommendationCard({
             <div className="mt-2 space-y-1 text-xs text-emerald-800 dark:text-emerald-200">
               {impact.revenue_delta && impact.revenue_delta > 0 && (
                 <div className="flex justify-between">
-                  <span>{t('ai.RecommendationCard.revenue')}</span>
+                  <span>Revenue:</span>
                   <span>+€{impact.revenue_delta}</span>
                 </div>
               )}
               {impact.labor_savings && impact.labor_savings > 0 && (
                 <div className="flex justify-between">
-                  <span>{t('ai.RecommendationCard.laborSavings')}</span>
+                  <span>Labor savings:</span>
                   <span>+€{impact.labor_savings}</span>
                 </div>
               )}
               {impact.cost_delta && impact.cost_delta > 0 && (
                 <div className="flex justify-between">
-                  <span>{t('ai.RecommendationCard.cost')}</span>
+                  <span>Cost:</span>
                   <span className="text-red-600">-€{impact.cost_delta}</span>
                 </div>
               )}
@@ -175,7 +172,7 @@ export function RecommendationCard({
               size="sm"
             >
               <Check className="h-4 w-4 mr-1" />
-              {t('ai.RecommendationCard.aprobar')}
+              Aprobar
             </Button>
             <Button
               onClick={() => onReject(recommendation.id)}
@@ -184,7 +181,7 @@ export function RecommendationCard({
               size="sm"
             >
               <X className="h-4 w-4 mr-1" />
-              {t('ai.RecommendationCard.rechazar')}
+              Rechazar
             </Button>
           </div>
         )}

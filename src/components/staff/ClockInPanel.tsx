@@ -9,7 +9,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface ClockRecord {
   id: string;
@@ -26,10 +25,13 @@ interface ClockInPanelProps {
 }
 
 export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [employeeId, setEmployeeId] = useState<string | null>{t('staff.ClockInPanel.nullConstActiverecordSetactiverecordUses')}<ClockRecord | null>{t('staff.ClockInPanel.nullConstWeekrecordsSetweekrecordsUsesta')}<ClockRecord[]>{t('staff.ClockInPanel.constCurrenttimeSetcurrenttimeUsestatene')}<{ lat: number; lng: number } | null>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [activeRecord, setActiveRecord] = useState<ClockRecord | null>(null);
+  const [weekRecords, setWeekRecords] = useState<ClockRecord[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Update current time every second
   useEffect(() => {
@@ -98,7 +100,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
   const handleClockIn = async () => {
     if (!employeeId) {
-      toast.error(t('clockIn.toastNotFound'));
+      toast.error('No se encontró tu registro de empleado');
       return;
     }
 
@@ -121,10 +123,10 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
       setActiveRecord(data);
       setWeekRecords(prev => [data, ...prev]);
-      toast.success(t('clockIn.toastClockInOk'));
+      toast.success('Entrada registrada correctamente');
     } catch (error) {
       console.error('Clock in error:', error);
-      toast.error(t('clockIn.toastClockInError'));
+      toast.error('Error al registrar entrada');
     } finally {
       setLoading(false);
     }
@@ -153,10 +155,10 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
         )
       );
       setActiveRecord(null);
-      toast.success(t('clockIn.toastClockOutOk'));
+      toast.success('Salida registrada correctamente');
     } catch (error) {
       console.error('Clock out error:', error);
-      toast.error(t('clockIn.toastClockOutError'));
+      toast.error('Error al registrar salida');
     } finally {
       setLoading(false);
     }
@@ -188,7 +190,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
       <Card>
         <CardContent className="pt-6">
           <p className="text-muted-foreground text-center">
-            {t('staff.ClockInPanel.noEstasAsignadoAEste')}
+            No estás asignado a este local como empleado.
           </p>
         </CardContent>
       </Card>
@@ -225,7 +227,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
           {geoLocation && (
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3 w-3" />
-              <span>{t("staff.locationDetected")}</span>
+              <span>Ubicación detectada</span>
             </div>
           )}
 
@@ -233,7 +235,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
           {activeRecord ? (
             <div className="space-y-3">
               <div className="bg-muted/50 rounded-lg p-3 text-center">
-                <p className="text-sm text-muted-foreground">{t("staff.activeShiftSince")}</p>
+                <p className="text-sm text-muted-foreground">Turno activo desde</p>
                 <p className="font-semibold">
                   {format(new Date(activeRecord.clock_in), 'HH:mm')}
                 </p>
@@ -248,7 +250,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
                 variant="destructive"
               >
                 <LogOut className="mr-2 h-5 w-5" />
-                {t('staff.ClockInPanel.ficharSalida')}
+                Fichar Salida
               </Button>
             </div>
           ) : (
@@ -258,13 +260,13 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
               className="w-full h-14 text-lg"
             >
               <LogIn className="mr-2 h-5 w-5" />
-              {t('staff.ClockInPanel.ficharEntrada')}
+              Fichar Entrada
             </Button>
           )}
 
           {/* Weekly Summary */}
           <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-sm text-muted-foreground">{t("staff.thisWeek")}:</span>
+            <span className="text-sm text-muted-foreground">Esta semana:</span>
             <span className="font-semibold">{calculateWeeklyHours()}</span>
           </div>
         </CardContent>
@@ -275,14 +277,14 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <History className="h-4 w-4" />
-            {t('staff.ClockInPanel.historialSemanal')}
+            Historial Semanal
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[200px]">
             {weekRecords.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">
-                {t('staff.ClockInPanel.sinFichajesEstaSemana')}
+                Sin fichajes esta semana
               </p>
             ) : (
               <div className="space-y-2">

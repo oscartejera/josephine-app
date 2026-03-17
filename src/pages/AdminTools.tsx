@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Database, Loader2, CheckCircle2, AlertCircle, TrendingUp, Calendar, Sparkles, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 export default function AdminTools() {
-  const { t } = useTranslation();
   const [isSeeding, setIsSeeding] = useState(false);
-  const [seedResult, setSeedResult] = useState<any>{t('adminTools.nullConstErrorSeterrorUsestate')}<string | null>{t('adminTools.nullConstIsgeneratingforecastSetisgenera')}<any>{t('adminTools.nullConstIsgeneratingv5Setisgeneratingv5')}<any>(null);
+  const [seedResult, setSeedResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isGeneratingForecast, setIsGeneratingForecast] = useState(false);
+  const [forecastResult, setForecastResult] = useState<any>(null);
+  const [isGeneratingV5, setIsGeneratingV5] = useState(false);
+  const [v5Result, setV5Result] = useState<any>(null);
 
   const handleSeed18Months = async () => {
     setIsSeeding(true);
@@ -31,7 +34,7 @@ export default function AdminTools() {
 
       console.log('✅ Seed result:', data);
       setSeedResult(data);
-      toast.success(t('adminTools.toast18Months'));
+      toast.success('18 meses de datos generados exitosamente!');
 
     } catch (err) {
       console.error('❌ Seed error:', err);
@@ -55,7 +58,7 @@ export default function AdminTools() {
       if (error) throw error;
 
       setSeedResult(data);
-      toast.success(t('adminTools.toast30Days'));
+      toast.success('30 días de datos generados!');
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMsg);
@@ -124,13 +127,13 @@ export default function AdminTools() {
   return (
     <div className="p-6 space-y-6 max-w-[1200px] mx-auto">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{t('adminTools.adminTools')}</h1>
-        <p className="text-gray-600 mt-2">{t("admin.toolsDescription")}</p>
+        <h1 className="text-3xl font-bold text-gray-900">Admin Tools</h1>
+        <p className="text-gray-600 mt-2">Herramientas para generar datos demo y gestión del sistema</p>
       </div>
 
       {/* Forecast Section */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900">{t('adminTools.generateProphetForecast')}</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Generate Prophet Forecast</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* V4 - Statistical Prophet */}
@@ -142,21 +145,21 @@ export default function AdminTools() {
               <div className="flex-1 space-y-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{t('adminTools.prophetV4')}</h3>
-                    <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{t('adminTools.statistical')}</span>
+                    <h3 className="text-lg font-semibold text-gray-900">Prophet v4</h3>
+                    <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">Statistical</span>
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    {t('adminTools.forecastEstadisticoConTrendSeasonality')}
+                    Forecast estadistico con trend + seasonality + regresores
                   </p>
                 </div>
 
                 <div className="bg-white rounded-lg p-3 space-y-2 text-sm">
-                  <p className="font-medium text-gray-900">{t('adminTools.incluye')}</p>
+                  <p className="font-medium text-gray-900">Incluye:</p>
                   <ul className="space-y-1 text-gray-700 ml-4">
-                    <li>{t('adminTools.trendLinealSeasonality')}</li>
-                    <li>{t('adminTools.9RegresoresExternos')}</li>
-                    <li>{t('adminTools.confidenceIntervals95')}</li>
-                    <li>{t('adminTools.noRequiereServicioExterno')}</li>
+                    <li>✓ Trend lineal + Seasonality</li>
+                    <li>✓ 9 regresores externos</li>
+                    <li>✓ Confidence intervals 95%</li>
+                    <li>✓ No requiere servicio externo</li>
                   </ul>
                 </div>
 
@@ -168,12 +171,12 @@ export default function AdminTools() {
                   {isGeneratingForecast ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      {t('adminTools.generando60Seg')}
+                      Generando... (~60 seg)
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 mr-2" />
-                      {t('adminTools.generarV43Meses')}
+                      Generar v4 (3 meses)
                     </>
                   )}
                 </Button>
@@ -190,23 +193,23 @@ export default function AdminTools() {
               <div className="flex-1 space-y-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{t('adminTools.prophetV5')}</h3>
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">{t('adminTools.realMl')}</span>
+                    <h3 className="text-lg font-semibold text-gray-900">Prophet v5</h3>
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Real ML</span>
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    {t('adminTools.facebookProphetRealPythonCon')}
+                    Facebook Prophet real (Python) con Machine Learning
                   </p>
                 </div>
 
                 <div className="bg-white rounded-lg p-3 space-y-2 text-sm">
-                  <p className="font-medium text-gray-900">{t("admin.advantagesOverV4")}:</p>
+                  <p className="font-medium text-gray-900">Ventajas sobre v4:</p>
                   <ul className="space-y-1 text-gray-700 ml-4">
-                    <li>{t('adminTools.facebookProphetMlRealPython')}</li>
-                    <li>{t('adminTools.changepointDetectionAutomatico')}</li>
-                    <li>{t('adminTools.bayesianUncertaintyIntervals')}</li>
-                    <li>{t('adminTools.fourierSeasonalityMonthlyCustom')}</li>
-                    <li>{t('adminTools.crossvalidationMetricsMapeRmse')}</li>
-                    <li>{t('adminTools.multiplicativeAdditiveRegressors')}</li>
+                    <li>✓ Facebook Prophet ML real (Python)</li>
+                    <li>✓ Changepoint detection automatico</li>
+                    <li>✓ Bayesian uncertainty intervals</li>
+                    <li>✓ Fourier seasonality (monthly custom)</li>
+                    <li>✓ Cross-validation metrics (MAPE, RMSE)</li>
+                    <li>✓ Multiplicative + additive regressors</li>
                   </ul>
                 </div>
 
@@ -218,18 +221,18 @@ export default function AdminTools() {
                   {isGeneratingV5 ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      {t('adminTools.entrenandoModeloMl23Min')}
+                      Entrenando modelo ML... (~2-3 min)
                     </>
                   ) : (
                     <>
                       <Brain className="h-4 w-4 mr-2" />
-                      {t('adminTools.generarV5ProphetMl3')}
+                      Generar v5 Prophet ML (3 meses)
                     </>
                   )}
                 </Button>
 
                 <p className="text-xs text-gray-500">
-                  {t('adminTools.requiereProphetserviceurlConfiguradoDepl')}
+                  Requiere PROPHET_SERVICE_URL configurado. Deploy el servicio Python primero.
                 </p>
               </div>
             </div>
@@ -239,7 +242,7 @@ export default function AdminTools() {
 
       {/* Seed Data Section */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900">{t('adminTools.generateDemoData')}</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Generate Demo Data</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 18 Months Seed */}
@@ -250,9 +253,9 @@ export default function AdminTools() {
                   <TrendingUp className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{t('adminTools.18MesesCompletos')}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">18 Meses Completos</h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    {t('adminTools.paraDemosEInversores')}
+                    Para demos e inversores
                   </p>
                 </div>
               </div>
@@ -261,40 +264,40 @@ export default function AdminTools() {
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-indigo-600" />
                   <span className="font-medium">2025-01 a 2025-12:</span>
-                  <span>{t("admin.actualsComplete")}</span>
+                  <span>Actuals completos</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-indigo-600" />
                   <span className="font-medium">2026-01 a 2026-02:</span>
-                  <span>{t("admin.actualsCurrent")}</span>
+                  <span>Actuals actuales</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-indigo-600" />
                   <span className="font-medium">2026-03 a 2026-06:</span>
-                  <span>{t('adminTools.forecastplanned')}</span>
+                  <span>Forecast/Planned</span>
                 </div>
               </div>
 
               <div className="bg-white rounded-lg p-3 space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.salesRecords')}</span>
+                  <span className="text-gray-600">Sales records:</span>
                   <span className="font-semibold">~60,000</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.labourRecords')}</span>
+                  <span className="text-gray-600">Labour records:</span>
                   <span className="font-semibold">~1,980</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.locations')}</span>
+                  <span className="text-gray-600">Locations:</span>
                   <span className="font-semibold">3</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.employees')}</span>
+                  <span className="text-gray-600">Employees:</span>
                   <span className="font-semibold">70</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.tiempo')}</span>
-                  <span className="font-semibold text-amber-600">{t('adminTools.35Min')}</span>
+                  <span className="text-gray-600">Tiempo:</span>
+                  <span className="font-semibold text-amber-600">~3-5 min</span>
                 </div>
               </div>
 
@@ -306,12 +309,12 @@ export default function AdminTools() {
                 {isSeeding ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    {t('adminTools.generando35Min')}
+                    Generando... (3-5 min)
                   </>
                 ) : (
                   <>
                     <Database className="h-4 w-4 mr-2" />
-                    {t('adminTools.generar18Meses')}
+                    Generar 18 Meses
                   </>
                 )}
               </Button>
@@ -326,9 +329,9 @@ export default function AdminTools() {
                   <Database className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{t('admin.30DiasRapido')}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">30 Días Rápido</h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    {t('adminTools.paraTestingRapido')}
+                    Para testing rápido
                   </p>
                 </div>
               </div>
@@ -336,26 +339,26 @@ export default function AdminTools() {
               <div className="space-y-2 text-sm text-gray-700">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-emerald-600" />
-                  <span>{t('admin.ultimos30DiasConActuals')}</span>
+                  <span>Últimos 30 días con actuals</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span>{t("admin.sufficientForFeatures")}</span>
+                  <span>Suficiente para ver funcionalidades</span>
                 </div>
               </div>
 
               <div className="bg-white rounded-lg p-3 space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.salesRecords1')}</span>
+                  <span className="text-gray-600">Sales records:</span>
                   <span className="font-semibold">~4,680</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.labourRecords1')}</span>
+                  <span className="text-gray-600">Labour records:</span>
                   <span className="font-semibold">~90</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t('adminTools.tiempo1')}</span>
-                  <span className="font-semibold text-emerald-600">{t('adminTools.30Seg')}</span>
+                  <span className="text-gray-600">Tiempo:</span>
+                  <span className="font-semibold text-emerald-600">~30 seg</span>
                 </div>
               </div>
 
@@ -367,12 +370,12 @@ export default function AdminTools() {
                 {isSeeding ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    {t('adminTools.generando')}
+                    Generando...
                   </>
                 ) : (
                   <>
                     <Database className="h-4 w-4 mr-2" />
-                    {t('adminTools.generar30Dias')}
+                    Generar 30 Días
                   </>
                 )}
               </Button>
@@ -388,36 +391,36 @@ export default function AdminTools() {
             <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('adminTools.datosGeneradosExitosamente')}
+                ✅ Datos generados exitosamente
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {seedResult.period && (
                   <div>
-                    <span className="text-gray-600">{t('admin.periodo')}</span>
+                    <span className="text-gray-600">Periodo:</span>
                     <span className="font-semibold ml-2">{seedResult.period}</span>
                   </div>
                 )}
                 <div>
-                  <span className="text-gray-600">{t('adminTools.locations1')}</span>
+                  <span className="text-gray-600">Locations:</span>
                   <span className="font-semibold ml-2">{seedResult.locations}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600">{t('adminTools.employees1')}</span>
+                  <span className="text-gray-600">Employees:</span>
                   <span className="font-semibold ml-2">{seedResult.employees}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600">{t('adminTools.salesRecords2')}</span>
+                  <span className="text-gray-600">Sales records:</span>
                   <span className="font-semibold ml-2">{seedResult.salesRecords?.toLocaleString()}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600">{t('adminTools.labourRecords2')}</span>
+                  <span className="text-gray-600">Labour records:</span>
                   <span className="font-semibold ml-2">{seedResult.labourRecords?.toLocaleString()}</span>
                 </div>
               </div>
               
               {seedResult.breakdown && (
                 <div className="mt-3 pt-3 border-t border-emerald-200">
-                  <p className="text-sm font-medium text-gray-900 mb-2">{t('adminTools.breakdown')}</p>
+                  <p className="text-sm font-medium text-gray-900 mb-2">Breakdown:</p>
                   <ul className="text-sm text-gray-700 space-y-1">
                     <li>✓ {seedResult.breakdown.historical_2025}</li>
                     <li>✓ {seedResult.breakdown.current_2026_jan_feb}</li>
@@ -432,14 +435,14 @@ export default function AdminTools() {
                   variant="outline"
                   onClick={() => window.location.href = '/sales'}
                 >
-                  {t('adminTools.verSalesModule')}
+                  Ver Sales Module
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline"
                   onClick={() => window.location.href = '/insights/labour'}
                 >
-                  {t('adminTools.verLabourModule')}
+                  Ver Labour Module
                 </Button>
               </div>
             </div>
@@ -454,23 +457,23 @@ export default function AdminTools() {
             <Sparkles className="h-6 w-6 text-purple-600 shrink-0 mt-1" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('adminTools.forecastGeneradoConProphetV4')}
+                🔮 Forecast generado con Prophet v4
               </h3>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-600">{t('adminTools.locationsProcesadas')}</span>
+                    <span className="text-gray-600">Locations procesadas:</span>
                     <span className="font-semibold ml-2">{forecastResult.locations_processed}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">{t('adminTools.horizon')}</span>
+                    <span className="text-gray-600">Horizon:</span>
                     <span className="font-semibold ml-2">{forecastResult.horizon_days} días</span>
                   </div>
                 </div>
 
                 {forecastResult.results && forecastResult.results.length > 0 && (
                   <div className="bg-white rounded-lg p-3 space-y-2">
-                    <p className="font-medium text-gray-900 text-sm">{t('admin.resultadosPorLocation')}</p>
+                    <p className="font-medium text-gray-900 text-sm">Resultados por location:</p>
                     {forecastResult.results.map((r: any, i: number) => (
                       <div key={i} className="text-xs space-y-1 border-b border-gray-100 pb-2 last:border-0">
                         <p className="font-semibold text-gray-900">{r.location_name}</p>
@@ -482,7 +485,7 @@ export default function AdminTools() {
                         </div>
                         {r.sample_forecast && r.sample_forecast.length > 0 && (
                           <div className="mt-2 bg-gray-50 p-2 rounded">
-                            <p className="font-medium mb-1">{t('admin.proximos7Dias')}</p>
+                            <p className="font-medium mb-1">Próximos 7 días:</p>
                             {r.sample_forecast.slice(0, 3).map((f: any, j: number) => (
                               <div key={j} className="text-[10px] text-gray-600">
                                 {f.date}: €{f.forecast.toFixed(0)} - {f.explanation}
@@ -501,14 +504,14 @@ export default function AdminTools() {
                     variant="outline"
                     onClick={() => window.location.href = '/sales'}
                   >
-                    {t('adminTools.verEnSales')}
+                    Ver en Sales
                   </Button>
                   <Button 
                     size="sm" 
                     variant="outline"
                     onClick={() => window.location.href = '/insights/labour'}
                   >
-                    {t('adminTools.verEnLabour')}
+                    Ver en Labour
                   </Button>
                 </div>
               </div>
@@ -524,27 +527,27 @@ export default function AdminTools() {
             <Brain className="h-6 w-6 text-blue-600 shrink-0 mt-1" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('adminTools.prophetV5RealMlForecast')}
+                Prophet v5 - Real ML Forecast
               </h3>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-600">{t('adminTools.engine')}</span>
+                    <span className="text-gray-600">Engine:</span>
                     <span className="font-semibold ml-2">{v5Result.engine}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">{t('adminTools.locations2')}</span>
+                    <span className="text-gray-600">Locations:</span>
                     <span className="font-semibold ml-2">{v5Result.locations_processed}</span>
                   </div>
                   <div>
-                    <span className="text-gray-600">{t('adminTools.horizon1')}</span>
+                    <span className="text-gray-600">Horizon:</span>
                     <span className="font-semibold ml-2">{v5Result.horizon_days} dias</span>
                   </div>
                 </div>
 
                 {v5Result.features && (
                   <div className="bg-white rounded-lg p-3 text-xs">
-                    <p className="font-medium text-gray-900 mb-1">{t('adminTools.mlFeatures')}</p>
+                    <p className="font-medium text-gray-900 mb-1">ML Features:</p>
                     <div className="flex flex-wrap gap-1">
                       {v5Result.features.map((f: string, i: number) => (
                         <span key={i} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
@@ -557,7 +560,7 @@ export default function AdminTools() {
 
                 {v5Result.results && v5Result.results.length > 0 && (
                   <div className="bg-white rounded-lg p-3 space-y-3">
-                    <p className="font-medium text-gray-900 text-sm">{t('admin.resultadosPorLocation')}</p>
+                    <p className="font-medium text-gray-900 text-sm">Resultados por location:</p>
                     {v5Result.results.map((r: any, i: number) => (
                       <div key={i} className="text-xs space-y-2 border-b border-gray-100 pb-3 last:border-0">
                         <p className="font-semibold text-gray-900 text-sm">{r.location_name}</p>
@@ -580,7 +583,7 @@ export default function AdminTools() {
                                 <p className="font-bold text-blue-700">{r.metrics?.r_squared}</p>
                               </div>
                               <div className="bg-blue-50 rounded p-2 text-center">
-                                <p className="text-[10px] text-gray-500">{t('adminTools.confidence')}</p>
+                                <p className="text-[10px] text-gray-500">Confidence</p>
                                 <p className="font-bold text-blue-700">{r.confidence}%</p>
                               </div>
                             </div>
@@ -593,7 +596,7 @@ export default function AdminTools() {
 
                             {r.sample_forecast && r.sample_forecast.length > 0 && (
                               <div className="mt-2 bg-gray-50 p-2 rounded">
-                                <p className="font-medium mb-1">{t('adminTools.proximos7Dias')}</p>
+                                <p className="font-medium mb-1">Proximos 7 dias:</p>
                                 {r.sample_forecast.slice(0, 5).map((f: any, j: number) => (
                                   <div key={j} className="text-[10px] text-gray-600 flex justify-between">
                                     <span>{f.date}</span>
@@ -617,14 +620,14 @@ export default function AdminTools() {
                     variant="outline"
                     onClick={() => window.location.href = '/sales'}
                   >
-                    {t('adminTools.verEnSales1')}
+                    Ver en Sales
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => window.location.href = '/insights/labour'}
                   >
-                    {t('adminTools.verEnLabour1')}
+                    Ver en Labour
                   </Button>
                 </div>
               </div>
@@ -640,16 +643,16 @@ export default function AdminTools() {
             <AlertCircle className="h-6 w-6 text-red-600 shrink-0" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('adminTools.errorAlGenerarDatos')}
+                Error al generar datos
               </h3>
               <p className="text-sm text-gray-700 mb-3">{error}</p>
               
               <div className="bg-white rounded-lg p-3 text-xs">
-                <p className="font-medium mb-2">{t('adminTools.alternativas')}</p>
+                <p className="font-medium mb-2">Alternativas:</p>
                 <ol className="list-decimal list-inside space-y-1 text-gray-600">
-                  <li>{t('adminTools.irASupabaseDashboardSql')}</li>
-                  <li>{t('adminTools.ejecutar')} <code className="bg-gray-100 px-1 rounded">SELECT * FROM seed_josephine_demo_data();</code></li>
-                  <li>{t('admin.oUsarElBoton30')}</li>
+                  <li>Ir a Supabase Dashboard → SQL Editor</li>
+                  <li>Ejecutar: <code className="bg-gray-100 px-1 rounded">SELECT * FROM seed_josephine_demo_data();</code></li>
+                  <li>O usar el botón "30 Días Rápido" arriba</li>
                 </ol>
               </div>
             </div>
@@ -659,37 +662,37 @@ export default function AdminTools() {
 
       {/* Instructions */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('adminTools.instrucciones')}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Instrucciones</h3>
         
         <div className="space-y-3 text-sm text-gray-700">
           <div>
-            <p className="font-medium text-gray-900 mb-1">{t('adminTools.18MesesRecomendadoParaDemos')}</p>
+            <p className="font-medium text-gray-900 mb-1">📊 18 Meses (Recomendado para demos):</p>
             <ul className="list-disc list-inside space-y-1 ml-4 text-gray-600">
-              <li>{t('admin.todo2025ConDatosHistoricos')}</li>
-              <li>{t('adminTools.enerofebrero2026ConActuals')}</li>
-              <li>{t('adminTools.marzojunio2026ConForecast')}</li>
-              <li>{t('adminTools.permiteComparacionesYoyVsLast')}</li>
-              <li>{t('adminTools.60000RegistrosTarda35Minutos')}</li>
+              <li>Todo 2025 con datos históricos (baseline)</li>
+              <li>Enero-Febrero 2026 con actuals</li>
+              <li>Marzo-Junio 2026 con forecast</li>
+              <li>Permite comparaciones YoY (vs Last Year)</li>
+              <li>~60,000 registros, tarda 3-5 minutos</li>
             </ul>
           </div>
 
           <div>
-            <p className="font-medium text-gray-900 mb-1">{t('admin.30DiasParaTestingRapido')}</p>
+            <p className="font-medium text-gray-900 mb-1">⚡ 30 Días (Para testing rápido):</p>
             <ul className="list-disc list-inside space-y-1 ml-4 text-gray-600">
-              <li>{t('admin.ultimos30DiasConActuals')}</li>
-              <li>{t('adminTools.suficienteParaVerTodasLas')}</li>
-              <li>{t('adminTools.4680RegistrosTarda30Segundos')}</li>
-              <li>{t('adminTools.idealParaDesarrolloYTesting')}</li>
+              <li>Últimos 30 días con actuals</li>
+              <li>Suficiente para ver todas las funcionalidades</li>
+              <li>~4,680 registros, tarda 30 segundos</li>
+              <li>Ideal para desarrollo y testing</li>
             </ul>
           </div>
 
           <div className="pt-3 border-t">
-            <p className="font-medium text-gray-900 mb-1">{t('adminTools.importante')}</p>
+            <p className="font-medium text-gray-900 mb-1">⚠️ Importante:</p>
             <ul className="list-disc list-inside space-y-1 ml-4 text-gray-600">
-              <li>{t('admin.estoBorraraDatosDemoPrevios')}</li>
-              <li>{t('adminTools.noAfectaDatosRealesDe')}</li>
-              <li>{t('adminTools.soloBorraLocationsLaTaberna')}</li>
-              <li>{t('adminTools.puedesRegenerarCuantasVecesNecesites')}</li>
+              <li>Esto borrará datos demo previos</li>
+              <li>NO afecta datos reales de POS conectados</li>
+              <li>Solo borra locations: "La Taberna Centro", "Chamberí", "Malasaña"</li>
+              <li>Puedes regenerar cuantas veces necesites</li>
             </ul>
           </div>
         </div>
@@ -697,25 +700,25 @@ export default function AdminTools() {
 
       {/* What Gets Generated */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("admin.whatIsGenerated")}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Qué se genera</h3>
         
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">{t('adminTools.masterData')}</h4>
+            <h4 className="font-medium text-gray-900 mb-2">Master Data:</h4>
             <ul className="space-y-1 text-sm text-gray-700">
-              <li>{t('adminTools.3LocationsMadridSalamanca')}</li>
-              <li>{t('admin.70EmpleadosConRolesRealistas')}</li>
-              <li>{t('admin.10ProductosDelMenuEspanol')}</li>
+              <li>✓ 3 Locations (Madrid + Salamanca)</li>
+              <li>✓ 70 Empleados con roles realistas</li>
+              <li>✓ 10 Productos del menú español</li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-medium text-gray-900 mb-2">{t('adminTools.factsData')}</h4>
+            <h4 className="font-medium text-gray-900 mb-2">Facts Data:</h4>
             <ul className="space-y-1 text-sm text-gray-700">
-              <li>{t('adminTools.factssales15mCada15min')}</li>
-              <li>{t('admin.factslabordailyPorDia')}</li>
-              <li>{t('adminTools.patronesRealistasWeekendsPeaks')}</li>
-              <li>{t('admin.coherenciaMatematicaGarantizada')}</li>
+              <li>✓ facts_sales_15m (cada 15min)</li>
+              <li>✓ facts_labor_daily (por día)</li>
+              <li>✓ Patrones realistas (weekends, peaks)</li>
+              <li>✓ Coherencia matemática garantizada</li>
             </ul>
           </div>
         </div>
@@ -723,11 +726,11 @@ export default function AdminTools() {
 
       {/* Verification Queries */}
       <Card className="p-6 bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("admin.verificationQueries")}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Queries de Verificación</h3>
         
         <div className="space-y-3">
           <div className="bg-white rounded-lg p-3 border">
-            <p className="text-xs font-medium text-gray-700 mb-2">{t("admin.viewTotals")}:</p>
+            <p className="text-xs font-medium text-gray-700 mb-2">Ver totales:</p>
             <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">
               {`SELECT 
   (SELECT COUNT(*) FROM facts_sales_15m) as sales,
@@ -738,7 +741,7 @@ export default function AdminTools() {
           </div>
 
           <div className="bg-white rounded-lg p-3 border">
-            <p className="text-xs font-medium text-gray-700 mb-2">{t("admin.viewSalesByMonth")}:</p>
+            <p className="text-xs font-medium text-gray-700 mb-2">Ver sales por mes:</p>
             <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">
               {`SELECT 
   TO_CHAR(DATE(ts_bucket), 'YYYY-MM') as month,

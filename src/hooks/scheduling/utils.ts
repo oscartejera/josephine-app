@@ -1,11 +1,9 @@
 // Scheduling module — pure utility functions
 
 import { addDays, format } from 'date-fns';
-
 import type { Location, Shift, DayKPI } from './types';
 import { UUID_REGEX, LEGACY_LOCATION_ALIASES, DAY_NAMES } from './types';
 
-import { useTranslation } from 'react-i18next';
 /**
  * Resolve a location parameter (UUID or legacy string) to a valid UUID
  * @param locationParam - The location parameter from URL (could be UUID or legacy string)
@@ -112,7 +110,9 @@ export function getStation(roleName: string): string {
 // Build DayKPIs from forecast + shifts + actual
 export function buildDailyKPIs(
     weekStart: Date,
-    forecastByDate: Record<string, any>{t('hooks.scheduling.utils.shiftsShiftActualbydateRecord')}<string, { actualSales: number; actualLaborCost: number; actualColPercent: number }> = {}
+    forecastByDate: Record<string, any>,
+    shifts: Shift[],
+    actualByDate: Record<string, { actualSales: number; actualLaborCost: number; actualColPercent: number }> = {}
 ): DayKPI[] {
     const kpis: DayKPI[] = [];
     const today = format(new Date(), 'yyyy-MM-dd');

@@ -4,7 +4,6 @@ import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BISalesData, CompareMode } from '@/hooks/useBISalesData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from 'react-i18next';
 
 interface BIKpiCardsProps {
   data: BISalesData | undefined;
@@ -22,7 +21,8 @@ function formatCurrency(value: number): string {
 }
 
 function DeltaBadge({ value, suffix = '' }: { value: number; suffix?: string }) {
-  const isPositive = value >{t('bi.BIKpiCards.0Return')}
+  const isPositive = value >= 0;
+  return (
     <span className={cn(
       "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
       isPositive 
@@ -110,7 +110,6 @@ function KpiCardSkeleton() {
 }
 
 export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
-  const { t } = useTranslation();
   if (isLoading || !data) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -129,7 +128,7 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">{t('bi.BIKpiCards.salesToDate')}</span>
+            <span className="text-sm text-muted-foreground">Sales to date</span>
             <DeltaBadge value={data.kpis.salesToDateDelta} suffix={` ${compareLabel}`} />
           </div>
           <div className="text-4xl font-bold tracking-tight mb-1">
@@ -143,7 +142,7 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">{t('bi.BIKpiCards.averageCheckSize')}</span>
+            <span className="text-sm text-muted-foreground">Average check size</span>
             <DeltaBadge value={data.kpis.avgCheckSizeDelta} suffix={` ${compareLabel}`} />
           </div>
           <div className="text-4xl font-bold tracking-tight mb-1">
@@ -158,14 +157,14 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
             <div className="flex items-center gap-1">
-              <span className="text-sm text-muted-foreground">{t('bi.BIKpiCards.dwellTime')}</span>
+              <span className="text-sm text-muted-foreground">Dwell time</span>
               {data.kpis.dwellTime === null && (
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="h-3.5 w-3.5 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t('bi.BIKpiCards.requiresOpenedatDataFromPos')}</p>
+                    <p>Requires opened_at data from POS</p>
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -178,7 +177,7 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
             {data.kpis.dwellTime !== null ? `${data.kpis.dwellTime} min` : '—'}
           </div>
           <p className="text-xs text-muted-foreground mt-4">
-            {t('bi.BIKpiCards.averageTimeDineinCustomersSpend')}
+            Average time dine-in customers spend
           </p>
         </CardContent>
       </Card>

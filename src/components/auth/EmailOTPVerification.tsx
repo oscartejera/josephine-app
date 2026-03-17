@@ -5,7 +5,6 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { ChefHat, Loader2, Mail, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useTranslation } from 'react-i18next';
 
 interface EmailOTPVerificationProps {
   email: string;
@@ -24,7 +23,6 @@ export function EmailOTPVerification({
   onVerified,
   onBack
 }: EmailOTPVerificationProps) {
-  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -62,15 +60,15 @@ export function EmailOTPVerification({
       if (error) throw error;
 
       toast({
-        title: t('auth.codigoEnviado'),
-        description: t('auth.otpSent', { email })
+        title: "Código enviado",
+        description: `Hemos enviado un código de 6 dígitos a ${email}`
       });
     } catch (error: any) {
       console.error('Error sending OTP:', error);
       toast({
         variant: "destructive",
-        title: t("common.error"),
-        description: t('auth.noSePudoEnviarEl')
+        title: "Error",
+        description: "No se pudo enviar el código. Intenta de nuevo."
       });
     }
   };
@@ -88,8 +86,8 @@ export function EmailOTPVerification({
     if (code.length !== 6) {
       toast({
         variant: "destructive",
-        title: t('auth.codigoIncompleto'),
-        description: t('auth.porFavorIngresaElCodigo')
+        title: "Código incompleto",
+        description: "Por favor ingresa el código de 6 dígitos"
       });
       return;
     }
@@ -105,8 +103,8 @@ export function EmailOTPVerification({
       if (verifyError || !verifyData?.valid) {
         toast({
           variant: "destructive",
-          title: t('auth.codigoInvalido'),
-          description: t('auth.elCodigoEsIncorrectoO')
+          title: "Código inválido",
+          description: "El código es incorrecto o ha expirado"
         });
         setLoading(false);
         return;
@@ -125,7 +123,7 @@ export function EmailOTPVerification({
       if (signUpError) {
         toast({
           variant: "destructive",
-          title: t("auth.errorCreatingAccount"),
+          title: "Error al crear cuenta",
           description: signUpError.message
         });
         setLoading(false);
@@ -138,7 +136,7 @@ export function EmailOTPVerification({
       }
 
       toast({
-        title: t('auth.cuentaCreada'),
+        title: "Cuenta creada",
         description: "Tu cuenta ha sido verificada y creada exitosamente."
       });
 
@@ -147,8 +145,8 @@ export function EmailOTPVerification({
       console.error('Verification error:', error);
       toast({
         variant: "destructive",
-        title: t("common.error"),
-        description: t('auth.ocurrioUnErrorAlVerificar')
+        title: "Error",
+        description: "Ocurrió un error al verificar. Intenta de nuevo."
       });
     }
 
@@ -161,7 +159,7 @@ export function EmailOTPVerification({
         <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
           <Mail className="w-6 h-6 text-primary-foreground" />
         </div>
-        <CardTitle className="text-2xl font-display">{t('auth.EmailOTPVerification.verificaTuEmail')}</CardTitle>
+        <CardTitle className="text-2xl font-display">Verifica tu email</CardTitle>
         <CardDescription>
           Ingresa el código de 6 dígitos que enviamos a{' '}
           <span className="font-medium text-foreground">{email}</span>
@@ -197,7 +195,7 @@ export function EmailOTPVerification({
 
         <div className="text-center space-y-2">
           <p className="text-sm text-muted-foreground">
-            {t('auth.EmailOTPVerification.noRecibisteElCodigo')}
+            ¿No recibiste el código?
           </p>
           {canResend ? (
             <Button
@@ -226,7 +224,7 @@ export function EmailOTPVerification({
           onClick={onBack}
           disabled={loading}
         >
-          {t('auth.EmailOTPVerification.volver')}
+          Volver
         </Button>
       </CardContent>
     </Card>

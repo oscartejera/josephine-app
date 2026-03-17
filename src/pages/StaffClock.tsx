@@ -1,10 +1,8 @@
 import { useParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { ClockInPanel } from '@/components/staff/ClockInPanel';
-import { useTranslation } from 'react-i18next';
 
 export default function StaffClock() {
-  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId: string }>();
   const { locations } = useApp();
   
@@ -13,7 +11,7 @@ export default function StaffClock() {
   if (!locationId) {
     return (
       <div className="p-6 flex items-center justify-center h-[calc(100vh-3.5rem)]">
-        <p className="text-muted-foreground">{t("staff.selectLocation")}</p>
+        <p className="text-muted-foreground">Selecciona un local</p>
       </div>
     );
   }
@@ -21,9 +19,9 @@ export default function StaffClock() {
   return (
     <div className="p-4 lg:p-6 max-w-md mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold">{t('staffClock.fichaje')}</h1>
+        <h1 className="text-xl font-semibold">Fichaje</h1>
         <p className="text-sm text-muted-foreground">
-          {t('staffClock.registraTuEntradaYSalida')}
+          Registra tu entrada y salida
         </p>
       </div>
       <ClockInPanel 

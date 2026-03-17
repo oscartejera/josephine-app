@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Search, ArrowUpDown, Star, HelpCircle, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
-import { useTranslation } from 'react-i18next';
 
 interface MenuEngineeringTableProps {
   items: MenuEngineeringItem[];
@@ -73,9 +72,10 @@ function getFoodCostHealth(pct: number): { label: string; className: string } {
 }
 
 export function MenuEngineeringTable({ items, loading }: MenuEngineeringTableProps) {
-  const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [classificationFilter, setClassificationFilter] = useState<string>{t('menu-engineering.MenuEngineeringTable.allConstSortfieldSetsortfieldUsestate')}<SortField>{t('menu-engineering.MenuEngineeringTable.totalgrossprofitConstSortdirectionSetsor')}<SortDirection>('desc');
+  const [classificationFilter, setClassificationFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<SortField>('total_gross_profit');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const filteredItems = useMemo(() => {
     let result = [...items];
@@ -107,21 +107,24 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
   );
 
   if (loading) {
-    return <Card><CardHeader><CardTitle>{t('menu-engineering.MenuEngineeringTable.yourMenuItems')}</CardTitle></CardHeader><CardContent><Skeleton className="h-[400px] w-full" /></CardContent></Card>;
+    return <Card><CardHeader><CardTitle>Your Menu Items</CardTitle></CardHeader><CardContent><Skeleton className="h-[400px] w-full" /></CardContent></Card>;
   }
 
   // Summary stats
   const totalProfit = filteredItems.reduce((s, i) => s + i.total_gross_profit, 0);
   const avgFoodCostPct = filteredItems.filter(i => i.unit_food_cost > 0).length > 0
-    ? filteredItems.filter(i => i.unit_food_cost > 0).reduce((s, i) => s + (i.selling_price_ex_vat > 0 ? (i.unit_food_cost / i.selling_price_ex_vat * 100) : 0), 0) / filteredItems.filter(i => i.unit_food_cost > {t('menu-engineering.MenuEngineeringTable.0length0Return')}
+    ? filteredItems.filter(i => i.unit_food_cost > 0).reduce((s, i) => s + (i.selling_price_ex_vat > 0 ? (i.unit_food_cost / i.selling_price_ex_vat * 100) : 0), 0) / filteredItems.filter(i => i.unit_food_cost > 0).length
+    : 0;
+
+  return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <CardTitle>{t('menu-engineering.MenuEngineeringTable.yourMenuItems1')}</CardTitle>
+            <CardTitle>Your Menu Items</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               {filteredItems.length} products · Total profit: <strong className={totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}>{formatCurrency(totalProfit)}</strong>
-              {avgFoodCostPct > 0 && <> {t('menu-engineering.MenuEngineeringTable.avgFoodCost')} <strong>{avgFoodCostPct.toFixed(0)}%</strong></>}
+              {avgFoodCostPct > 0 && <> · Avg food cost: <strong>{avgFoodCostPct.toFixed(0)}%</strong></>}
             </p>
           </div>
         </div>
@@ -130,16 +133,16 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder={t('menu-engineering.MenuEngineeringTable.searchProducts')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={classificationFilter} onValueChange={setClassificationFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder={t('menu-engineering.MenuEngineeringTable.filter')} /></SelectTrigger>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Filter" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('menu-engineering.MenuEngineeringTable.allItems')}</SelectItem>
-              <SelectItem value="star">{t('menu-engineering.MenuEngineeringTable.stars')}</SelectItem>
-              <SelectItem value="plow_horse">{t('menu-engineering.MenuEngineeringTable.plowHorses')}</SelectItem>
-              <SelectItem value="puzzle">{t('menu-engineering.MenuEngineeringTable.puzzles')}</SelectItem>
-              <SelectItem value="dog">{t('menu-engineering.MenuEngineeringTable.dogs')}</SelectItem>
+              <SelectItem value="all">All items</SelectItem>
+              <SelectItem value="star">⭐ Stars</SelectItem>
+              <SelectItem value="plow_horse">🐴 Plow Horses</SelectItem>
+              <SelectItem value="puzzle">💎 Puzzles</SelectItem>
+              <SelectItem value="dog">🔍 Dogs</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -148,25 +151,30 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
           <Table>
             <TableHeader>
               <TableRow className="text-xs">
-                <SortHeader field="name">{t('menu-engineering.MenuEngineeringTable.product')}</SortHeader>
-                <TableHead>{t('menu-engineering.MenuEngineeringTable.category')}</TableHead>
-                <SortHeader field="selling_price_ex_vat">{t('menu-engineering.MenuEngineeringTable.price')}</SortHeader>
-                <SortHeader field="unit_food_cost">{t('menu-engineering.MenuEngineeringTable.foodCost')}</SortHeader>
-                <TableHead>{t('menu-engineering.MenuEngineeringTable.fc')}</TableHead>
-                <SortHeader field="units_sold">{t('menu-engineering.MenuEngineeringTable.sold')}</SortHeader>
-                <SortHeader field="popularity_pct">{t('menu-engineering.MenuEngineeringTable.sales')}</SortHeader>
-                <SortHeader field="unit_gross_profit">{t('menu-engineering.MenuEngineeringTable.profitplate')}</SortHeader>
-                <SortHeader field="total_gross_profit">{t("menuEngineering.totalProfit")}</SortHeader>
-                <TableHead>{t('menu-engineering.MenuEngineeringTable.type')}</TableHead>
-                <TableHead>{t('menu-engineering.MenuEngineeringTable.whatToDo')}</TableHead>
+                <SortHeader field="name">Product</SortHeader>
+                <TableHead>Category</TableHead>
+                <SortHeader field="selling_price_ex_vat">Price</SortHeader>
+                <SortHeader field="unit_food_cost">Food Cost</SortHeader>
+                <TableHead>FC %</TableHead>
+                <SortHeader field="units_sold">Sold</SortHeader>
+                <SortHeader field="popularity_pct">% Sales</SortHeader>
+                <SortHeader field="unit_gross_profit">Profit/plate</SortHeader>
+                <SortHeader field="total_gross_profit">Total Profit</SortHeader>
+                <TableHead>Type</TableHead>
+                <TableHead>What to Do</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredItems.length === 0 ? (
-                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">{t('menu-engineering.MenuEngineeringTable.noProductsFound')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredItems.map((item) => {
                 const config = CLASSIFICATION_CONFIG[item.classification] || CLASSIFICATION_CONFIG.dog;
-                const foodCostPct = item.selling_price_ex_vat > {t('menu-engineering.MenuEngineeringTable.0ItemunitfoodcostItemsellingpriceexvat10')}
+                const foodCostPct = item.selling_price_ex_vat > 0 ? (item.unit_food_cost / item.selling_price_ex_vat) * 100 : 0;
+                const fcHealth = getFoodCostHealth(foodCostPct);
+                const hasRealCost = item.cost_source === 'recipe_actual';
+                const hasFallbackCost = item.cost_source === 'fallback_average';
+
+                return (
                   <TableRow key={item.product_id} className="group">
                     <TableCell className="font-medium max-w-[180px]">
                       <span className="truncate block">{item.name}</span>
@@ -183,7 +191,7 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
                             <TooltipTrigger>
                               <AlertTriangle className="h-3 w-3 text-amber-500 ml-1 inline" />
                             </TooltipTrigger>
-                            <TooltipContent><p className="text-xs">{t('menu-engineering.MenuEngineeringTable.estimatedFromCategoryAverage')}</p></TooltipContent>
+                            <TooltipContent><p className="text-xs">Estimated from category average</p></TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       )}
@@ -237,8 +245,8 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
 
         {/* Quick guide footer */}
         <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap gap-4 text-xs text-muted-foreground">
-          <span>{t('menu-engineering.MenuEngineeringTable.foodCostHealth')} <span className="text-emerald-600 font-medium">{t('menu-engineering.MenuEngineeringTable.30Great')}</span> · <span className="text-amber-600 font-medium">{t('menu-engineering.MenuEngineeringTable.3035Ok')}</span> · <span className="text-red-600 font-medium">{t('menu-engineering.MenuEngineeringTable.gt35High')}</span></span>
-          <span>{t('menu-engineering.MenuEngineeringTable.profitplatePriceFoodCostPer')}</span>
+          <span>Food cost % health: <span className="text-emerald-600 font-medium">≤30% great</span> · <span className="text-amber-600 font-medium">30-35% ok</span> · <span className="text-red-600 font-medium">&gt;35% high</span></span>
+          <span>Profit/plate = Price − Food Cost (per serving, ex-VAT)</span>
         </div>
       </CardContent>
     </Card>

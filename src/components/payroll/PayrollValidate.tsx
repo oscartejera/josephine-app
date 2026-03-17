@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
-import { useTranslation } from 'react-i18next';
 
 interface ValidationItem {
   id: string;
@@ -24,7 +23,6 @@ interface ValidationItem {
 }
 
 export default function PayrollValidate({
-  
   selectedLegalEntity,
   currentPeriod,
   currentRun,
@@ -32,7 +30,6 @@ export default function PayrollValidate({
   isPayrollAdmin,
   isSandboxMode,
 }: PayrollContextData) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -74,31 +71,31 @@ export default function PayrollValidate({
     
     results.push({
       id: 'nif',
-      category: t('payroll.datosLegales'),
-      description: t('payroll.empleadosConNif'),
+      category: 'Datos Legales',
+      description: 'Empleados con NIF',
       severity: critSeverity,
       status: missingNif.length === 0 ? 'pass' : 'fail',
-      details: missingNif.length > 0 ? t('payroll.employeesWithoutNif', { count: missingNif.length }) + (isSandboxMode ? t('payroll.sandboxEstimatedValues') : '') : undefined,
+      details: missingNif.length > 0 ? `${missingNif.length} empleado(s) sin NIF${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
       action: 'employees',
     });
     
     results.push({
       id: 'nss',
-      category: t('payroll.datosLegales'),
-      description: t('payroll.empleadosConNss'),
+      category: 'Datos Legales',
+      description: 'Empleados con NSS',
       severity: critSeverity,
       status: missingNss.length === 0 ? 'pass' : 'fail',
-      details: missingNss.length > 0 ? t('payroll.employeesWithoutNss', { count: missingNss.length }) + (isSandboxMode ? t('payroll.sandboxEstimatedValues') : '') : undefined,
+      details: missingNss.length > 0 ? `${missingNss.length} empleado(s) sin NSS${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
       action: 'employees',
     });
     
     results.push({
       id: 'iban',
-      category: t('payroll.datosBancarios'),
-      description: t('payroll.empleadosConIban'),
+      category: 'Datos Bancarios',
+      description: 'Empleados con IBAN',
       severity: 'warning',
       status: missingIban.length === 0 ? 'pass' : 'fail',
-      details: missingIban.length > 0 ? t('payroll.employeesWithoutIban', { count: missingIban.length }) : undefined,
+      details: missingIban.length > 0 ? `${missingIban.length} empleado(s) sin IBAN (no se podrá generar SEPA)` : undefined,
       action: 'employees',
     });
     
@@ -118,11 +115,11 @@ export default function PayrollValidate({
     
     results.push({
       id: 'contracts',
-      category: t('payroll.contracts'),
-      description: t('payroll.activeContracts'),
+      category: 'Contratos',
+      description: 'Contratos activos',
       severity: critSeverity,
       status: missingContract.length === 0 ? 'pass' : 'fail',
-      details: missingContract.length > 0 ? t('payroll.employeesWithoutContract', { count: missingContract.length }) + (isSandboxMode ? t('payroll.sandboxConvenioSalaries') : '') : undefined,
+      details: missingContract.length > 0 ? `${missingContract.length} empleado(s) sin contrato activo${isSandboxMode ? ' (sandbox: se usarán salarios del convenio)' : ''}` : undefined,
       action: 'employees',
     });
     
@@ -144,10 +141,10 @@ export default function PayrollValidate({
     results.push({
       id: 'timesheets',
       category: 'Timesheets',
-      description: t('payroll.timesheetsApproved'),
+      description: 'Timesheets aprobados',
       severity: 'warning',
       status: pendingTsCount === 0 ? 'pass' : 'fail',
-      details: pendingTsCount > 0 ? t('payroll.pendingTimesheets', { count: pendingTsCount }) : undefined,
+      details: pendingTsCount > 0 ? `${pendingTsCount} timesheet(s) pendientes de aprobar` : undefined,
       action: 'inputs',
     });
     
@@ -164,11 +161,11 @@ export default function PayrollValidate({
     
     results.push({
       id: 'inputs',
-      category: t('payroll.variables'),
-      description: t('payroll.monthVariablesLoaded'),
+      category: 'Variables',
+      description: 'Variables del mes cargadas',
       severity: 'warning',
       status: inputsCount > 0 ? 'pass' : 'fail',
-      details: inputsCount === 0 ? t('payroll.noVariablesLoaded') + (isSandboxMode ? t('payroll.sandboxContractHours') : '') : undefined,
+      details: inputsCount === 0 ? `No hay variables cargadas${isSandboxMode ? ' (sandbox: se usarán horas de contrato)' : ''}` : undefined,
       action: 'inputs',
     });
     
@@ -178,11 +175,11 @@ export default function PayrollValidate({
       : false;
     results.push({
       id: 'ccc',
-      category: t('payroll.entity'),
-      description: t('payroll.codigoCuentaCotizacion'),
+      category: 'Entidad',
+      description: 'Código Cuenta Cotización',
       severity: critSeverity,
       status: hasCCC ? 'pass' : 'fail',
-      details: !hasCCC ? t('payroll.entityWithoutCcc') + (isSandboxMode ? t('payroll.sandboxSimulatedSubmissions') : '') : undefined,
+      details: !hasCCC ? `Entidad sin CCC${isSandboxMode ? ' (sandbox: presentaciones se simularán)' : ''}` : undefined,
     });
     
     setValidations(results);
@@ -195,8 +192,8 @@ export default function PayrollValidate({
     if (criticalFails.length > 0) {
       toast({ 
         variant: 'destructive', 
-        title: t('payroll.validacionFallida'), 
-        description: t('payroll.hayErroresCriticosQueDeben') 
+        title: 'Validación fallida', 
+        description: 'Hay errores críticos que deben resolverse antes de continuar' 
       });
       return;
     }
@@ -219,7 +216,7 @@ export default function PayrollValidate({
     await refreshData();
     setValidating(false);
     
-    toast({ title: t('payroll.validacionCompletada'), description: t('payroll.puedesProcederAlCalculo') });
+    toast({ title: 'Validación completada', description: 'Puedes proceder al cálculo' });
     navigate('/payroll/calculate');
   };
 
@@ -234,14 +231,14 @@ export default function PayrollValidate({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold">{t('payroll.validacionPrecalculo')}</h2>
+              <h2 className="text-lg font-semibold">Validación Pre-Cálculo</h2>
               <p className="text-sm text-muted-foreground">
                 {passCount} de {validations.length} comprobaciones pasadas
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={runValidation}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              {t('payroll.PayrollValidate.revalidar')}
+              Revalidar
             </Button>
           </div>
           <Progress value={progress} className="h-2" />
@@ -261,9 +258,9 @@ export default function PayrollValidate({
                   {severity === 'critical' && <XCircle className="h-5 w-5 text-destructive" />}
                   {severity === 'warning' && <AlertTriangle className="h-5 w-5 text-warning" />}
                   {severity === 'info' && <CheckCircle className="h-5 w-5 text-info" />}
-                  {severity === 'critical' && t('payroll.critico')}
+                  {severity === 'critical' && 'Crítico'}
                   {severity === 'warning' && 'Advertencias'}
-                  {severity === 'info' && t('settings.informacion')}
+                  {severity === 'info' && 'Información'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -279,7 +276,7 @@ export default function PayrollValidate({
                       <div className="flex items-center gap-3">
                         {item.status === 'pass' ? (
                           <CheckCircle className="h-5 w-5 text-success" />
-                        {t('payroll.PayrollValidate.itemseverityCritical')}
+                        ) : item.severity === 'critical' ? (
                           <XCircle className="h-5 w-5 text-destructive" />
                         ) : (
                           <AlertTriangle className="h-5 w-5 text-warning" />
@@ -301,7 +298,7 @@ export default function PayrollValidate({
                             variant="outline"
                             onClick={() => navigate(`/payroll/${item.action}`)}
                           >
-                            {t('payroll.PayrollValidate.resolver')}
+                            Resolver
                           </Button>
                         )}
                       </div>
@@ -318,13 +315,13 @@ export default function PayrollValidate({
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/inputs')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('payroll.PayrollValidate.variables')}
+          Variables
         </Button>
         <Button 
           onClick={handleValidate}
           disabled={criticalFails.length > 0 || validating}
         >
-          {criticalFails.length > 0 ? t('payroll.resolverErroresCriticos') : 'Validar y Continuar'}
+          {criticalFails.length > 0 ? 'Resolver errores críticos' : 'Validar y Continuar'}
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>

@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -131,7 +130,7 @@ export function useGlobalRealtimeNotifications() {
             };
             addNotification({
               type: 'order',
-              title: t('notifications.pedidoActualizado'),
+              title: 'Pedido actualizado',
               message: `El pedido cambió a estado: ${statusLabels[order.status || ''] || order.status}`,
               data: { orderId: order.id },
             });

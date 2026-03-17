@@ -6,16 +6,14 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useTranslation } from 'react-i18next';
 
 const staffNavItems = [
   { icon: Map, label: 'Mesas', path: 'floor' },
   { icon: Clock, label: 'Fichaje', path: 'clock' },
-  { icon: KDSIcon, label: t('scheduling.cocina'), path: 'kds' },
+  { icon: KDSIcon, label: 'Cocina', path: 'kds' },
 ];
 
 export function StaffLayout() {
-  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId: string }>();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
@@ -34,10 +32,10 @@ export function StaffLayout() {
       ops_manager: 'Gerente de Operaciones',
       store_manager: 'Gerente de Local',
       finance: 'Finanzas',
-      hr_payroll: t('team.rrhhNominas'),
-      employee: t('payroll.empleado'),
+      hr_payroll: 'RRHH / Nóminas',
+      employee: 'Empleado',
     };
-    return role ? labels[role] || role : t('payroll.empleado');
+    return role ? labels[role] || role : 'Empleado';
   };
 
   const NavContent = () => (
@@ -49,8 +47,8 @@ export function StaffLayout() {
             <ChefHat className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
-            <span className="font-display font-bold text-lg">{t('staff.StaffLayout.josephine')}</span>
-            <p className="text-xs text-muted-foreground">{t('staff.StaffLayout.staff')}</p>
+            <span className="font-display font-bold text-lg">Josephine</span>
+            <p className="text-xs text-muted-foreground">Staff</p>
           </div>
         </div>
       </div>
@@ -84,7 +82,7 @@ export function StaffLayout() {
       <div className="border-t border-border p-4">
         <div className="mb-3">
           <p className="text-sm font-medium truncate">
-            {profile?.full_name || t('settings.usuario')}
+            {profile?.full_name || 'Usuario'}
           </p>
           <p className="text-xs text-muted-foreground">
             {getRoleLabel(primaryRole)}
@@ -96,11 +94,13 @@ export function StaffLayout() {
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
-          <span>{t("common.logout")}</span>
+          <span>Cerrar sesión</span>
         </Button>
       </div>
     </div>
-  {t('staff.StaffLayout.return')}
+  );
+
+  return (
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-50 flex items-center justify-between px-4">
@@ -117,7 +117,7 @@ export function StaffLayout() {
 
         <div className="flex items-center gap-2">
           <ChefHat className="w-5 h-5 text-primary" />
-          <span className="font-display font-bold">{t('staff.StaffLayout.josephine1')}</span>
+          <span className="font-display font-bold">Josephine</span>
         </div>
 
         <div className="w-10" /> {/* Spacer for balance */}

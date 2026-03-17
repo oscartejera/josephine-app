@@ -10,10 +10,8 @@ import {
   TimeOffRequestDialog,
   TimeOffRequestsList,
 } from '@/components/availability';
-import { useTranslation } from 'react-i18next';
 
 export default function Availability() {
-  const { t } = useTranslation();
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'availability' | 'requests' | 'team'>('availability');
@@ -37,9 +35,9 @@ export default function Availability() {
     setIsSaving(true);
     try {
       await saveAvailability();
-      toast.success(t('availability.toastSaved'));
+      toast.success('Availability saved successfully');
     } catch (error) {
-      toast.error(t('availability.toastSaveError'));
+      toast.error('Failed to save availability');
     } finally {
       setIsSaving(false);
     }
@@ -49,22 +47,22 @@ export default function Availability() {
     request: Omit<TimeOffRequest, 'id' | 'employeeId' | 'employeeName' | 'employeeInitials' | 'status' | 'createdAt'>
   ) => {
     await createTimeOffRequest(request);
-    toast.success(t('availability.toastTimeOffSubmitted'));
+    toast.success('Time off request submitted');
   }, [createTimeOffRequest]);
   
   const handleApproveRequest = useCallback(async (requestId: string) => {
     await approveTimeOffRequest(requestId);
-    toast.success(t('availability.toastApproved'));
+    toast.success('Request approved');
   }, [approveTimeOffRequest]);
   
   const handleRejectRequest = useCallback(async (requestId: string) => {
     await rejectTimeOffRequest(requestId);
-    toast.info(t('availability.toastRejected'));
+    toast.info('Request rejected');
   }, [rejectTimeOffRequest]);
   
   const handleCancelRequest = useCallback(async (requestId: string) => {
     await cancelTimeOffRequest(requestId);
-    toast.success(t('availability.toastCancelled'));
+    toast.success('Request cancelled');
   }, [cancelTimeOffRequest]);
   
   return (
@@ -73,16 +71,16 @@ export default function Availability() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span>{t('availability.scheduleWorkforce')}</span>
+            <span>Schedule & Workforce</span>
             <span>/</span>
-            <span className="text-foreground">{t('availability.availability')}</span>
+            <span className="text-foreground">Availability</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('availability.staffAvailability')}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Staff Availability</h1>
         </div>
         
         <Button onClick={() => setShowRequestDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          {t('availability.requestTimeOff')}
+          Request Time Off
         </Button>
       </div>
       
@@ -104,7 +102,7 @@ export default function Availability() {
         <TabsList className="grid w-full grid-cols-3 max-w-[400px]">
           <TabsTrigger value="availability" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            {t('availability.myHours')}
+            My Hours
           </TabsTrigger>
           <TabsTrigger value="requests" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -139,10 +137,10 @@ export default function Availability() {
         <TabsContent value="requests" className="mt-6">
           <div className="bg-card border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-lg">{t('availability.myTimeOffRequests')}</h3>
+              <h3 className="font-semibold text-lg">My Time Off Requests</h3>
               <Button variant="outline" size="sm" onClick={() => setShowRequestDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                {t('availability.newRequest')}
+                New Request
               </Button>
             </div>
             <TimeOffRequestsList
@@ -156,9 +154,9 @@ export default function Availability() {
         <TabsContent value="team" className="mt-6">
           <div className="bg-card border border-border rounded-xl p-6">
             <div className="mb-6">
-              <h3 className="font-semibold text-lg">{t('availability.teamTimeOffRequests')}</h3>
+              <h3 className="font-semibold text-lg">Team Time Off Requests</h3>
               <p className="text-sm text-muted-foreground">
-                {t('availability.reviewAndManageTimeOff')}
+                Review and manage time off requests from your team
               </p>
             </div>
             <TimeOffRequestsList

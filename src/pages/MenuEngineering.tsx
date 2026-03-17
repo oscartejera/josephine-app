@@ -20,10 +20,8 @@ import {
   PricingBandChart,
   PricingOmnesTable,
 } from '@/components/pricing-omnes';
-import { useTranslation } from 'react-i18next';
 
 export default function MenuEngineering() {
-  const { t } = useTranslation();
   const {
     items,
     stats,
@@ -110,7 +108,7 @@ export default function MenuEngineering() {
             <p className="text-destructive mb-4">{error}</p>
             <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              {t('menuEngineering.retry')}
+              Retry
             </Button>
           </CardContent>
         </Card>
@@ -121,13 +119,14 @@ export default function MenuEngineering() {
         <Card>
           <CardContent className="py-12 text-center">
             <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t("menu.noDataForPeriod")}</h3>
+            <h3 className="text-lg font-semibold mb-2">No data for this period</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              {t('menuEngineering.noProductSalesFoundIn')}
+              No product sales found in the selected date range. Try expanding the
+              period or selecting a different location.
             </p>
             <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              {t('menuEngineering.refresh')}
+              Refresh
             </Button>
           </CardContent>
         </Card>
@@ -139,11 +138,11 @@ export default function MenuEngineering() {
           <TabsList className="grid w-full grid-cols-2 max-w-lg">
             <TabsTrigger value="menu-engineering" className="gap-2">
               <ChefHat className="h-4 w-4" />
-              {t('menuEngineering.menuEngineering')}
+              Menu Engineering
             </TabsTrigger>
             <TabsTrigger value="pricing-omnes" className="gap-2">
               <DollarSign className="h-4 w-4" />
-              {t('menuEngineering.pricingAnalysis')}
+              Pricing Analysis
             </TabsTrigger>
           </TabsList>
 
@@ -200,32 +199,32 @@ export default function MenuEngineering() {
             {/* Methodology Explainer */}
             <Card className="bg-muted/30 border-muted">
               <CardContent className="py-4">
-                <h4 className="text-sm font-semibold mb-2">{t('menuEngineering.howJosephineClassifiesKasavanaSmith')}</h4>
+                <h4 className="text-sm font-semibold mb-2">📊 How Josephine Classifies — Kasavana & Smith (1982)</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
                   <div>
-                    <p className="font-medium text-foreground mb-1">{t('menuEngineering.popularity')}</p>
-                    <p>{t('menuEngineering.popularitypctUnitsSoldCategoryTotal')}</p>
-                    <p>{t('menuEngineering.threshold100N7070')}</p>
-                    <p>{t("menu.highIfPopularity")}</p>
+                    <p className="font-medium text-foreground mb-1">Popularity</p>
+                    <p>popularity_pct = units sold / category total × 100</p>
+                    <p>Threshold = (100 / N) × 70% (70% rule)</p>
+                    <p>High if popularity_pct ≥ threshold</p>
                   </div>
                   <div>
-                    <p className="font-medium text-foreground mb-1">{t('menuEngineering.profitability')}</p>
-                    <p>{t('menuEngineering.unitGpPriceExVat')}</p>
-                    <p>{t('menuEngineering.avgGpGpUnitsUnits')}</p>
-                    <p>{t("menu.highIfGP")}</p>
+                    <p className="font-medium text-foreground mb-1">Profitability</p>
+                    <p>Unit GP = price ex VAT − food cost</p>
+                    <p>Avg GP = Σ(GP × units) / Σ(units) within category</p>
+                    <p>High if unit GP ≥ avg GP</p>
                   </div>
                   <div>
-                    <p className="font-medium text-foreground mb-1">{t('menuEngineering.quadrant')}</p>
-                    <p>{t('menuEngineering.starHighPopHighGp')}</p>
-                    <p>{t('menuEngineering.plowHorseHighPopLow')}</p>
-                    <p>{t('menuEngineering.puzzleLowPopHighGp')}</p>
-                    <p>{t('menuEngineering.dogLowPopLowGp')}</p>
+                    <p className="font-medium text-foreground mb-1">Quadrant</p>
+                    <p>⭐ Star = High pop + High GP</p>
+                    <p>🐴 Plow Horse = High pop + Low GP</p>
+                    <p>💎 Puzzle = Low pop + High GP</p>
+                    <p>🔍 Dog = Low pop + Low GP</p>
                   </div>
                   <div>
-                    <p className="font-medium text-foreground mb-1">{t('menuEngineering.important')}</p>
-                    <p>{t('menuEngineering.percategoryAnalysisOnly')}</p>
-                    <p>{t("menu.pricesNormalized")}</p>
-                    <p>{t("menu.decisionSupport")}</p>
+                    <p className="font-medium text-foreground mb-1">⚠️ Important</p>
+                    <p>Per-category analysis only</p>
+                    <p>Prices normalized ex-VAT (10%)</p>
+                    <p>Decision support tool, not absolute truth</p>
                   </div>
                 </div>
               </CardContent>
@@ -238,9 +237,9 @@ export default function MenuEngineering() {
               <Card className="border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
                 <CardContent className="py-6 text-center">
                   <DollarSign className="h-8 w-8 mx-auto text-amber-500 mb-3" />
-                  <h3 className="text-base font-semibold mb-1">{t("menu.selectCategory")}</h3>
+                  <h3 className="text-base font-semibold mb-1">Select a category</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t('menuEngineering.omnesAnalysisAppliesToAn')}
+                    OMNES analysis applies to an individual category. Select one from the filter above.
                   </p>
                 </CardContent>
               </Card>
@@ -270,33 +269,33 @@ export default function MenuEngineering() {
                 {/* OMNES Methodology Explainer */}
                 <Card className="bg-muted/30 border-muted">
                   <CardContent className="py-4">
-                    <h4 className="text-sm font-semibold mb-2">{t('menuEngineering.howJosephineAnalyzesPricesOmnes')}</h4>
+                    <h4 className="text-sm font-semibold mb-2">💰 How Josephine Analyzes Prices — OMNES Method</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
                       <div>
-                        <p className="font-medium text-foreground mb-1">{t('menuEngineering.omnes1PriceRangeRatio')}</p>
-                        <p>{t('menuEngineering.ratioMaxPriceMinPrice')}</p>
-                        <p>{t('menuEngineering.lt25TooNarrow')}</p>
-                        <p>{t('menuEngineering.2530Healthy')}</p>
-                        <p>{t('menuEngineering.gt30TooWide')}</p>
+                        <p className="font-medium text-foreground mb-1">OMNES 1: Price Range Ratio</p>
+                        <p>ratio = max price / min price</p>
+                        <p>&lt; 2.5 = too narrow</p>
+                        <p>2.5–3.0 = healthy</p>
+                        <p>&gt; 3.0 = too wide</p>
                       </div>
                       <div>
-                        <p className="font-medium text-foreground mb-1">{t('menuEngineering.omnes2BandDistribution')}</p>
-                        <p>{t('menuEngineering.3EqualBandsLowerMiddle')}</p>
-                        <p>{t('menuEngineering.target25Lower50Middle')}</p>
-                        <p>{t("menu.promoteMiddleBand")}</p>
+                        <p className="font-medium text-foreground mb-1">OMNES 2: Band Distribution</p>
+                        <p>3 equal bands: lower / middle / upper</p>
+                        <p>Target: 25% lower · 50% middle · 25% upper</p>
+                        <p>Promote middle band products</p>
                       </div>
                       <div>
-                        <p className="font-medium text-foreground mb-1">{t('menuEngineering.omnes3CategoryRatio')}</p>
-                        <p>{t('menuEngineering.ratioAvgCheckAvgMenu')}</p>
-                        <p>{t('menuEngineering.lt090PerceivedAsExpensive')}</p>
-                        <p>{t('menuEngineering.090100Healthy')}</p>
-                        <p>{t('menuEngineering.gt100Underpriced')}</p>
+                        <p className="font-medium text-foreground mb-1">OMNES 3: Category Ratio</p>
+                        <p>ratio = avg check / avg menu price</p>
+                        <p>&lt; 0.90 = perceived as expensive</p>
+                        <p>0.90–1.00 = healthy</p>
+                        <p>&gt; 1.00 = underpriced</p>
                       </div>
                       <div>
-                        <p className="font-medium text-foreground mb-1">{t('menuEngineering.engineSeparation')}</p>
-                        <p>{t('menuEngineering.omnesDoesNotAffectStarplow')}</p>
-                        <p>{t('menuEngineering.omnesAnalyzesPriceStructureCoherence')}</p>
-                        <p>{t('menuEngineering.menuEngineeringAnalyzesPopularityProfita')}</p>
+                        <p className="font-medium text-foreground mb-1">⚠️ Engine Separation</p>
+                        <p>OMNES does NOT affect Star/Plow Horse/Puzzle/Dog</p>
+                        <p>OMNES analyzes price structure coherence</p>
+                        <p>Menu Engineering analyzes popularity + profitability</p>
                       </div>
                     </div>
                   </CardContent>

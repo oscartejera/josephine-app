@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { format, subDays, eachDayOfInterval } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
-import { useTranslation } from 'react-i18next';
 // Types
 export type Platform = 'all' | 'google' | 'tripadvisor' | 'thefork';
 export type ReplyStatus = 'draft' | 'published';
@@ -76,7 +75,9 @@ interface UseReviewsDataParams {
   locations?: { id: string; name: string }[];
 }
 
-const PLATFORMS: Exclude<Platform, 'all'>{t('hooks.useReviewsData.googleTripadvisorTheforkConstPlatformlab')}<Exclude<Platform, 'all'>, string> = {
+const PLATFORMS: Exclude<Platform, 'all'>[] = ['google', 'tripadvisor', 'thefork'];
+
+const PLATFORM_LABELS: Record<Exclude<Platform, 'all'>, string> = {
   google: 'From Google',
   tripadvisor: 'From TripAdvisor',
   thefork: 'From TheFork',
@@ -154,7 +155,10 @@ async function fetchReviews(params: UseReviewsDataParams): Promise<{ summary: Re
   // Compute summary
   const reviewCount = reviews.length;
   const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-  const rating_avg = reviewCount > {t('hooks.useReviewsData.0TotalratingReviewcount0Star')}<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  const rating_avg = reviewCount > 0 ? totalRating / reviewCount : 0;
+
+  // Star breakdown
+  const starCounts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   reviews.forEach(r => { starCounts[r.rating] = (starCounts[r.rating] || 0) + 1; });
   const star_breakdown: StarBreakdown[] = ([5, 4, 3, 2, 1] as const).map(stars => ({
     stars,

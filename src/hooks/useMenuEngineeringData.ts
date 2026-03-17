@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
@@ -69,13 +68,25 @@ export interface MenuEngineeringStats {
 }
 
 export function useMenuEngineeringData() {
-  const { t } = useTranslation();
   const { accessibleLocations, dataSource, loading: appLoading } = useApp();
   const { profile } = useAuth();
   const orgId = profile?.group_id;
 
   // State
-  const [items, setItems] = useState<MenuEngineeringItem[]>{t('hooks.useMenuEngineeringData.constStatsSetstatsUsestate')}<MenuEngineeringStats | null>{t('hooks.useMenuEngineeringData.nullConstLoadingSetloadingUsestatetrue')}<string | null>{t('hooks.useMenuEngineeringData.nullFiltersConstSelectedlocationidSetsel')}<string | null>{t('hooks.useMenuEngineeringData.nullConstDatefromSetdatefromUsestate')}<Date>(() => {t('hooks.useMenuEngineeringData.startofmonthnewDateConstDatetoSetdateto')}<Date>(() => {t('hooks.useMenuEngineeringData.endofmonthnewDateConstDatepresetSetdatep')}<DatePreset>{t('hooks.useMenuEngineeringData.last30ConstCustomdatefromSetcustomdatefr')}<Date | undefined>{t('hooks.useMenuEngineeringData.constCustomdatetoSetcustomdatetoUsestate')}<Date | undefined>{t('hooks.useMenuEngineeringData.constSelectedcategorySetselectedcategory')}<string | null>{t('hooks.useMenuEngineeringData.nullConstPopularitymodeSetpopularitymode')}<PopularityMode>('units');
+  const [items, setItems] = useState<MenuEngineeringItem[]>([]);
+  const [stats, setStats] = useState<MenuEngineeringStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filters
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date>(() => startOfMonth(new Date()));
+  const [dateTo, setDateTo] = useState<Date>(() => endOfMonth(new Date()));
+  const [datePreset, setDatePreset] = useState<DatePreset>('last30');
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [popularityMode, setPopularityMode] = useState<PopularityMode>('units');
 
   // Categories from items
   const categories = useMemo(() => {
@@ -176,7 +187,7 @@ export function useMenuEngineeringData() {
       setStats(statsData);
     } catch (err) {
       console.error('Menu engineering fetch error:', err);
-      setError(err instanceof Error ? err.message : t('data.errorAlCargarDatos'));
+      setError(err instanceof Error ? err.message : 'Error al cargar datos');
     } finally {
       setLoading(false);
     }

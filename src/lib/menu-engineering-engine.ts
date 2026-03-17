@@ -189,8 +189,8 @@ export function buildClassificationReason(
   unitGrossProfit: number,
   averageGrossProfit: number,
 ): string {
-  const popOp = popularityPct >{t('lib.menu-engineering-engine.idealaveragepopularity')}<';
-  const profOp = unitGrossProfit >{t('lib.menu-engineering-engine.averagegrossprofit')}<';
+  const popOp = popularityPct >= idealAveragePopularity ? '≥' : '<';
+  const profOp = unitGrossProfit >= averageGrossProfit ? '≥' : '<';
   return `Pop ${popularityPct.toFixed(1)}% ${popOp} ${idealAveragePopularity.toFixed(1)}% · GP €${unitGrossProfit.toFixed(2)} ${profOp} €${averageGrossProfit.toFixed(2)}`;
 }
 

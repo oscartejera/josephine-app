@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import type { ViewMode } from './InventoryHeader';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
-import { useTranslation } from 'react-i18next';
 
 interface LocationPerformance {
   locationId: string;
@@ -34,7 +33,6 @@ interface LocationPerformanceTableProps {
 }
 
 export function LocationPerformanceTable({
-  
   viewMode,
   data,
   isLoading = false,
@@ -42,7 +40,6 @@ export function LocationPerformanceTable({
   dateRange,
   onLocationClick
 }: LocationPerformanceTableProps) {
-  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
   const isCOGS = viewMode === 'COGS';
@@ -131,11 +128,11 @@ export function LocationPerformanceTable({
     <Card className="border-border/60 rounded-xl shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold text-foreground">{t('inventory.LocationPerformanceTable.locationPerformance')}</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">Location performance</CardTitle>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('inventory.LocationPerformanceTable.searchByLocation')}
+              placeholder="Search by location"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 border-border/60 focus:border-primary"
@@ -148,18 +145,18 @@ export function LocationPerformanceTable({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30">
-                <TableHead className="w-[180px] text-xs font-medium text-muted-foreground py-3 px-4">{t('inventory.LocationPerformanceTable.locations')}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 px-4">{t('inventory.LocationPerformanceTable.sales')}</TableHead>
+                <TableHead className="w-[180px] text-xs font-medium text-muted-foreground py-3 px-4">Locations</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 px-4">Sales</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 px-4">{theoreticalLabel}</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 px-4">{actualLabel}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 px-4">{t('inventory.LocationPerformanceTable.variance')}</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 px-4">Variance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.map((row) => {
                 // For COGS: positive variance is bad (red), negative is good (green)
                 // For GP: negative variance is bad (red), positive is good (green)
-                const isVarianceNegative = isCOGS ? row.variancePercent > {t('inventory.LocationPerformanceTable.0Rowvariancepercent')} < 0;
+                const isVarianceNegative = isCOGS ? row.variancePercent > 0 : row.variancePercent < 0;
                 const hasData = row.hasStockCount !== false;
                 
                 return (
@@ -210,7 +207,7 @@ export function LocationPerformanceTable({
                       </>
                     ) : (
                       <TableCell colSpan={2} className="py-3 px-4 text-center text-sm text-muted-foreground italic">
-                        {t('inventory.LocationPerformanceTable.noStockCountDone')}
+                        No stock count done
                       </TableCell>
                     )}
                   </TableRow>
@@ -219,7 +216,7 @@ export function LocationPerformanceTable({
               
               {/* Totals row */}
               <TableRow className="border-t-2 border-border bg-muted/20 hover:bg-muted/20">
-                <TableCell className="py-3 px-4 font-semibold text-sm text-muted-foreground">{t('inventory.LocationPerformanceTable.allLocations')}</TableCell>
+                <TableCell className="py-3 px-4 font-semibold text-sm text-muted-foreground">All locations</TableCell>
                 <TableCell className="py-3 px-4 text-right font-semibold text-sm">
                   {formatCurrency(totals.sales)}
                 </TableCell>
@@ -242,7 +239,7 @@ export function LocationPerformanceTable({
                 <TableCell className="py-3 px-4 text-right">
                   <div className={cn(
                     "flex flex-col items-end",
-                    (isCOGS ? avgVariancePercent > {t('inventory.LocationPerformanceTable.0Avgvariancepercent')} < 0) ? "text-destructive" : "text-success"
+                    (isCOGS ? avgVariancePercent > 0 : avgVariancePercent < 0) ? "text-destructive" : "text-success"
                   )}>
                     <span className="font-semibold text-sm">
                       {avgVariancePercent >= 0 ? '+' : ''}{avgVariancePercent.toFixed(1)}%

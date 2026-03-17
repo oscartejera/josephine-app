@@ -12,7 +12,6 @@
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { LabourKpis, MetricMode } from '@/hooks/useLabourData';
-import { useTranslation } from 'react-i18next';
 
 interface LabourTripleComparisonProps {
     kpis: LabourKpis | undefined;
@@ -37,7 +36,8 @@ interface BarRowProps {
 }
 
 function BarRow({ label, value, maxValue, color, badge }: BarRowProps) {
-    const pct = maxValue > {t('labour.LabourTripleComparison.0MathminvalueMaxvalue100100')}
+    const pct = maxValue > 0 ? Math.min((value / maxValue) * 100, 100) : 0;
+    return (
         <div className="space-y-1">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -61,7 +61,6 @@ function BarRow({ label, value, maxValue, color, badge }: BarRowProps) {
 }
 
 export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparisonProps) {
-  const { t } = useTranslation();
     if (isLoading || !kpis) {
         return (
             <Card className="p-6 bg-white">
@@ -86,14 +85,16 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
     // Drift metrics
     const scheduleVsPlanned = planned > 0 ? ((schedule - planned) / planned * 100) : 0;
     const payrollVsSchedule = hasPayroll && schedule > 0 ? ((payroll - schedule) / schedule * 100) : 0;
-    const totalDrift = hasPayroll && planned > 0 ? ((payroll - planned) / planned * 100) : (planned > {t('labour.LabourTripleComparison.0SchedulePlannedPlanned100')}
+    const totalDrift = hasPayroll && planned > 0 ? ((payroll - planned) / planned * 100) : (planned > 0 ? ((schedule - planned) / planned * 100) : 0);
+
+    return (
         <Card className="p-6 bg-white">
             <div className="space-y-5">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-base font-semibold text-gray-900">{t("labour.plannedVsActualVsPayroll")}</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">{t("labour.compareThreeLayers")}</p>
+                        <h3 className="text-base font-semibold text-gray-900">Planificado vs Actual vs Nómina</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">Compara las tres capas de coste laboral</p>
                     </div>
                     {/* Drift indicator */}
                     <div className={cn(
@@ -111,7 +112,7 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                 {/* Three bars */}
                 <div className="space-y-4">
                     <BarRow
-                        label={t("labour.planned")}
+                        label="Planificado"
                         value={planned}
                         maxValue={maxVal}
                         color="bg-gradient-to-r from-indigo-300 to-indigo-400"
@@ -119,7 +120,7 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                     />
 
                     <BarRow
-                        label={t("labour.actualSchedules")}
+                        label="Actual (horarios)"
                         value={schedule}
                         maxValue={maxVal}
                         color="bg-gradient-to-r from-blue-400 to-blue-500"
@@ -131,7 +132,7 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
 
                     {hasPayroll ? (
                         <BarRow
-                            label={t("labour.payrollActual")}
+                            label="Nómina (real)"
                             value={payroll}
                             maxValue={maxVal}
                             color="bg-gradient-to-r from-emerald-500 to-emerald-600"
@@ -144,9 +145,9 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                         <div className="space-y-1">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-400">{t("labour.payrollActual")}</span>
+                                    <span className="text-sm text-gray-400">Nómina (real)</span>
                                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase bg-gray-100 text-gray-500">
-                                        {t("common.noData")}
+                                        Sin datos
                                     </span>
                                 </div>
                                 <span className="text-sm text-gray-400">—</span>
@@ -160,18 +161,18 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
                 <div className="flex items-center gap-6 pt-2 border-t border-gray-100 text-xs text-gray-500">
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-indigo-400" />
-                        <span>{t("labour.planned")}</span>
+                        <span>Planificado</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
-                        <span>{t("labour.schedules")}</span>
+                        <span>Horarios</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-                        <span>{t("labour.payroll")}</span>
+                        <span>Nómina</span>
                     </div>
                     <div className="ml-auto text-gray-400">
-                        {t("labour.driftExplanation")}
+                        Drift = diferencia entre planificado y coste real
                     </div>
                 </div>
             </div>

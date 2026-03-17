@@ -21,7 +21,6 @@ import {
   ClipboardCheck,
   AlertTriangle,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface DataHealthResult {
   last_mv_refresh: {
@@ -75,12 +74,12 @@ function timeAgo(dateStr: string | null): string {
 }
 
 function healthBadge(value: number, good: number, warn: number) {
-  if (value >{t('dataHealth.goodReturn')} <Badge variant="default">OK</Badge>;
-  if (value >{t('dataHealth.warnReturn')} <Badge variant="secondary">{t('dataHealth.parcial')}</Badge>{t('dataHealth.return')} <Badge variant="destructive">{t("common.noData")}</Badge>;
+  if (value >= good) return <Badge variant="default">OK</Badge>;
+  if (value >= warn) return <Badge variant="secondary">Parcial</Badge>;
+  return <Badge variant="destructive">Sin datos</Badge>;
 }
 
 export default function DataHealth() {
-  const { t } = useTranslation();
   const { profile } = useAuth();
   const orgId = profile?.group_id;
   const [refreshing, setRefreshing] = useState(false);
@@ -126,9 +125,9 @@ export default function DataHealth() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t('dataHealth.dataHealth')}</h1>
+          <h1 className="text-2xl font-bold">Data Health</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {t('dataHealth.estadoDeLasVistasMaterializadas')}
+            Estado de las vistas materializadas, POS y cobertura de datos
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -139,11 +138,11 @@ export default function DataHealth() {
             disabled={refreshing}
           >
             <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-            {t('dataHealth.refrescarMvs')}
+            Refrescar MVs
           </Button>
           <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            {t('dataHealth.recargar')}
+            Recargar
           </Button>
         </div>
       </div>
@@ -153,7 +152,7 @@ export default function DataHealth() {
           <CardContent className="pt-4">
             <p className="text-destructive flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              {t('dataHealth.errorCargandoDatosDeSalud')}
+              Error cargando datos de salud. Verifica que las migraciones estén aplicadas.
             </p>
           </CardContent>
         </Card>
@@ -167,7 +166,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Database className="h-4 w-4" />
-                  {t('dataHealth.materializedViews')}
+                  Materialized Views
                 </CardTitle>
                 <Badge variant={statusColor(data.last_mv_refresh.status)}>
                   {data.last_mv_refresh.status}
@@ -177,19 +176,19 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.ultimoRefresh')}</span>{' '}
+                  <span className="text-muted-foreground">Ultimo refresh:</span>{' '}
                   <strong>{timeAgo(data.last_mv_refresh.finished_at)}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.duracion')}</span>{' '}
+                  <span className="text-muted-foreground">Duracion:</span>{' '}
                   <strong>{data.last_mv_refresh.duration_ms ? `${data.last_mv_refresh.duration_ms}ms` : '—'}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.trigger')}</span>{' '}
+                  <span className="text-muted-foreground">Trigger:</span>{' '}
                   <strong>{data.last_mv_refresh.triggered_by || '—'}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.vistas')}</span>{' '}
+                  <span className="text-muted-foreground">Vistas:</span>{' '}
                   <strong>{data.last_mv_refresh.views_refreshed?.length || 0}</strong>
                 </div>
                 {data.last_mv_refresh.error_message && (
@@ -207,7 +206,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4" />
-                  {t('dataHealth.posSync')}
+                  POS Sync
                 </CardTitle>
                 {healthBadge(data.last_pos_order.orders_7d, 1, 0)}
               </div>
@@ -215,11 +214,11 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.ultimaOrden')}</span>{' '}
+                  <span className="text-muted-foreground">Ultima orden:</span>{' '}
                   <strong>{timeAgo(data.last_pos_order.last_closed_at)}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.ordenes7d')}</span>{' '}
+                  <span className="text-muted-foreground">Ordenes (7d):</span>{' '}
                   <strong>{data.last_pos_order.orders_7d.toLocaleString()}</strong>
                 </div>
               </div>
@@ -232,7 +231,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  {t('dataHealth.coberturaKpi30d')}
+                  Cobertura KPI (30d)
                 </CardTitle>
                 {healthBadge(data.kpi_coverage.location_days_30d, 10, 1)}
               </div>
@@ -240,11 +239,11 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.locationdays')}</span>{' '}
+                  <span className="text-muted-foreground">Location-days:</span>{' '}
                   <strong>{data.kpi_coverage.location_days_30d}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.ubicacionesActivas')}</span>{' '}
+                  <span className="text-muted-foreground">Ubicaciones activas:</span>{' '}
                   <strong>{data.kpi_coverage.distinct_locations}</strong>
                 </div>
               </div>
@@ -257,7 +256,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Package className="h-4 w-4" />
-                  {t('dataHealth.inventario')}
+                  Inventario
                 </CardTitle>
                 {healthBadge(data.inventory.total_items, 1, 0)}
               </div>
@@ -265,19 +264,19 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.itemsTotales')}</span>{' '}
+                  <span className="text-muted-foreground">Items totales:</span>{' '}
                   <strong>{data.inventory.total_items}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.conReceta')}</span>{' '}
+                  <span className="text-muted-foreground">Con receta:</span>{' '}
                   <strong>{data.inventory.with_recipes}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t("dataHealth.withParLevel")}:</span>{' '}
+                  <span className="text-muted-foreground">Con par level:</span>{' '}
                   <strong>{data.inventory.with_par_level}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.conCoste')}</span>{' '}
+                  <span className="text-muted-foreground">Con coste:</span>{' '}
                   <strong>{data.inventory.with_cost}</strong>
                 </div>
               </div>
@@ -290,7 +289,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <ClipboardCheck className="h-4 w-4" />
-                  {t('dataHealth.conteosDeStock')}
+                  Conteos de Stock
                 </CardTitle>
                 {healthBadge(data.stock_counts.last_30d, 1, 0)}
               </div>
@@ -298,15 +297,15 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">{t("dataHealth.totalCounts")}:</span>{' '}
+                  <span className="text-muted-foreground">Total conteos:</span>{' '}
                   <strong>{data.stock_counts.total}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t('dataHealth.ultimos30d')}</span>{' '}
+                  <span className="text-muted-foreground">Ultimos 30d:</span>{' '}
                   <strong>{data.stock_counts.last_30d}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">{t("dataHealth.locationsWithCount")}:</span>{' '}
+                  <span className="text-muted-foreground">Ubicaciones con conteo:</span>{' '}
                   <strong>{data.stock_counts.distinct_locations}</strong>
                 </div>
               </div>
@@ -318,7 +317,7 @@ export default function DataHealth() {
       {!data && !isLoading && !isError && (
         <Card>
           <CardContent className="pt-6 text-center text-muted-foreground">
-            {t('dataHealth.cargandoDatosDeSaludDel')}
+            Cargando datos de salud del sistema...
           </CardContent>
         </Card>
       )}

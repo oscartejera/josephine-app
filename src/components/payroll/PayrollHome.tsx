@@ -18,7 +18,6 @@ import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
-import { useTranslation } from 'react-i18next';
 
 interface Issue {
   type: 'critical' | 'warning' | 'info';
@@ -28,7 +27,6 @@ interface Issue {
 }
 
 export default function PayrollHome({
-  
   legalEntities,
   selectedLegalEntity,
   setSelectedLegalEntity,
@@ -39,7 +37,6 @@ export default function PayrollHome({
   isPayrollAdmin,
   isSandboxMode,
 }: PayrollContextData) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { group, locations } = useApp();
   const { toast } = useToast();
@@ -99,7 +96,7 @@ export default function PayrollHome({
     if (withIban < totalEmps) {
       newIssues.push({
         type: 'info',
-        message: t('payroll.employeesWithoutIbanSepa', { count: totalEmps - withIban }),
+        message: `${totalEmps - withIban} empleado(s) sin IBAN (no se podrá generar SEPA)`,
         action: 'employees',
         count: totalEmps - withIban,
       });
@@ -146,11 +143,11 @@ export default function PayrollHome({
 
   const handleCreateEntity = async () => {
     if (!newEntity.razon_social || !newEntity.nif || !newEntity.domicilio_fiscal) {
-      toast({ variant: 'destructive', title: t("common.error"), description: 'Completa los campos obligatorios' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Completa los campos obligatorios' });
       return;
     }
     if (!group?.id) {
-      toast({ variant: 'destructive', title: t("common.error"), description: t('payroll.no_se_ha_detectado_el_grupo_recarga_la_pagina') });
+      toast({ variant: 'destructive', title: 'Error', description: 'No se ha detectado el grupo. Recarga la página.' });
       return;
     }
 
@@ -169,7 +166,7 @@ export default function PayrollHome({
       await refreshData();
       if (result.data) setSelectedLegalEntity(result.data);
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudo crear la entidad' });
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo crear la entidad' });
     } finally {
       setLoading(false);
     }
@@ -177,7 +174,7 @@ export default function PayrollHome({
 
   const handleStartPayroll = async () => {
     if (!selectedLegalEntity) {
-      toast({ variant: 'destructive', title: t("common.error"), description: 'Selecciona una entidad legal' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Selecciona una entidad legal' });
       return;
     }
 
@@ -195,11 +192,11 @@ export default function PayrollHome({
         currentPeriod.month
       );
       
-      toast({ title: t('payroll.nominaIniciada'), description: `Período ${format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}` });
+      toast({ title: 'Nómina iniciada', description: `Período ${format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}` });
       await refreshData();
       navigate('/payroll/employees');
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudo iniciar la nómina' });
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo iniciar la nómina' });
     } finally {
       setLoading(false);
     }
@@ -215,11 +212,11 @@ export default function PayrollHome({
       await supabase.from('compliance_submissions').delete().eq('payroll_run_id', currentRun.id);
       await supabase.from('payroll_runs').delete().eq('id', currentRun.id);
       
-      toast({ title: t('payroll.nominaReseteada'), description: t('payroll.seHaEliminadoLaNomina') });
+      toast({ title: 'Nómina reseteada', description: 'Se ha eliminado la nómina del período. Puedes empezar de nuevo.' });
       setShowResetDialog(false);
       await refreshData();
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: t('payroll.no_se_pudo_resetear_la_nomina') });
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo resetear la nómina' });
     } finally {
       setLoading(false);
     }
@@ -227,7 +224,7 @@ export default function PayrollHome({
 
   const handleSeedData = async () => {
     if (!selectedLegalEntity || !group?.id) {
-      toast({ variant: 'destructive', title: t("common.error"), description: 'Selecciona primero una entidad legal' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Selecciona primero una entidad legal' });
       return;
     }
     setLoading(true);
@@ -239,13 +236,13 @@ export default function PayrollHome({
         currentPeriod.month,
       );
       toast({ 
-        title: t('payroll.datosDePruebaCargados'), 
+        title: 'Datos de prueba cargados', 
         description: result.message || `${result.employees_count} empleados con contratos y datos legales` 
       });
       await refreshData();
       await fetchIssuesAndKPIs();
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'Error al cargar datos de prueba' });
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error al cargar datos de prueba' });
     } finally {
       setLoading(false);
     }
@@ -264,7 +261,7 @@ export default function PayrollHome({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Building className="h-4 w-4" />
-              {t('payroll.PayrollHome.entidadLegal')}
+              Entidad Legal
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -276,7 +273,7 @@ export default function PayrollHome({
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder={t('payroll.PayrollHome.seleccionaEntidad')} />
+                <SelectValue placeholder="Selecciona entidad..." />
               </SelectTrigger>
               <SelectContent>
                 {legalEntities.map(entity => (
@@ -292,29 +289,29 @@ export default function PayrollHome({
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full">
                     <Plus className="h-4 w-4 mr-2" />
-                    {t('payroll.PayrollHome.nuevaEntidad')}
+                    Nueva Entidad
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>{t('payroll.PayrollHome.nuevaEntidadLegal')}</DialogTitle>
+                    <DialogTitle>Nueva Entidad Legal</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label>{t('payroll.razonSocial')}</Label>
-                      <Input value={newEntity.razon_social} onChange={(e) => setNewEntity({...newEntity, razon_social: e.target.value})} placeholder={t('payroll.PayrollHome.restaurantesXyzSl')} />
+                      <Label>Razón Social *</Label>
+                      <Input value={newEntity.razon_social} onChange={(e) => setNewEntity({...newEntity, razon_social: e.target.value})} placeholder="Restaurantes XYZ S.L." />
                     </div>
                     <div>
-                      <Label>{t('payroll.PayrollHome.nif')}</Label>
+                      <Label>NIF *</Label>
                       <Input value={newEntity.nif} onChange={(e) => setNewEntity({...newEntity, nif: e.target.value})} placeholder="B12345678" />
                     </div>
                     <div>
-                      <Label>{t('payroll.PayrollHome.domicilioFiscal')}</Label>
-                      <Input value={newEntity.domicilio_fiscal} onChange={(e) => setNewEntity({...newEntity, domicilio_fiscal: e.target.value})} placeholder={t('payroll.PayrollHome.calleMayor128001Madrid')} />
+                      <Label>Domicilio Fiscal *</Label>
+                      <Input value={newEntity.domicilio_fiscal} onChange={(e) => setNewEntity({...newEntity, domicilio_fiscal: e.target.value})} placeholder="Calle Mayor 1, 28001 Madrid" />
                     </div>
                     <div>
-                      <Label>{t('payroll.PayrollHome.cnae')}</Label>
-                      <Input value={newEntity.cnae} onChange={(e) => setNewEntity({...newEntity, cnae: e.target.value})} placeholder={t('payroll.PayrollHome.5610Restaurantes')} />
+                      <Label>CNAE</Label>
+                      <Input value={newEntity.cnae} onChange={(e) => setNewEntity({...newEntity, cnae: e.target.value})} placeholder="5610 - Restaurantes" />
                     </div>
                     <Button onClick={handleCreateEntity} disabled={loading} className="w-full">
                       {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
@@ -331,7 +328,7 @@ export default function PayrollHome({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              {t('payroll.PayrollHome.periodo')}
+              Período
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -359,31 +356,31 @@ export default function PayrollHome({
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t('payroll.brutoTotal')}</p>
+            <p className="text-sm text-muted-foreground">Bruto Total</p>
             <p className="text-2xl font-bold">€{kpis.totalGross.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t('payroll.netoTotal')}</p>
+            <p className="text-sm text-muted-foreground">Neto Total</p>
             <p className="text-2xl font-bold text-success">€{kpis.totalNet.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t('payroll.PayrollHome.ssEmpresa')}</p>
+            <p className="text-sm text-muted-foreground">SS Empresa</p>
             <p className="text-2xl font-bold">€{kpis.totalEmployerSS.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t('payroll.irpfTotal')}</p>
+            <p className="text-sm text-muted-foreground">IRPF Total</p>
             <p className="text-2xl font-bold">€{kpis.totalIRPF.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">{t('settings.empleados')}</p>
+            <p className="text-sm text-muted-foreground">Empleados</p>
             <p className="text-2xl font-bold">{employeeCount}</p>
           </CardContent>
         </Card>
@@ -394,7 +391,7 @@ export default function PayrollHome({
         {/* Current Run Status */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('payroll.estadoDelPeriodo')}</CardTitle>
+            <CardTitle>Estado del Período</CardTitle>
             <CardDescription>
               {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}
             </CardDescription>
@@ -407,7 +404,7 @@ export default function PayrollHome({
                     {currentRun.status === 'draft' && 'Borrador'}
                     {currentRun.status === 'validated' && 'Validado'}
                     {currentRun.status === 'calculated' && 'Calculado'}
-                    {currentRun.status === 'approved' && t('payroll.aprobado')}
+                    {currentRun.status === 'approved' && 'Aprobado'}
                     {currentRun.status === 'submitted' && 'Presentado'}
                     {currentRun.status === 'paid' && 'Pagado'}
                   </Badge>
@@ -417,24 +414,24 @@ export default function PayrollHome({
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleStartPayroll} className="flex-1">
-                    {t('payroll.PayrollHome.continuarNomina')}
+                    Continuar nómina
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                   <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="icon" title={t('payroll.resetearNomina2')}>
+                      <Button variant="outline" size="icon" title="Resetear nómina">
                         <RotateCcw className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>{t('payroll.resetearNomina')}</DialogTitle>
+                        <DialogTitle>Resetear Nómina</DialogTitle>
                         <DialogDescription>
-                          {t('payroll.PayrollHome.seEliminaranTodosLosDatos')}
+                          Se eliminarán todos los datos de esta nómina (nóminas calculadas, presentaciones, etc.) y podrás empezar de nuevo.
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowResetDialog(false)}>{t("common.cancel")}</Button>
+                        <Button variant="outline" onClick={() => setShowResetDialog(false)}>Cancelar</Button>
                         <Button variant="destructive" onClick={handleResetPayroll} disabled={loading}>
                           {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RotateCcw className="h-4 w-4 mr-2" />}
                           Resetear
@@ -447,7 +444,7 @@ export default function PayrollHome({
             ) : (
               <>
                 <p className="text-muted-foreground">
-                  {t('payroll.PayrollHome.noHayNominaIniciadaPara')}
+                  No hay nómina iniciada para este período.
                 </p>
                 <Button 
                   onClick={handleStartPayroll} 
@@ -468,14 +465,14 @@ export default function PayrollHome({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileWarning className="h-5 w-5 text-warning" />
-              {t('payroll.PayrollHome.problemasAResolver')}
+              Problemas a Resolver
             </CardTitle>
           </CardHeader>
           <CardContent>
             {issues.length === 0 ? (
               <div className="flex items-center gap-2 text-success">
                 <CheckCircle className="h-5 w-5" />
-                <span>{t('payroll.PayrollHome.todoListoParaProcesar')}</span>
+                <span>Todo listo para procesar</span>
               </div>
             ) : (
               <div className="space-y-2">
@@ -495,13 +492,13 @@ export default function PayrollHome({
                       <span className="text-sm">{issue.message}</span>
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => navigate(`/payroll/${issue.action}`)}>
-                      {t('payroll.PayrollHome.resolver')}
+                      Resolver
                     </Button>
                   </div>
                 ))}
                 {isSandboxMode && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    {t('payroll.PayrollHome.enModoSandboxPuedesContinuar')}
+                    En modo sandbox, puedes continuar sin resolver estos problemas.
                   </p>
                 )}
               </div>
@@ -516,42 +513,42 @@ export default function PayrollHome({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">{t("payroll.configureCertificate")}</h3>
+                <h3 className="font-medium">Configurar Certificado Digital</h3>
                 <p className="text-sm text-muted-foreground">
-                  {t('payroll.PayrollHome.subeElCertificadoDeEmpresa')}
+                  Sube el certificado de empresa (P12/PFX) para presentar a TGSS/AEAT/SEPE
                 </p>
               </div>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline">
                     <Upload className="h-4 w-4 mr-2" />
-                    {t('payroll.PayrollHome.subirCertificado')}
+                    Subir Certificado
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>{t("payroll.configureCertificate")}</DialogTitle>
+                    <DialogTitle>Configurar Certificado Digital</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="border-2 border-dashed rounded-lg p-8 text-center">
                       <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">
-                        {t('payroll.PayrollHome.arrastraTuCertificadoP12pfxAqui')}
+                        Arrastra tu certificado P12/PFX aquí
                       </p>
                       <input type="file" className="hidden" accept=".p12,.pfx" />
                       <Button variant="link" className="mt-2">
-                        {t('payroll.PayrollHome.oSeleccionaUnArchivo')}
+                        O selecciona un archivo
                       </Button>
                     </div>
                     <div>
-                      <Label>{t('payroll.contrasenaDelCertificado')}</Label>
+                      <Label>Contraseña del certificado</Label>
                       <Input type="password" placeholder="••••••••" />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {t('payroll.PayrollHome.elCertificadoSeAlmacenaraCifrado')}
+                      El certificado se almacenará cifrado. Solo payroll_admin puede gestionarlo.
                     </p>
                     <Button className="w-full" disabled>
-                      {t('payroll.PayrollHome.guardarCertificado')}
+                      Guardar Certificado
                     </Button>
                   </div>
                 </DialogContent>
@@ -567,9 +564,9 @@ export default function PayrollHome({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">{t('payroll.datosDePrueba')}</h3>
+                <h3 className="font-medium">Datos de Prueba</h3>
                 <p className="text-sm text-muted-foreground">
-                  {t('payroll.PayrollHome.carga20EmpleadosConContratos')}
+                  Carga 20 empleados con contratos, NIF/NSS/IBAN y variables mensuales para hacer una prueba completa.
                 </p>
               </div>
               <Button variant="outline" onClick={handleSeedData} disabled={loading}>

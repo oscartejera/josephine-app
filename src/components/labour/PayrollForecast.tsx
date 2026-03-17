@@ -14,7 +14,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface PayrollForecastProps {
     locationId?: string | null;
@@ -44,14 +43,13 @@ function fmt(v: number) {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
     under_budget: { label: 'Bajo presupuesto', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: '✓' },
-    on_track: { label: t('payroll.enLinea'), color: 'text-blue-700', bg: 'bg-blue-100', icon: '→' },
-    warning: { label: t('payroll.atencion'), color: 'text-amber-700', bg: 'bg-amber-100', icon: '⚠' },
+    on_track: { label: 'En línea', color: 'text-blue-700', bg: 'bg-blue-100', icon: '→' },
+    warning: { label: 'Atención', color: 'text-amber-700', bg: 'bg-amber-100', icon: '⚠' },
     over_budget: { label: 'Sobre presupuesto', color: 'text-red-700', bg: 'bg-red-100', icon: '✗' },
     no_budget: { label: 'Sin presupuesto', color: 'text-gray-500', bg: 'bg-gray-100', icon: '—' },
 };
 
 export function PayrollForecast({ locationId }: PayrollForecastProps) {
-  const { t } = useTranslation();
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;
@@ -119,7 +117,10 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
 
             if (shifts.length === 0 && clockRecords.length === 0) return null;
 
-            const empMap = new Map(employees.map((e: any) => {t('labour.PayrollForecast.eidEPeremployeeAggregationConst')}<string, { worked: number; remaining: number; name: string; role: string; cost: number }> = {};
+            const empMap = new Map(employees.map((e: any) => [e.id, e]));
+
+            // Per-employee aggregation
+            const empStats: Record<string, { worked: number; remaining: number; name: string; role: string; cost: number }> = {};
 
             shifts.forEach((s: any) => {
                 const emp = empMap.get(s.employee_id);
@@ -189,8 +190,8 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
     if (!effectiveLocationId) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('payroll.previsionDeNomina')}</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t('payroll.seleccionaUnaUbicacion')}</p></CardContent>
+                <CardHeader><CardTitle className="text-base">📊 Previsión de Nómina</CardTitle></CardHeader>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">Selecciona una ubicación</p></CardContent>
             </Card>
         );
     }
@@ -198,7 +199,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
     if (isLoading) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('payroll.previsionDeNomina')}</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">📊 Previsión de Nómina</CardTitle></CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         {[1, 2, 3].map(i => <div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />)}
@@ -211,20 +212,23 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
     if (!data) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">{t('payroll.previsionDeNomina')}</CardTitle></CardHeader>
-                <CardContent><p className="text-sm text-gray-500 text-center py-4">{t("labour.noShiftData")}</p></CardContent>
+                <CardHeader><CardTitle className="text-base">📊 Previsión de Nómina</CardTitle></CardHeader>
+                <CardContent><p className="text-sm text-gray-500 text-center py-4">No hay datos de turnos</p></CardContent>
             </Card>
         );
     }
 
     const statusCfg = STATUS_CONFIG[data.budget.status] || STATUS_CONFIG.no_budget;
     const progressPct = data.days.total > 0 ? Math.round((data.days.elapsed / data.days.total) * 100) : 0;
-    const costPct = data.projected.total_cost > {t('labour.PayrollForecast.0MathrounddataworkedcostDataprojectedtot')}
+    const costPct = data.projected.total_cost > 0
+        ? Math.round((data.worked.cost / data.projected.total_cost) * 100) : 0;
+
+    return (
         <Card className="bg-white">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">{t('payroll.previsionDeNomina')}</CardTitle>
+                        <CardTitle className="text-base font-semibold">📊 Previsión de Nómina</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">
                             {format(new Date(data.period.year, data.period.month - 1), 'MMMM yyyy', { locale: es })}
                             {' · '} Día {data.days.elapsed} de {data.days.total}
@@ -239,17 +243,17 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 {/* Main projection */}
                 <div className="grid grid-cols-3 gap-4">
                     <div className="text-center p-3 bg-emerald-50/50 rounded-xl">
-                        <div className="text-[10px] font-semibold text-emerald-600 uppercase">{t('labour.PayrollForecast.yaGastado')}</div>
+                        <div className="text-[10px] font-semibold text-emerald-600 uppercase">Ya gastado</div>
                         <div className="text-xl font-bold text-emerald-700 mt-1">{fmt(data.worked.cost)}</div>
                         <div className="text-[10px] text-emerald-500">{data.worked.hours}h trabajadas</div>
                     </div>
                     <div className="text-center p-3 bg-blue-50/50 rounded-xl">
-                        <div className="text-[10px] font-semibold text-blue-600 uppercase">{t('integrations.pendiente')}</div>
+                        <div className="text-[10px] font-semibold text-blue-600 uppercase">Pendiente</div>
                         <div className="text-xl font-bold text-blue-700 mt-1">{fmt(data.remaining.cost)}</div>
                         <div className="text-[10px] text-blue-500">{data.remaining.hours}h planificadas</div>
                     </div>
                     <div className="text-center p-3 bg-indigo-50/50 rounded-xl border-2 border-indigo-200">
-                        <div className="text-[10px] font-semibold text-indigo-600 uppercase">{t('payroll.proyeccionMes')}</div>
+                        <div className="text-[10px] font-semibold text-indigo-600 uppercase">Proyección mes</div>
                         <div className="text-xl font-bold text-indigo-700 mt-1">{fmt(data.projected.total_cost)}</div>
                         <div className="text-[10px] text-indigo-500">{fmt(data.projected.daily_run_rate)}/día</div>
                     </div>
@@ -276,7 +280,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                             style={{ width: `${costPct}%` }}
                         />
                     </div>
-                    {costPct > {t('labour.PayrollForecast.progresspct10')}
+                    {costPct > progressPct + 10 && (
                         <p className="text-[10px] text-amber-600 font-medium">
                             ⚠ El coste va {costPct - progressPct}pp por delante del tiempo — ritmo por encima de lo esperado
                         </p>
@@ -287,7 +291,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 {data.budget.amount > 0 && (
                     <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg">
                         <div className="text-sm text-gray-600">
-                            <span className="font-medium">{t('payroll.presupuesto')}</span> {fmt(data.budget.amount)}
+                            <span className="font-medium">Presupuesto:</span> {fmt(data.budget.amount)}
                         </div>
                         <div className="text-sm">
                             <span className={cn("font-bold", statusCfg.color)}>
@@ -300,7 +304,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 {/* Per-employee breakdown */}
                 {data.per_employee.length > 0 && (
                     <div className="space-y-1">
-                        <div className="text-[10px] font-semibold text-gray-500 uppercase mb-2">{t('labour.PayrollForecast.desglosePorEmpleado')}</div>
+                        <div className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Desglose por empleado</div>
                         {data.per_employee.slice(0, 6).map(emp => (
                             <div key={emp.employee_id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50/50">
                                 <div className="flex items-center gap-2">

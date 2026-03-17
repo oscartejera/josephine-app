@@ -11,7 +11,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bell, Check, CheckCheck, Info, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Notification } from '@/hooks/useNotifications';
-import { useTranslation } from 'react-i18next';
 
 const typeIcons: Record<string, typeof Info> = {
     info: Info,
@@ -43,7 +42,6 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
-  const { t } = useTranslation();
     const navigate = useNavigate();
     const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
     const [open, setOpen] = useState(false);
@@ -63,7 +61,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
                     variant="ghost"
                     size="icon"
                     className="relative h-9 w-9"
-                    aria-label={t('layout.NotificationBell.notificaciones1')}
+                    aria-label="Notificaciones"
                 >
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
@@ -81,7 +79,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <h4 className="font-semibold text-sm">{t('layout.NotificationBell.notificaciones')}</h4>
+                    <h4 className="font-semibold text-sm">Notificaciones</h4>
                     {unreadCount > 0 && (
                         <Button
                             variant="ghost"
@@ -90,7 +88,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
                             onClick={() => markAllRead()}
                         >
                             <CheckCheck className="h-3 w-3 mr-1" />
-                            {t('layout.NotificationBell.leerTodo')}
+                            Leer todo
                         </Button>
                     )}
                 </div>
@@ -99,7 +97,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
                 <ScrollArea className="max-h-80">
                     {notifications.length === 0 ? (
                         <div className="p-6 text-center text-sm text-muted-foreground">
-                            {t('layout.NotificationBell.noHayNotificaciones')}
+                            No hay notificaciones
                         </div>
                     ) : (
                         <div className="divide-y">

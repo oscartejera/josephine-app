@@ -14,7 +14,6 @@ import { Check, Loader2, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { CLASSIFICATION_ACTIONS } from '@/lib/menu-engineering-engine';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
-import { useTranslation } from 'react-i18next';
 
 interface MenuEngineeringActionsProps {
   itemsByClassification: Record<Classification, MenuEngineeringItem[]>;
@@ -24,7 +23,7 @@ interface MenuEngineeringActionsProps {
     actionType: string,
     classification: string,
     estimatedImpact: number | null
-  ) => {t('menu-engineering.MenuEngineeringActions.promise')}<void>;
+  ) => Promise<void>;
 }
 
 function formatCurrency(value: number): string {
@@ -101,12 +100,10 @@ const PRACTICAL_ACTIONS = [
 ];
 
 export function MenuEngineeringActions({
-  
   itemsByClassification,
   loading,
   onSaveAction,
 }: MenuEngineeringActionsProps) {
-  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAction, setSelectedAction] = useState<{
     classification: Classification;
@@ -121,10 +118,10 @@ export function MenuEngineeringActions({
     setSaving(true);
     try {
       await onSaveAction(null, selectedAction.actionType, selectedAction.classification, selectedAction.impact > 0 ? selectedAction.impact : null);
-      toast.success(t('menuEngineering.toastActionSaved'));
+      toast.success('Action plan saved');
       setModalOpen(false);
     } catch {
-      toast.error(t('menuEngineering.toastSaveError'));
+      toast.error('Error saving');
     } finally {
       setSaving(false);
     }
@@ -137,7 +134,7 @@ export function MenuEngineeringActions({
   return (
     <>
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground px-1">{t('menu-engineering.MenuEngineeringActions.actionPlan')}</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground px-1">Action Plan</h3>
         {PRACTICAL_ACTIONS.map((config) => {
           const items = itemsByClassification[config.classification];
           const topNames = items.slice(0, 3).map(i => i.name);
@@ -189,30 +186,30 @@ export function MenuEngineeringActions({
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('menu-engineering.MenuEngineeringActions.saveActionPlan')}</DialogTitle>
+            <DialogTitle>Save Action Plan</DialogTitle>
             <DialogDescription>
-              {t('menu-engineering.MenuEngineeringActions.thisCreatesAReminderFor')}
+              This creates a reminder for your team. It won't change any data automatically — you apply changes in your POS or kitchen.
             </DialogDescription>
           </DialogHeader>
 
           {selectedAction && (
             <div className="py-4 space-y-3">
               <p className="text-sm">
-                {t('menu-engineering.MenuEngineeringActions.appliesTo')} <strong>{selectedAction.items.length}</strong> products.
+                Applies to <strong>{selectedAction.items.length}</strong> products.
               </p>
               {selectedAction.impact > 0 && (
                 <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-lg">
-                  <p className="text-sm">{t('menu-engineering.MenuEngineeringActions.estimatedImpact')} <strong className="text-emerald-600">+{formatCurrency(selectedAction.impact)}</strong></p>
+                  <p className="text-sm">Estimated impact: <strong className="text-emerald-600">+{formatCurrency(selectedAction.impact)}</strong></p>
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                {t('menu-engineering.MenuEngineeringActions.tipReviewIndividualProductsIn')}
+                💡 Tip: Review individual products in the table to decide specific changes.
               </p>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>{t('menu-engineering.MenuEngineeringActions.cancel')}</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
             <Button onClick={handleConfirm} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
               Save plan

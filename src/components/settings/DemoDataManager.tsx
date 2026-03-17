@@ -9,7 +9,6 @@ import { Database, RefreshCw, AlertTriangle, Loader2, CheckCircle2, XCircle, Cal
 import { useToast } from '@/hooks/use-toast';
 import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
 
 interface RegenerationResult {
   step: string;
@@ -18,7 +17,6 @@ interface RegenerationResult {
 }
 
 export function DemoDataManager() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const [regenerating, setRegenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -65,7 +63,7 @@ export function DemoDataManager() {
       await supabase.from('timesheets').delete().in('location_id', demoLocationIds);
       await supabase.from('planned_shifts').delete().in('location_id', demoLocationIds);
 
-      updateStepStatus('cleanup', 'success', t('settings.datosAntiguosEliminados'));
+      updateStepStatus('cleanup', 'success', 'Datos antiguos eliminados');
       setProgress(20);
 
       // Step 2: Call seed_demo_users edge function
@@ -90,7 +88,7 @@ export function DemoDataManager() {
       setProgress(80);
 
       // Step 6: Inventory
-      updateStepStatus('inventory', 'success', t('settings.inventarioActualizado'));
+      updateStepStatus('inventory', 'success', 'Inventario actualizado');
       setProgress(90);
 
       // Step 7: Products (handled by RPC in seed function)
@@ -103,8 +101,8 @@ export function DemoDataManager() {
       setLastRegenerated(now);
 
       toast({
-        title: t('settings.demoDataRegenerated'),
-        description: t("settings.demoDataUpdated"),
+        title: "Datos demo regenerados",
+        description: "Todos los datos de demostración han sido actualizados correctamente.",
       });
     } catch (error) {
       console.error('Error regenerating demo data:', error);
@@ -118,7 +116,7 @@ export function DemoDataManager() {
 
       toast({
         variant: "destructive",
-        title: t("common.error"),
+        title: "Error",
         description: error instanceof Error ? error.message : "No se pudieron regenerar los datos demo",
       });
     } finally {
@@ -168,12 +166,12 @@ export function DemoDataManager() {
       <CardContent className="space-y-6">
         {/* Info section */}
         <div className="bg-muted/30 rounded-lg p-4 space-y-2">
-          <h4 className="font-medium text-sm">{t('settings.queHaceEstaAccion')}</h4>
+          <h4 className="font-medium text-sm">¿Qué hace esta acción?</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• Elimina todos los datos de tickets, timesheets y turnos existentes</li>
             <li>• Regenera usuarios demo con roles y permisos</li>
-            <li>{t('settings.crea30DiasDeDatos')}</li>
-            <li>{t('settings.generaProductosCategoriasYMetricas')}</li>
+            <li>• Crea 30 días de datos históricos para todos los dashboards</li>
+            <li>• Genera productos, categorías y métricas de ventas</li>
             <li>• Genera forecasts usando el modelo LR+SI v3</li>
           </ul>
         </div>
@@ -250,7 +248,7 @@ export function DemoDataManager() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={handleRegenerate}>
                 Regenerar
               </AlertDialogAction>

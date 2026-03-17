@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Loader2, Clock, TrendingUp, DollarSign, AlertTriangle, Lightbulb, Wand2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Loader2, Clock, TrendingUp, DollarSign, AlertTriangle, Lightbulb } from 'lucide-react';
 import { format, addWeeks, subWeeks, endOfWeek, getWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface SchedulingHeaderProps {
   weekStart: Date;
@@ -32,10 +31,8 @@ interface SchedulingHeaderProps {
   onCreateSchedule: () => void;
   onPublish: () => void;
   onOpenSettings?: () => void;
-  onAutoFill?: () => void;
   hasSchedule: boolean;
   isCreating: boolean;
-  isAutoFilling?: boolean;
   projectedSales?: number;
   projectedColPercent?: number;
   scheduledColPercent?: number;
@@ -56,7 +53,6 @@ interface SchedulingHeaderProps {
 }
 
 export function SchedulingHeader({
-  
   weekStart,
   onWeekChange,
   onGoToToday,
@@ -64,7 +60,6 @@ export function SchedulingHeader({
   onPublish,
   hasSchedule,
   isCreating,
-  isAutoFilling,
   projectedSales,
   projectedColPercent,
   scheduledColPercent,
@@ -76,10 +71,8 @@ export function SchedulingHeader({
   splh,
   oplh,
   onOpenSettings,
-  onAutoFill,
   efficiency,
 }: SchedulingHeaderProps) {
-  const { t } = useTranslation();
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
   const weekLabel = `${format(weekStart, 'd')} - ${format(weekEnd, 'd MMM')}`;
   const weekNum = getWeek(weekStart, { weekStartsOn: 1 });
@@ -105,12 +98,12 @@ export function SchedulingHeader({
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="#" className="text-muted-foreground">
-              {t('scheduling.SchedulingHeader.scheduleWorkforce')}
+              Schedule & Workforce
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{t('scheduling.SchedulingHeader.schedule')}</BreadcrumbPage>
+            <BreadcrumbPage>Schedule</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -147,7 +140,7 @@ export function SchedulingHeader({
                 className="h-7 text-xs ml-1"
                 onClick={onGoToToday}
               >
-                {t('scheduling.SchedulingHeader.hoy')}
+                Hoy
               </Button>
             )}
           </div>
@@ -161,7 +154,7 @@ export function SchedulingHeader({
               <>
                 {/* / Projected €{SUM(forecast_sales)} */}
                 <span className="text-muted-foreground">/</span>
-                <span className="text-muted-foreground">{t('scheduling.SchedulingHeader.projected')}</span>
+                <span className="text-muted-foreground">Projected</span>
                 <span className="font-semibold">€{Math.round(projectedSales).toLocaleString()}</span>
 
                 {/* {shiftsCost / projectedSales * 100}% / €{SUM(planned_cost)} / {SUM(planned_hours)}h */}
@@ -186,7 +179,7 @@ export function SchedulingHeader({
         <div className="flex items-center gap-2">
           {/* Status badge */}
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-            {t('scheduling.SchedulingHeader.draft')}
+            Draft
           </Badge>
 
           <Button
@@ -198,39 +191,18 @@ export function SchedulingHeader({
             {isCreating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {t('scheduling.SchedulingHeader.generating')}
+                Generating...
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                {t('scheduling.SchedulingHeader.createSchedule')}
+                Create Schedule
               </>
             )}
           </Button>
 
-          {hasSchedule && onAutoFill && (
-            <Button
-              onClick={onAutoFill}
-              disabled={isAutoFilling}
-              variant="outline"
-              className="gap-2"
-            >
-              {isAutoFilling ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('scheduling.SchedulingHeader.filling')}
-                </>
-              ) : (
-                <>
-                  <Wand2 className="h-4 w-4" />
-                  {t('scheduling.SchedulingHeader.autofill')}
-                </>
-              )}
-            </Button>
-          )}
-
           <Button variant="outline">
-            {t('scheduling.SchedulingHeader.templates')}
+            Templates
           </Button>
 
           <Button
@@ -238,7 +210,7 @@ export function SchedulingHeader({
             disabled={!hasSchedule}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            {t('scheduling.SchedulingHeader.publish')}
+            Publish
           </Button>
 
           <DropdownMenu modal={false}>
@@ -249,10 +221,10 @@ export function SchedulingHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setTimeout(() => onOpenSettings?.(), 50); }}>
-                {t('scheduling.SchedulingHeader.scheduleSettings')}
+                Schedule Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>{t('scheduling.SchedulingHeader.exportSchedule')}</DropdownMenuItem>
-              <DropdownMenuItem>{t('scheduling.SchedulingHeader.printSchedule')}</DropdownMenuItem>
+              <DropdownMenuItem>Export Schedule</DropdownMenuItem>
+              <DropdownMenuItem>Print Schedule</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -265,7 +237,7 @@ export function SchedulingHeader({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-md cursor-default">
                 <DollarSign className="h-3.5 w-3.5 text-blue-500" />
-                <span className="text-blue-600 font-medium">{t('scheduling.SchedulingHeader.splh')}</span>
+                <span className="text-blue-600 font-medium">SPLH</span>
                 <span className="font-semibold text-blue-800">€{splh.toFixed(0)}</span>
               </div>
             </TooltipTrigger>
@@ -278,12 +250,12 @@ export function SchedulingHeader({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-100 rounded-md cursor-default">
                 <TrendingUp className="h-3.5 w-3.5 text-purple-500" />
-                <span className="text-purple-600 font-medium">{t('scheduling.SchedulingHeader.oplh')}</span>
+                <span className="text-purple-600 font-medium">OPLH</span>
                 <span className="font-semibold text-purple-800">{oplh?.toFixed(1)}</span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              {t('scheduling.SchedulingHeader.ordersPerLaborHourEstimated')}
+              Orders Per Labor Hour (estimated from avg check €25)
             </TooltipContent>
           </Tooltip>
 
@@ -291,14 +263,14 @@ export function SchedulingHeader({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 border border-border rounded-md cursor-default">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground font-medium">{t('scheduling.SchedulingHeader.scheduled')}</span>
+                <span className="text-muted-foreground font-medium">Scheduled</span>
                 <span className="font-semibold">{Math.round(totalShiftsHours || 0)}h</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="font-medium">{Math.round((totalShiftsHours || 0) / 7)}h/day avg</span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              {t('scheduling.SchedulingHeader.totalScheduledLaborHoursFor')}
+              Total scheduled labor hours for the week
             </TooltipContent>
           </Tooltip>
         </div>
@@ -310,13 +282,14 @@ export function SchedulingHeader({
           {/* Progress bar */}
           {(() => {
             const target = efficiency?.target_cost || (projectedSales ? projectedSales * (targetColPercent || 22) / 100 : 0);
-            const pct = target > {t('scheduling.SchedulingHeader.0MathmintotalshiftscostTarget100120')} <= 95 ? 'bg-emerald-500' : pct <= 105 ? 'bg-amber-500' : 'bg-red-500';
+            const pct = target > 0 ? Math.min((totalShiftsCost / target) * 100, 120) : 0;
+            const barColor = pct <= 95 ? 'bg-emerald-500' : pct <= 105 ? 'bg-amber-500' : 'bg-red-500';
             const textColor = pct <= 95 ? 'text-emerald-600' : pct <= 105 ? 'text-amber-600' : 'text-red-600';
             return (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[140px]">
                   <DollarSign className="h-3.5 w-3.5" />
-                  <span>{t('scheduling.presupuestoLaboral')}</span>
+                  <span>Presupuesto Laboral</span>
                 </div>
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div className={cn("h-full rounded-full transition-all duration-500", barColor)} style={{ width: `${Math.min(pct, 100)}%` }} />

@@ -25,7 +25,6 @@ import {
   type RoleTemplate,
   type TableShape,
 } from '@/lib/onboardingTemplates';
-import { useTranslation } from 'react-i18next';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -63,16 +62,15 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: 'business', title: t('onboarding.yourBusiness'), description: t('onboarding.companyName'), icon: Building2 },
-  { id: 'location', title: t('onboarding.yourLocation'), description: t('onboarding.firstLocation'), icon: MapPin },
-  { id: 'menu', title: t('onboarding.yourMenu'), description: t('onboarding.productsAndPrices'), icon: UtensilsCrossed },
-  { id: 'team', title: 'Tu Equipo', description: t('onboarding.empleadosIniciales'), icon: Users },
-  { id: 'floor', title: 'Tu Sala', description: t('onboarding.configuracionDeMesas'), icon: LayoutGrid },
-  { id: 'inventory', title: t('onboarding.inventario'), description: 'Ingredientes (opcional)', icon: Package },
+  { id: 'business', title: 'Tu Negocio', description: 'Nombre de tu empresa', icon: Building2 },
+  { id: 'location', title: 'Tu Local', description: 'Primer establecimiento', icon: MapPin },
+  { id: 'menu', title: 'Tu Carta', description: 'Productos y precios', icon: UtensilsCrossed },
+  { id: 'team', title: 'Tu Equipo', description: 'Empleados iniciales', icon: Users },
+  { id: 'floor', title: 'Tu Sala', description: 'Configuración de mesas', icon: LayoutGrid },
+  { id: 'inventory', title: 'Inventario', description: 'Ingredientes (opcional)', icon: Package },
 ];
 
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
@@ -90,7 +88,20 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   });
 
   // Step 3: Menu
-  const [selectedTemplate, setSelectedTemplate] = useState<RestaurantTemplate | null>{t('onboarding.OnboardingWizard.nullConstSelectedproductsSetselectedprod')}<Set<number>>{t('onboarding.OnboardingWizard.newSetConstCustomproductsSetcustomproduc')}<ProductTemplate[]>{t('onboarding.OnboardingWizard.step4TeamConstEmployees')}<EmployeeEntry[]>{t('onboarding.OnboardingWizard.constAvailablerolesSetavailablerolesUses')}<RoleTemplate[]>{t('onboarding.OnboardingWizard.step5FloorConstTables')}<TableEntry[]>{t('onboarding.OnboardingWizard.step6InventoryConstIncludeinventory')}<Set<number>>(new Set());
+  const [selectedTemplate, setSelectedTemplate] = useState<RestaurantTemplate | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set());
+  const [customProducts, setCustomProducts] = useState<ProductTemplate[]>([]);
+
+  // Step 4: Team
+  const [employees, setEmployees] = useState<EmployeeEntry[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<RoleTemplate[]>([]);
+
+  // Step 5: Floor
+  const [tables, setTables] = useState<TableEntry[]>([]);
+
+  // Step 6: Inventory
+  const [includeInventory, setIncludeInventory] = useState(false);
+  const [selectedInventory, setSelectedInventory] = useState<Set<number>>(new Set());
 
   // Template selection handler
   const handleTemplateSelect = (template: RestaurantTemplate) => {
@@ -387,8 +398,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         }
       }
 
-      toast.success(t('onboardingWizard.toastComplete'), {
-        description: t('onboarding.tuNegocioEstaListoPara'),
+      toast.success('¡Configuración completada!', {
+        description: 'Tu negocio está listo para empezar',
       });
 
       // Refresh profile to update group_id
@@ -397,8 +408,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       navigate('/dashboard');
     } catch (error) {
       console.error('Onboarding error:', error);
-      toast.error(t('onboardingWizard.toastError'), {
-        description: t('onboarding.porFavorIntentaloDeNuevo'),
+      toast.error('Error en la configuración', {
+        description: 'Por favor, inténtalo de nuevo',
       });
     } finally {
       setLoading(false);
@@ -412,57 +423,60 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold">{t('onboarding.bienvenidoAJosephine')}</h2>
+              <h2 className="text-2xl font-bold">¡Bienvenido a Josephine!</h2>
               <p className="text-muted-foreground mt-2">
-                {t('onboarding.OnboardingWizard.vamosAConfigurarTuNegocio')}
+                Vamos a configurar tu negocio en pocos minutos
               </p>
             </div>
             <div className="space-y-4 max-w-md mx-auto">
               <div className="space-y-2">
-                <Label htmlFor="business-name">{t('onboarding.nombreDeTuEmpresaO')}</Label>
+                <Label htmlFor="business-name">Nombre de tu empresa o grupo</Label>
                 <Input
                   id="business-name"
-                  placeholder={t('common.onboardingCompanyExample')}
+                  placeholder="Ej: Restaurantes García S.L."
                   value={businessInfo.name}
                   onChange={(e) => setBusinessInfo({ name: e.target.value })}
                   className="text-lg"
                 />
                 <p className="text-xs text-muted-foreground">
-                  {t('onboarding.OnboardingWizard.esteNombreAgrupaTodosTus')}
+                  Este nombre agrupa todos tus establecimientos
                 </p>
               </div>
             </div>
           </div>
-        {t('onboarding.OnboardingWizard.case1LocationReturn')}
+        );
+
+      case 1: // Location
+        return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold">{t('onboarding.OnboardingWizard.tuPrimerLocal')}</h2>
+              <h2 className="text-2xl font-bold">Tu primer local</h2>
               <p className="text-muted-foreground mt-2">
-                {t('onboarding.OnboardingWizard.configuraLosDatosBasicosDe')}
+                Configura los datos básicos de tu establecimiento
               </p>
             </div>
             <div className="grid gap-4 max-w-lg mx-auto">
               <div className="space-y-2">
-                <Label htmlFor="location-name">{t('onboarding.nombreDelLocal')}</Label>
+                <Label htmlFor="location-name">Nombre del local</Label>
                 <Input
                   id="location-name"
-                  placeholder={t('onboarding.OnboardingWizard.ejLaTabernaCentro')}
+                  placeholder="Ej: La Taberna Centro"
                   value={locationInfo.name}
                   onChange={(e) => setLocationInfo({ ...locationInfo, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="location-city">{t('onboarding.OnboardingWizard.ciudad')}</Label>
+                <Label htmlFor="location-city">Ciudad</Label>
                 <Input
                   id="location-city"
-                  placeholder={t('onboarding.OnboardingWizard.ejMadrid')}
+                  placeholder="Ej: Madrid"
                   value={locationInfo.city}
                   onChange={(e) => setLocationInfo({ ...locationInfo, city: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t('onboarding.OnboardingWizard.zonaHoraria')}</Label>
+                  <Label>Zona horaria</Label>
                   <Select
                     value={locationInfo.timezone}
                     onValueChange={(v) => setLocationInfo({ ...locationInfo, timezone: v })}
@@ -478,7 +492,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('onboarding.OnboardingWizard.moneda')}</Label>
+                  <Label>Moneda</Label>
                   <Select
                     value={locationInfo.currency}
                     onValueChange={(v) => setLocationInfo({ ...locationInfo, currency: v })}
@@ -496,12 +510,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </div>
             </div>
           </div>
-        {t('onboarding.OnboardingWizard.case2MenuReturn')}
+        );
+
+      case 2: // Menu
+        return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold">{t('onboarding.OnboardingWizard.tuCarta')}</h2>
+              <h2 className="text-2xl font-bold">Tu carta</h2>
               <p className="text-muted-foreground mt-2">
-                {t('onboarding.OnboardingWizard.eligeUnaPlantillaOEmpieza')}
+                Elige una plantilla o empieza desde cero
               </p>
             </div>
             
@@ -529,7 +546,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {selectedTemplate && selectedTemplate.products.length > 0 && (
               <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="font-medium">{t('onboarding.OnboardingWizard.productosIncluidos')}</span>
+                  <span className="font-medium">Productos incluidos</span>
                   <span className="text-sm text-muted-foreground">
                     {selectedProducts.size} de {selectedTemplate.products.length} seleccionados
                   </span>
@@ -562,16 +579,19 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {selectedTemplate?.id === 'custom' && (
               <div className="text-center text-muted-foreground py-8">
                 <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>{t('onboarding.podrasAnadirProductosDespuesDesde')}</p>
+                <p>Podrás añadir productos después desde el módulo de Menú</p>
               </div>
             )}
           </div>
-        {t('onboarding.OnboardingWizard.case3TeamReturn')}
+        );
+
+      case 3: // Team
+        return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold">{t('onboarding.OnboardingWizard.tuEquipo')}</h2>
+              <h2 className="text-2xl font-bold">Tu equipo</h2>
               <p className="text-muted-foreground mt-2">
-                {t('onboarding.OnboardingWizard.anadeATusEmpleadosPuedes')}
+                Añade a tus empleados (puedes hacerlo después)
               </p>
             </div>
 
@@ -580,7 +600,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 <div key={index} className="flex gap-3 items-start p-3 border rounded-lg">
                   <div className="flex-1 grid grid-cols-3 gap-3">
                     <Input
-                      placeholder={t('onboarding.nombre')}
+                      placeholder="Nombre"
                       value={employee.name}
                       onChange={(e) => updateEmployee(index, 'name', e.target.value)}
                     />
@@ -606,7 +626,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         onChange={(e) => updateEmployee(index, 'hourlyCost', parseFloat(e.target.value) || 0)}
                         className="w-20"
                       />
-                      <span className="text-sm text-muted-foreground">{t('onboarding.OnboardingWizard.h')}</span>
+                      <span className="text-sm text-muted-foreground">€/h</span>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => removeEmployee(index)}>
@@ -616,22 +636,25 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               ))}
 
               <Button variant="outline" onClick={addEmployee} className="w-full">
-                {t('onboarding.OnboardingWizard.anadirEmpleado')}
+                + Añadir empleado
               </Button>
 
               {employees.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-4">
-                  {t('onboarding.OnboardingWizard.puedesAnadirEmpleadosAhoraO')}
+                  Puedes añadir empleados ahora o hacerlo después desde Configuración
                 </p>
               )}
             </div>
           </div>
-        {t('onboarding.OnboardingWizard.case4FloorReturn')}
+        );
+
+      case 4: // Floor
+        return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold">{t('onboarding.OnboardingWizard.tuSala')}</h2>
+              <h2 className="text-2xl font-bold">Tu sala</h2>
               <p className="text-muted-foreground mt-2">
-                {t('onboarding.OnboardingWizard.configuraLasMesasDeTu')}
+                Configura las mesas de tu local
               </p>
             </div>
 
@@ -642,14 +665,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   <div key={table.id} className="flex gap-3 items-center p-3 border rounded-lg">
                     <div className="flex-1 grid grid-cols-3 gap-3">
                       <div className="space-y-1">
-                        <Label className="text-xs">{t('onboarding.OnboardingWizard.nMesa')}</Label>
+                        <Label className="text-xs">Nº Mesa</Label>
                         <Input
                           value={table.table_number}
                           onChange={(e) => updateTable(index, 'table_number', e.target.value)}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">{t('onboarding.OnboardingWizard.plazas')}</Label>
+                        <Label className="text-xs">Plazas</Label>
                         <Input
                           type="number"
                           min={1}
@@ -659,7 +682,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">{t('onboarding.OnboardingWizard.forma')}</Label>
+                        <Label className="text-xs">Forma</Label>
                         <Select
                           value={table.shape}
                           onValueChange={(v) => updateTable(index, 'shape', v)}
@@ -684,13 +707,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                 ))}
 
                 <Button variant="outline" onClick={addTable} className="w-full">
-                  {t('onboarding.OnboardingWizard.anadirMesa')}
+                  + Añadir mesa
                 </Button>
               </div>
 
               {/* Preview */}
               <div className="space-y-2">
-                <Label>{t('onboarding.previsualizacion')}</Label>
+                <Label>Previsualización</Label>
                 <FloorPlanPreview
                   tables={getTablesPreview()}
                   className="min-h-[300px]"
@@ -698,12 +721,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </div>
             </div>
           </div>
-        {t('onboarding.OnboardingWizard.case5InventoryReturn')}
+        );
+
+      case 5: // Inventory
+        return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold">{t('onboarding.inventario')}</h2>
+              <h2 className="text-2xl font-bold">Inventario</h2>
               <p className="text-muted-foreground mt-2">
-                {t('onboarding.OnboardingWizard.configuraTusIngredientesBaseOpcional')}
+                Configura tus ingredientes base (opcional)
               </p>
             </div>
 
@@ -714,9 +740,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   onCheckedChange={(c) => setIncludeInventory(c === true)}
                 />
                 <div>
-                  <div className="font-medium">{t('onboarding.OnboardingWizard.incluirInventarioInicial')}</div>
+                  <div className="font-medium">Incluir inventario inicial</div>
                   <div className="text-sm text-muted-foreground">
-                    {t('onboarding.OnboardingWizard.anadeIngredientesComunesSegunTu')}
+                    Añade ingredientes comunes según tu tipo de negocio
                   </div>
                 </div>
               </label>
@@ -725,7 +751,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {includeInventory && selectedTemplate && selectedTemplate.inventory.length > 0 && (
               <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto max-w-2xl mx-auto">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="font-medium">{t('onboarding.OnboardingWizard.ingredientesSugeridos')}</span>
+                  <span className="font-medium">Ingredientes sugeridos</span>
                   <span className="text-sm text-muted-foreground">
                     {selectedInventory.size} seleccionados
                   </span>
@@ -758,8 +784,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {includeInventory && (!selectedTemplate || selectedTemplate.inventory.length === 0) && (
               <div className="text-center text-muted-foreground py-8">
                 <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>{t("onboarding.noPresetInventory")}</p>
-                <p className="text-sm">{t('onboarding.podrasAnadirIngredientesDespuesDesde')}</p>
+                <p>No hay inventario predefinido para esta plantilla</p>
+                <p className="text-sm">Podrás añadir ingredientes después desde el módulo de Inventario</p>
               </div>
             )}
           </div>
@@ -778,7 +804,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-primary" />
-              <span className="font-display font-bold text-xl">{t('onboarding.OnboardingWizard.josephine')}</span>
+              <span className="font-display font-bold text-xl">Josephine</span>
             </div>
             <span className="text-sm text-muted-foreground">
               Paso {currentStep + 1} de {STEPS.length}
@@ -838,7 +864,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             disabled={currentStep === 0 || loading}
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
-            {t('onboarding.OnboardingWizard.atras')}
+            Atrás
           </Button>
 
           <Button
@@ -848,12 +874,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {currentStep === STEPS.length - 1 ? (
               <>
-                {t('onboarding.OnboardingWizard.finalizar')}
+                Finalizar
                 <Check className="w-4 h-4 ml-2" />
               </>
             ) : (
               <>
-                {t('onboarding.OnboardingWizard.siguiente')}
+                Siguiente
                 <ChevronRight className="w-4 h-4 ml-2" />
               </>
             )}

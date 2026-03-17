@@ -3,7 +3,6 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StarBreakdown } from '@/hooks/useReviewsData';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface StarBreakdownTableProps {
   data: StarBreakdown[];
@@ -11,10 +10,9 @@ interface StarBreakdownTableProps {
 }
 
 export function StarBreakdownTable({ data, isLoading }: StarBreakdownTableProps) {
-  const { t } = useTranslation();
   return (
     <Card className="p-5 bg-card border border-border/60 rounded-xl">
-      <h3 className="text-base font-semibold text-foreground mb-4">{t('reviews.StarBreakdownTable.rating')}</h3>
+      <h3 className="text-base font-semibold text-foreground mb-4">Rating</h3>
 
       {isLoading ? (
         <div className="space-y-3">
@@ -27,9 +25,9 @@ export function StarBreakdownTable({ data, isLoading }: StarBreakdownTableProps)
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/60">
-                <th className="text-left text-xs font-medium text-muted-foreground pb-2 pr-4">{t('reviews.StarBreakdownTable.rating1')}</th>
-                <th className="text-right text-xs font-medium text-muted-foreground pb-2 pr-4 w-24">{t('reviews.totalRatings2')}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-2 w-48">{t('reviews.StarBreakdownTable.ofRating')}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-2 pr-4">Rating</th>
+                <th className="text-right text-xs font-medium text-muted-foreground pb-2 pr-4 w-24">Total ratings</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-2 w-48">% of rating</th>
               </tr>
             </thead>
             <tbody>

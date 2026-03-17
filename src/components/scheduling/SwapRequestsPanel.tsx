@@ -13,7 +13,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { SwapRequest } from '@/hooks/useSchedulingSupabase';
-import { useTranslation } from 'react-i18next';
 
 interface SwapRequestsPanelProps {
   isOpen: boolean;
@@ -43,22 +42,22 @@ function SwapRequestCard({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ArrowRightLeft className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">{t('scheduling.SwapRequestsPanel.swapRequest')}</span>
+          <span className="text-sm font-medium">Swap Request</span>
         </div>
         <div className="flex items-center gap-2">
           {request.status === 'pending' && (
             <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
-              {t('scheduling.SwapRequestsPanel.pending')}
+              Pending
             </Badge>
           )}
           {request.status === 'approved' && (
             <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50">
-              {t('scheduling.SwapRequestsPanel.approved')}
+              Approved
             </Badge>
           )}
           {request.status === 'rejected' && (
             <Badge variant="outline" className="text-red-600 border-red-300 bg-red-50">
-              {t('scheduling.SwapRequestsPanel.rejected')}
+              Rejected
             </Badge>
           )}
         </div>
@@ -132,7 +131,7 @@ function SwapRequestCard({
               onClick={onReject}
             >
               <X className="h-4 w-4 mr-1" />
-              {t('scheduling.SwapRequestsPanel.reject')}
+              Reject
             </Button>
             <Button
               size="sm"
@@ -140,7 +139,7 @@ function SwapRequestCard({
               onClick={onApprove}
             >
               <Check className="h-4 w-4 mr-1" />
-              {t('scheduling.SwapRequestsPanel.approve')}
+              Approve
             </Button>
           </div>
         )}
@@ -150,14 +149,12 @@ function SwapRequestCard({
 }
 
 export function SwapRequestsPanel({
-  
   isOpen,
   onClose,
   requests,
   onApprove,
   onReject,
 }: SwapRequestsPanelProps) {
-  const { t } = useTranslation();
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const processedRequests = requests.filter(r => r.status !== 'pending');
   
@@ -167,10 +164,10 @@ export function SwapRequestsPanel({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5 text-primary" />
-            {t('scheduling.SwapRequestsPanel.shiftSwapRequests')}
+            Shift Swap Requests
           </SheetTitle>
           <SheetDescription>
-            {t('scheduling.SwapRequestsPanel.reviewAndManageShiftSwap')}
+            Review and manage shift swap requests from employees
           </SheetDescription>
         </SheetHeader>
         
@@ -178,8 +175,8 @@ export function SwapRequestsPanel({
           {requests.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <ArrowRightLeft className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">{t("scheduling.noSwapRequests")}</p>
-              <p className="text-xs mt-1">{t("scheduling.swapDescription")}</p>
+              <p className="text-sm">No swap requests yet</p>
+              <p className="text-xs mt-1">Employees can request to swap shifts with colleagues</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -188,7 +185,7 @@ export function SwapRequestsPanel({
                 <div>
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
                     <Badge variant="secondary">{pendingRequests.length}</Badge>
-                    {t('scheduling.SwapRequestsPanel.pendingApproval')}
+                    Pending Approval
                   </h3>
                   <div className="space-y-3">
                     {pendingRequests.map((request) => (
@@ -208,7 +205,7 @@ export function SwapRequestsPanel({
                 <div>
                   {pendingRequests.length > 0 && <Separator className="my-4" />}
                   <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-                    {t('scheduling.SwapRequestsPanel.recentActivity')}
+                    Recent Activity
                   </h3>
                   <div className="space-y-3">
                     {processedRequests.map((request) => (

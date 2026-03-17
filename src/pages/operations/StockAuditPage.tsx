@@ -14,7 +14,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useApp } from '@/contexts/AppContext';
 import { Search, AlertTriangle, TrendingDown, Package, ClipboardCheck, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 function useLocations() {
     const { group } = useApp();
@@ -56,7 +55,6 @@ function useInventoryItemsForAudit(locationId: string | null) {
 }
 
 export default function StockAuditPage() {
-  const { t } = useTranslation();
     const { toast } = useToast();
     const { data: locations } = useLocations();
     const [locationId, setLocationId] = useState('');
@@ -102,12 +100,12 @@ export default function StockAuditPage() {
                 stock_actual: parseFloat(countActual) || 0,
                 unit_cost: selectedCountItem.last_cost,
             });
-            toast({ title: `✅ ${t('stockAudit.countRegistered')}` });
+            toast({ title: '✅ Conteo registrado' });
             setShowCountDialog(false);
             setCountItemId('');
             setCountActual('');
         } catch (err: any) {
-            toast({ variant: 'destructive', title: t("common.error"), description: err.message });
+            toast({ variant: 'destructive', title: 'Error', description: err.message });
         }
     };
 
@@ -118,15 +116,15 @@ export default function StockAuditPage() {
                 <div>
                     <h1 className="text-2xl font-display font-bold flex items-center gap-2">
                         <ClipboardCheck className="h-6 w-6 text-primary" />
-                        {t('stockAudit.title')}
+                        Auditoría de Stock
                     </h1>
-                    <p className="text-muted-foreground">{t('stockAudit.subtitle')}</p>
+                    <p className="text-muted-foreground">Dashboard de varianza y dead stock</p>
                 </div>
                 <div className="flex gap-2">
                     {(locations?.length ?? 0) > 1 && (
                         <Select value={locationId} onValueChange={setLocationId}>
                             <SelectTrigger className="w-48">
-                                <SelectValue placeholder={t('common.location')} />
+                                <SelectValue placeholder="Ubicación" />
                             </SelectTrigger>
                             <SelectContent>
                                 {(locations ?? []).map(l => (
@@ -136,7 +134,7 @@ export default function StockAuditPage() {
                         </Select>
                     )}
                     <Button onClick={() => setShowCountDialog(true)} disabled={!locationId}>
-                        <Plus className="h-4 w-4 mr-2" /> {t('stockAudit.newCount')}
+                        <Plus className="h-4 w-4 mr-2" /> Nuevo Conteo
                     </Button>
                 </div>
             </div>
@@ -150,7 +148,7 @@ export default function StockAuditPage() {
                                 <TrendingDown className="h-5 w-5 text-red-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">{t('stockAudit.financialLoss')}</p>
+                                <p className="text-sm text-muted-foreground">Pérdida Financiera</p>
                                 <p className="text-2xl font-bold font-mono text-red-500">
                                     €{totalFinancialLoss.toFixed(2)}
                                 </p>
@@ -166,7 +164,7 @@ export default function StockAuditPage() {
                                 <AlertTriangle className="h-5 w-5 text-amber-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">{t('common.itemsCriticosGt5Varianza')}</p>
+                                <p className="text-sm text-muted-foreground">Ítems Críticos (&gt;5% varianza)</p>
                                 <p className="text-2xl font-bold">{criticalItems.length}</p>
                             </div>
                         </div>
@@ -180,7 +178,7 @@ export default function StockAuditPage() {
                                 <Package className="h-5 w-5 text-gray-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">{t('stockAudit.deadStock30')}</p>
+                                <p className="text-sm text-muted-foreground">Dead Stock (30 días)</p>
                                 <p className="text-2xl font-bold font-mono">€{totalDeadStockValue.toFixed(2)}</p>
                                 <p className="text-xs text-muted-foreground">{deadStock.length} ítems</p>
                             </div>
@@ -194,13 +192,13 @@ export default function StockAuditPage() {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="text-base">{t('stockAudit.inventoryVariance')}</CardTitle>
-                            <CardDescription>{t('common.stockTeoricoVsRealRojo')}</CardDescription>
+                            <CardTitle className="text-base">Varianza de Inventario</CardTitle>
+                            <CardDescription>Stock teórico vs real — rojo = varianza negativa &gt;5%</CardDescription>
                         </div>
                         <div className="relative w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder={t('common.searchProduct')}
+                                placeholder="Buscar producto..."
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 className="pl-9"
@@ -212,26 +210,26 @@ export default function StockAuditPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>{t('common.product')}</TableHead>
-                                <TableHead>{t('common.category')}</TableHead>
-                                <TableHead className="text-right">{t('stockAudit.theoretical')}</TableHead>
-                                <TableHead className="text-right">{t('stockAudit.actual')}</TableHead>
-                                <TableHead className="text-right">{t('stockAudit.variance')}</TableHead>
-                                <TableHead className="text-right">{t('stockAudit.variancePct')}</TableHead>
-                                <TableHead className="text-right">{t('stockAudit.lossEuro')}</TableHead>
+                                <TableHead>Producto</TableHead>
+                                <TableHead>Categoría</TableHead>
+                                <TableHead className="text-right">Teórico</TableHead>
+                                <TableHead className="text-right">Real</TableHead>
+                                <TableHead className="text-right">Varianza</TableHead>
+                                <TableHead className="text-right">Varianza %</TableHead>
+                                <TableHead className="text-right">Pérdida €</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                        {t('common.loading')}
+                                        Cargando...
                                     </TableCell>
                                 </TableRow>
-                            {t('operations.StockAuditPage.filteredvariancelength0')}
+                            ) : filteredVariance.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                        {t('stockAudit.noVarianceData')}
+                                        No hay datos de varianza. Registra conteos físicos para ver resultados.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -241,7 +239,7 @@ export default function StockAuditPage() {
                                         <TableRow key={`${v.item_id}-${v.count_date}`} className={cn(isCritical && "bg-red-50 dark:bg-red-950/20")}>
                                             <TableCell className="font-medium">
                                                 {v.item_name}
-                                                {isCritical && <Badge variant="destructive" className="ml-2 text-xs">{t('stockAudit.critical')}</Badge>}
+                                                {isCritical && <Badge variant="destructive" className="ml-2 text-xs">CRÍTICO</Badge>}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">{v.category}</TableCell>
                                             <TableCell className="text-right font-mono">{v.stock_expected.toFixed(2)}</TableCell>
@@ -269,18 +267,18 @@ export default function StockAuditPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-base flex items-center gap-2">
-                            <Package className="h-4 w-4" /> {t('stockAudit.deadStockTitle')}
+                            <Package className="h-4 w-4" /> Dead Stock — Sin rotación 30+ días
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>{t('common.product')}</TableHead>
-                                    <TableHead>{t('common.category')}</TableHead>
-                                    <TableHead className="text-right">{t('stockAudit.inStock')}</TableHead>
-                                    <TableHead className="text-right">{t('common.value')}</TableHead>
-                                    <TableHead className="text-right">{t('stockAudit.daysIdle')}</TableHead>
+                                    <TableHead>Producto</TableHead>
+                                    <TableHead>Categoría</TableHead>
+                                    <TableHead className="text-right">En stock</TableHead>
+                                    <TableHead className="text-right">Valor</TableHead>
+                                    <TableHead className="text-right">Días inactivo</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -292,7 +290,7 @@ export default function StockAuditPage() {
                                         <TableCell className="text-right font-mono font-medium">€{d.stock_value.toFixed(2)}</TableCell>
                                         <TableCell className="text-right">
                                             <Badge variant={d.days_idle > 60 ? "destructive" : "outline"}>
-                                                {d.days_idle} {t('common.days')}
+                                                {d.days_idle} días
                                             </Badge>
                                         </TableCell>
                                     </TableRow>
@@ -307,17 +305,17 @@ export default function StockAuditPage() {
             <Dialog open={showCountDialog} onOpenChange={setShowCountDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('stockAudit.registerPhysicalCount')}</DialogTitle>
+                        <DialogTitle>Registrar Conteo Físico</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
-                            <Label>{t('common.product')}</Label>
+                            <Label>Producto</Label>
                             <Select value={countItemId} onValueChange={setCountItemId}>
-                                <SelectTrigger><SelectValue placeholder={t('common.selectProduct')} /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
                                 <SelectContent>
                                     {(auditItems ?? []).map(item => (
                                         <SelectItem key={item.id} value={item.id}>
-                                            {item.name} — {t('stockAudit.currentStock')}: {item.on_hand} {item.base_unit}
+                                            {item.name} — Stock actual: {item.on_hand} {item.base_unit}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -327,16 +325,16 @@ export default function StockAuditPage() {
                             <>
                                 <div className="bg-muted/50 rounded-lg p-3 text-sm">
                                     <div className="flex justify-between">
-                                        <span>{t('stockAudit.theoreticalStock')}</span>
+                                        <span>Stock teórico (sistema)</span>
                                         <span className="font-mono font-bold">{selectedCountItem.on_hand} {selectedCountItem.base_unit}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>{t('stockAudit.actualStock')}</Label>
+                                    <Label>Stock real (contado)</Label>
                                     <Input
                                         type="number"
                                         step="0.01"
-                                        placeholder={t('stockAudit.actualQty')}
+                                        placeholder="Cantidad real..."
                                         value={countActual}
                                         onChange={e => setCountActual(e.target.value)}
                                         className="h-12 text-lg font-mono"
@@ -346,7 +344,7 @@ export default function StockAuditPage() {
                                 {countActual && (
                                     <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
                                         <div className="flex justify-between">
-                                            <span>{t('stockAudit.variance')}</span>
+                                            <span>Varianza</span>
                                             <span className={cn(
                                                 "font-mono font-bold",
                                                 (parseFloat(countActual) - selectedCountItem.on_hand) < 0 ? "text-red-600" : "text-emerald-600"
@@ -356,7 +354,7 @@ export default function StockAuditPage() {
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span>{t('stockAudit.economicImpact')}</span>
+                                            <span>Impacto económico</span>
                                             <span className="font-mono">
                                                 €{(Math.abs(parseFloat(countActual) - selectedCountItem.on_hand) * selectedCountItem.last_cost).toFixed(2)}
                                             </span>
@@ -367,9 +365,9 @@ export default function StockAuditPage() {
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowCountDialog(false)}>{t("common.cancel")}</Button>
+                        <Button variant="outline" onClick={() => setShowCountDialog(false)}>Cancelar</Button>
                         <Button onClick={handleSubmitCount} disabled={submitCount.isPending || !countItemId || !countActual}>
-                            {submitCount.isPending ? t('common.saving') : t('stockAudit.registerCount')}
+                            {submitCount.isPending ? 'Guardando...' : 'Registrar Conteo'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

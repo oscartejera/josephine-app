@@ -13,12 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { format } from 'date-fns';
 import { useProcurementData } from '@/hooks/useProcurementData';
 import { supabase } from '@/integrations/supabase/client';
-import { useTranslation } from 'react-i18next';
 
 type PaymentState = 'idle' | 'processing' | 'success' | 'error';
 
 export default function ProcurementCart() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     orderSummary,
@@ -32,7 +30,10 @@ export default function ProcurementCart() {
     allSkus,
   } = useProcurementData();
 
-  const [paymentState, setPaymentState] = useState<PaymentState>{t('procurementCart.idleConstOrderidSetorderidUsestate')}<string | null>{t('procurementCart.nullConstCommentsSetcommentsUsestate')}<string>('');
+  const [paymentState, setPaymentState] = useState<PaymentState>('idle');
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [comments, setComments] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [savedToDb, setSavedToDb] = useState(false);
 
   const cartItems = orderSummary.items;
@@ -187,7 +188,7 @@ export default function ProcurementCart() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">{t('procurementCart.shoppingCart')}</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">Shopping Cart</h1>
             <div className="flex items-center gap-2 mt-1">
               <Truck className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Delivers {deliveryDaysLabel}</span>
@@ -203,7 +204,7 @@ export default function ProcurementCart() {
       <div className="flex items-start gap-3 p-4 bg-info/10 rounded-xl border border-info/20">
         <Calendar className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
         <p className="text-sm text-foreground">
-          {t('procurementCart.earliestDeliveryOn')} <span className="font-semibold text-info">{cutoffInfo.deliveryDateStr}</span> if ordered before{' '}
+          Earliest delivery on <span className="font-semibold text-info">{cutoffInfo.deliveryDateStr}</span> if ordered before{' '}
           <span className="font-semibold">{cutoffInfo.cutoffTimeStr}</span> on {cutoffInfo.cutoffDay}.
         </p>
       </div>
@@ -212,9 +213,9 @@ export default function ProcurementCart() {
         <Card>
           <CardContent className="py-16 text-center">
             <Package className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" />
-            <p className="text-lg text-muted-foreground mb-4">{t("procurement.cartEmpty")}</p>
+            <p className="text-lg text-muted-foreground mb-4">Your cart is empty</p>
             <Button onClick={() => navigate('/procurement')}>
-              {t('procurementCart.continueShopping')}
+              Continue Shopping
             </Button>
           </CardContent>
         </Card>
@@ -231,7 +232,7 @@ export default function ProcurementCart() {
                       <Calendar className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">{t('procurementCart.deliveryDate')}</p>
+                      <p className="text-sm text-muted-foreground">Delivery Date</p>
                       <p className="text-lg font-semibold text-foreground">{format(deliveryDate, 'EEEE, d MMMM yyyy')}</p>
                     </div>
                   </div>
@@ -249,12 +250,12 @@ export default function ProcurementCart() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="comments" className="text-sm font-medium">{t('procurementCart.orderComments')}</Label>
+                    <Label htmlFor="comments" className="text-sm font-medium">Order Comments</Label>
                     <span className="text-xs text-muted-foreground ml-auto">{comments.length}/300</span>
                   </div>
                   <Textarea
                     id="comments"
-                    placeholder={t('procurement.specialInstructions')}
+                    placeholder="Add any special instructions for this order..."
                     value={comments}
                     onChange={(e) => setComments(e.target.value.slice(0, 300))}
                     className="min-h-[80px] resize-none"
@@ -272,7 +273,7 @@ export default function ProcurementCart() {
                   {cartItems.some(({ sku }) => sku.isRealData) && (
                     <Badge variant="outline" className="ml-2 text-xs gap-1 text-success border-success/30">
                       <Database className="h-3 w-3" />
-                      {t('procurementCart.linkedToInventory')}
+                      Linked to inventory
                     </Badge>
                   )}
                 </CardTitle>
@@ -281,11 +282,11 @@ export default function ProcurementCart() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      <TableHead className="font-semibold">{t('procurementCart.item')}</TableHead>
-                      <TableHead className="font-semibold">{t('procurementCart.packSize')}</TableHead>
-                      <TableHead className="text-center font-semibold">{t('procurementCart.quantity')}</TableHead>
-                      <TableHead className="text-right font-semibold">{t('procurementCart.unitPrice')}</TableHead>
-                      <TableHead className="text-right font-semibold">{t("procurement.subtotal")}</TableHead>
+                      <TableHead className="font-semibold">Item</TableHead>
+                      <TableHead className="font-semibold">Pack Size</TableHead>
+                      <TableHead className="text-center font-semibold">Quantity</TableHead>
+                      <TableHead className="text-right font-semibold">Unit Price</TableHead>
+                      <TableHead className="text-right font-semibold">Subtotal</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -352,7 +353,7 @@ export default function ProcurementCart() {
           <div className="space-y-4">
             <Card className="sticky top-6">
               <CardHeader className="border-b border-border bg-muted/30">
-                <CardTitle className="text-lg">{t('procurementCart.orderSummary')}</CardTitle>
+                <CardTitle className="text-lg">Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-5">
                 {/* Supplier info */}
@@ -371,7 +372,7 @@ export default function ProcurementCart() {
                 {/* Min order progress */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('procurementCart.minOrderValue')}</span>
+                    <span className="text-muted-foreground">Min. order value</span>
                     <span className="font-medium">€{orderSummary.minOrder.toFixed(0)}</span>
                   </div>
                   <Progress value={orderSummary.minOrderProgress} className="h-2.5" />
@@ -384,7 +385,7 @@ export default function ProcurementCart() {
                   {meetsMinOrder && (
                     <p className="text-xs text-success flex items-center gap-1">
                       <CheckCircle className="h-3 w-3" />
-                      {t('procurementCart.minimumOrderMet')}
+                      Minimum order met
                     </p>
                   )}
                 </div>
@@ -394,22 +395,22 @@ export default function ProcurementCart() {
                 {/* Totals */}
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("procurement.subtotalItems", { count: cartItems.length })}</span>
+                    <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
                     <span className="font-medium">€{orderSummary.subtotal.toFixed(2)}</span>
                   </div>
                   {orderSummary.deliveryFee > 0 ? (
                     <div className="flex justify-between text-sm text-warning">
-                      <span>{t('procurementCart.deliveryFee')}</span>
+                      <span>Delivery Fee</span>
                       <span>€{orderSummary.deliveryFee.toFixed(2)}</span>
                     </div>
                   ) : (
                     <div className="flex justify-between text-sm text-success">
-                      <span>{t('procurementCart.delivery')}</span>
-                      <span className="font-medium">{t('procurementCart.free')}</span>
+                      <span>Delivery</span>
+                      <span className="font-medium">FREE</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("procurement.totalVat")}</span>
+                    <span className="text-muted-foreground">Total VAT (21%)</span>
                     <span>€{orderSummary.tax.toFixed(2)}</span>
                   </div>
                 </div>
@@ -418,7 +419,7 @@ export default function ProcurementCart() {
 
                 {/* Grand Total */}
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">{t("common.total")}</span>
+                  <span className="text-lg font-semibold">Total</span>
                   <span className="text-2xl font-bold">€{orderSummary.total.toFixed(2)}</span>
                 </div>
 
@@ -429,7 +430,7 @@ export default function ProcurementCart() {
                     className="w-full"
                     onClick={() => {/* Save for later */ }}
                   >
-                    {t('procurementCart.saveForLater')}
+                    Save for later
                   </Button>
                   <Button
                     className="w-full h-12 text-base font-semibold"
@@ -438,12 +439,12 @@ export default function ProcurementCart() {
                     disabled={!meetsMinOrder}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
-                    {t('procurementCart.placeOrder')}
+                    Place Order
                   </Button>
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  {t('procurementCart.paymentWillBeChargedTo')}
+                  Payment will be charged to your saved payment method
                 </p>
               </CardContent>
             </Card>
@@ -458,7 +459,7 @@ export default function ProcurementCart() {
             <div className="py-8 text-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
               <DialogHeader>
-                <DialogTitle>{t('procurementCart.processingOrder')}</DialogTitle>
+                <DialogTitle>Processing Order...</DialogTitle>
                 <DialogDescription>
                   Please wait while we submit your order to {orderSummary.supplierName}.
                 </DialogDescription>
@@ -472,7 +473,7 @@ export default function ProcurementCart() {
                 <CheckCircle className="h-8 w-8 text-success" />
               </div>
               <DialogHeader>
-                <DialogTitle>{t('procurementCart.orderPlacedSuccessfully')}</DialogTitle>
+                <DialogTitle>Order Placed Successfully!</DialogTitle>
                 <DialogDescription className="space-y-2">
                   <p>Your order has been submitted to {orderSummary.supplierName}.</p>
                   <p className="font-medium text-foreground">Order ID: {orderId}</p>
@@ -480,13 +481,13 @@ export default function ProcurementCart() {
                   {savedToDb && (
                     <Badge variant="outline" className="mt-2 gap-1 text-success border-success/30">
                       <Database className="h-3 w-3" />
-                      {t('procurementCart.savedToDatabase')}
+                      Saved to database
                     </Badge>
                   )}
                 </DialogDescription>
               </DialogHeader>
               <Button onClick={handleCloseDialog} className="mt-4">
-                {t('procurementCart.viewOrders')}
+                View Orders
               </Button>
             </div>
           )}
@@ -497,17 +498,17 @@ export default function ProcurementCart() {
                 <AlertCircle className="h-8 w-8 text-destructive" />
               </div>
               <DialogHeader>
-                <DialogTitle>{t('procurementCart.orderFailed')}</DialogTitle>
+                <DialogTitle>Order Failed</DialogTitle>
                 <DialogDescription>
                   {errorMessage || 'There was an issue processing your order. Please check your supplier connection in Settings.'}
                 </DialogDescription>
               </DialogHeader>
               <div className="flex gap-2 justify-center mt-4">
                 <Button variant="outline" onClick={() => setPaymentState('idle')}>
-                  {t('procurementCart.tryAgain')}
+                  Try Again
                 </Button>
                 <Button onClick={() => navigate('/settings')}>
-                  {t('procurementCart.checkSettings')}
+                  Check Settings
                 </Button>
               </div>
             </div>

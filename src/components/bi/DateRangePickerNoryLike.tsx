@@ -25,7 +25,6 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from 'react-i18next';
 
 export type DateMode = 'daily' | 'weekly' | 'monthly';
 export type ChartGranularity = 'hourly' | 'daily';
@@ -51,7 +50,6 @@ const MODE_BUTTONS: { key: DateMode; label: string }[] = [
 ];
 
 export function DateRangePickerNoryLike({
-  
   value,
   onChange,
   mode,
@@ -59,7 +57,6 @@ export function DateRangePickerNoryLike({
   isLoading = false,
   className
 }: DateRangePickerNoryLikeProps) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [tempRange, setTempRange] = useState<{ from?: Date; to?: Date }>({
     from: value.from,
@@ -190,7 +187,7 @@ export function DateRangePickerNoryLike({
           size="icon"
           className="h-8 w-8 rounded-lg hover:bg-muted/80"
           onClick={navigatePrevious}
-          aria-label={t('bi.DateRangePickerNoryLike.previousPeriod')}
+          aria-label="Previous period"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -254,7 +251,7 @@ export function DateRangePickerNoryLike({
           size="icon"
           className="h-8 w-8 rounded-lg hover:bg-muted/80"
           onClick={navigateNext}
-          aria-label={t('bi.DateRangePickerNoryLike.nextPeriod')}
+          aria-label="Next period"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

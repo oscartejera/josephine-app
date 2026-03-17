@@ -136,9 +136,9 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="share">{t('dashboard.ventas')}</SelectItem>
-                <SelectItem value="gp_eur">{t('dashboard.TopProductsCard.gp')}</SelectItem>
-                <SelectItem value="gp_pct">{t('dashboard.TopProductsCard.gp1')}</SelectItem>
+                <SelectItem value="share">% Ventas</SelectItem>
+                <SelectItem value="gp_eur">GP €</SelectItem>
+                <SelectItem value="gp_pct">GP %</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -152,7 +152,7 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
-        {t('dashboard.TopProductsCard.showemptystate')}
+        ) : showEmptyState ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">{t('sales.noProductData')}</h3>
@@ -170,9 +170,9 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
                   <TableHead className="text-right">{t('common.quantity')}</TableHead>
                   <TableHead className="text-right">{t('sales.title')}</TableHead>
                   <TableHead className="text-right">% {t('sales.title')}</TableHead>
-                  <TableHead className="text-right">{t('dashboard.TopProductsCard.cogs')}</TableHead>
-                  <TableHead className="text-right">{t('dashboard.TopProductsCard.gp')}</TableHead>
-                  <TableHead className="text-right">{t('dashboard.TopProductsCard.gp2')}</TableHead>
+                  <TableHead className="text-right">COGS</TableHead>
+                  <TableHead className="text-right">GP</TableHead>
+                  <TableHead className="text-right">GP%</TableHead>
                   <TableHead className="w-32"></TableHead>
                 </TableRow>
               </TableHeader>

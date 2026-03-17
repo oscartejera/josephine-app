@@ -143,7 +143,7 @@ export default function Dashboard() {
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
-          <p className="text-muted-foreground">{t("dashboard.todayOperationsSummary")}</p>
+          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -167,17 +167,17 @@ export default function Dashboard() {
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
-          <p className="text-muted-foreground">{t("dashboard.todayOperationsSummary")}</p>
+          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
         </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <MapPin className="h-10 w-10 text-muted-foreground mb-3" />
-            <p className="text-lg font-medium">{t("dashboard.noLocations")}</p>
+            <p className="text-lg font-medium">No hay locales configurados</p>
             <p className="text-sm text-muted-foreground mt-1">
-              {t('dashboard.creaTuPrimerLocalPara')}
+              Crea tu primer local para empezar a ver datos en el dashboard.
             </p>
             <Button className="mt-4" onClick={() => window.location.href = '/settings'}>
-              {t('dashboard.configurarLocal')}
+              Configurar local
             </Button>
           </CardContent>
         </Card>
@@ -191,7 +191,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
           <p className="text-muted-foreground flex items-center gap-2">
-            {t('dashboard.panelEjecutivoJosephineIntelligence')}
+            Panel ejecutivo — Josephine Intelligence
             <ForecastConfidenceBadge compact />
           </p>
         </div>
@@ -208,11 +208,11 @@ export default function Dashboard() {
             <CardContent className="flex items-center gap-3 py-3">
               <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">{t('dashboard.kpisTemporalmenteNoDisponibles')}</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">{kpiError instanceof Error ? kpiError.message : t('dashboard.errorAlCargarIndicadores')}</p>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">KPIs temporalmente no disponibles</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400">{kpiError instanceof Error ? kpiError.message : 'Error al cargar indicadores'}</p>
               </div>
               <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetch()}>
-                {t('dashboard.reintentar')}
+                Reintentar
               </Button>
             </CardContent>
           </Card>
@@ -231,7 +231,7 @@ export default function Dashboard() {
             />,
             <MetricCard
               key="gp"
-              title={t('dashboard.gp')}
+              title="GP%"
               value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
               icon={Percent}
               variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
@@ -246,14 +246,14 @@ export default function Dashboard() {
             />,
             <MetricCard
               key="labor"
-              title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason={t("dashboard.labourPartiallyEstimated")} />}</span>}
+              title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
               value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
               icon={Users}
               trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
             />,
             <MetricCard
               key="col"
-              title={t('dashboard.col')}
+              title="COL%"
               value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
               icon={TrendingUp}
               variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
@@ -314,7 +314,7 @@ export default function Dashboard() {
         <button
           onClick={() => setChatOpen(true)}
           className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
-          title={t('dashboard.josephineAi')}
+          title="Josephine AI"
         >
           <Bot className="h-6 w-6" />
         </button>

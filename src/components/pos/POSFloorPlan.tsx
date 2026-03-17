@@ -6,7 +6,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { FloorMap, POSTable, POSProduct, POSTicket } from '@/hooks/usePOSData';
-import { useTranslation } from 'react-i18next';
 
 interface POSFloorPlanProps {
   locationId: string;
@@ -18,7 +17,6 @@ interface POSFloorPlanProps {
 }
 
 export function POSFloorPlan({
-  
   locationId,
   floorMaps,
   tables,
@@ -26,7 +24,6 @@ export function POSFloorPlan({
   openTickets,
   onRefresh,
 }: POSFloorPlanProps) {
-  const { t } = useTranslation();
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [activeFloor, setActiveFloor] = useState(floorMaps[0]?.id);
 
@@ -97,15 +94,15 @@ export function POSFloorPlan({
       <div className="flex items-center justify-center gap-6 p-3 border-t bg-card text-sm">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-emerald-500"></div>
-          <span>{t('pos.POSFloorPlan.libre')}</span>
+          <span>Libre</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-amber-500"></div>
-          <span>{t('pos.POSFloorPlan.ocupada')}</span>
+          <span>Ocupada</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-purple-500"></div>
-          <span>{t('pos.POSFloorPlan.reservada')}</span>
+          <span>Reservada</span>
         </div>
       </div>
     </div>

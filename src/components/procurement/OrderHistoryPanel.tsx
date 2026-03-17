@@ -9,7 +9,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Package, Truck, CheckCircle2, Clock, AlertCircle, RotateCcw, Eye, ChevronDown, ChevronUp, PackageCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useTranslation } from 'react-i18next';
 
 export interface OrderHistoryItem {
   id: string;
@@ -49,8 +48,10 @@ interface OrderHistoryPanelProps {
 }
 
 export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
-  const { t } = useTranslation();
-  const [orders, setOrders] = useState<OrderHistoryItem[]>{t('procurement.OrderHistoryPanel.constIsloadingSetisloadingUsestatetrueCo')}<OrderHistoryItem | null>{t('procurement.OrderHistoryPanel.nullConstExpandedorderidSetexpandedorder')}<string | null>(null);
+  const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -116,7 +117,15 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
   const getStatusBadge = (status: OrderHistoryItem['status']) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> {t('procurement.OrderHistoryPanel.pending')}</Badge>{t('procurement.OrderHistoryPanel.caseConfirmedReturn')} <Badge variant="outline" className="gap-1 border-blue-500 text-blue-600"><CheckCircle2 className="h-3 w-3" /> {t('procurement.OrderHistoryPanel.confirmed')}</Badge>{t('procurement.OrderHistoryPanel.caseShippedReturn')} <Badge variant="outline" className="gap-1 border-orange-500 text-orange-600"><Truck className="h-3 w-3" /> {t('procurement.OrderHistoryPanel.shipped')}</Badge>{t('procurement.OrderHistoryPanel.caseDeliveredReturn')} <Badge className="gap-1 bg-emerald-500"><CheckCircle2 className="h-3 w-3" /> {t('procurement.OrderHistoryPanel.delivered')}</Badge>{t('procurement.OrderHistoryPanel.caseCancelledReturn')} <Badge variant="destructive" className="gap-1"><AlertCircle className="h-3 w-3" /> {t('procurement.OrderHistoryPanel.cancelled')}</Badge>;
+        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Pending</Badge>;
+      case 'confirmed':
+        return <Badge variant="outline" className="gap-1 border-blue-500 text-blue-600"><CheckCircle2 className="h-3 w-3" /> Confirmed</Badge>;
+      case 'shipped':
+        return <Badge variant="outline" className="gap-1 border-orange-500 text-orange-600"><Truck className="h-3 w-3" /> Shipped</Badge>;
+      case 'delivered':
+        return <Badge className="gap-1 bg-emerald-500"><CheckCircle2 className="h-3 w-3" /> Delivered</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive" className="gap-1"><AlertCircle className="h-3 w-3" /> Cancelled</Badge>;
     }
   };
 
@@ -124,12 +133,12 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
     if (onReorder) {
       onReorder(order.items.map(item => ({ skuId: item.skuId, packs: item.packs })));
       toast({
-        title: t('procurement.itemsAddedToCart'),
+        title: 'Items added to cart',
         description: `${order.items.length} items from ${order.orderNumber} added to your cart`,
       });
     } else {
       toast({
-        title: t('procurement.reorder'),
+        title: 'Reorder',
         description: `Reordering ${order.items.length} items from ${order.orderNumber}`,
       });
     }
@@ -154,13 +163,13 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
       }
 
       toast({
-        title: t('procurement.deliveryReceived'),
+        title: 'Entrega recibida',
         description: `${order.orderNumber}: ${order.items.length} items actualizados en inventario`,
       });
     } catch (err: any) {
       console.error('Error marking received:', err);
       toast({
-        title: t("common.error"),
+        title: 'Error',
         description: err.message || 'No se pudo marcar como recibido',
         variant: 'destructive',
       });
@@ -176,7 +185,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
               <Package className="h-5 w-5" />
               Order History
             </CardTitle>
-            <CardDescription>{t("procurement.viewPastOrders")}</CardDescription>
+            <CardDescription>View past orders and quickly reorder</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -184,13 +193,13 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
             <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-sm">{t('procurement.OrderHistoryPanel.loadingOrders')}</p>
+            <p className="text-sm">Loading orders...</p>
           </div>
-        {t('procurement.OrderHistoryPanel.orderslength0')}
+        ) : orders.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Package className="h-12 w-12 mx-auto mb-4 opacity-40" />
-            <p className="font-medium">{t('procurement.OrderHistoryPanel.noOrdersYet')}</p>
-            <p className="text-sm mt-1">{t('procurement.OrderHistoryPanel.yourOrderHistoryWillAppear')}</p>
+            <p className="font-medium">No orders yet</p>
+            <p className="text-sm mt-1">Your order history will appear here</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -234,7 +243,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                         }}
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        {t('procurement.OrderHistoryPanel.view')}
+                        View
                       </Button>
                       <Button
                         variant="default"
@@ -245,7 +254,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                         }}
                       >
                         <RotateCcw className="h-4 w-4 mr-1" />
-                        {t('procurement.OrderHistoryPanel.reorder')}
+                        Reorder
                       </Button>
                       {order.status !== 'delivered' && order.status !== 'cancelled' && (
                         <Button
@@ -258,7 +267,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                           }}
                         >
                           <PackageCheck className="h-4 w-4 mr-1" />
-                          {t('procurement.OrderHistoryPanel.received')}
+                          Received
                         </Button>
                       )}
                       {expandedOrderId === order.id ? (
@@ -276,11 +285,11 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>{t('procurement.OrderHistoryPanel.item')}</TableHead>
-                          <TableHead>{t('procurement.OrderHistoryPanel.packSize')}</TableHead>
-                          <TableHead className="text-right">{t('procurement.OrderHistoryPanel.qty')}</TableHead>
-                          <TableHead className="text-right">{t('procurement.OrderHistoryPanel.unitPrice')}</TableHead>
-                          <TableHead className="text-right">{t("common.total")}</TableHead>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Pack Size</TableHead>
+                          <TableHead className="text-right">Qty</TableHead>
+                          <TableHead className="text-right">Unit Price</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -298,19 +307,19 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                     <div className="mt-4 pt-4 border-t flex justify-end">
                       <div className="text-right space-y-1 text-sm">
                         <div className="flex justify-between gap-8">
-                          <span className="text-muted-foreground">{t('procurement.OrderHistoryPanel.subtotal')}</span>
+                          <span className="text-muted-foreground">Subtotal</span>
                           <span>€{order.subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between gap-8">
-                          <span className="text-muted-foreground">{t('procurement.OrderHistoryPanel.delivery')}</span>
+                          <span className="text-muted-foreground">Delivery</span>
                           <span>{order.deliveryFee === 0 ? 'Free' : `€${order.deliveryFee.toFixed(2)}`}</span>
                         </div>
                         <div className="flex justify-between gap-8">
-                          <span className="text-muted-foreground">{t('procurement.OrderHistoryPanel.vat21')}</span>
+                          <span className="text-muted-foreground">VAT (21%)</span>
                           <span>€{order.tax.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between gap-8 font-semibold pt-2 border-t">
-                          <span>{t("common.total")}</span>
+                          <span>Total</span>
                           <span>€{order.total.toFixed(2)}</span>
                         </div>
                       </div>
@@ -343,7 +352,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('procurement.OrderHistoryPanel.orderDate')}</p>
+                    <p className="text-sm text-muted-foreground">Order Date</p>
                     <p className="font-medium">{format(selectedOrder.orderDate, 'MMM d, yyyy HH:mm')}</p>
                   </div>
                   <div>
@@ -358,11 +367,11 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t('procurement.OrderHistoryPanel.item1')}</TableHead>
-                        <TableHead>{t('procurement.OrderHistoryPanel.packSize1')}</TableHead>
-                        <TableHead className="text-right">{t('procurement.OrderHistoryPanel.qty1')}</TableHead>
-                        <TableHead className="text-right">{t('procurement.OrderHistoryPanel.price')}</TableHead>
-                        <TableHead className="text-right">{t("common.total")}</TableHead>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Pack Size</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -381,19 +390,19 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
 
                 <div className="border-t pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('procurement.OrderHistoryPanel.subtotal1')}</span>
+                    <span className="text-muted-foreground">Subtotal</span>
                     <span>€{selectedOrder.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('procurement.OrderHistoryPanel.deliveryFee')}</span>
+                    <span className="text-muted-foreground">Delivery Fee</span>
                     <span>{selectedOrder.deliveryFee === 0 ? 'Free' : `€${selectedOrder.deliveryFee.toFixed(2)}`}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('procurement.OrderHistoryPanel.vat211')}</span>
+                    <span className="text-muted-foreground">VAT (21%)</span>
                     <span>€{selectedOrder.tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-base pt-2 border-t">
-                    <span>{t("common.total")}</span>
+                    <span>Total</span>
                     <span>€{selectedOrder.total.toFixed(2)}</span>
                   </div>
                 </div>
@@ -410,12 +419,12 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
                   onClick={() => handleMarkReceived(selectedOrder)}
                 >
                   <PackageCheck className="h-4 w-4 mr-2" />
-                  {t('procurement.OrderHistoryPanel.markAsReceived')}
+                  Mark as Received
                 </Button>
               )}
               <Button onClick={() => selectedOrder && handleReorder(selectedOrder)}>
                 <RotateCcw className="h-4 w-4 mr-2" />
-                {t('procurement.OrderHistoryPanel.reorderAllItems')}
+                Reorder All Items
               </Button>
             </DialogFooter>
           </DialogContent>

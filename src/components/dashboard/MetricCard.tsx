@@ -2,7 +2,6 @@ import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface MetricCardProps {
   title: string | ReactNode;
@@ -20,7 +19,6 @@ interface MetricCardProps {
 }
 
 export function MetricCard({
-  
   title,
   value,
   subtitle,
@@ -30,7 +28,6 @@ export function MetricCard({
   className,
   children
 }: MetricCardProps) {
-  const { t } = useTranslation();
   const variantStyles = {
     default: 'border-l-primary',
     success: 'border-l-success',

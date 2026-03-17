@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChefHat, Printer, Calendar, Search, ChevronRight, Package, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
 
 interface PrepIngredient {
     name: string;
@@ -27,9 +26,12 @@ interface PrepItem {
 }
 
 export default function PrepListPage() {
-  const { t } = useTranslation();
     const { selectedLocationId, selectedLocation, loading: appLoading } = useApp();
-    const [prepItems, setPrepItems] = useState<PrepItem[]>{t('operations.PrepListPage.constLoadingSetloadingUsestatetrueConst')}<Set<string>>(new Set());
+    const [prepItems, setPrepItems] = useState<PrepItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [searchQuery, setSearchQuery] = useState('');
+    const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         async function fetchPrepList() {
@@ -95,16 +97,16 @@ export default function PrepListPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-display font-bold">{t('prepList.title')}</h1>
+                        <h1 className="text-2xl font-display font-bold">Prep List</h1>
                         <Badge variant="outline" className="gap-1.5">
                             <Calendar className="h-3 w-3" />
                             {format(new Date(selectedDate), "EEEE d 'de' MMMM", { locale: es })}
                         </Badge>
                     </div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <span>{t('nav.operations')}</span>
+                        <span>Operaciones</span>
                         <ChevronRight className="h-3 w-3" />
-                        <span className="text-foreground">{t('prepList.title')}</span>
+                        <span className="text-foreground">Prep List</span>
                     </div>
                 </div>
 
@@ -116,11 +118,11 @@ export default function PrepListPage() {
                         className="w-[160px]"
                     />
                     <Button variant="outline" onClick={() => setSelectedDate(format(addDays(new Date(), 1), 'yyyy-MM-dd'))}>
-                        {t('prepList.tomorrow')}
+                        Mañana
                     </Button>
                     <Button variant="outline" onClick={handlePrint}>
                         <Printer className="h-4 w-4 mr-2" />
-                        {t('common.print')}
+                        Imprimir
                     </Button>
                 </div>
             </div>
@@ -131,7 +133,7 @@ export default function PrepListPage() {
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-muted-foreground">{t('prepList.progress')}</p>
+                                <p className="text-sm text-muted-foreground">Progreso</p>
                                 <p className="text-2xl font-bold">{progress}%</p>
                             </div>
                             <div className="h-12 w-12 rounded-full border-4 border-primary flex items-center justify-center">
@@ -154,7 +156,7 @@ export default function PrepListPage() {
                                 <ChefHat className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">{t('prepList.recipesToPrepare')}</p>
+                                <p className="text-sm text-muted-foreground">Recetas a preparar</p>
                                 <p className="text-2xl font-bold">{prepItems.length}</p>
                             </div>
                         </div>
@@ -173,7 +175,7 @@ export default function PrepListPage() {
                                 )}
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">{t('prepList.lowStock')}</p>
+                                <p className="text-sm text-muted-foreground">Stock bajo</p>
                                 <p className="text-2xl font-bold">{lowStockCount}</p>
                             </div>
                         </div>
@@ -185,7 +187,7 @@ export default function PrepListPage() {
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder={t('prepList.searchRecipe')}
+                    placeholder="Buscar receta o categoría..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -199,13 +201,13 @@ export default function PrepListPage() {
                     <Skeleton className="h-32 w-full rounded-xl" />
                     <Skeleton className="h-32 w-full rounded-xl" />
                 </div>
-            {t('operations.PrepListPage.filtereditemslength0')}
+            ) : filteredItems.length === 0 ? (
                 <Card>
                     <CardContent className="py-12 text-center">
                         <ChefHat className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />
-                        <p className="font-medium text-muted-foreground">{t('prepList.noItems')}</p>
+                        <p className="font-medium text-muted-foreground">No hay ítems de prep</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                            {t('prepList.addRecipesHint')}
+                            Añade recetas en Escandallos y las verás aquí con cantidades basadas en el forecast
                         </p>
                     </CardContent>
                 </Card>
@@ -218,7 +220,7 @@ export default function PrepListPage() {
                                 {category}
                             </CardTitle>
                             <CardDescription>
-                                {filteredItems.filter(i => i.category === category).length} {t('prepList.recipes')}
+                                {filteredItems.filter(i => i.category === category).length} recetas
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -258,7 +260,7 @@ export default function PrepListPage() {
                                                         {hasLowStock && (
                                                             <Badge variant="outline" className="text-xs text-warning border-warning/30">
                                                                 <AlertTriangle className="h-3 w-3 mr-1" />
-                                                                {t('prepList.lowStock')}
+                                                                Stock bajo
                                                             </Badge>
                                                         )}
                                                     </div>

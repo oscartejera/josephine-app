@@ -10,7 +10,6 @@
 
 import { z } from 'zod';
 
-import { useTranslation } from 'react-i18next';
 // ─── Helper: coerce numeric (Postgres returns strings for numeric types) ────
 const num = z.coerce.number().default(0);
 const numNullable = z.coerce.number().nullable().default(null);
@@ -176,7 +175,11 @@ export const TopProductsSchema = z.object({
         share: num,
     }).passthrough()),
 }).passthrough();
-export type TopProductsRpc = z.infer<typeof TopProductsSchema>{t('data.rpc-contracts.instantPlFlexibleShapeVaries')}<typeof InstantPnlSchema>;
+export type TopProductsRpc = z.infer<typeof TopProductsSchema>;
+
+// Instant P&L — flexible shape (varies by implementation)
+export const InstantPnlSchema = z.record(z.string(), z.unknown());
+export type InstantPnlRpc = z.infer<typeof InstantPnlSchema>;
 
 // Menu Engineering — array of product classifications (canonical Kasavana-Smith)
 export const MenuEngineeringItemSchema = z.object({

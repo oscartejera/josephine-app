@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { useDemoMode } from './DemoModeContext';
 
-import { useTranslation } from 'react-i18next';
 export interface Location {
   id: string;
   name: string;
@@ -44,7 +43,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation();
   const { profile, isOwner, hasGlobalScope, accessibleLocationIds, refreshProfile } = useAuth();
   const { isDemoMode, dataSource: resolvedDataSource } = useDemoMode();
 
@@ -52,14 +50,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const posConnected = resolvedDataSource === 'pos';
   const dataSource: 'pos' | 'demo' = posConnected ? 'pos' : 'demo';
 
-  const [group, setGroup] = useState<Group | null>{t('contexts.AppContext.nullConstLocationsSetlocationsUsestate')}<Location[]>{t('contexts.AppContext.constSelectedlocationidSetselectedlocati')}<string | null>(() => {
+  const [group, setGroup] = useState<Group | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [selectedLocationId, setSelectedLocationIdInternal] = useState<string | null>(() => {
     try {
       return localStorage.getItem('josephine_selected_location') || null;
     } catch {
       return null;
     }
   });
-  const [dateRange, setDateRange] = useState<DateRange>{t('contexts.AppContext.todayConstCustomdaterangeSetcustomdatera')}<{ from: Date; to: Date } | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>('today');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [loading, setLoading] = useState(true);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 

@@ -25,10 +25,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CookiePreferencesDialog } from '@/components/gdpr/CookiePreferencesDialog';
 import { getConsent, type ConsentPreferences } from '@/components/gdpr/CookieConsentBanner';
-import { useTranslation } from 'react-i18next';
 
 export function DataPrivacySection() {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
@@ -67,14 +65,14 @@ export function DataPrivacySection() {
       URL.revokeObjectURL(url);
 
       toast({
-        title: t('settings.dataExported'),
+        title: 'Datos exportados',
         description: 'Tu archivo de datos se ha descargado correctamente.',
       });
     } catch (error) {
       console.error('Export error:', error);
       toast({
-        title: t('settings.exportError'),
-        description: t('settings.exportError'),
+        title: 'Error al exportar',
+        description: 'No se pudieron exportar los datos. Inténtalo de nuevo.',
         variant: 'destructive',
       });
     } finally {
@@ -96,15 +94,15 @@ export function DataPrivacySection() {
       if (error) throw error;
 
       toast({
-        title: t('settings.requestRegistered'),
-        description: t('settings.accountDeleteScheduled'),
+        title: 'Solicitud registrada',
+        description: 'Tu cuenta se eliminará en 30 días. Puedes cancelar desde este panel.',
       });
       setShowDelete(false);
     } catch (error) {
       console.error('Delete request error:', error);
       toast({
-        title: t("common.error"),
-        description: t('settings.requestError'),
+        title: 'Error',
+        description: 'No se pudo procesar la solicitud. Inténtalo de nuevo.',
         variant: 'destructive',
       });
     } finally {
@@ -117,16 +115,16 @@ export function DataPrivacySection() {
   const handleSavePreferences = (prefs: ConsentPreferences) => {
     localStorage.setItem('josephine_consent', JSON.stringify(prefs));
     setShowCookiePrefs(false);
-    toast({ title: t('settings.preferencesUpdated') });
+    toast({ title: 'Preferencias actualizadas' });
   };
 
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('settings.privacidadYDatos')}</CardTitle>
+          <CardTitle className="text-base">Privacidad y Datos</CardTitle>
           <CardDescription>
-            {t('settings.DataPrivacySection.gestionaTusDatosPersonalesSegun')}
+            Gestiona tus datos personales según tus derechos RGPD.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -135,16 +133,16 @@ export function DataPrivacySection() {
             <div className="flex items-center gap-3">
               <Cookie className="h-5 w-5 text-amber-600" />
               <div>
-                <p className="text-sm font-medium">{t("settings.cookiePreferences")}</p>
+                <p className="text-sm font-medium">Preferencias de cookies</p>
                 <p className="text-xs text-gray-500">
                   {currentConsent
-                    ? t('settings.consentStatus', { analytics: currentConsent.analytics ? t('common.yes') : t('common.no'), marketing: currentConsent.marketing ? t('common.yes') : t('common.no') })
-                    : t('settings.sinConfigurar')}
+                    ? `Analíticas: ${currentConsent.analytics ? 'Sí' : 'No'} · Marketing: ${currentConsent.marketing ? 'Sí' : 'No'}`
+                    : 'Sin configurar'}
                 </p>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={() => setShowCookiePrefs(true)}>
-              {t('settings.DataPrivacySection.gestionar')}
+              Gestionar
             </Button>
           </div>
 
@@ -153,9 +151,9 @@ export function DataPrivacySection() {
             <div className="flex items-center gap-3">
               <Download className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm font-medium">{t("settings.exportMyData")}</p>
+                <p className="text-sm font-medium">Exportar mis datos</p>
                 <p className="text-xs text-gray-500">
-                  {t('settings.DataPrivacySection.descargaUnaCopiaDeTodos')}
+                  Descarga una copia de todos tus datos en formato JSON.
                 </p>
               </div>
             </div>
@@ -175,9 +173,9 @@ export function DataPrivacySection() {
             <div className="flex items-center gap-3">
               <Trash2 className="h-5 w-5 text-red-600" />
               <div>
-                <p className="text-sm font-medium text-red-900">{t("settings.deleteMyAccount")}</p>
+                <p className="text-sm font-medium text-red-900">Eliminar mi cuenta</p>
                 <p className="text-xs text-red-600/80">
-                  {t('settings.DataPrivacySection.todosTusDatosSeEliminaran')}
+                  Todos tus datos se eliminarán tras 30 días de gracia.
                 </p>
               </div>
             </div>
@@ -186,7 +184,7 @@ export function DataPrivacySection() {
               size="sm"
               onClick={() => setShowDelete(true)}
             >
-              {t('settings.DataPrivacySection.solicitarEliminacion')}
+              Solicitar eliminación
             </Button>
           </div>
         </CardContent>
@@ -198,14 +196,16 @@ export function DataPrivacySection() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
-              {t('settings.DataPrivacySection.eliminarTuCuenta')}
+              ¿Eliminar tu cuenta?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('settings.DataPrivacySection.estaAccionProgramaraLaEliminacion')}
+              Esta acción programará la eliminación de tu cuenta y todos los datos asociados
+              en un plazo de 30 días. Durante ese periodo puedes cancelar la solicitud.
+              Después de los 30 días, los datos se eliminarán permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
               disabled={deleting}

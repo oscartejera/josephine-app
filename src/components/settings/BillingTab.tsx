@@ -11,7 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 const PLAN_META: Record<string, { label: string; icon: typeof Zap; color: string }> = {
   free: { label: 'Starter', icon: Zap, color: 'text-gray-500' },
@@ -22,14 +21,13 @@ const PLAN_META: Record<string, { label: string; icon: typeof Zap; color: string
 const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   active: { label: 'Activa', variant: 'default' },
   trialing: { label: 'Prueba gratis', variant: 'secondary' },
-  past_due: { label: t('settings.pagoPendiente'), variant: 'destructive' },
+  past_due: { label: 'Pago pendiente', variant: 'destructive' },
   canceled: { label: 'Cancelada', variant: 'destructive' },
   incomplete: { label: 'Incompleta', variant: 'outline' },
-  none: { label: t('settings.sinSuscripcion'), variant: 'outline' },
+  none: { label: 'Sin suscripción', variant: 'outline' },
 };
 
 export function BillingTab() {
-  const { t } = useTranslation();
   const { group } = useApp();
   const navigate = useNavigate();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -48,7 +46,7 @@ export function BillingTab() {
       });
 
       if (error || data?.error) {
-        toast.error(data?.error || error?.message || t('settings.noSePudoAbrirEl'));
+        toast.error(data?.error || error?.message || 'No se pudo abrir el portal de facturación');
         return;
       }
 
@@ -56,7 +54,7 @@ export function BillingTab() {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      toast.error(err?.message || t('pricing.errorAlConectarConStripe'));
+      toast.error(err?.message || 'Error al conectar con Stripe');
     } finally {
       setPortalLoading(false);
     }
@@ -71,11 +69,11 @@ export function BillingTab() {
             <Icon className={`h-5 w-5 ${meta.color}`} />
             Plan {meta.label}
           </CardTitle>
-          <CardDescription>{t("settings.currentPlanStatus")}</CardDescription>
+          <CardDescription>Tu plan actual y estado de suscripción</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{t('settings.estado')}</span>
+            <span className="text-sm text-muted-foreground">Estado:</span>
             <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
           </div>
 
@@ -83,7 +81,7 @@ export function BillingTab() {
             {plan === 'free' ? (
               <Button onClick={() => navigate('/pricing')} className="gap-2">
                 <Sparkles className="h-4 w-4" />
-                {t('settings.BillingTab.upgradeAPro')}
+                Upgrade a Pro
               </Button>
             ) : (
               <>
@@ -106,7 +104,7 @@ export function BillingTab() {
                   className="gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  {t('settings.BillingTab.verPlanes')}
+                  Ver planes
                 </Button>
               </>
             )}
@@ -117,16 +115,17 @@ export function BillingTab() {
       {/* Billing Portal Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t("settings.billingAndPayments")}</CardTitle>
+          <CardTitle className="text-base">Facturación y pagos</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            {t('settings.BillingTab.losPagosSeProcesanDe')}
+            Los pagos se procesan de forma segura a través de Stripe.
+            Desde el portal de facturación puedes:
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>{t("settings.updatePaymentMethod")}</li>
-            <li>{t("billing.downloadPreviousInvoices")}</li>
-            <li>{t("settings.changeOrCancelSub")}</li>
+            <li>Actualizar tu método de pago</li>
+            <li>Descargar facturas anteriores</li>
+            <li>Cambiar o cancelar tu suscripción</li>
           </ul>
         </CardContent>
       </Card>

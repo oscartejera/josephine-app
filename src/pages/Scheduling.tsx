@@ -21,7 +21,6 @@ import {
   SwapRequestsPanel,
   PopularShifts,
   ScheduleSettingsSheet,
-  DemandOverlay,
 } from '@/components/scheduling';
 import {
   Select,
@@ -33,7 +32,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useTranslation } from 'react-i18next';
 
 // Generate placeholder KPIs for empty state
 function generatePlaceholderKPIs(weekStart: Date) {
@@ -58,7 +56,6 @@ function generatePlaceholderKPIs(weekStart: Date) {
 }
 
 export default function Scheduling() {
-  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { selectedLocationId, accessibleLocations } = useApp();
@@ -71,7 +68,16 @@ export default function Scheduling() {
     : startOfWeek(new Date(), { weekStartsOn: 1 });
 
   // State
-  const [viewMode, setViewMode] = useState<ViewMode>{t('scheduling.departmentsConstIscreatingSetiscreatingU')}<{
+  const [viewMode, setViewMode] = useState<ViewMode>('departments');
+  const [isCreating, setIsCreating] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showSwapPanel, setShowSwapPanel] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showEventCalendar, setShowEventCalendar] = useState(false);
+
+  const [swapDialogData, setSwapDialogData] = useState<{
     shift: Shift;
     employeeName: string;
   } | null>(null);
@@ -141,7 +147,6 @@ export default function Scheduling() {
   const actualPublishSchedule = schedulingData.publishSchedule;
   const actualMoveShift = schedulingData.moveShift;
   const actualAddShift = schedulingData.addShift;
-  const actualAutoFillShifts = schedulingData.autoFillShifts;
   const actualSwapRequests = schedulingData.swapRequests;
   const actualPendingSwapRequests = schedulingData.pendingSwapRequests;
   const actualCreateSwapRequest = schedulingData.createSwapRequest;
@@ -235,18 +240,18 @@ export default function Scheduling() {
   const handleAccept = useCallback(() => {
     actualAcceptSchedule();
     setShowToast(false);
-    toast.success(t('scheduling.accepted'));
+    toast.success('Schedule accepted');
   }, [actualAcceptSchedule]);
 
   const handleUndo = useCallback(() => {
     actualUndoSchedule();
     setShowToast(false);
-    toast.info(t('scheduling.reverted'));
+    toast.info('Schedule reverted');
   }, [actualUndoSchedule]);
 
   const handlePublish = useCallback(async (emailBody: string) => {
     await actualPublishSchedule(emailBody);
-    toast.success(t('scheduling.published'));
+    toast.success('Schedule published and notifications sent to all employees');
   }, [actualPublishSchedule]);
 
   const handleApprove = useCallback(async () => {
@@ -260,17 +265,17 @@ export default function Scheduling() {
   const handleSubmitSwap = useCallback((targetShift: Shift, reason?: string) => {
     if (!swapDialogData) return;
     actualCreateSwapRequest(swapDialogData.shift, targetShift, reason);
-    toast.success(t('scheduling.swapRequested'));
+    toast.success('Swap request sent for approval');
   }, [swapDialogData, actualCreateSwapRequest]);
 
   const handleApproveSwap = useCallback((requestId: string) => {
     actualApproveSwapRequest(requestId);
-    toast.success(t('scheduling.swapApproved'));
+    toast.success('Swap approved - shifts have been exchanged');
   }, [actualApproveSwapRequest]);
 
   const handleRejectSwap = useCallback((requestId: string) => {
     actualRejectSwapRequest(requestId);
-    toast.info(t('scheduling.swapRejected'));
+    toast.info('Swap request rejected');
   }, [actualRejectSwapRequest]);
 
   // Get available shifts to swap with (other employees' shifts)
@@ -296,14 +301,6 @@ export default function Scheduling() {
         onWeekChange={handleWeekChange}
         onGoToToday={handleGoToToday}
         onCreateSchedule={handleCreateSchedule}
-        onAutoFill={async () => {
-          const count = await actualAutoFillShifts();
-          if (count && count > 0) {
-            toast.success(t('scheduling.autoFillResult', { count }));
-          } else {
-            toast.info(t('scheduling.autoFillEmpty'));
-          }
-        }}
         onPublish={() => setShowPublishModal(true)}
         onOpenSettings={() => setShowSettings(true)}
         hasSchedule={actualHasSchedule}
@@ -328,7 +325,7 @@ export default function Scheduling() {
           <AlertDescription className="text-amber-800">
             Faltan datos de nómina para {actualData.missingPayrollCount} empleados.
             <a href="/settings" className="underline ml-1 font-medium">
-              {t('scheduling.completaSettingsPayroll')}
+              Completa Settings → Payroll
             </a>
           </AlertDescription>
         </Alert>
@@ -376,7 +373,7 @@ export default function Scheduling() {
                   }
                 >
                   {actualData.status === 'published' ? 'Publicado'
-                    : actualData.status === 'approved' ? t('payroll.aprobado')
+                    : actualData.status === 'approved' ? 'Aprobado'
                       : 'Borrador'}
                 </Badge>
               )}
@@ -389,7 +386,7 @@ export default function Scheduling() {
                   className="border-amber-300 text-amber-700 hover:bg-amber-50"
                   onClick={() => setShowApproveModal(true)}
                 >
-                  {t('scheduling.aprobar')}
+                  ✓ Aprobar
                 </Button>
               )}
 
@@ -401,7 +398,7 @@ export default function Scheduling() {
                   className="border-primary/30 text-primary hover:bg-primary/5"
                   onClick={() => setShowPublishModal(true)}
                 >
-                  {t('scheduling.publicar')}
+                  ✉ Publicar
                 </Button>
               )}
 
@@ -419,26 +416,19 @@ export default function Scheduling() {
       )}
 
       {actualHasSchedule && actualData && (
-        <>
-          {/* Demand forecast overlay above the grid */}
-          <DemandOverlay
-            locationId={resolvedLocationId ?? undefined}
-            weekStart={weekStart}
-          />
-          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <div className="min-w-[800px]">
-              <ScheduleGrid
-                data={actualData}
-                viewMode={viewMode}
-                positions={positions}
-                weatherData={weatherData}
-                onMoveShift={actualMoveShift}
-                onAddShift={actualAddShift}
-                onInitiateSwap={handleInitiateSwap}
-              />
-            </div>
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="min-w-[800px]">
+            <ScheduleGrid
+              data={actualData}
+              viewMode={viewMode}
+              positions={positions}
+              weatherData={weatherData}
+              onMoveShift={actualMoveShift}
+              onAddShift={actualAddShift}
+              onInitiateSwap={handleInitiateSwap}
+            />
           </div>
-        </>
+        </div>
       )}
       {!actualHasSchedule && (
         <EmptyScheduleState weekStart={weekStart} dailyKPIs={placeholderKPIs} />

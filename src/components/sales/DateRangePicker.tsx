@@ -9,7 +9,6 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { format, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
 
 export type DateRangePreset = 'today' | 'week' | 'month';
 
@@ -22,14 +21,12 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({
-  
   selectedPreset,
   onPresetChange,
   startDate,
   endDate,
   onDateRangeChange,
 }: DateRangePickerProps) {
-  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const getDisplayText = () => {
@@ -142,7 +139,7 @@ export function DateRangePicker({
                 onClick={() => handlePresetClick('today')}
                 className="flex-1"
               >
-                {t('sales.DateRangePicker.today')}
+                Today
               </Button>
               <Button
                 variant={selectedPreset === 'week' ? 'default' : 'outline'}
@@ -150,7 +147,7 @@ export function DateRangePicker({
                 onClick={() => handlePresetClick('week')}
                 className="flex-1"
               >
-                {t('sales.DateRangePicker.week')}
+                Week
               </Button>
               <Button
                 variant={selectedPreset === 'month' ? 'default' : 'outline'}
@@ -158,13 +155,13 @@ export function DateRangePicker({
                 onClick={() => handlePresetClick('month')}
                 className="flex-1"
               >
-                {t('sales.DateRangePicker.month')}
+                Month
               </Button>
             </div>
 
             {/* Calendar for custom selection */}
             <div className="border-t pt-3">
-              <p className="text-sm font-medium mb-2">{t("sales.selectCustomRange")}:</p>
+              <p className="text-sm font-medium mb-2">Or select custom range:</p>
               <Calendar
                 mode="range"
                 selected={{

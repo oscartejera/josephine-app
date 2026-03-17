@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PayrollContextData } from '@/pages/Payroll';
-import { useTranslation } from 'react-i18next';
 
 interface Employee {
   id: string;
@@ -28,7 +27,8 @@ interface Employee {
     nif: string | null;
     nss: string | null;
     iban: string | null;
-  }>{t('payroll.PayrollEmployees.employmentcontractsArray')}<{
+  }>;
+  employment_contracts?: Array<{
     id: string;
     contract_type: string;
     base_salary_monthly: number;
@@ -37,18 +37,19 @@ interface Employee {
 }
 
 export default function PayrollEmployees({
-  
   selectedLegalEntity,
   currentRun,
   refreshData,
   isPayrollAdmin,
 }: PayrollContextData) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { selectedLocationId, locations } = useApp();
   const { toast } = useToast();
   
-  const [employees, setEmployees] = useState<Employee[]>{t('payroll.PayrollEmployees.constLoadingSetloadingUsestatetrueConst')}<Employee | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [legalData, setLegalData] = useState({ nif: '', nss: '', iban: '', domicilio: '' });
   const [contractData, setContractData] = useState({
     contract_type: 'indefinido',
@@ -131,11 +132,11 @@ export default function PayrollEmployees({
         iban: legalData.iban || undefined,
         domicilio: legalData.domicilio || undefined,
       });
-      toast({ title: 'Guardado', description: t('payroll.datosLegalesActualizados') });
+      toast({ title: 'Guardado', description: 'Datos legales actualizados' });
       fetchEmployees();
       setEditingEmployee(null);
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudieron guardar los datos' });
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudieron guardar los datos' });
     }
   };
 
@@ -161,7 +162,7 @@ export default function PayrollEmployees({
       fetchEmployees();
       setEditingEmployee(null);
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: error instanceof Error ? error.message : 'No se pudo crear el contrato' });
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'No se pudo crear el contrato' });
     }
   };
 
@@ -194,7 +195,7 @@ export default function PayrollEmployees({
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder={t('payroll.PayrollEmployees.buscarEmpleado')} 
+            placeholder="Buscar empleado..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -207,21 +208,21 @@ export default function PayrollEmployees({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {t('payroll.PayrollEmployees.empleadosYContratos')}
+            Empleados y Contratos
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('payroll.empleado')}</TableHead>
-                <TableHead>{t('payroll.PayrollEmployees.puesto')}</TableHead>
-                <TableHead>{t('payroll.PayrollEmployees.nif')}</TableHead>
-                <TableHead>{t('payroll.PayrollEmployees.nss')}</TableHead>
-                <TableHead>{t('payroll.PayrollEmployees.iban')}</TableHead>
-                <TableHead>{t('payroll.PayrollEmployees.contrato')}</TableHead>
-                <TableHead>{t('payroll.PayrollEmployees.salario')}</TableHead>
-                <TableHead className="text-center">{t('team.estado')}</TableHead>
+                <TableHead>Empleado</TableHead>
+                <TableHead>Puesto</TableHead>
+                <TableHead>NIF</TableHead>
+                <TableHead>NSS</TableHead>
+                <TableHead>IBAN</TableHead>
+                <TableHead>Contrato</TableHead>
+                <TableHead>Salario</TableHead>
+                <TableHead className="text-center">Estado</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -239,28 +240,28 @@ export default function PayrollEmployees({
                       {legal?.nif ? (
                         <span className="font-mono text-sm">{legal.nif}</span>
                       ) : (
-                        <Badge variant="destructive" className="text-xs">{t('payroll.PayrollEmployees.falta')}</Badge>
+                        <Badge variant="destructive" className="text-xs">Falta</Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {legal?.nss ? (
                         <span className="font-mono text-sm">{legal.nss}</span>
                       ) : (
-                        <Badge variant="destructive" className="text-xs">{t('payroll.PayrollEmployees.falta1')}</Badge>
+                        <Badge variant="destructive" className="text-xs">Falta</Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {legal?.iban ? (
                         <span className="font-mono text-sm">{legal.iban.slice(-4).padStart(legal.iban.length, '•')}</span>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">{t('payroll.PayrollEmployees.falta2')}</Badge>
+                        <Badge variant="secondary" className="text-xs">Falta</Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {contract ? (
                         <Badge variant="outline">{contract.contract_type}</Badge>
                       ) : (
-                        <Badge variant="destructive" className="text-xs">{t("payroll.noContract")}</Badge>
+                        <Badge variant="destructive" className="text-xs">Sin contrato</Badge>
                       )}
                     </TableCell>
                     <TableCell>
@@ -302,18 +303,18 @@ export default function PayrollEmployees({
                             <div className="space-y-4">
                               <h4 className="font-medium flex items-center gap-2">
                                 <FileText className="h-4 w-4" />
-                                {t('payroll.PayrollEmployees.datosLegales')}
+                                Datos Legales
                               </h4>
                               <div>
-                                <Label>{t('payroll.PayrollEmployees.nif')}</Label>
+                                <Label>NIF *</Label>
                                 <Input 
                                   value={legalData.nif}
                                   onChange={(e) => setLegalData({...legalData, nif: e.target.value})}
-                                  placeholder={t('payroll.PayrollEmployees.12345678a')}
+                                  placeholder="12345678A"
                                 />
                               </div>
                               <div>
-                                <Label>{t('payroll.PayrollEmployees.nssNSeguridadSocial')}</Label>
+                                <Label>NSS (Nº Seguridad Social) *</Label>
                                 <Input 
                                   value={legalData.nss}
                                   onChange={(e) => setLegalData({...legalData, nss: e.target.value})}
@@ -321,23 +322,23 @@ export default function PayrollEmployees({
                                 />
                               </div>
                               <div>
-                                <Label>{t('payroll.PayrollEmployees.iban1')}</Label>
+                                <Label>IBAN</Label>
                                 <Input 
                                   value={legalData.iban}
                                   onChange={(e) => setLegalData({...legalData, iban: e.target.value})}
-                                  placeholder={t('payroll.PayrollEmployees.es1234567890123456789012')}
+                                  placeholder="ES1234567890123456789012"
                                 />
                               </div>
                               <div>
-                                <Label>{t('payroll.PayrollEmployees.domicilio')}</Label>
+                                <Label>Domicilio</Label>
                                 <Input 
                                   value={legalData.domicilio}
                                   onChange={(e) => setLegalData({...legalData, domicilio: e.target.value})}
-                                  placeholder={t('payroll.PayrollEmployees.calleMayor128001Madrid')}
+                                  placeholder="Calle Mayor 1, 28001 Madrid"
                                 />
                               </div>
                               <Button onClick={handleSaveLegalData} className="w-full" disabled={!isPayrollAdmin}>
-                                {t('payroll.PayrollEmployees.guardarDatosLegales')}
+                                Guardar Datos Legales
                               </Button>
                             </div>
 
@@ -345,10 +346,10 @@ export default function PayrollEmployees({
                             <div className="space-y-4">
                               <h4 className="font-medium flex items-center gap-2">
                                 <FileText className="h-4 w-4" />
-                                {contract ? t('payroll.contratoActivo') : 'Crear Contrato'}
+                                {contract ? 'Contrato Activo' : 'Crear Contrato'}
                               </h4>
                               <div>
-                                <Label>{t('payroll.PayrollEmployees.tipoDeContrato')}</Label>
+                                <Label>Tipo de Contrato</Label>
                                 <Select 
                                   value={contractData.contract_type}
                                   onValueChange={(v) => setContractData({...contractData, contract_type: v})}
@@ -357,15 +358,15 @@ export default function PayrollEmployees({
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="indefinido">{t('payroll.PayrollEmployees.indefinido')}</SelectItem>
-                                    <SelectItem value="temporal">{t('payroll.PayrollEmployees.temporal')}</SelectItem>
-                                    <SelectItem value="formacion">{t('payroll.formacion')}</SelectItem>
-                                    <SelectItem value="practicas">{t('payroll.practicas')}</SelectItem>
+                                    <SelectItem value="indefinido">Indefinido</SelectItem>
+                                    <SelectItem value="temporal">Temporal</SelectItem>
+                                    <SelectItem value="formacion">Formación</SelectItem>
+                                    <SelectItem value="practicas">Prácticas</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div>
-                                <Label>{t('payroll.salarioBaseMensual')}</Label>
+                                <Label>Salario Base Mensual (€)</Label>
                                 <Input 
                                   type="number"
                                   value={contractData.base_salary_monthly}
@@ -375,7 +376,7 @@ export default function PayrollEmployees({
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                  <Label>{t('payroll.PayrollEmployees.grupoSs')}</Label>
+                                  <Label>Grupo SS</Label>
                                   <Select 
                                     value={contractData.group_ss}
                                     onValueChange={(v) => setContractData({...contractData, group_ss: v})}
@@ -391,7 +392,7 @@ export default function PayrollEmployees({
                                   </Select>
                                 </div>
                                 <div>
-                                  <Label>{t('payroll.PayrollEmployees.jornada')}</Label>
+                                  <Label>% Jornada</Label>
                                   <Input 
                                     type="number"
                                     value={contractData.jornada_pct}
@@ -401,7 +402,7 @@ export default function PayrollEmployees({
                                 </div>
                               </div>
                               <div>
-                                <Label>{t('payroll.PayrollEmployees.irpfManual')}</Label>
+                                <Label>% IRPF (manual)</Label>
                                 <Input 
                                   type="number"
                                   value={contractData.irpf_rate}
@@ -410,7 +411,9 @@ export default function PayrollEmployees({
                                 />
                               </div>
                               {!contract && (
-                                <Button onClick={handleCreateContract} className="w-full" disabled={!isPayrollAdmin}>{t('payroll.crearContrato')}</Button>
+                                <Button onClick={handleCreateContract} className="w-full" disabled={!isPayrollAdmin}>
+                                  Crear Contrato
+                                </Button>
                               )}
                             </div>
                           </div>
@@ -429,10 +432,10 @@ export default function PayrollEmployees({
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('payroll.PayrollEmployees.volver')}
+          Volver
         </Button>
         <Button onClick={() => navigate('/payroll/inputs')}>
-          {t('payroll.PayrollEmployees.siguienteVariablesDelMes')}
+          Siguiente: Variables del Mes
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>

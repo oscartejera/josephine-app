@@ -22,8 +22,8 @@ const REASON_LABELS: Record<string, string> = {
   manual_pos_blocked_no_sync: 'POS solicitado pero sync caducado',
   legacy_pos_connected: 'POS conectado (legacy)',
   legacy_no_pos: 'Sin POS (legacy)',
-  no_session: t('data.sinSesion'),
-  loading: t('common.loading'),
+  no_session: 'Sin sesión',
+  loading: 'Cargando...',
 };
 
 export function DataSourceBadge() {
@@ -59,7 +59,7 @@ export function DataSourceBadge() {
             </p>
             {lastSyncedAt && (
               <p className="text-muted-foreground">
-                {t('last_sync')}: {lastSyncedAt.toLocaleString('es-ES')}
+                {t('last_sync', 'Última sync')}: {lastSyncedAt.toLocaleString('es-ES')}
               </p>
             )}
             {blocked && (

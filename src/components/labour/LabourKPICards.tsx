@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { LabourKpis, LabourDateRange, MetricMode } from '@/hooks/useLabourData';
-import { useTranslation } from 'react-i18next';
 
 interface LabourKPICardsProps {
   kpis: LabourKpis | undefined;
@@ -43,7 +42,9 @@ interface DeltaBadgeProps {
 function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: DeltaBadgeProps) {
   // For COL, lower is better (inverted)
   const isPositive = inverted ? value <= 0 : value >= 0;
-  const arrow = value >{t('labour.LabourKPICards.0Return')}
+  const arrow = value >= 0 ? '▲' : '▼';
+
+  return (
     <span className={cn(
       "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
       isPositive
@@ -58,7 +59,6 @@ function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: DeltaBad
 
 /** Source badge: shows whether labour cost comes from payroll (real) or schedule (estimated) */
 function SourceBadge({ source }: { source: 'payroll' | 'schedule' }) {
-  const { t } = useTranslation();
   const isPayroll = source === 'payroll';
   return (
     <span
@@ -69,11 +69,11 @@ function SourceBadge({ source }: { source: 'payroll' | 'schedule' }) {
           : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
       )}
       title={isPayroll
-        ? t("payroll.basedOnProcessedPayroll")
-        : t("labour.estimatedFromSchedules")}
+        ? "Basado en nóminas procesadas"
+        : "Estimado desde horarios planificados"}
     >
       <span>{isPayroll ? '✓' : '~'}</span>
-      {isPayroll ? t('labour.nomina') : 'Estimado'}
+      {isPayroll ? 'Nómina' : 'Estimado'}
     </span>
   );
 }
@@ -94,7 +94,6 @@ function KpiCardSkeleton() {
 }
 
 export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: LabourKPICardsProps) {
-  const { t } = useTranslation();
   if (isLoading || !kpis) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -153,7 +152,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.sales')}</h3>
+            <h3 className="text-sm font-normal text-gray-700">Sales</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
 
@@ -192,7 +191,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
           <div className="space-y-1">
             <div className="text-3xl font-bold text-gray-900">{getActualColValue()}</div>
             <div className="flex items-center gap-2">
-              <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label={t('labour.LabourKPICards.vsPlanned')} />
+              <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label="vs planned" />
             </div>
           </div>
 
@@ -221,7 +220,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.splh')}</h3>
+            <h3 className="text-sm font-normal text-gray-700">SPLH</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
 
@@ -251,7 +250,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.comensal')}</h3>
+            <h3 className="text-sm font-normal text-gray-700">€/Comensal</h3>
             <SourceBadge source={kpis.labor_cost_source} />
           </div>
 
@@ -260,7 +259,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
               €{kpis.cost_per_cover.toFixed(2)}
             </div>
             <div className="text-xs text-gray-500">
-              {t('labour.LabourKPICards.costeLaboralPorClienteServido')}
+              Coste laboral por cliente servido
             </div>
           </div>
 
@@ -277,14 +276,14 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.primeCost')}</h3>
+            <h3 className="text-sm font-normal text-gray-700">Prime Cost</h3>
             <span className={cn(
               "text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase",
               kpis.prime_cost_pct <= 60 ? "bg-emerald-100 text-emerald-700"
                 : kpis.prime_cost_pct <= 65 ? "bg-amber-100 text-amber-700"
                   : "bg-red-100 text-red-700"
             )}>
-              {kpis.prime_cost_pct <= 60 ? t('labour.optimo') : kpis.prime_cost_pct <= 65 ? '~ Vigilar' : '✗ Alto'}
+              {kpis.prime_cost_pct <= 60 ? '✓ Óptimo' : kpis.prime_cost_pct <= 65 ? '~ Vigilar' : '✗ Alto'}
             </span>
           </div>
 
@@ -308,7 +307,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
             </div>
             <div className="flex justify-between text-xs text-gray-600">
               <span>{formatCurrency(kpis.prime_cost_amount)}</span>
-              <span>{t('labour.LabourKPICards.target5560')}</span>
+              <span>Target: 55-60%</span>
             </div>
           </div>
         </div>
@@ -318,7 +317,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.oplh')}</h3>
+            <h3 className="text-sm font-normal text-gray-700">OPLH</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
 

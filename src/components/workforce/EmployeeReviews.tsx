@@ -18,7 +18,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Star, TrendingUp, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface Review {
     id: string;
@@ -73,10 +72,18 @@ function StarRating({ value, onChange, size = 'md' }: {
 }
 
 export function EmployeeReviews({ locationId }: { locationId: string | null }) {
-  const { t } = useTranslation();
     const { group } = useApp();
     const { user } = useAuth();
-    const [reviews, setReviews] = useState<Review[]>{t('workforce.EmployeeReviews.constEmployeesSetemployeesUsestate')}<Employee[]>{t('workforce.EmployeeReviews.constLoadingSetloadingUsestatetrueConst')}<Record<string, number>>(
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Form state
+    const [selectedEmployee, setSelectedEmployee] = useState('');
+    const [overallRating, setOverallRating] = useState(3);
+    const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>(
         Object.fromEntries(REVIEW_CATEGORIES.map(c => [c.key, 3]))
     );
     const [strengths, setStrengths] = useState('');
@@ -134,12 +141,12 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                 status: 'submitted',
             });
             if (error) throw error;
-            toast.success(t('employeeReviews.toastSaved'));
+            toast.success('Evaluación guardada');
             setDialogOpen(false);
             resetForm();
             loadData();
         } catch (err: any) {
-            toast.error(t('employeeReviews.toastSaveError'), { description: err.message });
+            toast.error('Error al guardar', { description: err.message });
         } finally {
             setSubmitting(false);
         }
@@ -168,16 +175,21 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
 
     // Team average
     const teamAvg = reviews.length > 0
-        ? reviews.reduce((s, r) => {t('workforce.EmployeeReviews.sRoverallrating0Reviewslength0')}
+        ? reviews.reduce((s, r) => s + r.overall_rating, 0) / reviews.length
+        : 0;
+
+    return (
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">{t("workforce.teamPerformance")}</h3>
+                    <h3 className="text-lg font-semibold">Rendimiento del Equipo</h3>
                 </div>
                 <Button size="sm" onClick={() => setDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1" />{t('team.nuevaEvaluacion')}</Button>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Nueva Evaluación
+                </Button>
             </div>
 
             {/* Team Summary */}
@@ -185,20 +197,20 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                 <Card>
                     <CardContent className="py-3 px-4 text-center">
                         <p className="text-2xl font-bold">{teamAvg > 0 ? teamAvg.toFixed(1) : '—'}</p>
-                        <p className="text-xs text-muted-foreground">{t('team.promedioEquipo')}</p>
+                        <p className="text-xs text-muted-foreground">Promedio Equipo</p>
                         {teamAvg > 0 && <StarRating value={Math.round(teamAvg)} size="sm" />}
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="py-3 px-4 text-center">
                         <p className="text-2xl font-bold">{reviews.length}</p>
-                        <p className="text-xs text-muted-foreground">{t('workforce.EmployeeReviews.evaluaciones')}</p>
+                        <p className="text-xs text-muted-foreground">Evaluaciones</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="py-3 px-4 text-center">
                         <p className="text-2xl font-bold">{employeeAvgs.size}</p>
-                        <p className="text-xs text-muted-foreground">{t('workforce.EmployeeReviews.evaluados')}</p>
+                        <p className="text-xs text-muted-foreground">Evaluados</p>
                     </CardContent>
                 </Card>
             </div>
@@ -208,7 +220,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                 <Card>
                     <CardContent className="py-8 text-center">
                         <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                        <p className="text-muted-foreground">{t("reviews.noEmployees")}</p>
+                        <p className="text-muted-foreground">Sin empleados en este local</p>
                     </CardContent>
                 </Card>
             ) : (
@@ -216,7 +228,8 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                     {employees.map(emp => {
                         const stats = employeeAvgs.get(emp.id);
                         const empReviews = reviews.filter(r => r.employee_id === emp.id);
-                        const initials = emp.full_name?.split(' ').map((w: string) => {t('workforce.EmployeeReviews.w0joinslice02Return')}
+                        const initials = emp.full_name?.split(' ').map((w: string) => w[0]).join('').slice(0, 2) || '?';
+                        return (
                             <Card key={emp.id}>
                                 <CardContent className="py-3 px-4">
                                     <div className="flex items-center gap-3">
@@ -234,7 +247,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                                                     <p className="text-xs text-muted-foreground">{stats.count} eval{stats.count > 1 ? 's' : ''}</p>
                                                 </>
                                             ) : (
-                                                <Badge variant="outline" className="text-xs">{t("reviews.notEvaluated")}</Badge>
+                                                <Badge variant="outline" className="text-xs">Sin evaluar</Badge>
                                             )}
                                         </div>
                                     </div>
@@ -249,12 +262,12 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>{t('team.nuevaEvaluacion')}</DialogTitle>
+                        <DialogTitle>Nueva Evaluación</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                             <SelectTrigger>
-                                <SelectValue placeholder={t('employeeReviews.selectEmployee')} />
+                                <SelectValue placeholder="Seleccionar empleado" />
                             </SelectTrigger>
                             <SelectContent>
                                 {employees.map(e => (
@@ -266,12 +279,12 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                         </Select>
 
                         <div>
-                            <label className="text-sm font-medium mb-1 block">{t('team.puntuacionGeneral')}</label>
+                            <label className="text-sm font-medium mb-1 block">Puntuación General</label>
                             <StarRating value={overallRating} onChange={setOverallRating} />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">{t('team.categorias')}</label>
+                            <label className="text-sm font-medium">Categorías</label>
                             {REVIEW_CATEGORIES.map(cat => (
                                 <div key={cat.key} className="flex items-center justify-between">
                                     <span className="text-sm text-muted-foreground">{cat.label}</span>
@@ -284,14 +297,14 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                             ))}
                         </div>
 
-                        <Textarea placeholder={t('employeeReviews.strengths')} value={strengths} onChange={e => setStrengths(e.target.value)} rows={2} />
-                        <Textarea placeholder={t("workforce.areasOfImprovement")} value={improvements} onChange={e => setImprovements(e.target.value)} rows={2} />
-                        <Textarea placeholder={t('employeeReviews.goals')} value={goals} onChange={e => setGoals(e.target.value)} rows={2} />
+                        <Textarea placeholder="Fortalezas" value={strengths} onChange={e => setStrengths(e.target.value)} rows={2} />
+                        <Textarea placeholder="Áreas de mejora" value={improvements} onChange={e => setImprovements(e.target.value)} rows={2} />
+                        <Textarea placeholder="Objetivos" value={goals} onChange={e => setGoals(e.target.value)} rows={2} />
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
+                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                         <Button onClick={handleSubmit} disabled={submitting || !selectedEmployee}>
-                            {submitting ? 'Guardando...' : t('team.guardarEvaluacion')}
+                            {submitting ? 'Guardando...' : 'Guardar Evaluación'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

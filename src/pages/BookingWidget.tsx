@@ -19,10 +19,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Clock, Users, MapPin, Phone, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { es } from 'date-fns/locale';
 import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 
 export default function BookingWidget() {
-  const { t } = useTranslation();
   const { locationId } = useParams<{ locationId: string }>();
   const navigate = useNavigate();
   const {
@@ -45,7 +43,8 @@ export default function BookingWidget() {
     special_requests: '',
   });
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>{t('bookingWidget.nullConstReservationSetreservationUsesta')}<ReservationResult | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reservation, setReservation] = useState<ReservationResult | null>(null);
 
   // Fetch occupied slots when date changes
   useEffect(() => {
@@ -84,7 +83,7 @@ export default function BookingWidget() {
 
       setReservation(result);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : t('settings.errorAlCrearLaReserva'));
+      setSubmitError(err instanceof Error ? err.message : 'Error al crear la reserva');
     } finally {
       setSubmitting(false);
     }
@@ -117,7 +116,7 @@ export default function BookingWidget() {
           <CardContent className="pt-6">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error || t('settings.restauranteNoEncontrado')}</AlertDescription>
+              <AlertDescription>{error || 'Restaurante no encontrado'}</AlertDescription>
             </Alert>
           </CardContent>
         </Card>
@@ -134,7 +133,7 @@ export default function BookingWidget() {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">{t('settings.reservaConfirmada')}</CardTitle>
+            <CardTitle className="text-2xl">¡Reserva Confirmada!</CardTitle>
             <CardDescription>
               Recibirás un email de confirmación en {formData.guest_email}
             </CardDescription>
@@ -166,7 +165,8 @@ export default function BookingWidget() {
             </div>
 
             <p className="text-sm text-muted-foreground text-center">
-              {t('bookingWidget.siNecesitasModificarOCancelar')}
+              Si necesitas modificar o cancelar tu reserva, responde al email de confirmación o
+              llámanos directamente.
             </p>
 
             <Button
@@ -185,7 +185,7 @@ export default function BookingWidget() {
                 setSelectedDate(undefined);
               }}
             >
-              {t('bookingWidget.hacerOtraReserva')}
+              Hacer otra reserva
             </Button>
           </CardContent>
         </Card>
@@ -219,7 +219,7 @@ export default function BookingWidget() {
             {/* Date Selection */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" /> {t('bookingWidget.fecha')}
+                <CalendarDays className="h-4 w-4" /> Fecha
               </Label>
               <div className="flex justify-center">
                 <Calendar
@@ -237,11 +237,11 @@ export default function BookingWidget() {
             {selectedDate && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> {t('bookingWidget.hora')}
+                  <Clock className="h-4 w-4" /> Hora
                 </Label>
                 {availableSlots.length === 0 ? (
                   <Alert>
-                    <AlertDescription>{t("booking.noTimesAvailable")}</AlertDescription>
+                    <AlertDescription>No hay horarios disponibles para esta fecha</AlertDescription>
                   </Alert>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
@@ -264,7 +264,7 @@ export default function BookingWidget() {
             {/* Party Size */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <Users className="h-4 w-4" /> {t('bookingWidget.numeroDePersonas')}
+                <Users className="h-4 w-4" /> Número de personas
               </Label>
               <Select
                 value={String(formData.party_size)}
@@ -289,18 +289,18 @@ export default function BookingWidget() {
             {/* Contact Info */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="guest_name">{t("booking.guestName")} *</Label>
+                <Label htmlFor="guest_name">Nombre *</Label>
                 <Input
                   id="guest_name"
                   value={formData.guest_name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, guest_name: e.target.value }))}
-                  placeholder={t('booking.name')}
+                  placeholder="Tu nombre"
                   required
                   minLength={2}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="guest_phone">{t("common.phone")}</Label>
+                <Label htmlFor="guest_phone">Teléfono</Label>
                 <Input
                   id="guest_phone"
                   type="tel"
@@ -312,27 +312,27 @@ export default function BookingWidget() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="guest_email">{t('bookingWidget.email')}</Label>
+              <Label htmlFor="guest_email">Email *</Label>
               <Input
                 id="guest_email"
                 type="email"
                 value={formData.guest_email}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guest_email: e.target.value }))}
-                placeholder={t('booking.email')}
+                placeholder="tu@email.com"
                 required
               />
             </div>
 
             {/* Special Requests */}
             <div className="space-y-2">
-              <Label htmlFor="special_requests">{t("booking.specialRequests")}</Label>
+              <Label htmlFor="special_requests">Peticiones especiales</Label>
               <Textarea
                 id="special_requests"
                 value={formData.special_requests}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, special_requests: e.target.value }))
                 }
-                placeholder={t('booking.specialRequestsPlaceholder')}
+                placeholder="Alergias, silla para bebé, celebración especial..."
                 rows={3}
                 maxLength={500}
               />
@@ -360,10 +360,10 @@ export default function BookingWidget() {
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('bookingWidget.reservando')}
+                  Reservando...
                 </>
               ) : (
-                t('settings.confirmarReserva')
+                'Confirmar Reserva'
               )}
             </Button>
           </form>

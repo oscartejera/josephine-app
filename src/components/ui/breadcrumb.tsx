@@ -4,13 +4,15 @@ import { ChevronRight, MoreHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { useTranslation } from 'react-i18next';
 const Breadcrumb = React.forwardRef<
   HTMLElement,
   React.ComponentPropsWithoutRef<"nav"> & {
     separator?: React.ReactNode;
   }
->(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />{t('ui.breadcrumb.breadcrumbdisplaynameBreadcrumbConstBrea')}<HTMLOListElement, React.ComponentPropsWithoutRef<"ol">>(
+>(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />);
+Breadcrumb.displayName = "Breadcrumb";
+
+const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWithoutRef<"ol">>(
   ({ className, ...props }, ref) => (
     <ol
       ref={ref}
@@ -20,10 +22,18 @@ const Breadcrumb = React.forwardRef<
       )}
       {...props}
     />
-  {t('ui.breadcrumb.breadcrumblistdisplaynameBreadcrumblistC')}<HTMLLIElement, React.ComponentPropsWithoutRef<"li">>(
+  ),
+);
+BreadcrumbList.displayName = "BreadcrumbList";
+
+const BreadcrumbItem = React.forwardRef<HTMLLIElement, React.ComponentPropsWithoutRef<"li">>(
   ({ className, ...props }, ref) => (
     <li ref={ref} className={cn("inline-flex items-center gap-1.5", className)} {...props} />
-  {t('ui.breadcrumb.breadcrumbitemdisplaynameBreadcrumbitemC')}<
+  ),
+);
+BreadcrumbItem.displayName = "BreadcrumbItem";
+
+const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & {
     asChild?: boolean;
@@ -50,7 +60,6 @@ const BreadcrumbPage = React.forwardRef<HTMLSpanElement, React.ComponentPropsWit
 BreadcrumbPage.displayName = "BreadcrumbPage";
 
 const BreadcrumbSeparator = ({ children, className, ...props }: React.ComponentProps<"li">) => (
-  const { t } = useTranslation();
   <li role="presentation" aria-hidden="true" className={cn("[&>svg]:size-3.5", className)} {...props}>
     {children ?? <ChevronRight />}
   </li>
@@ -65,7 +74,7 @@ const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span"
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">{t('ui.breadcrumb.more')}</span>
+    <span className="sr-only">More</span>
   </span>
 );
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";

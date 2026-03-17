@@ -26,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface ClockRecord {
   id: string;
@@ -54,11 +53,16 @@ interface EmployeeInfo {
 }
 
 export default function TeamHome() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [employee, setEmployee] = useState<EmployeeInfo | null>{t('team.TeamHome.nullConstActiverecordSetactiverecordUses')}<ClockRecord | null>{t('team.TeamHome.nullConstWeekrecordsSetweekrecordsUsesta')}<ClockRecord[]>{t('team.TeamHome.constTodayshiftSettodayshiftUsestate')}<PlannedShift | null>{t('team.TeamHome.nullConstUpcomingshiftsSetupcomingshifts')}<PlannedShift[]>{t('team.TeamHome.constCurrenttimeSetcurrenttimeUsestatene')}<{ lat: number; lng: number } | null>(null);
+  const [employee, setEmployee] = useState<EmployeeInfo | null>(null);
+  const [activeRecord, setActiveRecord] = useState<ClockRecord | null>(null);
+  const [weekRecords, setWeekRecords] = useState<ClockRecord[]>([]);
+  const [todayShift, setTodayShift] = useState<PlannedShift | null>(null);
+  const [upcomingShifts, setUpcomingShifts] = useState<PlannedShift[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -159,9 +163,9 @@ export default function TeamHome() {
       if (error) throw error;
       setActiveRecord(data);
       setWeekRecords((prev) => [data, ...prev]);
-      toast.success(t('teamHome.toastClockIn'));
+      toast.success('Entrada registrada');
     } catch {
-      toast.error(t('teamHome.toastClockInError'));
+      toast.error('Error al registrar entrada');
     } finally {
       setLoading(false);
     }
@@ -186,9 +190,9 @@ export default function TeamHome() {
         )
       );
       setActiveRecord(null);
-      toast.success(t('teamHome.toastClockOut'));
+      toast.success('Salida registrada');
     } catch {
-      toast.error(t('teamHome.toastClockOutError'));
+      toast.error('Error al registrar salida');
     } finally {
       setLoading(false);
     }
@@ -208,7 +212,7 @@ export default function TeamHome() {
 
   const greeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return t('team.buenosDias');
+    if (hour < 12) return 'Buenos días';
     if (hour < 20) return 'Buenas tardes';
     return 'Buenas noches';
   };
@@ -231,7 +235,7 @@ export default function TeamHome() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" />
-              <span className="font-semibold">{t('team.fichajeRapido')}</span>
+              <span className="font-semibold">Fichaje Rápido</span>
             </div>
             <span className="text-2xl font-bold font-mono">
               {format(currentTime, 'HH:mm')}
@@ -241,7 +245,7 @@ export default function TeamHome() {
           {geoLocation && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
               <MapPin className="h-3 w-3" />
-              <span>{t('team.ubicacionDetectada')}</span>
+              <span>Ubicación detectada</span>
             </div>
           )}
 
@@ -249,13 +253,13 @@ export default function TeamHome() {
             <div className="space-y-3">
               <div className="flex items-center justify-between bg-primary/5 rounded-lg p-3">
                 <div>
-                  <p className="text-xs text-muted-foreground">{t('team.turnoActivo')}</p>
+                  <p className="text-xs text-muted-foreground">Turno activo</p>
                   <p className="font-semibold">
                     Desde {format(new Date(activeRecord.clock_in), 'HH:mm')}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">{t('team.TeamHome.tiempo')}</p>
+                  <p className="text-xs text-muted-foreground">Tiempo</p>
                   <p className="font-bold text-primary">
                     {Math.floor(activeMinutes / 60)}h {activeMinutes % 60}m
                   </p>
@@ -268,7 +272,7 @@ export default function TeamHome() {
                 className="w-full h-12"
               >
                 <LogOut className="mr-2 h-5 w-5" />
-                {t('team.TeamHome.ficharSalida')}
+                Fichar Salida
               </Button>
             </div>
           ) : (
@@ -278,7 +282,7 @@ export default function TeamHome() {
               className="w-full h-12"
             >
               <LogIn className="mr-2 h-5 w-5" />
-              {t('team.TeamHome.ficharEntrada')}
+              Fichar Entrada
             </Button>
           )}
         </CardContent>
@@ -296,7 +300,7 @@ export default function TeamHome() {
                 <Calendar className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">{t("team.todayShift")}</p>
+                <p className="text-sm font-medium text-muted-foreground">Turno de hoy</p>
                 {todayShift ? (
                   <p className="font-semibold">
                     {todayShift.start_time?.slice(0, 5)} - {todayShift.end_time?.slice(0, 5)}
@@ -305,7 +309,7 @@ export default function TeamHome() {
                     </span>
                   </p>
                 ) : (
-                  <p className="text-muted-foreground">{t("team.noShiftScheduled")}</p>
+                  <p className="text-muted-foreground">Sin turno programado</p>
                 )}
               </div>
             </div>
@@ -320,7 +324,7 @@ export default function TeamHome() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Timer className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{t('team.TeamHome.estaSemana')}</span>
+              <span className="text-sm text-muted-foreground">Esta semana</span>
             </div>
             <p className="text-2xl font-bold">
               {weeklyHours}h {weeklyMins}m
@@ -331,7 +335,7 @@ export default function TeamHome() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{t('team.TeamHome.fichajes')}</span>
+              <span className="text-sm text-muted-foreground">Fichajes</span>
             </div>
             <p className="text-2xl font-bold">{weekRecords.length}</p>
           </CardContent>
@@ -343,14 +347,14 @@ export default function TeamHome() {
         <Card>
           <CardHeader className="pb-2 px-4 pt-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{t('team.proximosTurnos')}</CardTitle>
+              <CardTitle className="text-base">Próximos turnos</CardTitle>
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-xs"
                 onClick={() => navigate('/team/schedule')}
               >
-                {t('team.TeamHome.verTodos')}
+                Ver todos
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
@@ -391,8 +395,8 @@ export default function TeamHome() {
               <TrendingUp className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-sm font-medium">{t('team.miNomina')}</p>
-              <p className="text-xs text-muted-foreground">{t("team.hoursAndPay")}</p>
+              <p className="text-sm font-medium">Mi Nómina</p>
+              <p className="text-xs text-muted-foreground">Horas y pagos</p>
             </div>
           </CardContent>
         </Card>
@@ -405,8 +409,8 @@ export default function TeamHome() {
               <Megaphone className="h-5 w-5 text-orange-500" />
             </div>
             <div>
-              <p className="text-sm font-medium">{t('team.TeamHome.novedades')}</p>
-              <p className="text-xs text-muted-foreground">{t("team.teamNews")}</p>
+              <p className="text-sm font-medium">Novedades</p>
+              <p className="text-xs text-muted-foreground">Noticias del equipo</p>
             </div>
           </CardContent>
         </Card>

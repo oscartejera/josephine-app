@@ -15,11 +15,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 const COGS_CATEGORIES = [
-    { key: 'food', label: t('common.alimentacion'), icon: '🍖', description: 'Materias primas' },
-    { key: 'beverage', label: 'Bebidas', icon: '🍷', description: t('instant-pl.vinos_refrescos_cafe') },
+    { key: 'food', label: 'Alimentación', icon: '🍖', description: 'Materias primas' },
+    { key: 'beverage', label: 'Bebidas', icon: '🍷', description: 'Vinos, refrescos, café' },
     { key: 'packaging', label: 'Packaging', icon: '📦', description: 'Envases, bolsas, cajas' },
     { key: 'supplies', label: 'Suministros', icon: '🧴', description: 'Limpieza, desechables' },
     { key: 'other', label: 'Otros', icon: '📋', description: 'Otros costes directos' },
@@ -40,7 +39,6 @@ interface CostEntry {
 }
 
 export function MonthlyCostInput({ year, month, locationId, onSaved, className }: MonthlyCostInputProps) {
-  const { t } = useTranslation();
     const { profile } = useAuth();
     const orgId = profile?.group_id;
     const [entries, setEntries] = useState<Record<string, number>>({});
@@ -113,16 +111,18 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
         }
     };
 
-    const totalCogs = Object.values(entries).reduce((sum, v) => {t('instant-pl.MonthlyCostInput.sumV00Return')}
+    const totalCogs = Object.values(entries).reduce((sum, v) => sum + (v || 0), 0);
+
+    return (
         <Card className={cn("bg-white", className)}>
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">{t('instant-pl.MonthlyCostInput.costesDirectosCogs')}</CardTitle>
+                        <CardTitle className="text-base font-semibold">Costes Directos (COGS)</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">{monthName} — Entrada manual</p>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-amber-100 text-amber-700">
-                        {t('instant-pl.MonthlyCostInput.manual')}
+                        ~ Manual
                     </span>
                 </div>
             </CardHeader>
@@ -161,7 +161,7 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
 
                         {/* Total row */}
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                            <span className="text-sm font-semibold text-gray-700">{t('common.totalCogs')}</span>
+                            <span className="text-sm font-semibold text-gray-700">Total COGS</span>
                             <span className="text-lg font-bold text-gray-900">
                                 {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalCogs)}
                             </span>
@@ -178,7 +178,7 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
                                     : "bg-indigo-600 hover:bg-indigo-700"
                             )}
                         >
-                            {saving ? 'Guardando...' : saved ? '✓ Guardado' : t('common.guardarCogs')}
+                            {saving ? 'Guardando...' : saved ? '✓ Guardado' : 'Guardar COGS'}
                         </Button>
                     </>
                 )}

@@ -3,7 +3,6 @@ import * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/lib/utils";
 
-import { useTranslation } from 'react-i18next';
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
 
@@ -21,7 +20,6 @@ type ChartContextProps = {
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
 function useChart() {
-  const { t } = useTranslation();
   const context = React.useContext(ChartContext);
 
   if (!context) {
@@ -93,7 +91,8 @@ const ChartTooltip = RechartsPrimitive.Tooltip;
 
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> {t('ui.chart.reactcomponentprops')}<"div"> & {
+  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+    React.ComponentProps<"div"> & {
       hideLabel?: boolean;
       hideIndicator?: boolean;
       indicator?: "line" | "dot" | "dashed";
@@ -180,7 +179,8 @@ const ChartTooltipContent = React.forwardRef<
                   <>
                     {itemConfig?.icon ? (
                       <itemConfig.icon />
-                    {t('ui.chart.hideindicator')}
+                    ) : (
+                      !hideIndicator && (
                         <div
                           className={cn("shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]", {
                             "h-2.5 w-2.5": indicator === "dot",
@@ -229,7 +229,8 @@ const ChartLegend = RechartsPrimitive.Legend;
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> {t('ui.chart.pick')}<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+  React.ComponentProps<"div"> &
+    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
       hideIcon?: boolean;
       nameKey?: string;
     }

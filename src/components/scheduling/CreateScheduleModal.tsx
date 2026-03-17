@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Check, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 
 interface Step {
   title: string;
@@ -10,16 +9,16 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title: t('scheduling.analyzingForecast'),
+    title: 'Analizando pronóstico de ventas y SPLH histórico',
     description: 'Josephine AI analiza datos de ventas pasadas y el forecast para proyectar la demanda por franja horaria.',
   },
   {
-    title: t('scheduling.calculatingStaffing'),
+    title: 'Calculando niveles de dotación óptimos por estación',
     description: 'Asigna a las personas adecuadas en el momento correcto, optimizando eficiencia y cobertura.',
   },
   {
-    title: t('scheduling.verifyingConstraints'),
-    description: t('scheduling.respeta_automaticamente_las_normas_laborales_la_di'),
+    title: 'Verificando restricciones de disponibilidad y contratos',
+    description: 'Respeta automáticamente las normas laborales, la disponibilidad del equipo y las regulaciones vigentes.',
   },
 ];
 
@@ -29,7 +28,6 @@ interface CreateScheduleModalProps {
 }
 
 export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalProps) {
-  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
@@ -48,7 +46,8 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
       totalDelay += duration;
 
       const timeout = setTimeout(() => {
-        setCompletedSteps(prev => {t('scheduling.CreateScheduleModal.prevIndexIfIndex')} < STEPS.length - 1) {
+        setCompletedSteps(prev => [...prev, index]);
+        if (index < STEPS.length - 1) {
           setCurrentStep(index + 1);
         }
       }, totalDelay);
@@ -88,10 +87,10 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-semibold">{t('scheduling.CreateScheduleModal.creatingSchedule')}</h2>
+          <h2 className="text-xl font-semibold">Creating schedule</h2>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">{t('scheduling.CreateScheduleModal.poweredByJosephineAi')}</span>
+            <span className="text-sm font-medium text-primary">Powered by Josephine AI</span>
           </div>
         </div>
 
@@ -136,7 +135,7 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
                   }`}>
                   {isCompleted ? (
                     <Check className="h-4 w-4 text-white" />
-                  {t('scheduling.CreateScheduleModal.iscurrent')}
+                  ) : isCurrent ? (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}

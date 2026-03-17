@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTranslation } from 'react-i18next';
 
 interface Step {
     id: string;
@@ -18,11 +17,10 @@ interface Step {
     description: string;
     icon: typeof Plug2;
     path: string;
-    checkFn: () => {t('onboarding.OnboardingChecklist.promise')}<boolean>;
+    checkFn: () => Promise<boolean>;
 }
 
 export function OnboardingChecklist() {
-  const { t } = useTranslation();
     const navigate = useNavigate();
     const { locations, group } = useApp();
     const [completed, setCompleted] = useState<Record<string, boolean>>({});
@@ -47,7 +45,7 @@ export function OnboardingChecklist() {
         },
         {
             id: 'team',
-            title: t('onboarding.anadirTuEquipo'),
+            title: 'Añadir tu equipo',
             description: 'Invita a managers y empleados',
             icon: Users,
             path: '/workforce/team',
@@ -61,8 +59,8 @@ export function OnboardingChecklist() {
         },
         {
             id: 'inventory',
-            title: t('onboarding.configurarInventario'),
-            description: t('onboarding.creaArticulosYRecetas'),
+            title: 'Configurar inventario',
+            description: 'Crea artículos y recetas',
             icon: Upload,
             path: '/inventory-setup/items',
             checkFn: async () => {
@@ -76,7 +74,7 @@ export function OnboardingChecklist() {
         {
             id: 'forecast',
             title: 'Tu primer forecast',
-            description: t('onboarding.estaraListoCuandoTengamos7'),
+            description: 'Estará listo cuando tengamos 7 días de datos',
             icon: BarChart3,
             path: '/insights/sales',
             checkFn: async () => {
@@ -130,11 +128,11 @@ export function OnboardingChecklist() {
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
-                        {t('onboarding.OnboardingChecklist.empiezaConJosephine')}
+                        🚀 Empieza con Josephine
                         <span className="text-xs font-normal text-muted-foreground">({completedCount}/{steps.length} completados)</span>
                     </CardTitle>
                     <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleDismiss}>
-                        {t('onboarding.OnboardingChecklist.ocultarPorHoy')}
+                        Ocultar por hoy
                     </Button>
                 </div>
                 {/* Progress bar */}

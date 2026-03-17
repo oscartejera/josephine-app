@@ -9,7 +9,6 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard, Plus, Trash2, CheckCircle2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 interface PaymentMethod {
     id: string;
@@ -23,7 +22,6 @@ interface PaymentMethod {
 }
 
 export function PaymentMethodsTab() {
-  const { t } = useTranslation();
     const { toast } = useToast();
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(() => {
         const saved = localStorage.getItem('paymentMethods');
@@ -62,15 +60,15 @@ export function PaymentMethodsTab() {
     const handleAddPaymentMethod = () => {
         const cleaned = newCard.cardNumber.replace(/\s/g, '');
         if (cleaned.length < 13) {
-            toast({ variant: "destructive", title: t("common.error"), description: "Card number is invalid" });
+            toast({ variant: "destructive", title: "Error", description: "Card number is invalid" });
             return;
         }
         if (!newCard.expiryMonth || !newCard.expiryYear) {
-            toast({ variant: "destructive", title: t("common.error"), description: "Please enter expiry date" });
+            toast({ variant: "destructive", title: "Error", description: "Please enter expiry date" });
             return;
         }
         if (newCard.cvv.length < 3) {
-            toast({ variant: "destructive", title: t("common.error"), description: "CVV is invalid" });
+            toast({ variant: "destructive", title: "Error", description: "CVV is invalid" });
             return;
         }
 
@@ -88,7 +86,7 @@ export function PaymentMethodsTab() {
         setPaymentMethods([...paymentMethods, newMethod]);
         setNewCard({ cardNumber: '', expiryMonth: '', expiryYear: '', cvv: '', nickname: '' });
         setShowAddPayment(false);
-        toast({ title: t('payments.methodAdded'), description: `${newMethod.brand} ending in ${newMethod.last4}` });
+        toast({ title: "Payment method added", description: `${newMethod.brand} ending in ${newMethod.last4}` });
     };
 
     const handleSetDefaultPayment = (id: string) => {
@@ -96,7 +94,7 @@ export function PaymentMethodsTab() {
             ...pm,
             isDefault: pm.id === id
         })));
-        toast({ title: t('payments.defaultUpdated'), description: t('payments.setAsDefault') });
+        toast({ title: "Default updated", description: "Payment method set as default" });
     };
 
     const handleDeletePayment = () => {
@@ -111,7 +109,7 @@ export function PaymentMethodsTab() {
 
         setPaymentMethods(remaining);
         setDeletePaymentId(null);
-        toast({ title: t('common.deleted'), description: t('payments.methodRemoved') });
+        toast({ title: "Deleted", description: "Payment method removed" });
     };
 
     const getCardIcon = (brand?: string) => {
@@ -126,27 +124,27 @@ export function PaymentMethodsTab() {
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <CreditCard className="h-5 w-5" />
-                                {t('settings.PaymentMethodsTab.paymentMethods')}
+                                Payment Methods
                             </CardTitle>
-                            <CardDescription>{t("settings.managePaymentMethods")}</CardDescription>
+                            <CardDescription>Manage payment methods for procurement autopay</CardDescription>
                         </div>
                         <Dialog open={showAddPayment} onOpenChange={setShowAddPayment}>
                             <DialogTrigger asChild>
                                 <Button>
                                     <Plus className="h-4 w-4 mr-2" />
-                                    {t('settings.PaymentMethodsTab.addPaymentMethod')}
+                                    Add Payment Method
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>{t('settings.PaymentMethodsTab.addPaymentMethod1')}</DialogTitle>
+                                    <DialogTitle>Add Payment Method</DialogTitle>
                                     <DialogDescription>
-                                        {t('settings.PaymentMethodsTab.addACreditOrDebit')}
+                                        Add a credit or debit card for automated procurement payments.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="cardNumber">{t('settings.PaymentMethodsTab.cardNumber')}</Label>
+                                        <Label htmlFor="cardNumber">Card Number</Label>
                                         <Input
                                             id="cardNumber"
                                             placeholder="1234 5678 9012 3456"
@@ -160,7 +158,7 @@ export function PaymentMethodsTab() {
                                     </div>
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="expiryMonth">{t('settings.PaymentMethodsTab.month')}</Label>
+                                            <Label htmlFor="expiryMonth">Month</Label>
                                             <Select
                                                 value={newCard.expiryMonth}
                                                 onValueChange={(val) => setNewCard({ ...newCard, expiryMonth: val })}
@@ -178,7 +176,7 @@ export function PaymentMethodsTab() {
                                             </Select>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="expiryYear">{t('settings.PaymentMethodsTab.year')}</Label>
+                                            <Label htmlFor="expiryYear">Year</Label>
                                             <Select
                                                 value={newCard.expiryYear}
                                                 onValueChange={(val) => setNewCard({ ...newCard, expiryYear: val })}
@@ -199,7 +197,7 @@ export function PaymentMethodsTab() {
                                             </Select>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="cvv">{t('settings.PaymentMethodsTab.cvv')}</Label>
+                                            <Label htmlFor="cvv">CVV</Label>
                                             <Input
                                                 id="cvv"
                                                 placeholder="123"
@@ -214,7 +212,7 @@ export function PaymentMethodsTab() {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="nickname">{t('settings.PaymentMethodsTab.nicknameOptional')}</Label>
+                                        <Label htmlFor="nickname">Nickname (optional)</Label>
                                         <Input
                                             id="nickname"
                                             placeholder="e.g., Company Card, Personal Visa"
@@ -224,15 +222,15 @@ export function PaymentMethodsTab() {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
                                         <Shield className="h-4 w-4" />
-                                        <span>{t("settings.cardEncrypted")}</span>
+                                        <span>Your card details are securely encrypted</span>
                                     </div>
                                 </div>
                                 <DialogFooter>
                                     <Button variant="outline" onClick={() => setShowAddPayment(false)}>
-                                        {t('settings.PaymentMethodsTab.cancel')}
+                                        Cancel
                                     </Button>
                                     <Button onClick={handleAddPaymentMethod}>
-                                        {t('settings.PaymentMethodsTab.addCard')}
+                                        Add Card
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -243,8 +241,8 @@ export function PaymentMethodsTab() {
                     {paymentMethods.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                             <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-40" />
-                            <p className="font-medium">{t("settings.noPaymentMethods")}</p>
-                            <p className="text-sm mt-1">{t("settings.addPaymentMethodDesc")}</p>
+                            <p className="font-medium">No payment methods</p>
+                            <p className="text-sm mt-1">Add a payment method to enable autopay for procurement orders</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -266,7 +264,7 @@ export function PaymentMethodsTab() {
                                                 {method.isDefault && (
                                                     <Badge variant="secondary" className="text-xs">
                                                         <CheckCircle2 className="h-3 w-3 mr-1" />
-                                                        {t('settings.PaymentMethodsTab.default')}
+                                                        Default
                                                     </Badge>
                                                 )}
                                             </div>
@@ -282,7 +280,7 @@ export function PaymentMethodsTab() {
                                                 size="sm"
                                                 onClick={() => handleSetDefaultPayment(method.id)}
                                             >
-                                                {t('settings.PaymentMethodsTab.setAsDefault')}
+                                                Set as default
                                             </Button>
                                         )}
                                         <Button
@@ -300,9 +298,10 @@ export function PaymentMethodsTab() {
                     )}
 
                     <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                        <h4 className="font-medium mb-2">{t('settings.PaymentMethodsTab.aboutAutopay')}</h4>
+                        <h4 className="font-medium mb-2">About Autopay</h4>
                         <p className="text-sm text-muted-foreground">
-                            {t('settings.PaymentMethodsTab.whenYouPlaceAProcurement')}
+                            When you place a procurement order, your default payment method will be charged automatically.
+                            You can review order totals before confirming each purchase.
                         </p>
                     </div>
                 </CardContent>
@@ -312,13 +311,13 @@ export function PaymentMethodsTab() {
             <AlertDialog open={!!deletePaymentId} onOpenChange={(open) => !open && setDeletePaymentId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>{t("settings.deletePaymentMethod")}</AlertDialogTitle>
+                        <AlertDialogTitle>Delete payment method?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {t('settings.PaymentMethodsTab.thisWillRemoveThisPayment')}
+                            This will remove this payment method from your account. This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>{t('settings.PaymentMethodsTab.cancel1')}</AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeletePayment}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

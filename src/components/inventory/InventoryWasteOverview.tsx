@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
-import { useTranslation } from 'react-i18next';
 
 interface WasteByCategory {
   category: string;
@@ -28,13 +27,11 @@ interface InventoryWasteOverviewProps {
 }
 
 export function InventoryWasteOverview({
-  
   categoryData,
   locationData,
   isLoading = false,
   currency = '€'
 }: InventoryWasteOverviewProps) {
-  const { t } = useTranslation();
   // Professional blue tones
   const accountedColor = 'hsl(199, 70%, 50%)';
   const unaccountedColor = 'hsl(199, 50%, 75%)';
@@ -72,18 +69,18 @@ export function InventoryWasteOverview({
   return (
     <Card className="h-full border-[#E8E5DD] rounded-2xl shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-foreground">{t('inventory.InventoryWasteOverview.wasteOverview')}</CardTitle>
+        <CardTitle className="text-base font-semibold text-foreground">Waste overview</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Legend at top */}
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: accountedColor }} />
-            <span className="text-muted-foreground">{t('inventory.InventoryWasteOverview.accounted')}</span>
+            <span className="text-muted-foreground">Accounted</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: unaccountedColor }} />
-            <span className="text-muted-foreground">{t('inventory.InventoryWasteOverview.unaccounted')}</span>
+            <span className="text-muted-foreground">Unaccounted</span>
           </div>
         </div>
 
@@ -124,10 +121,10 @@ export function InventoryWasteOverview({
           <Table>
             <TableHeader>
               <TableRow className="border-b border-border/50">
-                <TableHead className="w-[140px] text-xs font-medium text-muted-foreground">{t('inventory.InventoryWasteOverview.locations')}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryWasteOverview.accounted1')}</TableHead>
+                <TableHead className="w-[140px] text-xs font-medium text-muted-foreground">Locations</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">Accounted %</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Accounted {currency}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryWasteOverview.unaccounted1')}</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">Unaccounted %</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Unaccounted {currency}</TableHead>
               </TableRow>
             </TableHeader>
@@ -144,14 +141,14 @@ export function InventoryWasteOverview({
                     </>
                   ) : (
                     <TableCell colSpan={4} className="py-2.5 text-center text-sm text-muted-foreground italic">
-                      {t('inventory.InventoryWasteOverview.noStockCountDone')}
+                      No stock count done
                     </TableCell>
                   )}
                 </TableRow>
               ))}
               {/* Total row */}
               <TableRow className="border-t-2 border-border bg-muted/20">
-                <TableCell className="py-2.5 font-semibold text-sm text-muted-foreground">{t("common.total")}</TableCell>
+                <TableCell className="py-2.5 font-semibold text-sm text-muted-foreground">Total</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{avgAccountedPercent.toFixed(1)}%</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{currency}{totals.accountedAmount.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</TableCell>
                 <TableCell className="py-2.5 text-right font-semibold text-sm text-muted-foreground">{avgUnaccountedPercent.toFixed(1)}%</TableCell>

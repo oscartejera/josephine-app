@@ -6,7 +6,6 @@ import { Search } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { CashLocationData } from '@/hooks/useCashManagementData';
-import { useTranslation } from 'react-i18next';
 
 interface CashLocationTableProps {
   data: CashLocationData[];
@@ -20,7 +19,7 @@ function formatCurrency(value: number, currency = '€'): string {
 
 function DeltaCell({ value, suffix = '%', inverse = false }: { value: number; suffix?: string; inverse?: boolean }) {
   const isPositive = inverse ? value < 0 : value > 0;
-  const isNegative = inverse ? value > {t('cash-management.CashLocationTable.0Value')} < 0;
+  const isNegative = inverse ? value > 0 : value < 0;
   
   return (
     <span className={cn(
@@ -35,7 +34,6 @@ function DeltaCell({ value, suffix = '%', inverse = false }: { value: number; su
 }
 
 export function CashLocationTable({ data, isLoading = false, currency = '€' }: CashLocationTableProps) {
-  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filteredData = useMemo(() => {
@@ -80,11 +78,11 @@ export function CashLocationTable({ data, isLoading = false, currency = '€' }:
   return (
     <Card>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-base font-medium">{t('cash-management.CashLocationTable.cashByLocation')}</CardTitle>
+        <CardTitle className="text-base font-medium">Cash by Location</CardTitle>
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('cash-management.CashLocationTable.searchLocations')}
+            placeholder="Search locations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -96,17 +94,17 @@ export function CashLocationTable({ data, isLoading = false, currency = '€' }:
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[150px]">{t('cash-management.CashLocationTable.location')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.sales')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.vsPrev')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.cash')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.leakage')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.leakage1')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.vsPrev1')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.refunds')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.discounts')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.voids')}</TableHead>
-                <TableHead className="text-right">{t('cash-management.CashLocationTable.cashVar')}</TableHead>
+                <TableHead className="min-w-[150px]">Location</TableHead>
+                <TableHead className="text-right">Sales</TableHead>
+                <TableHead className="text-right">vs Prev</TableHead>
+                <TableHead className="text-right">Cash %</TableHead>
+                <TableHead className="text-right">Leakage</TableHead>
+                <TableHead className="text-right">Leakage %</TableHead>
+                <TableHead className="text-right">vs Prev</TableHead>
+                <TableHead className="text-right">Refunds</TableHead>
+                <TableHead className="text-right">Discounts</TableHead>
+                <TableHead className="text-right">Voids</TableHead>
+                <TableHead className="text-right">Cash Var</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -135,7 +133,7 @@ export function CashLocationTable({ data, isLoading = false, currency = '€' }:
               ))}
               {/* Totals row */}
               <TableRow className="bg-muted/30 font-medium border-t-2">
-                <TableCell>{t('budgets.totalAverage')}</TableCell>
+                <TableCell>Total / Average</TableCell>
                 <TableCell className="text-right">{formatCurrency(totals.sales, currency)}</TableCell>
                 <TableCell className="text-right"><DeltaCell value={totals.salesDelta} /></TableCell>
                 <TableCell className="text-right">{totals.avgCashPct.toFixed(1)}%</TableCell>

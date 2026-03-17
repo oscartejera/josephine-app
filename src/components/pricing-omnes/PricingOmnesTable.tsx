@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, ArrowUpDown, Target } from 'lucide-react';
 import type { PricingOmnesCategoryResult } from '@/lib/pricing-omnes-engine';
-import { useTranslation } from 'react-i18next';
 
 interface PricingOmnesTableProps {
   result: PricingOmnesCategoryResult | null;
@@ -23,9 +22,10 @@ const BAND_BADGES: Record<string, { label: string; className: string }> = {
 };
 
 export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
-  const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [bandFilter, setBandFilter] = useState<string>{t('pricing-omnes.PricingOmnesTable.allConstSortfieldSetsortfieldUsestate')}<SortField>{t('pricing-omnes.PricingOmnesTable.listedpriceConstSortdirectionSetsortdire')}<SortDirection>('asc');
+  const [bandFilter, setBandFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<SortField>('listed_price');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const items = result?.items || [];
 
@@ -63,7 +63,7 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
   );
 
   if (loading) {
-    return <Card><CardHeader><CardTitle>{t('pricing-omnes.PricingOmnesTable.productsByBand')}</CardTitle></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>;
+    return <Card><CardHeader><CardTitle>Products by Band</CardTitle></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>;
   }
 
   if (!result) return null;
@@ -71,13 +71,13 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('pricing-omnes.PricingOmnesTable.productsByPriceBand')}</CardTitle>
+        <CardTitle>Products by Price Band</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder={t('pricing-omnes.PricingOmnesTable.buscar')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
           <div className="flex gap-1.5">
             {['all', 'lower', 'middle', 'upper'].map(b => (
@@ -99,17 +99,17 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortHeader field="item_name">{t('pricing-omnes.PricingOmnesTable.product')}</SortHeader>
-                <SortHeader field="listed_price">{t('pricing-omnes.PricingOmnesTable.price')}</SortHeader>
-                <SortHeader field="units_sold">{t('pricing-omnes.PricingOmnesTable.units')}</SortHeader>
-                <SortHeader field="item_revenue">{t('pricing-omnes.PricingOmnesTable.revenue')}</SortHeader>
-                <TableHead>{t('pricing-omnes.PricingOmnesTable.band')}</TableHead>
-                <TableHead>{t('pricing-omnes.PricingOmnesTable.promotion')}</TableHead>
+                <SortHeader field="item_name">Product</SortHeader>
+                <SortHeader field="listed_price">Price</SortHeader>
+                <SortHeader field="units_sold">Units</SortHeader>
+                <SortHeader field="item_revenue">Revenue</SortHeader>
+                <TableHead>Band</TableHead>
+                <TableHead>Promotion</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredItems.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t('pricing-omnes.PricingOmnesTable.noProducts')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products</TableCell></TableRow>
               ) : filteredItems.map((item) => {
                 const bandBadge = BAND_BADGES[item.band] || BAND_BADGES.lower;
                 return (
@@ -124,7 +124,7 @@ export function PricingOmnesTable({ result, loading }: PricingOmnesTableProps) {
                     <TableCell>
                       {item.is_promotion_candidate && (
                         <Badge variant="outline" className="text-[10px] gap-1 text-violet-600 border-violet-300">
-                          <Target className="h-3 w-3" /> {t('pricing-omnes.PricingOmnesTable.promote')}
+                          <Target className="h-3 w-3" /> Promote
                         </Badge>
                       )}
                     </TableCell>

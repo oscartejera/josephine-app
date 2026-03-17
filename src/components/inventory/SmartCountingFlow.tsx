@@ -14,7 +14,6 @@ import { useApp } from '@/contexts/AppContext';
 import { format } from 'date-fns';
 import { Package, CheckCircle2, AlertTriangle, ArrowRight, RotateCcw, ClipboardCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 
 interface CountItem {
     id: string;
@@ -29,9 +28,12 @@ interface CountItem {
 }
 
 export function SmartCountingFlow({ locationId }: { locationId: string | null }) {
-  const { t } = useTranslation();
     const { group } = useApp();
-    const [items, setItems] = useState<CountItem[]>{t('inventory.SmartCountingFlow.constCurrentindexSetcurrentindexUsestate')}<'idle' | 'counting' | 'review'>('idle');
+    const [items, setItems] = useState<CountItem[]>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [countValue, setCountValue] = useState('');
+    const [phase, setPhase] = useState<'idle' | 'counting' | 'review'>('idle');
     const [saving, setSaving] = useState(false);
 
     const loadItems = useCallback(async () => {
@@ -73,7 +75,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
                 variance: null,
                 variancePct: null,
                 status: 'pending',
-                categoryName: item.inventory_categories?.name || t('inventory.sinCategoria'),
+                categoryName: item.inventory_categories?.name || 'Sin categoría',
             })));
         } catch (err) {
             console.error('Smart counting load error:', err);
@@ -93,7 +95,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
     const submitCount = () => {
         const value = parseFloat(countValue);
         if (isNaN(value) || value < 0) {
-            toast.error(t('smartCounting.toastInvalidQty'));
+            toast.error('Introduce una cantidad válida');
             return;
         }
 
@@ -133,7 +135,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
         try {
             const counted = items.filter(i => i.countedQty !== null);
             if (counted.length === 0) {
-                toast.error(t('smartCounting.toastNoCountsToSave'));
+                toast.error('No hay contajes para guardar');
                 setSaving(false);
                 return;
             }
@@ -155,7 +157,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
             setPhase('idle');
             loadItems();
         } catch (err: any) {
-            toast.error(t('smartCounting.toastSaveError'), { description: err.message });
+            toast.error('Error al guardar', { description: err.message });
         } finally {
             setSaving(false);
         }
@@ -166,7 +168,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
     const progress = items.length > 0 ? (countedCount / items.length) * 100 : 0;
 
     if (loading) {
-        return <div className="text-center py-8 text-muted-foreground">{t('inventory.cargandoInventario')}</div>;
+        return <div className="text-center py-8 text-muted-foreground">Cargando inventario...</div>;
     }
 
     // IDLE: Show start button
@@ -175,13 +177,13 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
             <Card>
                 <CardContent className="py-8 text-center">
                     <ClipboardCheck className="h-12 w-12 mx-auto mb-4 text-primary/60" />
-                    <h3 className="text-lg font-semibold mb-2">{t('inventory.SmartCountingFlow.smartCounting')}</h3>
+                    <h3 className="text-lg font-semibold mb-2">Smart Counting</h3>
                     <p className="text-sm text-muted-foreground mb-4">
                         Contaje guiado de {items.length} artículos con alertas de variación automáticas
                     </p>
                     <Button onClick={startCounting} disabled={items.length === 0}>
                         <Package className="h-4 w-4 mr-2" />
-                        {t('inventory.SmartCountingFlow.iniciarContaje')}
+                        Iniciar Contaje
                     </Button>
                 </CardContent>
             </Card>
@@ -194,7 +196,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
         return (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{t('inventory.SmartCountingFlow.smartCounting1')}</h3>
+                    <h3 className="font-semibold">Smart Counting</h3>
                     <Badge variant="outline">{currentIndex + 1} / {items.length}</Badge>
                 </div>
                 <Progress value={(currentIndex / items.length) * 100} />
@@ -214,7 +216,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
                                 min="0"
                                 value={countValue}
                                 onChange={e => setCountValue(e.target.value)}
-                                placeholder={t('inventory.quantityInUnit', { unit: current.unit })}
+                                placeholder={`Cantidad en ${current.unit}`}
                                 className="text-center text-lg"
                                 autoFocus
                                 onKeyDown={e => e.key === 'Enter' && submitCount()}
@@ -224,11 +226,11 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
 
                         <div className="flex gap-2 justify-center mt-4">
                             <Button variant="ghost" size="sm" onClick={skipItem}>
-                                {t('inventory.SmartCountingFlow.saltar')}
+                                Saltar
                             </Button>
                             <Button onClick={submitCount} disabled={!countValue}>
                                 <ArrowRight className="h-4 w-4 mr-1" />
-                                {currentIndex < items.length - 1 ? t('settings.siguiente') : 'Finalizar'}
+                                {currentIndex < items.length - 1 ? 'Siguiente' : 'Finalizar'}
                             </Button>
                         </div>
                     </CardContent>
@@ -241,7 +243,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{t('inventory.revisionDelContaje')}</h3>
+                <h3 className="font-semibold">Revisión del Contaje</h3>
                 <div className="flex gap-2">
                     <Badge variant="outline">{countedCount} contados</Badge>
                     {varianceCount > 0 && (
@@ -287,11 +289,11 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
             <div className="flex gap-2 justify-end">
                 <Button variant="ghost" onClick={() => { setPhase('idle'); }}>
                     <RotateCcw className="h-4 w-4 mr-1" />
-                    {t('inventory.SmartCountingFlow.reiniciar')}
+                    Reiniciar
                 </Button>
                 <Button onClick={saveAll} disabled={saving}>
                     <CheckCircle2 className="h-4 w-4 mr-1" />
-                    {saving ? 'Guardando...' : t('inventory.saveCounts', { count: countedCount })}
+                    {saving ? 'Guardando...' : `Guardar ${countedCount} contajes`}
                 </Button>
             </div>
         </div>

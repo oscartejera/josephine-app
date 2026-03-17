@@ -4,10 +4,8 @@ import { Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 export function ExportTab() {
-  const { t } = useTranslation();
     const { dataSource } = useApp();
     const { toast } = useToast();
 
@@ -34,7 +32,7 @@ export function ExportTab() {
         }
 
         if (data.length === 0) {
-            toast({ variant: "destructive", title: t("common.noData"), description: "No hay datos para exportar" });
+            toast({ variant: "destructive", title: "Sin datos", description: "No hay datos para exportar" });
             return;
         }
 
@@ -51,7 +49,7 @@ export function ExportTab() {
         a.download = filename;
         a.click();
 
-        toast({ title: t('common.exported'), description: `${filename} descargado` });
+        toast({ title: "Exportado", description: `${filename} descargado` });
     };
 
     return (
@@ -59,34 +57,34 @@ export function ExportTab() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Download className="h-5 w-5" />
-                    {t('settings.ExportTab.exportarDatos')}
+                    Exportar Datos
                 </CardTitle>
-                <CardDescription>{t("settings.downloadCsv")}</CardDescription>
+                <CardDescription>Descarga datos en formato CSV</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card className="p-4">
-                        <h3 className="font-medium mb-2">{t('settings.ExportTab.tickets')}</h3>
-                        <p className="text-sm text-muted-foreground mb-4">{t("settings.salesHistory")}</p>
+                        <h3 className="font-medium mb-2">Tickets</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Historial de ventas y transacciones</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('tickets')}>
                             <Download className="h-4 w-4 mr-2" />
-                            {t('settings.ExportTab.exportar')}
+                            Exportar
                         </Button>
                     </Card>
                     <Card className="p-4">
-                        <h3 className="font-medium mb-2">{t('settings.empleados')}</h3>
-                        <p className="text-sm text-muted-foreground mb-4">{t("settings.employeeList")}</p>
+                        <h3 className="font-medium mb-2">Empleados</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Lista de empleados y roles</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('employees')}>
                             <Download className="h-4 w-4 mr-2" />
-                            {t('settings.ExportTab.exportar1')}
+                            Exportar
                         </Button>
                     </Card>
                     <Card className="p-4">
-                        <h3 className="font-medium mb-2">{t('onboarding.inventario')}</h3>
-                        <p className="text-sm text-muted-foreground mb-4">{t("settings.inventoryItems")}</p>
+                        <h3 className="font-medium mb-2">Inventario</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Items de inventario y stock</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('inventory')}>
                             <Download className="h-4 w-4 mr-2" />
-                            {t('settings.ExportTab.exportar2')}
+                            Exportar
                         </Button>
                     </Card>
                 </div>

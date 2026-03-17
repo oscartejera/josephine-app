@@ -5,21 +5,20 @@
 
 import { useState, useEffect } from 'react';
 import { ChefHat, Loader2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 const QUOTES = [
   'La IA dice que tu plato estrella es el que menos vendes... awkward.',
   'Entrenando redes neuronales con recetas de la abuela...',
-  t('integrations.splashMsg1'),
-  t('integrations.splashMsg2'),
-  t('integrations.splashMsg3'),
+  'Calculando cuántas servilletas necesitas mañana...',
+  'Analizando por qué todos piden postre los viernes...',
+  'Prediciendo la próxima tendencia gastronómica...',
   'Convirtiendo tickets en insights... sin propina.',
-  t('integrations.splashMsg4'),
-  t('integrations.splashMsg5'),
+  'Tu sous-chef digital está calentando motores...',
+  'Optimizando el flujo de la cocina con matemáticas...',
   'Buscando patrones en tus pedidos como un detective...',
-  t('integrations.splashMsg6'),
-  t('integrations.splashMsg7'),
-  t('integrations.splashMsg8'),
+  'La IA ya sabe qué van a pedir antes que ellos...',
+  'Sincronizando datos más rápido que un camarero veterano...',
+  'Procesando números como si fueran mise en place...',
 ];
 
 interface SyncSplashScreenProps {
@@ -27,7 +26,6 @@ interface SyncSplashScreenProps {
 }
 
 export default function SyncSplashScreen({ message = 'Actualizando datos...' }: SyncSplashScreenProps) {
-  const { t } = useTranslation();
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * QUOTES.length));
 
   useEffect(() => {
@@ -45,7 +43,7 @@ export default function SyncSplashScreen({ message = 'Actualizando datos...' }: 
           <ChefHat className="w-10 h-10 text-primary-foreground" />
         </div>
 
-        <span className="font-display font-bold text-3xl">{t('integrations.SyncSplashScreen.josephine')}</span>
+        <span className="font-display font-bold text-3xl">Josephine</span>
 
         {/* Spinner */}
         <Loader2 className="w-6 h-6 animate-spin text-primary" />

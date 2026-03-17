@@ -2,7 +2,6 @@ import { Star, MessageSquare, Clock, BarChart3 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReviewsSummary } from '@/hooks/useReviewsData';
-import { useTranslation } from 'react-i18next';
 
 interface ReviewsKPICardsProps {
   summary: ReviewsSummary;
@@ -37,7 +36,6 @@ function KPICard({ title, value, icon, isLoading }: KPICardProps) {
 }
 
 export function ReviewsKPICards({ summary, isLoading }: ReviewsKPICardsProps) {
-  const { t } = useTranslation();
   const formatRating = (rating: number) => {
     return rating.toFixed(2);
   };
@@ -54,25 +52,25 @@ export function ReviewsKPICards({ summary, isLoading }: ReviewsKPICardsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <KPICard
-        title={t('reviews.ReviewsKPICards.rating')}
+        title="Rating"
         value={formatRating(summary.rating_avg)}
         icon={<Star className="h-5 w-5 text-primary" />}
         isLoading={isLoading}
       />
       <KPICard
-        title={t('reviews.ReviewsKPICards.ratingsInThePeriod')}
+        title="Ratings in the period"
         value={summary.ratings_in_period.toString()}
         icon={<BarChart3 className="h-5 w-5 text-primary" />}
         isLoading={isLoading}
       />
       <KPICard
-        title={t('reviews.ReviewsKPICards.responseRate')}
+        title="Response rate"
         value={formatResponseRate(summary.response_rate)}
         icon={<MessageSquare className="h-5 w-5 text-primary" />}
         isLoading={isLoading}
       />
       <KPICard
-        title={t('reviews.ReviewsKPICards.avgResponseTime')}
+        title="Avg response time"
         value={formatResponseTime(summary.avg_response_time_hours)}
         icon={<Clock className="h-5 w-5 text-primary" />}
         isLoading={isLoading}

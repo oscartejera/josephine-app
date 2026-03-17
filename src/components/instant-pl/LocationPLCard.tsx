@@ -10,7 +10,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useTranslation } from 'react-i18next';
 
 interface LocationPLCardProps {
   data: LocationPLMetrics;
@@ -134,13 +133,11 @@ function MetricRow({
 }
 
 export function LocationPLCard({
-  
   data,
   viewMode,
   isSelected = false,
   onClick
 }: LocationPLCardProps) {
-  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
 
   // Compute display values based on view mode
@@ -253,7 +250,7 @@ export function LocationPLCard({
       {/* Metrics */}
       <div className="px-4">
         <MetricRow
-          label={t('instant-pl.LocationPLCard.sales')}
+          label="Sales"
           actualPrimary={salesDisplay.actualPrimary}
           actualSecondary={salesDisplay.actualSecondary}
           forecastPrimary={salesDisplay.forecastPrimary}
@@ -263,7 +260,7 @@ export function LocationPLCard({
         />
 
         <MetricRow
-          label={t('instant-pl.LocationPLCard.cogs')}
+          label="CoGS"
           actualPrimary={cogsDisplay.actualPrimary}
           actualSecondary={cogsDisplay.actualSecondary}
           forecastPrimary={cogsDisplay.forecastPrimary}
@@ -285,7 +282,7 @@ export function LocationPLCard({
         />
 
         <MetricRow
-          label={t('instant-pl.LocationPLCard.flashProfit')}
+          label="Flash Profit"
           actualPrimary={flashProfitDisplay.actualPrimary}
           actualSecondary={flashProfitDisplay.actualSecondary}
           forecastPrimary={flashProfitDisplay.forecastPrimary}

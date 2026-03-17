@@ -8,7 +8,6 @@ import { getKpiRangeSummary } from '@/data/kpi';
 import { format, isSameDay, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 
-import { useTranslation } from 'react-i18next';
 export type CompareMode = 'forecast' | 'previous_period' | 'previous_year';
 export type GranularityMode = 'daily' | 'weekly' | 'monthly';
 
@@ -114,7 +113,6 @@ function emptyData(): BISalesData {
 }
 
 export function useBISalesData({ dateRange, granularity, compareMode, locationIds }: UseBISalesDataParams) {
-  const { t } = useTranslation();
   const { locations, group, dataSource } = useApp();
   const { session } = useAuth();
   const queryClient = useQueryClient();
@@ -170,7 +168,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
 
   const query = useQuery({
     queryKey: ['bi-sales', fromISO, toISO, granularity, compareMode, effectiveLocationIds, orgId],
-    enabled: !!orgId && effectiveLocationIds.length > {t('hooks.useBISalesData.0QueryfnAsyncPromise')}<BISalesData> => {
+    enabled: !!orgId && effectiveLocationIds.length > 0,
+    queryFn: async (): Promise<BISalesData> => {
 
       const fromStr = format(dateRange.from, 'yyyy-MM-dd');
       const toStr = format(dateRange.to, 'yyyy-MM-dd');
@@ -190,7 +189,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       // When pos_daily_finance has no data for the resolved data_source
       // (common in demo mode), aggregate hourly (facts_sales_15m) into
       // daily buckets so the chart and KPIs still work.
-      const hourlyRows = (ts.hourly || []) as Record<string, unknown>{t('hooks.useBISalesData.letDailyrowsTsdailyAsRecord')}<string, unknown>[];
+      const hourlyRows = (ts.hourly || []) as Record<string, unknown>[];
+      let dailyRows = (ts.daily || []) as Record<string, unknown>[];
 
       const rpcKpisEmpty =
         (Number(ts.kpis.actual_sales) || 0) === 0 &&
@@ -285,7 +285,7 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
         hourlyRows
           .filter((h) => {
             const hour = new Date(h.ts_hour as string).getHours();
-            return hour >{t('hooks.useBISalesData.10Hour')} <= 21;
+            return hour >= 10 && hour <= 21;
           })
           .forEach((h) => {
             const hour = new Date(h.ts_hour as string);
@@ -329,7 +329,8 @@ export function useBISalesData({ dateRange, granularity, compareMode, locationId
       const tpItems = tp?.items || [];
 
       if (tpItems.length > 0) {
-        const categoryMap = new Map<string, number>{t('hooks.useBISalesData.tpitemsforeachitemRecord')}<string, unknown>) => {
+        const categoryMap = new Map<string, number>();
+        tpItems.forEach((item: Record<string, unknown>) => {
           const cat = (item.category as string) || 'Other';
           categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(item.sales || 0));
         });

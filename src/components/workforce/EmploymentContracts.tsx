@@ -31,7 +31,6 @@ import {
 import { FileText, Plus, Edit, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface Contract {
     id: string;
@@ -49,12 +48,12 @@ interface Contract {
 const CONTRACT_TYPES = [
     { value: 'indefinido', label: 'Indefinido' },
     { value: 'temporal', label: 'Temporal' },
-    { value: 'practicas', label: t('payroll.practicas') },
-    { value: 'formacion', label: t('payroll.formacion') },
+    { value: 'practicas', label: 'Prácticas' },
+    { value: 'formacion', label: 'Formación' },
     { value: 'fijo_discontinuo', label: 'Fijo Discontinuo' },
     { value: 'por_obra', label: 'Por Obra' },
     { value: 'interinidad', label: 'Interinidad' },
-    { value: 'autonomo', label: t('team.autonomo') },
+    { value: 'autonomo', label: 'Autónomo' },
 ];
 
 const getContractLabel = (type: string) =>
@@ -72,9 +71,12 @@ interface Props {
 }
 
 export function EmploymentContracts({ locationId }: Props) {
-  const { t } = useTranslation();
     const { accessibleLocations } = useApp();
-    const [contracts, setContracts] = useState<Contract[]>{t('workforce.EmploymentContracts.constEmployeesSetemployeesUsestate')}<{ id: string; full_name: string }[]>{t('workforce.EmploymentContracts.constLoadingSetloadingUsestatetrueConst')}<string | null>(null);
+    const [contracts, setContracts] = useState<Contract[]>([]);
+    const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
     const [form, setForm] = useState({
@@ -159,7 +161,7 @@ export function EmploymentContracts({ locationId }: Props) {
 
     const handleSave = async () => {
         if (!form.employee_id) {
-            toast.error(t('contracts.toastSelectEmployee'));
+            toast.error('Selecciona un empleado');
             return;
         }
         setSaving(true);
@@ -180,18 +182,18 @@ export function EmploymentContracts({ locationId }: Props) {
                 .update(payload)
                 .eq('id', editingId);
             if (error) {
-                toast.error(t('contracts.toastUpdateError'));
+                toast.error('Error al actualizar contrato');
             } else {
-                toast.success(t('contracts.toastUpdated'));
+                toast.success('Contrato actualizado');
             }
         } else {
             const { error } = await (supabase as any)
                 .from('employment_contracts')
                 .insert(payload);
             if (error) {
-                toast.error(t('contracts.toastCreateError'));
+                toast.error('Error al crear contrato');
             } else {
-                toast.success(t('contracts.toastCreated'));
+                toast.success('Contrato creado');
             }
         }
 
@@ -208,7 +210,7 @@ export function EmploymentContracts({ locationId }: Props) {
             .eq('id', c.id);
 
         if (error) {
-            toast.error(t('contracts.toastStatusError'));
+            toast.error('Error al cambiar estado');
         } else {
             toast.success(c.active ? 'Contrato desactivado' : 'Contrato reactivado');
             fetchData();
@@ -221,35 +223,39 @@ export function EmploymentContracts({ locationId }: Props) {
         ? activeContracts.reduce((sum, c) => sum + (c.base_salary_monthly || 0), 0) / activeContracts.length
         : 0;
     const avgJornada = activeContracts.length > 0
-        ? activeContracts.reduce((sum, c) => {t('workforce.EmploymentContracts.sumCjornadapct1000Activecontractslength')}<Record<string, number>>((acc, c) => {
+        ? activeContracts.reduce((sum, c) => sum + (c.jornada_pct || 100), 0) / activeContracts.length
+        : 0;
+    const typeCounts = activeContracts.reduce<Record<string, number>>((acc, c) => {
         acc[c.contract_type] = (acc[c.contract_type] || 0) + 1;
         return acc;
     }, {});
-    const topType = Object.entries(typeCounts).sort(([, a], [, b]) => {t('workforce.EmploymentContracts.bA0Return')}
+    const topType = Object.entries(typeCounts).sort(([, a], [, b]) => b - a)[0];
+
+    return (
         <div className="space-y-4">
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">{t("workforce.activeContracts")}</p>
+                        <p className="text-xs text-muted-foreground">Contratos activos</p>
                         <p className="text-2xl font-bold mt-1">{activeContracts.length}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">{t("workforce.avgSalary")}</p>
+                        <p className="text-xs text-muted-foreground">Salario medio</p>
                         <p className="text-2xl font-bold mt-1">€{avgSalary.toFixed(0)}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">{t("workforce.avgWorkday")}</p>
+                        <p className="text-xs text-muted-foreground">Jornada media</p>
                         <p className="text-2xl font-bold mt-1">{avgJornada.toFixed(0)}%</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">{t("workforce.mostCommonType")}</p>
+                        <p className="text-xs text-muted-foreground">Tipo más común</p>
                         <p className="text-2xl font-bold mt-1">
                             {topType ? getContractLabel(topType[0]) : '—'}
                         </p>
@@ -262,7 +268,7 @@ export function EmploymentContracts({ locationId }: Props) {
                 <p className="text-sm text-muted-foreground">{contracts.length} contratos registrados</p>
                 <Button onClick={openAdd}>
                     <Plus className="mr-2 h-4 w-4" />
-                    {t('workforce.EmploymentContracts.nuevoContrato')}
+                    Nuevo contrato
                 </Button>
             </div>
 
@@ -272,13 +278,13 @@ export function EmploymentContracts({ locationId }: Props) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[220px]">{t('payroll.empleado')}</TableHead>
-                                <TableHead>{t('workforce.EmploymentContracts.tipo')}</TableHead>
-                                <TableHead className="text-right">{t('workforce.EmploymentContracts.salariomes')}</TableHead>
-                                <TableHead className="text-right">{t('workforce.EmploymentContracts.hora')}</TableHead>
-                                <TableHead className="text-right">{t('workforce.EmploymentContracts.jornada')}</TableHead>
-                                <TableHead className="text-right">{t('workforce.EmploymentContracts.irpf')}</TableHead>
-                                <TableHead className="text-center">{t("common.status")}</TableHead>
+                                <TableHead className="w-[220px]">Empleado</TableHead>
+                                <TableHead>Tipo</TableHead>
+                                <TableHead className="text-right">Salario/mes</TableHead>
+                                <TableHead className="text-right">€/hora</TableHead>
+                                <TableHead className="text-right">Jornada</TableHead>
+                                <TableHead className="text-right">IRPF</TableHead>
+                                <TableHead className="text-center">Estado</TableHead>
                                 <TableHead className="w-[80px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -290,12 +296,13 @@ export function EmploymentContracts({ locationId }: Props) {
                                             <div className="animate-pulse h-10 bg-muted rounded" />
                                         </TableCell>
                                     </TableRow>
-                                {t('workforce.EmploymentContracts.contractslength0')}
+                                ))
+                            ) : contracts.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12">
                                         <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                                        <p className="text-muted-foreground">{t("contracts.noContracts")}</p>
-                                        <p className="text-xs text-muted-foreground/60">{t("workforce.createFirstContract")}</p>
+                                        <p className="text-muted-foreground">No hay contratos registrados</p>
+                                        <p className="text-xs text-muted-foreground/60">Crea el primer contrato para tu equipo</p>
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -364,14 +371,14 @@ export function EmploymentContracts({ locationId }: Props) {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                        <DialogTitle>{editingId ? t('team.editarContrato') : 'Nuevo contrato'}</DialogTitle>
+                        <DialogTitle>{editingId ? 'Editar contrato' : 'Nuevo contrato'}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
-                            <Label>{t('payroll.empleado')}</Label>
+                            <Label>Empleado</Label>
                             <Select value={form.employee_id} onValueChange={v => setForm(f => ({ ...f, employee_id: v }))} disabled={!!editingId}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder={t('contracts.selectEmployee')} />
+                                    <SelectValue placeholder="Seleccionar empleado" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {employees.map(e => (
@@ -381,7 +388,7 @@ export function EmploymentContracts({ locationId }: Props) {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>{t("workforce.contractType")}</Label>
+                            <Label>Tipo de contrato</Label>
                             <Select value={form.contract_type} onValueChange={v => setForm(f => ({ ...f, contract_type: v }))}>
                                 <SelectTrigger>
                                     <SelectValue />
@@ -395,7 +402,7 @@ export function EmploymentContracts({ locationId }: Props) {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <Label>{t("workforce.grossSalaryMonth")}</Label>
+                                <Label>Salario bruto/mes (€)</Label>
                                 <Input
                                     type="number" step="0.01" placeholder="1500"
                                     value={form.base_salary_monthly}
@@ -403,7 +410,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('workforce.EmploymentContracts.costehora')}</Label>
+                                <Label>Coste/hora (€)</Label>
                                 <Input
                                     type="number" step="0.01" placeholder="10.50"
                                     value={form.hourly_rate}
@@ -413,7 +420,7 @@ export function EmploymentContracts({ locationId }: Props) {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <Label>{t('workforce.EmploymentContracts.jornada1')}</Label>
+                                <Label>Jornada (%)</Label>
                                 <Input
                                     type="number" step="1" min="0" max="100" placeholder="100"
                                     value={form.jornada_pct}
@@ -421,7 +428,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('workforce.EmploymentContracts.irpf')}</Label>
+                                <Label>IRPF (%)</Label>
                                 <Input
                                     type="number" step="0.1" placeholder="15"
                                     value={form.irpf_rate}
@@ -431,10 +438,10 @@ export function EmploymentContracts({ locationId }: Props) {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
+                        <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                         <Button onClick={handleSave} disabled={saving}>
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {editingId ? t('team.guardarCambios') : t('team.crearContrato')}
+                            {editingId ? 'Guardar cambios' : 'Crear contrato'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

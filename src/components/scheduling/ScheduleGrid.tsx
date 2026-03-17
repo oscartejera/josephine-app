@@ -18,7 +18,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useTranslation } from 'react-i18next';
 
 interface WeatherDayData {
   date: string;
@@ -33,7 +32,8 @@ interface ScheduleGridProps {
   viewMode: ViewMode;
   positions: string[];
   weatherData?: WeatherDayData[];
-  onMoveShift?: (shiftId: string, toEmployeeId: string, toDate: string) => {t('scheduling.ScheduleGrid.voidOnaddshiftShiftOmit')}<Shift, 'id'>) => void;
+  onMoveShift?: (shiftId: string, toEmployeeId: string, toDate: string) => void;
+  onAddShift?: (shift: Omit<Shift, 'id'>) => void;
   onInitiateSwap?: (shift: Shift, employeeName: string) => void;
 }
 
@@ -142,7 +142,7 @@ function ShiftCard({
         <ContextMenuContent>
           <ContextMenuItem onClick={onSwapClick}>
             <ArrowRightLeft className="h-4 w-4 mr-2" />
-            {t('scheduling.ScheduleGrid.requestSwap')}
+            Request Swap
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -155,7 +155,7 @@ function ShiftCard({
 function UnavailableCell() {
   return (
     <div className="flex items-center gap-1 px-2 py-1.5 bg-muted/50 rounded-md text-xs text-muted-foreground">
-      <span>{t('scheduling.ScheduleGrid.unavailable')}</span>
+      <span>Unavailable</span>
     </div>
   );
 }
@@ -163,7 +163,7 @@ function UnavailableCell() {
 function DayOffCell() {
   return (
     <div className="flex items-center gap-1 px-2 py-1.5 bg-blue-50 rounded-md text-xs text-blue-600">
-      <span>{t('scheduling.ScheduleGrid.dayOff')}</span>
+      <span>🏖️ Day off</span>
     </div>
   );
 }
@@ -182,7 +182,7 @@ function TimeOffCell({ type }: { type?: string }) {
 function PreferredCell() {
   return (
     <div className="flex items-center gap-1 px-2 py-1.5 bg-amber-50/50 rounded-md text-xs text-amber-600 border border-dashed border-amber-200">
-      <span>{t('scheduling.ScheduleGrid.prefersOff')}</span>
+      <span>⚠️ Prefers off</span>
     </div>
   );
 }
@@ -230,8 +230,11 @@ function DropZone({
 }
 
 export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShift, onAddShift, onInitiateSwap }: ScheduleGridProps) {
-  const { t } = useTranslation();
-  const [dragData, setDragData] = useState<DragData | null>{t('scheduling.ScheduleGrid.nullConstDroptargetSetdroptargetUsestate')}<{ employeeId: string; dayIndex: number } | null>{t('scheduling.ScheduleGrid.nullConstCreateshifttargetSetcreateshift')}<CreateShiftTarget | null>{t('scheduling.ScheduleGrid.nullConstSalessortSetsalessortUsestate')}<'none' | 'asc' | 'desc'>{t('scheduling.ScheduleGrid.noneConstColsortSetcolsortUsestate')}<'none' | 'asc' | 'desc'>('none');
+  const [dragData, setDragData] = useState<DragData | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ employeeId: string; dayIndex: number } | null>(null);
+  const [createShiftTarget, setCreateShiftTarget] = useState<CreateShiftTarget | null>(null);
+  const [salesSort, setSalesSort] = useState<'none' | 'asc' | 'desc'>('none');
+  const [colSort, setColSort] = useState<'none' | 'asc' | 'desc'>('none');
 
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => ({
@@ -290,7 +293,9 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
 
       const preferredOffDays = days
         .map((_, i) => emp.availability[i.toString()] === 'preferred' ? i : -1)
-        .filter(i => i >{t('scheduling.ScheduleGrid.0ConstTimeofftypesRecord')}<number, string> = {};
+        .filter(i => i >= 0);
+
+      const timeOffTypes: Record<number, string> = {};
       if (emp.timeOffInfo) {
         days.forEach((_, i) => {
           const info = emp.timeOffInfo?.[i.toString()];
@@ -500,61 +505,20 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
         {/* Header with days */}
         <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/30">
           <div className="p-3 font-medium text-sm text-muted-foreground border-r border-border">
-            {t('scheduling.ScheduleGrid.team')}
+            Team
           </div>
           {days.map((day, i) => {
             const weather = getWeatherIcon(day.dateStr);
             const WeatherIcon = weather.Icon;
 
-            // Staffing level indicator for day column
-            const kpi = data.dailyKPIs[i];
-            const forecastHours = kpi?.forecastLaborHours || 0;
-            const scheduledHours = kpi?.shiftsHours || 0;
-            const hasScheduled = scheduledHours > 0 && forecastHours > 0;
-            const staffDeviation = hasScheduled
-              ? ((scheduledHours - forecastHours) / forecastHours) * 100
-              : 0;
-            const absStaffDeviation = Math.abs(staffDeviation);
-
-            // Color coding: 🟢 ±10%, 🟡 10-25%, 🔴 >25%
-            let staffBorderColor = '';
-            let staffBadge = '';
-            let staffBadgeColor = '';
-            if (hasScheduled) {
-              if (absStaffDeviation > 25) {
-                staffBorderColor = 'border-l-2 border-l-red-400';
-                staffBadge = staffDeviation > 0 ? 'Over' : 'Under';
-                staffBadgeColor = 'bg-red-100 text-red-700';
-              } else if (absStaffDeviation > 10) {
-                staffBorderColor = 'border-l-2 border-l-amber-400';
-                staffBadge = staffDeviation > 0 ? 'Over' : 'Under';
-                staffBadgeColor = 'bg-amber-100 text-amber-700';
-              } else {
-                staffBorderColor = 'border-l-2 border-l-emerald-400';
-                staffBadge = 'OK';
-                staffBadgeColor = 'bg-emerald-100 text-emerald-700';
-              }
-            }
-
             return (
-              <div key={day.dateStr} className={cn(
-                "p-3 border-r border-border last:border-r-0",
-                staffBorderColor
-              )}>
+              <div key={day.dateStr} className="p-3 border-r border-border last:border-r-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{day.dayName}</span>
                     <span className="text-sm text-muted-foreground">{day.dayNum}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    {hasScheduled && staffBadge && (
-                      <span className={cn(
-                        "text-[9px] font-semibold px-1 py-0.5 rounded",
-                        staffBadgeColor
-                      )}>
-                        {staffBadge}
-                      </span>
-                    )}
                     <WeatherIcon className="h-4 w-4 text-muted-foreground" />
                     {weather.temp !== null && (
                       <span className="text-[10px] text-muted-foreground">{weather.temp}°</span>
@@ -595,7 +559,9 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
               const hasActual = isPastDay && actualSales !== undefined && actualSales > 0;
               const salesVariance = kpi.salesVarianceVsForecast;
               const salesVariancePct = kpi.salesVarianceVsForecastPct;
-              const varianceIsPositive = (salesVariance || 0) > {t('scheduling.ScheduleGrid.0Return')}
+              const varianceIsPositive = (salesVariance || 0) > 0;
+
+              return (
                 <Tooltip key={`sales-${day.dateStr}`}>
                   <TooltipTrigger asChild>
                     <div
@@ -608,11 +574,13 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                     >
                       <div className="flex items-center gap-1">
                         <span>€{(hasActual ? actualSales : kpi.sales).toLocaleString()}</span>
-                        {hasActual && Math.abs(salesVariancePct || 0) > {t('scheduling.ScheduleGrid.5Varianceispositive')} <TrendingUp className="h-3 w-3 text-green-500" />
+                        {hasActual && Math.abs(salesVariancePct || 0) > 5 && (
+                          varianceIsPositive
+                            ? <TrendingUp className="h-3 w-3 text-green-500" />
                             : <TrendingDown className="h-3 w-3 text-amber-500" />
                         )}
                       </div>
-                      {hasActual && <span className="text-[10px] text-muted-foreground">{t('scheduling.ScheduleGrid.actual')}</span>}
+                      {hasActual && <span className="text-[10px] text-muted-foreground">Actual</span>}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs">
@@ -626,7 +594,7 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                           </div>
                         </>
                       )}
-                      {!hasActual && isPastDay && <div className="text-muted-foreground">{t("scheduling.noActualData")}</div>}
+                      {!hasActual && isPastDay && <div className="text-muted-foreground">No actual data</div>}
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -661,7 +629,12 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
 
               // Variance data - check if extended KPI fields exist
               const hasVariance = 'varianceCost' in kpi && kpi.varianceCost !== 0;
-              const varianceIsPositive = (kpi as any).varianceCost > {t('scheduling.ScheduleGrid.0ConstVarianceabsMathabskpiAs')}
+              const varianceIsPositive = (kpi as any).varianceCost > 0;
+              const varianceAbs = Math.abs((kpi as any).varianceCost || 0);
+              const shiftsCost = (kpi as any).shiftsCost || 0;
+              const forecastCost = (kpi as any).forecastLaborCost || kpi.cost;
+
+              return (
                 <Tooltip key={`col-${day.dateStr}`}>
                   <TooltipTrigger asChild>
                     <div
@@ -681,7 +654,9 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                         )}>
                           {kpi.colPercent > 0 ? `${kpi.colPercent.toFixed(1)}%` : '-'}
                         </span>
-                        {hasVariance && varianceAbs > {t('scheduling.ScheduleGrid.50Varianceispositive')} <TrendingUp className="h-3 w-3 text-red-500" />
+                        {hasVariance && varianceAbs > 50 && (
+                          varianceIsPositive
+                            ? <TrendingUp className="h-3 w-3 text-red-500" />
                             : <TrendingDown className="h-3 w-3 text-green-500" />
                         )}
                       </div>
@@ -716,7 +691,7 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
           <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-gradient-to-r from-indigo-50/50 to-violet-50/50">
             <div className="p-2 px-3 text-xs text-muted-foreground border-r border-border flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {t('scheduling.ScheduleGrid.recHours')}
+              Rec. Hours
             </div>
             {days.map((day, i) => {
               const kpi = data.dailyKPIs[i];
@@ -738,7 +713,9 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                 deviationBg = 'bg-amber-50/50';
               }
 
-              const hasScheduled = scheduledHours > {t('scheduling.ScheduleGrid.0Return1')}
+              const hasScheduled = scheduledHours > 0;
+
+              return (
                 <Tooltip key={`hours-${day.dateStr}`}>
                   <TooltipTrigger asChild>
                     <div className={cn(
@@ -765,7 +742,7 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                   <TooltipContent side="bottom" className="text-xs">
                     <div className="space-y-1">
                       <div>Forecast: €{kpi?.forecastSales?.toLocaleString() || 0}</div>
-                      <div>{t('scheduling.ScheduleGrid.horasRecomendadas')} <strong>{forecastHours.toFixed(1)}h</strong></div>
+                      <div>Horas recomendadas: <strong>{forecastHours.toFixed(1)}h</strong></div>
                       {hasScheduled && (
                         <>
                           <div>Horas programadas: {scheduledHours.toFixed(1)}h</div>
@@ -875,11 +852,11 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                       >
                         {isTimeOff ? (
                           <TimeOffCell type={timeOffType} />
-                        {t('scheduling.ScheduleGrid.isunavailable')}
+                        ) : isUnavailable ? (
                           <UnavailableCell />
-                        {t('scheduling.ScheduleGrid.isdayoff')}
+                        ) : isDayOff ? (
                           <DayOffCell />
-                        {t('scheduling.ScheduleGrid.hasshifts')}
+                        ) : hasShifts ? (
                           <div className="space-y-1">
                             {dayShifts.map(shift => (
                               <ShiftCard
@@ -892,7 +869,7 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                               />
                             ))}
                           </div>
-                        {t('scheduling.ScheduleGrid.iscreatingenabled')}
+                        ) : isCreatingEnabled ? (
                           <EmptyCell onClick={() => handleEmptyCellClick(row.id, row.label, dayIndex)} />
                         ) : null}
                       </DropZone>
@@ -906,15 +883,15 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                     >
                       {isUnavailable ? (
                         <UnavailableCell />
-                      {t('scheduling.ScheduleGrid.isdayoff1')}
+                      ) : isDayOff ? (
                         <DayOffCell />
-                      {t('scheduling.ScheduleGrid.hasshifts1')}
+                      ) : hasShifts ? (
                         <div className="space-y-1">
                           {dayShifts.map(shift => (
                             <ShiftCard key={shift.id} shift={shift} draggable={false} />
                           ))}
                         </div>
-                      {t('scheduling.ScheduleGrid.iscreatingenabled1')}
+                      ) : isCreatingEnabled ? (
                         <EmptyCell onClick={() => handleEmptyCellClick(row.id, row.label, dayIndex)} />
                       ) : null}
                     </div>
@@ -928,8 +905,8 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
         {/* Hints */}
         {(isDraggingEnabled || isCreatingEnabled) && (
           <div className="px-4 py-2 bg-muted/30 border-t border-border text-xs text-muted-foreground flex gap-4">
-            {isDraggingEnabled && <span>{t('scheduling.ScheduleGrid.dragShiftsToReassign')}</span>}
-            {isCreatingEnabled && <span>{t('scheduling.ScheduleGrid.clickEmptyCellsToAdd')}</span>}
+            {isDraggingEnabled && <span>💡 Drag shifts to reassign</span>}
+            {isCreatingEnabled && <span>➕ Click empty cells to add shifts</span>}
           </div>
         )}
       </div>

@@ -7,10 +7,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useTranslation } from 'react-i18next';
 
 const REASON_LABELS: Record<string, string> = {
-    auto_demo_no_sync: t('data.sinDatosPos'),
+    auto_demo_no_sync: 'Sin datos POS',
     auto_pos_recent: 'POS sincronizado',
     auto_pos_stale: 'POS desactualizado',
     manual_demo: 'Forzado a Demo',
@@ -18,8 +17,8 @@ const REASON_LABELS: Record<string, string> = {
     manual_pos_blocked_no_sync: 'POS sin datos',
     legacy_pos_connected: 'POS conectado',
     legacy_no_pos: 'Sin POS',
-    no_session: t('data.sinSesion'),
-    loading: t('data.cargando'),
+    no_session: 'Sin sesión',
+    loading: 'Cargando…',
 };
 
 interface DataSourceBadgeProps {
@@ -27,7 +26,6 @@ interface DataSourceBadgeProps {
 }
 
 export function DataSourceBadge({ collapsed = false }: DataSourceBadgeProps) {
-  const { t } = useTranslation();
     const { dataSource, dataSourceMode, dataSourceReason, dataSourceBlocked } = useDemoMode();
 
     const isPos = dataSource === 'pos';
@@ -50,8 +48,8 @@ export function DataSourceBadge({ collapsed = false }: DataSourceBadgeProps) {
 
     const tooltipText = [
         `Fuente: ${isPos ? 'POS (real)' : 'Demo'}`,
-        `Modo: ${isAuto ? t('settings.automatico') : 'Manual'}`,
-        t('common.reason', { reason: reasonLabel }),
+        `Modo: ${isAuto ? 'Automático' : 'Manual'}`,
+        `Razón: ${reasonLabel}`,
         dataSourceBlocked ? '⚠️ Bloqueado: datos POS no disponibles' : null,
     ].filter(Boolean).join('\n');
 

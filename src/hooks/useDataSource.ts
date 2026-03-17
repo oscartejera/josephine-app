@@ -19,7 +19,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-import { useTranslation } from 'react-i18next';
 export type DataSourceValue = 'pos' | 'demo';
 
 export interface DataSourceState {
@@ -117,7 +116,6 @@ export function useDataSource(): DataSourceState {
 async function legacyFallback(
   setState: React.Dispatch<React.SetStateAction<Omit<DataSourceState, 'refetch'>>>,
 ) {
-  const { t } = useTranslation();
   try {
     const { data: integrations } = await supabase
       .from('integrations')
@@ -125,7 +123,10 @@ async function legacyFallback(
       .eq('status', 'active');
 
     const synced = integrations?.find(
-      (i) => {t('hooks.useDataSource.imetadataAsRecord')}<string, unknown>{t('hooks.useDataSource.lastsyncedatConstSyncedmetaSyncedmetadat')}<string, unknown> | undefined;
+      (i) => (i.metadata as Record<string, unknown>)?.last_synced_at,
+    );
+
+    const syncedMeta = synced?.metadata as Record<string, unknown> | undefined;
 
     setState({
       dataSource: synced ? 'pos' : 'demo',

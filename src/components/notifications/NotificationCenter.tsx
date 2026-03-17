@@ -11,7 +11,6 @@ import { useNotificationStore, NotificationType } from '@/stores/notificationSto
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; bgColor: string }> = {
   sale: { icon: DollarSign, color: 'text-success', bgColor: 'bg-success/10' },
@@ -23,7 +22,6 @@ const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; b
 };
 
 export function NotificationCenter() {
-  const { t } = useTranslation();
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification, clearAll } = useNotificationStore();
 
   return (
@@ -45,7 +43,7 @@ export function NotificationCenter() {
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            <h3 className="font-semibold">{t('notifications.NotificationCenter.notificaciones')}</h3>
+            <h3 className="font-semibold">Notificaciones</h3>
             {unreadCount > 0 && (
               <Badge variant="secondary">{unreadCount} nuevas</Badge>
             )}
@@ -54,7 +52,7 @@ export function NotificationCenter() {
             {unreadCount > 0 && (
               <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-8 px-2">
                 <CheckCheck className="h-4 w-4 mr-1" />
-                <span className="text-xs">{t('notifications.marcarLeidas')}</span>
+                <span className="text-xs">Marcar leídas</span>
               </Button>
             )}
             {notifications.length > 0 && (
@@ -69,7 +67,7 @@ export function NotificationCenter() {
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Bell className="h-12 w-12 mb-3 opacity-20" />
-              <p className="text-sm">{t("common.noNotifications")}</p>
+              <p className="text-sm">No hay notificaciones</p>
             </div>
           ) : (
             <div className="divide-y">

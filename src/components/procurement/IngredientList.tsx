@@ -1,6 +1,5 @@
 import { IngredientRow } from './IngredientRow';
 import type { IngredientSku, RecommendationBreakdown } from '@/hooks/useProcurementData';
-import { useTranslation } from 'react-i18next';
 
 interface IngredientListProps {
   skus: IngredientSku[];
@@ -13,7 +12,6 @@ interface IngredientListProps {
 }
 
 export function IngredientList({
-  
   skus,
   categories,
   cart,
@@ -22,11 +20,10 @@ export function IngredientList({
   getRecommendationBreakdown,
   onUpdatePacks,
 }: IngredientListProps) {
-  const { t } = useTranslation();
   if (skus.length === 0) {
     return (
       <div className="bg-card rounded-xl border border-border p-12 text-center">
-        <p className="text-muted-foreground">{t('procurement.IngredientList.noIngredientsFoundMatchingYour')}</p>
+        <p className="text-muted-foreground">No ingredients found matching your search.</p>
       </div>
     );
   }

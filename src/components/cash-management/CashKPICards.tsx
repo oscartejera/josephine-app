@@ -3,7 +3,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { DollarSign, CreditCard, RotateCcw, TrendingDown } from 'lucide-react';
 import type { CashManagementMetrics } from '@/hooks/useCashManagementData';
-import { useTranslation } from 'react-i18next';
 
 interface CashKPICardsProps {
   metrics: CashManagementMetrics;
@@ -13,7 +12,7 @@ interface CashKPICardsProps {
 
 function DeltaBadge({ value, suffix = '%', inverse = false }: { value: number; suffix?: string; inverse?: boolean }) {
   const isPositive = inverse ? value < 0 : value > 0;
-  const isNegative = inverse ? value > {t('cash-management.CashKPICards.0Value')} < 0;
+  const isNegative = inverse ? value > 0 : value < 0;
   
   return (
     <span className={cn(
@@ -46,7 +45,6 @@ function KPICardSkeleton() {
 }
 
 export function CashKPICards({ metrics, isLoading = false, currency = '€' }: CashKPICardsProps) {
-  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -63,7 +61,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Net Sales */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.netSales')}</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Net Sales</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -82,7 +80,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Cash Collected */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.cashCollected')}</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Cash Collected</CardTitle>
           <CreditCard className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -108,7 +106,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Refunds */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.refunds')}</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Refunds</CardTitle>
           <RotateCcw className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -123,7 +121,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Leakage */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.leakage')}</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Leakage</CardTitle>
           <TrendingDown className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

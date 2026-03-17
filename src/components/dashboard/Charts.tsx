@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next';
 
 interface HourlySalesChartProps {
   data: Array<{
@@ -13,13 +12,11 @@ interface HourlySalesChartProps {
   className?: string;
 }
 
-export function HourlySalesChart({ data, title, className }: HourlySalesChartProps) {
-  const { t } = useTranslation();
-  const resolvedTitle = title ?? t("dashboard.hourlySales");
+export function HourlySalesChart({ data, title = "Ventas por Hora", className }: HourlySalesChartProps) {
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{resolvedTitle}</CardTitle>
+        <CardTitle className="text-lg">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
@@ -90,13 +87,11 @@ interface HourlyLaborChartProps {
   className?: string;
 }
 
-export function HourlyLaborChart({ data, title, className }: HourlyLaborChartProps) {
-  const { t } = useTranslation();
-  const resolvedTitle = title ?? t("dashboard.hourlyLabour");
+export function HourlyLaborChart({ data, title = "Labor por Hora", className }: HourlyLaborChartProps) {
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{resolvedTitle}</CardTitle>
+        <CardTitle className="text-lg">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">

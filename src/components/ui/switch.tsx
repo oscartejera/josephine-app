@@ -3,9 +3,9 @@ import * as SwitchPrimitives from "@radix-ui/react-switch";
 
 import { cn } from "@/lib/utils";
 
-import { useTranslation } from 'react-i18next';
 const Switch = React.forwardRef<
-  React.ElementRef<typeof SwitchPrimitives.Root>{t('ui.switch.reactcomponentpropswithoutref')}<typeof SwitchPrimitives.Root>
+  React.ElementRef<typeof SwitchPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(

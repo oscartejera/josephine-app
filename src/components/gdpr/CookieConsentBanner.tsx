@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CookiePreferencesDialog } from './CookiePreferencesDialog';
-import { useTranslation } from 'react-i18next';
 
 export interface ConsentPreferences {
   essential: boolean; // always true
@@ -45,7 +44,6 @@ function storeConsent(prefs: ConsentPreferences): void {
 }
 
 export function CookieConsentBanner() {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
@@ -111,13 +109,13 @@ export function CookieConsentBanner() {
 
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                {t('gdpr.CookieConsentBanner.usamosCookies')}
+                Usamos cookies 🍪
               </h3>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Utilizamos cookies esenciales para que la aplicación funcione y cookies opcionales
                 para mejorar tu experiencia. Puedes personalizar tus preferencias en cualquier momento.{' '}
                 <a href="/privacidad" className="underline hover:text-gray-700">
-                  {t('gdpr.CookieConsentBanner.politicaDePrivacidad')}
+                  Política de privacidad
                 </a>
               </p>
             </div>
@@ -130,7 +128,7 @@ export function CookieConsentBanner() {
                 className="text-xs gap-1.5"
               >
                 <Settings2 className="h-3.5 w-3.5" />
-                {t('gdpr.CookieConsentBanner.personalizar')}
+                Personalizar
               </Button>
               <Button
                 variant="outline"
@@ -139,7 +137,7 @@ export function CookieConsentBanner() {
                 className="text-xs gap-1.5"
               >
                 <X className="h-3.5 w-3.5" />
-                {t('gdpr.CookieConsentBanner.soloEsenciales')}
+                Solo esenciales
               </Button>
               <Button
                 size="sm"
@@ -147,7 +145,7 @@ export function CookieConsentBanner() {
                 className="text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700"
               >
                 <Check className="h-3.5 w-3.5" />
-                {t('gdpr.CookieConsentBanner.aceptarTodo')}
+                Aceptar todo
               </Button>
             </div>
           </div>

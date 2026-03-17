@@ -24,7 +24,6 @@ import {
 } from 'recharts';
 import type { LabourTimeseriesRow, MetricMode } from '@/hooks/useLabourData';
 import { LabourHourlyDrillDown } from './LabourHourlyDrillDown';
-import { useTranslation } from 'react-i18next';
 
 interface LabourChartProps {
   data: LabourTimeseriesRow[];
@@ -91,7 +90,9 @@ function CustomTooltip({ active, payload, label, metricMode, chartMode }: Custom
   const relevantVariance = chartMode === 'splh' ? splhVariance : oplhVariance;
 
   const TrendIcon = relevantVariance >= 0 ? '↗' : '↘';
-  const varianceColor = relevantVariance >{t('labour.LabourChart.010b981F43f5eReturn')}
+  const varianceColor = relevantVariance >= 0 ? '#10b981' : '#f43f5e';
+
+  return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[280px]">
       {/* COL / Hours / Cost Section */}
       <div className="mb-3 pb-3 border-b border-gray-100">
@@ -137,8 +138,9 @@ function CustomTooltip({ active, payload, label, metricMode, chartMode }: Custom
 }
 
 export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
-  const { t } = useTranslation();
-  const [chartMode, setChartMode] = useState<ChartMode>{t('labour.LabourChart.splhConstDrilldownopenSetdrilldownopenUs')}<any>(null);
+  const [chartMode, setChartMode] = useState<ChartMode>('splh');
+  const [drillDownOpen, setDrillDownOpen] = useState(false);
+  const [selectedDayData, setSelectedDayData] = useState<any>(null);
 
   // Detect single-day (Today mode) → show hourly breakdown
   const isSingleDayView = data.length === 1 || (data.length > 1 && data[0].date && data[data.length - 1].date && isSameDay(new Date(data[0].date), new Date(data[data.length - 1].date)));
@@ -340,7 +342,7 @@ export function LabourChart({ data, isLoading, metricMode }: LabourChartProps) {
   return (
     <Card className="p-6 bg-white">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-base font-semibold text-gray-900">{t('labour.LabourChart.labourOverTime')}</h3>
+        <h3 className="text-base font-semibold text-gray-900">Labour over time</h3>
 
         {/* SPLH / OPLH Toggle */}
         <div className="flex items-center bg-gray-100 rounded-lg p-0.5">

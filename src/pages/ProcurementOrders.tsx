@@ -30,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useTranslation } from 'react-i18next';
 
 interface SupplierWithStats {
   id: string;
@@ -60,9 +59,13 @@ interface OrderLine {
 }
 
 export default function ProcurementOrders() {
-  const { t } = useTranslation();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'place-order' | 'orders' | 'invoices' | 'credits'>{t('procurementOrders.ordersConstSuppliersSetsuppliersUsestate')}<SupplierWithStats[]>{t('procurementOrders.constOrdersSetordersUsestate')}<PurchaseOrder[]>{t('procurementOrders.constIsloadingSetisloadingUsestatetrueCo')}<PurchaseOrder | null>{t('procurementOrders.nullConstOrderlinesSetorderlinesUsestate')}<OrderLine[]>([]);
+  const [activeTab, setActiveTab] = useState<'place-order' | 'orders' | 'invoices' | 'credits'>('orders');
+  const [suppliers, setSuppliers] = useState<SupplierWithStats[]>([]);
+  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [isLoadingLines, setIsLoadingLines] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const { session } = useAuth();
@@ -213,7 +216,7 @@ export default function ProcurementOrders() {
               };
             }
 
-            toast.success(t('procurement.toastNewOrder'), {
+            toast.success('New order received!', {
               description: 'The orders list has been updated.',
               icon: <CheckCircle className="h-5 w-5 text-success" />,
             });
@@ -230,7 +233,7 @@ export default function ProcurementOrders() {
   // Check if we came from a successful order placement
   useEffect(() => {
     if (location.state?.orderSuccess) {
-      toast.success(t('procurement.toastOrderSent'), {
+      toast.success('Order sent to supplier!', {
         description: `Order ${location.state.orderId} has been submitted successfully.`,
         duration: 5000,
         icon: <CheckCircle className="h-5 w-5 text-success" />,
@@ -279,7 +282,13 @@ export default function ProcurementOrders() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'received':
-        return <Badge className="bg-success/10 text-success hover:bg-success/20">{t('procurementOrders.received')}</Badge>{t('procurementOrders.caseSentReturn')} <Badge className="bg-info/10 text-info hover:bg-info/20">{t('procurementOrders.sent')}</Badge>{t('procurementOrders.caseDraftReturn')} <Badge variant="secondary">{t('procurementOrders.draft')}</Badge>{t('procurementOrders.defaultReturn')} <Badge variant="outline">{status}</Badge>;
+        return <Badge className="bg-success/10 text-success hover:bg-success/20">Received</Badge>;
+      case 'sent':
+        return <Badge className="bg-info/10 text-info hover:bg-info/20">Sent</Badge>;
+      case 'draft':
+        return <Badge variant="secondary">Draft</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -297,11 +306,11 @@ export default function ProcurementOrders() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">{t('procurementOrders.procurement')}</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">Procurement</h1>
           <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-            <span>{t('procurementOrders.insights')}</span>
+            <span>Insights</span>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground">{t('procurementOrders.suppliersOrders')}</span>
+            <span className="text-foreground">Suppliers & Orders</span>
           </div>
         </div>
 
@@ -309,12 +318,12 @@ export default function ProcurementOrders() {
           {isLoading ? (
             <Badge variant="secondary" className="gap-1.5">
               <Loader2 className="h-3 w-3 animate-spin" />
-              {t('procurementOrders.loading')}
+              Loading...
             </Badge>
           ) : suppliers.length > 0 && (
             <Badge variant="outline" className="gap-1.5 text-success border-success/30">
               <Database className="h-3 w-3" />
-              {t('procurementOrders.liveData')}
+              Live Data
             </Badge>
           )}
           <DropdownMenu>
@@ -324,9 +333,9 @@ export default function ProcurementOrders() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>{t('procurementOrders.addSupplier')}</DropdownMenuItem>
-              <DropdownMenuItem>{t('procurementOrders.importInvoices')}</DropdownMenuItem>
-              <DropdownMenuItem>{t('procurementOrders.exportData')}</DropdownMenuItem>
+              <DropdownMenuItem>Add Supplier</DropdownMenuItem>
+              <DropdownMenuItem>Import Invoices</DropdownMenuItem>
+              <DropdownMenuItem>Export Data</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -336,17 +345,17 @@ export default function ProcurementOrders() {
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList className="grid w-full grid-cols-4 max-w-[500px]">
           <TabsTrigger value="place-order" onClick={() => window.location.href = '/procurement'}>
-            {t('procurementOrders.placeOrder')}
+            Place order
           </TabsTrigger>
           <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
-          <TabsTrigger value="invoices">{t('procurementOrders.invoices')}</TabsTrigger>
-          <TabsTrigger value="credits">{t('procurementOrders.creditNotes')}</TabsTrigger>
+          <TabsTrigger value="invoices">Invoices</TabsTrigger>
+          <TabsTrigger value="credits">Credit notes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="orders" className="mt-6 space-y-6">
           {/* Suppliers Section */}
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-4">{t('procurementOrders.suppliers')}</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Suppliers</h2>
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
@@ -364,12 +373,12 @@ export default function ProcurementOrders() {
                   </Card>
                 ))}
               </div>
-            {t('procurementOrders.supplierslength0')}
+            ) : suppliers.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">{t("procurement.noSuppliersFound")}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{t("procurement.placeOrderToAdd")}</p>
+                  <p className="text-muted-foreground">No suppliers found</p>
+                  <p className="text-sm text-muted-foreground mt-1">Place an order to add suppliers</p>
                 </CardContent>
               </Card>
             ) : (
@@ -386,7 +395,7 @@ export default function ProcurementOrders() {
                             <div className="flex items-center gap-3">
                               <h3 className="text-lg font-semibold text-foreground">{supplier.name}</h3>
                               {supplier.ordersCount > 0 && (
-                                <Badge className="bg-success/10 text-success hover:bg-success/20">{t('procurementOrders.active')}</Badge>
+                                <Badge className="bg-success/10 text-success hover:bg-success/20">Active</Badge>
                               )}
                             </div>
                             <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
@@ -403,16 +412,16 @@ export default function ProcurementOrders() {
                         <div className="flex items-center gap-6">
                           <div className="text-center px-4">
                             <p className="text-2xl font-bold text-foreground">{supplier.ordersCount}</p>
-                            <p className="text-xs text-muted-foreground">{t('procurementOrders.orders')}</p>
+                            <p className="text-xs text-muted-foreground">Orders</p>
                           </div>
                           <div className="text-center px-4 border-l border-border">
                             <p className="text-2xl font-bold text-foreground">€{supplier.totalValue.toFixed(0)}</p>
-                            <p className="text-xs text-muted-foreground">{t("procurement.totalValue")}</p>
+                            <p className="text-xs text-muted-foreground">Total Value</p>
                           </div>
                           <div className="flex gap-2 pl-4 border-l border-border">
                             <Button size="sm" onClick={() => window.location.href = `/procurement?supplier=${supplier.id}`}>
                               <RotateCcw className="h-4 w-4 mr-2" />
-                              {t('procurementOrders.newOrder')}
+                              New Order
                             </Button>
                           </div>
                         </div>
@@ -431,7 +440,7 @@ export default function ProcurementOrders() {
 
           {/* Recent Orders Section */}
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-4">{t('procurementOrders.recentOrders')}</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Recent Orders</h2>
             {isLoading ? (
               <Card>
                 <CardContent className="p-0">
@@ -449,13 +458,13 @@ export default function ProcurementOrders() {
                   </div>
                 </CardContent>
               </Card>
-            {t('procurementOrders.orderslength0')}
+            ) : orders.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">{t("procurement.noOrdersYet")}</p>
+                  <p className="text-muted-foreground">No orders yet</p>
                   <Button className="mt-4" onClick={() => window.location.href = '/procurement'}>
-                    {t('procurementOrders.placeFirstOrder')}
+                    Place First Order
                   </Button>
                 </CardContent>
               </Card>
@@ -465,13 +474,13 @@ export default function ProcurementOrders() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/30">
-                        <TableHead>{t('procurementOrders.orderId')}</TableHead>
-                        <TableHead>{t('procurementOrders.supplier')}</TableHead>
-                        <TableHead>{t('procurementOrders.date')}</TableHead>
-                        <TableHead>{t('procurementOrders.items')}</TableHead>
-                        <TableHead>{t("common.total")}</TableHead>
-                        <TableHead>{t('procurementOrders.status')}</TableHead>
-                        <TableHead className="text-right">{t('procurementOrders.actions')}</TableHead>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Supplier</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -493,7 +502,7 @@ export default function ProcurementOrders() {
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm" onClick={() => handleViewOrder(order)}>
                               <Eye className="h-4 w-4 mr-1" />
-                              {t('procurementOrders.view')}
+                              View
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -511,12 +520,12 @@ export default function ProcurementOrders() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                {t('procurementOrders.invoices1')}
+                Invoices
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-center py-8">
-                {t('procurementOrders.invoiceManagementComingSoonConnect')}
+                Invoice management coming soon. Connect your accounting software to sync invoices automatically.
               </p>
             </CardContent>
           </Card>
@@ -527,12 +536,12 @@ export default function ProcurementOrders() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                {t('procurementOrders.creditNotes1')}
+                Credit Notes
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-center py-8">
-                {t('procurementOrders.creditNoteTrackingComingSoon')}
+                Credit note tracking coming soon. Request credits for damaged or incorrect deliveries.
               </p>
             </CardContent>
           </Card>
@@ -554,41 +563,41 @@ export default function ProcurementOrders() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">{t('procurementOrders.orderId1')}</p>
+                  <p className="text-muted-foreground">Order ID</p>
                   <p className="font-mono font-medium">{selectedOrder.id}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">{t('procurementOrders.supplier1')}</p>
+                  <p className="text-muted-foreground">Supplier</p>
                   <p className="font-medium">{selectedOrder.supplier_name}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">{t('procurementOrders.date1')}</p>
+                  <p className="text-muted-foreground">Date</p>
                   <p className="font-medium">{format(new Date(selectedOrder.created_at), 'PPP')}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">{t("common.total")}</p>
+                  <p className="text-muted-foreground">Total</p>
                   <p className="font-semibold text-lg">€{selectedOrder.total_value.toFixed(2)}</p>
                 </div>
               </div>
 
               <div className="border-t pt-4">
-                <h4 className="font-medium mb-3">{t('procurementOrders.orderLines')}</h4>
+                <h4 className="font-medium mb-3">Order Lines</h4>
                 {isLoadingLines ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map(i => (
                       <Skeleton key={i} className="h-10 w-full" />
                     ))}
                   </div>
-                {t('procurementOrders.orderlineslength0')}
-                  <p className="text-muted-foreground text-center py-4">{t("procurement.noLineItems")}</p>
+                ) : orderLines.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No line items found</p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t('procurementOrders.item')}</TableHead>
-                        <TableHead className="text-right">{t('procurementOrders.qty')}</TableHead>
-                        <TableHead className="text-right">{t('procurementOrders.unitCost')}</TableHead>
-                        <TableHead className="text-right">{t("common.total")}</TableHead>
+                        <TableHead>Item</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right">Unit Cost</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

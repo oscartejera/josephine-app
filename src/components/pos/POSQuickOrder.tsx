@@ -12,7 +12,6 @@ import { Separator } from '@/components/ui/separator';
 import { Search, Plus, Minus, Trash2, CreditCard, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { POSProduct, CashSession } from '@/hooks/usePOSData';
-import { useTranslation } from 'react-i18next';
 
 interface POSQuickOrderProps {
   locationId: string;
@@ -27,15 +26,14 @@ interface CartItem {
 }
 
 export function POSQuickOrder({
-  
   locationId,
   products,
   cashSession,
   onRefresh,
 }: POSQuickOrderProps) {
-  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>{t('pos.POSQuickOrder.nullConstCartSetcartUsestate')}<CartItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
 
   const categories = useMemo(() => {
     const cats = new Set(products.map(p => p.category));
@@ -74,7 +72,9 @@ export function POSQuickOrder({
     }).filter(item => item.quantity > 0));
   };
 
-  const total = cart.reduce((sum, item) => {t('pos.POSQuickOrder.sumItemproductpriceItemquantity0Return')}
+  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+
+  return (
     <div className="h-full flex">
       {/* Products section */}
       <div className="flex-1 flex flex-col border-r">
@@ -83,7 +83,7 @@ export function POSQuickOrder({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('pos.POSQuickOrder.buscarProducto')}
+              placeholder="Buscar producto..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -95,7 +95,7 @@ export function POSQuickOrder({
               variant={!selectedCategory ? 'default' : 'outline'}
               onClick={() => setSelectedCategory(null)}
             >
-              {t('pos.POSQuickOrder.todos')}
+              Todos
             </Button>
             {categories.map(cat => (
               <Button
@@ -130,14 +130,14 @@ export function POSQuickOrder({
       {/* Cart section */}
       <div className="w-80 flex flex-col bg-card">
         <div className="p-4 border-b">
-          <h3 className="font-semibold">{t('pos.pedidoRapido')}</h3>
+          <h3 className="font-semibold">Pedido Rápido</h3>
         </div>
 
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-3">
             {cart.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                {t('pos.POSQuickOrder.anadeProductosAlPedido')}
+                Añade productos al pedido
               </p>
             ) : (
               cart.map(item => (
@@ -178,17 +178,17 @@ export function POSQuickOrder({
 
         <div className="p-4 border-t space-y-3">
           <div className="flex justify-between text-lg font-bold">
-            <span>{t("common.total")}</span>
+            <span>Total</span>
             <span>€{total.toFixed(2)}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" disabled={cart.length === 0} className="gap-2">
               <Banknote className="h-4 w-4" />
-              {t('pos.POSQuickOrder.efectivo')}
+              Efectivo
             </Button>
             <Button disabled={cart.length === 0} className="gap-2">
               <CreditCard className="h-4 w-4" />
-              {t('pos.POSQuickOrder.tarjeta')}
+              Tarjeta
             </Button>
           </div>
         </div>

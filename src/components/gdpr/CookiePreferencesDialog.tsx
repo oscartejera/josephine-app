@@ -19,16 +19,15 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import type { ConsentPreferences } from './CookieConsentBanner';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (prefs: ConsentPreferences) => {t('gdpr.CookiePreferencesDialog.voidInitialprefsPartial')}<ConsentPreferences>;
+  onSave: (prefs: ConsentPreferences) => void;
+  initialPrefs?: Partial<ConsentPreferences>;
 }
 
 export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPrefs }: Props) {
-  const { t } = useTranslation();
   const [analytics, setAnalytics] = useState(initialPrefs?.analytics ?? false);
   const [marketing, setMarketing] = useState(initialPrefs?.marketing ?? false);
 
@@ -45,9 +44,9 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('gdpr.CookiePreferencesDialog.preferenciasDeCookies')}</DialogTitle>
+          <DialogTitle>Preferencias de cookies</DialogTitle>
           <DialogDescription>
-            {t('gdpr.CookiePreferencesDialog.eligeQueTiposDeCookies')}
+            Elige qué tipos de cookies deseas aceptar. Las cookies esenciales no se pueden desactivar.
           </DialogDescription>
         </DialogHeader>
 
@@ -57,9 +56,10 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
             <div className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-emerald-600 mt-0.5" />
               <div>
-                <Label className="text-sm font-medium">{t('gdpr.CookiePreferencesDialog.esenciales')}</Label>
+                <Label className="text-sm font-medium">Esenciales</Label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {t('gdpr.CookiePreferencesDialog.necesariasParaElFuncionamientoDe')}
+                  Necesarias para el funcionamiento de la aplicación.
+                  Incluyen autenticación, seguridad y preferencias básicas.
                 </p>
               </div>
             </div>
@@ -72,10 +72,11 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
               <BarChart3 className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
                 <Label htmlFor="analytics-toggle" className="text-sm font-medium cursor-pointer">
-                  {t('gdpr.CookiePreferencesDialog.analiticas')}
+                  Analíticas
                 </Label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {t('gdpr.CookiePreferencesDialog.nosAyudanAEntenderComo')}
+                  Nos ayudan a entender cómo usas la aplicación para mejorarla.
+                  No se comparten con terceros.
                 </p>
               </div>
             </div>
@@ -92,10 +93,11 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
               <Megaphone className="h-5 w-5 text-purple-600 mt-0.5" />
               <div>
                 <Label htmlFor="marketing-toggle" className="text-sm font-medium cursor-pointer">
-                  {t('gdpr.CookiePreferencesDialog.marketing')}
+                  Marketing
                 </Label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {t('gdpr.CookiePreferencesDialog.permitenMostrarContenidoYComunicaciones')}
+                  Permiten mostrar contenido y comunicaciones personalizadas.
+                  Puedes revocar el consentimiento en cualquier momento.
                 </p>
               </div>
             </div>
@@ -109,10 +111,10 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t('gdpr.CookiePreferencesDialog.cancelar')}
+            Cancelar
           </Button>
           <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700">
-            {t('gdpr.CookiePreferencesDialog.guardarPreferencias')}
+            Guardar preferencias
           </Button>
         </DialogFooter>
       </DialogContent>

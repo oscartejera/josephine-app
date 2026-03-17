@@ -18,19 +18,17 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useTranslation } from 'react-i18next';
 
 const teamNavItems = [
   { icon: Home, label: 'Inicio', path: '/team' },
-  { icon: Calendar, label: t('team.miHorario'), path: '/team/schedule' },
+  { icon: Calendar, label: 'Mi Horario', path: '/team/schedule' },
   { icon: Clock, label: 'Fichaje', path: '/team/clock' },
-  { icon: Wallet, label: t('team.miNomina'), path: '/team/pay' },
+  { icon: Wallet, label: 'Mi Nómina', path: '/team/pay' },
   { icon: Users, label: 'Equipo', path: '/team/directory' },
   { icon: Megaphone, label: 'Novedades', path: '/team/news' },
 ];
 
 export function TeamLayout() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, profile } = useAuth();
@@ -49,10 +47,10 @@ export function TeamLayout() {
       ops_manager: 'Gerente de Operaciones',
       store_manager: 'Gerente de Local',
       finance: 'Finanzas',
-      hr_payroll: t('team.rrhhNominas'),
-      employee: t('payroll.empleado'),
+      hr_payroll: 'RRHH / Nóminas',
+      employee: 'Empleado',
     };
-    return role ? labels[role] || role : t('payroll.empleado');
+    return role ? labels[role] || role : 'Empleado';
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -70,9 +68,9 @@ export function TeamLayout() {
   const getBreadcrumb = () => {
     const breadcrumbMap: Record<string, string> = {
       '/team': 'Inicio',
-      '/team/schedule': t('team.miHorario'),
+      '/team/schedule': 'Mi Horario',
       '/team/clock': 'Fichaje',
-      '/team/pay': t('team.miNomina'),
+      '/team/pay': 'Mi Nómina',
       '/team/directory': 'Equipo',
       '/team/news': 'Novedades',
     };
@@ -88,8 +86,8 @@ export function TeamLayout() {
             <ChefHat className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <span className="font-display font-bold text-lg">{t('team.TeamLayout.josephine')}</span>
-            <p className="text-xs text-muted-foreground">{t("team.teamPortal")}</p>
+            <span className="font-display font-bold text-lg">Josephine</span>
+            <p className="text-xs text-muted-foreground">Portal de Equipo</p>
           </div>
         </div>
       </div>
@@ -104,7 +102,7 @@ export function TeamLayout() {
           </Avatar>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">
-              {profile?.full_name || t('settings.usuario')}
+              {profile?.full_name || 'Usuario'}
             </p>
             <p className="text-xs text-muted-foreground">
               {getRoleLabel(primaryRole)}
@@ -150,7 +148,7 @@ export function TeamLayout() {
             onClick={() => navigate('/dashboard')}
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>{t("team.managementPanel")}</span>
+            <span>Panel de gestión</span>
           </Button>
         )}
         <Button
@@ -159,11 +157,13 @@ export function TeamLayout() {
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
-          <span>{t("common.logout")}</span>
+          <span>Cerrar sesión</span>
         </Button>
       </div>
     </div>
-  {t('team.TeamLayout.return')}
+  );
+
+  return (
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-50 flex items-center justify-between px-4">
@@ -180,7 +180,7 @@ export function TeamLayout() {
 
         <div className="flex items-center gap-2">
           <ChefHat className="w-5 h-5 text-primary" />
-          <span className="font-display font-bold">{t('team.TeamLayout.josephine1')}</span>
+          <span className="font-display font-bold">Josephine</span>
         </div>
 
         <Avatar className="h-8 w-8">

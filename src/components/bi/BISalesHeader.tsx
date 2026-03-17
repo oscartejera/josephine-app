@@ -24,7 +24,6 @@ import type { CompareMode, GranularityMode, BIDateRange } from '@/types/sales';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DateRangePickerNoryLike, DateMode, ChartGranularity } from './DateRangePickerNoryLike';
 import { formatDistanceToNow } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 
 interface BISalesHeaderProps {
   dateRange: BIDateRange;
@@ -41,7 +40,6 @@ interface BISalesHeaderProps {
 }
 
 export function BISalesHeader({
-  
   dateRange,
   setDateRange,
   granularity,
@@ -54,7 +52,6 @@ export function BISalesHeader({
   isConnected = false,
   lastUpdate = null
 }: BISalesHeaderProps) {
-  const { t } = useTranslation();
   const { locations } = useApp();
   const [locationsOpen, setLocationsOpen] = useState(false);
 
@@ -102,12 +99,12 @@ export function BISalesHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 px-2 text-muted-foreground gap-1">
-                {t('bi.BISalesHeader.insights')}
+                Insights
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>{t('bi.BISalesHeader.salesInsights')}</DropdownMenuItem>
+              <DropdownMenuItem>Sales Insights</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -116,13 +113,13 @@ export function BISalesHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 px-2 font-semibold gap-1">
-                {t('bi.BISalesHeader.sales')}
+                Sales
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>{t('bi.BISalesHeader.sales1')}</DropdownMenuItem>
-              <DropdownMenuItem disabled>{t('bi.BISalesHeader.ordersComingSoon')}</DropdownMenuItem>
+              <DropdownMenuItem>Sales</DropdownMenuItem>
+              <DropdownMenuItem disabled>Orders (coming soon)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -146,13 +143,13 @@ export function BISalesHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => setCompareMode('forecast')}>
-                {t('bi.BISalesHeader.forecast')}
+                Forecast
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCompareMode('previous_period')}>
-                {t('bi.BISalesHeader.previousPeriod')}
+                Previous period
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCompareMode('previous_year')}>
-                {t('bi.BISalesHeader.previousYear')}
+                Previous year
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -177,12 +174,12 @@ export function BISalesHeader({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                     </span>
-                    {t('bi.BISalesHeader.live')}
+                    Live
                   </>
                 ) : (
                   <>
                     <WifiOff className="h-3 w-3" />
-                    {t('bi.BISalesHeader.offline')}
+                    Offline
                   </>
                 )}
               </Badge>
@@ -191,7 +188,7 @@ export function BISalesHeader({
               {isConnected ? (
                 <p>Real-time updates active{lastUpdate ? `. Last update: ${formatDistanceToNow(lastUpdate, { addSuffix: true })}` : ''}</p>
               ) : (
-                <p>{t('bi.BISalesHeader.connectingToRealtimeUpdates')}</p>
+                <p>Connecting to real-time updates...</p>
               )}
             </TooltipContent>
           </Tooltip>
@@ -201,7 +198,7 @@ export function BISalesHeader({
             className="bg-gradient-primary text-white gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            {t('bi.BISalesHeader.askJosephine')}
+            Ask Josephine
           </Button>
         </div>
       </div>
@@ -224,7 +221,7 @@ export function BISalesHeader({
                   onCheckedChange={selectAllLocations}
                 />
                 <label htmlFor="all-locations" className="text-sm font-medium cursor-pointer">
-                  {t('bi.BISalesHeader.allLocations')}
+                  All locations
                 </label>
               </div>
               {locations.map(loc => (

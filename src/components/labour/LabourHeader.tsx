@@ -108,7 +108,7 @@ export function LabourHeader({
               )}
               onClick={() => setMetricMode('percentage')}
             >
-              {t('labour.LabourHeader.percentage')}
+              Percentage
             </Button>
             <Button
               variant="ghost"
@@ -121,7 +121,7 @@ export function LabourHeader({
               )}
               onClick={() => setMetricMode('amount')}
             >
-              {t('labour.LabourHeader.amount')}
+              Amount
             </Button>
             <Button
               variant="ghost"
@@ -134,7 +134,7 @@ export function LabourHeader({
               )}
               onClick={() => setMetricMode('hours')}
             >
-              {t('labour.LabourHeader.hours')}
+              Hours
             </Button>
           </div>
 

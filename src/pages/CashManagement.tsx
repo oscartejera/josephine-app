@@ -4,10 +4,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { DateRangePickerNoryLike, type DateMode, type DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 import { CashKPICards, CashLeakageChart, CashLocationTable } from '@/components/cash-management';
 import { useCashManagementData } from '@/hooks/useCashManagementData';
-import { useTranslation } from 'react-i18next';
 
 export default function CashManagement() {
-  const { t } = useTranslation();
   const { hasPermission, loading: permLoading } = usePermissions();
 
   const initialDateRange = useMemo((): DateRangeValue => {
@@ -15,7 +13,9 @@ export default function CashManagement() {
     return { from: startOfMonth(today), to: endOfMonth(today) };
   }, []);
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>{t('cashManagement.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('cashManagement.monthlyConstSelectedlocationsUsestate')}<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
+  const [dateMode, setDateMode] = useState<DateMode>('monthly');
+  const [selectedLocations] = useState<string[]>([]);
 
   const { isLoading, metrics, dailyData, locationData } = useCashManagementData(dateRange, selectedLocations);
 
@@ -27,8 +27,8 @@ export default function CashManagement() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t('cashManagement.cashManagement')}</h1>
-          <p className="text-sm text-muted-foreground">{t("cash.monitorDescription")}</p>
+          <h1 className="text-2xl font-bold">Cash Management</h1>
+          <p className="text-sm text-muted-foreground">Monitor sales, payments, refunds and leakage</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <DateRangePickerNoryLike
