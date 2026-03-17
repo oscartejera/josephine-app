@@ -43,9 +43,7 @@ interface DeltaBadgeProps {
 function DeltaBadge({ value, inverted = false, label = 'vs forecast' }: DeltaBadgeProps) {
   // For COL, lower is better (inverted)
   const isPositive = inverted ? value <= 0 : value >= 0;
-  const arrow = value >= 0 ? '▲' : '▼';
-
-  return (
+  const arrow = value >{t('labour.LabourKPICards.0Return')}
     <span className={cn(
       "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
       isPositive
@@ -155,7 +153,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">Sales</h3>
+            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.sales')}</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
 
@@ -194,7 +192,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
           <div className="space-y-1">
             <div className="text-3xl font-bold text-gray-900">{getActualColValue()}</div>
             <div className="flex items-center gap-2">
-              <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label="vs planned" />
+              <DeltaBadge value={getColDelta()} inverted={metricMode !== 'hours'} label={t('labour.LabourKPICards.vsPlanned')} />
             </div>
           </div>
 
@@ -223,7 +221,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">SPLH</h3>
+            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.splh')}</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
 
@@ -253,7 +251,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">€/Comensal</h3>
+            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.comensal')}</h3>
             <SourceBadge source={kpis.labor_cost_source} />
           </div>
 
@@ -262,7 +260,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
               €{kpis.cost_per_cover.toFixed(2)}
             </div>
             <div className="text-xs text-gray-500">
-              Coste laboral por cliente servido
+              {t('labour.LabourKPICards.costeLaboralPorClienteServido')}
             </div>
           </div>
 
@@ -279,7 +277,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">Prime Cost</h3>
+            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.primeCost')}</h3>
             <span className={cn(
               "text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase",
               kpis.prime_cost_pct <= 60 ? "bg-emerald-100 text-emerald-700"
@@ -310,7 +308,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
             </div>
             <div className="flex justify-between text-xs text-gray-600">
               <span>{formatCurrency(kpis.prime_cost_amount)}</span>
-              <span>Target: 55-60%</span>
+              <span>{t('labour.LabourKPICards.target5560')}</span>
             </div>
           </div>
         </div>
@@ -320,7 +318,7 @@ export function LabourKPICards({ kpis, isLoading, metricMode, dateRange }: Labou
       <Card className="p-5 bg-white">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-normal text-gray-700">OPLH</h3>
+            <h3 className="text-sm font-normal text-gray-700">{t('labour.LabourKPICards.oplh')}</h3>
             <span className="text-xs text-gray-500">{dateLabel}</span>
           </div>
 

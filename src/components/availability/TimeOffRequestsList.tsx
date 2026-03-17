@@ -142,11 +142,11 @@ function TimeOffRequestCard({
                 onClick={onReject}
               >
                 <X className="h-4 w-4 mr-1" />
-                Reject
+                {t('availability.TimeOffRequestsList.reject')}
               </Button>
               <Button size="sm" onClick={onApprove}>
                 <Check className="h-4 w-4 mr-1" />
-                Approve
+                {t('availability.TimeOffRequestsList.approve')}
               </Button>
             </>
           ) : (
@@ -154,20 +154,20 @@ function TimeOffRequestCard({
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="outline" className="text-destructive hover:text-destructive">
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Cancel Request
+                  {t('availability.TimeOffRequestsList.cancelRequest')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Cancel Time Off Request?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('availability.TimeOffRequestsList.cancelTimeOffRequest')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to cancel this time off request? This action cannot be undone.
+                    {t('availability.TimeOffRequestsList.areYouSureYouWant')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Keep Request</AlertDialogCancel>
+                  <AlertDialogCancel>{t('availability.TimeOffRequestsList.keepRequest')}</AlertDialogCancel>
                   <AlertDialogAction onClick={onCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Cancel Request
+                    {t('availability.TimeOffRequestsList.cancelRequest1')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -195,7 +195,7 @@ export function TimeOffRequestsList({
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Calendar className="h-10 w-10 mx-auto mb-3 opacity-30" />
-        <p className="text-sm">No time off requests</p>
+        <p className="text-sm">{t('availability.TimeOffRequestsList.noTimeOffRequests')}</p>
         <p className="text-xs mt-1">
           {isManager 
             ? "Employee requests will appear here"

@@ -169,9 +169,7 @@ function RoleRedirect() {
 
 function OwnerOnlyRoute({ children }: { children: React.ReactNode }) {
   const { isOwner, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  if (!isOwner) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
+  if (loading) return <PageLoader />{t('app.ifIsownerReturn')} <Navigate to="/dashboard" replace />{t('app.return')} <>{children}</>;
 }
 
 function PageLoader() {
@@ -267,14 +265,14 @@ function AppRoutes() {
             <Route path="/integrations/lightspeed" element={<Suspense fallback={<SectionLoader section="Lightspeed" />}><OwnerOnlyRoute><InsightErrorBoundary pageName="Lightspeed"><LightspeedIntegration /></InsightErrorBoundary></OwnerOnlyRoute></Suspense>} />
 
             {/* Inventory Setup — per-section Suspense */}
-            <Route path="/inventory-setup/items" element={<Suspense fallback={<SectionLoader section=t('common.articulos') />}><InsightErrorBoundary pageName=t('common.articulos')><InventoryItems /></InsightErrorBoundary></Suspense>} />
-            <Route path="/inventory-setup/recipes" element={<Suspense fallback={<SectionLoader section=t('common.recetas') />}><InsightErrorBoundary pageName=t('common.recetas')><RecipesPage /></InsightErrorBoundary></Suspense>} />
-            <Route path="/inventory-setup/recipes/:id" element={<Suspense fallback={<SectionLoader section=t('common.receta') />}><InsightErrorBoundary pageName=t('common.receta')><RecipeDetailPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/inventory-setup/items" element={<Suspense fallback={<SectionLoader section={t('common.articulos')} />}><InsightErrorBoundary pageName={t('common.articulos')}><InventoryItems /></InsightErrorBoundary></Suspense>} />
+            <Route path="/inventory-setup/recipes" element={<Suspense fallback={<SectionLoader section={t('common.recetas')} />}><InsightErrorBoundary pageName={t('common.recetas')}><RecipesPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/inventory-setup/recipes/:id" element={<Suspense fallback={<SectionLoader section={t('common.receta')} />}><InsightErrorBoundary pageName={t('common.receta')}><RecipeDetailPage /></InsightErrorBoundary></Suspense>} />
             <Route path="/inventory-setup/menu-items" element={<Suspense fallback={<SectionLoader section={t("nav.menu")} />}><InsightErrorBoundary pageName={t("nav.menuItems")}><MenuItemsPage /></InsightErrorBoundary></Suspense>} />
 
             {/* Operations — per-section Suspense */}
             <Route path="/operations/waste-entry" element={<Suspense fallback={<SectionLoader section={t("nav.waste")} />}><InsightErrorBoundary pageName="Registro Merma"><WasteEntryPage /></InsightErrorBoundary></Suspense>} />
-            <Route path="/operations/stock-audit" element={<Suspense fallback={<SectionLoader section="Stock" />}><InsightErrorBoundary pageName=t('common.auditoriaStock')><StockAuditPage /></InsightErrorBoundary></Suspense>} />
+            <Route path="/operations/stock-audit" element={<Suspense fallback={<SectionLoader section="Stock" />}><InsightErrorBoundary pageName={t('common.auditoriaStock')}><StockAuditPage /></InsightErrorBoundary></Suspense>} />
             <Route path="/operations/prep-list" element={<Suspense fallback={<SectionLoader section="Prep List" />}><InsightErrorBoundary pageName="Prep List"><PrepListPage /></InsightErrorBoundary></Suspense>} />
 
             {/* Settings — Owner-only, per-section Suspense */}

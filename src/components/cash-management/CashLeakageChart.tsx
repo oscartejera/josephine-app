@@ -49,7 +49,7 @@ export function CashLeakageChart({ data, isLoading = false, currency = '€' }: 
   return (
     <Card>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-base font-medium">Cash Leakage Over Time</CardTitle>
+        <CardTitle className="text-base font-medium">{t('cash-management.CashLeakageChart.cashLeakageOverTime')}</CardTitle>
         <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as 'eur' | 'pct')}>
           <ToggleGroupItem value="eur" className="text-xs px-3">€</ToggleGroupItem>
           <ToggleGroupItem value="pct" className="text-xs px-3">%</ToggleGroupItem>

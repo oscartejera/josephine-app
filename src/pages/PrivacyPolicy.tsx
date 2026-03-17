@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
           className="mb-6 gap-2 text-gray-500"
         >
           <ArrowLeft className="h-4 w-4" />
-          Volver
+          {t('privacyPolicy.volver')}
         </Button>
 
         <div className="flex items-center gap-3 mb-8">
@@ -30,102 +30,98 @@ export default function PrivacyPolicy() {
             <Shield className="h-6 w-6 text-emerald-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Política de Privacidad</h1>
-            <p className="text-sm text-gray-500">Última actualización: Marzo 2025</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('gdpr.privacyPolicy')}</h1>
+            <p className="text-sm text-gray-500">{t('privacypolicy.ultima_actualizacion_marzo_2025')}</p>
           </div>
         </div>
 
         <div className="prose prose-sm prose-gray max-w-none space-y-6">
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">1. Responsable del tratamiento</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacyPolicy.1ResponsableDelTratamiento')}</h2>
             <p>
               Josephine (en adelante, "nosotros") es el responsable del tratamiento de tus datos
               personales. Puedes contactarnos en{' '}
               <a href="mailto:privacy@josephine.app" className="text-emerald-600 hover:underline">
-                privacy@josephine.app
+                {t('privacyPolicy.privacyjosephineapp')}
               </a>
               .
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">2. Datos que recopilamos</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacyPolicy.2DatosQueRecopilamos')}</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Datos de cuenta:</strong> nombre, email, contraseña (hash).</li>
-              <li><strong>Datos del negocio:</strong> recetas, inventario, ventas, horarios de personal.</li>
-              <li><strong>Datos de uso:</strong> páginas visitadas, acciones realizadas (solo con consentimiento).</li>
-              <li><strong>Datos técnicos:</strong> dirección IP, navegador, dispositivo.</li>
+              <li><strong>{t('privacyPolicy.datosDeCuenta')}</strong>{t('privacypolicy.nombre_email_contrasena_hash')}</li>
+              <li><strong>{t('privacyPolicy.datosDelNegocio')}</strong> {t('privacyPolicy.recetasInventarioVentasHorariosDe')}</li>
+              <li><strong>{t('privacyPolicy.datosDeUso')}</strong>{t('privacypolicy.paginas_visitadas_acciones_realizadas_solo_con_con')}</li>
+              <li><strong>{t('privacypolicy.datos_tecnicos')}</strong> {t('privacyPolicy.direccionIpNavegadorDispositivo')}</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">3. Base legal del tratamiento</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacyPolicy.3BaseLegalDelTratamiento')}</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Ejecución del contrato:</strong> para proporcionar el servicio que contratas.</li>
-              <li><strong>Consentimiento:</strong> para cookies analíticas y de marketing.</li>
-              <li><strong>Interés legítimo:</strong> para mejorar la seguridad y prevenir fraude.</li>
+              <li><strong>{t('privacypolicy.ejecucion_del_contrato')}</strong> {t('privacyPolicy.paraProporcionarElServicioQue')}</li>
+              <li><strong>{t('privacyPolicy.consentimiento')}</strong>{t('privacypolicy.para_cookies_analiticas_y_de_marketing')}</li>
+              <li><strong>{t('privacypolicy.interes_legitimo')}</strong> {t('privacyPolicy.paraMejorarLaSeguridadY')}</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">4. Cookies</h2>
-            <p>Utilizamos los siguientes tipos de cookies:</p>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacyPolicy.4Cookies')}</h2>
+            <p>{t('privacyPolicy.utilizamosLosSiguientesTiposDe')}</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Esenciales:</strong> necesarias para la autenticación y funcionamiento. No requieren consentimiento.</li>
-              <li><strong>Analíticas:</strong> miden el uso de la aplicación para mejorarla. Requieren consentimiento.</li>
-              <li><strong>Marketing:</strong> permiten comunicaciones personalizadas. Requieren consentimiento.</li>
+              <li><strong>{t('privacyPolicy.esenciales')}</strong>{t('privacypolicy.necesarias_para_la_autenticacion_y_funcionamiento_')}</li>
+              <li><strong>{t('privacypolicy.analiticas')}</strong> {t('privacyPolicy.midenElUsoDeLa')}</li>
+              <li><strong>{t('privacyPolicy.marketing')}</strong> {t('privacyPolicy.permitenComunicacionesPersonalizadasRequ')}</li>
             </ul>
             <p>
               Puedes gestionar tus preferencias en cualquier momento desde{' '}
-              <strong>Ajustes → Privacidad</strong> o haciendo clic en el enlace de cookies del pie de página.
+              <strong>{t('privacyPolicy.ajustesPrivacidad')}</strong> {t('privacyPolicy.oHaciendoClicEnEl')}
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">5. Tus derechos (RGPD)</h2>
-            <p>Tienes derecho a:</p>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacyPolicy.5TusDerechosRgpd')}</h2>
+            <p>{t('privacyPolicy.tienesDerechoA')}</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Acceso:</strong> solicitar una copia de tus datos personales.</li>
-              <li><strong>Rectificación:</strong> corregir datos inexactos.</li>
-              <li><strong>Supresión:</strong> solicitar la eliminación de tus datos ("derecho al olvido").</li>
-              <li><strong>Portabilidad:</strong> recibir tus datos en formato JSON.</li>
-              <li><strong>Oposición:</strong> oponerte al tratamiento en determinadas circunstancias.</li>
-              <li><strong>Limitación:</strong> restringir el uso de tus datos.</li>
+              <li><strong>{t('privacyPolicy.acceso')}</strong> {t('privacyPolicy.solicitarUnaCopiaDeTus')}</li>
+              <li><strong>{t('privacypolicy.rectificacion')}</strong> {t('privacyPolicy.corregirDatosInexactos')}</li>
+              <li><strong>{t('privacypolicy.supresion')}</strong> {t('privacyPolicy.solicitarLaEliminacionDeTus')}</li>
+              <li><strong>{t('privacyPolicy.portabilidad')}</strong> {t('privacyPolicy.recibirTusDatosEnFormato')}</li>
+              <li><strong>{t('privacypolicy.oposicion')}</strong> {t('privacyPolicy.oponerteAlTratamientoEnDeterminadas')}</li>
+              <li><strong>{t('privacypolicy.limitacion')}</strong> {t('privacyPolicy.restringirElUsoDeTus')}</li>
             </ul>
             <p>
-              Puedes ejercer estos derechos desde <strong>Ajustes → Privacidad</strong> o
+              {t('privacyPolicy.puedesEjercerEstosDerechosDesde')} <strong>{t('privacyPolicy.ajustesPrivacidad1')}</strong> o
               contactando a{' '}
               <a href="mailto:privacy@josephine.app" className="text-emerald-600 hover:underline">
-                privacy@josephine.app
+                {t('privacyPolicy.privacyjosephineapp1')}
               </a>
               .
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">6. Retención de datos</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacypolicy.6_retencion_de_datos')}</h2>
             <p>
-              Conservamos tus datos mientras tu cuenta esté activa. Si solicitas la eliminación,
-              aplicamos un periodo de gracia de 30 días tras el cual los datos se eliminan
-              permanentemente. Los datos agregados y anonimizados pueden conservarse indefinidamente.
+              {t('privacyPolicy.conservamosTusDatosMientrasTu')}
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">7. Seguridad</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacyPolicy.7Seguridad')}</h2>
             <p>
-              Tus datos se almacenan en servidores seguros con cifrado en tránsito (TLS 1.3) y en
-              reposo (AES-256). Las contraseñas se almacenan con hash bcrypt. Utilizamos Row Level
-              Security (RLS) para garantizar que solo accedes a tus propios datos.
+              {t('privacyPolicy.tusDatosSeAlmacenanEn')}
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900">8. Contacto</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('privacyPolicy.8Contacto')}</h2>
             <p>
               Para cualquier consulta sobre privacidad:{' '}
               <a href="mailto:privacy@josephine.app" className="text-emerald-600 hover:underline">
-                privacy@josephine.app
+                {t('privacyPolicy.privacyjosephineapp2')}
               </a>
             </p>
             <p>

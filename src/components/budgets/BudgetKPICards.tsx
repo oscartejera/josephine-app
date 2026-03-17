@@ -15,7 +15,7 @@ interface BudgetKPICardsProps {
 
 function DeltaBadge({ value, suffix = '%', inverse = false }: { value: number; suffix?: string; inverse?: boolean }) {
   const isPositive = inverse ? value < 0 : value > 0;
-  const isNegative = inverse ? value > 0 : value < 0;
+  const isNegative = inverse ? value > {t('budgets.BudgetKPICards.0Value')} < 0;
   
   return (
     <span className={cn(
@@ -85,7 +85,7 @@ export function BudgetKPICards({ metrics, activeTab, isLoading = false, currency
       {/* Sales vs Budget */}
       <Card className={cn(activeTab === 'sales' && 'ring-2 ring-primary')}>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Sales vs Budget</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('budgets.BudgetKPICards.salesVsBudget')}</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -105,7 +105,7 @@ export function BudgetKPICards({ metrics, activeTab, isLoading = false, currency
       {/* Labour vs Budget */}
       <Card className={cn(activeTab === 'labour' && 'ring-2 ring-primary')}>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Labour vs Budget</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('budgets.BudgetKPICards.labourVsBudget')}</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -127,7 +127,7 @@ export function BudgetKPICards({ metrics, activeTab, isLoading = false, currency
       {/* COGS vs Budget */}
       <Card className={cn(activeTab === 'cogs' && 'ring-2 ring-primary')}>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">COGS vs Budget</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('budgets.BudgetKPICards.cogsVsBudget')}</CardTitle>
           <Package className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -147,7 +147,7 @@ export function BudgetKPICards({ metrics, activeTab, isLoading = false, currency
       {/* Prime Cost */}
       <Card className={cn(activeTab === 'prime' && 'ring-2 ring-primary')}>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Prime Cost</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('budgets.BudgetKPICards.primeCost')}</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

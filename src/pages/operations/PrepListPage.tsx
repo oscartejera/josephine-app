@@ -29,11 +29,7 @@ interface PrepItem {
 export default function PrepListPage() {
   const { t } = useTranslation();
     const { selectedLocationId, selectedLocation, loading: appLoading } = useApp();
-    const [prepItems, setPrepItems] = useState<PrepItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-    const [searchQuery, setSearchQuery] = useState('');
-    const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+    const [prepItems, setPrepItems] = useState<PrepItem[]>{t('operations.PrepListPage.constLoadingSetloadingUsestatetrueConst')}<Set<string>>(new Set());
 
     useEffect(() => {
         async function fetchPrepList() {
@@ -203,7 +199,7 @@ export default function PrepListPage() {
                     <Skeleton className="h-32 w-full rounded-xl" />
                     <Skeleton className="h-32 w-full rounded-xl" />
                 </div>
-            ) : filteredItems.length === 0 ? (
+            {t('operations.PrepListPage.filtereditemslength0')}
                 <Card>
                     <CardContent className="py-12 text-center">
                         <ChefHat className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />

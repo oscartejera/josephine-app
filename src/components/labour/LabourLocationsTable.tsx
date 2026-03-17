@@ -44,9 +44,7 @@ interface DeltaChipProps {
 function DeltaChip({ value, inverted = false }: DeltaChipProps) {
   const safeValue = value ?? 0;
   const isPositive = inverted ? safeValue <= 0 : safeValue >= 0;
-  const arrow = safeValue >= 0 ? '↑' : '↓';
-
-  return (
+  const arrow = safeValue >{t('labour.LabourLocationsTable.0Return')}
     <span className={cn(
       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium",
       isPositive
@@ -87,7 +85,7 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardContent className="p-8 text-center text-muted-foreground">
-          No location data available for the selected period.
+          {t('labour.LabourLocationsTable.noLocationDataAvailableFor')}
         </CardContent>
       </Card>
     );
@@ -120,7 +118,7 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
   return (
     <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">Performance by Location</CardTitle>
+        <CardTitle className="text-lg font-semibold">{t('labour.LabourLocationsTable.performanceByLocation')}</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
@@ -129,10 +127,10 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th rowSpan={2} className="text-left font-medium text-muted-foreground px-4 py-3 sticky left-0 bg-muted/30">
-                  Location
+                  {t('labour.LabourLocationsTable.location')}
                 </th>
                 <th colSpan={2} className="text-center font-medium text-muted-foreground px-2 py-2 border-l border-border">
-                  Sales
+                  {t('labour.LabourLocationsTable.sales')}
                 </th>
                 <th colSpan={2} className="text-center font-medium text-muted-foreground px-2 py-2 border-l border-border">
                   {colLabel}
@@ -142,12 +140,12 @@ export function LabourLocationsTable({ data, isLoading, metricMode }: LabourLoca
                 </th>
               </tr>
               <tr className="border-b border-border bg-muted/20">
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">Actual</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">Projected</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">Actual</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">Projected</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">Actual</th>
-                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">Projected</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">{t('labour.LabourLocationsTable.actual')}</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">{t('labour.LabourLocationsTable.projected')}</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">{t('labour.LabourLocationsTable.actual1')}</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">{t('labour.LabourLocationsTable.projected1')}</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs border-l border-border">{t('labour.LabourLocationsTable.actual2')}</th>
+                <th className="text-center font-normal text-muted-foreground px-2 py-2 text-xs">{t('labour.LabourLocationsTable.projected2')}</th>
               </tr>
             </thead>
             <tbody>

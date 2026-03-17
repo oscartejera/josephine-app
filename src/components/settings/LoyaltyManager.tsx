@@ -78,9 +78,7 @@ export function LoyaltyManager() {
   const [showMemberDialog, setShowMemberDialog] = useState(false);
   const [showRewardDialog, setShowRewardDialog] = useState(false);
   const [showPointsDialog, setShowPointsDialog] = useState(false);
-  const [editingMember, setEditingMember] = useState<LoyaltyMember | null>(null);
-  const [editingReward, setEditingReward] = useState<LoyaltyReward | null>(null);
-  const [selectedMember, setSelectedMember] = useState<LoyaltyMember | null>(null);
+  const [editingMember, setEditingMember] = useState<LoyaltyMember | null>{t('settings.LoyaltyManager.nullConstEditingrewardSeteditingrewardUs')}<LoyaltyReward | null>{t('settings.LoyaltyManager.nullConstSelectedmemberSetselectedmember')}<LoyaltyMember | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [memberForm, setMemberForm] = useState({
@@ -283,7 +281,7 @@ export function LoyaltyManager() {
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <span className="text-2xl font-bold">{stats.totalMembers}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">Miembros</p>
+                  <p className="text-sm text-muted-foreground">{t('settings.LoyaltyManager.miembros')}</p>
                 </CardContent>
               </Card>
               <Card>
@@ -327,17 +325,17 @@ export function LoyaltyManager() {
       {settings?.is_enabled && (
         <Tabs defaultValue="members">
           <TabsList>
-            <TabsTrigger value="members">Miembros</TabsTrigger>
-            <TabsTrigger value="rewards">Recompensas</TabsTrigger>
+            <TabsTrigger value="members">{t('settings.LoyaltyManager.miembros1')}</TabsTrigger>
+            <TabsTrigger value="rewards">{t('settings.LoyaltyManager.recompensas')}</TabsTrigger>
             <TabsTrigger value="settings">{t('settings.configuracion2')}</TabsTrigger>
           </TabsList>
 
           {/* Members Tab */}
           <TabsContent value="members" className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Clientes Frecuentes</h3>
+              <h3 className="text-lg font-medium">{t('settings.LoyaltyManager.clientesFrecuentes')}</h3>
               <Button onClick={() => { setEditingMember(null); setMemberForm({ name: '', email: '', phone: '', notes: '' }); setShowMemberDialog(true); }}>
-                <Plus className="h-4 w-4 mr-2" /> Añadir Miembro
+                <Plus className="h-4 w-4 mr-2" /> {t('settings.LoyaltyManager.anadirMiembro')}
               </Button>
             </div>
 
@@ -345,11 +343,11 @@ export function LoyaltyManager() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Contacto</TableHead>
-                    <TableHead>Nivel</TableHead>
-                    <TableHead className="text-right">Puntos</TableHead>
-                    <TableHead className="text-right">Acumulados</TableHead>
+                    <TableHead>{t('settings.LoyaltyManager.cliente')}</TableHead>
+                    <TableHead>{t('settings.LoyaltyManager.contacto')}</TableHead>
+                    <TableHead>{t('settings.LoyaltyManager.nivel')}</TableHead>
+                    <TableHead className="text-right">{t('settings.LoyaltyManager.puntos')}</TableHead>
+                    <TableHead className="text-right">{t('settings.LoyaltyManager.acumulados')}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -357,7 +355,7 @@ export function LoyaltyManager() {
                   {members.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        No hay miembros registrados
+                        {t('settings.LoyaltyManager.noHayMiembrosRegistrados')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -409,7 +407,7 @@ export function LoyaltyManager() {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">{t("settings.rewardsCatalog")}</h3>
               <Button onClick={() => { setEditingReward(null); setRewardForm({ name: '', description: '', points_cost: 100, reward_type: 'discount', value: 5, is_active: true }); setShowRewardDialog(true); }}>
-                <Plus className="h-4 w-4 mr-2" /> Añadir Recompensa
+                <Plus className="h-4 w-4 mr-2" /> {t('settings.LoyaltyManager.anadirRecompensa')}
               </Button>
             </div>
 
@@ -417,7 +415,7 @@ export function LoyaltyManager() {
               {rewards.length === 0 ? (
                 <Card className="col-span-full">
                   <CardContent className="py-8 text-center text-muted-foreground">
-                    No hay recompensas configuradas
+                    {t('settings.LoyaltyManager.noHayRecompensasConfiguradas')}
                   </CardContent>
                 </Card>
               ) : (
@@ -479,7 +477,7 @@ export function LoyaltyManager() {
                       onBlur={(e) => updateSettings({ points_per_euro: Number(e.target.value) })}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Ejemplo: 1 punto por cada €1 gastado
+                      {t('settings.LoyaltyManager.ejemplo1PuntoPorCada')}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -490,7 +488,7 @@ export function LoyaltyManager() {
                       onBlur={(e) => updateSettings({ welcome_bonus: Number(e.target.value) })}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Puntos que recibe un nuevo miembro al registrarse
+                      {t('settings.LoyaltyManager.puntosQueRecibeUnNuevo')}
                     </p>
                   </div>
                 </div>
@@ -541,17 +539,17 @@ export function LoyaltyManager() {
               <Input
                 value={memberForm.name}
                 onChange={(e) => setMemberForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder=t('settings.nombreCompleto')
+                placeholder={t('settings.nombreCompleto')}
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>{t('settings.LoyaltyManager.email')}</Label>
                 <Input
                   type="email"
                   value={memberForm.email}
                   onChange={(e) => setMemberForm((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="cliente@email.com"
+                  placeholder={t('settings.LoyaltyManager.clienteemailcom')}
                 />
               </div>
               <div className="space-y-2">
@@ -565,17 +563,17 @@ export function LoyaltyManager() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Notas</Label>
+              <Label>{t('settings.LoyaltyManager.notas')}</Label>
               <Textarea
                 value={memberForm.notes}
                 onChange={(e) => setMemberForm((p) => ({ ...p, notes: e.target.value }))}
-                placeholder="Preferencias, alergias, etc."
+                placeholder={t('settings.LoyaltyManager.preferenciasAlergiasEtc')}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowMemberDialog(false)}>
-              Cancelar
+              {t('settings.LoyaltyManager.cancelar')}
             </Button>
             <Button onClick={handleSaveMember} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
@@ -597,7 +595,7 @@ export function LoyaltyManager() {
               <Input
                 value={rewardForm.name}
                 onChange={(e) => setRewardForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="Café gratis, 10% descuento..."
+                placeholder={t('settings.cafeGratis10Descuento')}
               />
             </div>
             <div className="space-y-2">
@@ -618,7 +616,7 @@ export function LoyaltyManager() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Tipo</Label>
+                <Label>{t('settings.LoyaltyManager.tipo')}</Label>
                 <Select
                   value={rewardForm.reward_type}
                   onValueChange={(v) => setRewardForm((p) => ({ ...p, reward_type: v as LoyaltyReward['reward_type'] }))}
@@ -651,12 +649,12 @@ export function LoyaltyManager() {
                 checked={rewardForm.is_active}
                 onCheckedChange={(v) => setRewardForm((p) => ({ ...p, is_active: v }))}
               />
-              <Label>Activa</Label>
+              <Label>{t('settings.LoyaltyManager.activa')}</Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRewardDialog(false)}>
-              Cancelar
+              {t('settings.LoyaltyManager.cancelar1')}
             </Button>
             <Button onClick={handleSaveReward} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
@@ -674,16 +672,16 @@ export function LoyaltyManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Puntos</Label>
+              <Label>{t('settings.LoyaltyManager.puntos1')}</Label>
               <Input
                 type="number"
                 value={pointsForm.points}
                 onChange={(e) => setPointsForm((p) => ({ ...p, points: Number(e.target.value) }))}
-                placeholder="Usa negativos para restar"
+                placeholder={t('settings.LoyaltyManager.usaNegativosParaRestar')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Tipo</Label>
+              <Label>{t('settings.LoyaltyManager.tipo1')}</Label>
               <Select
                 value={pointsForm.type}
                 onValueChange={(v) => setPointsForm((p) => ({ ...p, type: v as 'bonus' | 'adjustment' }))}
@@ -692,8 +690,8 @@ export function LoyaltyManager() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bonus">Bono</SelectItem>
-                  <SelectItem value="adjustment">Ajuste</SelectItem>
+                  <SelectItem value="bonus">{t('settings.LoyaltyManager.bono')}</SelectItem>
+                  <SelectItem value="adjustment">{t('settings.LoyaltyManager.ajuste')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -708,7 +706,7 @@ export function LoyaltyManager() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPointsDialog(false)}>
-              Cancelar
+              {t('settings.LoyaltyManager.cancelar2')}
             </Button>
             <Button onClick={handleAddPoints} disabled={saving || pointsForm.points === 0}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}

@@ -100,7 +100,7 @@ export default function PayrollCalculate({
       toast({ 
         variant: 'destructive', 
         title: t("common.error"), 
-        description: 'No hay nómina iniciada para este período. Vuelve a Inicio y pulsa "Iniciar nómina del mes".' 
+        description: t('payroll.noHayNominaIniciadaPara') 
       });
       return;
     }
@@ -157,7 +157,7 @@ export default function PayrollCalculate({
         {calculated && (
           <Button onClick={handleCalculate} variant="outline">
             <Calculator className="h-4 w-4 mr-2" />
-            Recalcular
+            {t('payroll.PayrollCalculate.recalcular')}
           </Button>
         )}
       </div>
@@ -179,13 +179,13 @@ export default function PayrollCalculate({
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">SS Empresa</p>
+              <p className="text-sm text-muted-foreground">{t('payroll.PayrollCalculate.ssEmpresa')}</p>
               <p className="text-2xl font-bold">€{fmt(totals.employerSS)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">IRPF</p>
+              <p className="text-sm text-muted-foreground">{t('payroll.PayrollCalculate.irpf')}</p>
               <p className="text-2xl font-bold">€{fmt(totals.irpf)}</p>
             </CardContent>
           </Card>
@@ -210,11 +210,11 @@ export default function PayrollCalculate({
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('payroll.empleado')}</TableHead>
-                  <TableHead className="text-right">Bruto</TableHead>
-                  <TableHead className="text-right">SS Emp.</TableHead>
-                  <TableHead className="text-right">IRPF</TableHead>
-                  <TableHead className="text-right">Otras Ded.</TableHead>
-                  <TableHead className="text-right">Neto</TableHead>
+                  <TableHead className="text-right">{t('payroll.PayrollCalculate.bruto')}</TableHead>
+                  <TableHead className="text-right">{t('payroll.PayrollCalculate.ssEmp')}</TableHead>
+                  <TableHead className="text-right">{t('payroll.PayrollCalculate.irpf1')}</TableHead>
+                  <TableHead className="text-right">{t('payroll.PayrollCalculate.otrasDed')}</TableHead>
+                  <TableHead className="text-right">{t('payroll.PayrollCalculate.neto')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -239,7 +239,7 @@ export default function PayrollCalculate({
         <Card>
           <CardContent className="py-12 text-center">
             <Calculator className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Listo para calcular</h3>
+            <h3 className="text-lg font-medium mb-2">{t('payroll.PayrollCalculate.listoParaCalcular')}</h3>
             <p className="text-muted-foreground mb-4">
               Pulsa "{t('payroll.calculatePayrolls')}" para generar los cálculos del período.
             </p>
@@ -262,10 +262,10 @@ export default function PayrollCalculate({
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/validate')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Validar
+          {t('payroll.PayrollCalculate.validar')}
         </Button>
         <Button onClick={() => navigate('/payroll/review')} disabled={!calculated}>
-          Siguiente: Revisar
+          {t('payroll.PayrollCalculate.siguienteRevisar')}
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>

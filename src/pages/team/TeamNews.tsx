@@ -56,13 +56,7 @@ export default function TeamNews() {
   const getTypeIcon = (type: AnnouncementType) => {
     switch (type) {
       case 'important':
-        return <AlertTriangle className="h-4 w-4" />;
-      case 'celebration':
-        return <PartyPopper className="h-4 w-4" />;
-      case 'schedule':
-        return <Calendar className="h-4 w-4" />;
-      default:
-        return <Info className="h-4 w-4" />;
+        return <AlertTriangle className="h-4 w-4" />{t('team.TeamNews.caseCelebrationReturn')} <PartyPopper className="h-4 w-4" />{t('team.TeamNews.caseScheduleReturn')} <Calendar className="h-4 w-4" />{t('team.TeamNews.defaultReturn')} <Info className="h-4 w-4" />;
     }
   };
 
@@ -132,19 +126,19 @@ export default function TeamNews() {
     <div className="p-4 lg:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold">Novedades</h1>
+        <h1 className="text-xl font-bold">{t('team.TeamNews.novedades')}</h1>
         <p className="text-sm text-muted-foreground">
-          Anuncios y noticias del equipo
+          {t('team.TeamNews.anunciosYNoticiasDelEquipo')}
         </p>
       </div>
 
       {/* Filter Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="important">Importantes</TabsTrigger>
-          <TabsTrigger value="schedule">Horarios</TabsTrigger>
-          <TabsTrigger value="celebration">Equipo</TabsTrigger>
+          <TabsTrigger value="all">{t('team.TeamNews.todos')}</TabsTrigger>
+          <TabsTrigger value="important">{t('team.TeamNews.importantes')}</TabsTrigger>
+          <TabsTrigger value="schedule">{t('team.TeamNews.horarios')}</TabsTrigger>
+          <TabsTrigger value="celebration">{t('team.TeamNews.equipo')}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -153,7 +147,7 @@ export default function TeamNews() {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
             <Pin className="h-3 w-3" />
-            <span>Fijados</span>
+            <span>{t('team.TeamNews.fijados')}</span>
           </div>
           {pinned.map((item) => {
             const style = getTypeStyle(item.type);
@@ -196,7 +190,7 @@ export default function TeamNews() {
           {pinned.length > 0 && (
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <Bell className="h-3 w-3" />
-              <span>Recientes</span>
+              <span>{t('team.TeamNews.recientes')}</span>
             </div>
           )}
           {rest.map((item) => {

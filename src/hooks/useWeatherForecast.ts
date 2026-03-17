@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
 
+import { useTranslation } from 'react-i18next';
 const OWM_API_KEY = import.meta.env.VITE_OPENWEATHERMAP_API_KEY || '';
 
 export interface WeatherDay {
@@ -26,8 +27,7 @@ export interface WeatherDay {
  * Calculate sales multiplier from weather conditions
  * Based on restaurant industry research:
  * - Rain → -15% sales
- * - Extreme heat (>35°C) → -10%
- * - Cold (<5°C) → -12%
+ * - Extreme heat (>{t('hooks.useWeatherForecast.35c10Cold')}<5°C) → -12%
  * - Ideal terrace weather (18-25°C, no rain) → +5%
  */
 function calculateSalesMultiplier(temp: number, rainMm: number, condition: string): number {
@@ -35,14 +35,11 @@ function calculateSalesMultiplier(temp: number, rainMm: number, condition: strin
 
     // Rain impact
     if (rainMm > 5) multiplier *= 0.82;
-    else if (rainMm > 0.5) multiplier *= 0.90;
-
-    // Temperature impact
-    if (temp < 5) multiplier *= 0.88;
+    else if (rainMm > {t('hooks.useWeatherForecast.05Multiplier090TemperatureImpact')} < 5) multiplier *= 0.88;
     else if (temp < 10) multiplier *= 0.93;
     else if (temp > 35) multiplier *= 0.90;
     else if (temp > 30) multiplier *= 0.95;
-    else if (temp >= 18 && temp <= 25 && rainMm < 0.5) multiplier *= 1.05;
+    else if (temp >{t('hooks.useWeatherForecast.18Temp')} <= 25 && rainMm < 0.5) multiplier *= 1.05;
 
     // Snow/storm
     if (condition.includes('Snow') || condition.includes('Thunderstorm')) {
@@ -53,9 +50,8 @@ function calculateSalesMultiplier(temp: number, rainMm: number, condition: strin
 }
 
 export function useWeatherForecast(locationId: string | null, lat: number | null, lng: number | null) {
-    const [forecast, setForecast] = useState<WeatherDay[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
+    const [forecast, setForecast] = useState<WeatherDay[]>{t('hooks.useWeatherForecast.constLoadingSetloadingUsestatefalseConst')}<string | null>(null);
 
     const fetchWeather = useCallback(async () => {
         if (!locationId || lat == null || lng == null || !OWM_API_KEY) {

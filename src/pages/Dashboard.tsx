@@ -174,10 +174,10 @@ export default function Dashboard() {
             <MapPin className="h-10 w-10 text-muted-foreground mb-3" />
             <p className="text-lg font-medium">{t("dashboard.noLocations")}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Crea tu primer local para empezar a ver datos en el dashboard.
+              {t('dashboard.creaTuPrimerLocalPara')}
             </p>
             <Button className="mt-4" onClick={() => window.location.href = '/settings'}>
-              Configurar local
+              {t('dashboard.configurarLocal')}
             </Button>
           </CardContent>
         </Card>
@@ -191,7 +191,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
           <p className="text-muted-foreground flex items-center gap-2">
-            Panel ejecutivo — Josephine Intelligence
+            {t('dashboard.panelEjecutivoJosephineIntelligence')}
             <ForecastConfidenceBadge compact />
           </p>
         </div>
@@ -208,11 +208,11 @@ export default function Dashboard() {
             <CardContent className="flex items-center gap-3 py-3">
               <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">KPIs temporalmente no disponibles</p>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">{t('dashboard.kpisTemporalmenteNoDisponibles')}</p>
                 <p className="text-xs text-amber-600 dark:text-amber-400">{kpiError instanceof Error ? kpiError.message : t('dashboard.errorAlCargarIndicadores')}</p>
               </div>
               <Button variant="outline" size="sm" className="shrink-0" onClick={() => refetch()}>
-                Reintentar
+                {t('dashboard.reintentar')}
               </Button>
             </CardContent>
           </Card>
@@ -231,7 +231,7 @@ export default function Dashboard() {
             />,
             <MetricCard
               key="gp"
-              title="GP%"
+              title={t('dashboard.gp')}
               value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
               icon={Percent}
               variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
@@ -253,7 +253,7 @@ export default function Dashboard() {
             />,
             <MetricCard
               key="col"
-              title="COL%"
+              title={t('dashboard.col')}
               value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
               icon={TrendingUp}
               variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
@@ -314,7 +314,7 @@ export default function Dashboard() {
         <button
           onClick={() => setChatOpen(true)}
           className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
-          title="Josephine AI"
+          title={t('dashboard.josephineAi')}
         >
           <Bot className="h-6 w-6" />
         </button>

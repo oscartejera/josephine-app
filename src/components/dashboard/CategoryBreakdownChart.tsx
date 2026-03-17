@@ -54,13 +54,13 @@ export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProp
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium text-sm">{data.category}</p>
           <p className="text-sm text-muted-foreground">
-            Ventas: <span className="font-semibold text-foreground">{formatCurrency(data.sales)}</span>
+            {t('dashboard.CategoryBreakdownChart.ventas')} <span className="font-semibold text-foreground">{formatCurrency(data.sales)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Unidades: <span className="font-semibold text-foreground">{data.units.toLocaleString('es-ES')}</span>
+            {t('dashboard.CategoryBreakdownChart.unidades')} <span className="font-semibold text-foreground">{data.units.toLocaleString('es-ES')}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Porcentaje: <span className="font-semibold text-foreground">{data.percentage.toFixed(1)}%</span>
+            {t('dashboard.CategoryBreakdownChart.porcentaje')} <span className="font-semibold text-foreground">{data.percentage.toFixed(1)}%</span>
           </p>
         </div>
       );
@@ -82,9 +82,7 @@ export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProp
         </div>
       ))}
     </div>
-  );
-
-  return (
+  {t('dashboard.CategoryBreakdownChart.return')}
     <Card className={className}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
@@ -97,7 +95,7 @@ export function CategoryBreakdownChart({ className }: CategoryBreakdownChartProp
       <CardContent>
         {categories.length === 0 ? (
           <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-            No hay datos de ventas por categoría
+            {t('dashboard.CategoryBreakdownChart.noHayDatosDeVentas')}
           </div>
         ) : (
           <>

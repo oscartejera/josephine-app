@@ -15,8 +15,7 @@ import { useTranslation } from 'react-i18next';
 // ── Helper: rating badge ─────────────────────────────────────
 
 function AccuracyBadge({ mape }: { mape: number | null }) {
-    if (mape === null) return <span className="text-xs text-muted-foreground">{t("common.noData")}</span>;
-    const isExcellent = mape <= 5;
+    if (mape === null) return <span className="text-xs text-muted-foreground">{t("common.noData")}</span>{t('forecast.ForecastAccuracyCard.constIsexcellentMape')} <= 5;
     const isGood = mape <= 10;
     const label = isExcellent ? 'Excelente' : isGood ? 'Bueno' : mape <= 20 ? 'Aceptable' : 'Mejorar';
     const color = isExcellent
@@ -101,11 +100,11 @@ export function ForecastAccuracyCard({ locationIds }: ForecastAccuracyCardProps)
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <Target className="h-4 w-4" />
-                        Forecast Accuracy
+                        {t('forecast.ForecastAccuracyCard.forecastAccuracy')}
                     </h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    Ejecuta <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">backfill_forecast_accuracy()</code> para empezar a medir la precisión del forecast.
+                    {t('forecast.ForecastAccuracyCard.ejecuta')} <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">{t('forecast.ForecastAccuracyCard.backfillforecastaccuracy')}</code> {t('forecast.ForecastAccuracyCard.paraEmpezarAMedirLa')}
                 </p>
             </Card>
         );
@@ -116,7 +115,7 @@ export function ForecastAccuracyCard({ locationIds }: ForecastAccuracyCardProps)
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Target className="h-4 w-4" />
-                    Forecast Accuracy
+                    {t('forecast.ForecastAccuracyCard.forecastAccuracy1')}
                     <span className="text-xs font-normal text-muted-foreground">
                         (últimos 90 días · {agg.daysEvaluated} días evaluados)
                     </span>
@@ -134,21 +133,21 @@ export function ForecastAccuracyCard({ locationIds }: ForecastAccuracyCardProps)
                 />
                 <KpiMini
                     icon={agg.biasEur !== null && agg.biasEur >= 0 ? TrendingUp : TrendingDown}
-                    label="Bias"
+                    label={t('forecast.ForecastAccuracyCard.bias')}
                     value={agg.biasEur !== null ? `€${Math.abs(agg.biasEur).toLocaleString('es-ES')}` : null}
                     suffix={agg.biasEur !== null ? (agg.biasEur >= 0 ? ' (sobre)' : ' (bajo)') : ''}
                     good={agg.biasEur !== null ? Math.abs(agg.biasEur) <= 200 : undefined}
                 />
                 <KpiMini
                     icon={BarChart3}
-                    label="Hit Rate ±10%"
+                    label={t('forecast.ForecastAccuracyCard.hitRate10')}
                     value={agg.hitRate10?.toFixed(1) ?? null}
                     suffix="%"
                     good={agg.hitRate10 !== null ? agg.hitRate10 >= 85 : undefined}
                 />
                 <KpiMini
                     icon={BarChart3}
-                    label="Hit Rate ±5%"
+                    label={t('forecast.ForecastAccuracyCard.hitRate5')}
                     value={agg.hitRate5?.toFixed(1) ?? null}
                     suffix="%"
                     good={agg.hitRate5 !== null ? agg.hitRate5 >= 70 : undefined}

@@ -41,8 +41,7 @@ interface SchedulingConfig {
   closingTime: string;         // e.g. "01:00"
   maxHoursPerDay: number;      // e.g. 10
   maxWeeklyHours: number;      // e.g. 40
-  demandCurve: Record<string, number>;  // hour→pct of daily sales
-  staffingRatios: Record<string, number>; // role→covers/hour capacity
+  demandCurve: Record<string, number>{t('hooks.useSchedulingSupabase.hourpctOfDailySalesStaffingratios')}<string, number>; // role→covers/hour capacity
   closedDays: number[];
 }
 
@@ -152,12 +151,7 @@ function buildDayparts(config: SchedulingConfig, dayOfWeek: number): DaypartBloc
  * 6. Allows split shifts (employee works 2 dayparts)
  */
 function calculateShiftAssignments(
-  employees: Array<{ id: string; full_name: string; role_name: string | null; hourly_cost: number | null }>,
-  targetHours: number,
-  dayOfWeek: number,
-  availMap: Map<string, Map<number, { start: string; end: string }>>,
-  config: SchedulingConfig = DEFAULT_CONFIG,
-  weeklyHoursUsed: Map<string, number> = new Map(),
+  employees: Array<{ id: string; full_name: string; role_name: string | null; hourly_cost: number | null }>{t('hooks.useSchedulingSupabase.targethoursNumberDayofweekNumberAvailmap')}<string, Map<number, { start: string; end: string }>>{t('hooks.useSchedulingSupabase.configSchedulingconfigDefaultconfigWeekl')}<string, number> = new Map(),
 ): ShiftAssignment[] {
   const assignments: ShiftAssignment[] = [];
   const dayparts = buildDayparts(config, dayOfWeek);
@@ -186,6 +180,7 @@ function calculateShiftAssignments(
     const fohNeeded = hasBothDepts ? Math.max(1, staffNeeded - bohNeeded) : staffNeeded;
 
     const assignGroup = (pool: typeof employees, needed: number) => {
+  const { t } = useTranslation();
       let assigned = 0;
       for (const emp of pool) {
         if (assigned >= needed) break;
@@ -270,8 +265,7 @@ export function useSchedulingSupabase(
   const { dataSource } = useApp();
   const [hasSchedule, setHasSchedule] = useState(false);
   const [shiftOverrides, setShiftOverrides] = useState<Record<string, { employeeId: string; date: string }>>({});
-  const [newShifts, setNewShifts] = useState<Shift[]>([]);
-  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
+  const [newShifts, setNewShifts] = useState<Shift[]>{t('hooks.useSchedulingSupabase.constSwaprequestsSetswaprequestsUsestate')}<SwapRequest[]>([]);
   const [forecastGenerating, setForecastGenerating] = useState(false);
 
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -390,10 +384,7 @@ export function useSchedulingSupabase(
     const employeesWithHours = employees.map(emp => {
       const empShifts = regularShifts.filter(s => s.employeeId === emp.id);
       // Sum hours correctly even when employee has multiple shifts per day
-      const weeklyHours = Math.round(empShifts.reduce((sum, s) => sum + s.hours, 0) * 10) / 10;
-
-      // Derive availability from actual shifts
-      const availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'> = {};
+      const weeklyHours = Math.round(empShifts.reduce((sum, s) => {t('hooks.useSchedulingSupabase.sumShours01010')}<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'> = {};
       for (let d = 0; d < 7; d++) {
         const dayDate = format(addDays(weekStart, d), 'yyyy-MM-dd');
         const hasShift = empShifts.some(s => s.date === dayDate);
@@ -569,8 +560,7 @@ export function useSchedulingSupabase(
       }
 
       // ── Step 3: Build availability index ──────────────────────
-      // Map: employee_id -> Set of day_of_week where available
-      const availMap = new Map<string, Map<number, { start: string; end: string }>>();
+      // Map: employee_id -> {t('hooks.useSchedulingSupabase.setOfDayofweekWhereAvailable')}<string, Map<number, { start: string; end: string }>>();
       (availRows || []).forEach(a => {
         if (!availMap.has(a.employee_id)) availMap.set(a.employee_id, new Map());
         availMap.get(a.employee_id)!.set(a.day_of_week, {
@@ -590,17 +580,7 @@ export function useSchedulingSupabase(
         planned_cost: number;
         role: string;
         status: string;
-      }> = [];
-
-      let totalHours = 0;
-      let totalCost = 0;
-      let totalForecastSales = 0;
-
-      // Track weekly hours per employee across all 7 days
-      const weeklyHoursUsed = new Map<string, number>();
-
-      // For each day of the week
-      for (let d = 0; d < 7; d++) {
+      }> {t('hooks.useSchedulingSupabase.letTotalhours0LetTotalcost')}<string, number>{t('hooks.useSchedulingSupabase.forEachDayOfThe')} < 7; d++) {
         const dayDate = new Date(weekStart);
         dayDate.setDate(dayDate.getDate() + d);
         const dayISO = format(dayDate, 'yyyy-MM-dd');
@@ -628,14 +608,7 @@ export function useSchedulingSupabase(
 
         // Budget cap: target_col_percent of forecast sales / avg hourly rate
         const avgHourlyCost = empRows.reduce((sum, e) => sum + (e.hourly_cost || 12), 0) / empRows.length;
-        const maxBudgetHours = forecastSales > 0
-          ? Math.floor((forecastSales * targetCol / 100) / avgHourlyCost)
-          : targetHoursForDay;
-
-        // Use the lower of target vs budget
-        const hoursToAllocate = Math.min(targetHoursForDay, maxBudgetHours);
-
-        if (hoursToAllocate <= 0) {
+        const maxBudgetHours = forecastSales > {t('hooks.useSchedulingSupabase.0MathfloorforecastsalesTargetcol100Avgho')} <= 0) {
           diagWarnings.push(`${dayISO}: El presupuesto (Target COL% ${targetCol}%) es demasiado bajo para cubrir un turno mínimo.`);
           continue;
         }
@@ -719,10 +692,7 @@ export function useSchedulingSupabase(
       setNewShifts([]);
       setHasSchedule(true);
 
-      const colPercent = totalForecastSales > 0
-        ? ((totalCost / totalForecastSales) * 100).toFixed(1)
-        : '—';
-      const colStatus = Number(colPercent) <= targetCol ? '✓' : `⚠ (objetivo ${targetCol}%)`;
+      const colPercent = totalForecastSales > {t('hooks.useSchedulingSupabase.0TotalcostTotalforecastsales100tofixed1C')} <= targetCol ? '✓' : `⚠ (objetivo ${targetCol}%)`;
 
       toast.success(
         `Creados ${shiftsToInsert.length} turnos (${totalHours}h) • COL% ${colPercent}% ${colStatus}`,
@@ -910,13 +880,7 @@ export function useSchedulingSupabase(
 
       // Get existing shifts for this day
       const dayShifts = allShifts.filter(s => s.date === dayISO);
-      const scheduledHours = dayShifts.reduce((sum, s) => sum + s.hours, 0);
-
-      // Get forecast hours for this day
-      const kpi = data.dailyKPIs[d];
-      const forecastHours = kpi?.forecastLaborHours || 0;
-
-      // Only fill if under-staffed (scheduled < 90% of forecast)
+      const scheduledHours = dayShifts.reduce((sum, s) => {t('hooks.useSchedulingSupabase.sumShours0GetForecast')} < 90% of forecast)
       if (forecastHours <= 0 || scheduledHours >= forecastHours * 0.9) continue;
 
       const gapHours = forecastHours - scheduledHours;
@@ -930,11 +894,7 @@ export function useSchedulingSupabase(
 
       // Sort available employees by cost (cheapest first)
       const sortedEmps = [...availableEmps].sort(
-        (a, b) => (a.hourlyRate || 12) - (b.hourlyRate || 12)
-      );
-
-      // Calculate weekly hours used
-      const weeklyHoursUsed = new Map<string, number>();
+        (a, b) => {t('hooks.useSchedulingSupabase.ahourlyrate12Bhourlyrate12Calculate')}<string, number>();
       for (const e of allEmployees) {
         const empShifts = allShifts.filter(s => s.employeeId === e.id);
         const total = empShifts.reduce((sum, s) => sum + s.hours, 0);
@@ -947,11 +907,7 @@ export function useSchedulingSupabase(
         if (hoursToFill <= 0) break;
 
         const weeklyUsed = weeklyHoursUsed.get(emp.id) || 0;
-        if (weeklyUsed >= 40) continue; // Max weekly hours
-
-        // Determine shift length (6-8 hrs, capped at remaining needed)
-        const shiftHours = Math.min(Math.max(6, hoursToFill), 8, 40 - weeklyUsed);
-        if (shiftHours < 3) continue; // Skip if less than 3h
+        if (weeklyUsed >{t('hooks.useSchedulingSupabase.40ContinueMaxWeeklyHours')} < 3) continue; // Skip if less than 3h
 
         // Determine shift time based on gap analysis
         // If evening coverage is lower, assign evening; otherwise morning

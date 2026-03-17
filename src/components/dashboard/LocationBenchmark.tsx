@@ -29,7 +29,7 @@ const KPI_TARGETS = {
 function getKPIColor(value: number, kpi: keyof typeof KPI_TARGETS): string {
     const config = KPI_TARGETS[kpi];
     const diff = value - config.target;
-    const isGood = config.higher === 'good' ? diff >= 0 : diff <= 0;
+    const isGood = config.higher === 'good' ? diff >{t('dashboard.LocationBenchmark.0Diff')} <= 0;
     return isGood ? 'text-emerald-600' : 'text-red-500';
 }
 
@@ -44,11 +44,7 @@ export function LocationBenchmark() {
   const { t } = useTranslation();
     const { accessibleLocations, canShowAllLocations, getDateRangeValues, dataSource, dateRange } = useApp();
     const { profile } = useAuth();
-    const [kpis, setKpis] = useState<LocationKPI[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    // Only show for owners with multiple locations
-    if (!canShowAllLocations || accessibleLocations.length < 2) return null;
+    const [kpis, setKpis] = useState<LocationKPI[]>{t('dashboard.LocationBenchmark.constLoadingSetloadingUsestatetrueOnly')} < 2) return null;
 
     useEffect(() => {
         async function fetchAllLocations() {
@@ -116,20 +112,20 @@ export function LocationBenchmark() {
             <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
-                    Benchmarking Multi-Local
+                    {t('dashboard.LocationBenchmark.benchmarkingMultilocal')}
                 </CardTitle>
-                <CardDescription>Comparativa de KPIs entre locales</CardDescription>
+                <CardDescription>{t('dashboard.LocationBenchmark.comparativaDeKpisEntreLocales')}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto -mx-6 px-6">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b">
-                                <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Local</th>
-                                <th className="text-right py-2 px-3 font-medium text-muted-foreground">Revenue</th>
-                                <th className="text-right py-2 px-3 font-medium text-muted-foreground">GP%</th>
-                                <th className="text-right py-2 px-3 font-medium text-muted-foreground">COL%</th>
-                                <th className="text-right py-2 pl-3 font-medium text-muted-foreground">SPLH</th>
+                                <th className="text-left py-2 pr-4 font-medium text-muted-foreground">{t('dashboard.LocationBenchmark.local')}</th>
+                                <th className="text-right py-2 px-3 font-medium text-muted-foreground">{t('dashboard.LocationBenchmark.revenue')}</th>
+                                <th className="text-right py-2 px-3 font-medium text-muted-foreground">{t('dashboard.LocationBenchmark.gp')}</th>
+                                <th className="text-right py-2 px-3 font-medium text-muted-foreground">{t('dashboard.LocationBenchmark.col')}</th>
+                                <th className="text-right py-2 pl-3 font-medium text-muted-foreground">{t('dashboard.LocationBenchmark.splh')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -143,7 +139,7 @@ export function LocationBenchmark() {
                                             <span className="font-medium truncate max-w-[120px]">{loc.name}</span>
                                             {loc.id === bestGP.id && bestGP.gpPercent > 0 && (
                                                 <Badge variant="outline" className="text-[10px] py-0 px-1 border-emerald-300 text-emerald-600">
-                                                    Best GP
+                                                    {t('dashboard.LocationBenchmark.bestGp')}
                                                 </Badge>
                                             )}
                                         </div>
@@ -174,7 +170,7 @@ export function LocationBenchmark() {
                         </tbody>
                         <tfoot>
                             <tr className="bg-muted/30">
-                                <td className="py-2 pr-4 text-xs font-medium text-muted-foreground">Objetivo</td>
+                                <td className="py-2 pr-4 text-xs font-medium text-muted-foreground">{t('dashboard.LocationBenchmark.objetivo')}</td>
                                 <td className="text-right py-2 px-3 text-xs text-muted-foreground">—</td>
                                 <td className="text-right py-2 px-3 text-xs text-muted-foreground">≥70%</td>
                                 <td className="text-right py-2 px-3 text-xs text-muted-foreground">≤30%</td>

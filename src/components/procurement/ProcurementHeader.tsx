@@ -35,11 +35,11 @@ export function ProcurementHeader({
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Procurement</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">{t('procurement.ProcurementHeader.procurement')}</h1>
         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-          <span>Insights</span>
+          <span>{t('procurement.ProcurementHeader.insights')}</span>
           <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground">Procurement</span>
+          <span className="text-foreground">{t('procurement.ProcurementHeader.procurement1')}</span>
         </div>
       </div>
       
@@ -64,9 +64,9 @@ export function ProcurementHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Order History</DropdownMenuItem>
-            <DropdownMenuItem>Manage Suppliers</DropdownMenuItem>
-            <DropdownMenuItem>Export Data</DropdownMenuItem>
+            <DropdownMenuItem>{t('procurement.ProcurementHeader.orderHistory')}</DropdownMenuItem>
+            <DropdownMenuItem>{t('procurement.ProcurementHeader.manageSuppliers')}</DropdownMenuItem>
+            <DropdownMenuItem>{t('procurement.ProcurementHeader.exportData')}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -79,11 +79,11 @@ export function WasteCategoryDonut({
               size="sm"
               className="h-7 text-xs gap-1.5 font-normal"
             >
-              Category
+              {t('waste.WasteCategoryDonut.category')}
               <ChevronDown className="h-3 w-3" />
             </Button>
             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground">
-              See all
+              {t('waste.WasteCategoryDonut.seeAll')}
               <ArrowRight className="h-3 w-3" />
             </Button>
           </div>
@@ -125,9 +125,9 @@ export function WasteCategoryDonut({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">Item category</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">% of total waste</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Value</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteCategoryDonut.itemCategory')}</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteCategoryDonut.ofTotalWaste')}</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteCategoryDonut.value')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

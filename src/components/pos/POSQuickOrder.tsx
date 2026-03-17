@@ -35,8 +35,7 @@ export function POSQuickOrder({
 }: POSQuickOrderProps) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>{t('pos.POSQuickOrder.nullConstCartSetcartUsestate')}<CartItem[]>([]);
 
   const categories = useMemo(() => {
     const cats = new Set(products.map(p => p.category));
@@ -75,9 +74,7 @@ export function POSQuickOrder({
     }).filter(item => item.quantity > 0));
   };
 
-  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-
-  return (
+  const total = cart.reduce((sum, item) => {t('pos.POSQuickOrder.sumItemproductpriceItemquantity0Return')}
     <div className="h-full flex">
       {/* Products section */}
       <div className="flex-1 flex flex-col border-r">
@@ -86,7 +83,7 @@ export function POSQuickOrder({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar producto..."
+              placeholder={t('pos.POSQuickOrder.buscarProducto')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -98,7 +95,7 @@ export function POSQuickOrder({
               variant={!selectedCategory ? 'default' : 'outline'}
               onClick={() => setSelectedCategory(null)}
             >
-              Todos
+              {t('pos.POSQuickOrder.todos')}
             </Button>
             {categories.map(cat => (
               <Button
@@ -140,7 +137,7 @@ export function POSQuickOrder({
           <div className="p-4 space-y-3">
             {cart.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                Añade productos al pedido
+                {t('pos.POSQuickOrder.anadeProductosAlPedido')}
               </p>
             ) : (
               cart.map(item => (
@@ -187,11 +184,11 @@ export function POSQuickOrder({
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" disabled={cart.length === 0} className="gap-2">
               <Banknote className="h-4 w-4" />
-              Efectivo
+              {t('pos.POSQuickOrder.efectivo')}
             </Button>
             <Button disabled={cart.length === 0} className="gap-2">
               <CreditCard className="h-4 w-4" />
-              Tarjeta
+              {t('pos.POSQuickOrder.tarjeta')}
             </Button>
           </div>
         </div>

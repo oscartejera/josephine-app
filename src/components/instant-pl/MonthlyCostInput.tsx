@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 
 const COGS_CATEGORIES = [
     { key: 'food', label: t('common.alimentacion'), icon: '🍖', description: 'Materias primas' },
-    { key: 'beverage', label: 'Bebidas', icon: '🍷', description: 'Vinos, refrescos, café' },
+    { key: 'beverage', label: 'Bebidas', icon: '🍷', description: t('instant-pl.vinos_refrescos_cafe') },
     { key: 'packaging', label: 'Packaging', icon: '📦', description: 'Envases, bolsas, cajas' },
     { key: 'supplies', label: 'Suministros', icon: '🧴', description: 'Limpieza, desechables' },
     { key: 'other', label: 'Otros', icon: '📋', description: 'Otros costes directos' },
@@ -113,18 +113,16 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
         }
     };
 
-    const totalCogs = Object.values(entries).reduce((sum, v) => sum + (v || 0), 0);
-
-    return (
+    const totalCogs = Object.values(entries).reduce((sum, v) => {t('instant-pl.MonthlyCostInput.sumV00Return')}
         <Card className={cn("bg-white", className)}>
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">Costes Directos (COGS)</CardTitle>
+                        <CardTitle className="text-base font-semibold">{t('instant-pl.MonthlyCostInput.costesDirectosCogs')}</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">{monthName} — Entrada manual</p>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-amber-100 text-amber-700">
-                        ~ Manual
+                        {t('instant-pl.MonthlyCostInput.manual')}
                     </span>
                 </div>
             </CardHeader>

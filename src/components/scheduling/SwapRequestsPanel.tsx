@@ -43,22 +43,22 @@ function SwapRequestCard({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ArrowRightLeft className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">Swap Request</span>
+          <span className="text-sm font-medium">{t('scheduling.SwapRequestsPanel.swapRequest')}</span>
         </div>
         <div className="flex items-center gap-2">
           {request.status === 'pending' && (
             <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
-              Pending
+              {t('scheduling.SwapRequestsPanel.pending')}
             </Badge>
           )}
           {request.status === 'approved' && (
             <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50">
-              Approved
+              {t('scheduling.SwapRequestsPanel.approved')}
             </Badge>
           )}
           {request.status === 'rejected' && (
             <Badge variant="outline" className="text-red-600 border-red-300 bg-red-50">
-              Rejected
+              {t('scheduling.SwapRequestsPanel.rejected')}
             </Badge>
           )}
         </div>
@@ -132,7 +132,7 @@ function SwapRequestCard({
               onClick={onReject}
             >
               <X className="h-4 w-4 mr-1" />
-              Reject
+              {t('scheduling.SwapRequestsPanel.reject')}
             </Button>
             <Button
               size="sm"
@@ -140,7 +140,7 @@ function SwapRequestCard({
               onClick={onApprove}
             >
               <Check className="h-4 w-4 mr-1" />
-              Approve
+              {t('scheduling.SwapRequestsPanel.approve')}
             </Button>
           </div>
         )}
@@ -167,10 +167,10 @@ export function SwapRequestsPanel({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5 text-primary" />
-            Shift Swap Requests
+            {t('scheduling.SwapRequestsPanel.shiftSwapRequests')}
           </SheetTitle>
           <SheetDescription>
-            Review and manage shift swap requests from employees
+            {t('scheduling.SwapRequestsPanel.reviewAndManageShiftSwap')}
           </SheetDescription>
         </SheetHeader>
         
@@ -188,7 +188,7 @@ export function SwapRequestsPanel({
                 <div>
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
                     <Badge variant="secondary">{pendingRequests.length}</Badge>
-                    Pending Approval
+                    {t('scheduling.SwapRequestsPanel.pendingApproval')}
                   </h3>
                   <div className="space-y-3">
                     {pendingRequests.map((request) => (
@@ -208,7 +208,7 @@ export function SwapRequestsPanel({
                 <div>
                   {pendingRequests.length > 0 && <Separator className="my-4" />}
                   <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-                    Recent Activity
+                    {t('scheduling.SwapRequestsPanel.recentActivity')}
                   </h3>
                   <div className="space-y-3">
                     {processedRequests.map((request) => (

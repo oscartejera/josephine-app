@@ -162,21 +162,7 @@ const getAvatarColor = (name: string) =>
 export default function WorkforceTeam() {
   const { t } = useTranslation();
     const { accessibleLocations, selectedLocationId } = useApp();
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [clockedIn, setClockedIn] = useState<ClockRecord[]>([]);
-    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-    const [locations, setLocations] = useState<LocationOption[]>([]);
-    const [orgId, setOrgId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
-    const [roleFilter, setRoleFilter] = useState('all');
-    const [locationFilter, setLocationFilter] = useState('all');
-    const [showInactive, setShowInactive] = useState(false);
-    const [currentTime, setCurrentTime] = useState(new Date());
-
-    // Modals
-    const [addOpen, setAddOpen] = useState(false);
-    const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
+    const [employees, setEmployees] = useState<Employee[]>{t('workforceTeam.constClockedinSetclockedinUsestate')}<ClockRecord[]>{t('workforceTeam.constAnnouncementsSetannouncementsUsesta')}<Announcement[]>{t('workforceTeam.constLocationsSetlocationsUsestate')}<LocationOption[]>{t('workforceTeam.constOrgidSetorgidUsestate')}<string | null>{t('workforceTeam.nullConstLoadingSetloadingUsestatetrue')}<Employee | null>(null);
     const [announcementOpen, setAnnouncementOpen] = useState(false);
 
     // Form state
@@ -434,7 +420,7 @@ export default function WorkforceTeam() {
                 </div>
                 <Button onClick={() => { setForm({ full_name: '', role_name: 'employee', location_id: locations[0]?.id || '', hourly_cost: '' }); setAddOpen(true); }}>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Añadir empleado
+                    {t('workforceTeam.anadirEmpleado')}
                 </Button>
             </div>
 
@@ -443,7 +429,7 @@ export default function WorkforceTeam() {
                 <TabsList>
                     <TabsTrigger value="roster" className="gap-2">
                         <Users className="h-4 w-4" />
-                        Directorio
+                        {t('workforceTeam.directorio')}
                     </TabsTrigger>
                     <TabsTrigger value="working" className="gap-2">
                         <Clock className="h-4 w-4" />
@@ -456,23 +442,23 @@ export default function WorkforceTeam() {
                     </TabsTrigger>
                     <TabsTrigger value="news" className="gap-2">
                         <Megaphone className="h-4 w-4" />
-                        Anuncios
+                        {t('workforceTeam.anuncios')}
                     </TabsTrigger>
                     <TabsTrigger value="logbook" className="gap-2">
                         <BookOpen className="h-4 w-4" />
-                        Logbook
+                        {t('workforceTeam.logbook')}
                     </TabsTrigger>
                     <TabsTrigger value="reviews" className="gap-2">
                         <TrendingUp className="h-4 w-4" />
-                        Rendimiento
+                        {t('workforceTeam.rendimiento')}
                     </TabsTrigger>
                     <TabsTrigger value="training" className="gap-2">
                         <GraduationCap className="h-4 w-4" />
-                        Formación
+                        {t('workforceTeam.formacion')}
                     </TabsTrigger>
                     <TabsTrigger value="contracts" className="gap-2">
                         <FileText className="h-4 w-4" />
-                        Contratos
+                        {t('workforceTeam.contratos')}
                     </TabsTrigger>
                 </TabsList>
 
@@ -520,7 +506,7 @@ export default function WorkforceTeam() {
                                 onCheckedChange={setShowInactive}
                             />
                             <Label htmlFor="show-inactive" className="text-sm text-muted-foreground cursor-pointer">
-                                Inactivos
+                                {t('workforceTeam.inactivos')}
                             </Label>
                         </div>
                     </div>
@@ -547,8 +533,7 @@ export default function WorkforceTeam() {
                                                     <div className="animate-pulse h-10 bg-muted rounded" />
                                                 </TableCell>
                                             </TableRow>
-                                        ))
-                                    ) : filteredEmployees.length === 0 ? (
+                                        {t('workforceTeam.filteredemployeeslength0')}
                                         <TableRow>
                                             <TableCell colSpan={6} className="text-center py-12">
                                                 <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
@@ -613,9 +598,9 @@ export default function WorkforceTeam() {
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleActive(emp); }}>
                                                                 {emp.active ? (
-                                                                    <><XCircle className="mr-2 h-4 w-4" /> Desactivar</>
+                                                                    <><XCircle className="mr-2 h-4 w-4" /> {t('workforceTeam.desactivar')}</>
                                                                 ) : (
-                                                                    <><CheckCircle2 className="mr-2 h-4 w-4" /> Reactivar</>
+                                                                    <><CheckCircle2 className="mr-2 h-4 w-4" /> {t('workforceTeam.reactivar')}</>
                                                                 )}
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
@@ -659,7 +644,7 @@ export default function WorkforceTeam() {
                         </p>
                         <Button variant="outline" size="sm" onClick={fetchClockedIn}>
                             <RefreshCw className="mr-2 h-3 w-3" />
-                            Actualizar
+                            {t('workforceTeam.actualizar')}
                         </Button>
                     </div>
 
@@ -677,8 +662,7 @@ export default function WorkforceTeam() {
                                 const elapsed = differenceInMinutes(currentTime, new Date(record.clock_in));
                                 const hours = Math.floor(elapsed / 60);
                                 const mins = elapsed % 60;
-                                const isLong = elapsed > 480; // > 8h
-                                return (
+                                const isLong = elapsed > 480; // > {t('workforceTeam.8hReturn')}
                                     <Card
                                         key={record.id}
                                         className={cn(
@@ -728,7 +712,7 @@ export default function WorkforceTeam() {
                         <p className="text-sm text-muted-foreground">{announcements.length} anuncios</p>
                         <Button onClick={() => setAnnouncementOpen(true)}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Nuevo anuncio
+                            {t('workforceTeam.nuevoAnuncio')}
                         </Button>
                     </div>
 
@@ -779,7 +763,7 @@ export default function WorkforceTeam() {
                                                             onClick={() => handleDeleteAnnouncement(a.id)}
                                                         >
                                                             <Trash2 className="mr-2 h-4 w-4" />
-                                                            Eliminar
+                                                            {t('workforceTeam.eliminar')}
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -819,7 +803,7 @@ export default function WorkforceTeam() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <UserPlus className="h-5 w-5" />
-                            Nuevo empleado
+                            {t('workforceTeam.nuevoEmpleado')}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -881,7 +865,7 @@ export default function WorkforceTeam() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Edit className="h-5 w-5" />
-                            Editar empleado
+                            {t('workforceTeam.editarEmpleado')}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -894,7 +878,7 @@ export default function WorkforceTeam() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Rol</Label>
+                                <Label>{t('workforceTeam.rol')}</Label>
                                 <Select value={form.role_name} onValueChange={(v) => setForm((f) => ({ ...f, role_name: v }))}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
@@ -905,7 +889,7 @@ export default function WorkforceTeam() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Coste/hora (€)</Label>
+                                <Label>{t('workforceTeam.costehora')}</Label>
                                 <Input
                                     type="number"
                                     step="0.01"
@@ -955,7 +939,7 @@ export default function WorkforceTeam() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Megaphone className="h-5 w-5" />
-                            Nuevo anuncio
+                            {t('workforceTeam.nuevoAnuncio1')}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">

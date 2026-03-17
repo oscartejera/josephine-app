@@ -66,13 +66,13 @@ export default function SquareOAuthCallback() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4 max-w-md p-6">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-          <h2 className="text-xl font-semibold">Error conectando Square</h2>
+          <h2 className="text-xl font-semibold">{t('integrations.SquareOAuthCallback.errorConectandoSquare')}</h2>
           <p className="text-muted-foreground">{error}</p>
           <button
             className="text-primary underline"
             onClick={() => navigate('/integrations/square')}
           >
-            Volver a intentar
+            {t('integrations.SquareOAuthCallback.volverAIntentar')}
           </button>
         </div>
       </div>
@@ -83,8 +83,8 @@ export default function SquareOAuthCallback() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-        <h2 className="text-xl font-semibold">Conectando con Square...</h2>
-        <p className="text-muted-foreground">Intercambiando credenciales. No cierres esta ventana.</p>
+        <h2 className="text-xl font-semibold">{t('integrations.SquareOAuthCallback.conectandoConSquare')}</h2>
+        <p className="text-muted-foreground">{t('integrations.SquareOAuthCallback.intercambiandoCredencialesNoCierresEsta')}</p>
       </div>
     </div>
   );

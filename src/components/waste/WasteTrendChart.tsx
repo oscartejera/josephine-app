@@ -71,14 +71,10 @@ export function WasteTrendChart({
   }));
 
   // Get max value for Y axis
-  const allValues = trendData.flatMap(d => [d.broken, d.end_of_day, d.expired, d.theft, d.other]);
-  const maxValue = Math.max(...allValues, 1);
-  const yAxisMax = Math.ceil(maxValue / 10) * 10 + 10;
-
-  return (
+  const allValues = trendData.flatMap(d => {t('waste.WasteTrendChart.dbrokenDendofdayDexpiredDtheftDother')}
     <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">Waste by Reason trend</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">{t('waste.WasteTrendChart.wasteByReasonTrend')}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px]">
@@ -139,8 +135,8 @@ export function WasteTrendChart({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">Reason</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Logged</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteTrendChart.reason')}</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteTrendChart.logged')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

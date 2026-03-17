@@ -106,7 +106,7 @@ export function POSCashSession({
         ) : (
           <>
             <DoorClosed className="h-4 w-4" />
-            <span className="hidden sm:inline">Abrir Caja</span>
+            <span className="hidden sm:inline">{t('pos.POSCashSession.abrirCaja')}</span>
           </>
         )}
       </Button>
@@ -128,13 +128,13 @@ export function POSCashSession({
             {session ? (
               <>
                 <div className="grid gap-2">
-                  <Label>Efectivo inicial</Label>
+                  <Label>{t('pos.POSCashSession.efectivoInicial')}</Label>
                   <div className="text-2xl font-bold">
                     €{session.opening_cash.toFixed(2)}
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="closing-cash">Efectivo contado</Label>
+                  <Label htmlFor="closing-cash">{t('pos.POSCashSession.efectivoContado')}</Label>
                   <Input
                     id="closing-cash"
                     type="number"
@@ -147,7 +147,7 @@ export function POSCashSession({
               </>
             ) : (
               <div className="grid gap-2">
-                <Label htmlFor="opening-cash">Efectivo inicial</Label>
+                <Label htmlFor="opening-cash">{t('pos.POSCashSession.efectivoInicial1')}</Label>
                 <Input
                   id="opening-cash"
                   type="number"
@@ -162,7 +162,7 @@ export function POSCashSession({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
+              {t('pos.POSCashSession.cancelar')}
             </Button>
             <Button
               onClick={session ? handleCloseSession : handleOpenSession}

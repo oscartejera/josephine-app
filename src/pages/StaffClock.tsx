@@ -21,9 +21,9 @@ export default function StaffClock() {
   return (
     <div className="p-4 lg:p-6 max-w-md mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold">Fichaje</h1>
+        <h1 className="text-xl font-semibold">{t('staffClock.fichaje')}</h1>
         <p className="text-sm text-muted-foreground">
-          Registra tu entrada y salida
+          {t('staffClock.registraTuEntradaYSalida')}
         </p>
       </div>
       <ClockInPanel 

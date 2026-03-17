@@ -24,9 +24,9 @@ interface Message {
 
 const QUICK_PROMPTS = [
     { label: t('ai.ventasHoy'), prompt: '¿Cómo van las ventas de hoy comparadas con la semana pasada?', icon: TrendingUp },
-    { label: '👥 Labour cost', prompt: '¿Cuál es el coste de personal actual vs el presupuesto? ¿Estamos dentro del objetivo?', icon: Users },
+    { label: '👥 Labour cost', prompt: t('ai.cualEsElCosteDe'), icon: Users },
     { label: '📦 Stock bajo', prompt: t('ai.suggestedIngredients'), icon: Package },
-    { label: '✨ Briefing', prompt: 'Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predicción para mañana.', icon: Sparkles },
+    { label: '✨ Briefing', prompt: t('ai.dame_un_resumen_ejecutivo_del_dia_de_hoy_ventas_pe'), icon: Sparkles },
 ];
 
 export function JosephineChat({
@@ -41,13 +41,12 @@ export function JosephineChat({
     const [messages, setMessages] = useState<Message[]>([{
         id: 'welcome',
         role: 'assistant',
-        content: '¡Hola! 👋 Soy **Josephine**, tu asistente de operaciones. Pregúntame sobre ventas, personal, inventario, o pídeme un resumen del día.',
+        content: t('ai.hola_soy_josephine_tu_asistente_de_operaciones_pre'),
         createdAt: new Date(),
     }]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const scrollRef = useRef<HTMLDivElement>{t('ai.JosephineChat.nullConstInputrefUseref')}<HTMLInputElement>(null);
 
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -143,8 +142,8 @@ export function JosephineChat({
                             <Bot className="h-4 w-4 text-white" />
                         </div>
                         <div>
-                            <CardTitle className="text-sm">Josephine AI</CardTitle>
-                            <p className="text-[10px] text-muted-foreground">Asistente de operaciones</p>
+                            <CardTitle className="text-sm">{t('ai.JosephineChat.josephineAi')}</CardTitle>
+                            <p className="text-[10px] text-muted-foreground">{t('ai.JosephineChat.asistenteDeOperaciones')}</p>
                         </div>
                     </div>
                     <div className="flex gap-1">
@@ -191,7 +190,7 @@ export function JosephineChat({
                                 </AvatarFallback>
                             </Avatar>
                             <div className="bg-muted rounded-xl px-3 py-2 text-sm">
-                                <span className="text-muted-foreground">Pensando...</span>
+                                <span className="text-muted-foreground">{t('ai.JosephineChat.pensando')}</span>
                             </div>
                         </div>
                     )}
@@ -222,7 +221,7 @@ export function JosephineChat({
                     ref={inputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    placeholder="Pregunta algo sobre el negocio..."
+                    placeholder={t('ai.JosephineChat.preguntaAlgoSobreElNegocio')}
                     disabled={loading}
                     className="text-sm"
                 />

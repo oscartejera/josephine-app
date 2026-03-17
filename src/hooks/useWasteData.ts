@@ -96,6 +96,7 @@ export function useWasteData(
   _dateMode: DateMode, // Reserved for future use
   selectedLocations: string[]
 ) {
+  const { t } = useTranslation();
   const { locations, dataSource, loading: appLoading } = useApp();
   const { session } = useAuth();
   const dsLegacy = toLegacyDataSource(dataSource);
@@ -106,11 +107,7 @@ export function useWasteData(
     totalAccountedWaste: 0,
     wastePercentOfSales: 0
   });
-  const [trendData, setTrendData] = useState<WasteTrendData[]>([]);
-  const [byReason, setByReason] = useState<WasteByReason[]>([]);
-  const [byCategory, setByCategory] = useState<WasteByCategory[]>([]);
-  const [leaderboard, setLeaderboard] = useState<WasteLeaderboard[]>([]);
-  const [items, setItems] = useState<WasteItem[]>([]);
+  const [trendData, setTrendData] = useState<WasteTrendData[]>{t('hooks.useWasteData.constByreasonSetbyreasonUsestate')}<WasteByReason[]>{t('hooks.useWasteData.constBycategorySetbycategoryUsestate')}<WasteByCategory[]>{t('hooks.useWasteData.constLeaderboardSetleaderboardUsestate')}<WasteLeaderboard[]>{t('hooks.useWasteData.constItemsSetitemsUsestate')}<WasteItem[]>([]);
 
   const locationIds = useMemo(() => {
     if (selectedLocations.length === 0) {
@@ -144,7 +141,7 @@ export function useWasteData(
         .gte('date', fromDate)
         .lte('date', toDate);
 
-      if (locationIds.length > 0 && locationIds.length < locations.length) {
+      if (locationIds.length > {t('hooks.useWasteData.0Locationidslength')} < locations.length) {
         salesQuery = salesQuery.in('location_id', locationIds);
       }
 
@@ -158,7 +155,7 @@ export function useWasteData(
         .gte('created_at', `${fromDate}T00:00:00`)
         .lte('created_at', `${toDate}T23:59:59`);
 
-      if (locationIds.length > 0 && locationIds.length < locations.length) {
+      if (locationIds.length > {t('hooks.useWasteData.0Locationidslength1')} < locations.length) {
         wasteQuery = wasteQuery.in('location_id', locationIds);
       }
 

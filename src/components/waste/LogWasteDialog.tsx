@@ -64,13 +64,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
   const { locations } = useApp();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [isLoadingItems, setIsLoadingItems] = useState(true);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const form = useForm<FormValues>({
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>{t('waste.LogWasteDialog.constIsloadingitemsSetisloadingitemsUses')}<File | null>{t('waste.LogWasteDialog.nullConstPhotopreviewSetphotopreviewUses')}<string | null>{t('waste.LogWasteDialog.nullConstFileinputrefUseref')}<HTMLInputElement>{t('waste.LogWasteDialog.nullConstFormUseform')}<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       inventory_item_id: '',

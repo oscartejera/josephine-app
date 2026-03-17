@@ -24,7 +24,7 @@ interface MenuEngineeringActionsProps {
     actionType: string,
     classification: string,
     estimatedImpact: number | null
-  ) => Promise<void>;
+  ) => {t('menu-engineering.MenuEngineeringActions.promise')}<void>;
 }
 
 function formatCurrency(value: number): string {
@@ -137,7 +137,7 @@ export function MenuEngineeringActions({
   return (
     <>
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground px-1">Action Plan</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground px-1">{t('menu-engineering.MenuEngineeringActions.actionPlan')}</h3>
         {PRACTICAL_ACTIONS.map((config) => {
           const items = itemsByClassification[config.classification];
           const topNames = items.slice(0, 3).map(i => i.name);
@@ -189,30 +189,30 @@ export function MenuEngineeringActions({
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save Action Plan</DialogTitle>
+            <DialogTitle>{t('menu-engineering.MenuEngineeringActions.saveActionPlan')}</DialogTitle>
             <DialogDescription>
-              This creates a reminder for your team. It won't change any data automatically — you apply changes in your POS or kitchen.
+              {t('menu-engineering.MenuEngineeringActions.thisCreatesAReminderFor')}
             </DialogDescription>
           </DialogHeader>
 
           {selectedAction && (
             <div className="py-4 space-y-3">
               <p className="text-sm">
-                Applies to <strong>{selectedAction.items.length}</strong> products.
+                {t('menu-engineering.MenuEngineeringActions.appliesTo')} <strong>{selectedAction.items.length}</strong> products.
               </p>
               {selectedAction.impact > 0 && (
                 <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-lg">
-                  <p className="text-sm">Estimated impact: <strong className="text-emerald-600">+{formatCurrency(selectedAction.impact)}</strong></p>
+                  <p className="text-sm">{t('menu-engineering.MenuEngineeringActions.estimatedImpact')} <strong className="text-emerald-600">+{formatCurrency(selectedAction.impact)}</strong></p>
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                💡 Tip: Review individual products in the table to decide specific changes.
+                {t('menu-engineering.MenuEngineeringActions.tipReviewIndividualProductsIn')}
               </p>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>{t('menu-engineering.MenuEngineeringActions.cancel')}</Button>
             <Button onClick={handleConfirm} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
               Save plan

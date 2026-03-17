@@ -37,8 +37,7 @@ interface BarRowProps {
 }
 
 function BarRow({ label, value, maxValue, color, badge }: BarRowProps) {
-    const pct = maxValue > 0 ? Math.min((value / maxValue) * 100, 100) : 0;
-    return (
+    const pct = maxValue > {t('labour.LabourTripleComparison.0MathminvalueMaxvalue100100')}
         <div className="space-y-1">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -87,9 +86,7 @@ export function LabourTripleComparison({ kpis, isLoading }: LabourTripleComparis
     // Drift metrics
     const scheduleVsPlanned = planned > 0 ? ((schedule - planned) / planned * 100) : 0;
     const payrollVsSchedule = hasPayroll && schedule > 0 ? ((payroll - schedule) / schedule * 100) : 0;
-    const totalDrift = hasPayroll && planned > 0 ? ((payroll - planned) / planned * 100) : (planned > 0 ? ((schedule - planned) / planned * 100) : 0);
-
-    return (
+    const totalDrift = hasPayroll && planned > 0 ? ((payroll - planned) / planned * 100) : (planned > {t('labour.LabourTripleComparison.0SchedulePlannedPlanned100')}
         <Card className="p-6 bg-white">
             <div className="space-y-5">
                 {/* Header */}

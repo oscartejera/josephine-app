@@ -8,6 +8,7 @@ import type { PaginationMeta } from "./pagination.ts";
 import type { ErrorCodeValue } from "./errors.ts";
 import { generateUUID } from "./runtime.ts";
 
+import { useTranslation } from 'react-i18next';
 export interface ToolEnvelope<T = unknown> {
   status: "ok" | "preview" | "error" | "not_supported";
   requestId: string;
@@ -17,8 +18,7 @@ export interface ToolEnvelope<T = unknown> {
   data: T;
   pagination?: PaginationMeta;
   warnings?: string[];
-  errors?: Array<{ code: ErrorCodeValue; message: string; hint?: string | null }>;
-  meta?: Record<string, unknown>;
+  errors?: Array<{ code: ErrorCodeValue; message: string; hint?: string | null }>{t('ai-tools-core.lib.response.metaRecord')}<string, unknown>;
 }
 
 export interface ResponseContext {

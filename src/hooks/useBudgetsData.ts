@@ -6,6 +6,7 @@ import { toLegacyDataSource } from '@/data';
 import { format, subDays, differenceInDays } from 'date-fns';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
+import { useTranslation } from 'react-i18next';
 export type BudgetTab = 'sales' | 'labour' | 'cogs' | 'prime';
 export type CompareMode = 'budget' | 'previous';
 
@@ -101,12 +102,11 @@ export function useBudgetsData(
   selectedLocations: string[],
   compareMode: CompareMode = 'budget'
 ) {
+  const { t } = useTranslation();
   const { locations, loading: appLoading, dataSource } = useApp();
   const dsLegacy = toLegacyDataSource(dataSource);
   const [isLoading, setIsLoading] = useState(true);
-  const [metrics, setMetrics] = useState<BudgetMetrics>(defaultMetrics);
-  const [dailyData, setDailyData] = useState<BudgetDailyData[]>([]);
-  const [locationData, setLocationData] = useState<BudgetLocationData[]>([]);
+  const [metrics, setMetrics] = useState<BudgetMetrics>{t('hooks.useBudgetsData.defaultmetricsConstDailydataSetdailydata')}<BudgetDailyData[]>{t('hooks.useBudgetsData.constLocationdataSetlocationdataUsestate')}<BudgetLocationData[]>([]);
   const [hasData, setHasData] = useState(false);
 
   const effectiveLocationIds = useMemo(() => {
@@ -137,7 +137,7 @@ export function useBudgetsData(
         .gte('day', fromDate)
         .lte('day', toDate);
 
-      if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      if (effectiveLocationIds.length > {t('hooks.useBudgetsData.0Effectivelocationidslength')} < locations.length) {
         budgetQuery = budgetQuery.in('location_id', effectiveLocationIds);
       }
 
@@ -159,7 +159,7 @@ export function useBudgetsData(
         .gte('date', fromDate)
         .lte('date', toDate);
 
-      if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      if (effectiveLocationIds.length > {t('hooks.useBudgetsData.0Effectivelocationidslength1')} < locations.length) {
         salesQuery = salesQuery.in('location_id', effectiveLocationIds);
       }
 
@@ -172,7 +172,7 @@ export function useBudgetsData(
         .gte('day', fromDate)
         .lte('day', toDate);
 
-      if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      if (effectiveLocationIds.length > {t('hooks.useBudgetsData.0Effectivelocationidslength2')} < locations.length) {
         labourQuery = labourQuery.in('location_id', effectiveLocationIds);
       }
 
@@ -192,7 +192,7 @@ export function useBudgetsData(
         .gte('date', fromDate)
         .lte('date', toDate);
 
-      if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      if (effectiveLocationIds.length > {t('hooks.useBudgetsData.0Effectivelocationidslength3')} < locations.length) {
         cogsQuery = cogsQuery.in('location_id', effectiveLocationIds);
       }
 
@@ -229,7 +229,7 @@ export function useBudgetsData(
       const labourVarPct = labourBudget > 0 ? ((labourActual - labourBudget) / labourBudget) * 100 : 0;
 
       let primeStatus: 'on_track' | 'at_risk' | 'over_budget' = 'on_track';
-      if (primeVarPp > 2 || (salesVarPct < -5 && labourVarPct > 5)) {
+      if (primeVarPp > {t('hooks.useBudgetsData.2Salesvarpct')} < -5 && labourVarPct > 5)) {
         primeStatus = 'at_risk';
       }
       if (primeVarPp > 5) {
@@ -344,7 +344,7 @@ export function useBudgetsData(
           ? ((data.labourActual - data.labourBudget) / data.labourBudget) * 100 : 0;
 
         let status: BudgetLocationData['status'] = 'on_track';
-        if (primeVarPpLoc > 2 || (salesVarPctLoc < -5 && labourVarPctLoc > 5)) {
+        if (primeVarPpLoc > {t('hooks.useBudgetsData.2Salesvarpctloc')} < -5 && labourVarPctLoc > 5)) {
           status = 'at_risk';
         }
         if (salesVarPctLoc > 0 && labourVarPctLoc > 5) {

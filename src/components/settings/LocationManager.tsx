@@ -69,12 +69,7 @@ export function LocationManager() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
-  const [editingLocation, setEditingLocation] = useState<string | null>(null);
-  const [formData, setFormData] = useState<LocationFormData>(initialFormData);
-  const [sourceLocationId, setSourceLocationId] = useState<string>('');
-  const [duplicateOptions, setDuplicateOptions] = useState<DuplicateOptions>(initialDuplicateOptions);
-  const [loading, setLoading] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingLocation, setEditingLocation] = useState<string | null>{t('settings.LocationManager.nullConstFormdataSetformdataUsestate')}<LocationFormData>{t('settings.LocationManager.initialformdataConstSourcelocationidSets')}<string>{t('settings.LocationManager.constDuplicateoptionsSetduplicateoptions')}<DuplicateOptions>{t('settings.LocationManager.initialduplicateoptionsConstLoadingSetlo')}<string | null>(null);
 
   const handleAddLocation = async () => {
     if (!formData.name.trim()) {
@@ -585,27 +580,27 @@ export function LocationManager() {
               Locales de {group?.name || 'Grupo'}
             </CardTitle>
             <CardDescription>
-              Gestiona los locales de tu grupo. Cada local tiene su propio POS, KDS, inventario y métricas.
+              {t('settings.LocationManager.gestionaLosLocalesDeTu')}
             </CardDescription>
           </div>
           
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowWizard(true)}>
               <Sparkles className="h-4 w-4 mr-2" />
-              Wizard Guiado
+              {t('settings.LocationManager.wizardGuiado')}
             </Button>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
                 <Button onClick={() => setFormData(initialFormData)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Añadir Rápido
+                  {t('settings.LocationManager.anadirRapido')}
                 </Button>
               </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Nuevo Local</DialogTitle>
+                <DialogTitle>{t('settings.LocationManager.nuevoLocal')}</DialogTitle>
                 <DialogDescription>
-                  Crea un nuevo local para tu grupo. Se configurará automáticamente con POS, KDS y estructura de datos lista para usar.
+                  {t('settings.LocationManager.creaUnNuevoLocalPara')}
                 </DialogDescription>
               </DialogHeader>
               
@@ -614,7 +609,7 @@ export function LocationManager() {
                   <Label htmlFor="name">{t("location.locationName")} *</Label>
                   <Input
                     id="name"
-                    placeholder=t('settings.ejRestauranteCentro')
+                    placeholder={t('settings.ejRestauranteCentro')}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
@@ -624,7 +619,7 @@ export function LocationManager() {
                   <Label htmlFor="city">{t("common.city")}</Label>
                   <Input
                     id="city"
-                    placeholder="Ej: Madrid"
+                    placeholder={t('settings.LocationManager.ejMadrid')}
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   />
@@ -632,7 +627,7 @@ export function LocationManager() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Zona Horaria</Label>
+                    <Label>{t('settings.LocationManager.zonaHoraria')}</Label>
                     <Select 
                       value={formData.timezone} 
                       onValueChange={(v) => setFormData({ ...formData, timezone: v })}
@@ -651,7 +646,7 @@ export function LocationManager() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Moneda</Label>
+                    <Label>{t('settings.LocationManager.moneda')}</Label>
                     <Select 
                       value={formData.currency} 
                       onValueChange={(v) => setFormData({ ...formData, currency: v })}
@@ -683,7 +678,7 @@ export function LocationManager() {
               
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancelar
+                  {t('settings.LocationManager.cancelar')}
                 </Button>
                 <Button onClick={handleAddLocation} disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
@@ -702,10 +697,10 @@ export function LocationManager() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Copy className="h-5 w-5" />
-              Duplicar Local
+              {t('settings.LocationManager.duplicarLocal')}
             </DialogTitle>
             <DialogDescription>
-              Crea un nuevo local copiando la configuración de uno existente. No se copiarán datos históricos (ventas, tickets, turnos).
+              {t('settings.LocationManager.creaUnNuevoLocalCopiando')}
             </DialogDescription>
           </DialogHeader>
           
@@ -714,7 +709,7 @@ export function LocationManager() {
               <Label>{t("settings.sourceLocation")}</Label>
               <Select value={sourceLocationId} onValueChange={setSourceLocationId}>
                 <SelectTrigger>
-                  <SelectValue placeholder=t('settings.seleccionaElLocalACopiar') />
+                  <SelectValue placeholder={t('settings.seleccionaElLocalACopiar')} />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map(loc => (
@@ -730,7 +725,7 @@ export function LocationManager() {
               <Label htmlFor="dup-name">{t("location.newLocationName")} *</Label>
               <Input
                 id="dup-name"
-                placeholder=t('settings.ejRestauranteCentro2')
+                placeholder={t('settings.ejRestauranteCentro2')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -740,7 +735,7 @@ export function LocationManager() {
               <Label htmlFor="dup-city">{t("common.city")}</Label>
               <Input
                 id="dup-city"
-                placeholder="Ej: Madrid"
+                placeholder={t('settings.LocationManager.ejMadrid1')}
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               />
@@ -758,7 +753,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-products" className="text-sm cursor-pointer">
-                    Productos y categorías
+                    {t('settings.LocationManager.productosYCategorias')}
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -770,7 +765,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-employees" className="text-sm cursor-pointer">
-                    Empleados (sin datos de nómina)
+                    {t('settings.LocationManager.empleadosSinDatosDeNomina')}
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -782,7 +777,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-floormaps" className="text-sm cursor-pointer">
-                    Planos de sala y mesas
+                    {t('settings.LocationManager.planosDeSalaYMesas')}
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -794,7 +789,7 @@ export function LocationManager() {
                     }
                   />
                   <label htmlFor="dup-settings" className="text-sm cursor-pointer">
-                    Configuración (objetivos GP, COL, nóminas)
+                    {t('settings.LocationManager.configuracionObjetivosGpColNominas')}
                   </label>
                 </div>
               </div>
@@ -802,14 +797,14 @@ export function LocationManager() {
 
             <div className="bg-muted/50 border border-border rounded-lg p-3 text-sm">
               <p className="text-muted-foreground">
-                <strong className="text-foreground">Nota:</strong> El nuevo local empezará sin datos históricos. Los datos de ventas, inventario y turnos se generarán desde cero.
+                <strong className="text-foreground">{t('settings.LocationManager.nota')}</strong> {t('settings.LocationManager.elNuevoLocalEmpezaraSin')}
               </p>
             </div>
           </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
-              Cancelar
+              {t('settings.LocationManager.cancelar1')}
             </Button>
             <Button onClick={handleDuplicateLocation} disabled={loading || !sourceLocationId}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
@@ -825,8 +820,8 @@ export function LocationManager() {
             <TableRow>
               <TableHead>{t("common.name")}</TableHead>
               <TableHead>{t("common.city")}</TableHead>
-              <TableHead>Zona Horaria</TableHead>
-              <TableHead>Moneda</TableHead>
+              <TableHead>{t('settings.LocationManager.zonaHoraria1')}</TableHead>
+              <TableHead>{t('settings.LocationManager.moneda1')}</TableHead>
               <TableHead className="text-right">{t('settings.acciones')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -853,7 +848,7 @@ export function LocationManager() {
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       className="h-8 w-32"
-                      placeholder="Ciudad"
+                      placeholder={t('settings.LocationManager.ciudad')}
                     />
                   ) : (
                     <div className="flex items-center gap-1">
@@ -865,7 +860,7 @@ export function LocationManager() {
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-muted-foreground" />
-                    Europe/Madrid
+                    {t('settings.LocationManager.europemadrid')}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -883,7 +878,7 @@ export function LocationManager() {
                             setFormData(initialFormData);
                           }}
                         >
-                          Cancelar
+                          {t('settings.LocationManager.cancelar2')}
                         </Button>
                         <Button 
                           size="sm"
@@ -899,7 +894,7 @@ export function LocationManager() {
                           size="sm" 
                           variant="ghost"
                           onClick={() => openDuplicateDialog(loc)}
-                          title="Duplicar local"
+                          title={t('settings.LocationManager.duplicarLocal1')}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -942,7 +937,7 @@ export function LocationManager() {
                                   <li>{t("settings.tablesAndFloorPlans")}</li>
                                 </ul>
                                 <p className="font-medium text-destructive">
-                                  Esta acción no se puede deshacer.
+                                  {t('settings.LocationManager.estaAccionNoSePuede')}
                                 </p>
                               </AlertDialogDescription>
                             </AlertDialogHeader>

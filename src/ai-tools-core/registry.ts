@@ -7,11 +7,12 @@ import { TOOL_VERSIONS, type ToolName } from "./lib/version.ts";
 import type { ToolMeta } from "./types.ts";
 import type { ToolEnvelope } from "./lib/response.ts";
 
+import { useTranslation } from 'react-i18next';
 /** Common tool handler signature. */
 export type ToolHandler = (
   input: Record<string, unknown>,
   supabase: SupabaseClient,
-) => Promise<{ text: string; envelope: ToolEnvelope }>;
+) => {t('ai-tools-core.registry.promise')}<{ text: string; envelope: ToolEnvelope }>;
 
 interface RegistryEntry {
   meta: ToolMeta;

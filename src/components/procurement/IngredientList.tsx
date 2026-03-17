@@ -26,7 +26,7 @@ export function IngredientList({
   if (skus.length === 0) {
     return (
       <div className="bg-card rounded-xl border border-border p-12 text-center">
-        <p className="text-muted-foreground">No ingredients found matching your search.</p>
+        <p className="text-muted-foreground">{t('procurement.IngredientList.noIngredientsFoundMatchingYour')}</p>
       </div>
     );
   }

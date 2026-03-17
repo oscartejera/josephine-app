@@ -20,13 +20,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState<string | null>(null);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
-  const [lockdownSeconds, setLockdownSeconds] = useState(0);
-  const lockTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [demoLoading, setDemoLoading] = useState<string | null>{t('login.nullConstShowforgotpasswordSetshowforgot')}<number | null>{t('login.nullConstLockdownsecondsSetlockdownsecon')}<ReturnType<typeof setInterval> | null>(null);
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();

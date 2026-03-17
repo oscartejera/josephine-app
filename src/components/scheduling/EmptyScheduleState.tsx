@@ -21,7 +21,7 @@ export function EmptyScheduleState({ weekStart, dailyKPIs }: EmptyScheduleStateP
       {/* Header with days */}
       <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border bg-muted/30">
         <div className="p-3 font-medium text-sm text-muted-foreground border-r border-border">
-          Team
+          {t('scheduling.EmptyScheduleState.team')}
         </div>
         {days.map((day, i) => {
           const kpi = dailyKPIs[i];
@@ -47,11 +47,11 @@ export function EmptyScheduleState({ weekStart, dailyKPIs }: EmptyScheduleStateP
         </div>
         <h3 className="text-lg font-semibold mb-2">{t("scheduling.noScheduleYet")}</h3>
         <p className="text-muted-foreground max-w-md mx-auto mb-6">
-          Click "Create Schedule" to let Josephine AI generate an optimized schedule based on your forecast and team availability.
+          {t('scheduling.EmptyScheduleState.clickCreateScheduleToLet')}
         </p>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full text-sm text-primary">
           <Sparkles className="h-4 w-4" />
-          <span>Powered by Josephine AI</span>
+          <span>{t('scheduling.EmptyScheduleState.poweredByJosephineAi')}</span>
         </div>
       </div>
     </div>

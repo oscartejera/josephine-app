@@ -45,8 +45,7 @@ export default function PayrollSubmit({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [loadingAgency, setLoadingAgency] = useState<string | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>{t('payroll.PayrollSubmit.constLoadingagencySetloadingagencyUsesta')}<string | null>(null);
 
   useEffect(() => {
     if (currentRun) fetchSubmissions();
@@ -106,9 +105,7 @@ export default function PayrollSubmit({
     return submissions.find(s => s.agency === agencyId);
   };
 
-  const allDone = AGENCIES.every(a => getAgencyStatus(a.id)?.status === 'accepted');
-
-  return (
+  const allDone = AGENCIES.every(a => {t('payroll.PayrollSubmit.getagencystatusaidstatusAcceptedReturn')}
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -151,9 +148,9 @@ export default function PayrollSubmit({
                 <div className="flex items-center gap-2">
                   {submission?.status === 'accepted' ? (
                     <Badge className="bg-success"><CheckCircle className="h-3 w-3 mr-1" />{t('payroll.accepted')}</Badge>
-                  ) : submission?.status === 'rejected' ? (
+                  {t('payroll.PayrollSubmit.submissionstatusRejected')}
                     <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />{t('payroll.rejected')}</Badge>
-                  ) : submission?.status === 'sent' ? (
+                  {t('payroll.PayrollSubmit.submissionstatusSent')}
                     <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />{t('payroll.pending')}</Badge>
                   ) : (
                     <Badge variant="outline">{t("payroll.notSubmitted")}</Badge>

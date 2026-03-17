@@ -54,25 +54,25 @@ export function ReviewsKPICards({ summary, isLoading }: ReviewsKPICardsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <KPICard
-        title="Rating"
+        title={t('reviews.ReviewsKPICards.rating')}
         value={formatRating(summary.rating_avg)}
         icon={<Star className="h-5 w-5 text-primary" />}
         isLoading={isLoading}
       />
       <KPICard
-        title="Ratings in the period"
+        title={t('reviews.ReviewsKPICards.ratingsInThePeriod')}
         value={summary.ratings_in_period.toString()}
         icon={<BarChart3 className="h-5 w-5 text-primary" />}
         isLoading={isLoading}
       />
       <KPICard
-        title="Response rate"
+        title={t('reviews.ReviewsKPICards.responseRate')}
         value={formatResponseRate(summary.response_rate)}
         icon={<MessageSquare className="h-5 w-5 text-primary" />}
         isLoading={isLoading}
       />
       <KPICard
-        title="Avg response time"
+        title={t('reviews.ReviewsKPICards.avgResponseTime')}
         value={formatResponseTime(summary.avg_response_time_hours)}
         icon={<Clock className="h-5 w-5 text-primary" />}
         isLoading={isLoading}

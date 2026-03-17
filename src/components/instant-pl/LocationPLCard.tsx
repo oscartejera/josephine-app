@@ -253,7 +253,7 @@ export function LocationPLCard({
       {/* Metrics */}
       <div className="px-4">
         <MetricRow
-          label="Sales"
+          label={t('instant-pl.LocationPLCard.sales')}
           actualPrimary={salesDisplay.actualPrimary}
           actualSecondary={salesDisplay.actualSecondary}
           forecastPrimary={salesDisplay.forecastPrimary}
@@ -263,7 +263,7 @@ export function LocationPLCard({
         />
 
         <MetricRow
-          label="CoGS"
+          label={t('instant-pl.LocationPLCard.cogs')}
           actualPrimary={cogsDisplay.actualPrimary}
           actualSecondary={cogsDisplay.actualSecondary}
           forecastPrimary={cogsDisplay.forecastPrimary}
@@ -285,7 +285,7 @@ export function LocationPLCard({
         />
 
         <MetricRow
-          label="Flash Profit"
+          label={t('instant-pl.LocationPLCard.flashProfit')}
           actualPrimary={flashProfitDisplay.actualPrimary}
           actualSecondary={flashProfitDisplay.actualSecondary}
           forecastPrimary={flashProfitDisplay.forecastPrimary}

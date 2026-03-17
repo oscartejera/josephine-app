@@ -55,28 +55,7 @@ const CAMERA_TIMEOUT_MS = 15_000; // 15 seconds max for camera
 
 export default function KioskMode() {
   const { t } = useTranslation();
-    const { locationId } = useParams<{ locationId: string }>();
-    const navigate = useNavigate();
-
-    // ── State ─────────────────────────────────────────────────────
-    const [locked, setLocked] = useState(true);
-    const [pin, setPin] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [employee, setEmployee] = useState<Employee | null>(null);
-    const [activeClockIn, setActiveClockIn] = useState<string | null>(null);
-    const [showCamera, setShowCamera] = useState(false);
-    const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
-    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-    const [lastAction, setLastAction] = useState<ClockAction | null>(null);
-    const [currentTime, setCurrentTime] = useState(new Date());
-    const [locationName, setLocationName] = useState('');
-    const [error, setError] = useState<string | null>(null);
-
-    // ── Refs ──────────────────────────────────────────────────────
-    const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const videoRef = useRef<HTMLVideoElement | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const streamRef = useRef<MediaStream | null>(null);
+    const { locationId } = useParams<{ locationId: string }>{t('kioskMode.constNavigateUsenavigateStateConst')}<Employee | null>{t('kioskMode.nullConstActiveclockinSetactiveclockinUs')}<string | null>{t('kioskMode.nullConstShowcameraSetshowcameraUsestate')}<Blob | null>{t('kioskMode.nullConstPhotopreviewSetphotopreviewUses')}<string | null>{t('kioskMode.nullConstLastactionSetlastactionUsestate')}<ClockAction | null>{t('kioskMode.nullConstCurrenttimeSetcurrenttimeUsesta')}<string | null>{t('kioskMode.nullRefsConstLocktimerrefUseref')}<NodeJS.Timeout | null>{t('kioskMode.nullConstVideorefUseref')}<HTMLVideoElement | null>{t('kioskMode.nullConstCanvasrefUseref')}<HTMLCanvasElement | null>{t('kioskMode.nullConstStreamrefUseref')}<MediaStream | null>(null);
 
     // ── Clock ────────────────────────────────────────────────────
     useEffect(() => {
@@ -510,14 +489,14 @@ export default function KioskMode() {
                                 onClick={handleClear}
                                 className="text-slate-500 hover:text-white"
                             >
-                                Cancelar
+                                {t('kioskMode.cancelar')}
                             </Button>
                         </div>
                     ) : (
                         <div className="text-center space-y-4">
                             <Unlock className="h-16 w-16 text-slate-600 mx-auto" />
                             <p className="text-xl text-slate-400">
-                                Introduce tu PIN de 6 dígitos
+                                {t('kioskMode.introduceTuPinDe6')}
                             </p>
                             {error && (
                                 <div className="flex items-center gap-2 text-red-400 justify-center">

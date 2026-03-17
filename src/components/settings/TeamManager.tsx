@@ -57,8 +57,7 @@ export function TeamManager() {
   const { isOwner, hasPermission } = usePermissions();
   const { toast } = useToast();
 
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>{t('settings.TeamManager.constRolesSetrolesUsestate')}<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviting, setInviting] = useState(false);
@@ -257,7 +256,7 @@ export function TeamManager() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Equipo
+                {t('settings.TeamManager.equipo')}
               </CardTitle>
               <CardDescription>
                 Gestiona los miembros del equipo de {group?.name || 'tu grupo'}
@@ -265,7 +264,7 @@ export function TeamManager() {
             </div>
             <Button onClick={handleOpenInvite}>
               <UserPlus className="h-4 w-4 mr-2" />
-              Invitar Miembro
+              {t('settings.TeamManager.invitarMiembro')}
             </Button>
           </div>
         </CardHeader>
@@ -276,24 +275,24 @@ export function TeamManager() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          ) : members.length === 0 ? (
+          {t('settings.TeamManager.memberslength0')}
             <div className="text-center py-10">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">{t("team.noTeamMembers")}</h3>
               <p className="text-muted-foreground mb-4">
-                Invita a tu primer miembro del equipo para comenzar.
+                {t('settings.TeamManager.invitaATuPrimerMiembro')}
               </p>
               <Button onClick={handleOpenInvite}>
                 <UserPlus className="h-4 w-4 mr-2" />
-                Invitar Miembro
+                {t('settings.TeamManager.invitarMiembro1')}
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Miembro</TableHead>
-                  <TableHead>Rol</TableHead>
+                  <TableHead>{t('settings.TeamManager.miembro')}</TableHead>
+                  <TableHead>{t('settings.TeamManager.rol')}</TableHead>
                   <TableHead>{t('ai.ubicacion2')}</TableHead>
                   <TableHead>{t("common.status")}</TableHead>
                 </TableRow>
@@ -343,7 +342,7 @@ export function TeamManager() {
                           ) : (
                             <>
                               <Globe className="h-3 w-3" />
-                              Global
+                              {t('settings.TeamManager.global')}
                             </>
                           )}
                         </div>
@@ -351,7 +350,7 @@ export function TeamManager() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        Activo
+                        {t('settings.TeamManager.activo')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -368,10 +367,10 @@ export function TeamManager() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Invitar Nuevo Miembro
+              {t('settings.TeamManager.invitarNuevoMiembro')}
             </DialogTitle>
             <DialogDescription>
-              El nuevo miembro recibirá un email con sus credenciales de acceso.
+              {t('settings.TeamManager.elNuevoMiembroRecibiraUn')}
             </DialogDescription>
           </DialogHeader>
 
@@ -382,7 +381,7 @@ export function TeamManager() {
               </div>
               <h3 className="text-lg font-semibold mb-2">{t('team.invitacionEnviada')}</h3>
               <p className="text-muted-foreground">
-                Se ha enviado un email a <strong>{newMember.email}</strong> con las credenciales de acceso.
+                {t('settings.TeamManager.seHaEnviadoUnEmail')} <strong>{newMember.email}</strong> {t('settings.TeamManager.conLasCredencialesDeAcceso')}
               </p>
             </div>
           ) : (
@@ -400,7 +399,7 @@ export function TeamManager() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">{t('settings.TeamManager.email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -416,7 +415,7 @@ export function TeamManager() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="role">Rol *</Label>
+                  <Label htmlFor="role">{t('settings.TeamManager.rol1')}</Label>
                   <Select
                     value={newMember.role_id}
                     onValueChange={(value) => setNewMember({ ...newMember, role_id: value, location_id: null })}
@@ -468,7 +467,7 @@ export function TeamManager() {
                         <SelectItem value="global">
                           <span className="flex items-center gap-2">
                             <Globe className="h-3 w-3" />
-                            Todas las ubicaciones
+                            {t('settings.TeamManager.todasLasUbicaciones')}
                           </span>
                         </SelectItem>
                       )}
@@ -487,18 +486,18 @@ export function TeamManager() {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowInviteDialog(false)} disabled={inviting}>
-                  Cancelar
+                  {t('settings.TeamManager.cancelar')}
                 </Button>
                 <Button onClick={handleInvite} disabled={inviting}>
                   {inviting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Enviando...
+                      {t('settings.TeamManager.enviando')}
                     </>
                   ) : (
                     <>
                       <Mail className="h-4 w-4 mr-2" />
-                      Enviar Invitación
+                      {t('settings.TeamManager.enviarInvitacion')}
                     </>
                   )}
                 </Button>

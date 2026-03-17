@@ -31,11 +31,7 @@ interface CountItem {
 export function SmartCountingFlow({ locationId }: { locationId: string | null }) {
   const { t } = useTranslation();
     const { group } = useApp();
-    const [items, setItems] = useState<CountItem[]>([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [countValue, setCountValue] = useState('');
-    const [phase, setPhase] = useState<'idle' | 'counting' | 'review'>('idle');
+    const [items, setItems] = useState<CountItem[]>{t('inventory.SmartCountingFlow.constCurrentindexSetcurrentindexUsestate')}<'idle' | 'counting' | 'review'>('idle');
     const [saving, setSaving] = useState(false);
 
     const loadItems = useCallback(async () => {
@@ -179,13 +175,13 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
             <Card>
                 <CardContent className="py-8 text-center">
                     <ClipboardCheck className="h-12 w-12 mx-auto mb-4 text-primary/60" />
-                    <h3 className="text-lg font-semibold mb-2">Smart Counting</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('inventory.SmartCountingFlow.smartCounting')}</h3>
                     <p className="text-sm text-muted-foreground mb-4">
                         Contaje guiado de {items.length} artículos con alertas de variación automáticas
                     </p>
                     <Button onClick={startCounting} disabled={items.length === 0}>
                         <Package className="h-4 w-4 mr-2" />
-                        Iniciar Contaje
+                        {t('inventory.SmartCountingFlow.iniciarContaje')}
                     </Button>
                 </CardContent>
             </Card>
@@ -198,7 +194,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
         return (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Smart Counting</h3>
+                    <h3 className="font-semibold">{t('inventory.SmartCountingFlow.smartCounting1')}</h3>
                     <Badge variant="outline">{currentIndex + 1} / {items.length}</Badge>
                 </div>
                 <Progress value={(currentIndex / items.length) * 100} />
@@ -228,7 +224,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
 
                         <div className="flex gap-2 justify-center mt-4">
                             <Button variant="ghost" size="sm" onClick={skipItem}>
-                                Saltar
+                                {t('inventory.SmartCountingFlow.saltar')}
                             </Button>
                             <Button onClick={submitCount} disabled={!countValue}>
                                 <ArrowRight className="h-4 w-4 mr-1" />
@@ -291,7 +287,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
             <div className="flex gap-2 justify-end">
                 <Button variant="ghost" onClick={() => { setPhase('idle'); }}>
                     <RotateCcw className="h-4 w-4 mr-1" />
-                    Reiniciar
+                    {t('inventory.SmartCountingFlow.reiniciar')}
                 </Button>
                 <Button onClick={saveAll} disabled={saving}>
                     <CheckCircle2 className="h-4 w-4 mr-1" />

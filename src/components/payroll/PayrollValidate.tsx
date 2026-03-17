@@ -241,7 +241,7 @@ export default function PayrollValidate({
             </div>
             <Button variant="outline" size="sm" onClick={runValidation}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Revalidar
+              {t('payroll.PayrollValidate.revalidar')}
             </Button>
           </div>
           <Progress value={progress} className="h-2" />
@@ -279,7 +279,7 @@ export default function PayrollValidate({
                       <div className="flex items-center gap-3">
                         {item.status === 'pass' ? (
                           <CheckCircle className="h-5 w-5 text-success" />
-                        ) : item.severity === 'critical' ? (
+                        {t('payroll.PayrollValidate.itemseverityCritical')}
                           <XCircle className="h-5 w-5 text-destructive" />
                         ) : (
                           <AlertTriangle className="h-5 w-5 text-warning" />
@@ -301,7 +301,7 @@ export default function PayrollValidate({
                             variant="outline"
                             onClick={() => navigate(`/payroll/${item.action}`)}
                           >
-                            Resolver
+                            {t('payroll.PayrollValidate.resolver')}
                           </Button>
                         )}
                       </div>
@@ -318,7 +318,7 @@ export default function PayrollValidate({
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/inputs')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Variables
+          {t('payroll.PayrollValidate.variables')}
         </Button>
         <Button 
           onClick={handleValidate}

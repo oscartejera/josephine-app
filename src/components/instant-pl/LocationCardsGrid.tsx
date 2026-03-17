@@ -40,9 +40,9 @@ export function LocationCardsGrid({
     return (
       <div className="flex items-center justify-center h-[300px] bg-card rounded-xl border border-border/60">
         <div className="text-center">
-          <p className="text-muted-foreground">No locations match the selected filters</p>
+          <p className="text-muted-foreground">{t('instant-pl.LocationCardsGrid.noLocationsMatchTheSelected')}</p>
           <p className="text-sm text-muted-foreground/70 mt-1">
-            Try adjusting your filter criteria
+            {t('instant-pl.LocationCardsGrid.tryAdjustingYourFilterCriteria')}
           </p>
         </div>
       </div>

@@ -24,9 +24,7 @@ export function ObjectivesTab() {
     const { locations } = useApp();
     const { isOwner, hasPermission } = usePermissions();
     const { toast } = useToast();
-    const [settings, setSettings] = useState<LocationSetting[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [settings, setSettings] = useState<LocationSetting[]>{t('settings.ObjectivesTab.constLoadingSetloadingUsestatetrueConst')}<string | null>(null);
     const [editValues, setEditValues] = useState({ target_gp: '', target_col: '', default_cogs: '', hourly_cost: '' });
 
     const isAdmin = isOwner || hasPermission(PERMISSIONS.SETTINGS_USERS_MANAGE);
@@ -94,7 +92,7 @@ export function ObjectivesTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Target className="h-5 w-5" />
-                        Objetivos P&L por Local
+                        {t('settings.ObjectivesTab.objetivosPlPorLocal')}
                     </CardTitle>
                     <CardDescription>{t("settings.kpiObjectivesDesc")}</CardDescription>
                 </CardHeader>
@@ -102,11 +100,11 @@ export function ObjectivesTab() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Local</TableHead>
-                                <TableHead className="text-right">Target GP%</TableHead>
-                                <TableHead className="text-right">Target COL%</TableHead>
-                                <TableHead className="text-right">COGS %</TableHead>
-                                <TableHead className="text-right">€/h Medio</TableHead>
+                                <TableHead>{t('settings.ObjectivesTab.local')}</TableHead>
+                                <TableHead className="text-right">{t('settings.ObjectivesTab.targetGp')}</TableHead>
+                                <TableHead className="text-right">{t('settings.ObjectivesTab.targetCol')}</TableHead>
+                                <TableHead className="text-right">{t('settings.ObjectivesTab.cogs')}</TableHead>
+                                <TableHead className="text-right">{t('settings.ObjectivesTab.hMedio')}</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -171,7 +169,7 @@ export function ObjectivesTab() {
                                                 </Button>
                                             ) : (
                                                 <Button size="sm" variant="ghost" onClick={() => handleEdit(setting)}>
-                                                    Editar
+                                                    {t('settings.ObjectivesTab.editar')}
                                                 </Button>
                                             )
                                         )}
@@ -188,7 +186,7 @@ export function ObjectivesTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <span className="text-lg">📊</span>
-                        Impacto en Scheduling
+                        {t('settings.ObjectivesTab.impactoEnScheduling')}
                     </CardTitle>
                     <CardDescription>{t("settings.objectivesImpact")}</CardDescription>
                 </CardHeader>
@@ -204,7 +202,7 @@ export function ObjectivesTab() {
                                     <div className="font-medium text-sm">{s.location_name}</div>
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Target COL%</span>
+                                            <span className="text-muted-foreground">{t('settings.ObjectivesTab.targetCol1')}</span>
                                             <span className="font-semibold text-emerald-600">{s.target_col_percent}%</span>
                                         </div>
                                         <div className="flex justify-between">
@@ -216,7 +214,7 @@ export function ObjectivesTab() {
                                             <span className="font-medium">~{maxHours}h</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">SPLH objetivo</span>
+                                            <span className="text-muted-foreground">{t('settings.ObjectivesTab.splhObjetivo')}</span>
                                             <span className="font-medium">€{splhTarget}/h</span>
                                         </div>
                                     </div>
@@ -225,7 +223,7 @@ export function ObjectivesTab() {
                         })}
                     </div>
                     <p className="text-xs text-muted-foreground mt-4">
-                        * Estimaciones basadas en ventas promedio de ~€3,500/día. El AI Scheduler usa el forecast real de cada día para calcular los turnos óptimos.
+                        {t('settings.ObjectivesTab.estimacionesBasadasEnVentasPromedio')}
                     </p>
                 </CardContent>
             </Card>

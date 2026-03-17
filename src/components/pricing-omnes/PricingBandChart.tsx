@@ -47,11 +47,11 @@ function CustomTooltip({ active, payload }: TooltipProps) {
     <div className="bg-popover border border-border rounded-lg shadow-lg p-3 text-sm">
       <p className="font-semibold mb-1">{d.name}</p>
       <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-muted-foreground text-xs">
-        <span>Price:</span><span className="text-foreground font-medium">€{d.price.toFixed(2)}</span>
-        <span>Units:</span><span className="text-foreground">{d.units}</span>
-        <span>Revenue:</span><span className="text-foreground">€{d.revenue.toFixed(0)}</span>
-        <span>Band:</span><span className="text-foreground capitalize">{d.band === 'lower' ? 'Lower' : d.band === 'middle' ? 'Middle' : 'Upper'}</span>
-        {d.isPromo && <><span>🎯</span><span className="text-violet-600 font-medium">Promote</span></>}
+        <span>{t('pricing-omnes.PricingBandChart.price')}</span><span className="text-foreground font-medium">€{d.price.toFixed(2)}</span>
+        <span>{t('pricing-omnes.PricingBandChart.units')}</span><span className="text-foreground">{d.units}</span>
+        <span>{t('pricing-omnes.PricingBandChart.revenue')}</span><span className="text-foreground">€{d.revenue.toFixed(0)}</span>
+        <span>{t('pricing-omnes.PricingBandChart.band')}</span><span className="text-foreground capitalize">{d.band === 'lower' ? 'Lower' : d.band === 'middle' ? 'Middle' : 'Upper'}</span>
+        {d.isPromo && <><span>🎯</span><span className="text-violet-600 font-medium">{t('pricing-omnes.PricingBandChart.promote')}</span></>}
       </div>
     </div>
   );
@@ -77,7 +77,7 @@ export function PricingBandChart({ result, loading }: PricingBandChartProps) {
   if (loading) {
     return (
       <Card>
-        <CardHeader><CardTitle>Price Distribution</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('pricing-omnes.PricingBandChart.priceDistribution')}</CardTitle></CardHeader>
         <CardContent><Skeleton className="h-[300px] w-full" /></CardContent>
       </Card>
     );
@@ -86,7 +86,7 @@ export function PricingBandChart({ result, loading }: PricingBandChartProps) {
   if (!result || chartData.length === 0) {
     return (
       <Card>
-        <CardHeader><CardTitle>Price Distribution</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('pricing-omnes.PricingBandChart.priceDistribution1')}</CardTitle></CardHeader>
         <CardContent>
           <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             Select a category to view the distribution
@@ -100,7 +100,7 @@ export function PricingBandChart({ result, loading }: PricingBandChartProps) {
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base">Price Distribution by Band</CardTitle>
+          <CardTitle className="text-base">{t('pricing-omnes.PricingBandChart.priceDistributionByBand')}</CardTitle>
           <div className="flex gap-3 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BAND_COLORS.lower }} />

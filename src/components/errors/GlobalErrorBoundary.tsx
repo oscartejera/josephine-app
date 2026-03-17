@@ -55,11 +55,10 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
             </div>
 
             <h1 className="text-xl font-bold text-gray-900 mb-2">
-              Algo salió mal
+              {t('errors.GlobalErrorBoundary.algoSalioMal')}
             </h1>
             <p className="text-sm text-gray-500 mb-2">
-              Se ha producido un error inesperado en la aplicación.
-              Nuestro equipo ha sido notificado.
+              {t('errors.GlobalErrorBoundary.seHaProducidoUnError')}
             </p>
             <p className="text-xs text-gray-400 font-mono mb-6 break-all">
               {this.state.error?.message?.slice(0, 200)}
@@ -71,14 +70,14 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
               >
                 <Home className="h-4 w-4" />
-                Ir al inicio
+                {t('errors.GlobalErrorBoundary.irAlInicio')}
               </button>
               <button
                 onClick={this.handleReload}
                 className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
               >
                 <RefreshCw className="h-4 w-4" />
-                Recargar página
+                {t('errors.GlobalErrorBoundary.recargarPagina')}
               </button>
             </div>
 
@@ -86,7 +85,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
               <p className="mt-6 text-xs text-gray-400">
                 Si el error persiste, contacta con soporte:{' '}
                 <a href="mailto:soporte@josephine.app" className="underline">
-                  soporte@josephine.app
+                  {t('errors.GlobalErrorBoundary.soportejosephineapp')}
                 </a>
               </p>
             )}

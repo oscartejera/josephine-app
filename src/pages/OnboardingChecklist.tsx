@@ -186,7 +186,7 @@ export default function OnboardingChecklist() {
             <div>
                 <h1 className="text-2xl font-bold">{t("onboarding.configTitle")}</h1>
                 <p className="text-muted-foreground mt-1">
-                    Sigue estos pasos para activar todas las funcionalidades de Josephine para tu restaurante.
+                    {t('onboardingChecklist.sigueEstosPasosParaActivar')}
                 </p>
             </div>
 
@@ -207,7 +207,7 @@ export default function OnboardingChecklist() {
                     </div>
                     {progressPercent === 100 && (
                         <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-2 font-medium">
-                            🎉 ¡Todo configurado! Josephine está lista para producción.
+                            {t('onboardingChecklist.todoConfiguradoJosephineEstaLista')}
                         </p>
                     )}
                 </CardContent>
@@ -281,7 +281,7 @@ export default function OnboardingChecklist() {
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-blue-500" />
-                        Se activan automáticamente al conectar el POS
+                        {t('onboardingChecklist.seActivanAutomaticamenteAlConectar')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -308,7 +308,7 @@ export default function OnboardingChecklist() {
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <Star className="h-5 w-5 text-amber-500" />
-                        Próximamente
+                        {t('onboardingChecklist.proximamente')}
                     </CardTitle>
                     <CardDescription>{t("onboarding.pendingIntegrations")}</CardDescription>
                 </CardHeader>

@@ -111,13 +111,13 @@ export function CookieConsentBanner() {
 
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                Usamos cookies 🍪
+                {t('gdpr.CookieConsentBanner.usamosCookies')}
               </h3>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Utilizamos cookies esenciales para que la aplicación funcione y cookies opcionales
                 para mejorar tu experiencia. Puedes personalizar tus preferencias en cualquier momento.{' '}
                 <a href="/privacidad" className="underline hover:text-gray-700">
-                  Política de privacidad
+                  {t('gdpr.CookieConsentBanner.politicaDePrivacidad')}
                 </a>
               </p>
             </div>
@@ -130,7 +130,7 @@ export function CookieConsentBanner() {
                 className="text-xs gap-1.5"
               >
                 <Settings2 className="h-3.5 w-3.5" />
-                Personalizar
+                {t('gdpr.CookieConsentBanner.personalizar')}
               </Button>
               <Button
                 variant="outline"
@@ -139,7 +139,7 @@ export function CookieConsentBanner() {
                 className="text-xs gap-1.5"
               >
                 <X className="h-3.5 w-3.5" />
-                Solo esenciales
+                {t('gdpr.CookieConsentBanner.soloEsenciales')}
               </Button>
               <Button
                 size="sm"
@@ -147,7 +147,7 @@ export function CookieConsentBanner() {
                 className="text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700"
               >
                 <Check className="h-3.5 w-3.5" />
-                Aceptar todo
+                {t('gdpr.CookieConsentBanner.aceptarTodo')}
               </Button>
             </div>
           </div>

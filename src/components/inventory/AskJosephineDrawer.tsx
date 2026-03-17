@@ -88,11 +88,7 @@ export function AskJosephineDrawer({
   locationPerformance
 }: AskJosephineDrawerProps) {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<Message[]>{t('inventory.AskJosephineDrawer.constInputSetinputUsestateConst')}<string | null>{t('inventory.AskJosephineDrawer.nullConstScrollrefUseref')}<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Auto-scroll to bottom when messages change
@@ -110,7 +106,7 @@ export function AskJosephineDrawer({
   }, [open]);
 
   const sendInitialAnalysis = async () => {
-    const initialQuestion = "Analiza mi situación actual de inventario y dame un resumen ejecutivo con los puntos clave y recomendaciones.";
+    const initialQuestion = t('inventory.analiza_mi_situacion_actual_de_inventario_y_dame_u');
     await streamChat([{ role: 'user', content: initialQuestion }], true);
   };
 
@@ -332,7 +328,7 @@ export function AskJosephineDrawer({
         <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Ask Josephine
+            {t('inventory.AskJosephineDrawer.askJosephine')}
           </SheetTitle>
         </SheetHeader>
 
@@ -343,8 +339,7 @@ export function AskJosephineDrawer({
               <div className="text-center py-8">
                 <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary/30" />
                 <p className="text-muted-foreground mb-6">
-                  Hola! Soy Josephine, tu asistente de inventario. 
-                  Puedo analizar tu COGS, mermas y ayudarte a optimizar tu food cost.
+                  {t('inventory.AskJosephineDrawer.holaSoyJosephineTuAsistente')}
                 </p>
                 <div className="space-y-2">
                   {suggestedQuestions.map((q, i) => (
@@ -410,7 +405,7 @@ export function AskJosephineDrawer({
                 <div className="bg-muted rounded-lg px-4 py-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Analizando tu inventario...
+                    {t('inventory.AskJosephineDrawer.analizandoTuInventario')}
                   </div>
                 </div>
               </div>
@@ -427,7 +422,7 @@ export function AskJosephineDrawer({
 
         {/* Input area */}
         <div className="border-t p-4">
-          {messages.length > 0 && !isStreaming && (
+          {messages.length > {t('inventory.AskJosephineDrawer.0Isstreaming')}
             <div className="flex flex-wrap gap-2 mb-3">
               {suggestedQuestions.slice(0, 2).map((q, i) => (
                 <Button
@@ -447,7 +442,7 @@ export function AskJosephineDrawer({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe tu pregunta..."
+              placeholder={t('inventory.AskJosephineDrawer.escribeTuPregunta')}
               className="min-h-[44px] max-h-32 resize-none"
               disabled={isStreaming}
             />

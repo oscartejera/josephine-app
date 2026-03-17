@@ -13,6 +13,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildQueryContext, getInstantPnlRpc } from '@/data';
 
+import { useTranslation } from 'react-i18next';
 // ============= TYPES =============
 
 export type ViewMode = 'percentage' | 'amount' | 'hours';
@@ -233,9 +234,7 @@ export function useInstantPLData({
           flashProfitDeltaPct,
           flashProfitIsBetter: flashProfitActual != null && flashProfitForecast != null && flashProfitActual >= flashProfitForecast,
           isProfitOverTarget: flashProfitActualPct != null && flashProfitActualPct >= 40,
-          isSalesAboveForecast: salesActual >= salesForecast * 1.10,
-          isCogsBelow: false, // Calculated after all locations
-          isUnderPlannedLabour: labourActual <= labourForecast,
+          isSalesAboveForecast: salesActual >{t('hooks.useInstantPLData.salesforecast110IscogsbelowFalseCalculat')} <= labourForecast,
           estimatedCogs: loc.estimated_cogs ?? true,
           estimatedLabour: estimatedLabour,
         };

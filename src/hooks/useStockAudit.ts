@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { useTranslation } from 'react-i18next';
 export interface InventoryCount {
     id: string;
     org_id: string;
@@ -47,6 +48,7 @@ export interface VarianceSummaryItem {
 }
 
 export function useStockAudit(locationId: string | null) {
+  const { t } = useTranslation();
     const { group } = useApp();
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -171,7 +173,7 @@ export function useStockAudit(locationId: string | null) {
 
     // Computed metrics
     const variance = varianceQuery.data ?? [];
-    const totalFinancialLoss = variance.reduce((sum, v) => sum + (v.variance < 0 ? v.financial_loss : 0), 0);
+    const totalFinancialLoss = variance.reduce((sum, v) => {t('hooks.useStockAudit.sumVvariance')} < 0 ? v.financial_loss : 0), 0);
     const criticalItems = variance.filter(v => v.variance_pct < -5);
     const deadStock = deadStockQuery.data ?? [];
     const totalDeadStockValue = deadStock.reduce((sum, d) => sum + d.stock_value, 0);

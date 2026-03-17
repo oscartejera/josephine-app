@@ -45,12 +45,7 @@ export default function Reviews() {
     };
   };
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [platform, setPlatform] = useState<Platform>(
-    (searchParams.get('platform') as Platform) || 'all'
-  );
-  const [locationId, setLocationId] = useState<string>(
+  const [dateRange, setDateRange] = useState<DateRangeValue>{t('reviews.getinitialdaterangeConstDatemodeSetdatem')}<DateMode>{t('reviews.monthlyConstPlatformSetplatformUsestate')}<Platform>{t('reviews.searchparamsgetplatformAsPlatformAllCons')}<string>(
     searchParams.get('location') || 'all'
   );
 
@@ -225,7 +220,7 @@ export default function Reviews() {
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="h-5 w-5 text-orange-500" />
-          <h3 className="text-lg font-semibold">Busy Hours (Forecast)</h3>
+          <h3 className="text-lg font-semibold">{t('reviews.busyHoursForecast')}</h3>
         </div>
         {busyLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -261,7 +256,7 @@ export default function Reviews() {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No forecast data available for this period
+            {t('reviews.noForecastDataAvailableFor')}
           </p>
         )}
       </Card>

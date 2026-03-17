@@ -56,7 +56,7 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
       <PopoverTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Sparkles className="h-4 w-4 text-purple-500" />
-          Ask Josephine
+          {t('sales.AskJosephine.askJosephine')}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px]" align="end">
@@ -64,7 +64,7 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
           <div>
             <h4 className="font-semibold mb-2">{t("sales.askAboutSales")}</h4>
             <p className="text-sm text-muted-foreground">
-              Get AI insights based on your data
+              {t('sales.AskJosephine.getAiInsightsBasedOn')}
             </p>
           </div>
 
@@ -102,7 +102,7 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
                 handleAsk();
               }}
             >
-              Why did sales change?
+              {t('sales.AskJosephine.whyDidSalesChange')}
             </Button>
             <Button
               variant="outline"
@@ -112,7 +112,7 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
                 handleAsk();
               }}
             >
-              Recommendations
+              {t('sales.AskJosephine.recommendations')}
             </Button>
           </div>
         </div>

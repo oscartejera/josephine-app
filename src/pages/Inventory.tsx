@@ -47,10 +47,7 @@ export default function Inventory() {
     };
   }, []); // Only compute once on mount
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [viewMode, setViewMode] = useState<ViewMode>('GP');
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRangeValue>{t('inventory.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('inventory.monthlyConstViewmodeSetviewmodeUsestate')}<ViewMode>{t('inventory.gpConstSelectedlocationsSetselectedlocat')}<string[]>([]);
   const [josephineOpen, setJosephineOpen] = useState(false);
   const [smartCountOpen, setSmartCountOpen] = useState(false);
 
@@ -108,7 +105,7 @@ export default function Inventory() {
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
-          Reconciliation Report
+          {t('inventory.reconciliationReport')}
         </Button>
         <Button
           variant="outline"
@@ -116,7 +113,7 @@ export default function Inventory() {
           className="gap-2"
         >
           <ClipboardCheck className="h-4 w-4" />
-          Smart Counting
+          {t('inventory.smartCounting')}
         </Button>
       </div>
 

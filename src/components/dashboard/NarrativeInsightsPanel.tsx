@@ -14,11 +14,7 @@ interface NarrativeInsightsPanelProps {
 
 function renderMarkdown(text: string): string {
   return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n•/g, '<br/>•')
-    .replace(/\n- /g, '<br/>• ')
-    .replace(/\n\n/g, '<br/><br/>')
-    .replace(/\n/g, '<br/>');
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>{t('dashboard.NarrativeInsightsPanel.replaceng')}<br/>{t('dashboard.NarrativeInsightsPanel.replacenG')}<br/>{t('dashboard.NarrativeInsightsPanel.replacenng')}<br/><br/>{t('dashboard.NarrativeInsightsPanel.replaceng1')}<br/>');
 }
 
 export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsightsPanelProps) {
@@ -47,7 +43,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-violet-500" />
-            Josephine dice...
+            {t('dashboard.NarrativeInsightsPanel.josephineDice')}
           </CardTitle>
           <Button
             variant="ghost"
@@ -66,7 +62,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
         {isLoading && !narrative && (
           <div className="flex items-center gap-3 py-6">
             <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
-            <span className="text-sm text-muted-foreground">Analizando tus operaciones...</span>
+            <span className="text-sm text-muted-foreground">{t('dashboard.NarrativeInsightsPanel.analizandoTusOperaciones')}</span>
           </div>
         )}
 
@@ -77,7 +73,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
             <div>
               <p className="text-sm text-destructive">{error}</p>
               <Button variant="link" size="sm" className="px-0 h-auto text-xs" onClick={handleRefresh}>
-                Reintentar
+                {t('dashboard.NarrativeInsightsPanel.reintentar')}
               </Button>
             </div>
           </div>
@@ -99,7 +95,7 @@ export function NarrativeInsightsPanel({ metrics, className }: NarrativeInsights
         {/* Empty state - no metrics yet */}
         {!metrics && !isLoading && !error && (
           <p className="text-sm text-muted-foreground py-4">
-            Cargando datos del dashboard...
+            {t('dashboard.NarrativeInsightsPanel.cargandoDatosDelDashboard')}
           </p>
         )}
       </CardContent>

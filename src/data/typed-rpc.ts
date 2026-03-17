@@ -12,6 +12,7 @@
 import { z, type ZodType } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
+import { useTranslation } from 'react-i18next';
 const isDev = import.meta.env.DEV;
 
 interface TypedRpcOptions {
@@ -25,11 +26,7 @@ interface TypedRpcOptions {
  * @example
  * const data = await typedRpc('get_labour_kpis', LabourKpisSchema, params);
  * // data is fully typed as z.infer<typeof LabourKpisSchema>
- */
-export async function typedRpc<T>(
-    name: string,
-    schema: ZodType<T>,
-    params: Record<string, unknown>,
+ {t('data.typed-rpc.exportAsyncFunctionTypedrpc')}<T>{t('data.typed-rpc.nameStringSchemaZodtype')}<T>{t('data.typed-rpc.paramsRecord')}<string, unknown>,
     options: TypedRpcOptions = {}
 ): Promise<T> {
     const { data, error } = await (supabase.rpc as any)(name, params);
@@ -70,10 +67,7 @@ export async function typedRpc<T>(
 /**
  * Call a Supabase RPC that returns an array.
  */
-export async function typedRpcArray<T>(
-    name: string,
-    itemSchema: ZodType<T>,
-    params: Record<string, unknown>,
+export async function typedRpcArray<T>{t('data.typed-rpc.nameStringItemschemaZodtype')}<T>{t('data.typed-rpc.paramsRecord1')}<string, unknown>,
     options: TypedRpcOptions = {}
 ): Promise<T[]> {
     return typedRpc(name, z.array(itemSchema), params, options);

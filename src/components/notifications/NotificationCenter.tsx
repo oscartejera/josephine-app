@@ -45,7 +45,7 @@ export function NotificationCenter() {
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            <h3 className="font-semibold">Notificaciones</h3>
+            <h3 className="font-semibold">{t('notifications.NotificationCenter.notificaciones')}</h3>
             {unreadCount > 0 && (
               <Badge variant="secondary">{unreadCount} nuevas</Badge>
             )}

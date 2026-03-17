@@ -73,16 +73,16 @@ export default function Availability() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span>Schedule & Workforce</span>
+            <span>{t('availability.scheduleWorkforce')}</span>
             <span>/</span>
-            <span className="text-foreground">Availability</span>
+            <span className="text-foreground">{t('availability.availability')}</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Staff Availability</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('availability.staffAvailability')}</h1>
         </div>
         
         <Button onClick={() => setShowRequestDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Request Time Off
+          {t('availability.requestTimeOff')}
         </Button>
       </div>
       
@@ -104,7 +104,7 @@ export default function Availability() {
         <TabsList className="grid w-full grid-cols-3 max-w-[400px]">
           <TabsTrigger value="availability" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            My Hours
+            {t('availability.myHours')}
           </TabsTrigger>
           <TabsTrigger value="requests" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -139,10 +139,10 @@ export default function Availability() {
         <TabsContent value="requests" className="mt-6">
           <div className="bg-card border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-lg">My Time Off Requests</h3>
+              <h3 className="font-semibold text-lg">{t('availability.myTimeOffRequests')}</h3>
               <Button variant="outline" size="sm" onClick={() => setShowRequestDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                New Request
+                {t('availability.newRequest')}
               </Button>
             </div>
             <TimeOffRequestsList
@@ -156,9 +156,9 @@ export default function Availability() {
         <TabsContent value="team" className="mt-6">
           <div className="bg-card border border-border rounded-xl p-6">
             <div className="mb-6">
-              <h3 className="font-semibold text-lg">Team Time Off Requests</h3>
+              <h3 className="font-semibold text-lg">{t('availability.teamTimeOffRequests')}</h3>
               <p className="text-sm text-muted-foreground">
-                Review and manage time off requests from your team
+                {t('availability.reviewAndManageTimeOff')}
               </p>
             </div>
             <TimeOffRequestsList

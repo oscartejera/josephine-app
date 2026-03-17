@@ -16,8 +16,8 @@ import { useTranslation } from 'react-i18next';
 
 interface ReviewCardProps {
   review: Review;
-  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => Promise<string>;
-  onSubmit: (reviewId: string, replyText: string) => Promise<void>;
+  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => {t('reviews.ReviewCard.promise')}<string>;
+  onSubmit: (reviewId: string, replyText: string) => {t('reviews.ReviewCard.promise1')}<void>;
 }
 
 const REFINE_OPTIONS = [
@@ -109,7 +109,7 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
       {/* Published badge */}
       {isPublished && (
         <Badge variant="secondary" className="mb-3 bg-success/10 text-success border-0">
-          Replied
+          {t('reviews.ReviewCard.replied')}
         </Badge>
       )}
 
@@ -117,7 +117,7 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
       <Textarea
         value={replyText}
         onChange={(e) => setReplyText(e.target.value)}
-        placeholder="Write your reply..."
+        placeholder={t('reviews.ReviewCard.writeYourReply')}
         className="min-h-[80px] text-sm resize-none mb-3"
         disabled={isRefining || isSubmitting}
       />
@@ -162,7 +162,7 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
             </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-2 py-1.5">
-              Rewrite as
+              {t('reviews.ReviewCard.rewriteAs')}
             </p>
             <div className="space-y-0.5">
               {REFINE_OPTIONS.map((option) => (

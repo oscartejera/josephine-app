@@ -108,7 +108,7 @@ export function LabourComplianceDashboard({ locationId, weekStart }: LabourCompl
     if (isLoading) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">Cumplimiento Laboral</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t('labour.LabourComplianceDashboard.cumplimientoLaboral')}</CardTitle></CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-100 rounded animate-pulse" />)}
@@ -121,7 +121,7 @@ export function LabourComplianceDashboard({ locationId, weekStart }: LabourCompl
     if (isError || !data || data.employees.length === 0) {
         return (
             <Card className="bg-white">
-                <CardHeader><CardTitle className="text-base">Cumplimiento Laboral</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">{t('labour.LabourComplianceDashboard.cumplimientoLaboral1')}</CardTitle></CardHeader>
                 <CardContent>
                     <p className="text-sm text-gray-500 text-center py-4">
                         {!locationId ? t('dashboard.seleccionaUnaUbicacionParaVer') : t('dashboard.noHayTurnosProgramadosEsta')}
@@ -138,7 +138,7 @@ export function LabourComplianceDashboard({ locationId, weekStart }: LabourCompl
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base font-semibold">Cumplimiento Laboral</CardTitle>
+                        <CardTitle className="text-base font-semibold">{t('labour.LabourComplianceDashboard.cumplimientoLaboral2')}</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">
                             Semana {format(ws, 'dd MMM')} — Límites configurables
                         </p>
@@ -203,9 +203,9 @@ export function LabourComplianceDashboard({ locationId, weekStart }: LabourCompl
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <StatusDot ok={emp.overtime_status === 'ok'} label="Horas" />
-                                <StatusDot ok={emp.min_rest_ok} label="Descanso" />
-                                <StatusDot ok={emp.weekly_rest_ok} label="Libre" />
+                                <StatusDot ok={emp.overtime_status === 'ok'} label={t('labour.LabourComplianceDashboard.horas')} />
+                                <StatusDot ok={emp.min_rest_ok} label={t('labour.LabourComplianceDashboard.descanso')} />
+                                <StatusDot ok={emp.weekly_rest_ok} label={t('labour.LabourComplianceDashboard.libre')} />
                             </div>
 
                             <RiskBadge score={emp.risk_score} />
@@ -216,7 +216,7 @@ export function LabourComplianceDashboard({ locationId, weekStart }: LabourCompl
                 {/* Summary */}
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
                     <span>{summary.total_employees} empleados • Riesgo medio: {summary.avg_risk_score}</span>
-                    <span className="text-[10px] text-gray-400">Umbrales configurables en Ajustes → Reglas Laborales</span>
+                    <span className="text-[10px] text-gray-400">{t('labour.LabourComplianceDashboard.umbralesConfigurablesEnAjustesReglas')}</span>
                 </div>
             </CardContent>
         </Card>

@@ -19,7 +19,7 @@ interface TopItemsTableProps {
   className?: string;
 }
 
-export function TopItemsTable({ items, title = "Top Items", className }: TopItemsTableProps) {
+export function TopItemsTable({ items, title={t('dashboard.TopItemsTable.topItems')}, className }: TopItemsTableProps) {
   const { t } = useTranslation();
   return (
     <Card className={className}>
@@ -34,10 +34,10 @@ export function TopItemsTable({ items, title = "Top Items", className }: TopItem
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">#</TableHead>
-              <TableHead>Producto</TableHead>
-              <TableHead className="text-right">Uds</TableHead>
+              <TableHead>{t('dashboard.TopItemsTable.producto')}</TableHead>
+              <TableHead className="text-right">{t('dashboard.TopItemsTable.uds')}</TableHead>
               <TableHead className="text-right">{t('common.ventas')}</TableHead>
-              <TableHead className="text-right">Margen</TableHead>
+              <TableHead className="text-right">{t('dashboard.TopItemsTable.margen')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

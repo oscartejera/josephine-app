@@ -77,12 +77,12 @@ export default function ResetPassword() {
               <div className="mx-auto w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-4">
                 <ChefHat className="w-6 h-6 text-destructive" />
               </div>
-              <CardTitle className="text-2xl font-display">Enlace expirado</CardTitle>
+              <CardTitle className="text-2xl font-display">{t('resetPassword.enlaceExpirado')}</CardTitle>
               <CardDescription>{error}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full" onClick={() => navigate('/login')}>
-                Volver al inicio de sesión
+                {t('resetPassword.volverAlInicioDeSesion')}
               </Button>
             </CardContent>
           </Card>
@@ -105,7 +105,7 @@ export default function ResetPassword() {
             </CardHeader>
             <CardContent>
               <Button className="w-full" onClick={() => navigate('/dashboard')}>
-                Ir al dashboard
+                {t('resetPassword.irAlDashboard')}
               </Button>
             </CardContent>
           </Card>

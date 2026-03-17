@@ -228,7 +228,7 @@ export default function StockAuditPage() {
                                         {t('common.loading')}
                                     </TableCell>
                                 </TableRow>
-                            ) : filteredVariance.length === 0 ? (
+                            {t('operations.StockAuditPage.filteredvariancelength0')}
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                         {t('stockAudit.noVarianceData')}

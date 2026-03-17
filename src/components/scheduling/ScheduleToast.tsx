@@ -34,7 +34,7 @@ export function ScheduleToast({ isVisible, hoursAdded, onAccept, onUndo }: Sched
                   {hoursAdded} hours added
                 </h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Adjust your schedule as needed. The more you tweak, the smarter our engine gets.
+                  {t('scheduling.ScheduleToast.adjustYourScheduleAsNeeded')}
                 </p>
                 
                 {/* Actions */}
@@ -43,13 +43,13 @@ export function ScheduleToast({ isVisible, hoursAdded, onAccept, onUndo }: Sched
                     onClick={onAccept}
                     className="bg-primary hover:bg-primary/90"
                   >
-                    Accept
+                    {t('scheduling.ScheduleToast.accept')}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={onUndo}
                   >
-                    Undo
+                    {t('scheduling.ScheduleToast.undo')}
                   </Button>
                 </div>
               </div>

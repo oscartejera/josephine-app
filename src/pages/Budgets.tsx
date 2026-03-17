@@ -16,10 +16,7 @@ export default function Budgets() {
     return { from: startOfMonth(today), to: endOfMonth(today) };
   }, []);
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [selectedLocations] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<BudgetTab>('sales');
+  const [dateRange, setDateRange] = useState<DateRangeValue>{t('budgets.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('budgets.monthlyConstSelectedlocationsUsestate')}<string[]>{t('budgets.constActivetabSetactivetabUsestate')}<BudgetTab>('sales');
 
   const { isLoading, metrics, dailyData, locationData } = useBudgetsData(dateRange, selectedLocations);
 
@@ -31,7 +28,7 @@ export default function Budgets() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Budgets</h1>
+          <h1 className="text-2xl font-bold">{t('budgets.budgets')}</h1>
           <p className="text-sm text-muted-foreground">{t("budgets.comparePerformance")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -46,10 +43,10 @@ export default function Budgets() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as BudgetTab)}>
         <TabsList>
-          <TabsTrigger value="sales">Sales</TabsTrigger>
-          <TabsTrigger value="labour">Labour</TabsTrigger>
-          <TabsTrigger value="cogs">COGS</TabsTrigger>
-          <TabsTrigger value="prime">Prime Cost</TabsTrigger>
+          <TabsTrigger value="sales">{t('budgets.sales')}</TabsTrigger>
+          <TabsTrigger value="labour">{t('budgets.labour')}</TabsTrigger>
+          <TabsTrigger value="cogs">{t('budgets.cogs')}</TabsTrigger>
+          <TabsTrigger value="prime">{t('budgets.primeCost')}</TabsTrigger>
         </TabsList>
       </Tabs>
 

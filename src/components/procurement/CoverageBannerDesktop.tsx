@@ -36,7 +36,7 @@ export function CoverageBannerDesktop({
               <span className="text-success">{format(coverageEndDate, 'EEEE d MMMM')}</span>
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Based on your forecast demand, recipe usage, and current stock levels
+              {t('procurement.CoverageBannerDesktop.basedOnYourForecastDemand')}
             </p>
           </div>
         </div>
@@ -44,7 +44,7 @@ export function CoverageBannerDesktop({
           <Calendar className="h-5 w-5 text-success" />
           <div className="text-right">
             <p className="text-2xl font-bold text-success">{coverageDays}</p>
-            <p className="text-xs text-muted-foreground">days covered</p>
+            <p className="text-xs text-muted-foreground">{t('procurement.CoverageBannerDesktop.daysCovered')}</p>
           </div>
         </div>
       </div>

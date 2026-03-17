@@ -104,10 +104,10 @@ export function InventoryHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => navigate('/inventory')}>
-                    Inventory Overview
+                    {t('inventory.InventoryHeader.inventoryOverview')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/inventory/reconciliation')}>
-                    Reconciliation Report
+                    {t('inventory.InventoryHeader.reconciliationReport')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -145,12 +145,12 @@ export function InventoryHeader({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                     </span>
-                    Live
+                    {t('inventory.InventoryHeader.live')}
                   </>
                 ) : (
                   <>
                     <WifiOff className="h-3 w-3" />
-                    Offline
+                    {t('inventory.InventoryHeader.offline')}
                   </>
                 )}
               </Badge>
@@ -159,7 +159,7 @@ export function InventoryHeader({
               {isConnected ? (
                 <p>Real-time inventory updates active{lastUpdated ? `. Last update: ${formatDistanceToNow(lastUpdated, { addSuffix: true })}` : ''}</p>
               ) : (
-                <p>Connecting to real-time updates...</p>
+                <p>{t('inventory.InventoryHeader.connectingToRealtimeUpdates')}</p>
               )}
             </TooltipContent>
           </Tooltip>
@@ -196,7 +196,7 @@ export function InventoryHeader({
             className="bg-gradient-primary text-white gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            Ask Josephine
+            {t('inventory.InventoryHeader.askJosephine')}
           </Button>
 
           {/* Actions menu */}
@@ -209,7 +209,7 @@ export function InventoryHeader({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleReseedData}>
                 <Database className="h-4 w-4 mr-2" />
-                Reseed demo data
+                {t('inventory.InventoryHeader.reseedDemoData')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

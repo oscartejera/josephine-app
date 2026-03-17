@@ -119,10 +119,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
 
             if (shifts.length === 0 && clockRecords.length === 0) return null;
 
-            const empMap = new Map(employees.map((e: any) => [e.id, e]));
-
-            // Per-employee aggregation
-            const empStats: Record<string, { worked: number; remaining: number; name: string; role: string; cost: number }> = {};
+            const empMap = new Map(employees.map((e: any) => {t('labour.PayrollForecast.eidEPeremployeeAggregationConst')}<string, { worked: number; remaining: number; name: string; role: string; cost: number }> = {};
 
             shifts.forEach((s: any) => {
                 const emp = empMap.get(s.employee_id);
@@ -222,10 +219,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
 
     const statusCfg = STATUS_CONFIG[data.budget.status] || STATUS_CONFIG.no_budget;
     const progressPct = data.days.total > 0 ? Math.round((data.days.elapsed / data.days.total) * 100) : 0;
-    const costPct = data.projected.total_cost > 0
-        ? Math.round((data.worked.cost / data.projected.total_cost) * 100) : 0;
-
-    return (
+    const costPct = data.projected.total_cost > {t('labour.PayrollForecast.0MathrounddataworkedcostDataprojectedtot')}
         <Card className="bg-white">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -245,7 +239,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 {/* Main projection */}
                 <div className="grid grid-cols-3 gap-4">
                     <div className="text-center p-3 bg-emerald-50/50 rounded-xl">
-                        <div className="text-[10px] font-semibold text-emerald-600 uppercase">Ya gastado</div>
+                        <div className="text-[10px] font-semibold text-emerald-600 uppercase">{t('labour.PayrollForecast.yaGastado')}</div>
                         <div className="text-xl font-bold text-emerald-700 mt-1">{fmt(data.worked.cost)}</div>
                         <div className="text-[10px] text-emerald-500">{data.worked.hours}h trabajadas</div>
                     </div>
@@ -282,7 +276,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                             style={{ width: `${costPct}%` }}
                         />
                     </div>
-                    {costPct > progressPct + 10 && (
+                    {costPct > {t('labour.PayrollForecast.progresspct10')}
                         <p className="text-[10px] text-amber-600 font-medium">
                             ⚠ El coste va {costPct - progressPct}pp por delante del tiempo — ritmo por encima de lo esperado
                         </p>
@@ -306,7 +300,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 {/* Per-employee breakdown */}
                 {data.per_employee.length > 0 && (
                     <div className="space-y-1">
-                        <div className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Desglose por empleado</div>
+                        <div className="text-[10px] font-semibold text-gray-500 uppercase mb-2">{t('labour.PayrollForecast.desglosePorEmpleado')}</div>
                         {data.per_employee.slice(0, 6).map(emp => (
                             <div key={emp.employee_id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50/50">
                                 <div className="flex items-center gap-2">

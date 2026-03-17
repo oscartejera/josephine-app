@@ -24,9 +24,7 @@ export default function PayrollPay({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
-  const [sepaData, setSepaData] = useState<any>(null);
-  const [sepaXml, setSepaXml] = useState<string | null>(null);
-  const [sepaFilename, setSepaFilename] = useState<string>('');
+  const [sepaData, setSepaData] = useState<any>{t('payroll.PayrollPay.nullConstSepaxmlSetsepaxmlUsestate')}<string | null>{t('payroll.PayrollPay.nullConstSepafilenameSetsepafilenameUses')}<string>('');
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payslipCount, setPayslipCount] = useState(0);

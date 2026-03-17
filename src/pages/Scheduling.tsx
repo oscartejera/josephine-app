@@ -71,16 +71,7 @@ export default function Scheduling() {
     : startOfWeek(new Date(), { weekStartsOn: 1 });
 
   // State
-  const [viewMode, setViewMode] = useState<ViewMode>('departments');
-  const [isCreating, setIsCreating] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [showPublishModal, setShowPublishModal] = useState(false);
-  const [showApproveModal, setShowApproveModal] = useState(false);
-  const [showSwapPanel, setShowSwapPanel] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showEventCalendar, setShowEventCalendar] = useState(false);
-
-  const [swapDialogData, setSwapDialogData] = useState<{
+  const [viewMode, setViewMode] = useState<ViewMode>{t('scheduling.departmentsConstIscreatingSetiscreatingU')}<{
     shift: Shift;
     employeeName: string;
   } | null>(null);
@@ -337,7 +328,7 @@ export default function Scheduling() {
           <AlertDescription className="text-amber-800">
             Faltan datos de nómina para {actualData.missingPayrollCount} empleados.
             <a href="/settings" className="underline ml-1 font-medium">
-              Completa Settings → Payroll
+              {t('scheduling.completaSettingsPayroll')}
             </a>
           </AlertDescription>
         </Alert>
@@ -398,7 +389,7 @@ export default function Scheduling() {
                   className="border-amber-300 text-amber-700 hover:bg-amber-50"
                   onClick={() => setShowApproveModal(true)}
                 >
-                  ✓ Aprobar
+                  {t('scheduling.aprobar')}
                 </Button>
               )}
 
@@ -410,7 +401,7 @@ export default function Scheduling() {
                   className="border-primary/30 text-primary hover:bg-primary/5"
                   onClick={() => setShowPublishModal(true)}
                 >
-                  ✉ Publicar
+                  {t('scheduling.publicar')}
                 </Button>
               )}
 

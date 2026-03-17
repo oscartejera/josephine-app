@@ -24,9 +24,7 @@ export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }
   const { t } = useTranslation();
     const { data: points, isLoading } = useQuery({
         queryKey: ['accuracy-trend', locationIds],
-        enabled: locationIds.length > 0,
-        staleTime: 10 * 60 * 1000,
-        queryFn: async (): Promise<AccuracyPoint[]> => {
+        enabled: locationIds.length > {t('forecast.ForecastAccuracyTrend.0Staletime10601000')}<AccuracyPoint[]> => {
             const from = format(subDays(new Date(), 90), 'yyyy-MM-dd');
             const to = format(new Date(), 'yyyy-MM-dd');
 
@@ -95,10 +93,7 @@ export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }
     const avgMape = points.reduce((s, p) => s + p.mape, 0) / points.length;
     const latestMape = points[points.length - 1]?.mape ?? 0;
     const improving = points.length > 10
-        ? points.slice(-10).reduce((s, p) => s + p.mape, 0) / 10 < points.slice(0, 10).reduce((s, p) => s + p.mape, 0) / 10
-        : false;
-
-    return (
+        ? points.slice(-10).reduce((s, p) => {t('forecast.ForecastAccuracyTrend.sPmape010')} < points.slice(0, 10).reduce((s, p) => {t('forecast.ForecastAccuracyTrend.sPmape010False')}
         <Card className="p-5 bg-white">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -108,10 +103,10 @@ export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                     <span className="text-muted-foreground">
-                        MAPE medio: <strong className={avgMape <= 10 ? 'text-emerald-600' : avgMape <= 20 ? 'text-amber-600' : 'text-red-600'}>{avgMape.toFixed(1)}%</strong>
+                        {t('forecast.ForecastAccuracyTrend.mapeMedio')} <strong className={avgMape <= 10 ? 'text-emerald-600' : avgMape <= 20 ? 'text-amber-600' : 'text-red-600'}>{avgMape.toFixed(1)}%</strong>
                     </span>
                     {improving && (
-                        <span className="text-emerald-600 font-medium">↗ Mejorando</span>
+                        <span className="text-emerald-600 font-medium">{t('forecast.ForecastAccuracyTrend.mejorando')}</span>
                     )}
                 </div>
             </div>
@@ -140,7 +135,7 @@ export function ForecastAccuracyTrend({ locationIds }: { locationIds: string[] }
                                 return (
                                     <div className="bg-white border rounded-lg shadow-xl p-3 text-sm">
                                         <p className="font-semibold mb-1">{d.date}</p>
-                                        <p>MAPE: <strong className={d.mape <= 10 ? 'text-emerald-600' : 'text-amber-600'}>{d.mape.toFixed(1)}%</strong></p>
+                                        <p>{t('forecast.ForecastAccuracyTrend.mape')} <strong className={d.mape <= 10 ? 'text-emerald-600' : 'text-amber-600'}>{d.mape.toFixed(1)}%</strong></p>
                                         <p className="text-xs text-muted-foreground">
                                             Actual: €{d.actual_sales.toLocaleString('es-ES', { maximumFractionDigits: 0 })} vs
                                             Forecast: €{d.forecast_sales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}

@@ -78,7 +78,7 @@ export function StockCountReport({
           </div>
           <Button variant="outline" size="sm" className="gap-1.5">
             <ExternalLink className="h-3.5 w-3.5" />
-            Full report
+            {t('inventory.StockCountReport.fullReport')}
           </Button>
         </div>
       </CardHeader>
@@ -88,31 +88,31 @@ export function StockCountReport({
             <TableHeader>
               <TableRow className="bg-muted/30 border-b border-border/50">
                 <TableHead className="sticky left-0 bg-muted/30 min-w-[200px] text-xs font-medium text-muted-foreground py-3">
-                  Item Name
+                  {t('inventory.StockCountReport.itemName')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Variance Qty
+                  {t('inventory.StockCountReport.varianceQty')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Opening Qty
+                  {t('inventory.StockCountReport.openingQty')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Deliveries
+                  {t('inventory.StockCountReport.deliveries')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Net Transferred Qty
+                  {t('inventory.StockCountReport.netTransferredQty')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Closing Qty
+                  {t('inventory.StockCountReport.closingQty')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Used Qty
+                  {t('inventory.StockCountReport.usedQty')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Sales Qty
+                  {t('inventory.StockCountReport.salesQty')}
                 </TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground py-3 whitespace-nowrap">
-                  Batch Balance
+                  {t('inventory.StockCountReport.batchBalance')}
                 </TableHead>
               </TableRow>
             </TableHeader>

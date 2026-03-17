@@ -42,15 +42,12 @@ const getPresetDates = (preset: 'last7' | 'last30' | 'custom'): { from: Date; to
 };
 
 export function useTopProducts() {
+  const { t } = useTranslation();
   const { group, locations, dataSource } = useApp();
   const orgId = group?.id;
 
   // Filter state
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
-  const [datePreset, setDatePreset] = useState<'last7' | 'last30' | 'custom'>('last7');
-  const [customDateFrom, setCustomDateFrom] = useState<Date>(subDays(new Date(), 7));
-  const [customDateTo, setCustomDateTo] = useState<Date>(new Date());
-  const [orderBy, setOrderBy] = useState<OrderByOption>('share');
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>{t('hooks.useTopProducts.nullConstDatepresetSetdatepresetUsestate')}<'last7' | 'last30' | 'custom'>{t('hooks.useTopProducts.last7ConstCustomdatefromSetcustomdatefro')}<Date>{t('hooks.useTopProducts.subdaysnewDate7ConstCustomdateto')}<Date>{t('hooks.useTopProducts.newDateConstOrderbySetorderby')}<OrderByOption>('share');
 
   const getDateRange = useCallback(() => {
     if (datePreset === 'custom') {
@@ -82,11 +79,7 @@ export function useTopProducts() {
           .eq('org_id', orgId)
           .gte('date', fromStr)
           .lte('date', toStr)
-          .then(({ data }) => data || []),
-      ]);
-
-      // Aggregate mart data by product (used for recipe COGS source metadata)
-      const martMap = new Map<string, { cogs: number; units: number; sales: number; cogsSource: string }>();
+          .then(({ data }) => {t('hooks.useTopProducts.dataAggregateMartDataBy')}<string, { cogs: number; units: number; sales: number; cogsSource: string }>();
       (martResult as any[]).forEach((row: any) => {
         const pid = row.product_id;
         const existing = martMap.get(pid) || { cogs: 0, units: 0, sales: 0, cogsSource: 'estimated' };

@@ -11,8 +11,8 @@ import { useTranslation } from 'react-i18next';
 interface CustomerReviewsPanelProps {
   reviews: Review[];
   isLoading: boolean;
-  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => Promise<string>;
-  onSubmit: (reviewId: string, replyText: string) => Promise<void>;
+  onRefine: (reviewId: string, tone: 'friendly' | 'professional' | 'concise', currentText: string) => {t('reviews.CustomerReviewsPanel.promise')}<string>;
+  onSubmit: (reviewId: string, replyText: string) => {t('reviews.CustomerReviewsPanel.promise1')}<void>;
   maxItems?: number;
 }
 
@@ -40,10 +40,10 @@ export function CustomerReviewsPanel({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Star className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-semibold text-foreground">Customer Reviews</h3>
+          <h3 className="text-base font-semibold text-foreground">{t('reviews.CustomerReviewsPanel.customerReviews')}</h3>
         </div>
         <Button variant="ghost" size="sm" className="gap-1" onClick={handleSeeAll}>
-          See All
+          {t('reviews.CustomerReviewsPanel.seeAll')}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>

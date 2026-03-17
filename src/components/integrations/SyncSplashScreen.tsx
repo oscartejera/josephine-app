@@ -45,7 +45,7 @@ export default function SyncSplashScreen({ message = 'Actualizando datos...' }: 
           <ChefHat className="w-10 h-10 text-primary-foreground" />
         </div>
 
-        <span className="font-display font-bold text-3xl">Josephine</span>
+        <span className="font-display font-bold text-3xl">{t('integrations.SyncSplashScreen.josephine')}</span>
 
         {/* Spinner */}
         <Loader2 className="w-6 h-6 animate-spin text-primary" />

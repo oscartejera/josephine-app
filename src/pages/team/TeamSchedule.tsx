@@ -44,9 +44,7 @@ export default function TeamSchedule() {
   const [currentWeekStart, setCurrentWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
-  const [shifts, setShifts] = useState<PlannedShift[]>([]);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+  const [shifts, setShifts] = useState<PlannedShift[]>{t('team.TeamSchedule.constEmployeeidSetemployeeidUsestate')}<string | null>{t('team.TeamSchedule.nullConstSelecteddaySetselecteddayUsesta')}<Date>(new Date());
   const [loading, setLoading] = useState(true);
 
   const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
@@ -89,11 +87,7 @@ export default function TeamSchedule() {
 
   const totalWeekHours = shifts
     .filter((s) => s.status === 'published')
-    .reduce((sum, s) => sum + (s.planned_hours || 0), 0);
-
-  const selectedDayShifts = getShiftsForDay(selectedDay);
-
-  return (
+    .reduce((sum, s) => {t('team.TeamSchedule.sumSplannedhours00Const')}
     <div className="p-4 lg:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -123,11 +117,7 @@ export default function TeamSchedule() {
         <div className="flex gap-1 flex-1 mx-2">
           {weekDays.map((day) => {
             const dayShifts = getShiftsForDay(day);
-            const hasShift = dayShifts.length > 0;
-            const isSelected = isSameDay(day, selectedDay);
-            const today = isToday(day);
-
-            return (
+            const hasShift = dayShifts.length > {t('team.TeamSchedule.0ConstIsselectedIssamedaydaySelectedday')}
               <button
                 key={day.toISOString()}
                 onClick={() => setSelectedDay(day)}
@@ -232,7 +222,7 @@ export default function TeamSchedule() {
               <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-muted-foreground">{t('scheduling.diaLibre')}</p>
               <p className="text-xs text-muted-foreground/60">
-                No tienes turnos programados
+                {t('team.TeamSchedule.noTienesTurnosProgramados')}
               </p>
             </CardContent>
           </Card>
@@ -273,7 +263,7 @@ export default function TeamSchedule() {
                       </Badge>
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Libre</span>
+                    <span className="text-xs text-muted-foreground">{t('team.TeamSchedule.libre')}</span>
                   )}
                 </div>
               );

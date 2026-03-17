@@ -58,13 +58,7 @@ export default function TeamHome() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [employee, setEmployee] = useState<EmployeeInfo | null>(null);
-  const [activeRecord, setActiveRecord] = useState<ClockRecord | null>(null);
-  const [weekRecords, setWeekRecords] = useState<ClockRecord[]>([]);
-  const [todayShift, setTodayShift] = useState<PlannedShift | null>(null);
-  const [upcomingShifts, setUpcomingShifts] = useState<PlannedShift[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [employee, setEmployee] = useState<EmployeeInfo | null>{t('team.TeamHome.nullConstActiverecordSetactiverecordUses')}<ClockRecord | null>{t('team.TeamHome.nullConstWeekrecordsSetweekrecordsUsesta')}<ClockRecord[]>{t('team.TeamHome.constTodayshiftSettodayshiftUsestate')}<PlannedShift | null>{t('team.TeamHome.nullConstUpcomingshiftsSetupcomingshifts')}<PlannedShift[]>{t('team.TeamHome.constCurrenttimeSetcurrenttimeUsestatene')}<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -261,7 +255,7 @@ export default function TeamHome() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Tiempo</p>
+                  <p className="text-xs text-muted-foreground">{t('team.TeamHome.tiempo')}</p>
                   <p className="font-bold text-primary">
                     {Math.floor(activeMinutes / 60)}h {activeMinutes % 60}m
                   </p>
@@ -274,7 +268,7 @@ export default function TeamHome() {
                 className="w-full h-12"
               >
                 <LogOut className="mr-2 h-5 w-5" />
-                Fichar Salida
+                {t('team.TeamHome.ficharSalida')}
               </Button>
             </div>
           ) : (
@@ -284,7 +278,7 @@ export default function TeamHome() {
               className="w-full h-12"
             >
               <LogIn className="mr-2 h-5 w-5" />
-              Fichar Entrada
+              {t('team.TeamHome.ficharEntrada')}
             </Button>
           )}
         </CardContent>
@@ -326,7 +320,7 @@ export default function TeamHome() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Timer className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Esta semana</span>
+              <span className="text-sm text-muted-foreground">{t('team.TeamHome.estaSemana')}</span>
             </div>
             <p className="text-2xl font-bold">
               {weeklyHours}h {weeklyMins}m
@@ -337,7 +331,7 @@ export default function TeamHome() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Fichajes</span>
+              <span className="text-sm text-muted-foreground">{t('team.TeamHome.fichajes')}</span>
             </div>
             <p className="text-2xl font-bold">{weekRecords.length}</p>
           </CardContent>
@@ -356,7 +350,7 @@ export default function TeamHome() {
                 className="text-xs"
                 onClick={() => navigate('/team/schedule')}
               >
-                Ver todos
+                {t('team.TeamHome.verTodos')}
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
@@ -411,7 +405,7 @@ export default function TeamHome() {
               <Megaphone className="h-5 w-5 text-orange-500" />
             </div>
             <div>
-              <p className="text-sm font-medium">Novedades</p>
+              <p className="text-sm font-medium">{t('team.TeamHome.novedades')}</p>
               <p className="text-xs text-muted-foreground">{t("team.teamNews")}</p>
             </div>
           </CardContent>

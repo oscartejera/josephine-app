@@ -203,7 +203,7 @@ export function DataSourceSettings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="auto">{t('settings.automatico')}</SelectItem>
-                <SelectItem value="manual">Manual</SelectItem>
+                <SelectItem value="manual">{t('settings.DataSourceSettings.manual')}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
@@ -222,8 +222,8 @@ export function DataSourceSettings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="demo">Demo</SelectItem>
-                  <SelectItem value="pos">POS (Square)</SelectItem>
+                  <SelectItem value="demo">{t('settings.DataSourceSettings.demo')}</SelectItem>
+                  <SelectItem value="pos">{t('settings.DataSourceSettings.posSquare')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -231,8 +231,7 @@ export function DataSourceSettings() {
                 <div className="flex items-start gap-2 mt-2 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                   <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                   <p className="text-xs text-amber-700 dark:text-amber-400">
-                    No hay sincronización POS reciente. Se mostrarán datos Demo hasta que se
-                    complete una sincronización exitosa.
+                    {t('settings.DataSourceSettings.noHaySincronizacionPosReciente')}
                   </p>
                 </div>
               )}
@@ -259,9 +258,9 @@ export function DataSourceSettings() {
         <div className="p-4 bg-muted/20 rounded-lg border border-dashed">
           <h4 className="text-sm font-medium mb-2">{t('settings.comoFunciona')}</h4>
           <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-            <li><strong>Auto:</strong>{t('settings.siSquarePosSeSincronizo')}</li>
-            <li><strong>Manual → Demo:</strong>{t('settings.siempreMuestraDatosDeDemostracion')}</li>
-            <li><strong>Manual → POS:</strong>{t('settings.usaDatosPosRealesSi')}</li>
+            <li><strong>{t('settings.DataSourceSettings.auto')}</strong>{t('settings.siSquarePosSeSincronizo')}</li>
+            <li><strong>{t('settings.DataSourceSettings.manualDemo')}</strong>{t('settings.siempreMuestraDatosDeDemostracion')}</li>
+            <li><strong>{t('settings.DataSourceSettings.manualPos')}</strong>{t('settings.usaDatosPosRealesSi')}</li>
           </ul>
         </div>
       </CardContent>

@@ -124,7 +124,7 @@ export default function MenuItemsPage() {
     if (item.ingredient_count === 0) {
       return <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px]">{t("menu.noIngredients")}</Badge>;
     }
-    return <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px]">Completo</Badge>;
+    return <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px]">{t('inventory-setup.MenuItemsPage.completo')}</Badge>;
   };
 
   return (
@@ -136,7 +136,7 @@ export default function MenuItemsPage() {
           <h1 className="text-2xl font-bold">{t('common.cartaDelMenu')}</h1>
         </div>
         <p className="mt-1 text-muted-foreground">
-          Todos tus platos del POS — vincula cada uno con un escandallo para calcular food cost.
+          {t('inventory-setup.MenuItemsPage.todosTusPlatosDelPos')}
         </p>
       </div>
 
@@ -150,7 +150,7 @@ export default function MenuItemsPage() {
         </Card>
         <Card className={stats.withRecipe < stats.total ? 'border-amber-200' : ''}>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Con escandallo</p>
+            <p className="text-sm text-muted-foreground">{t('inventory-setup.MenuItemsPage.conEscandallo')}</p>
             <p className="text-2xl font-bold">
               {stats.withRecipe}
               <span className="ml-1 text-sm font-normal text-muted-foreground">/ {stats.total}</span>
@@ -159,7 +159,7 @@ export default function MenuItemsPage() {
         </Card>
         <Card className={stats.withIngredients < stats.withRecipe ? 'border-amber-200' : ''}>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Con ingredientes</p>
+            <p className="text-sm text-muted-foreground">{t('inventory-setup.MenuItemsPage.conIngredientes')}</p>
             <p className="text-2xl font-bold">
               {stats.withIngredients}
               <span className="ml-1 text-sm font-normal text-muted-foreground">/ {stats.withRecipe}</span>
@@ -192,7 +192,7 @@ export default function MenuItemsPage() {
             <SelectValue placeholder={t('menuItems.category')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="all">{t('inventory-setup.MenuItemsPage.todas')}</SelectItem>
             {categories.map(c => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
             ))}
@@ -206,11 +206,11 @@ export default function MenuItemsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Plato</TableHead>
+                <TableHead>{t('inventory-setup.MenuItemsPage.plato')}</TableHead>
                 <TableHead>{t('inventory.categoria')}</TableHead>
-                <TableHead className="text-right">PVP</TableHead>
-                <TableHead className="text-right">Food Cost</TableHead>
-                <TableHead className="text-right">FC %</TableHead>
+                <TableHead className="text-right">{t('inventory-setup.MenuItemsPage.pvp')}</TableHead>
+                <TableHead className="text-right">{t('inventory-setup.MenuItemsPage.foodCost')}</TableHead>
+                <TableHead className="text-right">{t('inventory-setup.MenuItemsPage.fc')}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="text-right">{t('inventory.accion')}</TableHead>
               </TableRow>
@@ -219,13 +219,13 @@ export default function MenuItemsPage() {
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                    Cargando carta...
+                    {t('inventory-setup.MenuItemsPage.cargandoCarta')}
                   </TableCell>
                 </TableRow>
-              ) : filtered.length === 0 ? (
+              {t('inventory-setup.MenuItemsPage.filteredlength0')}
                 <TableRow>
                   <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                    No se encontraron platos
+                    {t('inventory-setup.MenuItemsPage.noSeEncontraronPlatos')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -250,14 +250,14 @@ export default function MenuItemsPage() {
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/inventory-setup/recipes/${item.recipe_id}`}>
                             <ChefHat className="mr-1 h-3.5 w-3.5" />
-                            Ver receta
+                            {t('inventory-setup.MenuItemsPage.verReceta')}
                           </Link>
                         </Button>
                       ) : (
                         <Button variant="outline" size="sm" asChild>
                           <Link to="/inventory-setup/recipes">
                             <AlertCircle className="mr-1 h-3.5 w-3.5" />
-                            Crear escandallo
+                            {t('inventory-setup.MenuItemsPage.crearEscandallo')}
                           </Link>
                         </Button>
                       )}

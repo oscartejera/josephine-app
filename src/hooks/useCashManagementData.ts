@@ -6,6 +6,7 @@ import { toLegacyDataSource } from '@/data';
 import { format, subDays, differenceInDays } from 'date-fns';
 import type { DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
+import { useTranslation } from 'react-i18next';
 export interface CashManagementMetrics {
   netSales: number;
   grossSales: number;
@@ -91,12 +92,11 @@ export function useCashManagementData(
   dateRange: DateRangeValue,
   selectedLocations: string[]
 ) {
+  const { t } = useTranslation();
   const { locations, loading: appLoading, dataSource } = useApp();
   const dsLegacy = toLegacyDataSource(dataSource);
   const [isLoading, setIsLoading] = useState(true);
-  const [metrics, setMetrics] = useState<CashManagementMetrics>(defaultMetrics);
-  const [dailyData, setDailyData] = useState<CashDailyData[]>([]);
-  const [locationData, setLocationData] = useState<CashLocationData[]>([]);
+  const [metrics, setMetrics] = useState<CashManagementMetrics>{t('hooks.useCashManagementData.defaultmetricsConstDailydataSetdailydata')}<CashDailyData[]>{t('hooks.useCashManagementData.constLocationdataSetlocationdataUsestate')}<CashLocationData[]>([]);
   const [hasData, setHasData] = useState(false);
 
   const effectiveLocationIds = useMemo(() => {
@@ -133,7 +133,7 @@ export function useCashManagementData(
         .gte('date', fromDate)
         .lte('date', toDate);
 
-      if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      if (effectiveLocationIds.length > {t('hooks.useCashManagementData.0Effectivelocationidslength')} < locations.length) {
         query = query.in('location_id', effectiveLocationIds);
       }
 
@@ -154,7 +154,7 @@ export function useCashManagementData(
         .gte('date', prevFrom)
         .lte('date', prevTo);
 
-      if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      if (effectiveLocationIds.length > {t('hooks.useCashManagementData.0Effectivelocationidslength1')} < locations.length) {
         prevQuery = prevQuery.in('location_id', effectiveLocationIds);
       }
 
@@ -167,7 +167,7 @@ export function useCashManagementData(
         .gte('date', fromDate)
         .lte('date', toDate);
 
-      if (effectiveLocationIds.length > 0 && effectiveLocationIds.length < locations.length) {
+      if (effectiveLocationIds.length > {t('hooks.useCashManagementData.0Effectivelocationidslength2')} < locations.length) {
         cashQuery = cashQuery.in('location_id', effectiveLocationIds);
       }
 
@@ -247,8 +247,7 @@ export function useCashManagementData(
       setDailyData(Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date)));
 
       // Location data
-      const locMap = new Map<string, any>();
-      const prevLocMap = new Map<string, any>();
+      const locMap = new Map<string, any>{t('hooks.useCashManagementData.constPrevlocmapNewMap')}<string, any>();
 
       currentData.forEach(row => {
         const existing = locMap.get(row.location_id) || { ...emptyLocAgg() };

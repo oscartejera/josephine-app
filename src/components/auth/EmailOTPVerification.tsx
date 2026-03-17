@@ -70,7 +70,7 @@ export function EmailOTPVerification({
       toast({
         variant: "destructive",
         title: t("common.error"),
-        description: "No se pudo enviar el código. Intenta de nuevo."
+        description: t('auth.noSePudoEnviarEl')
       });
     }
   };
@@ -148,7 +148,7 @@ export function EmailOTPVerification({
       toast({
         variant: "destructive",
         title: t("common.error"),
-        description: "Ocurrió un error al verificar. Intenta de nuevo."
+        description: t('auth.ocurrioUnErrorAlVerificar')
       });
     }
 
@@ -161,7 +161,7 @@ export function EmailOTPVerification({
         <div className="mx-auto w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mb-4">
           <Mail className="w-6 h-6 text-primary-foreground" />
         </div>
-        <CardTitle className="text-2xl font-display">Verifica tu email</CardTitle>
+        <CardTitle className="text-2xl font-display">{t('auth.EmailOTPVerification.verificaTuEmail')}</CardTitle>
         <CardDescription>
           Ingresa el código de 6 dígitos que enviamos a{' '}
           <span className="font-medium text-foreground">{email}</span>
@@ -197,7 +197,7 @@ export function EmailOTPVerification({
 
         <div className="text-center space-y-2">
           <p className="text-sm text-muted-foreground">
-            ¿No recibiste el código?
+            {t('auth.EmailOTPVerification.noRecibisteElCodigo')}
           </p>
           {canResend ? (
             <Button
@@ -226,7 +226,7 @@ export function EmailOTPVerification({
           onClick={onBack}
           disabled={loading}
         >
-          Volver
+          {t('auth.EmailOTPVerification.volver')}
         </Button>
       </CardContent>
     </Card>

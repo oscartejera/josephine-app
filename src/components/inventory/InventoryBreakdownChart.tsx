@@ -74,11 +74,11 @@ export function InventoryBreakdownChart({
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: actualColor }} />
-            <span className="text-muted-foreground">Actual</span>
+            <span className="text-muted-foreground">{t('inventory.InventoryBreakdownChart.actual')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: theoreticalColor }} />
-            <span className="text-muted-foreground">Theoretical</span>
+            <span className="text-muted-foreground">{t('inventory.InventoryBreakdownChart.theoretical')}</span>
           </div>
         </div>
 
@@ -119,10 +119,10 @@ export function InventoryBreakdownChart({
           <Table>
             <TableHeader>
               <TableRow className="border-b border-border/50">
-                <TableHead className="w-[120px] text-xs font-medium text-muted-foreground">Category</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">Actual %</TableHead>
+                <TableHead className="w-[120px] text-xs font-medium text-muted-foreground">{t('inventory.InventoryBreakdownChart.category')}</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryBreakdownChart.actual1')}</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Actual {currency}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">Theoretical %</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryBreakdownChart.theoretical1')}</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Theoretical {currency}</TableHead>
               </TableRow>
             </TableHeader>

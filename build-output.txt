@@ -1,0 +1,57 @@
+﻿[36mvite v5.4.19 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : Browserslist: browsers data 
+(caniuse-lite) is 9 months old. Please run:
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Browser 
+   slist: b...ld. Please run::String) [], RemoteExc  
+  eption
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  npx update-browserslist-db@latest
+  Why you should do it regularly: 
+https://github.com/browserslist/update-db#readme
+[32mÔ£ô[39m 383 modules transformed.
+[31mx[39m Build failed in 1.94s
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 1 error:
+C:/Users/oscar/josephine-app-1/src/components/ui/Demo
+DataBanner.tsx:29:33: ERROR: Expected "}" but found 
+"common"[31m
+file: [36mC:/Users/oscar/josephine-app-1/src/compone
+nts/ui/DemoDataBanner.tsx:29:33[31m
+[33m
+[33mExpected "}" but found "common"[33m
+27 |              <AlertTriangle className="h-4 w-4 
+shrink-0" />
+28 |              <span>
+29 |                  {message || 
+'{t('common.demoDataBanner')}'}
+   |                                   ^
+30 |              </span>
+31 |          </div>
+[31m
+    at failureErrorWithLog (C:\Users\oscar\josephine-
+app-1\node_modules\esbuild\lib\main.js:1472:15)
+    at C:\Users\oscar\josephine-app-1\node_modules\es
+build\lib\main.js:755:50
+    at responseCallbacks.<computed> (C:\Users\oscar\j
+osephine-app-1\node_modules\esbuild\lib\main.js:622:9
+)
+    at handleIncomingPacket (C:\Users\oscar\josephine
+-app-1\node_modules\esbuild\lib\main.js:677:12)
+    at Socket.readFromStdout (C:\Users\oscar\josephin
+e-app-1\node_modules\esbuild\lib\main.js:600:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk 
+(node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode 
+(node:internal/streams/readable:510:3)
+    at Readable.push 
+(node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead 
+(node:internal/stream_base_commons:189:23)[39m

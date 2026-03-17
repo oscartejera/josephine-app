@@ -24,8 +24,7 @@ import { useTranslation } from 'react-i18next';
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (prefs: ConsentPreferences) => void;
-  initialPrefs?: Partial<ConsentPreferences>;
+  onSave: (prefs: ConsentPreferences) => {t('gdpr.CookiePreferencesDialog.voidInitialprefsPartial')}<ConsentPreferences>;
 }
 
 export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPrefs }: Props) {
@@ -46,9 +45,9 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Preferencias de cookies</DialogTitle>
+          <DialogTitle>{t('gdpr.CookiePreferencesDialog.preferenciasDeCookies')}</DialogTitle>
           <DialogDescription>
-            Elige qué tipos de cookies deseas aceptar. Las cookies esenciales no se pueden desactivar.
+            {t('gdpr.CookiePreferencesDialog.eligeQueTiposDeCookies')}
           </DialogDescription>
         </DialogHeader>
 
@@ -58,10 +57,9 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
             <div className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-emerald-600 mt-0.5" />
               <div>
-                <Label className="text-sm font-medium">Esenciales</Label>
+                <Label className="text-sm font-medium">{t('gdpr.CookiePreferencesDialog.esenciales')}</Label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Necesarias para el funcionamiento de la aplicación.
-                  Incluyen autenticación, seguridad y preferencias básicas.
+                  {t('gdpr.CookiePreferencesDialog.necesariasParaElFuncionamientoDe')}
                 </p>
               </div>
             </div>
@@ -74,11 +72,10 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
               <BarChart3 className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
                 <Label htmlFor="analytics-toggle" className="text-sm font-medium cursor-pointer">
-                  Analíticas
+                  {t('gdpr.CookiePreferencesDialog.analiticas')}
                 </Label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Nos ayudan a entender cómo usas la aplicación para mejorarla.
-                  No se comparten con terceros.
+                  {t('gdpr.CookiePreferencesDialog.nosAyudanAEntenderComo')}
                 </p>
               </div>
             </div>
@@ -95,11 +92,10 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
               <Megaphone className="h-5 w-5 text-purple-600 mt-0.5" />
               <div>
                 <Label htmlFor="marketing-toggle" className="text-sm font-medium cursor-pointer">
-                  Marketing
+                  {t('gdpr.CookiePreferencesDialog.marketing')}
                 </Label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Permiten mostrar contenido y comunicaciones personalizadas.
-                  Puedes revocar el consentimiento en cualquier momento.
+                  {t('gdpr.CookiePreferencesDialog.permitenMostrarContenidoYComunicaciones')}
                 </p>
               </div>
             </div>
@@ -113,10 +109,10 @@ export function CookiePreferencesDialog({ open, onOpenChange, onSave, initialPre
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {t('gdpr.CookiePreferencesDialog.cancelar')}
           </Button>
           <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700">
-            Guardar preferencias
+            {t('gdpr.CookiePreferencesDialog.guardarPreferencias')}
           </Button>
         </DialogFooter>
       </DialogContent>

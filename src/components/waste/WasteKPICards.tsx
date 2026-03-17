@@ -61,7 +61,7 @@ export function WasteKPICards({
       {/* Total Accounted Waste */}
       <Card className="border-border">
         <CardContent className="py-4 px-5">
-          <p className="text-sm text-muted-foreground mb-1">Merma Registrada</p>
+          <p className="text-sm text-muted-foreground mb-1">{t('waste.WasteKPICards.mermaRegistrada')}</p>
           <p className="text-2xl font-semibold text-foreground">
             {formatCurrency(totalAccountedWaste)}
           </p>
@@ -90,7 +90,7 @@ export function WasteKPICards({
             ) : (
               <TrendingUp className="h-3.5 w-3.5 text-amber-500" />
             )}
-            <p className="text-sm text-muted-foreground">Ahorro por Forecast</p>
+            <p className="text-sm text-muted-foreground">{t('waste.WasteKPICards.ahorroPorForecast')}</p>
           </div>
           <p className={`text-2xl font-semibold ${isSaving ? 'text-emerald-500' : 'text-amber-500'}`}>
             {isSaving ? '+' : ''}{formatCurrency(Math.abs(savingsAmount))}

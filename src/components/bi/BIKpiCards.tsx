@@ -22,8 +22,7 @@ function formatCurrency(value: number): string {
 }
 
 function DeltaBadge({ value, suffix = '' }: { value: number; suffix?: string }) {
-  const isPositive = value >= 0;
-  return (
+  const isPositive = value >{t('bi.BIKpiCards.0Return')}
     <span className={cn(
       "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
       isPositive 
@@ -130,7 +129,7 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">Sales to date</span>
+            <span className="text-sm text-muted-foreground">{t('bi.BIKpiCards.salesToDate')}</span>
             <DeltaBadge value={data.kpis.salesToDateDelta} suffix={` ${compareLabel}`} />
           </div>
           <div className="text-4xl font-bold tracking-tight mb-1">
@@ -144,7 +143,7 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-sm text-muted-foreground">Average check size</span>
+            <span className="text-sm text-muted-foreground">{t('bi.BIKpiCards.averageCheckSize')}</span>
             <DeltaBadge value={data.kpis.avgCheckSizeDelta} suffix={` ${compareLabel}`} />
           </div>
           <div className="text-4xl font-bold tracking-tight mb-1">
@@ -159,14 +158,14 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-2">
             <div className="flex items-center gap-1">
-              <span className="text-sm text-muted-foreground">Dwell time</span>
+              <span className="text-sm text-muted-foreground">{t('bi.BIKpiCards.dwellTime')}</span>
               {data.kpis.dwellTime === null && (
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="h-3.5 w-3.5 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Requires opened_at data from POS</p>
+                    <p>{t('bi.BIKpiCards.requiresOpenedatDataFromPos')}</p>
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -179,7 +178,7 @@ export function BIKpiCards({ data, isLoading, compareMode }: BIKpiCardsProps) {
             {data.kpis.dwellTime !== null ? `${data.kpis.dwellTime} min` : '—'}
           </div>
           <p className="text-xs text-muted-foreground mt-4">
-            Average time dine-in customers spend
+            {t('bi.BIKpiCards.averageTimeDineinCustomersSpend')}
           </p>
         </CardContent>
       </Card>

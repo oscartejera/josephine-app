@@ -44,18 +44,13 @@ const CERT_TYPES = [
 ];
 
 function getStatusBadge(status: string, expiryDate: string | null) {
-    if (!expiryDate) return <Badge variant="outline"><CheckCircle2 className="h-3 w-3 mr-1" />{t("training.noExpiry")}</Badge>;
-    const daysLeft = differenceInDays(new Date(expiryDate), new Date());
-    if (daysLeft < 0) return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Caducado</Badge>;
-    if (daysLeft < 30) return <Badge className="bg-amber-500"><Clock className="h-3 w-3 mr-1" />Caduca en {daysLeft}d</Badge>;
-    return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />{t('team.valido')}</Badge>;
+    if (!expiryDate) return <Badge variant="outline"><CheckCircle2 className="h-3 w-3 mr-1" />{t("training.noExpiry")}</Badge>{t('workforce.TrainingTracker.constDaysleftDifferenceindaysnewDateexpi')} < 0) return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />{t('workforce.TrainingTracker.caducado')}</Badge>{t('workforce.TrainingTracker.ifDaysleft')} < 30) return <Badge className="bg-amber-500"><Clock className="h-3 w-3 mr-1" />Caduca en {daysLeft}d</Badge>{t('workforce.TrainingTracker.return')} <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle2 className="h-3 w-3 mr-1" />{t('team.valido')}</Badge>;
 }
 
 export function TrainingTracker({ locationId }: { locationId: string | null }) {
   const { t } = useTranslation();
     const { group } = useApp();
-    const [records, setRecords] = useState<TrainingRecord[]>([]);
-    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [records, setRecords] = useState<TrainingRecord[]>{t('workforce.TrainingTracker.constEmployeesSetemployeesUsestate')}<Employee[]>([]);
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -143,7 +138,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
     const expiringCount = records.filter(r => {
         if (!r.expiry_date) return false;
         const d = differenceInDays(new Date(r.expiry_date), new Date());
-        return d >= 0 && d < 30;
+        return d >{t('workforce.TrainingTracker.0D')} < 30;
     }).length;
 
     return (
@@ -160,7 +155,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                 </div>
                 <Button size="sm" onClick={() => setDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />
-                    Añadir Certificado
+                    {t('workforce.TrainingTracker.anadirCertificado')}
                 </Button>
             </div>
 
@@ -176,18 +171,18 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-amber-600">{expiringCount}</p>
-                    <p className="text-xs text-muted-foreground">Caducando</p>
+                    <p className="text-xs text-muted-foreground">{t('workforce.TrainingTracker.caducando')}</p>
                 </CardContent></Card>
                 <Card><CardContent className="py-3 px-4 text-center">
                     <p className="text-2xl font-bold text-red-600">{expiredCount}</p>
-                    <p className="text-xs text-muted-foreground">Caducados</p>
+                    <p className="text-xs text-muted-foreground">{t('workforce.TrainingTracker.caducados')}</p>
                 </CardContent></Card>
             </div>
 
             {/* Records list */}
             {loading ? (
                 <div className="text-center py-8 text-muted-foreground">{t('settings.cargando')}</div>
-            ) : records.length === 0 ? (
+            {t('workforce.TrainingTracker.recordslength0')}
                 <Card><CardContent className="py-8 text-center">
                     <Shield className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
                     <p className="text-muted-foreground">{t("training.noCertificates")}</p>
@@ -226,7 +221,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
             {/* Add Dialog */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>Nuevo Certificado</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>{t('workforce.TrainingTracker.nuevoCertificado')}</DialogTitle></DialogHeader>
                     <div className="space-y-3 py-2">
                         <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                             <SelectTrigger><SelectValue placeholder={t("labour.employee")} /></SelectTrigger>

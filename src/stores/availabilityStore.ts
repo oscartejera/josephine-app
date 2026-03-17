@@ -10,6 +10,7 @@
 import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
+import { useTranslation } from 'react-i18next';
 // Types
 export type AvailabilityStatus = 'available' | 'unavailable' | 'preferred';
 
@@ -70,6 +71,7 @@ function generateDefaultAvailability(employeeId: string): EmployeeAvailability {
  * Load availability data from Supabase 
  */
 async function loadFromDB() {
+  const { t } = useTranslation();
   if (isInitialized || isLoading) return;
   isLoading = true;
 
@@ -284,7 +286,7 @@ export function getEmployeeDateAvailability(employeeId: string, date: Date): {
 /**
  * Add a new time-off request — persists to DB
  */
-export async function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'createdAt'>, orgId: string): Promise<TimeOffRequest> {
+export async function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'createdAt'>{t('stores.availabilityStore.orgidStringPromise')}<TimeOffRequest> {
   const newRequest: TimeOffRequest = {
     ...request,
     id: `timeoff-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,

@@ -57,9 +57,9 @@ export function InstantPLHeader({
         <div className="flex items-center gap-3 flex-wrap">
           {/* Breadcrumbs */}
           <nav className="flex items-center gap-1 text-sm">
-            <span className="text-muted-foreground">Insights</span>
+            <span className="text-muted-foreground">{t('instant-pl.InstantPLHeader.insights')}</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-            <span className="font-medium">Instant P&L</span>
+            <span className="font-medium">{t('instant-pl.InstantPLHeader.instantPl')}</span>
           </nav>
 
           <div className="h-5 w-px bg-border mx-1" />
@@ -77,12 +77,12 @@ export function InstantPLHeader({
           {/* Compare dropdown */}
           <Select defaultValue="forecast">
             <SelectTrigger className="h-8 w-[160px] text-sm border-border/60">
-              <SelectValue placeholder="Compare" />
+              <SelectValue placeholder={t('instant-pl.InstantPLHeader.compare')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="forecast">Compare: Forecast</SelectItem>
-              <SelectItem value="previous_period">Previous period</SelectItem>
-              <SelectItem value="previous_year">Previous year</SelectItem>
+              <SelectItem value="forecast">{t('instant-pl.InstantPLHeader.compareForecast')}</SelectItem>
+              <SelectItem value="previous_period">{t('instant-pl.InstantPLHeader.previousPeriod')}</SelectItem>
+              <SelectItem value="previous_year">{t('instant-pl.InstantPLHeader.previousYear')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -122,7 +122,7 @@ export function InstantPLHeader({
 
       {/* Row 2: Title + Last updated */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Instant P&L</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('instant-pl.InstantPLHeader.instantPl1')}</h1>
         {lastUpdated && (
           <p className="text-sm text-muted-foreground mt-1">
             Updated at end of day {format(lastUpdated, 'dd MMM yyyy')}

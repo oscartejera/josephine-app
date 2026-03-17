@@ -42,13 +42,7 @@ interface Notification {
 }
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-    announcement: <Megaphone className="h-4 w-4 text-blue-500" />,
-    schedule: <Calendar className="h-4 w-4 text-violet-500" />,
-    timeoff: <Clock className="h-4 w-4 text-amber-500" />,
-    sales: <DollarSign className="h-4 w-4 text-emerald-500" />,
-    alert: <AlertTriangle className="h-4 w-4 text-red-500" />,
-    info: <Info className="h-4 w-4 text-muted-foreground" />,
-    review: <MessageSquare className="h-4 w-4 text-orange-500" />,
+    announcement: <Megaphone className="h-4 w-4 text-blue-500" />{t('ui.NotificationCenter.schedule')} <Calendar className="h-4 w-4 text-violet-500" />{t('ui.NotificationCenter.timeoff')} <Clock className="h-4 w-4 text-amber-500" />{t('ui.NotificationCenter.sales')} <DollarSign className="h-4 w-4 text-emerald-500" />{t('ui.NotificationCenter.alert')} <AlertTriangle className="h-4 w-4 text-red-500" />{t('ui.NotificationCenter.info')} <Info className="h-4 w-4 text-muted-foreground" />{t('ui.NotificationCenter.review')} <MessageSquare className="h-4 w-4 text-orange-500" />,
 };
 
 export function NotificationCenter() {
@@ -136,7 +130,7 @@ export function NotificationCenter() {
             <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <h3 className="font-semibold text-sm">Notificaciones</h3>
+                    <h3 className="font-semibold text-sm">{t('ui.NotificationCenter.notificaciones')}</h3>
                     {unreadCount > 0 && (
                         <Button
                             variant="ghost"
@@ -145,7 +139,7 @@ export function NotificationCenter() {
                             onClick={() => markAllRead.mutate()}
                         >
                             <CheckCheck className="h-3 w-3" />
-                            Marcar todas
+                            {t('ui.NotificationCenter.marcarTodas')}
                         </Button>
                     )}
                 </div>

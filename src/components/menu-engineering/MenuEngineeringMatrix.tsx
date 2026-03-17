@@ -48,17 +48,17 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       <p className="font-semibold mb-1">{item.name}</p>
       <p className="text-xs text-muted-foreground mb-2 italic">{item.classification_reason}</p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-        <span>Price (ex VAT):</span>
+        <span>{t('menu-engineering.MenuEngineeringMatrix.priceExVat')}</span>
         <span className="text-foreground font-medium">{formatCurrency(item.selling_price_ex_vat)}</span>
-        <span>Food cost:</span>
+        <span>{t('menu-engineering.MenuEngineeringMatrix.foodCost')}</span>
         <span className="text-foreground">{formatCurrency(item.unit_food_cost)}</span>
-        <span>Unit GP:</span>
+        <span>{t('menu-engineering.MenuEngineeringMatrix.unitGp')}</span>
         <span className="text-foreground font-medium">{formatCurrency(item.unit_gross_profit)}</span>
-        <span>Units sold:</span>
+        <span>{t('menu-engineering.MenuEngineeringMatrix.unitsSold')}</span>
         <span className="text-foreground">{item.units_sold.toLocaleString()}</span>
-        <span>Popularity:</span>
+        <span>{t('menu-engineering.MenuEngineeringMatrix.popularity')}</span>
         <span className="text-foreground">{item.popularity_pct.toFixed(1)}%</span>
-        <span>Cost source:</span>
+        <span>{t('menu-engineering.MenuEngineeringMatrix.costSource')}</span>
         <span className="text-foreground">{item.cost_source === 'recipe_actual' ? '✓ Recipe' : item.cost_source === 'fallback_average' ? '~ Cat. avg' : '? No data'}</span>
       </div>
     </div>
@@ -98,7 +98,7 @@ export function MenuEngineeringMatrix({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Popularity vs Profitability</CardTitle>
+          <CardTitle>{t('menu-engineering.MenuEngineeringMatrix.popularityVsProfitability')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[350px] w-full" />
@@ -111,11 +111,11 @@ export function MenuEngineeringMatrix({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Popularity vs Profitability</CardTitle>
+          <CardTitle>{t('menu-engineering.MenuEngineeringMatrix.popularityVsProfitability1')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[350px] flex items-center justify-center text-muted-foreground">
-            No data to display
+            {t('menu-engineering.MenuEngineeringMatrix.noDataToDisplay')}
           </div>
         </CardContent>
       </Card>
@@ -126,7 +126,7 @@ export function MenuEngineeringMatrix({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base">Popularity vs Profitability</CardTitle>
+          <CardTitle className="text-base">{t('menu-engineering.MenuEngineeringMatrix.popularityVsProfitability2')}</CardTitle>
           <div className="flex items-center gap-4">
             {/* Legend */}
             <div className="flex gap-3 text-xs">
@@ -135,28 +135,28 @@ export function MenuEngineeringMatrix({
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.star }}
                 />
-                <span>Stars</span>
+                <span>{t('menu-engineering.MenuEngineeringMatrix.stars')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.plow_horse }}
                 />
-                <span>Plow Horses</span>
+                <span>{t('menu-engineering.MenuEngineeringMatrix.plowHorses')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.puzzle }}
                 />
-                <span>Puzzles</span>
+                <span>{t('menu-engineering.MenuEngineeringMatrix.puzzles')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: CLASSIFICATION_COLORS.dog }}
                 />
-                <span>Dogs</span>
+                <span>{t('menu-engineering.MenuEngineeringMatrix.dogs')}</span>
               </div>
             </div>
           </div>

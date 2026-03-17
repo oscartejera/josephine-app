@@ -82,7 +82,7 @@ export function FloorPlanPreview({
       <div className="absolute inset-0" style={{ padding: '10px' }}>
         {tables.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            Añade mesas para ver la previsualización
+            {t('onboarding.FloorPlanPreview.anadeMesasParaVerLa')}
           </div>
         ) : (
           tables.map((table) => {
@@ -126,15 +126,15 @@ export function FloorPlanPreview({
         <div className="absolute bottom-2 right-2 flex gap-2 text-[10px] bg-background/80 backdrop-blur-sm rounded px-2 py-1">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-sm bg-blue-500" />
-            <span>Cuadrada</span>
+            <span>{t('onboarding.FloorPlanPreview.cuadrada')}</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-emerald-500" />
-            <span>Redonda</span>
+            <span>{t('onboarding.FloorPlanPreview.redonda')}</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-sm bg-violet-500" />
-            <span>Rectangular</span>
+            <span>{t('onboarding.FloorPlanPreview.rectangular')}</span>
           </div>
         </div>
       )}

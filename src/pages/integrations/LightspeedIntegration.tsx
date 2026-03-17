@@ -75,9 +75,7 @@ export default function LightspeedIntegration() {
     const navigate = useNavigate();
     const { selectedLocationId } = useApp();
 
-    const [integration, setIntegration] = useState<Integration | null>(null);
-    const [account, setAccount] = useState<IntegrationAccount | null>(null);
-    const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
+    const [integration, setIntegration] = useState<Integration | null>{t('integrations.LightspeedIntegration.nullConstAccountSetaccountUsestate')}<IntegrationAccount | null>{t('integrations.LightspeedIntegration.nullConstSyncrunsSetsyncrunsUsestate')}<SyncRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
     const [syncing, setSyncing] = useState(false);
@@ -241,10 +239,10 @@ export default function LightspeedIntegration() {
                 <div className="flex-1">
                     <h1 className="text-2xl font-display font-bold flex items-center gap-2">
                         <Zap className="h-6 w-6 text-yellow-500" />
-                        Lightspeed Restaurant
+                        {t('integrations.LightspeedIntegration.lightspeedRestaurant')}
                     </h1>
                     <p className="text-muted-foreground">
-                        Sincroniza ventas, menú y empleados desde Lightspeed POS
+                        {t('integrations.LightspeedIntegration.sincronizaVentasMenuYEmpleados')}
                     </p>
                 </div>
                 {integration && (
@@ -259,7 +257,7 @@ export default function LightspeedIntegration() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Plug2 className="h-5 w-5" />
-                        Conexión
+                        {t('integrations.LightspeedIntegration.conexion')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -281,14 +279,14 @@ export default function LightspeedIntegration() {
                                 </Button>
                                 <Button variant="outline" onClick={handleDisconnect} className="text-red-600">
                                     <Unplug className="h-4 w-4 mr-2" />
-                                    Desconectar
+                                    {t('integrations.LightspeedIntegration.desconectar')}
                                 </Button>
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-4">
                             <p className="text-muted-foreground">
-                                Conecta tu cuenta de Lightspeed Restaurant para sincronizar automáticamente tus datos de ventas, menú y empleados.
+                                {t('integrations.LightspeedIntegration.conectaTuCuentaDeLightspeed')}
                             </p>
                             <Button size="lg" onClick={handleConnect} disabled={connecting}>
                                 {connecting ? (
@@ -309,7 +307,7 @@ export default function LightspeedIntegration() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <RefreshCw className="h-5 w-5" />
-                            Historial de Sincronización
+                            {t('integrations.LightspeedIntegration.historialDeSincronizacion')}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -322,7 +320,7 @@ export default function LightspeedIntegration() {
                                         <div className="flex items-center gap-3">
                                             {run.status === 'success' ? (
                                                 <CheckCircle className="h-5 w-5 text-emerald-500" />
-                                            ) : run.status === 'running' ? (
+                                            {t('integrations.LightspeedIntegration.runstatusRunning')}
                                                 <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
                                             ) : (
                                                 <XCircle className="h-5 w-5 text-red-500" />
@@ -356,9 +354,9 @@ export default function LightspeedIntegration() {
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
                     <ul className="list-disc list-inside space-y-1 ml-4">
-                        <li><strong>{t('common.ventas')}</strong> — Transacciones diarias, tickets, pagos</li>
+                        <li><strong>{t('common.ventas')}</strong> {t('integrations.LightspeedIntegration.transaccionesDiariasTicketsPagos')}</li>
                         <li><strong>{t('integrations.menu')}</strong>{t('integrations.productosCategoriasPrecios')}</li>
-                        <li><strong>{t('settings.empleados')}</strong> — Staff, roles, turnos</li>
+                        <li><strong>{t('settings.empleados')}</strong> {t('integrations.LightspeedIntegration.staffRolesTurnos')}</li>
                     </ul>
                     <p>{t('integrations.losDatosSeNormalizanAl')}</p>
                 </CardContent>

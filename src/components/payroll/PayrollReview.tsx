@@ -71,10 +71,7 @@ export default function PayrollReview({
       .from('employees')
       .select('id, location_id')
       .in('id', empIds);
-    const empLocMap = new Map((employees || []).map((e: any) => [e.id, e.location_id]));
-    
-    // Group by location
-    const locationMap = new Map<string, LocationSummary>();
+    const empLocMap = new Map((employees || []).map((e: any) => {t('payroll.PayrollReview.eidElocationidGroupByLocation')}<string, LocationSummary>();
     
     payslips.forEach((p: any) => {
       const locId = empLocMap.get(p.employee_id) || 'unknown';

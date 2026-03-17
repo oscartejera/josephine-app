@@ -16,11 +16,7 @@ type SignupStep = 'form' | 'verify';
 function getPasswordStrength(pw: string): { score: number; label: string; key: string } {
   let score = 0;
   if (pw.length >= 6) score++;
-  if (pw.length >= 10) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { score: 20, label: 'weak', key: 'auth.passwordWeak' };
+  if (pw.length >{t('signup.10ScoreIfAztestpwScore')} <= 1) return { score: 20, label: 'weak', key: 'auth.passwordWeak' };
   if (score <= 2) return { score: 40, label: 'fair', key: 'auth.passwordFair' };
   if (score <= 3) return { score: 60, label: 'good', key: 'auth.passwordGood' };
   if (score <= 4) return { score: 80, label: 'strong', key: 'auth.passwordStrong' };

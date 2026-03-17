@@ -47,10 +47,7 @@ const COLORS = {
 };
 
 const VarianceIndicator = ({ value }: { value: number }) => {
-  const isPositive = value >= 0;
-  const Icon = isPositive ? TrendingUp : TrendingDown;
-  
-  return (
+  const isPositive = value >{t('sales.HourlyDrillDownDrawer.0ConstIconIspositiveTrendingup')}
     <span className={cn('inline-flex items-center gap-1 text-xs font-medium', isPositive ? 'text-emerald-600' : 'text-rose-600')}>
       <Icon className="h-3 w-3" />
       {isPositive ? '+' : ''}{value.toFixed(2)}%
@@ -94,7 +91,7 @@ export function HourlyDrillDownDrawer({
             </Card>
             <Card className="p-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Avg Check</p>
+                <p className="text-sm text-muted-foreground">{t('sales.HourlyDrillDownDrawer.avgCheck')}</p>
                 <p className="text-2xl font-bold">€{avgCheckSize.toFixed(2)}</p>
               </div>
             </Card>
@@ -108,7 +105,7 @@ export function HourlyDrillDownDrawer({
 
           {/* Hourly Chart */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Sales v Forecast by Hour</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('sales.HourlyDrillDownDrawer.salesVForecastByHour')}</h3>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={hourlyData}>
@@ -126,23 +123,23 @@ export function HourlyDrillDownDrawer({
                               <div className="flex items-center justify-between gap-4">
                                 <span className="flex items-center gap-2">
                                   <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.actual}}></div>
-                                  Actual:
+                                  {t('sales.HourlyDrillDownDrawer.actual')}
                                 </span>
                                 <span className="font-semibold">€{payload[0].value}</span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
                                 <span className="flex items-center gap-2">
                                   <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS.forecast}}></div>
-                                  Forecast:
+                                  {t('sales.HourlyDrillDownDrawer.forecast')}
                                 </span>
                                 <span className="font-semibold">€{payload[1].value}</span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span>Avg Check:</span>
+                                <span>{t('sales.HourlyDrillDownDrawer.avgCheck1')}</span>
                                 <span className="font-semibold">€{payload[0].payload.avgCheck.toFixed(2)}</span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span>Orders:</span>
+                                <span>{t('sales.HourlyDrillDownDrawer.orders')}</span>
                                 <span className="font-semibold">{payload[0].payload.orders}</span>
                               </div>
                               <div className="pt-1 border-t">
@@ -166,17 +163,17 @@ export function HourlyDrillDownDrawer({
 
           {/* Hourly Data Table */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Detailed Breakdown</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('sales.HourlyDrillDownDrawer.detailedBreakdown')}</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">Hour</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Actual</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Forecast</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Variance</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Orders</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">Avg Check</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.hour')}</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.actual1')}</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.forecast1')}</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.variance')}</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.orders1')}</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">{t('sales.HourlyDrillDownDrawer.avgCheck2')}</th>
                   </tr>
                 </thead>
                 <tbody>

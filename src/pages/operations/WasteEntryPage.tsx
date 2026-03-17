@@ -176,7 +176,7 @@ export default function WasteEntryPage() {
                                 step === i + 1 ? "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2" :
                                     "bg-muted text-muted-foreground"
                         )}>
-                            {step > i + 1 ? <Check className="h-4 w-4" /> : i + 1}
+                            {step > {t('operations.WasteEntryPage.i1')} <Check className="h-4 w-4" /> : i + 1}
                         </div>
                         <span className={cn("text-xs hidden sm:inline", step === i + 1 ? "font-medium" : "text-muted-foreground")}>{label}</span>
                         {i < 3 && <div className="flex-1 h-0.5 bg-muted" />}

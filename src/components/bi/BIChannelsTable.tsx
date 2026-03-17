@@ -28,8 +28,7 @@ function formatCurrency(value: number): string {
 }
 
 function DeltaCell({ value, delta }: { value: number; delta: number }) {
-  const isPositive = delta >= 0;
-  return (
+  const isPositive = delta >{t('bi.BIChannelsTable.0Return')}
     <div className="text-right">
       <div className="font-medium">{formatCurrency(value)}</div>
       <div className={cn(
@@ -43,8 +42,7 @@ function DeltaCell({ value, delta }: { value: number; delta: number }) {
 }
 
 function AcsDeltaCell({ value, delta }: { value: number; delta: number }) {
-  const isPositive = delta >= 0;
-  return (
+  const isPositive = delta >{t('bi.BIChannelsTable.0Return1')}
     <div className="text-right">
       <div className="font-medium">€{value.toFixed(2)}</div>
       <div className={cn(
@@ -63,7 +61,7 @@ export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTabl
     return (
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle>Channels</CardTitle>
+          <CardTitle>{t('bi.BIChannelsTable.channels')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[200px] w-full" />
@@ -79,26 +77,24 @@ export function BIChannelsTable({ data, isLoading, compareMode }: BIChannelsTabl
   const totalProjected = data.channels.reduce((sum, c) => sum + c.projectedSales, 0);
   const totalOrders = data.channels.reduce((sum, c) => sum + c.orders, 0);
   const avgAcs = totalOrders > 0 ? totalSales / totalOrders : 0;
-  const avgProjectedAcs = data.channels.reduce((sum, c) => sum + c.projectedAcs, 0) / data.channels.length;
-
-  return (
+  const avgProjectedAcs = data.channels.reduce((sum, c) => {t('bi.BIChannelsTable.sumCprojectedacs0DatachannelslengthRetur')}
     <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm overflow-hidden">
       <CardHeader className="pb-0">
-        <CardTitle className="text-lg font-semibold">Channels</CardTitle>
+        <CardTitle className="text-lg font-semibold">{t('bi.BIChannelsTable.channels1')}</CardTitle>
       </CardHeader>
       <CardContent className="p-0 pt-4">
         <Table>
           <TableHeader>
             <TableRow className="border-b-0 bg-muted/30">
               <TableHead className="w-[140px]"></TableHead>
-              <TableHead colSpan={2} className="text-center border-l">Sales</TableHead>
-              <TableHead colSpan={2} className="text-center border-l">Avg check size</TableHead>
+              <TableHead colSpan={2} className="text-center border-l">{t('bi.BIChannelsTable.sales')}</TableHead>
+              <TableHead colSpan={2} className="text-center border-l">{t('bi.BIChannelsTable.avgCheckSize')}</TableHead>
             </TableRow>
             <TableRow>
-              <TableHead className="font-medium">Channel</TableHead>
-              <TableHead className="text-right border-l">Actual</TableHead>
+              <TableHead className="font-medium">{t('bi.BIChannelsTable.channel')}</TableHead>
+              <TableHead className="text-right border-l">{t('bi.BIChannelsTable.actual')}</TableHead>
               <TableHead className="text-right">{projectedLabel}</TableHead>
-              <TableHead className="text-right border-l">Actual</TableHead>
+              <TableHead className="text-right border-l">{t('bi.BIChannelsTable.actual1')}</TableHead>
               <TableHead className="text-right">{projectedLabel}</TableHead>
             </TableRow>
           </TableHeader>

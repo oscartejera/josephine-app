@@ -32,8 +32,7 @@ import { useTranslation } from 'react-i18next';
 
 interface TimeOffRequestDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (request: Omit<TimeOffRequest, 'id' | 'employeeId' | 'employeeName' | 'employeeInitials' | 'status' | 'createdAt'>) => Promise<void>;
+  onClose: () => {t('availability.TimeOffRequestDialog.voidOnsubmitRequestOmit')}<TimeOffRequest, 'id' | 'employeeId' | 'employeeName' | 'employeeInitials' | 'status' | 'createdAt'>) => {t('availability.TimeOffRequestDialog.promise')}<void>;
 }
 
 const TYPE_CONFIG: Record<TimeOffRequest['type'], { label: string; icon: React.ElementType }> = {
@@ -50,9 +49,7 @@ export function TimeOffRequestDialog({
   onSubmit,
 }: TimeOffRequestDialogProps) {
   const { t } = useTranslation();
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [type, setType] = useState<TimeOffRequest['type']>('vacation');
+  const [startDate, setStartDate] = useState<Date>{t('availability.TimeOffRequestDialog.constEnddateSetenddateUsestate')}<Date>{t('availability.TimeOffRequestDialog.constTypeSettypeUsestate')}<TimeOffRequest['type']>('vacation');
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -99,17 +96,17 @@ export function TimeOffRequestDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            Request Time Off
+            {t('availability.TimeOffRequestDialog.requestTimeOff')}
           </DialogTitle>
           <DialogDescription>
-            Submit a request for time off. Your manager will review and approve or reject it.
+            {t('availability.TimeOffRequestDialog.submitARequestForTime')}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           {/* Type selector */}
           <div className="space-y-2">
-            <Label>Type of Leave</Label>
+            <Label>{t('availability.TimeOffRequestDialog.typeOfLeave')}</Label>
             <Select value={type} onValueChange={(v) => setType(v as TimeOffRequest['type'])}>
               <SelectTrigger>
                 <SelectValue />
@@ -133,7 +130,7 @@ export function TimeOffRequestDialog({
           {/* Date range */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Start Date</Label>
+              <Label>{t('availability.TimeOffRequestDialog.startDate')}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -166,7 +163,7 @@ export function TimeOffRequestDialog({
             </div>
             
             <div className="space-y-2">
-              <Label>End Date</Label>
+              <Label>{t('availability.TimeOffRequestDialog.endDate')}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -204,10 +201,10 @@ export function TimeOffRequestDialog({
           
           {/* Reason */}
           <div className="space-y-2">
-            <Label htmlFor="reason">Reason</Label>
+            <Label htmlFor="reason">{t('availability.TimeOffRequestDialog.reason')}</Label>
             <Textarea
               id="reason"
-              placeholder="Brief description of why you need this time off..."
+              placeholder={t('availability.TimeOffRequestDialog.briefDescriptionOfWhyYou')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
@@ -218,7 +215,7 @@ export function TimeOffRequestDialog({
         
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            {t('availability.TimeOffRequestDialog.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={!isValid || isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit Request'}

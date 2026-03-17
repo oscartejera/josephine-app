@@ -107,9 +107,7 @@ async function streamInsights({
 
 export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProps) {
   const { t } = useTranslation();
-  const [insight, setInsight] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [insight, setInsight] = useState<string>{t('bi.AskJosephinePanel.constIsloadingSetisloadingUsestatefalseC')}<string | null>(null);
   const [question, setQuestion] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
   const { toast } = useToast();
@@ -175,7 +173,7 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Ask Josephine
+            {t('bi.AskJosephinePanel.askJosephine')}
           </SheetTitle>
         </SheetHeader>
 
@@ -184,7 +182,7 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
           {!hasGenerated && !isLoading && (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
-                Obtén insights automáticos sobre el rendimiento de ventas
+                {t('bi.AskJosephinePanel.obtenInsightsAutomaticosSobreEl')}
               </p>
               <Button 
                 onClick={() => generateInsights()} 
@@ -192,7 +190,7 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
                 disabled={!data}
               >
                 <Sparkles className="h-4 w-4" />
-                Generar Insights
+                {t('bi.AskJosephinePanel.generarInsights')}
               </Button>
             </div>
           )}
@@ -201,7 +199,7 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
           {isLoading && !insight && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Analizando datos...</span>
+              <span className="ml-2 text-muted-foreground">{t('bi.AskJosephinePanel.analizandoDatos')}</span>
             </div>
           )}
 
@@ -220,9 +218,8 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
                 className="bg-muted/50 rounded-xl p-4 whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{ 
                   __html: insight
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br/>')
-                    .replace(/#{1,3}\s(.*?)(<br\/>|$)/g, '<h4 class="font-semibold mt-3 mb-1">$1</h4>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>{t('bi.AskJosephinePanel.replaceng')}<br/>')
+                    .replace(/#{1,3}\s(.*?)(<br\/>{t('bi.AskJosephinePanel.g')}<h4 class="font-semibold mt-3 mb-1">$1</h4>')
                 }}
               />
               {isLoading && (
@@ -234,7 +231,7 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
           {/* Suggested Questions */}
           {hasGenerated && !isLoading && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">Preguntas sugeridas:</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('bi.AskJosephinePanel.preguntasSugeridas')}</p>
               <div className="space-y-1">
                 {suggestedQuestions.map((q, i) => (
                   <Button
@@ -258,7 +255,7 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
         {/* Question input */}
         <form onSubmit={handleSubmitQuestion} className="flex gap-2 mt-4 pt-4 border-t">
           <Input
-            placeholder="Pregunta algo sobre tus ventas..."
+            placeholder={t('bi.AskJosephinePanel.preguntaAlgoSobreTusVentas')}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={isLoading || !data}

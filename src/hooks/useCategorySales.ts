@@ -12,6 +12,7 @@ export interface CategorySales {
 }
 
 export function useCategorySales() {
+  const { t } = useTranslation();
   const { group, selectedLocationId, locations, dataSource } = useApp();
   const orgId = group?.id;
 
@@ -32,9 +33,7 @@ export function useCategorySales() {
       const items = result?.items || [];
       const total = Number(result?.total_sales) || 0;
 
-      const categoryMap = new Map<string, { sales: number; units: number }>();
-
-      items.forEach((item: Record<string, unknown>) => {
+      const categoryMap = new Map<string, { sales: number; units: number }>{t('hooks.useCategorySales.itemsforeachitemRecord')}<string, unknown>) => {
         const category = (item.category as string) || t('inventory.sinCategoria');
         const existing = categoryMap.get(category) || { sales: 0, units: 0 };
         existing.sales += Number(item.sales) || 0;

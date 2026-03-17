@@ -43,9 +43,9 @@ export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
           <BarChart3 className="h-8 w-8 text-muted-foreground" />
         </div>
         
-        <h3 className="text-xl font-semibold mb-2">No Labour Data Available</h3>
+        <h3 className="text-xl font-semibold mb-2">{t('labour.LabourEmptyState.noLabourDataAvailable')}</h3>
         <p className="text-muted-foreground mb-6 max-w-md">
-          There's no labour data for the selected date range. Generate demo data to explore the Labour dashboard with realistic metrics.
+          {t('labour.LabourEmptyState.theresNoLabourDataFor')}
         </p>
         
         <Button 
@@ -57,18 +57,18 @@ export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
           {isSeeding ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generating...
+              {t('labour.LabourEmptyState.generating')}
             </>
           ) : (
             <>
               <Database className="h-4 w-4" />
-              Generate Demo Data
+              {t('labour.LabourEmptyState.generateDemoData')}
             </>
           )}
         </Button>
         
         <p className="text-xs text-muted-foreground mt-4">
-          This will create 30 days of realistic POS and forecast data for all locations.
+          {t('labour.LabourEmptyState.thisWillCreate30Days')}
         </p>
       </CardContent>
     </Card>

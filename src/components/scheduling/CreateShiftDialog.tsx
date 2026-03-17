@@ -95,7 +95,7 @@ export function CreateShiftDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
-            Create New Shift
+            {t('scheduling.CreateShiftDialog.createNewShift')}
           </DialogTitle>
         </DialogHeader>
         
@@ -115,7 +115,7 @@ export function CreateShiftDialog({
           <div className="space-y-2">
             <Label htmlFor="role" className="flex items-center gap-2">
               <Briefcase className="h-4 w-4" />
-              Role / Position
+              {t('scheduling.CreateShiftDialog.rolePosition')}
             </Label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger>
@@ -133,10 +133,10 @@ export function CreateShiftDialog({
           
           {/* Time selector - only start time (end is auto-calculated) */}
           <div className="space-y-2">
-            <Label htmlFor="start-time">Start Time</Label>
+            <Label htmlFor="start-time">{t('scheduling.CreateShiftDialog.startTime')}</Label>
             <Select value={startTime} onValueChange={setStartTime}>
               <SelectTrigger>
-                <SelectValue placeholder="Start" />
+                <SelectValue placeholder={t('scheduling.CreateShiftDialog.start')} />
               </SelectTrigger>
               <SelectContent className="max-h-[200px]">
                 {START_TIME_OPTIONS.map((time) => (
@@ -151,14 +151,14 @@ export function CreateShiftDialog({
           {/* Shift duration info (fixed 8h per Spanish law) */}
           <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Duration:</span>
+              <span className="text-muted-foreground">{t('scheduling.CreateShiftDialog.duration')}</span>
               <span className="font-semibold text-primary">{SHIFT_HOURS}h (Spanish law)</span>
             </div>
             <div className="flex items-center justify-between text-sm mt-1">
-              <span className="text-muted-foreground">End Time:</span>
+              <span className="text-muted-foreground">{t('scheduling.CreateShiftDialog.endTime')}</span>
               <span className="font-medium">
                 {endTime}
-                {overnight && <span className="text-xs text-muted-foreground ml-1">(+1 day)</span>}
+                {overnight && <span className="text-xs text-muted-foreground ml-1">{t('scheduling.CreateShiftDialog.1Day')}</span>}
               </span>
             </div>
           </div>
@@ -173,10 +173,10 @@ export function CreateShiftDialog({
         
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('scheduling.CreateShiftDialog.cancel')}
           </Button>
           <Button onClick={handleSubmit}>
-            Create Shift
+            {t('scheduling.CreateShiftDialog.createShift')}
           </Button>
         </DialogFooter>
       </DialogContent>

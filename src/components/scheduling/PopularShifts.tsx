@@ -40,7 +40,7 @@ export function PopularShifts({ onDragStart }: PopularShiftsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Popular Shifts</span>
+      <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">{t('scheduling.PopularShifts.popularShifts')}</span>
       <div className="flex items-center gap-1.5 overflow-x-auto">
         {POPULAR_SHIFTS.map((shift) => (
           <div

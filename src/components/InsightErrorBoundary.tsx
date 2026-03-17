@@ -71,9 +71,7 @@ export class InsightErrorBoundary extends React.Component<Props, State> {
     render() {
         if (this.state.hasError) {
             const isRpcError = this.state.error?.name === 'RpcContractError';
-            const autoRetriesExhausted = this.state.retryCount >= MAX_RETRIES;
-
-            return (
+            const autoRetriesExhausted = this.state.retryCount >{t('insightErrorBoundary.maxretriesReturn')}
                 <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
                     <div className="rounded-full bg-amber-100 p-4 mb-4">
                         {this.state.retrying ? (
@@ -106,7 +104,7 @@ export class InsightErrorBoundary extends React.Component<Props, State> {
                         disabled={this.state.retrying}
                     >
                         <RefreshCw className="h-4 w-4" />
-                        Reintentar
+                        {t('insightErrorBoundary.reintentar')}
                     </Button>
                 </div>
             );

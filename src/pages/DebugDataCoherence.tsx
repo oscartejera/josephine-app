@@ -68,9 +68,9 @@ export default function DebugDataCoherence() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Data Coherence Audit</h1>
+          <h1 className="text-2xl font-bold">{t('debugDataCoherence.dataCoherenceAudit')}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Verifica integridad de datos entre tablas unificadas
+            {t('debugDataCoherence.verificaIntegridadDeDatosEntre')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ export default function DebugDataCoherence() {
           </select>
           <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Auditar
+            {t('debugDataCoherence.auditar')}
           </Button>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default function DebugDataCoherence() {
           <CardContent className="pt-4">
             <p className="text-destructive flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Error ejecutando audit. Verifica que las migraciones estén aplicadas.
+              {t('debugDataCoherence.errorEjecutandoAuditVerificaQue')}
             </p>
           </CardContent>
         </Card>
@@ -108,10 +108,10 @@ export default function DebugDataCoherence() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Resultado Global</CardTitle>
+                <CardTitle className="text-lg">{t('debugDataCoherence.resultadoGlobal')}</CardTitle>
                 <Badge variant={data.all_pass ? 'default' : 'destructive'} className="text-sm">
                   {data.all_pass ? (
-                    <><CheckCircle className="h-4 w-4 mr-1" /> ALL PASS</>
+                    <><CheckCircle className="h-4 w-4 mr-1" /> {t('debugDataCoherence.allPass')}</>
                   ) : (
                     <><XCircle className="h-4 w-4 mr-1" /> FAIL</>
                   )}
@@ -121,11 +121,11 @@ export default function DebugDataCoherence() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Data source:</span>{' '}
+                  <span className="text-muted-foreground">{t('debugDataCoherence.dataSource')}</span>{' '}
                   <strong>{data.resolved_source.data_source}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Modo:</span>{' '}
+                  <span className="text-muted-foreground">{t('debugDataCoherence.modo')}</span>{' '}
                   <strong>{data.resolved_source.mode}</strong>
                 </div>
                 <div>
@@ -133,7 +133,7 @@ export default function DebugDataCoherence() {
                   <strong>{data.resolved_source.reason}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Rango:</span>{' '}
+                  <span className="text-muted-foreground">{t('debugDataCoherence.rango')}</span>{' '}
                   <strong>{data.date_range.from} → {data.date_range.to}</strong>
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function DebugDataCoherence() {
       {!data && !isLoading && !isError && (
         <Card>
           <CardContent className="pt-6 text-center text-muted-foreground">
-            Haz clic en "Auditar" para ejecutar la verificación de coherencia.
+            {t('debugDataCoherence.hazClicEnAuditarPara')}
           </CardContent>
         </Card>
       )}

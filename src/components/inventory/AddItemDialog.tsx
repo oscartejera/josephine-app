@@ -96,92 +96,92 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Add Inventory Item</DialogTitle>
+          <DialogTitle>{t('inventory.AddItemDialog.addInventoryItem')}</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           {/* Name */}
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">{t('inventory.AddItemDialog.name')}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Salmón Fresco"
+              placeholder={t('inventory.egSalmonFresco')}
             />
           </div>
 
           {/* Type */}
           <div className="space-y-2">
-            <Label htmlFor="type">Type *</Label>
+            <Label htmlFor="type">{t('inventory.AddItemDialog.type')}</Label>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="food">Food</SelectItem>
-                <SelectItem value="beverage">Beverage</SelectItem>
-                <SelectItem value="misc">Misc</SelectItem>
-                <SelectItem value="packaging">Packaging</SelectItem>
+                <SelectItem value="food">{t('inventory.AddItemDialog.food')}</SelectItem>
+                <SelectItem value="beverage">{t('inventory.AddItemDialog.beverage')}</SelectItem>
+                <SelectItem value="misc">{t('inventory.AddItemDialog.misc')}</SelectItem>
+                <SelectItem value="packaging">{t('inventory.AddItemDialog.packaging')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">{t('inventory.AddItemDialog.category')}</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Pescados y Mariscos">Pescados y Mariscos</SelectItem>
-                <SelectItem value="Carnes">Carnes</SelectItem>
-                <SelectItem value=t('inventory.charcuteria')>{t('inventory.charcuteria')}</SelectItem>
-                <SelectItem value="Verduras">Verduras</SelectItem>
-                <SelectItem value="Secos">Secos</SelectItem>
-                <SelectItem value="Aceites">Aceites</SelectItem>
-                <SelectItem value="Cervezas">Cervezas</SelectItem>
-                <SelectItem value="Vinos">Vinos</SelectItem>
-                <SelectItem value="Refrescos">Refrescos</SelectItem>
-                <SelectItem value="Limpieza">Limpieza</SelectItem>
-                <SelectItem value=t('inventory.papeleria')>{t('inventory.papeleria')}</SelectItem>
-                <SelectItem value="Desechables">Desechables</SelectItem>
+                <SelectItem value="Pescados y Mariscos">{t('inventory.AddItemDialog.pescadosYMariscos')}</SelectItem>
+                <SelectItem value="Carnes">{t('inventory.AddItemDialog.carnes')}</SelectItem>
+                <SelectItem value={t('inventory.charcuteria')}>{t('inventory.charcuteria')}</SelectItem>
+                <SelectItem value="Verduras">{t('inventory.AddItemDialog.verduras')}</SelectItem>
+                <SelectItem value="Secos">{t('inventory.AddItemDialog.secos')}</SelectItem>
+                <SelectItem value="Aceites">{t('inventory.AddItemDialog.aceites')}</SelectItem>
+                <SelectItem value="Cervezas">{t('inventory.AddItemDialog.cervezas')}</SelectItem>
+                <SelectItem value="Vinos">{t('inventory.AddItemDialog.vinos')}</SelectItem>
+                <SelectItem value="Refrescos">{t('inventory.AddItemDialog.refrescos')}</SelectItem>
+                <SelectItem value="Limpieza">{t('inventory.AddItemDialog.limpieza')}</SelectItem>
+                <SelectItem value={t('inventory.papeleria')}>{t('inventory.papeleria')}</SelectItem>
+                <SelectItem value="Desechables">{t('inventory.AddItemDialog.desechables')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Main Supplier */}
           <div className="space-y-2">
-            <Label htmlFor="supplier">Main Supplier</Label>
+            <Label htmlFor="supplier">{t('inventory.AddItemDialog.mainSupplier')}</Label>
             <Input
               id="supplier"
               value={supplier}
               onChange={(e) => setSupplier(e.target.value)}
-              placeholder="e.g., Pescaderías del Norte"
+              placeholder={t('inventory.egPescaderiasDelNorte')}
             />
           </div>
 
           {/* Order Unit + Qty */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="orderUnit">Order Unit</Label>
+              <Label htmlFor="orderUnit">{t('inventory.AddItemDialog.orderUnit')}</Label>
               <Select value={orderUnit} onValueChange={setOrderUnit}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="kg">kg</SelectItem>
-                  <SelectItem value="L">L (Liters)</SelectItem>
-                  <SelectItem value="Pack">Pack</SelectItem>
-                  <SelectItem value="Case">Case</SelectItem>
-                  <SelectItem value="ea">Each (ea)</SelectItem>
+                  <SelectItem value="L">{t('inventory.AddItemDialog.lLiters')}</SelectItem>
+                  <SelectItem value="Pack">{t('inventory.AddItemDialog.pack')}</SelectItem>
+                  <SelectItem value="Case">{t('inventory.AddItemDialog.case')}</SelectItem>
+                  <SelectItem value="ea">{t('inventory.AddItemDialog.eachEa')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="orderQty">Qty per Unit</Label>
+              <Label htmlFor="orderQty">{t('inventory.AddItemDialog.qtyPerUnit')}</Label>
               <Input
                 id="orderQty"
                 type="number"
@@ -195,7 +195,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
           {/* Price + VAT */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Price (€) *</Label>
+              <Label htmlFor="price">{t('inventory.AddItemDialog.price')}</Label>
               <Input
                 id="price"
                 type="number"
@@ -207,7 +207,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vat">VAT Rate (%)</Label>
+              <Label htmlFor="vat">{t('inventory.AddItemDialog.vatRate')}</Label>
               <Select value={vatRate} onValueChange={setVatRate}>
                 <SelectTrigger>
                   <SelectValue />
@@ -225,7 +225,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
+            {t('inventory.AddItemDialog.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Add Item'}

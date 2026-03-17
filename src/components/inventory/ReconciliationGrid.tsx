@@ -60,9 +60,7 @@ export function ReconciliationGrid({
 }: ReconciliationGridProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<SortField>('itemName');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+  const [sortField, setSortField] = useState<SortField>{t('inventory.ReconciliationGrid.itemnameConstSortdirectionSetsortdirecti')}<SortDirection>{t('inventory.ReconciliationGrid.ascConstVisiblecolumnsSetvisiblecolumnsU')}<string[]>(
     allColumns.map(c => c.key)
   );
 
@@ -155,21 +153,21 @@ export function ReconciliationGrid({
               className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('counted')}
             >
-              Counted
+              {t('inventory.ReconciliationGrid.counted')}
             </Badge>
             <Badge 
               variant={stockStatus === 'uncounted' ? 'default' : 'outline'}
               className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('uncounted')}
             >
-              Uncounted
+              {t('inventory.ReconciliationGrid.uncounted')}
             </Badge>
             <Badge 
               variant={stockStatus === 'all' ? 'default' : 'outline'}
               className="cursor-pointer transition-colors"
               onClick={() => setStockStatus('all')}
             >
-              All
+              {t('inventory.ReconciliationGrid.all')}
             </Badge>
           </div>
 
@@ -177,7 +175,7 @@ export function ReconciliationGrid({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                Columns
+                {t('inventory.ReconciliationGrid.columns')}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -199,12 +197,12 @@ export function ReconciliationGrid({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                Unit
+                {t('inventory.ReconciliationGrid.unit')}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>All units</DropdownMenuItem>
+              <DropdownMenuItem>{t('inventory.ReconciliationGrid.allUnits')}</DropdownMenuItem>
               <DropdownMenuItem>kg</DropdownMenuItem>
               <DropdownMenuItem>L</DropdownMenuItem>
               <DropdownMenuItem>units</DropdownMenuItem>
@@ -212,12 +210,12 @@ export function ReconciliationGrid({
           </DropdownMenu>
 
           <Badge variant="outline" className="text-muted-foreground">
-            +9 more
+            {t('inventory.ReconciliationGrid.9More')}
           </Badge>
 
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="h-3.5 w-3.5" />
-            Filters
+            {t('inventory.ReconciliationGrid.filters')}
           </Button>
 
           <div className="flex-1" />
@@ -226,7 +224,7 @@ export function ReconciliationGrid({
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search items..."
+              placeholder={t('inventory.ReconciliationGrid.searchItems')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 border-border/60"
@@ -236,13 +234,13 @@ export function ReconciliationGrid({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
-                Reconciliation
+                {t('inventory.ReconciliationGrid.reconciliation')}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Export CSV</DropdownMenuItem>
-              <DropdownMenuItem>Print report</DropdownMenuItem>
+              <DropdownMenuItem>{t('inventory.ReconciliationGrid.exportCsv')}</DropdownMenuItem>
+              <DropdownMenuItem>{t('inventory.ReconciliationGrid.printReport')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 

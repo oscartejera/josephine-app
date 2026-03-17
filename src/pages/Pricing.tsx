@@ -152,9 +152,9 @@ export default function Pricing() {
     return (
         <div className="p-6 space-y-8 max-w-5xl mx-auto">
             <div className="text-center">
-                <h1 className="text-3xl font-display font-bold">Planes y Precios</h1>
+                <h1 className="text-3xl font-display font-bold">{t('pricing.planesYPrecios')}</h1>
                 <p className="text-muted-foreground mt-2 text-lg">
-                    Elige el plan que mejor se adapte a tu negocio
+                    {t('pricing.eligeElPlanQueMejor')}
                 </p>
             </div>
 
@@ -215,7 +215,7 @@ export default function Pricing() {
             {/* FAQ */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Preguntas Frecuentes</CardTitle>
+                    <CardTitle>{t('pricing.preguntasFrecuentes')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
                     <div>
@@ -224,7 +224,7 @@ export default function Pricing() {
                     </div>
                     <div>
                         <p className="font-medium">{t('pricing.hayPeriodoDePrueba')}</p>
-                        <p className="text-muted-foreground">El plan Starter es gratuito para siempre. Pro y Enterprise tienen 14 días de prueba gratis.</p>
+                        <p className="text-muted-foreground">{t('pricing.el_plan_starter_es_gratuito_para_siempre_pro_y_ent')}</p>
                     </div>
                     <div>
                         <p className="font-medium">{t('pricing.comoFuncionaLaFacturacion')}</p>

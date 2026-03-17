@@ -40,9 +40,7 @@ interface ScheduleSettings {
   // Staffing Rules
   min_rest_hours: number;
   max_hours_per_day: number;
-  staffing_ratios: Record<string, number>;
-  // Demand Curve
-  hourly_demand_curve: Record<string, number>;
+  staffing_ratios: Record<string, number>{t('scheduling.ScheduleSettingsSheet.demandCurveHourlydemandcurveRecord')}<string, number>;
 }
 
 const DAYS_OF_WEEK = [
@@ -196,7 +194,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Settings2 className="h-5 w-5" />
-            Schedule Settings
+            {t('scheduling.ScheduleSettingsSheet.scheduleSettings')}
           </SheetTitle>
           <SheetDescription>
             {locationName} — Configura los datos de tu local para que el AI Scheduler genere turnos realistas.
@@ -215,11 +213,11 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <Store className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-sm">Venue Profile</h3>
+                  <h3 className="font-semibold text-sm">{t('scheduling.ScheduleSettingsSheet.venueProfile')}</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">Mesas</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.mesas')}</Label>
                     <Input
                       type="number"
                       value={settings.tables_count}
@@ -247,11 +245,11 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-sm">Operating Hours</h3>
+                  <h3 className="font-semibold text-sm">{t('scheduling.ScheduleSettingsSheet.operatingHours')}</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <Label className="text-xs">Apertura</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.apertura')}</Label>
                     <Input
                       type="time"
                       value={settings.opening_time}
@@ -259,7 +257,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Cierre</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.cierre')}</Label>
                     <Input
                       type="time"
                       value={settings.closing_time}
@@ -268,7 +266,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs mb-2 block">Dias cerrados</Label>
+                  <Label className="text-xs mb-2 block">{t('scheduling.ScheduleSettingsSheet.diasCerrados')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {DAYS_OF_WEEK.map(day => (
                       <label
@@ -292,11 +290,11 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <Target className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-sm">Labor Goals</h3>
+                  <h3 className="font-semibold text-sm">{t('scheduling.ScheduleSettingsSheet.laborGoals')}</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">Target COL %</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.targetCol')}</Label>
                     <Input
                       type="number"
                       step="0.5"
@@ -305,7 +303,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">SPLH Goal (€/h)</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.splhGoalH')}</Label>
                     <Input
                       type="number"
                       value={settings.splh_goal}
@@ -313,7 +311,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Ticket medio (ACS) €</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.ticketMedioAcs')}</Label>
                     <Input
                       type="number"
                       step="0.5"
@@ -342,11 +340,11 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-sm">Staffing Rules</h3>
+                  <h3 className="font-semibold text-sm">{t('scheduling.ScheduleSettingsSheet.staffingRules')}</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <Label className="text-xs">Descanso min. entre turnos (h)</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.descansoMinEntreTurnosH')}</Label>
                     <Input
                       type="number"
                       step="0.5"
@@ -355,7 +353,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Max horas/dia por persona</Label>
+                    <Label className="text-xs">{t('scheduling.ScheduleSettingsSheet.maxHorasdiaPorPersona')}</Label>
                     <Input
                       type="number"
                       value={settings.max_hours_per_day}
@@ -363,7 +361,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                     />
                   </div>
                 </div>
-                <Label className="text-xs mb-2 block">OPLH por rol (covers que maneja 1 persona/hora)</Label>
+                <Label className="text-xs mb-2 block">{t('scheduling.ScheduleSettingsSheet.oplhPorRolCoversQue')}</Label>
                 <div className="space-y-2">
                   {Object.entries(settings.staffing_ratios)
                     .filter(([role]) => role !== 'Manager')
@@ -376,7 +374,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                           value={value}
                           onChange={e => updateStaffingRatio(role, parseInt(e.target.value) || 1)}
                         />
-                        <span className="text-xs text-muted-foreground">covers/h</span>
+                        <span className="text-xs text-muted-foreground">{t('scheduling.ScheduleSettingsSheet.coversh')}</span>
                       </div>
                     ))}
                 </div>
@@ -388,10 +386,10 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-sm">Hourly Demand Curve</h3>
+                  <h3 className="font-semibold text-sm">{t('scheduling.ScheduleSettingsSheet.hourlyDemandCurve')}</h3>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">
-                  % de ventas diarias por hora. El total debe sumar ~100%.
+                  {t('scheduling.ScheduleSettingsSheet.deVentasDiariasPorHora')}
                 </p>
                 <div className="space-y-1">
                   {Object.entries(settings.hourly_demand_curve)

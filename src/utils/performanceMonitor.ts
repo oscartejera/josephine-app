@@ -18,6 +18,7 @@ const entries: PerfEntry[] = [];
 const MAX_ENTRIES = 200;
 
 function logEntry(entry: PerfEntry) {
+  const { t } = useTranslation();
   if (!IS_DEV) return;
 
   entries.push(entry);
@@ -52,7 +53,7 @@ export function markRouteEnd(routeName: string) {
 }
 
 // ─── RPC Call Timer ──────────────────────────────────────────────────
-export function measureRpc<T>(name: string, fn: () => Promise<T>): Promise<T> {
+export function measureRpc<T>(name: string, fn: () => {t('utils.performanceMonitor.promise')}<T>{t('utils.performanceMonitor.promise1')}<T> {
   if (!IS_DEV) return fn();
 
   const start = performance.now();

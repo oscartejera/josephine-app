@@ -36,12 +36,7 @@ interface Payment {
 export function PaymentHistoryManager() {
   const { t } = useTranslation();
   const { locations } = useApp();
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [methodFilter, setMethodFilter] = useState<string>('all');
-  const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [payments, setPayments] = useState<Payment[]>{t('settings.PaymentHistoryManager.constLoadingSetloadingUsestatetrueConst')}<string>{t('settings.PaymentHistoryManager.allConstLocationfilterSetlocationfilterU')}<string>{t('settings.PaymentHistoryManager.allConstCopiedidSetcopiedidUsestate')}<string | null>(null);
 
   useEffect(() => {
     fetchPayments();
@@ -88,13 +83,7 @@ export function PaymentHistoryManager() {
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'card':
-        return <CreditCard className="h-4 w-4" />;
-      case 'cash':
-        return <Banknote className="h-4 w-4" />;
-      case 'other':
-        return <Smartphone className="h-4 w-4" />;
-      default:
-        return <CreditCard className="h-4 w-4" />;
+        return <CreditCard className="h-4 w-4" />{t('settings.PaymentHistoryManager.caseCashReturn')} <Banknote className="h-4 w-4" />{t('settings.PaymentHistoryManager.caseOtherReturn')} <Smartphone className="h-4 w-4" />{t('settings.PaymentHistoryManager.defaultReturn')} <CreditCard className="h-4 w-4" />;
     }
   };
 
@@ -151,15 +140,15 @@ export function PaymentHistoryManager() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              Histórico de Pagos
+              {t('settings.PaymentHistoryManager.historicoDePagos')}
             </CardTitle>
             <CardDescription>
-              Transacciones procesadas con IDs de Stripe
+              {t('settings.PaymentHistoryManager.transaccionesProcesadasConIdsDe')}
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={fetchPayments}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            Actualizar
+            {t('settings.PaymentHistoryManager.actualizar')}
           </Button>
         </div>
       </CardHeader>
@@ -200,10 +189,10 @@ export function PaymentHistoryManager() {
               <SelectValue placeholder={t('settings.paymentMethod')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">{t('settings.PaymentHistoryManager.todos')}</SelectItem>
               <SelectItem value="card">{t('settings.tarjeta')}</SelectItem>
-              <SelectItem value="cash">Efectivo</SelectItem>
-              <SelectItem value="other">Bizum</SelectItem>
+              <SelectItem value="cash">{t('settings.PaymentHistoryManager.efectivo')}</SelectItem>
+              <SelectItem value="other">{t('settings.PaymentHistoryManager.bizum')}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={locationFilter} onValueChange={setLocationFilter}>
@@ -225,18 +214,18 @@ export function PaymentHistoryManager() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t('ai.fecha')}</TableHead>
-                <TableHead>Local</TableHead>
+                <TableHead>{t('settings.PaymentHistoryManager.local')}</TableHead>
                 <TableHead>{t('settings.metodo')}</TableHead>
-                <TableHead className="text-right">Importe</TableHead>
-                <TableHead className="text-right">Propina</TableHead>
-                <TableHead>Stripe Payment Intent ID</TableHead>
+                <TableHead className="text-right">{t('settings.PaymentHistoryManager.importe')}</TableHead>
+                <TableHead className="text-right">{t('settings.PaymentHistoryManager.propina')}</TableHead>
+                <TableHead>{t('settings.PaymentHistoryManager.stripePaymentIntentId')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPayments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No se encontraron pagos
+                    {t('settings.PaymentHistoryManager.noSeEncontraronPagos')}
                   </TableCell>
                 </TableRow>
               ) : (

@@ -12,7 +12,7 @@ export function EmptyLocationsState() {
       <MapPin className="h-12 w-12 text-muted-foreground/40 mb-4" />
       <h3 className="text-lg font-semibold text-foreground">{t("common.noAccessibleLocations")}</h3>
       <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-        No tienes acceso a ningún local. Contacta con el administrador para que te asigne permisos.
+        {t('ui.EmptyLocationsState.noTienesAccesoANingun')}
       </p>
     </div>
   );

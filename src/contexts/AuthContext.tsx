@@ -5,6 +5,7 @@ import posthog from 'posthog-js';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { SessionTimeoutDialog } from '@/components/auth/SessionTimeoutDialog';
 
+import { useTranslation } from 'react-i18next';
 interface Profile {
   id: string;
   group_id: string | null;
@@ -33,16 +34,16 @@ interface AuthContextType {
   isOwner: boolean;
   hasGlobalScope: boolean;
   accessibleLocationIds: string[];
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => {t('contexts.AuthContext.promise')}<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string) => {t('contexts.AuthContext.promise1')}<{ error: Error | null }>;
+  signOut: () => {t('contexts.AuthContext.promise2')}<void>;
+  signInWithGoogle: () => {t('contexts.AuthContext.promise3')}<void>;
   hasPermission: (permissionKey: string, locationId?: string | null) => boolean;
   hasAnyPermission: (permissionKeys: string[]) => boolean;
   hasRole: (roleName: string) => boolean;
   isAdminOrOps: () => boolean;
-  refreshPermissions: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshPermissions: () => {t('contexts.AuthContext.promise4')}<void>;
+  refreshProfile: () => {t('contexts.AuthContext.promise5')}<void>;
   // For action-level permission checks (not for hiding content)
   hasActionPermission: (permissionKey: string, locationId?: string | null) => boolean;
 }
@@ -50,13 +51,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [roles, setRoles] = useState<UserRole[]>([]);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [accessibleLocationIds, setAccessibleLocationIds] = useState<string[]>([]);
+  const { t } = useTranslation();
+  const [user, setUser] = useState<User | null>{t('contexts.AuthContext.nullConstSessionSetsessionUsestate')}<Session | null>{t('contexts.AuthContext.nullConstProfileSetprofileUsestate')}<Profile | null>{t('contexts.AuthContext.nullConstRolesSetrolesUsestate')}<UserRole[]>{t('contexts.AuthContext.constPermissionsSetpermissionsUsestate')}<Permission[]>{t('contexts.AuthContext.constLoadingSetloadingUsestatetrueConst')}<string[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [hasGlobalScope, setHasGlobalScope] = useState(false);
 
@@ -254,7 +250,7 @@ function SessionTimeoutWarning({
   onLogout,
 }: {
   session: Session | null;
-  onLogout: () => Promise<void>;
+  onLogout: () => {t('contexts.AuthContext.promise6')}<void>;
 }) {
   const isLoggedIn = !!session;
   const { showWarning, minutesRemaining, resetTimer } = useIdleTimeout(isLoggedIn);

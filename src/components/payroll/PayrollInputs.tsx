@@ -43,9 +43,7 @@ export default function PayrollInputs({
   const { selectedLocationId, locations } = useApp();
   const { toast } = useToast();
   
-  const [inputs, setInputs] = useState<PayrollInput[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingInput, setEditingInput] = useState<PayrollInput | null>(null);
+  const [inputs, setInputs] = useState<PayrollInput[]>{t('payroll.PayrollInputs.constLoadingSetloadingUsestatetrueConst')}<PayrollInput | null>(null);
   const [pullLoading, setPullLoading] = useState(false);
 
   useEffect(() => {
@@ -185,14 +183,12 @@ export default function PayrollInputs({
     }
   };
 
-  const totalHours = inputs.reduce((sum, i) => sum + i.hours_regular + i.hours_night + i.hours_holiday + i.hours_overtime, 0);
-
-  return (
+  const totalHours = inputs.reduce((sum, i) => {t('payroll.PayrollInputs.sumIhoursregularIhoursnightIhoursholiday')}
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Variables del Mes</h2>
+          <h2 className="text-lg font-semibold">{t('payroll.PayrollInputs.variablesDelMes')}</h2>
           <p className="text-sm text-muted-foreground">
             {format(new Date(currentPeriod.year, currentPeriod.month - 1), 'MMMM yyyy', { locale: es })}
           </p>
@@ -200,7 +196,7 @@ export default function PayrollInputs({
         
         <Button variant="outline" onClick={handlePullTimesheets} disabled={pullLoading}>
           <Download className="h-4 w-4 mr-2" />
-          Importar Timesheets Aprobados
+          {t('payroll.PayrollInputs.importarTimesheetsAprobados')}
         </Button>
       </div>
 
@@ -208,25 +204,25 @@ export default function PayrollInputs({
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Horas Regulares</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.PayrollInputs.horasRegulares')}</p>
             <p className="text-2xl font-bold">{inputs.reduce((s, i) => s + i.hours_regular, 0).toFixed(1)}h</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Horas Nocturnas</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.PayrollInputs.horasNocturnas')}</p>
             <p className="text-2xl font-bold">{inputs.reduce((s, i) => s + i.hours_night, 0).toFixed(1)}h</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Horas Festivos</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.PayrollInputs.horasFestivos')}</p>
             <p className="text-2xl font-bold">{inputs.reduce((s, i) => s + i.hours_holiday, 0).toFixed(1)}h</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Horas Extra</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.PayrollInputs.horasExtra')}</p>
             <p className="text-2xl font-bold">{inputs.reduce((s, i) => s + i.hours_overtime, 0).toFixed(1)}h</p>
           </CardContent>
         </Card>
@@ -237,7 +233,7 @@ export default function PayrollInputs({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Horas y Complementos por Empleado
+            {t('payroll.PayrollInputs.horasYComplementosPorEmpleado')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -245,12 +241,12 @@ export default function PayrollInputs({
             <TableHeader>
               <TableRow>
                 <TableHead>{t('payroll.empleado')}</TableHead>
-                <TableHead className="text-right">H. Regulares</TableHead>
-                <TableHead className="text-right">H. Nocturnas</TableHead>
-                <TableHead className="text-right">H. Festivos</TableHead>
-                <TableHead className="text-right">H. Extra</TableHead>
-                <TableHead className="text-center">Bonos</TableHead>
-                <TableHead className="text-center">Deducciones</TableHead>
+                <TableHead className="text-right">{t('payroll.PayrollInputs.hRegulares')}</TableHead>
+                <TableHead className="text-right">{t('payroll.PayrollInputs.hNocturnas')}</TableHead>
+                <TableHead className="text-right">{t('payroll.PayrollInputs.hFestivos')}</TableHead>
+                <TableHead className="text-right">{t('payroll.PayrollInputs.hExtra')}</TableHead>
+                <TableHead className="text-center">{t('payroll.PayrollInputs.bonos')}</TableHead>
+                <TableHead className="text-center">{t('payroll.PayrollInputs.deducciones')}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -292,7 +288,7 @@ export default function PayrollInputs({
                           <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <Label>Horas Regulares</Label>
+                                <Label>{t('payroll.PayrollInputs.horasRegulares1')}</Label>
                                 <Input 
                                   type="number"
                                   step="0.5"
@@ -304,7 +300,7 @@ export default function PayrollInputs({
                                 />
                               </div>
                               <div>
-                                <Label>Horas Nocturnas</Label>
+                                <Label>{t('payroll.PayrollInputs.horasNocturnas1')}</Label>
                                 <Input 
                                   type="number"
                                   step="0.5"
@@ -316,7 +312,7 @@ export default function PayrollInputs({
                                 />
                               </div>
                               <div>
-                                <Label>Horas Festivos</Label>
+                                <Label>{t('payroll.PayrollInputs.horasFestivos1')}</Label>
                                 <Input 
                                   type="number"
                                   step="0.5"
@@ -328,7 +324,7 @@ export default function PayrollInputs({
                                 />
                               </div>
                               <div>
-                                <Label>Horas Extra</Label>
+                                <Label>{t('payroll.PayrollInputs.horasExtra1')}</Label>
                                 <Input 
                                   type="number"
                                   step="0.5"
@@ -344,7 +340,7 @@ export default function PayrollInputs({
                             {/* Bonuses */}
                             <div>
                               <Label className="flex items-center justify-between">
-                                Bonos
+                                {t('payroll.PayrollInputs.bonos1')}
                                 <Button 
                                   size="sm" 
                                   variant="ghost"
@@ -359,7 +355,7 @@ export default function PayrollInputs({
                               {editingInput.bonuses.map((bonus, idx) => (
                                 <div key={idx} className="flex gap-2 mt-2">
                                   <Input 
-                                    placeholder="Concepto"
+                                    placeholder={t('payroll.PayrollInputs.concepto')}
                                     value={bonus.name}
                                     onChange={(e) => {
                                       const updated = [...editingInput.bonuses];
@@ -395,7 +391,7 @@ export default function PayrollInputs({
                             {/* Deductions */}
                             <div>
                               <Label className="flex items-center justify-between">
-                                Deducciones
+                                {t('payroll.PayrollInputs.deducciones1')}
                                 <Button 
                                   size="sm" 
                                   variant="ghost"
@@ -410,7 +406,7 @@ export default function PayrollInputs({
                               {editingInput.deductions.map((ded, idx) => (
                                 <div key={idx} className="flex gap-2 mt-2">
                                   <Input 
-                                    placeholder="Concepto"
+                                    placeholder={t('payroll.PayrollInputs.concepto1')}
                                     value={ded.name}
                                     onChange={(e) => {
                                       const updated = [...editingInput.deductions];
@@ -448,7 +444,7 @@ export default function PayrollInputs({
                               className="w-full"
                             >
                               <Save className="h-4 w-4 mr-2" />
-                              Guardar
+                              {t('payroll.PayrollInputs.guardar')}
                             </Button>
                           </div>
                         )}
@@ -466,10 +462,10 @@ export default function PayrollInputs({
       <div className="flex justify-between">
         <Button variant="outline" onClick={() => navigate('/payroll/employees')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Empleados
+          {t('payroll.PayrollInputs.empleados')}
         </Button>
         <Button onClick={() => navigate('/payroll/validate')}>
-          Siguiente: Validar
+          {t('payroll.PayrollInputs.siguienteValidar')}
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>

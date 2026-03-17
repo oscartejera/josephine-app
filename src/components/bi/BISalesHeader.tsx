@@ -102,12 +102,12 @@ export function BISalesHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 px-2 text-muted-foreground gap-1">
-                Insights
+                {t('bi.BISalesHeader.insights')}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Sales Insights</DropdownMenuItem>
+              <DropdownMenuItem>{t('bi.BISalesHeader.salesInsights')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -116,13 +116,13 @@ export function BISalesHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 px-2 font-semibold gap-1">
-                Sales
+                {t('bi.BISalesHeader.sales')}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Sales</DropdownMenuItem>
-              <DropdownMenuItem disabled>Orders (coming soon)</DropdownMenuItem>
+              <DropdownMenuItem>{t('bi.BISalesHeader.sales1')}</DropdownMenuItem>
+              <DropdownMenuItem disabled>{t('bi.BISalesHeader.ordersComingSoon')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -146,13 +146,13 @@ export function BISalesHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => setCompareMode('forecast')}>
-                Forecast
+                {t('bi.BISalesHeader.forecast')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCompareMode('previous_period')}>
-                Previous period
+                {t('bi.BISalesHeader.previousPeriod')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCompareMode('previous_year')}>
-                Previous year
+                {t('bi.BISalesHeader.previousYear')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -177,12 +177,12 @@ export function BISalesHeader({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
                     </span>
-                    Live
+                    {t('bi.BISalesHeader.live')}
                   </>
                 ) : (
                   <>
                     <WifiOff className="h-3 w-3" />
-                    Offline
+                    {t('bi.BISalesHeader.offline')}
                   </>
                 )}
               </Badge>
@@ -191,7 +191,7 @@ export function BISalesHeader({
               {isConnected ? (
                 <p>Real-time updates active{lastUpdate ? `. Last update: ${formatDistanceToNow(lastUpdate, { addSuffix: true })}` : ''}</p>
               ) : (
-                <p>Connecting to real-time updates...</p>
+                <p>{t('bi.BISalesHeader.connectingToRealtimeUpdates')}</p>
               )}
             </TooltipContent>
           </Tooltip>
@@ -201,7 +201,7 @@ export function BISalesHeader({
             className="bg-gradient-primary text-white gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            Ask Josephine
+            {t('bi.BISalesHeader.askJosephine')}
           </Button>
         </div>
       </div>
@@ -224,7 +224,7 @@ export function BISalesHeader({
                   onCheckedChange={selectAllLocations}
                 />
                 <label htmlFor="all-locations" className="text-sm font-medium cursor-pointer">
-                  All locations
+                  {t('bi.BISalesHeader.allLocations')}
                 </label>
               </div>
               {locations.map(loc => (

@@ -45,8 +45,7 @@ export default function BookingWidget() {
     special_requests: '',
   });
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [reservation, setReservation] = useState<ReservationResult | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>{t('bookingWidget.nullConstReservationSetreservationUsesta')}<ReservationResult | null>(null);
 
   // Fetch occupied slots when date changes
   useEffect(() => {
@@ -167,8 +166,7 @@ export default function BookingWidget() {
             </div>
 
             <p className="text-sm text-muted-foreground text-center">
-              Si necesitas modificar o cancelar tu reserva, responde al email de confirmación o
-              llámanos directamente.
+              {t('bookingWidget.siNecesitasModificarOCancelar')}
             </p>
 
             <Button
@@ -187,7 +185,7 @@ export default function BookingWidget() {
                 setSelectedDate(undefined);
               }}
             >
-              Hacer otra reserva
+              {t('bookingWidget.hacerOtraReserva')}
             </Button>
           </CardContent>
         </Card>
@@ -221,7 +219,7 @@ export default function BookingWidget() {
             {/* Date Selection */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" /> Fecha
+                <CalendarDays className="h-4 w-4" /> {t('bookingWidget.fecha')}
               </Label>
               <div className="flex justify-center">
                 <Calendar
@@ -239,7 +237,7 @@ export default function BookingWidget() {
             {selectedDate && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> Hora
+                  <Clock className="h-4 w-4" /> {t('bookingWidget.hora')}
                 </Label>
                 {availableSlots.length === 0 ? (
                   <Alert>
@@ -266,7 +264,7 @@ export default function BookingWidget() {
             {/* Party Size */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <Users className="h-4 w-4" /> Número de personas
+                <Users className="h-4 w-4" /> {t('bookingWidget.numeroDePersonas')}
               </Label>
               <Select
                 value={String(formData.party_size)}
@@ -314,7 +312,7 @@ export default function BookingWidget() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="guest_email">Email *</Label>
+              <Label htmlFor="guest_email">{t('bookingWidget.email')}</Label>
               <Input
                 id="guest_email"
                 type="email"
@@ -362,7 +360,7 @@ export default function BookingWidget() {
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Reservando...
+                  {t('bookingWidget.reservando')}
                 </>
               ) : (
                 t('settings.confirmarReserva')

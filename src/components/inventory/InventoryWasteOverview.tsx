@@ -72,18 +72,18 @@ export function InventoryWasteOverview({
   return (
     <Card className="h-full border-[#E8E5DD] rounded-2xl shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-foreground">Waste overview</CardTitle>
+        <CardTitle className="text-base font-semibold text-foreground">{t('inventory.InventoryWasteOverview.wasteOverview')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Legend at top */}
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: accountedColor }} />
-            <span className="text-muted-foreground">Accounted</span>
+            <span className="text-muted-foreground">{t('inventory.InventoryWasteOverview.accounted')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: unaccountedColor }} />
-            <span className="text-muted-foreground">Unaccounted</span>
+            <span className="text-muted-foreground">{t('inventory.InventoryWasteOverview.unaccounted')}</span>
           </div>
         </div>
 
@@ -124,10 +124,10 @@ export function InventoryWasteOverview({
           <Table>
             <TableHeader>
               <TableRow className="border-b border-border/50">
-                <TableHead className="w-[140px] text-xs font-medium text-muted-foreground">Locations</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">Accounted %</TableHead>
+                <TableHead className="w-[140px] text-xs font-medium text-muted-foreground">{t('inventory.InventoryWasteOverview.locations')}</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryWasteOverview.accounted1')}</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Accounted {currency}</TableHead>
-                <TableHead className="text-right text-xs font-medium text-muted-foreground">Unaccounted %</TableHead>
+                <TableHead className="text-right text-xs font-medium text-muted-foreground">{t('inventory.InventoryWasteOverview.unaccounted1')}</TableHead>
                 <TableHead className="text-right text-xs font-medium text-muted-foreground">Unaccounted {currency}</TableHead>
               </TableRow>
             </TableHeader>
@@ -144,7 +144,7 @@ export function InventoryWasteOverview({
                     </>
                   ) : (
                     <TableCell colSpan={4} className="py-2.5 text-center text-sm text-muted-foreground italic">
-                      No stock count done
+                      {t('inventory.InventoryWasteOverview.noStockCountDone')}
                     </TableCell>
                   )}
                 </TableRow>

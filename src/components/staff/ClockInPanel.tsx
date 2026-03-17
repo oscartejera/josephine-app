@@ -29,11 +29,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [activeRecord, setActiveRecord] = useState<ClockRecord | null>(null);
-  const [weekRecords, setWeekRecords] = useState<ClockRecord[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>{t('staff.ClockInPanel.nullConstActiverecordSetactiverecordUses')}<ClockRecord | null>{t('staff.ClockInPanel.nullConstWeekrecordsSetweekrecordsUsesta')}<ClockRecord[]>{t('staff.ClockInPanel.constCurrenttimeSetcurrenttimeUsestatene')}<{ lat: number; lng: number } | null>(null);
 
   // Update current time every second
   useEffect(() => {
@@ -192,7 +188,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
       <Card>
         <CardContent className="pt-6">
           <p className="text-muted-foreground text-center">
-            No estás asignado a este local como empleado.
+            {t('staff.ClockInPanel.noEstasAsignadoAEste')}
           </p>
         </CardContent>
       </Card>
@@ -252,7 +248,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
                 variant="destructive"
               >
                 <LogOut className="mr-2 h-5 w-5" />
-                Fichar Salida
+                {t('staff.ClockInPanel.ficharSalida')}
               </Button>
             </div>
           ) : (
@@ -262,7 +258,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
               className="w-full h-14 text-lg"
             >
               <LogIn className="mr-2 h-5 w-5" />
-              Fichar Entrada
+              {t('staff.ClockInPanel.ficharEntrada')}
             </Button>
           )}
 
@@ -279,14 +275,14 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <History className="h-4 w-4" />
-            Historial Semanal
+            {t('staff.ClockInPanel.historialSemanal')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[200px]">
             {weekRecords.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">
-                Sin fichajes esta semana
+                {t('staff.ClockInPanel.sinFichajesEstaSemana')}
               </p>
             ) : (
               <div className="space-y-2">

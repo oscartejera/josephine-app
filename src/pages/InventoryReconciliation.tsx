@@ -17,10 +17,7 @@ export default function InventoryReconciliation() {
     from: startOfMonth(today),
     to: endOfMonth(today)
   });
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [viewMode, setViewMode] = useState<ViewMode>('COGS');
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const [stockStatus, setStockStatus] = useState<'counted' | 'uncounted' | 'all'>('counted');
+  const [dateMode, setDateMode] = useState<DateMode>{t('inventoryReconciliation.monthlyConstViewmodeSetviewmodeUsestate')}<ViewMode>{t('inventoryReconciliation.cogsConstSelectedlocationsSetselectedloc')}<string[]>{t('inventoryReconciliation.constStockstatusSetstockstatusUsestate')}<'counted' | 'uncounted' | 'all'>('counted');
   const [josephineOpen, setJosephineOpen] = useState(false);
 
   const { isLoading, lastUpdated, lines, totals } = useReconciliationData(

@@ -9,6 +9,7 @@ import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 
+import { useTranslation } from 'react-i18next';
 interface ErrorReport {
   error: Error;
   context?: string;
@@ -28,6 +29,7 @@ interface ErrorPayload {
 }
 
 export function useErrorReporter() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { selectedLocationId } = useApp();
 
@@ -55,7 +57,7 @@ export function useErrorReporter() {
   );
 
   const wrapAsync = useCallback(
-    <T,>(fn: () => Promise<T>, context: string): Promise<T | undefined> => {
+    <T,>(fn: () => {t('hooks.useErrorReporter.promise')}<T>{t('hooks.useErrorReporter.contextStringPromise')}<T | undefined> => {
       return fn().catch((error: Error) => {
         reportError({ error, context });
         return undefined;

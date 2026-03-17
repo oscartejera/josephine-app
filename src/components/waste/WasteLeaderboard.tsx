@@ -39,20 +39,18 @@ export function WasteLeaderboard({
     );
   }
 
-  const totalValue = leaderboard.reduce((sum, l) => sum + l.totalValue, 0);
-
-  return (
+  const totalValue = leaderboard.reduce((sum, l) => {t('waste.WasteLeaderboard.sumLtotalvalue0Return')}
     <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">Waste Logs Leaderboard</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">{t('waste.WasteLeaderboard.wasteLogsLeaderboard')}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="text-xs font-medium text-muted-foreground h-9">Team Member</TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Waste Logs</TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground h-9">Location</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteLeaderboard.teamMember')}</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteLeaderboard.wasteLogs')}</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteLeaderboard.location')}</TableHead>
               <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t("waste.loggedWasteValue")}</TableHead>
             </TableRow>
           </TableHeader>

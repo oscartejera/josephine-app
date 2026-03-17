@@ -59,18 +59,18 @@ export function ExportTab() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Download className="h-5 w-5" />
-                    Exportar Datos
+                    {t('settings.ExportTab.exportarDatos')}
                 </CardTitle>
                 <CardDescription>{t("settings.downloadCsv")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card className="p-4">
-                        <h3 className="font-medium mb-2">Tickets</h3>
+                        <h3 className="font-medium mb-2">{t('settings.ExportTab.tickets')}</h3>
                         <p className="text-sm text-muted-foreground mb-4">{t("settings.salesHistory")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('tickets')}>
                             <Download className="h-4 w-4 mr-2" />
-                            Exportar
+                            {t('settings.ExportTab.exportar')}
                         </Button>
                     </Card>
                     <Card className="p-4">
@@ -78,7 +78,7 @@ export function ExportTab() {
                         <p className="text-sm text-muted-foreground mb-4">{t("settings.employeeList")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('employees')}>
                             <Download className="h-4 w-4 mr-2" />
-                            Exportar
+                            {t('settings.ExportTab.exportar1')}
                         </Button>
                     </Card>
                     <Card className="p-4">
@@ -86,7 +86,7 @@ export function ExportTab() {
                         <p className="text-sm text-muted-foreground mb-4">{t("settings.inventoryItems")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('inventory')}>
                             <Download className="h-4 w-4 mr-2" />
-                            Exportar
+                            {t('settings.ExportTab.exportar2')}
                         </Button>
                     </Card>
                 </div>

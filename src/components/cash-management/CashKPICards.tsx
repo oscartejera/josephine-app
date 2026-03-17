@@ -13,7 +13,7 @@ interface CashKPICardsProps {
 
 function DeltaBadge({ value, suffix = '%', inverse = false }: { value: number; suffix?: string; inverse?: boolean }) {
   const isPositive = inverse ? value < 0 : value > 0;
-  const isNegative = inverse ? value > 0 : value < 0;
+  const isNegative = inverse ? value > {t('cash-management.CashKPICards.0Value')} < 0;
   
   return (
     <span className={cn(
@@ -63,7 +63,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Net Sales */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Net Sales</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.netSales')}</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -82,7 +82,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Cash Collected */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Cash Collected</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.cashCollected')}</CardTitle>
           <CreditCard className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -108,7 +108,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Refunds */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Refunds</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.refunds')}</CardTitle>
           <RotateCcw className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -123,7 +123,7 @@ export function CashKPICards({ metrics, isLoading = false, currency = '€' }: C
       {/* Leakage */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Leakage</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{t('cash-management.CashKPICards.leakage')}</CardTitle>
           <TrendingDown className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

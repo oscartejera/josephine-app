@@ -147,23 +147,7 @@ export default function SquareIntegration() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [integration, setIntegration] = useState<Integration | null>(null);
-  const [account, setAccount] = useState<IntegrationAccount | null>(null);
-  const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [connecting, setConnecting] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-
-  // Progress bar state
-  const [syncProgress, setSyncProgress] = useState(0);
-  const [syncPhaseLabel, setSyncPhaseLabel] = useState('');
-  const [syncComplete, setSyncComplete] = useState(false);
-  const progressTimer = useRef<ReturnType<typeof setInterval>>();
-
-  // Splash screen state
-  const [showSplash, setShowSplash] = useState(false);
-  const [splashMessage, setSplashMessage] = useState('');
-  const splashSafetyTimer = useRef<ReturnType<typeof setTimeout>>();
+  const [integration, setIntegration] = useState<Integration | null>{t('integrations.SquareIntegration.nullConstAccountSetaccountUsestate')}<IntegrationAccount | null>{t('integrations.SquareIntegration.nullConstSyncrunsSetsyncrunsUsestate')}<SyncRun[]>{t('integrations.SquareIntegration.constLoadingSetloadingUsestatetrueConst')}<ReturnType<typeof setInterval>>{t('integrations.SquareIntegration.splashScreenStateConstShowsplash')}<ReturnType<typeof setTimeout>>();
 
   /** Show splash with an auto-dismiss safety net. */
   const showSplashScreen = useCallback((msg: string, maxMs = 8_000) => {
@@ -197,7 +181,7 @@ export default function SquareIntegration() {
       current = prevTarget + (target - prevTarget) * phaseProgress;
       setSyncProgress(Math.min(Math.round(current), 90));
 
-      if (phaseProgress >= 0.95 && phase < SYNC_PHASES.length - 1) {
+      if (phaseProgress >{t('integrations.SquareIntegration.095Phase')} < SYNC_PHASES.length - 1) {
         phase++;
         elapsedInPhase = 0;
         setSyncPhaseLabel(SYNC_PHASES[phase].label);
@@ -572,7 +556,7 @@ export default function SquareIntegration() {
           <div>
             <h1 className="text-2xl font-display font-bold flex items-center gap-2">
               <span className="text-3xl">🔷</span>
-              Square POS
+              {t('integrations.SquareIntegration.squarePos')}
             </h1>
             <p className="text-muted-foreground">{t("integrations.squareAutoSync")}</p>
           </div>
@@ -581,12 +565,12 @@ export default function SquareIntegration() {
         {isConnected ? (
           <Badge variant="default" className="gap-2 bg-green-600">
             <CheckCircle className="h-4 w-4" />
-            Conectado
+            {t('integrations.SquareIntegration.conectado')}
           </Badge>
-        ) : isConnectedNoAccount ? (
+        {t('integrations.SquareIntegration.isconnectednoaccount')}
           <Badge variant="secondary" className="gap-2">
             <AlertTriangle className="h-4 w-4" />
-            Conectado (sin cuenta)
+            {t('integrations.SquareIntegration.conectadoSinCuenta')}
           </Badge>
         ) : (
           <Button onClick={handleConnect} size="lg" disabled={connecting}>
@@ -624,7 +608,7 @@ export default function SquareIntegration() {
           <CardHeader>
             <CardTitle>{t("integrations.connectSquare")}</CardTitle>
             <CardDescription>
-              Sincroniza productos, pedidos y pagos automáticamente desde Square POS
+              {t('integrations.SquareIntegration.sincronizaProductosPedidosYPagos')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -636,7 +620,7 @@ export default function SquareIntegration() {
               <li>{t("integrations.paymentMethodsAndAmounts")}</li>
             </ul>
             <p className="text-sm text-muted-foreground">
-              Los datos se normalizan al modelo canónico (CDM) para análisis unificado.
+              {t('integrations.SquareIntegration.losDatosSeNormalizanAl')}
             </p>
           </CardContent>
         </Card>
@@ -657,8 +641,7 @@ export default function SquareIntegration() {
               )}
               {isConnectedNoAccount && (
                 <CardDescription className="text-amber-600">
-                  La integración está activa pero no se encontró una cuenta de Square.
-                  Intenta desconectar y volver a conectar.
+                  {t('integrations.SquareIntegration.laIntegracionEstaActivaPero')}
                 </CardDescription>
               )}
             </CardHeader>
@@ -672,7 +655,7 @@ export default function SquareIntegration() {
                 {syncing ? 'Sincronizando...' : isRunningFromDB ? t('integrations.syncInProgress') : 'Sincronizar ahora'}
               </Button>
               <Button variant="destructive" size="sm" onClick={handleDisconnect}>
-                Desconectar
+                {t('integrations.SquareIntegration.desconectar')}
               </Button>
             </CardContent>
           </Card>
@@ -681,13 +664,13 @@ export default function SquareIntegration() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Historial de sincronización
+                {t('integrations.SquareIntegration.historialDeSincronizacion')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {syncRuns.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">
-                  Conectado, sin sincronizaciones todavía. Haz clic en "Sincronizar ahora" para importar datos.
+                  {t('integrations.SquareIntegration.conectadoSinSincronizacionesTodaviaHaz')}
                 </p>
               ) : (
                 <div className="space-y-3">

@@ -31,7 +31,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="general">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="general">{t('settings.general')}</TabsTrigger>
-          <TabsTrigger value="team">Equipo</TabsTrigger>
+          <TabsTrigger value="team">{t('settingsPage.equipo')}</TabsTrigger>
           <TabsTrigger value="locations">{t('settings.locations')}</TabsTrigger>
           <TabsTrigger value="booking">{t('settings.bookings')}</TabsTrigger>
           <TabsTrigger value="loyalty">{t('settings.loyalty')}</TabsTrigger>
@@ -41,7 +41,7 @@ export default function SettingsPage() {
           <TabsTrigger value="transactions">{t('common.transactions')}</TabsTrigger>
           <TabsTrigger value="export">{t('settings.exportData')}</TabsTrigger>
           <TabsTrigger value="datasource">{t('settings.dataSource', 'Fuente de Datos')}</TabsTrigger>
-          <TabsTrigger value="privacy">Privacidad</TabsTrigger>
+          <TabsTrigger value="privacy">{t('settingsPage.privacidad')}</TabsTrigger>
           <TabsTrigger value="billing">{t('common.facturacion')}</TabsTrigger>
         </TabsList>
 

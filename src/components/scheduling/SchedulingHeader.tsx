@@ -105,12 +105,12 @@ export function SchedulingHeader({
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="#" className="text-muted-foreground">
-              Schedule & Workforce
+              {t('scheduling.SchedulingHeader.scheduleWorkforce')}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Schedule</BreadcrumbPage>
+            <BreadcrumbPage>{t('scheduling.SchedulingHeader.schedule')}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -147,7 +147,7 @@ export function SchedulingHeader({
                 className="h-7 text-xs ml-1"
                 onClick={onGoToToday}
               >
-                Hoy
+                {t('scheduling.SchedulingHeader.hoy')}
               </Button>
             )}
           </div>
@@ -161,7 +161,7 @@ export function SchedulingHeader({
               <>
                 {/* / Projected €{SUM(forecast_sales)} */}
                 <span className="text-muted-foreground">/</span>
-                <span className="text-muted-foreground">Projected</span>
+                <span className="text-muted-foreground">{t('scheduling.SchedulingHeader.projected')}</span>
                 <span className="font-semibold">€{Math.round(projectedSales).toLocaleString()}</span>
 
                 {/* {shiftsCost / projectedSales * 100}% / €{SUM(planned_cost)} / {SUM(planned_hours)}h */}
@@ -186,7 +186,7 @@ export function SchedulingHeader({
         <div className="flex items-center gap-2">
           {/* Status badge */}
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-            Draft
+            {t('scheduling.SchedulingHeader.draft')}
           </Badge>
 
           <Button
@@ -198,12 +198,12 @@ export function SchedulingHeader({
             {isCreating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Generating...
+                {t('scheduling.SchedulingHeader.generating')}
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                Create Schedule
+                {t('scheduling.SchedulingHeader.createSchedule')}
               </>
             )}
           </Button>
@@ -218,19 +218,19 @@ export function SchedulingHeader({
               {isAutoFilling ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Filling...
+                  {t('scheduling.SchedulingHeader.filling')}
                 </>
               ) : (
                 <>
                   <Wand2 className="h-4 w-4" />
-                  Auto-fill
+                  {t('scheduling.SchedulingHeader.autofill')}
                 </>
               )}
             </Button>
           )}
 
           <Button variant="outline">
-            Templates
+            {t('scheduling.SchedulingHeader.templates')}
           </Button>
 
           <Button
@@ -238,7 +238,7 @@ export function SchedulingHeader({
             disabled={!hasSchedule}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            Publish
+            {t('scheduling.SchedulingHeader.publish')}
           </Button>
 
           <DropdownMenu modal={false}>
@@ -249,10 +249,10 @@ export function SchedulingHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setTimeout(() => onOpenSettings?.(), 50); }}>
-                Schedule Settings
+                {t('scheduling.SchedulingHeader.scheduleSettings')}
               </DropdownMenuItem>
-              <DropdownMenuItem>Export Schedule</DropdownMenuItem>
-              <DropdownMenuItem>Print Schedule</DropdownMenuItem>
+              <DropdownMenuItem>{t('scheduling.SchedulingHeader.exportSchedule')}</DropdownMenuItem>
+              <DropdownMenuItem>{t('scheduling.SchedulingHeader.printSchedule')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -265,7 +265,7 @@ export function SchedulingHeader({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-md cursor-default">
                 <DollarSign className="h-3.5 w-3.5 text-blue-500" />
-                <span className="text-blue-600 font-medium">SPLH</span>
+                <span className="text-blue-600 font-medium">{t('scheduling.SchedulingHeader.splh')}</span>
                 <span className="font-semibold text-blue-800">€{splh.toFixed(0)}</span>
               </div>
             </TooltipTrigger>
@@ -278,12 +278,12 @@ export function SchedulingHeader({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-100 rounded-md cursor-default">
                 <TrendingUp className="h-3.5 w-3.5 text-purple-500" />
-                <span className="text-purple-600 font-medium">OPLH</span>
+                <span className="text-purple-600 font-medium">{t('scheduling.SchedulingHeader.oplh')}</span>
                 <span className="font-semibold text-purple-800">{oplh?.toFixed(1)}</span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              Orders Per Labor Hour (estimated from avg check €25)
+              {t('scheduling.SchedulingHeader.ordersPerLaborHourEstimated')}
             </TooltipContent>
           </Tooltip>
 
@@ -291,14 +291,14 @@ export function SchedulingHeader({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 border border-border rounded-md cursor-default">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground font-medium">Scheduled</span>
+                <span className="text-muted-foreground font-medium">{t('scheduling.SchedulingHeader.scheduled')}</span>
                 <span className="font-semibold">{Math.round(totalShiftsHours || 0)}h</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="font-medium">{Math.round((totalShiftsHours || 0) / 7)}h/day avg</span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              Total scheduled labor hours for the week
+              {t('scheduling.SchedulingHeader.totalScheduledLaborHoursFor')}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -310,8 +310,7 @@ export function SchedulingHeader({
           {/* Progress bar */}
           {(() => {
             const target = efficiency?.target_cost || (projectedSales ? projectedSales * (targetColPercent || 22) / 100 : 0);
-            const pct = target > 0 ? Math.min((totalShiftsCost / target) * 100, 120) : 0;
-            const barColor = pct <= 95 ? 'bg-emerald-500' : pct <= 105 ? 'bg-amber-500' : 'bg-red-500';
+            const pct = target > {t('scheduling.SchedulingHeader.0MathmintotalshiftscostTarget100120')} <= 95 ? 'bg-emerald-500' : pct <= 105 ? 'bg-amber-500' : 'bg-red-500';
             const textColor = pct <= 95 ? 'text-emerald-600' : pct <= 105 ? 'text-amber-600' : 'text-red-600';
             return (
               <div className="flex items-center gap-3">

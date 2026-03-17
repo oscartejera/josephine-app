@@ -31,7 +31,7 @@ export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps
         <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
         <h3 className="text-lg font-medium">{t("pos.noOpenTables")}</h3>
         <p className="text-muted-foreground">
-          Las mesas con comandas activas aparecerán aquí
+          {t('pos.POSOpenTables.lasMesasConComandasActivas')}
         </p>
       </div>
     );
@@ -70,7 +70,7 @@ export function POSOpenTables({ tickets, tables, onRefresh }: POSOpenTablesProps
             <span className="text-xl font-bold">
               €{ticket.total_amount.toFixed(2)}
             </span>
-            <Button size="sm">Ver detalle</Button>
+            <Button size="sm">{t('pos.POSOpenTables.verDetalle')}</Button>
           </div>
         </Card>
       ))}

@@ -109,27 +109,27 @@ export default function Procurement() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-display font-bold text-foreground">Procurement</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">{t('procurement.procurement')}</h1>
             {isLoading ? (
               <Badge variant="outline" className="gap-1.5 text-muted-foreground">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Loading inventory...
+                {t('procurement.loadingInventory')}
               </Badge>
-            ) : hasRealData ? (
+            {t('procurement.hasrealdata')}
               <Badge variant="outline" className="gap-1.5 text-success border-success/30 bg-success/5">
                 <Database className="h-3 w-3" />
-                Live Inventory
+                {t('procurement.liveInventory')}
               </Badge>
             ) : (
               <Badge variant="secondary" className="gap-1.5 text-xs">
-                Demo Data
+                {t('procurement.demoData')}
               </Badge>
             )}
           </div>
           <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-            <span>Insights</span>
+            <span>{t('procurement.insights')}</span>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground">Procurement</span>
+            <span className="text-foreground">{t('procurement.procurement1')}</span>
           </div>
         </div>
 
@@ -170,12 +170,12 @@ export default function Procurement() {
             {aiLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Generando...
+                {t('procurement.generando')}
               </>
             ) : (
               <>
                 <Bot className="h-4 w-4" />
-                Pedido AI
+                {t('procurement.pedidoAi')}
               </>
             )}
           </Button>
@@ -188,10 +188,10 @@ export default function Procurement() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => window.location.href = '/procurement/orders'}>
-                Suppliers & Orders
+                {t('procurement.suppliersOrders')}
               </DropdownMenuItem>
-              <DropdownMenuItem>Manage Suppliers</DropdownMenuItem>
-              <DropdownMenuItem>Export Data</DropdownMenuItem>
+              <DropdownMenuItem>{t('procurement.manageSuppliers')}</DropdownMenuItem>
+              <DropdownMenuItem>{t('procurement.exportData')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -202,7 +202,7 @@ export default function Procurement() {
         <TabsList className="h-11">
           <TabsTrigger value="order" className="gap-2 px-6 h-9">
             <ShoppingCart className="h-4 w-4" />
-            New Order
+            {t('procurement.newOrder')}
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2 px-6 h-9">
             <History className="h-4 w-4" />
@@ -291,7 +291,7 @@ export default function Procurement() {
                     disabled={orderSummary.items.length === 0}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    View Cart
+                    {t('procurement.viewCart')}
                   </Button>
                 </div>
               </div>
@@ -310,7 +310,7 @@ export default function Procurement() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-violet-500" />
-              Pedido AI — Guía de Pedido Inteligente
+              {t('procurement.pedidoAiGuiaDePedido')}
             </DialogTitle>
           </DialogHeader>
 
@@ -334,11 +334,11 @@ export default function Procurement() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground">
-                        <th className="text-left p-2 pl-4">Producto</th>
-                        <th className="text-right p-2">Necesario</th>
-                        <th className="text-right p-2">En stock</th>
-                        <th className="text-right p-2">Pedir</th>
-                        <th className="text-right p-2 pr-4">Coste</th>
+                        <th className="text-left p-2 pl-4">{t('procurement.producto')}</th>
+                        <th className="text-right p-2">{t('procurement.necesario')}</th>
+                        <th className="text-right p-2">{t('procurement.enStock')}</th>
+                        <th className="text-right p-2">{t('procurement.pedir')}</th>
+                        <th className="text-right p-2 pr-4">{t('procurement.coste')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -363,7 +363,7 @@ export default function Procurement() {
 
           <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setShowAIGuide(false)}>
-              Cerrar
+              {t('procurement.cerrar')}
             </Button>
             <Button
               className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
@@ -383,7 +383,7 @@ export default function Procurement() {
               }}
             >
               <ShoppingCart className="h-4 w-4" />
-              Añadir al Pedido
+              {t('procurement.anadirAlPedido')}
             </Button>
           </DialogFooter>
         </DialogContent>

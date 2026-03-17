@@ -97,15 +97,15 @@ export function POSFloorPlan({
       <div className="flex items-center justify-center gap-6 p-3 border-t bg-card text-sm">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-emerald-500"></div>
-          <span>Libre</span>
+          <span>{t('pos.POSFloorPlan.libre')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-amber-500"></div>
-          <span>Ocupada</span>
+          <span>{t('pos.POSFloorPlan.ocupada')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-purple-500"></div>
-          <span>Reservada</span>
+          <span>{t('pos.POSFloorPlan.reservada')}</span>
         </div>
       </div>
     </div>

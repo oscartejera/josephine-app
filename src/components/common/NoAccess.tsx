@@ -12,7 +12,7 @@ interface NoAccessProps {
 export function NoAccess({
   
   title = 'Acceso Denegado',
-  message = 'No tienes permisos para ver esta página. Contacta a tu administrador si crees que esto es un error.',
+  message = t('common.no_tienes_permisos_para_ver_esta_pagina_contacta_a'),
   showBackButton = true,
 }: NoAccessProps) {
   const { t } = useTranslation();
@@ -39,7 +39,7 @@ export function NoAccess({
           className="gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver
+          {t('common.NoAccess.volver')}
         </Button>
       )}
     </div>

@@ -59,14 +59,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
     const { profile } = useAuth();
     const { accessibleLocations } = useApp();
     const orgId = profile?.group_id;
-    const effectiveLocationId = locationId || (accessibleLocations.length > 0 ? accessibleLocations[0].id : null);
-
-    const [tipAmount, setTipAmount] = useState<number>(0);
-    const [tipDate, setTipDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-    const [method, setMethod] = useState<string>('hours_worked');
-    const [poolPct, setPoolPct] = useState<number>(100);
-    const [saving, setSaving] = useState(false);
-    const [result, setResult] = useState<DistributionResult | null>(null);
+    const effectiveLocationId = locationId || (accessibleLocations.length > {t('payroll.TipDistributionConfig.0Accessiblelocations0idNullConstTipamoun')}<number>{t('payroll.TipDistributionConfig.0ConstTipdateSettipdateUsestateformatnew')}<string>{t('payroll.TipDistributionConfig.hoursworkedConstPoolpctSetpoolpctUsestat')}<number>{t('payroll.TipDistributionConfig.100ConstSavingSetsavingUsestatefalse')}<DistributionResult | null>(null);
     const [ruleLoaded, setRuleLoaded] = useState(false);
 
     // Load existing rule
@@ -152,11 +145,11 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-base font-semibold">{t('payroll.distribucionDePropinas')}</CardTitle>
-                        <p className="text-xs text-gray-500 mt-0.5">Configura reglas y distribuye propinas</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t('payroll.TipDistributionConfig.configuraReglasYDistribuyePropinas')}</p>
                     </div>
                     {result && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                            ✓ Distribuido
+                            {t('payroll.TipDistributionConfig.distribuido')}
                         </span>
                     )}
                 </div>
@@ -189,7 +182,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
                         </div>
                     </div>
                     <div>
-                        <Label className="text-xs font-medium text-gray-600">Pool %</Label>
+                        <Label className="text-xs font-medium text-gray-600">{t('payroll.TipDistributionConfig.pool')}</Label>
                         <div className="relative mt-1">
                             <Input
                                 type="number"
@@ -264,7 +257,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
 
                 {result && result.distributions.length === 0 && (
                     <p className="text-sm text-gray-500 text-center py-2">
-                        No hay turnos programados para esta fecha
+                        {t('payroll.TipDistributionConfig.noHayTurnosProgramadosPara')}
                     </p>
                 )}
             </CardContent>

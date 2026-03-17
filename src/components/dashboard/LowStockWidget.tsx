@@ -40,7 +40,7 @@ export function LowStockWidget() {
 
       // Filter items below par level
       const lowStockItems: LowStockItem[] = (data || [])
-        .filter(item => (item.current_stock || 0) < (item.par_level || 0))
+        .filter(item => {t('dashboard.LowStockWidget.itemcurrentstock0')} < (item.par_level || 0))
         .map(item => ({
           id: item.id,
           name: item.name,
@@ -109,9 +109,7 @@ export function LowStockWidget() {
   };
 
   const getSeverityBadge = (percentOfPar: number) => {
-    if (percentOfPar <= 25) return <Badge variant="destructive">Critical</Badge>;
-    if (percentOfPar <= 50) return <Badge className="bg-warning/10 text-warning hover:bg-warning/20">Low</Badge>;
-    return <Badge variant="secondary">Monitor</Badge>;
+    if (percentOfPar <= 25) return <Badge variant="destructive">{t('dashboard.LowStockWidget.critical')}</Badge>{t('dashboard.LowStockWidget.ifPercentofpar')} <= 50) return <Badge className="bg-warning/10 text-warning hover:bg-warning/20">{t('dashboard.LowStockWidget.low')}</Badge>{t('dashboard.LowStockWidget.return')} <Badge variant="secondary">{t('dashboard.LowStockWidget.monitor')}</Badge>;
   };
 
   if (isLoading) {
@@ -120,7 +118,7 @@ export function LowStockWidget() {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
-            Low Stock Alerts
+            {t('dashboard.LowStockWidget.lowStockAlerts')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -149,7 +147,7 @@ export function LowStockWidget() {
             {isLive && (
               <Badge variant="outline" className="gap-1 text-success border-success/30 animate-pulse">
                 <Wifi className="h-3 w-3" />
-                Live
+                {t('dashboard.LowStockWidget.live')}
               </Badge>
             )}
           </CardTitle>
@@ -160,8 +158,8 @@ export function LowStockWidget() {
         {items.length === 0 ? (
           <div className="py-8 text-center">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-muted-foreground">All items are well stocked</p>
-            <p className="text-sm text-muted-foreground mt-1">No items below par level</p>
+            <p className="text-muted-foreground">{t('dashboard.LowStockWidget.allItemsAreWellStocked')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('dashboard.LowStockWidget.noItemsBelowParLevel')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -181,7 +179,7 @@ export function LowStockWidget() {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold">{item.percentOfPar.toFixed(0)}%</p>
-                  <p className="text-xs opacity-70">of par</p>
+                  <p className="text-xs opacity-70">{t('dashboard.LowStockWidget.ofPar')}</p>
                 </div>
               </div>
             ))}

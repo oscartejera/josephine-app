@@ -56,7 +56,7 @@ export function SupplierCard({
             <div className="relative flex-1 sm:w-[300px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name..."
+                placeholder={t('procurement.SupplierCard.searchByName')}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-9 bg-background h-11"
@@ -88,7 +88,7 @@ export function SupplierCard({
       <div className="px-6 py-4 bg-info/5 flex items-start gap-3">
         <Info className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
         <p className="text-sm text-foreground">
-          Earliest delivery on <span className="font-semibold text-info">{cutoffInfo.deliveryDateStr}</span> if ordered before{' '}
+          {t('procurement.SupplierCard.earliestDeliveryOn')} <span className="font-semibold text-info">{cutoffInfo.deliveryDateStr}</span> if ordered before{' '}
           <span className="font-semibold">{cutoffInfo.cutoffTimeStr}</span> on {cutoffInfo.cutoffDay}.
         </p>
       </div>

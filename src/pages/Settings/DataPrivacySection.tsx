@@ -126,7 +126,7 @@ export function DataPrivacySection() {
         <CardHeader>
           <CardTitle className="text-base">{t('settings.privacidadYDatos')}</CardTitle>
           <CardDescription>
-            Gestiona tus datos personales según tus derechos RGPD.
+            {t('settings.DataPrivacySection.gestionaTusDatosPersonalesSegun')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -144,7 +144,7 @@ export function DataPrivacySection() {
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={() => setShowCookiePrefs(true)}>
-              Gestionar
+              {t('settings.DataPrivacySection.gestionar')}
             </Button>
           </div>
 
@@ -155,7 +155,7 @@ export function DataPrivacySection() {
               <div>
                 <p className="text-sm font-medium">{t("settings.exportMyData")}</p>
                 <p className="text-xs text-gray-500">
-                  Descarga una copia de todos tus datos en formato JSON.
+                  {t('settings.DataPrivacySection.descargaUnaCopiaDeTodos')}
                 </p>
               </div>
             </div>
@@ -177,7 +177,7 @@ export function DataPrivacySection() {
               <div>
                 <p className="text-sm font-medium text-red-900">{t("settings.deleteMyAccount")}</p>
                 <p className="text-xs text-red-600/80">
-                  Todos tus datos se eliminarán tras 30 días de gracia.
+                  {t('settings.DataPrivacySection.todosTusDatosSeEliminaran')}
                 </p>
               </div>
             </div>
@@ -186,7 +186,7 @@ export function DataPrivacySection() {
               size="sm"
               onClick={() => setShowDelete(true)}
             >
-              Solicitar eliminación
+              {t('settings.DataPrivacySection.solicitarEliminacion')}
             </Button>
           </div>
         </CardContent>
@@ -198,12 +198,10 @@ export function DataPrivacySection() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
-              ¿Eliminar tu cuenta?
+              {t('settings.DataPrivacySection.eliminarTuCuenta')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción programará la eliminación de tu cuenta y todos los datos asociados
-              en un plazo de 30 días. Durante ese periodo puedes cancelar la solicitud.
-              Después de los 30 días, los datos se eliminarán permanentemente.
+              {t('settings.DataPrivacySection.estaAccionProgramaraLaEliminacion')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

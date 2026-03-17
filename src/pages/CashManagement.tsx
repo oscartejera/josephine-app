@@ -15,9 +15,7 @@ export default function CashManagement() {
     return { from: startOfMonth(today), to: endOfMonth(today) };
   }, []);
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [selectedLocations] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRangeValue>{t('cashManagement.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('cashManagement.monthlyConstSelectedlocationsUsestate')}<string[]>([]);
 
   const { isLoading, metrics, dailyData, locationData } = useCashManagementData(dateRange, selectedLocations);
 
@@ -29,7 +27,7 @@ export default function CashManagement() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Cash Management</h1>
+          <h1 className="text-2xl font-bold">{t('cashManagement.cashManagement')}</h1>
           <p className="text-sm text-muted-foreground">{t("cash.monitorDescription")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

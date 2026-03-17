@@ -136,10 +136,10 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
                 <div className="grid grid-cols-7 gap-2 mb-2 text-[10px] font-semibold text-gray-500 uppercase">
                     <span>{t('team.dia')}</span>
                     <span className="text-right">{t('team.prevision')}</span>
-                    <span className="text-right">Horas rec.</span>
-                    <span className="text-right">Personal rec.</span>
-                    <span className="text-right">Horas prog.</span>
-                    <span className="text-right">Delta</span>
+                    <span className="text-right">{t('labour.StaffingRecommendation.horasRec')}</span>
+                    <span className="text-right">{t('labour.StaffingRecommendation.personalRec')}</span>
+                    <span className="text-right">{t('labour.StaffingRecommendation.horasProg')}</span>
+                    <span className="text-right">{t('labour.StaffingRecommendation.delta')}</span>
                     <span className="text-center">{t('team.estado')}</span>
                 </div>
 
@@ -165,7 +165,7 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
                                     {day.scheduled_hours > 0 ? `${day.scheduled_hours}h` : '—'}
                                 </span>
                                 <span className={cn("text-right font-medium",
-                                    day.delta_hours > 0 ? 'text-amber-600' : day.delta_hours < 0 ? 'text-red-600' : 'text-emerald-600'
+                                    day.delta_hours > {t('labour.StaffingRecommendation.0Textamber600Daydeltahours')} < 0 ? 'text-red-600' : 'text-emerald-600'
                                 )}>
                                     {day.delta_hours > 0 ? '+' : ''}{day.delta_hours.toFixed(1)}h
                                 </span>
@@ -180,7 +180,7 @@ export function StaffingRecommendation({ locationId, dateFrom, dateTo }: Staffin
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
                     <span>{t('team.basadoEnPrevisionDeVentas')}</span>
-                    <span>Objetivos configurables en Ajustes → Reglas Laborales</span>
+                    <span>{t('labour.StaffingRecommendation.objetivosConfigurablesEnAjustesReglas')}</span>
                 </div>
             </CardContent>
         </Card>

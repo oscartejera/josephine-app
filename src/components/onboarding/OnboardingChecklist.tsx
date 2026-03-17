@@ -18,7 +18,7 @@ interface Step {
     description: string;
     icon: typeof Plug2;
     path: string;
-    checkFn: () => Promise<boolean>;
+    checkFn: () => {t('onboarding.OnboardingChecklist.promise')}<boolean>;
 }
 
 export function OnboardingChecklist() {
@@ -130,11 +130,11 @@ export function OnboardingChecklist() {
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
-                        🚀 Empieza con Josephine
+                        {t('onboarding.OnboardingChecklist.empiezaConJosephine')}
                         <span className="text-xs font-normal text-muted-foreground">({completedCount}/{steps.length} completados)</span>
                     </CardTitle>
                     <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={handleDismiss}>
-                        Ocultar por hoy
+                        {t('onboarding.OnboardingChecklist.ocultarPorHoy')}
                     </Button>
                 </div>
                 {/* Progress bar */}

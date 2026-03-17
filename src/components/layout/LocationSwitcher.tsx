@@ -75,7 +75,7 @@ export function LocationSwitcher({ collapsed = false, align = 'start', side }: L
           <DropdownMenuSeparator />
           {canShowAllLocations && (
             <DropdownMenuItem onClick={() => handleSelect('all')}>
-              <span className="flex-1">Todos los locales</span>
+              <span className="flex-1">{t('layout.LocationSwitcher.todosLosLocales')}</span>
               {selectedLocationId === 'all' && <Check className="h-4 w-4 text-primary" />}
             </DropdownMenuItem>
           )}
@@ -111,7 +111,7 @@ export function LocationSwitcher({ collapsed = false, align = 'start', side }: L
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-56">
         <DropdownMenuLabel className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Locales</span>
+          <span>{t('layout.LocationSwitcher.locales')}</span>
           <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full text-[10px] font-medium">
             {accessibleLocations.length}
           </span>
@@ -119,7 +119,7 @@ export function LocationSwitcher({ collapsed = false, align = 'start', side }: L
         <DropdownMenuSeparator />
         {canShowAllLocations && (
           <DropdownMenuItem onClick={() => handleSelect('all')}>
-            <span className="flex-1 font-medium">Todos los locales</span>
+            <span className="flex-1 font-medium">{t('layout.LocationSwitcher.todosLosLocales1')}</span>
             {selectedLocationId === 'all' && <Check className="h-4 w-4 text-primary" />}
           </DropdownMenuItem>
         )}

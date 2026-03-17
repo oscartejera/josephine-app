@@ -40,7 +40,7 @@ export function AIRecommendPanel({
           {isCalculating ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Calculating coverage...
+              {t('procurement.AIRecommendPanel.calculatingCoverage')}
             </>
           ) : (
             <>
@@ -52,7 +52,7 @@ export function AIRecommendPanel({
 
         {/* Horizon Selector */}
         <div className="flex items-center gap-2">
-          <Label className="text-sm text-muted-foreground whitespace-nowrap">Horizon:</Label>
+          <Label className="text-sm text-muted-foreground whitespace-nowrap">{t('procurement.AIRecommendPanel.horizon')}</Label>
           <Select 
             value={settings.horizon.toString()} 
             onValueChange={(v) => onSettingsChange({ ...settings, horizon: parseInt(v) as 7 | 14 | 30 })}
@@ -61,9 +61,9 @@ export function AIRecommendPanel({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">7 days</SelectItem>
-              <SelectItem value="14">14 days</SelectItem>
-              <SelectItem value="30">30 days</SelectItem>
+              <SelectItem value="7">{t('procurement.AIRecommendPanel.7Days')}</SelectItem>
+              <SelectItem value="14">{t('procurement.AIRecommendPanel.14Days')}</SelectItem>
+              <SelectItem value="30">{t('procurement.AIRecommendPanel.30Days')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -76,7 +76,7 @@ export function AIRecommendPanel({
             onCheckedChange={(checked) => onSettingsChange({ ...settings, includeSafetyStock: checked })}
           />
           <Label htmlFor="safety-stock" className="text-sm cursor-pointer">
-            Include safety stock
+            {t('procurement.AIRecommendPanel.includeSafetyStock')}
           </Label>
         </div>
 
@@ -88,7 +88,7 @@ export function AIRecommendPanel({
             onCheckedChange={(checked) => onSettingsChange({ ...settings, roundToPacks: checked })}
           />
           <Label htmlFor="round-packs" className="text-sm cursor-pointer">
-            Round to packs
+            {t('procurement.AIRecommendPanel.roundToPacks')}
           </Label>
         </div>
       </div>

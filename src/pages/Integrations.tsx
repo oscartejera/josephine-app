@@ -54,10 +54,10 @@ export default function Integrations() {
       <div>
         <h1 className="text-2xl font-display font-bold flex items-center gap-2">
           <Plug2 className="h-6 w-6" />
-          Integraciones
+          {t('integrations.integraciones')}
         </h1>
         <p className="text-muted-foreground">
-          Conecta Josephine con sistemas POS externos
+          {t('integrations.conectaJosephineConSistemasPos')}
         </p>
       </div>
 
@@ -95,8 +95,7 @@ export default function Integrations() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            Las integraciones permiten a Josephine conectarse con sistemas POS externos
-            para sincronizar automáticamente:
+            {t('integrations.lasIntegracionesPermitenAJosephine')}
           </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>{t("integrations.productCatalog")}</li>
@@ -105,8 +104,7 @@ export default function Integrations() {
             <li>{t("integrations.locationInfo")}</li>
           </ul>
           <p>
-            Los datos se normalizan a un modelo canónico (CDM) que permite análisis
-            unificado independientemente del sistema POS que uses.
+            {t('integrations.losDatosSeNormalizanA')}
           </p>
         </CardContent>
       </Card>

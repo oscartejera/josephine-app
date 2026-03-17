@@ -119,9 +119,7 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
         loadEntries();
     };
 
-    const unresolvedCount = entries.filter(e => !e.resolved && e.severity !== 'info').length;
-
-    return (
+    const unresolvedCount = entries.filter(e => {t('workforce.ManagerLogbook.eresolvedEseverityInfolengthReturn')}
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -185,7 +183,7 @@ export function ManagerLogbook({ locationId }: { locationId: string | null }) {
             {/* Entries Timeline */}
             {loading ? (
                 <div className="text-center py-8 text-muted-foreground">{t('logbook.loading')}</div>
-            ) : entries.length === 0 ? (
+            {t('workforce.ManagerLogbook.entrieslength0')}
                 <Card>
                     <CardContent className="py-8 text-center">
                         <BookOpen className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />

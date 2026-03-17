@@ -52,7 +52,7 @@ export function PermissionGate({
  * 
  * Use this to DISABLE actions (not hide them):
  * const canPublish = usePermissionCheck({ permission: 'scheduling.publish' });
- * <Button disabled={!canPublish}>Publish</Button>
+ * <Button disabled={!canPublish}>{t('common.PermissionGate.publish')}</Button>
  */
 export function usePermissionCheck(options: {
   permission?: PermissionKey;

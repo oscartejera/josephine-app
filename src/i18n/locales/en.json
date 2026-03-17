@@ -470,7 +470,14 @@
     "noHayTurnosProgramadosEsta": "[ES] No hay turnos programados esta semana",
     "ventasPorCategoria": "[ES] Ventas por Categoría",
     "ventas": "[ES] % Ventas",
-    "errorAlCargarIndicadores": "[ES] Error al cargar indicadores"
+    "errorAlCargarIndicadores": "[ES] Error al cargar indicadores",
+    "LocationBenchmark": {
+      "splh": "SPLH"
+    },
+    "TopProductsCard": {
+      "cogs": "COGS",
+      "gp": "GP"
+    }
   },
   "sales": {
     "title": "Sales",
@@ -543,7 +550,17 @@
     "revenuePorEmpleado": "[ES] 🏆 Revenue por Empleado",
     "optimo": "[ES] ✓ Óptimo",
     "nomina": "[ES] Nómina",
-    "totalHours": "[ES] Total Hours"
+    "totalHours": "[ES] Total Hours",
+    "EmployeeRevenueTable": {
+      "splh": "SPLH"
+    },
+    "LabourHourlyDrillDown": {
+      "splh": "SPLH"
+    },
+    "LabourKPICards": {
+      "splh": "SPLH",
+      "oplh": "OPLH"
+    }
   },
   "waste": {
     "title": "Waste",
@@ -674,7 +691,10 @@
     "queCategoriaTieneMayorVarianza": "[ES] ¿Qué categoría tiene mayor varianza?",
     "cualesSonLasPrincipalesFuentes": "[ES] ¿Cuáles son las principales fuentes de merma?",
     "porQueMiCogsActual": "[ES] ¿Por qué mi COGS actual está por encima del teórico?",
-    "accion": "[ES] Acción"
+    "accion": "[ES] Acción",
+    "AddItemDialog": {
+      "orderUnit": "Order Unit"
+    }
   },
   "recipes": {
     "title": "Recipes",
@@ -800,7 +820,14 @@
     "sab": "[ES] Sáb",
     "respetaAutomaticamenteLasNormasLaborales": "[ES] Respeta automáticamente las normas laborales, la disponibilidad del equipo y las regulacio",
     "anadeUnMensajeConLa": "[ES] Añade un mensaje con la notificación del horario...",
-    "presupuestoLaboral": "[ES] Presupuesto Laboral"
+    "presupuestoLaboral": "[ES] Presupuesto Laboral",
+    "SchedulingHeader": {
+      "splh": "SPLH",
+      "oplh": "OPLH"
+    },
+    "SwapShiftDialog": {
+      "egDoctorsAppointmentOnThursday": "E.g., Doctor's appointment on Thursday..."
+    }
   },
   "budgets": {
     "title": "Budgets",
@@ -809,7 +836,11 @@
     "actualVsBudget": "Actual vs Budget",
     "variance": "Variance",
     "comparePerformance": "[ES] Compara rendimiento real vs presupuesto",
-    "totalAverage": "[ES] Total / Average"
+    "totalAverage": "[ES] Total / Average",
+    "BudgetLocationTable": {
+      "cogs": "COGS"
+    },
+    "cogs": "COGS"
   },
   "cashManagement": {
     "title": "Cash Management",
@@ -888,7 +919,19 @@
     "placeOrderToAdd": "[ES] Realiza un pedido para añadir proveedores",
     "noOrdersYet": "[ES] No hay pedidos aún",
     "noLineItems": "[ES] No se encontraron líneas de pedido",
-    "cartEmpty": "[ES] Tu carrito está vacío"
+    "cartEmpty": "[ES] Tu carrito está vacío",
+    "OrderHistoryPanel": {
+      "orderDate": "Order Date"
+    },
+    "OrderSummaryDesktop": {
+      "free": "FREE"
+    },
+    "OrderSummaryPanel": {
+      "free": "FREE"
+    },
+    "ProcurementHeader": {
+      "orderHistory": "Order History"
+    }
   },
   "reviews": {
     "title": "Reviews",
@@ -1149,7 +1192,21 @@
     "pesosDiferentesSegunElPuesto": "[ES] Pesos diferentes según el puesto",
     "rlcLiquidacionCotizaciones": "[ES] RLC - Liquidación Cotizaciones",
     "rntRelacionNominalTrabajadores": "[ES] RNT - Relación Nominal Trabajadores",
-    "nominas": "[ES] Nóminas"
+    "nominas": "[ES] Nóminas",
+    "PayrollCalculate": {
+      "irpf": "IRPF",
+      "irpf1": "IRPF"
+    },
+    "PayrollEmployees": {
+      "nif": "NIF",
+      "nss": "NSS",
+      "iban": "IBAN",
+      "iban1": "IBAN",
+      "es1234567890123456789012": "ES1234567890123456789012"
+    },
+    "PayrollHome": {
+      "cnae": "CNAE"
+    }
   },
   "pos": {
     "title": "Point of Sale",
@@ -1546,7 +1603,10 @@
     "confirmarReserva": "[ES] Confirmar Reserva",
     "reservaConfirmada": "[ES] ¡Reserva Confirmada!",
     "restauranteNoEncontrado": "[ES] Restaurante no encontrado",
-    "errorAlCrearLaReserva": "[ES] Error al crear la reserva"
+    "errorAlCrearLaReserva": "[ES] Error al crear la reserva",
+    "PaymentMethodsTab": {
+      "cvv": "CVV"
+    }
   },
   "errors": {
     "generic": "An error occurred",
@@ -1692,7 +1752,10 @@
     "createFirstContract": "[ES] Crea el primer contrato para tu equipo",
     "contractType": "[ES] Tipo de contrato",
     "grossSalaryMonth": "[ES] Salario bruto/mes (€)",
-    "teamPerformance": "[ES] Rendimiento del Equipo"
+    "teamPerformance": "[ES] Rendimiento del Equipo",
+    "EmploymentContracts": {
+      "irpf": "IRPF"
+    }
   },
   "onboarding": {
     "title": "Onboarding",
@@ -1931,7 +1994,10 @@
     "hitRate10": "Hit Rate ±10%",
     "hitRate5": "Hit Rate ±5%",
     "peakHour": "Peak hour",
-    "noDataForPeriod": "[ES] Sin datos para este periodo"
+    "noDataForPeriod": "[ES] Sin datos para este periodo",
+    "BILocationTable": {
+      "acs": "ACS"
+    }
   },
   "gdpr": {
     "title": "Data Privacy",
@@ -2704,5 +2770,33 @@
     "precisionForecast": "[ES] Precisión Forecast",
     "ultimos90Dias": "[ES] (últimos 90 días)",
     "tendenciaDePrecision": "[ES] Tendencia de Precisión"
+  },
+  "ui": {
+    "breadcrumb": {
+      "more": "More"
+    }
+  },
+  "inventory-setup": {
+    "InventoryItems": {
+      "orderUnit": "Order Unit"
+    },
+    "MenuItemsPage": {
+      "pvp": "PVP"
+    },
+    "RecipesPage": {
+      "pvp": "PVP"
+    }
+  },
+  "procurementCart": {
+    "orderComments": "Order Comments",
+    "orderSummary": "Order Summary",
+    "free": "FREE",
+    "orderPlacedSuccessfully": "Order Placed Successfully!",
+    "orderFailed": "Order Failed"
+  },
+  "procurementOrders": {
+    "orderId": "Order ID",
+    "orderId1": "Order ID",
+    "orderLines": "Order Lines"
   }
 }

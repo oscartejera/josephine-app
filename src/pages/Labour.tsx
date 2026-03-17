@@ -42,9 +42,7 @@ export default function Labour() {
     to: endOfMonth(new Date()),
   }), []);
 
-  const [dateRange, setDateRange] = useState<LabourDateRange>(initialDateRange);
-  const [metricMode, setMetricMode] = useState<MetricMode>('percentage');
-  const [compareMode, setCompareMode] = useState<CompareMode>('forecast');
+  const [dateRange, setDateRange] = useState<LabourDateRange>{t('labour.initialdaterangeConstMetricmodeSetmetric')}<MetricMode>{t('labour.percentageConstComparemodeSetcomparemode')}<CompareMode>('forecast');
   const [showJosephine, setShowJosephine] = useState(false);
 
   // Validate location ID

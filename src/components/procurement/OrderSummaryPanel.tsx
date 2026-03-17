@@ -24,10 +24,7 @@ export function OrderSummaryPanel({
   const itemCount = summary.items.length;
   const displayItems = summary.items.slice(0, 6);
   const moreCount = summary.items.length - 6;
-  const meetsMinOrder = summary.subtotal >= summary.minOrder;
-  const amountNeeded = summary.minOrder - summary.subtotal;
-
-  return (
+  const meetsMinOrder = summary.subtotal >{t('procurement.OrderSummaryPanel.summaryminorderConstAmountneededSummarym')}
     <div className="bg-card rounded-xl border border-border overflow-hidden sticky top-6">
       <div className="p-4 border-b border-border bg-muted/30">
         <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -41,18 +38,18 @@ export function OrderSummaryPanel({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Truck className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Supplier:</span>
+            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.supplier')}</span>
             <span className="font-medium text-foreground">{summary.supplierName}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Delivery:</span>
+            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.delivery')}</span>
             <span className="font-medium text-foreground">{format(summary.deliveryDate, 'd MMM yyyy')}</span>
           </div>
           {itemCount > 0 && (
             <div className="flex items-center gap-2 text-sm">
               <Shield className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Coverage:</span>
+              <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.coverage')}</span>
               <span className="font-medium text-success">Until {format(summary.coverageEndDate, 'EEE d MMM')}</span>
             </div>
           )}
@@ -113,23 +110,23 @@ export function OrderSummaryPanel({
         {/* Totals */}
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.subtotal')}</span>
             <span className="text-foreground">€{summary.subtotal.toFixed(2)}</span>
           </div>
           {summary.deliveryFee > 0 && (
             <div className="flex justify-between text-warning">
-              <span>Delivery fee</span>
+              <span>{t('procurement.OrderSummaryPanel.deliveryFee')}</span>
               <span>€{summary.deliveryFee.toFixed(2)}</span>
             </div>
           )}
-          {summary.deliveryFee === 0 && summary.subtotal >= summary.minOrder && (
+          {summary.deliveryFee === 0 && summary.subtotal >{t('procurement.OrderSummaryPanel.summaryminorder')}
             <div className="flex justify-between text-success">
-              <span>Delivery</span>
-              <span>FREE</span>
+              <span>{t('procurement.OrderSummaryPanel.delivery1')}</span>
+              <span>{t('procurement.OrderSummaryPanel.free')}</span>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-muted-foreground">VAT (21%)</span>
+            <span className="text-muted-foreground">{t('procurement.OrderSummaryPanel.vat21')}</span>
             <span className="text-foreground">€{summary.tax.toFixed(2)}</span>
           </div>
           <Separator />
@@ -148,7 +145,7 @@ export function OrderSummaryPanel({
             disabled={itemCount === 0}
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
-            View Shopping Cart
+            {t('procurement.OrderSummaryPanel.viewShoppingCart')}
           </Button>
           <Button 
             variant="outline" 
@@ -156,7 +153,7 @@ export function OrderSummaryPanel({
             onClick={onAutofill}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            Quick Autofill
+            {t('procurement.OrderSummaryPanel.quickAutofill')}
           </Button>
           {itemCount > 0 && (
             <Button 
@@ -164,7 +161,7 @@ export function OrderSummaryPanel({
               className="w-full text-muted-foreground"
               onClick={onClearCart}
             >
-              Clear Cart
+              {t('procurement.OrderSummaryPanel.clearCart')}
             </Button>
           )}
         </div>

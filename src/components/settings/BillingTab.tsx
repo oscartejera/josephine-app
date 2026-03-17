@@ -83,7 +83,7 @@ export function BillingTab() {
             {plan === 'free' ? (
               <Button onClick={() => navigate('/pricing')} className="gap-2">
                 <Sparkles className="h-4 w-4" />
-                Upgrade a Pro
+                {t('settings.BillingTab.upgradeAPro')}
               </Button>
             ) : (
               <>
@@ -106,7 +106,7 @@ export function BillingTab() {
                   className="gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Ver planes
+                  {t('settings.BillingTab.verPlanes')}
                 </Button>
               </>
             )}
@@ -121,8 +121,7 @@ export function BillingTab() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            Los pagos se procesan de forma segura a través de Stripe.
-            Desde el portal de facturación puedes:
+            {t('settings.BillingTab.losPagosSeProcesanDe')}
           </p>
           <ul className="list-disc pl-5 space-y-1">
             <li>{t("settings.updatePaymentMethod")}</li>

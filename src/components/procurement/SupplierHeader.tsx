@@ -54,7 +54,7 @@ export function SupplierHeader({
           <div className="relative flex-1 sm:w-[280px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name..."
+              placeholder={t('procurement.SupplierHeader.searchByName')}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-9 bg-background"
@@ -85,7 +85,7 @@ export function SupplierHeader({
       <div className="flex items-start gap-3 p-4 bg-info/10 rounded-lg border border-info/20">
         <Info className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
         <p className="text-sm text-foreground">
-          Earliest delivery on <span className="font-medium">{cutoffInfo.deliveryDateStr}</span> if ordered before{' '}
+          {t('procurement.SupplierHeader.earliestDeliveryOn')} <span className="font-medium">{cutoffInfo.deliveryDateStr}</span> if ordered before{' '}
           <span className="font-medium">{cutoffInfo.cutoffTimeStr}</span> on {cutoffInfo.cutoffDay}.
         </p>
       </div>

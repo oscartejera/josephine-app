@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+import { useTranslation } from 'react-i18next';
 export interface FloorMap {
   id: string;
   name: string;
@@ -61,11 +62,8 @@ export interface CashSession {
 }
 
 export function usePOSData(locationId: string) {
-  const [floorMaps, setFloorMaps] = useState<FloorMap[]>([]);
-  const [tables, setTables] = useState<POSTable[]>([]);
-  const [products, setProducts] = useState<POSProduct[]>([]);
-  const [openTickets, setOpenTickets] = useState<POSTicket[]>([]);
-  const [cashSession, setCashSession] = useState<CashSession | null>(null);
+  const { t } = useTranslation();
+  const [floorMaps, setFloorMaps] = useState<FloorMap[]>{t('hooks.usePOSData.constTablesSettablesUsestate')}<POSTable[]>{t('hooks.usePOSData.constProductsSetproductsUsestate')}<POSProduct[]>{t('hooks.usePOSData.constOpenticketsSetopenticketsUsestate')}<POSTicket[]>{t('hooks.usePOSData.constCashsessionSetcashsessionUsestate')}<CashSession | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {

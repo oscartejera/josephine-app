@@ -49,9 +49,7 @@ export default function InventoryLocationReconciliation() {
     };
   }, []); // Only compute once on mount
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [stockStatus, setStockStatus] = useState<'counted' | 'uncounted' | 'all'>('counted');
+  const [dateRange, setDateRange] = useState<DateRangeValue>{t('inventoryLocationReconciliation.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('inventoryLocationReconciliation.monthlyConstStockstatusSetstockstatusUse')}<'counted' | 'uncounted' | 'all'>('counted');
 
   // Validate locationId
   const isValidLocation = useMemo(() => isValidLocationId(locationId), [locationId]);
@@ -129,14 +127,14 @@ export default function InventoryLocationReconciliation() {
             <div className="flex flex-col items-center text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-destructive" />
               <div>
-                <h2 className="text-lg font-semibold">Invalid Location</h2>
+                <h2 className="text-lg font-semibold">{t('inventoryLocationReconciliation.invalidLocation')}</h2>
                 <p className="text-muted-foreground mt-1">
                   The location "{locationId}" could not be found or is invalid.
                 </p>
               </div>
               <Button onClick={handleBackToAllLocations} className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Back to All Locations
+                {t('inventoryLocationReconciliation.backToAllLocations')}
               </Button>
             </div>
           </CardContent>
@@ -155,17 +153,17 @@ export default function InventoryLocationReconciliation() {
             onClick={handleBackToAllLocations}
             className="hover:text-foreground transition-colors"
           >
-            Counts & Waste
+            {t('inventoryLocationReconciliation.countsWaste')}
           </button>
           <span className="mx-2">›</span>
           <button 
             onClick={handleBackToLocation}
             className="hover:text-foreground transition-colors"
           >
-            Counts
+            {t('inventoryLocationReconciliation.counts')}
           </button>
           <span className="mx-2">›</span>
-          <span className="text-foreground font-medium">Reconciliation report</span>
+          <span className="text-foreground font-medium">{t('inventoryLocationReconciliation.reconciliationReport')}</span>
         </div>
 
         {/* Title row */}
@@ -180,7 +178,7 @@ export default function InventoryLocationReconciliation() {
             </Button>
             <div>
               <h1 className="text-2xl font-semibold text-foreground">
-                Reconciliation report
+                {t('inventoryLocationReconciliation.reconciliationReport1')}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {currentLocation?.name || 'Location'} • {dateRangeLabel}

@@ -59,7 +59,7 @@ export function DataSourceBadge() {
             </p>
             {lastSyncedAt && (
               <p className="text-muted-foreground">
-                {t('last_sync', 'Última sync')}: {lastSyncedAt.toLocaleString('es-ES')}
+                {t('last_sync')}: {lastSyncedAt.toLocaleString('es-ES')}
               </p>
             )}
             {blocked && (

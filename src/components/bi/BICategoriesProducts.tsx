@@ -44,7 +44,7 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle>Sales per Product Categories</CardTitle>
+            <CardTitle>{t('bi.BICategoriesProducts.salesPerProductCategories')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Skeleton className="h-[250px] w-full" />
@@ -52,7 +52,7 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
         </Card>
         <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle>Products</CardTitle>
+            <CardTitle>{t('bi.BICategoriesProducts.products')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Skeleton className="h-[250px] w-full" />
@@ -72,14 +72,12 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
   const maxProductValue = Math.max(...sortedProducts.map(p => p.value));
 
   const hasCategories = data.categories && data.categories.length > 0;
-  const hasProducts = data.products && data.products.length > 0;
-
-  return (
+  const hasProducts = data.products && data.products.length > {t('bi.BICategoriesProducts.0Return')}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Categories */}
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Sales per Product Categories</CardTitle>
+          <CardTitle className="text-lg font-semibold">{t('bi.BICategoriesProducts.salesPerProductCategories1')}</CardTitle>
         </CardHeader>
         <CardContent>
           {hasCategories ? (
@@ -106,9 +104,9 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
               <Table className="mt-4">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Ratio %</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>{t('bi.BICategoriesProducts.category')}</TableHead>
+                    <TableHead className="text-right">{t('bi.BICategoriesProducts.ratio')}</TableHead>
+                    <TableHead className="text-right">{t('bi.BICategoriesProducts.amount')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -124,7 +122,7 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
             </>
           ) : (
             <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-              No category data available for selected date range
+              {t('bi.BICategoriesProducts.noCategoryDataAvailableFor')}
             </div>
           )}
         </CardContent>
@@ -133,14 +131,14 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
       {/* Products */}
       <Card className="border-[hsl(var(--bi-border))] rounded-2xl shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Products</CardTitle>
+          <CardTitle className="text-lg font-semibold">{t('bi.BICategoriesProducts.products1')}</CardTitle>
           <Select value={productSort} onValueChange={(v) => setProductSort(v as 'sales' | 'name')}>
             <SelectTrigger className="w-[120px] h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sales">Sales</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="sales">{t('bi.BICategoriesProducts.sales')}</SelectItem>
+              <SelectItem value="name">{t('bi.BICategoriesProducts.name')}</SelectItem>
             </SelectContent>
           </Select>
         </CardHeader>
@@ -149,9 +147,9 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead className="text-right">Value</TableHead>
-                  <TableHead className="w-[120px]">% of sales</TableHead>
+                  <TableHead>{t('bi.BICategoriesProducts.productName')}</TableHead>
+                  <TableHead className="text-right">{t('bi.BICategoriesProducts.value')}</TableHead>
+                  <TableHead className="w-[120px]">{t('bi.BICategoriesProducts.ofSales')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -178,7 +176,7 @@ export function BICategoriesProducts({ data, isLoading }: BICategoriesProductsPr
             </Table>
           ) : (
             <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-              No product data available for selected date range
+              {t('bi.BICategoriesProducts.noProductDataAvailableFor')}
             </div>
           )}
         </CardContent>

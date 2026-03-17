@@ -24,16 +24,14 @@ export function RatingByLocationTable({ data, isLoading, onLocationClick }: Rati
   // Calculate averages/totals
   const avgRating = data.length > 0 ? data.reduce((sum, l) => sum + l.rating_avg, 0) / data.length : 0;
   const totalRatings = data.reduce((sum, l) => sum + l.total_ratings, 0);
-  const avgResponseRate = data.length > 0 ? data.reduce((sum, l) => sum + l.response_rate, 0) / data.length : 0;
-
-  return (
+  const avgResponseRate = data.length > 0 ? data.reduce((sum, l) => {t('reviews.RatingByLocationTable.sumLresponserate0Datalength0')}
     <Card className="p-5 bg-card border border-border/60 rounded-xl">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-foreground">{t("reviews.ratingByLocation")}</h3>
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by location"
+            placeholder={t('reviews.RatingByLocationTable.searchByLocation')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9 text-sm"
@@ -52,11 +50,11 @@ export function RatingByLocationTable({ data, isLoading, onLocationClick }: Rati
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/60">
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3 pr-4">Locations</th>
-                <th className="text-right text-xs font-medium text-muted-foreground pb-3 pr-4 w-20">Rating</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3 pr-4">{t('reviews.RatingByLocationTable.locations')}</th>
+                <th className="text-right text-xs font-medium text-muted-foreground pb-3 pr-4 w-20">{t('reviews.RatingByLocationTable.rating')}</th>
                 <th className="text-right text-xs font-medium text-muted-foreground pb-3 pr-4 w-24">{t('reviews.totalRatings')}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3 pr-4 w-48">Rating Distribution</th>
-                <th className="text-right text-xs font-medium text-muted-foreground pb-3 w-28">Response Rate</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3 pr-4 w-48">{t('reviews.RatingByLocationTable.ratingDistribution')}</th>
+                <th className="text-right text-xs font-medium text-muted-foreground pb-3 w-28">{t('reviews.RatingByLocationTable.responseRate')}</th>
               </tr>
             </thead>
             <tbody>
@@ -99,7 +97,7 @@ export function RatingByLocationTable({ data, isLoading, onLocationClick }: Rati
               {/* Summary row */}
               <tr className="bg-muted/30 font-medium">
                 <td className="py-3 pr-4">
-                  <span className="text-sm text-foreground">AVG / SUM</span>
+                  <span className="text-sm text-foreground">{t('reviews.RatingByLocationTable.avgSum')}</span>
                 </td>
                 <td className="py-3 pr-4 text-right">
                   <span className="text-sm text-foreground">{avgRating.toFixed(2)}</span>

@@ -19,7 +19,7 @@ const STEPS: Step[] = [
   },
   {
     title: t('scheduling.verifyingConstraints'),
-    description: 'Respeta automáticamente las normas laborales, la disponibilidad del equipo y las regulaciones vigentes.',
+    description: t('scheduling.respeta_automaticamente_las_normas_laborales_la_di'),
   },
 ];
 
@@ -48,8 +48,7 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
       totalDelay += duration;
 
       const timeout = setTimeout(() => {
-        setCompletedSteps(prev => [...prev, index]);
-        if (index < STEPS.length - 1) {
+        setCompletedSteps(prev => {t('scheduling.CreateScheduleModal.prevIndexIfIndex')} < STEPS.length - 1) {
           setCurrentStep(index + 1);
         }
       }, totalDelay);
@@ -89,10 +88,10 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-semibold">Creating schedule</h2>
+          <h2 className="text-xl font-semibold">{t('scheduling.CreateScheduleModal.creatingSchedule')}</h2>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Powered by Josephine AI</span>
+            <span className="text-sm font-medium text-primary">{t('scheduling.CreateScheduleModal.poweredByJosephineAi')}</span>
           </div>
         </div>
 
@@ -137,7 +136,7 @@ export function CreateScheduleModal({ isOpen, onComplete }: CreateScheduleModalP
                   }`}>
                   {isCompleted ? (
                     <Check className="h-4 w-4 text-white" />
-                  ) : isCurrent ? (
+                  {t('scheduling.CreateScheduleModal.iscurrent')}
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}

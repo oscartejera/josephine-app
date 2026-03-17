@@ -43,18 +43,7 @@ const ITEMS_PER_PAGE = 50;
 export default function InventoryItems() {
   const { t } = useTranslation();
   const { locations } = useApp();
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedSupplier, setSelectedSupplier] = useState('all');
-  const [selectedLocation, setSelectedLocation] = useState('all');
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
+  const [items, setItems] = useState<any[]>{t('inventory-setup.InventoryItems.constLoadingSetloadingUsestatetrueConst')}<string[]>{t('inventory-setup.InventoryItems.constCategoriesSetcategoriesUsestate')}<{ id: string; name: string }[]>{t('inventory-setup.InventoryItems.constSuppliersSetsuppliersUsestate')}<{ id: string; name: string }[]>([]);
 
   // Load items from Supabase
   useEffect(() => {
@@ -188,15 +177,15 @@ export default function InventoryItems() {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-muted-foreground mb-1">
-            Inventory Setup / Items
+            {t('inventory-setup.InventoryItems.inventorySetupItems')}
           </div>
-          <h1 className="text-3xl font-bold">Inventory Items</h1>
+          <h1 className="text-3xl font-bold">{t('inventory-setup.InventoryItems.inventoryItems')}</h1>
         </div>
 
         <div className="flex items-center gap-2">
           <Button onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add item
+            {t('inventory-setup.InventoryItems.addItem')}
           </Button>
 
           <DropdownMenu>
@@ -208,7 +197,7 @@ export default function InventoryItems() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportPDF}>
                 <FileDown className="h-4 w-4 mr-2" />
-                Export to CSV
+                {t('inventory-setup.InventoryItems.exportToCsv')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -232,7 +221,7 @@ export default function InventoryItems() {
             <SelectValue placeholder={t('inventoryItems.category')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">{t('inventory-setup.InventoryItems.allCategories')}</SelectItem>
             {categories.map(c => (
               <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
             ))}
@@ -244,7 +233,7 @@ export default function InventoryItems() {
             <SelectValue placeholder={t('inventoryItems.supplier')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Suppliers</SelectItem>
+            <SelectItem value="all">{t('inventory-setup.InventoryItems.allSuppliers')}</SelectItem>
             {suppliers.map(s => (
               <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
             ))}
@@ -256,7 +245,7 @@ export default function InventoryItems() {
             <SelectValue placeholder={t('inventoryItems.allLocations')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
+            <SelectItem value="all">{t('inventory-setup.InventoryItems.allLocations')}</SelectItem>
             {locations.map(l => (
               <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
             ))}
@@ -277,15 +266,15 @@ export default function InventoryItems() {
               </TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                  Name <ArrowUpDown className="h-3 w-3" />
+                  {t('inventory-setup.InventoryItems.name')} <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Main Supplier</TableHead>
-              <TableHead>Order Unit</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">VAT Rate</TableHead>
+              <TableHead>{t('inventory-setup.InventoryItems.type')}</TableHead>
+              <TableHead>{t('inventory-setup.InventoryItems.category')}</TableHead>
+              <TableHead>{t('inventory-setup.InventoryItems.mainSupplier')}</TableHead>
+              <TableHead>{t('inventory-setup.InventoryItems.orderUnit')}</TableHead>
+              <TableHead className="text-right">{t('inventory-setup.InventoryItems.price')}</TableHead>
+              <TableHead className="text-right">{t('inventory-setup.InventoryItems.vatRate')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

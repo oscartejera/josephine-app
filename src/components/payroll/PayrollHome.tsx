@@ -150,7 +150,7 @@ export default function PayrollHome({
       return;
     }
     if (!group?.id) {
-      toast({ variant: 'destructive', title: t("common.error"), description: 'No se ha detectado el grupo. Recarga la página.' });
+      toast({ variant: 'destructive', title: t("common.error"), description: t('payroll.no_se_ha_detectado_el_grupo_recarga_la_pagina') });
       return;
     }
 
@@ -215,11 +215,11 @@ export default function PayrollHome({
       await supabase.from('compliance_submissions').delete().eq('payroll_run_id', currentRun.id);
       await supabase.from('payroll_runs').delete().eq('id', currentRun.id);
       
-      toast({ title: t('payroll.nominaReseteada'), description: 'Se ha eliminado la nómina del período. Puedes empezar de nuevo.' });
+      toast({ title: t('payroll.nominaReseteada'), description: t('payroll.seHaEliminadoLaNomina') });
       setShowResetDialog(false);
       await refreshData();
     } catch (error) {
-      toast({ variant: 'destructive', title: t("common.error"), description: 'No se pudo resetear la nómina' });
+      toast({ variant: 'destructive', title: t("common.error"), description: t('payroll.no_se_pudo_resetear_la_nomina') });
     } finally {
       setLoading(false);
     }
@@ -264,7 +264,7 @@ export default function PayrollHome({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Building className="h-4 w-4" />
-              Entidad Legal
+              {t('payroll.PayrollHome.entidadLegal')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -276,7 +276,7 @@ export default function PayrollHome({
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecciona entidad..." />
+                <SelectValue placeholder={t('payroll.PayrollHome.seleccionaEntidad')} />
               </SelectTrigger>
               <SelectContent>
                 {legalEntities.map(entity => (
@@ -292,29 +292,29 @@ export default function PayrollHome({
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full">
                     <Plus className="h-4 w-4 mr-2" />
-                    Nueva Entidad
+                    {t('payroll.PayrollHome.nuevaEntidad')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Nueva Entidad Legal</DialogTitle>
+                    <DialogTitle>{t('payroll.PayrollHome.nuevaEntidadLegal')}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
                       <Label>{t('payroll.razonSocial')}</Label>
-                      <Input value={newEntity.razon_social} onChange={(e) => setNewEntity({...newEntity, razon_social: e.target.value})} placeholder="Restaurantes XYZ S.L." />
+                      <Input value={newEntity.razon_social} onChange={(e) => setNewEntity({...newEntity, razon_social: e.target.value})} placeholder={t('payroll.PayrollHome.restaurantesXyzSl')} />
                     </div>
                     <div>
-                      <Label>NIF *</Label>
+                      <Label>{t('payroll.PayrollHome.nif')}</Label>
                       <Input value={newEntity.nif} onChange={(e) => setNewEntity({...newEntity, nif: e.target.value})} placeholder="B12345678" />
                     </div>
                     <div>
-                      <Label>Domicilio Fiscal *</Label>
-                      <Input value={newEntity.domicilio_fiscal} onChange={(e) => setNewEntity({...newEntity, domicilio_fiscal: e.target.value})} placeholder="Calle Mayor 1, 28001 Madrid" />
+                      <Label>{t('payroll.PayrollHome.domicilioFiscal')}</Label>
+                      <Input value={newEntity.domicilio_fiscal} onChange={(e) => setNewEntity({...newEntity, domicilio_fiscal: e.target.value})} placeholder={t('payroll.PayrollHome.calleMayor128001Madrid')} />
                     </div>
                     <div>
-                      <Label>CNAE</Label>
-                      <Input value={newEntity.cnae} onChange={(e) => setNewEntity({...newEntity, cnae: e.target.value})} placeholder="5610 - Restaurantes" />
+                      <Label>{t('payroll.PayrollHome.cnae')}</Label>
+                      <Input value={newEntity.cnae} onChange={(e) => setNewEntity({...newEntity, cnae: e.target.value})} placeholder={t('payroll.PayrollHome.5610Restaurantes')} />
                     </div>
                     <Button onClick={handleCreateEntity} disabled={loading} className="w-full">
                       {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
@@ -331,7 +331,7 @@ export default function PayrollHome({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Período
+              {t('payroll.PayrollHome.periodo')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -371,7 +371,7 @@ export default function PayrollHome({
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">SS Empresa</p>
+            <p className="text-sm text-muted-foreground">{t('payroll.PayrollHome.ssEmpresa')}</p>
             <p className="text-2xl font-bold">€{kpis.totalEmployerSS.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
@@ -417,12 +417,12 @@ export default function PayrollHome({
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleStartPayroll} className="flex-1">
-                    Continuar nómina
+                    {t('payroll.PayrollHome.continuarNomina')}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                   <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="icon" title=t('payroll.resetearNomina2')>
+                      <Button variant="outline" size="icon" title={t('payroll.resetearNomina2')}>
                         <RotateCcw className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -430,7 +430,7 @@ export default function PayrollHome({
                       <DialogHeader>
                         <DialogTitle>{t('payroll.resetearNomina')}</DialogTitle>
                         <DialogDescription>
-                          Se eliminarán todos los datos de esta nómina (nóminas calculadas, presentaciones, etc.) y podrás empezar de nuevo.
+                          {t('payroll.PayrollHome.seEliminaranTodosLosDatos')}
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
@@ -447,7 +447,7 @@ export default function PayrollHome({
             ) : (
               <>
                 <p className="text-muted-foreground">
-                  No hay nómina iniciada para este período.
+                  {t('payroll.PayrollHome.noHayNominaIniciadaPara')}
                 </p>
                 <Button 
                   onClick={handleStartPayroll} 
@@ -468,14 +468,14 @@ export default function PayrollHome({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileWarning className="h-5 w-5 text-warning" />
-              Problemas a Resolver
+              {t('payroll.PayrollHome.problemasAResolver')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {issues.length === 0 ? (
               <div className="flex items-center gap-2 text-success">
                 <CheckCircle className="h-5 w-5" />
-                <span>Todo listo para procesar</span>
+                <span>{t('payroll.PayrollHome.todoListoParaProcesar')}</span>
               </div>
             ) : (
               <div className="space-y-2">
@@ -495,13 +495,13 @@ export default function PayrollHome({
                       <span className="text-sm">{issue.message}</span>
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => navigate(`/payroll/${issue.action}`)}>
-                      Resolver
+                      {t('payroll.PayrollHome.resolver')}
                     </Button>
                   </div>
                 ))}
                 {isSandboxMode && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    En modo sandbox, puedes continuar sin resolver estos problemas.
+                    {t('payroll.PayrollHome.enModoSandboxPuedesContinuar')}
                   </p>
                 )}
               </div>
@@ -518,14 +518,14 @@ export default function PayrollHome({
               <div>
                 <h3 className="font-medium">{t("payroll.configureCertificate")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Sube el certificado de empresa (P12/PFX) para presentar a TGSS/AEAT/SEPE
+                  {t('payroll.PayrollHome.subeElCertificadoDeEmpresa')}
                 </p>
               </div>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline">
                     <Upload className="h-4 w-4 mr-2" />
-                    Subir Certificado
+                    {t('payroll.PayrollHome.subirCertificado')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -536,11 +536,11 @@ export default function PayrollHome({
                     <div className="border-2 border-dashed rounded-lg p-8 text-center">
                       <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">
-                        Arrastra tu certificado P12/PFX aquí
+                        {t('payroll.PayrollHome.arrastraTuCertificadoP12pfxAqui')}
                       </p>
                       <input type="file" className="hidden" accept=".p12,.pfx" />
                       <Button variant="link" className="mt-2">
-                        O selecciona un archivo
+                        {t('payroll.PayrollHome.oSeleccionaUnArchivo')}
                       </Button>
                     </div>
                     <div>
@@ -548,10 +548,10 @@ export default function PayrollHome({
                       <Input type="password" placeholder="••••••••" />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      El certificado se almacenará cifrado. Solo payroll_admin puede gestionarlo.
+                      {t('payroll.PayrollHome.elCertificadoSeAlmacenaraCifrado')}
                     </p>
                     <Button className="w-full" disabled>
-                      Guardar Certificado
+                      {t('payroll.PayrollHome.guardarCertificado')}
                     </Button>
                   </div>
                 </DialogContent>
@@ -569,7 +569,7 @@ export default function PayrollHome({
               <div>
                 <h3 className="font-medium">{t('payroll.datosDePrueba')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Carga 20 empleados con contratos, NIF/NSS/IBAN y variables mensuales para hacer una prueba completa.
+                  {t('payroll.PayrollHome.carga20EmpleadosConContratos')}
                 </p>
               </div>
               <Button variant="outline" onClick={handleSeedData} disabled={loading}>

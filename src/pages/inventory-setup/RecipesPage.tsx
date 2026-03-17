@@ -87,7 +87,7 @@ export default function RecipesPage() {
                 <div>
                     <h1 className="text-2xl font-display font-bold flex items-center gap-2">
                         <ChefHat className="h-6 w-6" />
-                        Escandallos
+                        {t('inventory-setup.RecipesPage.escandallos')}
                     </h1>
                     <p className="text-muted-foreground">{t('inventory.recetasSubrecetasYFoodCost')}</p>
                 </div>
@@ -111,7 +111,7 @@ export default function RecipesPage() {
                         <SelectValue placeholder={t('recipes.category')} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="all">{t('inventory-setup.RecipesPage.todas')}</SelectItem>
                         {CATEGORIES.map(c => (
                             <SelectItem key={c} value={c}>{c}</SelectItem>
                         ))}
@@ -119,7 +119,7 @@ export default function RecipesPage() {
                 </Select>
                 <div className="flex items-center gap-2">
                     <Switch checked={showSubRecipes} onCheckedChange={setShowSubRecipes} id="show-sub" />
-                    <Label htmlFor="show-sub" className="text-sm">Mostrar sub-recetas</Label>
+                    <Label htmlFor="show-sub" className="text-sm">{t('inventory-setup.RecipesPage.mostrarSubrecetas')}</Label>
                 </div>
             </div>
 
@@ -131,11 +131,11 @@ export default function RecipesPage() {
                             <TableRow>
                                 <TableHead>{t('onboarding.nombre')}</TableHead>
                                 <TableHead>{t('inventory.categoria')}</TableHead>
-                                <TableHead className="text-center">Ingredientes</TableHead>
-                                <TableHead className="text-right">Food Cost</TableHead>
-                                <TableHead className="text-right">Food Cost %</TableHead>
-                                <TableHead className="text-right">PVP</TableHead>
-                                <TableHead className="text-right">Yield</TableHead>
+                                <TableHead className="text-center">{t('inventory-setup.RecipesPage.ingredientes')}</TableHead>
+                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.foodCost')}</TableHead>
+                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.foodCost1')}</TableHead>
+                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.pvp')}</TableHead>
+                                <TableHead className="text-right">{t('inventory-setup.RecipesPage.yield')}</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -143,16 +143,16 @@ export default function RecipesPage() {
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                                        Cargando recetas...
+                                        {t('inventory-setup.RecipesPage.cargandoRecetas')}
                                     </TableCell>
                                 </TableRow>
-                            ) : filtered.length === 0 ? (
+                            {t('inventory-setup.RecipesPage.filteredlength0')}
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                                         <ChefHat className="h-10 w-10 mx-auto mb-3 opacity-30" />
                                         <p>No hay recetas{search ? ` que coincidan con "${search}"` : ''}</p>
                                         <Button variant="link" onClick={() => setShowCreateDialog(true)}>
-                                            Crear primera receta
+                                            {t('inventory-setup.RecipesPage.crearPrimeraReceta')}
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -167,7 +167,7 @@ export default function RecipesPage() {
                                             <div className="flex items-center gap-2">
                                                 {recipe.menu_item_name}
                                                 {recipe.is_sub_recipe && (
-                                                    <Badge variant="outline" className="text-xs">Sub-receta</Badge>
+                                                    <Badge variant="outline" className="text-xs">{t('inventory-setup.RecipesPage.subreceta')}</Badge>
                                                 )}
                                             </div>
                                         </TableCell>
@@ -238,7 +238,7 @@ export default function RecipesPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>PVP (€)</Label>
+                                <Label>{t('inventory-setup.RecipesPage.pvp')}</Label>
                                 <Input
                                     type="number" step="0.01" placeholder="12.50"
                                     value={newRecipe.selling_price}
@@ -262,8 +262,8 @@ export default function RecipesPage() {
                                     <SelectContent>
                                         <SelectItem value="portion">{t('inventory.porcion')}</SelectItem>
                                         <SelectItem value="kg">kg</SelectItem>
-                                        <SelectItem value="L">Litro</SelectItem>
-                                        <SelectItem value="units">Unidades</SelectItem>
+                                        <SelectItem value="L">{t('inventory-setup.RecipesPage.litro')}</SelectItem>
+                                        <SelectItem value="units">{t('inventory-setup.RecipesPage.unidades')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -274,7 +274,7 @@ export default function RecipesPage() {
                                 onCheckedChange={v => setNewRecipe({ ...newRecipe, is_sub_recipe: v })}
                                 id="is-sub"
                             />
-                            <Label htmlFor="is-sub">Es sub-receta (puede usarse como ingrediente de otra receta)</Label>
+                            <Label htmlFor="is-sub">{t('inventory-setup.RecipesPage.esSubrecetaPuedeUsarseComo')}</Label>
                         </div>
                     </div>
                     <DialogFooter>

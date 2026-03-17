@@ -35,10 +35,7 @@ const ROLE_COLORS = {
 };
 
 const VarianceIndicator = ({ value, inverted = false }: { value: number; inverted?: boolean }) => {
-  const isPositive = inverted ? value <= 0 : value >= 0;
-  const Icon = isPositive ? TrendingUp : TrendingDown;
-  
-  return (
+  const isPositive = inverted ? value <= 0 : value >{t('labour.LabourByRole.0ConstIconIspositiveTrendingup')}
     <span className={cn('inline-flex items-center gap-1 text-xs font-medium', isPositive ? 'text-emerald-600' : 'text-rose-600')}>
       <Icon className="h-3 w-3" />
       {isPositive ? '+' : ''}{value.toFixed(2)}%
@@ -73,7 +70,7 @@ export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
   if (isLoading) {
     return (
       <Card className="p-6 bg-white">
-        <h3 className="text-base font-semibold text-gray-900 mb-4">Labour by Role</h3>
+        <h3 className="text-base font-semibold text-gray-900 mb-4">{t('labour.LabourByRole.labourByRole')}</h3>
         <RoleSkeleton />
       </Card>
     );
@@ -81,7 +78,7 @@ export function LabourByRole({ isLoading, metricMode }: LabourByRoleProps) {
 
   return (
     <Card className="p-6 bg-white">
-      <h3 className="text-base font-semibold text-gray-900 mb-4">Labour by Role</h3>
+      <h3 className="text-base font-semibold text-gray-900 mb-4">{t('labour.LabourByRole.labourByRole1')}</h3>
       
       <div className="space-y-4">
         {rolesData.map((role) => {

@@ -32,10 +32,8 @@ export interface DashboardMetricsForAI {
 }
 
 export function useAINarratives() {
-  const [narrative, setNarrative] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const { t } = useTranslation();
+  const [narrative, setNarrative] = useState<string>{t('hooks.useAINarratives.constIsloadingSetisloadingUsestatefalseC')}<string | null>{t('hooks.useAINarratives.nullConstAbortrefUseref')}<AbortController | null>(null);
 
   const generate = useCallback(async (metrics: DashboardMetricsForAI, forceRefresh = false) => {
     // Cache key based on metrics signature

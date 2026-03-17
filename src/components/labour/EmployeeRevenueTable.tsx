@@ -113,7 +113,7 @@ export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeR
                 <CardHeader><CardTitle className="text-base">{t('labour.revenuePorEmpleado')}</CardTitle></CardHeader>
                 <CardContent>
                     <p className="text-sm text-gray-500 text-center py-4">
-                        No hay datos de turnos para el período seleccionado
+                        {t('labour.EmployeeRevenueTable.noHayDatosDeTurnos')}
                     </p>
                 </CardContent>
             </Card>
@@ -144,12 +144,12 @@ export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeR
                 {/* Table header */}
                 <div className="grid grid-cols-8 gap-2 mb-2 pb-2 border-b border-gray-100 text-[10px] font-semibold text-gray-500 uppercase">
                     <span className="col-span-2">{t('payroll.empleado')}</span>
-                    <span className="text-right">Horas</span>
-                    <span className="text-right">Revenue</span>
-                    <span className="text-right">SPLH</span>
-                    <span className="text-right">Coste</span>
+                    <span className="text-right">{t('labour.EmployeeRevenueTable.horas')}</span>
+                    <span className="text-right">{t('labour.EmployeeRevenueTable.revenue')}</span>
+                    <span className="text-right">{t('labour.EmployeeRevenueTable.splh')}</span>
+                    <span className="text-right">{t('labour.EmployeeRevenueTable.coste')}</span>
                     <span className="text-right">ROI</span>
-                    <span className="text-center">Nivel</span>
+                    <span className="text-center">{t('labour.EmployeeRevenueTable.nivel')}</span>
                 </div>
 
                 {/* Employee rows */}
@@ -190,7 +190,7 @@ export function EmployeeRevenueTable({ locationId, dateFrom, dateTo }: EmployeeR
 
                 {/* Footer */}
                 <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-                    Revenue atribuido proporcionalmente a horas trabajadas
+                    {t('labour.EmployeeRevenueTable.revenueAtribuidoProporcionalmenteAHoras')}
                 </div>
             </CardContent>
         </Card>

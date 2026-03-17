@@ -14,8 +14,7 @@ export interface Employee {
     weeklyHours: number;
     targetHours: number;
     hourlyRate: number | null;
-    availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'>;
-    timeOffInfo?: Record<string, any>;
+    availability: Record<string, 'available' | 'unavailable' | 'day_off' | 'time_off' | 'preferred'>{t('hooks.scheduling.types.timeoffinfoRecord')}<string, any>;
     contractType?: string;
 }
 

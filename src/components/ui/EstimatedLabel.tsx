@@ -27,7 +27,7 @@ export function EstimatedLabel({ reason, className = '' }: EstimatedLabelProps) 
         <TooltipTrigger asChild>
           <span className={`inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium ${className}`}>
             <Info className="h-3 w-3" />
-            Estimado
+            {t('ui.EstimatedLabel.estimado')}
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs text-xs">

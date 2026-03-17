@@ -75,9 +75,8 @@ function timeAgo(dateStr: string | null): string {
 }
 
 function healthBadge(value: number, good: number, warn: number) {
-  if (value >= good) return <Badge variant="default">OK</Badge>;
-  if (value >= warn) return <Badge variant="secondary">Parcial</Badge>;
-  return <Badge variant="destructive">{t("common.noData")}</Badge>;
+  if (value >{t('dataHealth.goodReturn')} <Badge variant="default">OK</Badge>;
+  if (value >{t('dataHealth.warnReturn')} <Badge variant="secondary">{t('dataHealth.parcial')}</Badge>{t('dataHealth.return')} <Badge variant="destructive">{t("common.noData")}</Badge>;
 }
 
 export default function DataHealth() {
@@ -127,9 +126,9 @@ export default function DataHealth() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Data Health</h1>
+          <h1 className="text-2xl font-bold">{t('dataHealth.dataHealth')}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Estado de las vistas materializadas, POS y cobertura de datos
+            {t('dataHealth.estadoDeLasVistasMaterializadas')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -140,11 +139,11 @@ export default function DataHealth() {
             disabled={refreshing}
           >
             <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-            Refrescar MVs
+            {t('dataHealth.refrescarMvs')}
           </Button>
           <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Recargar
+            {t('dataHealth.recargar')}
           </Button>
         </div>
       </div>
@@ -154,7 +153,7 @@ export default function DataHealth() {
           <CardContent className="pt-4">
             <p className="text-destructive flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Error cargando datos de salud. Verifica que las migraciones estén aplicadas.
+              {t('dataHealth.errorCargandoDatosDeSalud')}
             </p>
           </CardContent>
         </Card>
@@ -168,7 +167,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Database className="h-4 w-4" />
-                  Materialized Views
+                  {t('dataHealth.materializedViews')}
                 </CardTitle>
                 <Badge variant={statusColor(data.last_mv_refresh.status)}>
                   {data.last_mv_refresh.status}
@@ -178,19 +177,19 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Ultimo refresh:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.ultimoRefresh')}</span>{' '}
                   <strong>{timeAgo(data.last_mv_refresh.finished_at)}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Duracion:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.duracion')}</span>{' '}
                   <strong>{data.last_mv_refresh.duration_ms ? `${data.last_mv_refresh.duration_ms}ms` : '—'}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Trigger:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.trigger')}</span>{' '}
                   <strong>{data.last_mv_refresh.triggered_by || '—'}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Vistas:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.vistas')}</span>{' '}
                   <strong>{data.last_mv_refresh.views_refreshed?.length || 0}</strong>
                 </div>
                 {data.last_mv_refresh.error_message && (
@@ -208,7 +207,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4" />
-                  POS Sync
+                  {t('dataHealth.posSync')}
                 </CardTitle>
                 {healthBadge(data.last_pos_order.orders_7d, 1, 0)}
               </div>
@@ -216,11 +215,11 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Ultima orden:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.ultimaOrden')}</span>{' '}
                   <strong>{timeAgo(data.last_pos_order.last_closed_at)}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Ordenes (7d):</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.ordenes7d')}</span>{' '}
                   <strong>{data.last_pos_order.orders_7d.toLocaleString()}</strong>
                 </div>
               </div>
@@ -233,7 +232,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  Cobertura KPI (30d)
+                  {t('dataHealth.coberturaKpi30d')}
                 </CardTitle>
                 {healthBadge(data.kpi_coverage.location_days_30d, 10, 1)}
               </div>
@@ -241,11 +240,11 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Location-days:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.locationdays')}</span>{' '}
                   <strong>{data.kpi_coverage.location_days_30d}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Ubicaciones activas:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.ubicacionesActivas')}</span>{' '}
                   <strong>{data.kpi_coverage.distinct_locations}</strong>
                 </div>
               </div>
@@ -258,7 +257,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Package className="h-4 w-4" />
-                  Inventario
+                  {t('dataHealth.inventario')}
                 </CardTitle>
                 {healthBadge(data.inventory.total_items, 1, 0)}
               </div>
@@ -266,11 +265,11 @@ export default function DataHealth() {
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Items totales:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.itemsTotales')}</span>{' '}
                   <strong>{data.inventory.total_items}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Con receta:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.conReceta')}</span>{' '}
                   <strong>{data.inventory.with_recipes}</strong>
                 </div>
                 <div>
@@ -278,7 +277,7 @@ export default function DataHealth() {
                   <strong>{data.inventory.with_par_level}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Con coste:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.conCoste')}</span>{' '}
                   <strong>{data.inventory.with_cost}</strong>
                 </div>
               </div>
@@ -291,7 +290,7 @@ export default function DataHealth() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <ClipboardCheck className="h-4 w-4" />
-                  Conteos de Stock
+                  {t('dataHealth.conteosDeStock')}
                 </CardTitle>
                 {healthBadge(data.stock_counts.last_30d, 1, 0)}
               </div>
@@ -303,7 +302,7 @@ export default function DataHealth() {
                   <strong>{data.stock_counts.total}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Ultimos 30d:</span>{' '}
+                  <span className="text-muted-foreground">{t('dataHealth.ultimos30d')}</span>{' '}
                   <strong>{data.stock_counts.last_30d}</strong>
                 </div>
                 <div>
@@ -319,7 +318,7 @@ export default function DataHealth() {
       {!data && !isLoading && !isError && (
         <Card>
           <CardContent className="pt-6 text-center text-muted-foreground">
-            Cargando datos de salud del sistema...
+            {t('dataHealth.cargandoDatosDeSaludDel')}
           </CardContent>
         </Card>
       )}

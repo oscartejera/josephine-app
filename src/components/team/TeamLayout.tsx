@@ -88,7 +88,7 @@ export function TeamLayout() {
             <ChefHat className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <span className="font-display font-bold text-lg">Josephine</span>
+            <span className="font-display font-bold text-lg">{t('team.TeamLayout.josephine')}</span>
             <p className="text-xs text-muted-foreground">{t("team.teamPortal")}</p>
           </div>
         </div>
@@ -163,9 +163,7 @@ export function TeamLayout() {
         </Button>
       </div>
     </div>
-  );
-
-  return (
+  {t('team.TeamLayout.return')}
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-50 flex items-center justify-between px-4">
@@ -182,7 +180,7 @@ export function TeamLayout() {
 
         <div className="flex items-center gap-2">
           <ChefHat className="w-5 h-5 text-primary" />
-          <span className="font-display font-bold">Josephine</span>
+          <span className="font-display font-bold">{t('team.TeamLayout.josephine1')}</span>
         </div>
 
         <Avatar className="h-8 w-8">

@@ -33,13 +33,7 @@ export default function InstantPL() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
   }));
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-
-  // Filter mode state (Best/Worst/All)
-  const [filterMode, setFilterMode] = useState<FilterMode>('all');
-
-  // Active chips state
-  const [activeChips, setActiveChips] = useState<ChipFilter[]>(['all_locations']);
+  const [dateMode, setDateMode] = useState<DateMode>{t('instantPL.monthlyFilterModeStateBestworstall')}<FilterMode>{t('instantPL.allActiveChipsStateConst')}<ChipFilter[]>(['all_locations']);
 
   // Fetch data
   const { locations, chipCounts, lastUpdated, isLoading, isError } = useInstantPLData({
@@ -130,7 +124,7 @@ export default function InstantPL() {
           disabled={isLoading || locations.length === 0}
         >
           <Download className="h-4 w-4 mr-2" />
-          Exportar P&L (PDF)
+          {t('instantPL.exportarPlPdf')}
         </Button>
       </div>
 
@@ -158,7 +152,7 @@ export default function InstantPL() {
       {isError && (
         <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-center">
           <p className="text-destructive font-medium">
-            Failed to load P&L data. Please try again.
+            {t('instantPL.failedToLoadPlData')}
           </p>
         </div>
       )}

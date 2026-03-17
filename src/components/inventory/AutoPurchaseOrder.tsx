@@ -31,12 +31,7 @@ interface LowStockAlert {
 export function AutoPurchaseOrder() {
   const { t } = useTranslation();
     const { selectedLocationId, accessibleLocations } = useApp();
-    const [alerts, setAlerts] = useState<LowStockAlert[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [scanned, setScanned] = useState(false);
-    const [generating, setGenerating] = useState(false);
-    const [lastResult, setLastResult] = useState<{ id: string; totalLines: number } | null>(null);
-    const [resolvedOrgId, setResolvedOrgId] = useState<string>('');
+    const [alerts, setAlerts] = useState<LowStockAlert[]>{t('inventory.AutoPurchaseOrder.constLoadingSetloadingUsestatefalseConst')}<{ id: string; totalLines: number } | null>{t('inventory.AutoPurchaseOrder.nullConstResolvedorgidSetresolvedorgidUs')}<string>('');
 
     const locationIds = selectedLocationId === 'all'
         ? accessibleLocations.map(l => l.id)
@@ -124,7 +119,7 @@ export function AutoPurchaseOrder() {
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Truck className="h-4 w-4 text-primary" />
-                        Auto-Reposición Inteligente
+                        {t('inventory.AutoPurchaseOrder.autoreposicionInteligente')}
                     </CardTitle>
                     {lastResult && (
                         <Badge variant="outline" className="border-emerald-200 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 gap-1">
@@ -139,7 +134,7 @@ export function AutoPurchaseOrder() {
                     <div className="text-center py-4">
                         <PackageSearch className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
                         <p className="text-sm text-muted-foreground mb-3">
-                            Escanea el inventario para detectar items bajo mínimos y genera automáticamente una orden de compra
+                            {t('inventory.AutoPurchaseOrder.escaneaElInventarioParaDetectar')}
                         </p>
                         <Button onClick={scanAlerts} disabled={loading}>
                             {loading ? (
@@ -150,13 +145,13 @@ export function AutoPurchaseOrder() {
                             Escanear inventario
                         </Button>
                     </div>
-                ) : alerts.length === 0 ? (
+                {t('inventory.AutoPurchaseOrder.alertslength0')}
                     <div className="text-center py-4">
                         <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-emerald-600">Todo en orden</p>
+                        <p className="text-sm font-medium text-emerald-600">{t('inventory.AutoPurchaseOrder.todoEnOrden')}</p>
                         <p className="text-xs text-muted-foreground">{t("inventory.noItemsBelowMinimum")}</p>
                         <Button variant="outline" size="sm" className="mt-3" onClick={scanAlerts} disabled={loading}>
-                            Volver a escanear
+                            {t('inventory.AutoPurchaseOrder.volverAEscanear')}
                         </Button>
                     </div>
                 ) : (
@@ -168,7 +163,7 @@ export function AutoPurchaseOrder() {
                             </Badge>
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={scanAlerts} disabled={loading || generating}>
-                                    Reescanear
+                                    {t('inventory.AutoPurchaseOrder.reescanear')}
                                 </Button>
                                 <Button size="sm" onClick={generatePO} disabled={generating || !!lastResult}>
                                     {generating ? (
@@ -185,8 +180,8 @@ export function AutoPurchaseOrder() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Item</TableHead>
-                                        <TableHead className="text-right">Stock</TableHead>
+                                        <TableHead>{t('inventory.AutoPurchaseOrder.item')}</TableHead>
+                                        <TableHead className="text-right">{t('inventory.AutoPurchaseOrder.stock')}</TableHead>
                                         <TableHead className="text-right">{t('settings.minimo')}</TableHead>
                                         <TableHead className="text-right">{t('inventory.deficit')}</TableHead>
                                     </TableRow>

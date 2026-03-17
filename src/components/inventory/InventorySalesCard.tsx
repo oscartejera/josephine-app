@@ -43,7 +43,7 @@ export function InventorySalesCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">Sales</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{t('inventory.InventorySalesCard.sales')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold mb-4">
@@ -69,14 +69,14 @@ export function InventorySalesCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-primary" />
-              <span className="text-muted-foreground">Assigned</span>
+              <span className="text-muted-foreground">{t('inventory.InventorySalesCard.assigned')}</span>
             </div>
             <span className="font-medium">{currency}{assignedSales.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-muted-foreground/30" />
-              <span className="text-muted-foreground">Unassigned</span>
+              <span className="text-muted-foreground">{t('inventory.InventorySalesCard.unassigned')}</span>
             </div>
             <span className="font-medium">{currency}{unassignedSales.toLocaleString('es-ES', { minimumFractionDigits: 0 })}</span>
           </div>

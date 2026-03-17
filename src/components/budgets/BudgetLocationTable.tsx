@@ -21,7 +21,7 @@ function formatCurrency(value: number, currency = '€'): string {
 
 function DeltaCell({ value, suffix = '%', inverse = false }: { value: number; suffix?: string; inverse?: boolean }) {
   const isPositive = inverse ? value < 0 : value > 0;
-  const isNegative = inverse ? value > 0 : value < 0;
+  const isNegative = inverse ? value > {t('budgets.BudgetLocationTable.0Value')} < 0;
   
   return (
     <span className={cn(
@@ -106,11 +106,11 @@ export function BudgetLocationTable({ data, isLoading = false, currency = '€' 
   return (
     <Card>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-base font-medium">Budget by Location</CardTitle>
+        <CardTitle className="text-base font-medium">{t('budgets.BudgetLocationTable.budgetByLocation')}</CardTitle>
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search locations..."
+            placeholder={t('budgets.BudgetLocationTable.searchLocations')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9"
@@ -122,25 +122,25 @@ export function BudgetLocationTable({ data, isLoading = false, currency = '€' 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[140px]">Location</TableHead>
-                <TableHead colSpan={3} className="text-center border-l">Sales</TableHead>
-                <TableHead colSpan={2} className="text-center border-l">Labour</TableHead>
-                <TableHead colSpan={2} className="text-center border-l">COGS</TableHead>
-                <TableHead colSpan={3} className="text-center border-l">Prime Cost</TableHead>
-                <TableHead className="text-center border-l">Status</TableHead>
+                <TableHead className="min-w-[140px]">{t('budgets.BudgetLocationTable.location')}</TableHead>
+                <TableHead colSpan={3} className="text-center border-l">{t('budgets.BudgetLocationTable.sales')}</TableHead>
+                <TableHead colSpan={2} className="text-center border-l">{t('budgets.BudgetLocationTable.labour')}</TableHead>
+                <TableHead colSpan={2} className="text-center border-l">{t('budgets.BudgetLocationTable.cogs')}</TableHead>
+                <TableHead colSpan={3} className="text-center border-l">{t('budgets.BudgetLocationTable.primeCost')}</TableHead>
+                <TableHead className="text-center border-l">{t('budgets.BudgetLocationTable.status')}</TableHead>
               </TableRow>
               <TableRow>
                 <TableHead></TableHead>
-                <TableHead className="text-right text-xs border-l">Actual</TableHead>
-                <TableHead className="text-right text-xs">Budget</TableHead>
-                <TableHead className="text-right text-xs">Var</TableHead>
-                <TableHead className="text-right text-xs border-l">Actual</TableHead>
-                <TableHead className="text-right text-xs">Var</TableHead>
-                <TableHead className="text-right text-xs border-l">Actual</TableHead>
-                <TableHead className="text-right text-xs">Var</TableHead>
-                <TableHead className="text-right text-xs border-l">Actual %</TableHead>
-                <TableHead className="text-right text-xs">Budget %</TableHead>
-                <TableHead className="text-right text-xs">Var pp</TableHead>
+                <TableHead className="text-right text-xs border-l">{t('budgets.BudgetLocationTable.actual')}</TableHead>
+                <TableHead className="text-right text-xs">{t('budgets.BudgetLocationTable.budget')}</TableHead>
+                <TableHead className="text-right text-xs">{t('budgets.BudgetLocationTable.var')}</TableHead>
+                <TableHead className="text-right text-xs border-l">{t('budgets.BudgetLocationTable.actual1')}</TableHead>
+                <TableHead className="text-right text-xs">{t('budgets.BudgetLocationTable.var1')}</TableHead>
+                <TableHead className="text-right text-xs border-l">{t('budgets.BudgetLocationTable.actual2')}</TableHead>
+                <TableHead className="text-right text-xs">{t('budgets.BudgetLocationTable.var2')}</TableHead>
+                <TableHead className="text-right text-xs border-l">{t('budgets.BudgetLocationTable.actual3')}</TableHead>
+                <TableHead className="text-right text-xs">{t('budgets.BudgetLocationTable.budget1')}</TableHead>
+                <TableHead className="text-right text-xs">{t('budgets.BudgetLocationTable.varPp')}</TableHead>
                 <TableHead className="text-center border-l"></TableHead>
               </TableRow>
             </TableHeader>

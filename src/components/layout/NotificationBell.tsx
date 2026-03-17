@@ -63,7 +63,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
                     variant="ghost"
                     size="icon"
                     className="relative h-9 w-9"
-                    aria-label="Notificaciones"
+                    aria-label={t('layout.NotificationBell.notificaciones1')}
                 >
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
@@ -81,7 +81,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <h4 className="font-semibold text-sm">Notificaciones</h4>
+                    <h4 className="font-semibold text-sm">{t('layout.NotificationBell.notificaciones')}</h4>
                     {unreadCount > 0 && (
                         <Button
                             variant="ghost"
@@ -90,7 +90,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
                             onClick={() => markAllRead()}
                         >
                             <CheckCheck className="h-3 w-3 mr-1" />
-                            Leer todo
+                            {t('layout.NotificationBell.leerTodo')}
                         </Button>
                     )}
                 </div>
@@ -99,7 +99,7 @@ export function NotificationBell({ collapsed }: { collapsed?: boolean }) {
                 <ScrollArea className="max-h-80">
                     {notifications.length === 0 ? (
                         <div className="p-6 text-center text-sm text-muted-foreground">
-                            No hay notificaciones
+                            {t('layout.NotificationBell.noHayNotificaciones')}
                         </div>
                     ) : (
                         <div className="divide-y">

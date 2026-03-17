@@ -135,8 +135,8 @@ export function WasteByReasonChart({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">Reason</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Amount</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">{t('waste.WasteByReasonChart.reason')}</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t('waste.WasteByReasonChart.amount')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

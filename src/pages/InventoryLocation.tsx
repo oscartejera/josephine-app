@@ -58,11 +58,7 @@ export default function InventoryLocation() {
     };
   }, []); // Only compute once on mount
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [viewMode, setViewMode] = useState<ViewMode>('GP');
-  const [josephineOpen, setJosephineOpen] = useState(false);
-  const [pageError, setPageError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRangeValue>{t('inventoryLocation.initialdaterangeConstDatemodeSetdatemode')}<DateMode>{t('inventoryLocation.monthlyConstViewmodeSetviewmodeUsestate')}<ViewMode>{t('inventoryLocation.gpConstJosephineopenSetjosephineopenUses')}<string | null>(null);
 
   // Validate locationId - memoized
   const isValidLocation = useMemo(() => isValidLocationId(locationId), [locationId]);
@@ -180,14 +176,14 @@ export default function InventoryLocation() {
             <div className="flex flex-col items-center text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-destructive" />
               <div>
-                <h2 className="text-lg font-semibold">Invalid Location</h2>
+                <h2 className="text-lg font-semibold">{t('inventoryLocation.invalidLocation')}</h2>
                 <p className="text-muted-foreground mt-1">
                   The location "{locationId}" could not be found or is invalid.
                 </p>
               </div>
               <Button onClick={handleBackToAllLocations} className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Back to All Locations
+                {t('inventoryLocation.backToAllLocations')}
               </Button>
             </div>
           </CardContent>
@@ -213,11 +209,11 @@ export default function InventoryLocation() {
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleBackToAllLocations} className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
-                  Back to Inventory
+                  {t('inventoryLocation.backToInventory')}
                 </Button>
                 <Button onClick={handleRetry} className="gap-2">
                   <RefreshCw className="h-4 w-4" />
-                  Retry
+                  {t('inventoryLocation.retry')}
                 </Button>
               </div>
             </div>
@@ -260,7 +256,7 @@ export default function InventoryLocation() {
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          All locations
+          {t('inventoryLocation.allLocations')}
         </Button>
         
         <Button 
@@ -269,7 +265,7 @@ export default function InventoryLocation() {
           className="gap-2"
         >
           <FileText className="h-4 w-4" />
-          Reconciliation Report
+          {t('inventoryLocation.reconciliationReport')}
         </Button>
       </div>
 

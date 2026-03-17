@@ -92,7 +92,7 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                 <SheetHeader>
                     <SheetTitle className="flex items-center gap-2 text-base">
                         <Brain className="h-5 w-5 text-violet-500" />
-                        ¿Por qué este forecast?
+                        {t('forecast.ForecastExplainDrawer.porQueEsteForecast')}
                     </SheetTitle>
                     <p className="text-sm text-muted-foreground capitalize">{formattedDate}</p>
                 </SheetHeader>
@@ -108,7 +108,7 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
 
                     {!isLoading && !detail && (
                         <p className="text-sm text-muted-foreground py-8 text-center">
-                            No hay datos de forecast para esta fecha
+                            {t('forecast.ForecastExplainDrawer.noHayDatosDeForecast')}
                         </p>
                     )}
 
@@ -131,21 +131,21 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                             <div className="space-y-0">
                                 <ExplainFactor
                                     icon={TrendingUp}
-                                    label="Tendencia Base"
+                                    label={t('forecast.ForecastExplainDrawer.tendenciaBase')}
                                     impact={`€${Math.round(detail.trend || 0).toLocaleString('es-ES')}`}
                                     detail={t("bi.longTermGrowthTrend")}
                                     color="bg-blue-50 text-blue-600"
                                 />
                                 <ExplainFactor
                                     icon={Calendar}
-                                    label=t('forecast.patronSemanal')
+                                    label={t('forecast.patronSemanal')}
                                     impact={detail.weekly ? `${detail.weekly > 0 ? '+' : ''}${(detail.weekly * 100).toFixed(0)}%` : '—'}
                                     detail={`Efecto del día de la semana (${format(parseISO(date), 'EEEE', { locale: es })})`}
                                     color="bg-indigo-50 text-indigo-600"
                                 />
                                 <ExplainFactor
                                     icon={Sparkles}
-                                    label=t('forecast.patronAnual')
+                                    label={t('forecast.patronAnual')}
                                     impact={detail.yearly ? `${detail.yearly > 0 ? '+' : ''}${(detail.yearly * 100).toFixed(0)}%` : '—'}
                                     detail="Efecto estacional (temporada alta/baja)"
                                     color="bg-purple-50 text-purple-600"
@@ -153,7 +153,7 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                                 {detail.weather_temp !== null && (
                                     <ExplainFactor
                                         icon={Cloud}
-                                        label="Clima"
+                                        label={t('forecast.ForecastExplainDrawer.clima')}
                                         impact={`${Math.round(detail.weather_temp)}°C`}
                                         detail="Temperatura prevista (afecta demanda de terraza)"
                                         color="bg-cyan-50 text-cyan-600"
@@ -162,15 +162,15 @@ export function ForecastExplainDrawer({ open, onClose, locationId, date }: Forec
                                 {detail.is_holiday && (
                                     <ExplainFactor
                                         icon={Calendar}
-                                        label="Festivo"
+                                        label={t('forecast.ForecastExplainDrawer.festivo')}
                                         impact={detail.holiday_name || 'Festivo'}
-                                        detail=t('forecast.losFestivosModificanElPatron')
+                                        detail={t('forecast.losFestivosModificanElPatron')}
                                         color="bg-rose-50 text-rose-600"
                                     />
                                 )}
                                 <ExplainFactor
                                     icon={Brain}
-                                    label="Regresores Externos"
+                                    label={t('forecast.ForecastExplainDrawer.regresoresExternos')}
                                     impact={detail.regressor_total ? `${detail.regressor_total > 0 ? '+' : ''}${(detail.regressor_total * 100).toFixed(1)}%` : '0%'}
                                     detail="Impacto combinado de clima, eventos, festivos"
                                     color="bg-violet-50 text-violet-600"

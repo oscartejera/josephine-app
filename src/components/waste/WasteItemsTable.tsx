@@ -44,9 +44,7 @@ export function WasteItemsTable({
 }: WasteItemsTableProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [reasonFilter, setReasonFilter] = useState<WasteReason | 'all'>('all');
-  const [sortBy, setSortBy] = useState<'value' | 'quantity' | 'percentOfSales'>('value');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [reasonFilter, setReasonFilter] = useState<WasteReason | 'all'>{t('waste.WasteItemsTable.allConstSortbySetsortbyUsestate')}<'value' | 'quantity' | 'percentOfSales'>{t('waste.WasteItemsTable.valueConstSortorderSetsortorderUsestate')}<'asc' | 'desc'>('desc');
 
   const filteredItems = useMemo(() => {
     let result = [...items];
@@ -188,9 +186,7 @@ export function WasteItemsTable({
             </TableHeader>
             <TableBody>
               {filteredItems.map((item) => {
-                const percentOfTotal = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-
-                return (
+                const percentOfTotal = totalValue > {t('waste.WasteItemsTable.0ItemvalueTotalvalue1000')}
                   <TableRow key={item.itemId} className="hover:bg-muted/30">
                     <TableCell className="py-3 font-medium text-sm">
                       {item.itemName}

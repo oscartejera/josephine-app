@@ -47,13 +47,13 @@ export function AlertsPanel({ alerts, className }: AlertsPanelProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-warning" />
-          Alertas
+          {t('dashboard.AlertsPanel.alertas')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {alerts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No hay alertas activas
+            {t('dashboard.AlertsPanel.noHayAlertasActivas')}
           </p>
         ) : (
           alerts.map((alert) => {

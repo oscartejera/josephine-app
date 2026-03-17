@@ -142,7 +142,7 @@ export function DateRangePicker({
                 onClick={() => handlePresetClick('today')}
                 className="flex-1"
               >
-                Today
+                {t('sales.DateRangePicker.today')}
               </Button>
               <Button
                 variant={selectedPreset === 'week' ? 'default' : 'outline'}
@@ -150,7 +150,7 @@ export function DateRangePicker({
                 onClick={() => handlePresetClick('week')}
                 className="flex-1"
               >
-                Week
+                {t('sales.DateRangePicker.week')}
               </Button>
               <Button
                 variant={selectedPreset === 'month' ? 'default' : 'outline'}
@@ -158,7 +158,7 @@ export function DateRangePicker({
                 onClick={() => handlePresetClick('month')}
                 className="flex-1"
               >
-                Month
+                {t('sales.DateRangePicker.month')}
               </Button>
             </div>
 

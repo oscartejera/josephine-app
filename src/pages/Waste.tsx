@@ -37,8 +37,7 @@ export default function Waste() {
     from: initialFrom,
     to: initialTo
   });
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [selectedLocations, setSelectedLocations] = useState<string[]>(
+  const [dateMode, setDateMode] = useState<DateMode>{t('waste.monthlyConstSelectedlocationsSetselected')}<string[]>(
     initialLocation && initialLocation !== 'all' ? [initialLocation] : []
   );
 

@@ -120,8 +120,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
 
     // Impact color
     const getImpactColor = (m: number) => {
-        if (m >= 1.2) return 'text-green-600';
-        if (m <= 0.8) return 'text-red-600';
+        if (m >{t('settings.EventCalendarManager.12ReturnTextgreen600IfM')} <= 0.8) return 'text-red-600';
         return 'text-muted-foreground';
     };
 
@@ -136,23 +135,23 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <CalendarDays className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Calendario de Eventos</h3>
+                    <h3 className="text-lg font-semibold">{t('settings.EventCalendarManager.calendarioDeEventos')}</h3>
                     <Badge variant="outline">{events.length} próximos</Badge>
                 </div>
                 <Button size="sm" onClick={() => setDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />
-                    Añadir Evento
+                    {t('settings.EventCalendarManager.anadirEvento')}
                 </Button>
             </div>
 
             <p className="text-sm text-muted-foreground">
-                Los eventos afectan automáticamente al forecast de ventas. Un impacto de +20% significa que se espera un 20% más de ventas ese día.
+                {t('settings.EventCalendarManager.losEventosAfectanAutomaticamenteAl')}
             </p>
 
             {/* Events list */}
             {loading ? (
                 <div className="text-center py-8 text-muted-foreground">{t('settings.cargandoEventos')}</div>
-            ) : events.length === 0 ? (
+            {t('settings.EventCalendarManager.eventslength0')}
                 <Card><CardContent className="py-8 text-center">
                     <CalendarDays className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
                     <p className="text-muted-foreground">{t("events.noUpcomingEvents")}</p>
@@ -198,7 +197,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
             {/* Add Dialog */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>Nuevo Evento</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>{t('settings.EventCalendarManager.nuevoEvento')}</DialogTitle></DialogHeader>
                     <div className="space-y-3 py-2">
                         <Input placeholder={t("settings.eventName")} value={eventName} onChange={e => setEventName(e.target.value)} />
                         <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
@@ -216,7 +215,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                         <SelectItem value="0.70">-30%</SelectItem>
                                         <SelectItem value="0.80">-20%</SelectItem>
                                         <SelectItem value="0.90">-10%</SelectItem>
-                                        <SelectItem value="1.00">Normal (0%)</SelectItem>
+                                        <SelectItem value="1.00">{t('settings.EventCalendarManager.normal0')}</SelectItem>
                                         <SelectItem value="1.10">+10%</SelectItem>
                                         <SelectItem value="1.20">+20%</SelectItem>
                                         <SelectItem value="1.30">+30%</SelectItem>
@@ -226,11 +225,11 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                 </Select>
                             </div>
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">Recurrencia</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">{t('settings.EventCalendarManager.recurrencia')}</label>
                                 <Select value={recurrence} onValueChange={setRecurrence}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="none">Una vez</SelectItem>
+                                        <SelectItem value="none">{t('settings.EventCalendarManager.unaVez')}</SelectItem>
                                         <SelectItem value="weekly">{t('settings.semanal')}</SelectItem>
                                         <SelectItem value="monthly">{t('settings.mensual')}</SelectItem>
                                         <SelectItem value="yearly">{t('settings.anual')}</SelectItem>
@@ -238,7 +237,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                                 </Select>
                             </div>
                         </div>
-                        <Input placeholder="Ciudad (opcional)" value={city} onChange={e => setCity(e.target.value)} />
+                        <Input placeholder={t('settings.EventCalendarManager.ciudadOpcional')} value={city} onChange={e => setCity(e.target.value)} />
                     </div>
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>

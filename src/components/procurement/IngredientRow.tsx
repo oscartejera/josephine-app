@@ -39,7 +39,7 @@ export function IngredientRow({
                 <TooltipTrigger>
                   <Badge variant="secondary" className="gap-1">
                     <Pause className="h-3 w-3" />
-                    Paused
+                    {t('procurement.IngredientRow.paused')}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -54,7 +54,7 @@ export function IngredientRow({
           
           {/* Daily usage row */}
           <div className="mt-3 flex items-center gap-1">
-            <span className="text-xs text-muted-foreground mr-2 shrink-0">Daily usage:</span>
+            <span className="text-xs text-muted-foreground mr-2 shrink-0">{t('procurement.IngredientRow.dailyUsage')}</span>
             <div className="flex gap-1 overflow-x-auto">
               {dayLabels.map((day, i) => (
                 <div
@@ -73,15 +73,15 @@ export function IngredientRow({
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground ml-2">
                     <HelpCircle className="h-3 w-3 mr-1" />
-                    Why?
+                    {t('procurement.IngredientRow.why')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80" side="right" align="start">
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-sm">Recommendation Breakdown</h4>
+                    <h4 className="font-semibold text-sm">{t('procurement.IngredientRow.recommendationBreakdown')}</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Forecast Usage:</span>
+                        <span className="text-muted-foreground">{t('procurement.IngredientRow.forecastUsage')}</span>
                         <span className="font-medium">{breakdown.forecastUsage.toFixed(1)} {sku.unit}</span>
                       </div>
                       <div className="flex justify-between">
@@ -100,21 +100,21 @@ export function IngredientRow({
                       )}
                       <div className="border-t border-border pt-2">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">On Hand:</span>
+                          <span className="text-muted-foreground">{t('procurement.IngredientRow.onHand')}</span>
                           <span className="font-medium text-success">-{breakdown.onHand.toFixed(1)} {sku.unit}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">On Order:</span>
+                          <span className="text-muted-foreground">{t('procurement.IngredientRow.onOrder')}</span>
                           <span className="font-medium text-success">-{breakdown.onOrder.toFixed(1)} {sku.unit}</span>
                         </div>
                       </div>
                       <div className="border-t border-border pt-2">
                         <div className="flex justify-between font-semibold">
-                          <span>Net Needed:</span>
+                          <span>{t('procurement.IngredientRow.netNeeded')}</span>
                           <span>{breakdown.netNeeded.toFixed(1)} {sku.unit}</span>
                         </div>
                         <div className="flex justify-between font-semibold text-primary">
-                          <span>Recommended:</span>
+                          <span>{t('procurement.IngredientRow.recommended')}</span>
                           <span>{breakdown.recommendedPacks} packs ({(breakdown.recommendedPacks * sku.packSizeUnits).toFixed(1)} {sku.unit})</span>
                         </div>
                       </div>
@@ -162,7 +162,7 @@ export function IngredientRow({
             </p>
           </div>
           
-          {recommendedPacks > 0 && packs === 0 && !isPaused && (
+          {recommendedPacks > {t('procurement.IngredientRow.0Packs0Ispaused')}
             <Button
               variant="ghost"
               size="sm"

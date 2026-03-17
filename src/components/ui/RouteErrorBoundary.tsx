@@ -39,7 +39,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
             variant="outline"
             onClick={() => this.setState({ hasError: false, error: null })}
           >
-            Reintentar
+            {t('ui.RouteErrorBoundary.reintentar')}
           </Button>
         </div>
       );

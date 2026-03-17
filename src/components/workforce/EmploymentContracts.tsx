@@ -74,11 +74,7 @@ interface Props {
 export function EmploymentContracts({ locationId }: Props) {
   const { t } = useTranslation();
     const { accessibleLocations } = useApp();
-    const [contracts, setContracts] = useState<Contract[]>([]);
-    const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [contracts, setContracts] = useState<Contract[]>{t('workforce.EmploymentContracts.constEmployeesSetemployeesUsestate')}<{ id: string; full_name: string }[]>{t('workforce.EmploymentContracts.constLoadingSetloadingUsestatetrueConst')}<string | null>(null);
     const [saving, setSaving] = useState(false);
 
     const [form, setForm] = useState({
@@ -225,15 +221,11 @@ export function EmploymentContracts({ locationId }: Props) {
         ? activeContracts.reduce((sum, c) => sum + (c.base_salary_monthly || 0), 0) / activeContracts.length
         : 0;
     const avgJornada = activeContracts.length > 0
-        ? activeContracts.reduce((sum, c) => sum + (c.jornada_pct || 100), 0) / activeContracts.length
-        : 0;
-    const typeCounts = activeContracts.reduce<Record<string, number>>((acc, c) => {
+        ? activeContracts.reduce((sum, c) => {t('workforce.EmploymentContracts.sumCjornadapct1000Activecontractslength')}<Record<string, number>>((acc, c) => {
         acc[c.contract_type] = (acc[c.contract_type] || 0) + 1;
         return acc;
     }, {});
-    const topType = Object.entries(typeCounts).sort(([, a], [, b]) => b - a)[0];
-
-    return (
+    const topType = Object.entries(typeCounts).sort(([, a], [, b]) => {t('workforce.EmploymentContracts.bA0Return')}
         <div className="space-y-4">
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -270,7 +262,7 @@ export function EmploymentContracts({ locationId }: Props) {
                 <p className="text-sm text-muted-foreground">{contracts.length} contratos registrados</p>
                 <Button onClick={openAdd}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Nuevo contrato
+                    {t('workforce.EmploymentContracts.nuevoContrato')}
                 </Button>
             </div>
 
@@ -281,11 +273,11 @@ export function EmploymentContracts({ locationId }: Props) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[220px]">{t('payroll.empleado')}</TableHead>
-                                <TableHead>Tipo</TableHead>
-                                <TableHead className="text-right">Salario/mes</TableHead>
-                                <TableHead className="text-right">€/hora</TableHead>
-                                <TableHead className="text-right">Jornada</TableHead>
-                                <TableHead className="text-right">IRPF</TableHead>
+                                <TableHead>{t('workforce.EmploymentContracts.tipo')}</TableHead>
+                                <TableHead className="text-right">{t('workforce.EmploymentContracts.salariomes')}</TableHead>
+                                <TableHead className="text-right">{t('workforce.EmploymentContracts.hora')}</TableHead>
+                                <TableHead className="text-right">{t('workforce.EmploymentContracts.jornada')}</TableHead>
+                                <TableHead className="text-right">{t('workforce.EmploymentContracts.irpf')}</TableHead>
                                 <TableHead className="text-center">{t("common.status")}</TableHead>
                                 <TableHead className="w-[80px]"></TableHead>
                             </TableRow>
@@ -298,8 +290,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                             <div className="animate-pulse h-10 bg-muted rounded" />
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            ) : contracts.length === 0 ? (
+                                {t('workforce.EmploymentContracts.contractslength0')}
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12">
                                         <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
@@ -412,7 +403,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Coste/hora (€)</Label>
+                                <Label>{t('workforce.EmploymentContracts.costehora')}</Label>
                                 <Input
                                     type="number" step="0.01" placeholder="10.50"
                                     value={form.hourly_rate}
@@ -422,7 +413,7 @@ export function EmploymentContracts({ locationId }: Props) {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <Label>Jornada (%)</Label>
+                                <Label>{t('workforce.EmploymentContracts.jornada1')}</Label>
                                 <Input
                                     type="number" step="1" min="0" max="100" placeholder="100"
                                     value={form.jornada_pct}
@@ -430,7 +421,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>IRPF (%)</Label>
+                                <Label>{t('workforce.EmploymentContracts.irpf')}</Label>
                                 <Input
                                     type="number" step="0.1" placeholder="15"
                                     value={form.irpf_rate}

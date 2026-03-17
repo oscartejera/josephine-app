@@ -107,9 +107,7 @@ async function streamInsights({
 
 export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJosephineLabourPanelProps) {
   const { t } = useTranslation();
-  const [insight, setInsight] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [insight, setInsight] = useState<string>{t('labour.AskJosephineLabourPanel.constIsloadingSetisloadingUsestatefalseC')}<string | null>(null);
   const [question, setQuestion] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
   const { toast } = useToast();
@@ -189,7 +187,7 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Ask Josephine - Labour
+            {t('labour.AskJosephineLabourPanel.askJosephineLabour')}
           </SheetTitle>
         </SheetHeader>
 
@@ -198,7 +196,7 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
           {!hasGenerated && !isLoading && (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
-                Obtén insights sobre COL%, SPLH y recomendaciones de staffing
+                {t('labour.AskJosephineLabourPanel.obtenInsightsSobreColSplh')}
               </p>
               <Button 
                 onClick={() => generateInsights()} 
@@ -206,7 +204,7 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
                 disabled={!kpis}
               >
                 <Sparkles className="h-4 w-4" />
-                Analizar Labour
+                {t('labour.AskJosephineLabourPanel.analizarLabour')}
               </Button>
             </div>
           )}
@@ -234,9 +232,8 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
                 className="bg-muted/50 rounded-xl p-4 whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{ 
                   __html: insight
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br/>')
-                    .replace(/#{1,3}\s(.*?)(<br\/>|$)/g, '<h4 class="font-semibold mt-3 mb-1">$1</h4>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>{t('labour.AskJosephineLabourPanel.replaceng')}<br/>')
+                    .replace(/#{1,3}\s(.*?)(<br\/>{t('labour.AskJosephineLabourPanel.g')}<h4 class="font-semibold mt-3 mb-1">$1</h4>')
                 }}
               />
               {isLoading && (
@@ -248,7 +245,7 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
           {/* Suggested Questions */}
           {hasGenerated && !isLoading && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">Preguntas sugeridas:</p>
+              <p className="text-xs text-muted-foreground font-medium">{t('labour.AskJosephineLabourPanel.preguntasSugeridas')}</p>
               <div className="space-y-1">
                 {suggestedQuestions.map((q, i) => (
                   <Button
@@ -272,7 +269,7 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
         {/* Question input */}
         <form onSubmit={handleSubmitQuestion} className="flex gap-2 mt-4 pt-4 border-t">
           <Input
-            placeholder="Pregunta sobre COL, SPLH, staffing..."
+            placeholder={t('labour.AskJosephineLabourPanel.preguntaSobreColSplhStaffing')}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={isLoading || !kpis}

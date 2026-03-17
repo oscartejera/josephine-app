@@ -45,7 +45,7 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
                     <h3 className="text-sm font-semibold text-gray-700">{t('forecast.forecastPorHora')}</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    No hay datos horarios disponibles para esta fecha.
+                    {t('forecast.HourlyForecastChart.noHayDatosHorariosDisponibles')}
                 </p>
             </Card>
         );
@@ -106,8 +106,8 @@ export function HourlyForecastChart({ locationId, date }: HourlyForecastChartPro
                                 return (
                                     <div className="bg-white border rounded-lg shadow-xl p-3 text-sm">
                                         <p className="font-semibold mb-1">{d.hour}</p>
-                                        <p>Forecast: <strong>€{d.sales.toLocaleString('es-ES')}</strong></p>
-                                        <p>Mix: <strong>{d.mix.toFixed(1)}%</strong></p>
+                                        <p>{t('forecast.HourlyForecastChart.forecast')} <strong>€{d.sales.toLocaleString('es-ES')}</strong></p>
+                                        <p>{t('forecast.HourlyForecastChart.mix')} <strong>{d.mix.toFixed(1)}%</strong></p>
                                         {d.isPeak && <p className="text-indigo-600 font-medium">{t('forecast.horaPunta')}</p>}
                                     </div>
                                 );

@@ -132,7 +132,7 @@ export function RecommendationCard({
           <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
-                Impacto Estimado:
+                {t('ai.RecommendationCard.impactoEstimado')}
               </span>
               <div className="flex items-center gap-1">
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
@@ -146,19 +146,19 @@ export function RecommendationCard({
             <div className="mt-2 space-y-1 text-xs text-emerald-800 dark:text-emerald-200">
               {impact.revenue_delta && impact.revenue_delta > 0 && (
                 <div className="flex justify-between">
-                  <span>Revenue:</span>
+                  <span>{t('ai.RecommendationCard.revenue')}</span>
                   <span>+€{impact.revenue_delta}</span>
                 </div>
               )}
               {impact.labor_savings && impact.labor_savings > 0 && (
                 <div className="flex justify-between">
-                  <span>Labor savings:</span>
+                  <span>{t('ai.RecommendationCard.laborSavings')}</span>
                   <span>+€{impact.labor_savings}</span>
                 </div>
               )}
               {impact.cost_delta && impact.cost_delta > 0 && (
                 <div className="flex justify-between">
-                  <span>Cost:</span>
+                  <span>{t('ai.RecommendationCard.cost')}</span>
                   <span className="text-red-600">-€{impact.cost_delta}</span>
                 </div>
               )}
@@ -175,7 +175,7 @@ export function RecommendationCard({
               size="sm"
             >
               <Check className="h-4 w-4 mr-1" />
-              Aprobar
+              {t('ai.RecommendationCard.aprobar')}
             </Button>
             <Button
               onClick={() => onReject(recommendation.id)}
@@ -184,7 +184,7 @@ export function RecommendationCard({
               size="sm"
             >
               <X className="h-4 w-4 mr-1" />
-              Rechazar
+              {t('ai.RecommendationCard.rechazar')}
             </Button>
           </div>
         )}

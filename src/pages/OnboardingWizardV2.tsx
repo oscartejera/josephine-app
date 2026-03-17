@@ -99,8 +99,8 @@ function SetupTransition() {
                 <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 animate-ping" />
             </div>
             <div className="text-center space-y-2">
-                <h2 className="text-xl font-bold">Configurando tu cuenta...</h2>
-                <p className="text-sm text-muted-foreground">Preparando Josephine para ti</p>
+                <h2 className="text-xl font-bold">{t('onboardingWizardV2.configurandoTuCuenta')}</h2>
+                <p className="text-sm text-muted-foreground">{t('onboardingWizardV2.preparandoJosephineParaTi')}</p>
             </div>
             <div className="flex gap-1.5">
                 <div className="h-2 w-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0ms]" />
@@ -117,8 +117,7 @@ export default function OnboardingWizardV2() {
     const { selectedLocationId, setOnboardingComplete } = useApp();
     const { session, user, profile } = useAuth();
 
-    const [step, setStep] = useState<WizardStep>(1);
-    const [posChoice, setPosChoice] = useState<'square' | 'lightspeed' | 'csv' | 'skip' | null>(null);
+    const [step, setStep] = useState<WizardStep>{t('onboardingWizardV2.1ConstPoschoiceSetposchoiceUsestate')}<'square' | 'lightspeed' | 'csv' | 'skip' | null>(null);
     const [showTour, setShowTour] = useState(false);
     const [saving, setSaving] = useState(false);
     const [showTransition, setShowTransition] = useState(false);
@@ -215,9 +214,9 @@ export default function OnboardingWizardV2() {
                 <div className="h-16 w-16 rounded-2xl bg-indigo-500/10 mx-auto flex items-center justify-center">
                     <Link2 className="h-8 w-8 text-indigo-500" />
                 </div>
-                <h2 className="text-2xl font-bold">Conecta tu sistema POS</h2>
+                <h2 className="text-2xl font-bold">{t('onboardingWizardV2.conectaTuSistemaPos')}</h2>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                    Josephine importa datos de tu POS para generar insights automáticos. Elige tu sistema o sube datos manualmente.
+                    {t('onboardingWizardV2.josephineImportaDatosDeTu')}
                 </p>
             </div>
 
@@ -229,7 +228,7 @@ export default function OnboardingWizardV2() {
                         }`}
                 >
                     <Zap className="h-8 w-8 text-indigo-500 mb-2" />
-                    <p className="font-semibold">Square POS</p>
+                    <p className="font-semibold">{t('onboardingWizardV2.squarePos')}</p>
                     <p className="text-xs text-muted-foreground">{t('onboarding.conexionDirectaViaOauth')}</p>
                     {posChoice === 'square' && <CheckCircle className="h-5 w-5 text-indigo-500 mt-2" />}
                 </button>
@@ -241,7 +240,7 @@ export default function OnboardingWizardV2() {
                         }`}
                 >
                     <Zap className="h-8 w-8 text-amber-500 mb-2" />
-                    <p className="font-semibold">Lightspeed</p>
+                    <p className="font-semibold">{t('onboardingWizardV2.lightspeed')}</p>
                     <p className="text-xs text-muted-foreground">{t('onboarding.conexionDirectaViaOauth')}</p>
                     {posChoice === 'lightspeed' && <CheckCircle className="h-5 w-5 text-amber-500 mt-2" />}
                 </button>
@@ -254,7 +253,7 @@ export default function OnboardingWizardV2() {
                 >
                     <FileSpreadsheet className="h-8 w-8 text-emerald-500 mb-2" />
                     <p className="font-semibold">{t('onboarding.subirCsv')}</p>
-                    <p className="text-xs text-muted-foreground">Importa datos de cualquier POS</p>
+                    <p className="text-xs text-muted-foreground">{t('onboardingWizardV2.importaDatosDeCualquierPos')}</p>
                     {posChoice === 'csv' && <CheckCircle className="h-5 w-5 text-emerald-500 mt-2" />}
                 </button>
 
@@ -266,7 +265,7 @@ export default function OnboardingWizardV2() {
                 >
                     <SkipForward className="h-8 w-8 text-slate-400 mb-2" />
                     <p className="font-semibold">{t('onboarding.loHareDespues')}</p>
-                    <p className="text-xs text-muted-foreground">Empieza con datos de demo</p>
+                    <p className="text-xs text-muted-foreground">{t('onboardingWizardV2.empiezaConDatosDeDemo')}</p>
                     {posChoice === 'skip' && <CheckCircle className="h-5 w-5 text-slate-400 mt-2" />}
                 </button>
             </div>
@@ -281,9 +280,9 @@ export default function OnboardingWizardV2() {
                     <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-500 mx-auto flex items-center justify-center">
                         <Rocket className="h-10 w-10 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold">Todo listo</h2>
+                    <h2 className="text-2xl font-bold">{t('onboardingWizardV2.todoListo')}</h2>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        <strong>{restaurantName}</strong>{t('onboarding.yaEstaConfiguradoEnJosephine')}<strong>menos de 24 horas</strong>.
+                        <strong>{restaurantName}</strong>{t('onboarding.yaEstaConfiguradoEnJosephine')}<strong>{t('onboardingWizardV2.menosDe24Horas')}</strong>.
                     </p>
                 </div>
 
@@ -293,7 +292,7 @@ export default function OnboardingWizardV2() {
                         <div className="flex items-center gap-3">
                             <CheckCircle className="h-5 w-5 text-emerald-500" />
                             <span className="text-sm">
-                                <strong>POS:</strong>{' '}
+                                <strong>{t('onboardingWizardV2.pos')}</strong>{' '}
                                 {posChoice === 'square' ? t('onboarding.squareConnectLater') :
                                     posChoice === 'lightspeed' ? t('onboarding.lightspeedConnectLater') :
                                         posChoice === 'csv' ? t('onboarding.importacionCsv') : t('onboarding.seConfiguraraDespues')}
@@ -313,7 +312,7 @@ export default function OnboardingWizardV2() {
                             <div className="text-sm">
                                 <p className="font-medium text-indigo-700 dark:text-indigo-300">{t('onboarding.tuPrimeraPrevisionEn24h')}</p>
                                 <p className="text-indigo-600 dark:text-indigo-400 mt-1">
-                                    Josephine analizará tus datos y generará tu primer forecast de ventas, labor y demanda.
+                                    {t('onboardingWizardV2.josephineAnalizaraTusDatosY')}
                                 </p>
                             </div>
                         </div>
@@ -329,7 +328,7 @@ export default function OnboardingWizardV2() {
                             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white h-14 text-lg rounded-xl"
                         >
                             <Rocket className="h-5 w-5 mr-2" />
-                            Empezar a usar Josephine
+                            {t('onboardingWizardV2.empezarAUsarJosephine')}
                         </Button>
 
                         <Button
@@ -342,7 +341,7 @@ export default function OnboardingWizardV2() {
                             className="w-full h-12 rounded-xl"
                         >
                             <Sparkles className="h-4 w-4 mr-2" />
-                            Empezar con tour guiado
+                            {t('onboardingWizardV2.empezarConTourGuiado')}
                         </Button>
                     </div>
                 </div>
@@ -372,7 +371,7 @@ export default function OnboardingWizardV2() {
                     <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                         <span className="text-white font-bold text-sm">J</span>
                     </div>
-                    <span className="font-display font-bold text-lg">Josephine</span>
+                    <span className="font-display font-bold text-lg">{t('onboardingWizardV2.josephine')}</span>
                 </div>
                 <div className="flex items-center gap-4">
                     <span className="text-sm text-muted-foreground">

@@ -31,9 +31,7 @@ export function TeamManagersTab() {
     const [lastName, setLastName] = useState('');
     const [locationId, setLocationId] = useState('');
     const [sending, setSending] = useState(false);
-    const [managers, setManagers] = useState<ManagerEntry[]>([]);
-    const [loadingManagers, setLoadingManagers] = useState(true);
-    const [lastCreated, setLastCreated] = useState<{ email: string; password: string } | null>(null);
+    const [managers, setManagers] = useState<ManagerEntry[]>{t('settings.TeamManagersTab.constLoadingmanagersSetloadingmanagersUs')}<{ email: string; password: string } | null>(null);
 
     // Generate email preview
     const sanitize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
@@ -124,11 +122,10 @@ export function TeamManagersTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <UserPlus className="h-5 w-5 text-indigo-500" />
-                        Invitar Manager
+                        {t('settings.TeamManagersTab.invitarManager')}
                     </CardTitle>
                     <CardDescription>
-                        Crea una cuenta de manager con acceso limitado a una ubicación específica.
-                        Recibirá un email con sus credenciales.
+                        {t('settings.TeamManagersTab.creaUnaCuentaDeManager')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -173,7 +170,7 @@ export function TeamManagersTab() {
                         <div className="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg">
                             <Mail className="h-4 w-4 text-indigo-500 shrink-0" />
                             <span className="text-sm text-indigo-700 dark:text-indigo-300">
-                                Email: <strong>{emailPreview}</strong>
+                                {t('settings.TeamManagersTab.email')} <strong>{emailPreview}</strong>
                             </span>
                         </div>
                     )}
@@ -184,7 +181,7 @@ export function TeamManagersTab() {
                         className="w-full sm:w-auto"
                     >
                         {sending ? (
-                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
+                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t('settings.TeamManagersTab.enviando')}</>
                         ) : (
                             <><UserPlus className="h-4 w-4 mr-2" /> {t("team.sendInvitation")}</>
                         )}
@@ -196,7 +193,7 @@ export function TeamManagersTab() {
                             <div className="flex items-center gap-2 mb-2">
                                 <CheckCircle className="h-4 w-4 text-emerald-500" />
                                 <span className="font-medium text-emerald-700 dark:text-emerald-300 text-sm">
-                                    Manager invitado correctamente
+                                    {t('settings.TeamManagersTab.managerInvitadoCorrectamente')}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -208,7 +205,7 @@ export function TeamManagersTab() {
                                 </Button>
                             </div>
                             <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                                Las credenciales se han enviado por email.
+                                {t('settings.TeamManagersTab.lasCredencialesSeHanEnviado')}
                             </p>
                         </div>
                     )}
@@ -220,7 +217,7 @@ export function TeamManagersTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5 text-amber-500" />
-                        Permisos del Manager
+                        {t('settings.TeamManagersTab.permisosDelManager')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -252,17 +249,17 @@ export function TeamManagersTab() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Users className="h-5 w-5 text-slate-500" />
-                        Managers activos
+                        {t('settings.TeamManagersTab.managersActivos')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {loadingManagers ? (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                            <Loader2 className="h-4 w-4 animate-spin" /> Cargando...
+                            <Loader2 className="h-4 w-4 animate-spin" /> {t('settings.TeamManagersTab.cargando')}
                         </div>
-                    ) : managers.length === 0 ? (
+                    {t('settings.TeamManagersTab.managerslength0')}
                         <p className="text-sm text-muted-foreground py-4">
-                            No hay managers invitados aún. Usa el formulario de arriba para invitar al primero.
+                            {t('settings.TeamManagersTab.noHayManagersInvitadosAun')}
                         </p>
                     ) : (
                         <div className="space-y-3">
@@ -277,7 +274,7 @@ export function TeamManagersTab() {
                                         <div>
                                             <p className="text-sm font-medium">{m.full_name}</p>
                                             <div className="flex items-center gap-2">
-                                                <Badge variant="secondary" className="text-xs">Manager</Badge>
+                                                <Badge variant="secondary" className="text-xs">{t('settings.TeamManagersTab.manager')}</Badge>
                                                 {m.location_name && (
                                                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                                         <MapPin className="h-3 w-3" /> {m.location_name}

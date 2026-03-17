@@ -53,9 +53,7 @@ export default function TeamPay() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [employee, setEmployee] = useState<EmployeeInfo | null>(null);
-  const [clockRecords, setClockRecords] = useState<ClockRecord[]>([]);
-  const [plannedShifts, setPlannedShifts] = useState<PlannedShift[]>([]);
+  const [employee, setEmployee] = useState<EmployeeInfo | null>{t('team.TeamPay.nullConstClockrecordsSetclockrecordsUses')}<ClockRecord[]>{t('team.TeamPay.constPlannedshiftsSetplannedshiftsUsesta')}<PlannedShift[]>([]);
   const [loading, setLoading] = useState(true);
 
   const monthStart = startOfMonth(currentMonth);
@@ -114,15 +112,7 @@ export default function TeamPay() {
   const totalActualHours = totalActualMinutes / 60;
 
   // Calculate planned hours
-  const totalPlannedHours = plannedShifts.reduce((sum, s) => sum + (s.planned_hours || 0), 0);
-
-  // Estimated earnings
-  const hourlyRate = employee?.hourly_cost || 0;
-  const estimatedEarnings = totalActualHours * hourlyRate;
-  const plannedEarnings = totalPlannedHours * hourlyRate;
-
-  // Group clock records by day
-  const groupedByDay = clockRecords.reduce<Record<string, ClockRecord[]>>((acc, r) => {
+  const totalPlannedHours = plannedShifts.reduce((sum, s) => {t('team.TeamPay.sumSplannedhours00Estimated')}<Record<string, ClockRecord[]>>((acc, r) => {
     const day = format(new Date(r.clock_in), 'yyyy-MM-dd');
     if (!acc[day]) acc[day] = [];
     acc[day].push(r);
@@ -166,7 +156,7 @@ export default function TeamPay() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-muted-foreground">Horas trabajadas</span>
+              <span className="text-xs text-muted-foreground">{t('team.TeamPay.horasTrabajadas')}</span>
             </div>
             <p className="text-2xl font-bold">{totalActualHours.toFixed(1)}h</p>
             <p className="text-xs text-muted-foreground">
@@ -192,7 +182,7 @@ export default function TeamPay() {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Progreso del mes</span>
+            <span className="text-sm font-medium">{t('team.TeamPay.progresoDelMes')}</span>
             <span className="text-sm text-muted-foreground">
               {totalPlannedHours > 0
                 ? `${Math.round((totalActualHours / totalPlannedHours) * 100)}%`
@@ -224,8 +214,8 @@ export default function TeamPay() {
       {/* Detailed View */}
       <Tabs defaultValue="records">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="records">Fichajes</TabsTrigger>
-          <TabsTrigger value="shifts">Turnos planificados</TabsTrigger>
+          <TabsTrigger value="records">{t('team.TeamPay.fichajes')}</TabsTrigger>
+          <TabsTrigger value="shifts">{t('team.TeamPay.turnosPlanificados')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="records" className="mt-3">

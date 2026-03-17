@@ -20,12 +20,7 @@ interface BriefingData {
 }
 
 function generateLocalBriefing(
-    locations: Array<{ id: string; name: string }>,
-    salesByLoc: Record<string, number>,
-    labourByLoc: Record<string, number>,
-    budgetByLoc: Record<string, { sales: number; labour: number }>,
-    wasteTotal: number,
-    targetColByLoc: Record<string, number> = {}
+    locations: Array<{ id: string; name: string }>{t('dashboard.ExecutiveBriefing.salesbylocRecord')}<string, number>{t('dashboard.ExecutiveBriefing.labourbylocRecord')}<string, number>{t('dashboard.ExecutiveBriefing.budgetbylocRecord')}<string, { sales: number; labour: number }>{t('dashboard.ExecutiveBriefing.wastetotalNumberTargetcolbylocRecord')}<string, number> = {}
 ): BriefingData {
     const alerts: BriefingData['alerts'] = [];
     const recommendations: string[] = [];
@@ -103,17 +98,17 @@ function generateLocalBriefing(
         alerts.push({
             location: 'Todos',
             type: 'critical' as const,
-            message: 'No se han registrado ventas. Verifica la conexión POS o que los datos estén sincronizados.',
+            message: t('dashboard.noSeHanRegistradoVentas'),
         });
-        recommendations.push('⚠️ Sin datos de ventas: revisa que el POS esté conectado y sincronizando correctamente. Si usas datos demo, ejecuta el script de extensión de datos.');
+        recommendations.push(t('dashboard.sin_datos_de_ventas_revisa_que_el_pos_este_conecta'));
     }
 
     if (alerts.length === 0) {
-        narrativeParts.push('Todos los locales operan dentro de los márgenes objetivo. Excelente jornada.');
+        narrativeParts.push(t('dashboard.todosLosLocalesOperanDentro'));
     }
 
     if (recommendations.length === 0) {
-        recommendations.push('No se requieren ajustes inmediatos. Mantén la estrategia actual.');
+        recommendations.push(t('dashboard.noSeRequierenAjustesInmediatos'));
     }
 
     return {
@@ -171,9 +166,7 @@ export function ExecutiveBriefing() {
                         .from('employees')
                         .select('id, hourly_cost')
                         .in('id', empIds);
-                    const costMap = new Map((emps || []).map((e: any) => [e.id, e.hourly_cost || 12]));
-
-                    const locCosts: Record<string, number> = {};
+                    const costMap = new Map((emps || []).map((e: any) => {t('dashboard.ExecutiveBriefing.eidEhourlycost12ConstLoccosts')}<string, number> = {};
                     shifts.forEach((s: any) => {
                         const cost = (s.planned_hours || 0) * (costMap.get(s.employee_id) || 12);
                         locCosts[s.location_id] = (locCosts[s.location_id] || 0) + cost;
@@ -217,10 +210,7 @@ export function ExecutiveBriefing() {
                 budgetByLoc[r.location_id].labour += r.budget_labour || 0;
             });
 
-            const wasteTotal = (wasteData || []).reduce((sum: number, r: any) => sum + Math.abs((r.qty_delta || 0) * (r.unit_cost || 0)), 0);
-
-            // Fetch target COL% per location from location_settings
-            const targetColByLoc: Record<string, number> = {};
+            const wasteTotal = (wasteData || []).reduce((sum: number, r: any) => {t('dashboard.ExecutiveBriefing.sumMathabsrqtydelta0Runitcost0')}<string, number> = {};
             try {
                 const { data: settingsData } = await (supabase as any)
                     .from('location_settings')
@@ -256,7 +246,7 @@ export function ExecutiveBriefing() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-violet-500" />
-                        Morning Briefing
+                        {t('dashboard.ExecutiveBriefing.morningBriefing')}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -276,7 +266,7 @@ export function ExecutiveBriefing() {
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Coffee className="h-4 w-4 text-violet-500" />
-                        Morning Briefing — Josephine AI
+                        {t('dashboard.ExecutiveBriefing.morningBriefingJosephineAi')}
                     </CardTitle>
                     <Button
                         variant="ghost"
@@ -310,7 +300,7 @@ export function ExecutiveBriefing() {
                 {/* Recommendations */}
                 {briefing.recommendations.length > 0 && (
                     <div className="border-t pt-2">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Recomendaciones:</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">{t('dashboard.ExecutiveBriefing.recomendaciones')}</p>
                         {briefing.recommendations.slice(0, 2).map((rec, i) => (
                             <div key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
                                 <TrendingUp className="h-3 w-3 mt-0.5 shrink-0 text-emerald-500" />

@@ -39,9 +39,7 @@ function useAIImpactData(): { data: ImpactMetrics | null; isLoading: boolean } {
 
     return useQuery({
         queryKey: ['ai-impact', locationIds],
-        enabled: locationIds.length > 0 && !!session,
-        staleTime: 5 * 60 * 1000,
-        queryFn: async (): Promise<ImpactMetrics> => {
+        enabled: locationIds.length > {t('forecast.AIImpactCard.0SessionStaletime560')}<ImpactMetrics> => {
             const now = new Date();
             const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
             const today = format(now, 'yyyy-MM-dd');
@@ -181,8 +179,8 @@ export function AIImpactCard() {
             <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-violet-500" />
-                    Josephine AI Impact
-                    <span className="text-xs font-normal text-muted-foreground">— este mes</span>
+                    {t('forecast.AIImpactCard.josephineAiImpact')}
+                    <span className="text-xs font-normal text-muted-foreground">{t('forecast.AIImpactCard.esteMes')}</span>
                 </CardTitle>
                 {totalSavings > 0 && (
                     <p className="text-xs text-emerald-600 font-medium">
@@ -194,30 +192,30 @@ export function AIImpactCard() {
                 <div className="grid grid-cols-2 gap-4">
                     <ImpactKPI
                         icon={TrendingDown}
-                        label="Ahorro Laboral"
+                        label={t('forecast.AIImpactCard.ahorroLaboral')}
                         value={data.labourSavings > 0 ? `+${fmt(data.labourSavings)}` : '—'}
                         subtitle={`COL ${data.actualCol.toFixed(1)}% vs ${INDUSTRY_COL_BENCHMARK}% benchmark`}
                         color="bg-emerald-50 text-emerald-600"
                     />
                     <ImpactKPI
                         icon={ShieldCheck}
-                        label="Ahorro Merma"
+                        label={t('forecast.AIImpactCard.ahorroMerma')}
                         value={data.wasteSavings > 0 ? `+${fmt(data.wasteSavings)}` : '—'}
                         subtitle={`Waste ${data.actualWaste.toFixed(1)}% vs ${INDUSTRY_WASTE_BENCHMARK}% benchmark`}
                         color="bg-blue-50 text-blue-600"
                     />
                     <ImpactKPI
                         icon={Target}
-                        label=t('forecast.precisionForecast')
+                        label={t('forecast.precisionForecast')}
                         value={data.mape !== null ? `${(100 - data.mape).toFixed(0)}%` : t('team.sinDatos')}
                         subtitle={data.mape !== null ? `MAPE: ${data.mape.toFixed(1)}%` : 'Ejecuta backfill_forecast_accuracy()'}
                         color="bg-violet-50 text-violet-600"
                     />
                     <ImpactKPI
                         icon={Clock}
-                        label="Admin Ahorrado"
+                        label={t('forecast.AIImpactCard.adminAhorrado')}
                         value={data.adminHoursSaved > 0 ? `${data.adminHoursSaved}h` : '—'}
-                        subtitle="Horas ahorradas en scheduling"
+                        subtitle={t('forecast.AIImpactCard.horasAhorradasEnScheduling')}
                         color="bg-amber-50 text-amber-600"
                     />
                 </div>

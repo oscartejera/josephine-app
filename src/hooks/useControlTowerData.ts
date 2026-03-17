@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { buildQueryContext, getSalesTimeseriesRpc, getTopProductsRpc } from '@/data';
 import { format, subDays, startOfMonth } from 'date-fns';
 
+import { useTranslation } from 'react-i18next';
 export interface ControlTowerKPIs {
   salesToday: number;
   salesYesterday: number;
@@ -33,6 +34,7 @@ const emptyKPIs: ControlTowerKPIs = {
 };
 
 export function useControlTowerData() {
+  const { t } = useTranslation();
   const { locations, group, dataSource } = useApp();
   const { session } = useAuth();
   const orgId = group?.id;
@@ -40,9 +42,7 @@ export function useControlTowerData() {
 
   return useQuery({
     queryKey: ['control-tower', orgId, locationIds],
-    enabled: !!orgId && locationIds.length > 0 && !!session,
-    staleTime: 60000,
-    queryFn: async (): Promise<ControlTowerKPIs> => {
+    enabled: !!orgId && locationIds.length > {t('hooks.useControlTowerData.0SessionStaletime60000Queryfn')}<ControlTowerKPIs> => {
       const ctx = buildQueryContext(orgId, locationIds, dataSource);
       const today = new Date();
       const todayStr = format(today, 'yyyy-MM-dd');

@@ -190,7 +190,7 @@ export function DateRangePickerNoryLike({
           size="icon"
           className="h-8 w-8 rounded-lg hover:bg-muted/80"
           onClick={navigatePrevious}
-          aria-label="Previous period"
+          aria-label={t('bi.DateRangePickerNoryLike.previousPeriod')}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -254,7 +254,7 @@ export function DateRangePickerNoryLike({
           size="icon"
           className="h-8 w-8 rounded-lg hover:bg-muted/80"
           onClick={navigateNext}
-          aria-label="Next period"
+          aria-label={t('bi.DateRangePickerNoryLike.nextPeriod')}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

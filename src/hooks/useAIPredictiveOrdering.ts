@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { addDays, format } from 'date-fns';
 
+import { useTranslation } from 'react-i18next';
 export interface OrderGuideItem {
     inventoryItemId: string;
     itemName: string;
@@ -37,10 +38,9 @@ export interface OrderGuide {
 }
 
 export function useAIPredictiveOrdering(locationId: string | null) {
+  const { t } = useTranslation();
     const { group } = useApp();
-    const [orderGuide, setOrderGuide] = useState<OrderGuide | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [orderGuide, setOrderGuide] = useState<OrderGuide | null>{t('hooks.useAIPredictiveOrdering.nullConstLoadingSetloadingUsestatefalse')}<string | null>(null);
 
     const generateOrderGuide = useCallback(async (daysAhead: number = 7) => {
         if (!locationId || !group?.id) return;
@@ -66,12 +66,9 @@ export function useAIPredictiveOrdering(locationId: string | null) {
 
             // Sum total forecast sales
             const totalForecastSales = locationForecasts.reduce(
-                (sum: number, fp: any) => sum + (Number(fp.yhat) || 0), 0
-            );
-
-            if (totalForecastSales <= 0) {
+                (sum: number, fp: any) => {t('hooks.useAIPredictiveOrdering.sumNumberfpyhat00If')} <= 0) {
                 // Fallback: use average daily sales × days if no forecast
-                setError('No hay datos de forecast. Usando estimación por defecto.');
+                setError(t('ai.noHayDatosDeForecast'));
             }
 
             // 2. Get all recipes with their ingredients

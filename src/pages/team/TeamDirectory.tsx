@@ -144,7 +144,7 @@ export default function TeamDirectory() {
     <div className="p-4 lg:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold">Equipo</h1>
+        <h1 className="text-xl font-bold">{t('team.TeamDirectory.equipo')}</h1>
         <p className="text-sm text-muted-foreground flex items-center gap-1">
           <MapPin className="h-3 w-3" />
           {locationName} · {members.length} personas
@@ -179,7 +179,7 @@ export default function TeamDirectory() {
             </Card>
           ))}
         </div>
-      ) : filteredMembers.length === 0 ? (
+      {t('team.TeamDirectory.filteredmemberslength0')}
         <Card>
           <CardContent className="p-8 text-center">
             <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />

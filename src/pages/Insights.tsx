@@ -84,9 +84,7 @@ export default function Insights() {
   ];
 
   const delta = kpis?.salesDeltaPct ?? 0;
-  const DeltaIcon = delta >= 0 ? TrendingUp : TrendingDown;
-
-  return (
+  const DeltaIcon = delta >{t('insights.0TrendingupTrendingdownReturn')}
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="space-y-2">

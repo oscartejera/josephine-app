@@ -13,10 +13,7 @@ interface UseIdleTimeoutReturn {
 export function useIdleTimeout(enabled: boolean): UseIdleTimeoutReturn {
   const [showWarning, setShowWarning] = useState(false);
   const [minutesRemaining, setMinutesRemaining] = useState(5);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const warningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const deadlineRef = useRef<number>(Date.now() + IDLE_TIMEOUT_MS);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>{t('hooks.useIdleTimeout.nullConstWarningrefUseref')}<ReturnType<typeof setTimeout> | null>{t('hooks.useIdleTimeout.nullConstIntervalrefUseref')}<ReturnType<typeof setInterval> | null>{t('hooks.useIdleTimeout.nullConstDeadlinerefUseref')}<number>(Date.now() + IDLE_TIMEOUT_MS);
 
   const clearTimers = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -50,6 +47,7 @@ export function useIdleTimeout(enabled: boolean): UseIdleTimeoutReturn {
     resetTimer();
 
     const handleActivity = () => {
+  const { t } = useTranslation();
       if (!showWarning) {
         resetTimer();
       }

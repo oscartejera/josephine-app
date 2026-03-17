@@ -44,12 +44,7 @@ export default function ReviewsAll() {
     };
   };
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
-  const [dateMode, setDateMode] = useState<DateMode>('monthly');
-  const [platform, setPlatform] = useState<Platform>(
-    (searchParams.get('platform') as Platform) || 'all'
-  );
-  const [locationId, setLocationId] = useState<string>(
+  const [dateRange, setDateRange] = useState<DateRangeValue>{t('reviewsAll.getinitialdaterangeConstDatemodeSetdatem')}<DateMode>{t('reviewsAll.monthlyConstPlatformSetplatformUsestate')}<Platform>{t('reviewsAll.searchparamsgetplatformAsPlatformAllCons')}<string>(
     searchParams.get('location') || 'all'
   );
 
@@ -158,11 +153,11 @@ export default function ReviewsAll() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-muted-foreground">Insights</span>
+              <span className="text-muted-foreground">{t('reviewsAll.insights')}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Reviews</span>
+              <span className="text-muted-foreground">{t('reviewsAll.reviews')}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-foreground">All Reviews</span>
+              <span className="font-medium text-foreground">{t('reviewsAll.allReviews')}</span>
             </div>
           </div>
 
@@ -182,10 +177,10 @@ export default function ReviewsAll() {
                 <SelectValue placeholder={t('reviews.allPlatforms')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Platforms</SelectItem>
-                <SelectItem value="google">Google</SelectItem>
-                <SelectItem value="tripadvisor">TripAdvisor</SelectItem>
-                <SelectItem value="thefork">TheFork</SelectItem>
+                <SelectItem value="all">{t('reviewsAll.allPlatforms')}</SelectItem>
+                <SelectItem value="google">{t('reviewsAll.google')}</SelectItem>
+                <SelectItem value="tripadvisor">{t('reviewsAll.tripadvisor')}</SelectItem>
+                <SelectItem value="thefork">{t('reviewsAll.thefork')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -194,7 +189,7 @@ export default function ReviewsAll() {
                 <SelectValue placeholder={t('reviews.allLocations')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="all">{t('reviewsAll.allLocations')}</SelectItem>
                 {locations.map((loc) => (
                   <SelectItem key={loc.id} value={loc.id}>
                     {loc.name}
@@ -207,7 +202,7 @@ export default function ReviewsAll() {
 
         {/* Title */}
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">All Reviews</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t('reviewsAll.allReviews1')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {reviews.length} reviews in this period
           </p>

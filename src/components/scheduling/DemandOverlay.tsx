@@ -122,13 +122,12 @@ export function DemandOverlay({ locationId, weekStart, scheduledHoursPerDay }: D
         <div className="relative">
           {isLoading ? (
             <div className="h-20 flex items-center justify-center text-xs text-muted-foreground">
-              Loading forecast…
+              {t('scheduling.DemandOverlay.loadingForecast')}
             </div>
           ) : hourlyData && hourlyData.length > 0 ? (
             <div className="flex items-end gap-px h-20 px-1">
               {hourlyData.map((row) => {
-                const heightPct = maxSales > 0 ? (row.forecast_sales / maxSales) * 100 : 0;
-                return (
+                const heightPct = maxSales > {t('scheduling.DemandOverlay.0RowforecastsalesMaxsales1000')}
                   <Tooltip key={row.hour}>
                     <TooltipTrigger asChild>
                       <div className="flex-1 flex flex-col items-center gap-0.5">
@@ -149,7 +148,7 @@ export function DemandOverlay({ locationId, weekStart, scheduledHoursPerDay }: D
                     <TooltipContent side="top" className="text-xs">
                       <div className="font-semibold">{row.hour}:00</div>
                       <div>€{Math.round(row.forecast_sales)} ({(row.mix_pct * 100).toFixed(1)}%)</div>
-                      {row.is_peak && <div className="text-amber-500 font-medium">Peak hour</div>}
+                      {row.is_peak && <div className="text-amber-500 font-medium">{t('scheduling.DemandOverlay.peakHour')}</div>}
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -167,8 +166,8 @@ export function DemandOverlay({ locationId, weekStart, scheduledHoursPerDay }: D
               <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
               <div className="flex items-center gap-0.5 flex-1">
                 {dailyForecasts.map(({ label, scheduled, dayIdx }) => {
-                  // Simple heuristic: > 60h = over, < 20h = under (for a full-service restaurant)
-                  const status = scheduled > 50 ? 'over' : scheduled < 15 ? 'under' : 'ok';
+                  // Simple heuristic: > {t('scheduling.DemandOverlay.60hOver')} < 20h = under (for a full-service restaurant)
+                  const status = scheduled > {t('scheduling.DemandOverlay.50OverScheduled')} < 15 ? 'under' : 'ok';
                   return (
                     <Tooltip key={dayIdx}>
                       <TooltipTrigger asChild>

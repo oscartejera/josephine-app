@@ -62,17 +62,7 @@ export function UsersRolesManager() {
   const { isOwner, hasPermission } = usePermissions();
   const { toast } = useToast();
 
-  const [users, setUsers] = useState<UserWithRoles[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingUser, setEditingUser] = useState<UserWithRoles | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  // New role assignment state
-  const [newAssignment, setNewAssignment] = useState<RoleAssignment>({
+  const [users, setUsers] = useState<UserWithRoles[]>{t('settings.UsersRolesManager.constRolesSetrolesUsestate')}<Role[]>{t('settings.UsersRolesManager.constLoadingSetloadingUsestatetrueConst')}<UserWithRoles | null>{t('settings.UsersRolesManager.nullConstShoweditdialogSetshoweditdialog')}<string | null>{t('settings.UsersRolesManager.nullConstSavingSetsavingUsestatefalse')}<RoleAssignment>({
     role_id: '',
     location_id: null
   });
@@ -291,7 +281,7 @@ export function UsersRolesManager() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Usuarios y Roles
+                {t('settings.UsersRolesManager.usuariosYRoles')}
               </CardTitle>
               <CardDescription>
                 Gestiona los usuarios y sus permisos en {group?.name || 'tu grupo'}
@@ -299,7 +289,7 @@ export function UsersRolesManager() {
             </div>
             <Button disabled>
               <Plus className="h-4 w-4 mr-2" />
-              Invitar Usuario
+              {t('settings.UsersRolesManager.invitarUsuario')}
             </Button>
           </div>
         </CardHeader>
@@ -315,8 +305,8 @@ export function UsersRolesManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('settings.usuario')}</TableHead>
-                  <TableHead>Roles</TableHead>
-                  <TableHead>Scope</TableHead>
+                  <TableHead>{t('settings.UsersRolesManager.roles')}</TableHead>
+                  <TableHead>{t('settings.UsersRolesManager.scope')}</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -366,7 +356,7 @@ export function UsersRolesManager() {
                             ) : (
                               <>
                                 <Globe className="h-3 w-3" />
-                                Global
+                                {t('settings.UsersRolesManager.global')}
                               </>
                             )}
                           </div>
@@ -390,7 +380,7 @@ export function UsersRolesManager() {
 
           {canViewRoles && (
             <div className="mt-6 pt-6 border-t">
-              <h4 className="font-medium mb-3">Roles Disponibles</h4>
+              <h4 className="font-medium mb-3">{t('settings.UsersRolesManager.rolesDisponibles')}</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {roles.map(role => {
                   const display = ROLE_DISPLAY[role.name] || { label: role.name, variant: 'outline' as const };
@@ -430,7 +420,7 @@ export function UsersRolesManager() {
           <div className="space-y-4 py-4">
             {/* Current Roles */}
             <div>
-              <Label className="mb-2 block">Roles Actuales</Label>
+              <Label className="mb-2 block">{t('settings.UsersRolesManager.rolesActuales')}</Label>
               {editingUser?.roles.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("users.noRolesAssigned")}</p>
               ) : (
@@ -458,7 +448,7 @@ export function UsersRolesManager() {
                             ) : (
                               <span className="flex items-center gap-1">
                                 <Globe className="h-3 w-3" />
-                                Todas las ubicaciones
+                                {t('settings.UsersRolesManager.todasLasUbicaciones')}
                               </span>
                             )}
                           </span>
@@ -525,7 +515,7 @@ export function UsersRolesManager() {
                       <SelectItem value="global">
                         <span className="flex items-center gap-2">
                           <Globe className="h-3 w-3" />
-                          Todas las ubicaciones
+                          {t('settings.UsersRolesManager.todasLasUbicaciones1')}
                         </span>
                       </SelectItem>
                     )}
@@ -545,7 +535,7 @@ export function UsersRolesManager() {
                   disabled={!newAssignment.role_id || saving}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Añadir Rol
+                  {t('settings.UsersRolesManager.anadirRol')}
                 </Button>
               </div>
             </div>
@@ -553,7 +543,7 @@ export function UsersRolesManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Cerrar
+              {t('settings.UsersRolesManager.cerrar')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -565,7 +555,7 @@ export function UsersRolesManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('settings.eliminarEsteRol')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará el rol del usuario. Podrás volver a asignarlo después.
+              {t('settings.UsersRolesManager.estaAccionEliminaraElRol')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -575,7 +565,7 @@ export function UsersRolesManager() {
               disabled={saving}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Eliminar
+              {t('settings.UsersRolesManager.eliminar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -76,16 +76,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
   const { t } = useTranslation();
     const { group } = useApp();
     const { user } = useAuth();
-    const [reviews, setReviews] = useState<Review[]>([]);
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-
-    // Form state
-    const [selectedEmployee, setSelectedEmployee] = useState('');
-    const [overallRating, setOverallRating] = useState(3);
-    const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>(
+    const [reviews, setReviews] = useState<Review[]>{t('workforce.EmployeeReviews.constEmployeesSetemployeesUsestate')}<Employee[]>{t('workforce.EmployeeReviews.constLoadingSetloadingUsestatetrueConst')}<Record<string, number>>(
         Object.fromEntries(REVIEW_CATEGORIES.map(c => [c.key, 3]))
     );
     const [strengths, setStrengths] = useState('');
@@ -177,10 +168,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
 
     // Team average
     const teamAvg = reviews.length > 0
-        ? reviews.reduce((s, r) => s + r.overall_rating, 0) / reviews.length
-        : 0;
-
-    return (
+        ? reviews.reduce((s, r) => {t('workforce.EmployeeReviews.sRoverallrating0Reviewslength0')}
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -204,13 +192,13 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                 <Card>
                     <CardContent className="py-3 px-4 text-center">
                         <p className="text-2xl font-bold">{reviews.length}</p>
-                        <p className="text-xs text-muted-foreground">Evaluaciones</p>
+                        <p className="text-xs text-muted-foreground">{t('workforce.EmployeeReviews.evaluaciones')}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="py-3 px-4 text-center">
                         <p className="text-2xl font-bold">{employeeAvgs.size}</p>
-                        <p className="text-xs text-muted-foreground">Evaluados</p>
+                        <p className="text-xs text-muted-foreground">{t('workforce.EmployeeReviews.evaluados')}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -228,8 +216,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                     {employees.map(emp => {
                         const stats = employeeAvgs.get(emp.id);
                         const empReviews = reviews.filter(r => r.employee_id === emp.id);
-                        const initials = emp.full_name?.split(' ').map((w: string) => w[0]).join('').slice(0, 2) || '?';
-                        return (
+                        const initials = emp.full_name?.split(' ').map((w: string) => {t('workforce.EmployeeReviews.w0joinslice02Return')}
                             <Card key={emp.id}>
                                 <CardContent className="py-3 px-4">
                                     <div className="flex items-center gap-3">
