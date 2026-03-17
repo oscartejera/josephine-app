@@ -128,7 +128,7 @@ export function OrderSummaryDesktop({
         ) : (
           <div className="py-8 text-center">
             <ShoppingCart className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">No items in cart</p>
+            <p className="text-sm text-muted-foreground">{t("procurement.noItemsInCart")}</p>
             <p className="text-xs text-muted-foreground mt-1">Use AI Recommend to auto-fill</p>
           </div>
         )}

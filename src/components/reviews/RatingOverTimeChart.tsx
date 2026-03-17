@@ -28,7 +28,7 @@ export function RatingOverTimeChart({ data, isLoading }: RatingOverTimeChartProp
   return (
     <Card className="p-5 bg-card border border-border/60 rounded-xl">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-foreground">Rating over time</h3>
+        <h3 className="text-base font-semibold text-foreground">{t("reviews.ratingOverTime")}</h3>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 rounded bg-primary" />

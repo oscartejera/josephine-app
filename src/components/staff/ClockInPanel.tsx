@@ -229,7 +229,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
           {geoLocation && (
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3 w-3" />
-              <span>Ubicación detectada</span>
+              <span>{t("staff.locationDetected")}</span>
             </div>
           )}
 
@@ -237,7 +237,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
           {activeRecord ? (
             <div className="space-y-3">
               <div className="bg-muted/50 rounded-lg p-3 text-center">
-                <p className="text-sm text-muted-foreground">Turno activo desde</p>
+                <p className="text-sm text-muted-foreground">{t("staff.activeShiftSince")}</p>
                 <p className="font-semibold">
                   {format(new Date(activeRecord.clock_in), 'HH:mm')}
                 </p>
@@ -268,7 +268,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
           {/* Weekly Summary */}
           <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-sm text-muted-foreground">Esta semana:</span>
+            <span className="text-sm text-muted-foreground">{t("staff.thisWeek")}:</span>
             <span className="font-semibold">{calculateWeeklyHours()}</span>
           </div>
         </CardContent>

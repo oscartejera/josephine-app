@@ -130,7 +130,7 @@ export default function AdminTools() {
     <div className="p-6 space-y-6 max-w-[1200px] mx-auto">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Admin Tools</h1>
-        <p className="text-gray-600 mt-2">Herramientas para generar datos demo y gestión del sistema</p>
+        <p className="text-gray-600 mt-2">{t("admin.toolsDescription")}</p>
       </div>
 
       {/* Forecast Section */}
@@ -204,7 +204,7 @@ export default function AdminTools() {
                 </div>
 
                 <div className="bg-white rounded-lg p-3 space-y-2 text-sm">
-                  <p className="font-medium text-gray-900">Ventajas sobre v4:</p>
+                  <p className="font-medium text-gray-900">{t("admin.advantagesOverV4")}:</p>
                   <ul className="space-y-1 text-gray-700 ml-4">
                     <li>✓ Facebook Prophet ML real (Python)</li>
                     <li>✓ Changepoint detection automatico</li>
@@ -266,12 +266,12 @@ export default function AdminTools() {
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-indigo-600" />
                   <span className="font-medium">2025-01 a 2025-12:</span>
-                  <span>Actuals completos</span>
+                  <span>{t("admin.actualsComplete")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-indigo-600" />
                   <span className="font-medium">2026-01 a 2026-02:</span>
-                  <span>Actuals actuales</span>
+                  <span>{t("admin.actualsCurrent")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-indigo-600" />
@@ -345,7 +345,7 @@ export default function AdminTools() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span>Suficiente para ver funcionalidades</span>
+                  <span>{t("admin.sufficientForFeatures")}</span>
                 </div>
               </div>
 
@@ -702,7 +702,7 @@ export default function AdminTools() {
 
       {/* What Gets Generated */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Qué se genera</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("admin.whatIsGenerated")}</h3>
         
         <div className="grid grid-cols-2 gap-6">
           <div>
@@ -728,11 +728,11 @@ export default function AdminTools() {
 
       {/* Verification Queries */}
       <Card className="p-6 bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Queries de Verificación</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("admin.verificationQueries")}</h3>
         
         <div className="space-y-3">
           <div className="bg-white rounded-lg p-3 border">
-            <p className="text-xs font-medium text-gray-700 mb-2">Ver totales:</p>
+            <p className="text-xs font-medium text-gray-700 mb-2">{t("admin.viewTotals")}:</p>
             <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">
               {`SELECT 
   (SELECT COUNT(*) FROM facts_sales_15m) as sales,
@@ -743,7 +743,7 @@ export default function AdminTools() {
           </div>
 
           <div className="bg-white rounded-lg p-3 border">
-            <p className="text-xs font-medium text-gray-700 mb-2">Ver sales por mes:</p>
+            <p className="text-xs font-medium text-gray-700 mb-2">{t("admin.viewSalesByMonth")}:</p>
             <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">
               {`SELECT 
   TO_CHAR(DATE(ts_bucket), 'YYYY-MM') as month,

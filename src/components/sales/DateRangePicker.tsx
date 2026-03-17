@@ -164,7 +164,7 @@ export function DateRangePicker({
 
             {/* Calendar for custom selection */}
             <div className="border-t pt-3">
-              <p className="text-sm font-medium mb-2">Or select custom range:</p>
+              <p className="text-sm font-medium mb-2">{t("sales.selectCustomRange")}:</p>
               <Calendar
                 mode="range"
                 selected={{

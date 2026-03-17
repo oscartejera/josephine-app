@@ -135,7 +135,7 @@ export default function TeamPay() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Mi Nómina</h1>
-          <p className="text-sm text-muted-foreground">Control de horas y estimaciones</p>
+          <p className="text-sm text-muted-foreground">{t("team.hoursControl")}</p>
         </div>
       </div>
 

@@ -215,7 +215,7 @@ export default function ProcurementCart() {
         <Card>
           <CardContent className="py-16 text-center">
             <Package className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" />
-            <p className="text-lg text-muted-foreground mb-4">Your cart is empty</p>
+            <p className="text-lg text-muted-foreground mb-4">{t("procurement.cartEmpty")}</p>
             <Button onClick={() => navigate('/procurement')}>
               Continue Shopping
             </Button>

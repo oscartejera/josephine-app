@@ -327,7 +327,7 @@ export default function BookingWidget() {
 
             {/* Special Requests */}
             <div className="space-y-2">
-              <Label htmlFor="special_requests">Peticiones especiales</Label>
+              <Label htmlFor="special_requests">{t("booking.specialRequests")}</Label>
               <Textarea
                 id="special_requests"
                 value={formData.special_requests}

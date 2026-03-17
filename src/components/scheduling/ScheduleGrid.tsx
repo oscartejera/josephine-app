@@ -637,7 +637,7 @@ export function ScheduleGrid({ data, viewMode, positions, weatherData, onMoveShi
                           </div>
                         </>
                       )}
-                      {!hasActual && isPastDay && <div className="text-muted-foreground">No actual data</div>}
+                      {!hasActual && isPastDay && <div className="text-muted-foreground">{t("scheduling.noActualData")}</div>}
                     </div>
                   </TooltipContent>
                 </Tooltip>

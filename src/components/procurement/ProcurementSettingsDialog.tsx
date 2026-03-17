@@ -148,7 +148,7 @@ export function ProcurementSettingsDialog({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Reset all settings?</AlertDialogTitle>
+                <AlertDialogTitle>{t("procurement.resetSettings")}</AlertDialogTitle>
                 <AlertDialogDescription>
                   This will reset all category settings (waste factors, safety stock, and yield factors) to their default values. This action cannot be undone.
                 </AlertDialogDescription>

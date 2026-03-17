@@ -29,7 +29,7 @@ export function RatingByLocationTable({ data, isLoading, onLocationClick }: Rati
   return (
     <Card className="p-5 bg-card border border-border/60 rounded-xl">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-foreground">Rating by location</h3>
+        <h3 className="text-base font-semibold text-foreground">{t("reviews.ratingByLocation")}</h3>
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

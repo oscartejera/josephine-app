@@ -208,7 +208,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                         </Select>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">Impacto en ventas</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">{t("settings.salesImpact")}</label>
                                 <Select value={impactMultiplier} onValueChange={setImpactMultiplier}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>

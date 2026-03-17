@@ -228,7 +228,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                     <span className="text-xs text-muted-foreground">~{estimatedCovers} covers max</span>
                   </div>
                   <div>
-                    <Label className="text-xs">Tipo de servicio</Label>
+                    <Label className="text-xs">{t("scheduling.serviceType")}</Label>
                     <Select value={settings.service_type} onValueChange={v => updateField('service_type', v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -322,7 +322,7 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Coste horario medio €/h</Label>
+                    <Label className="text-xs">{t("scheduling.avgHourlyCost")}</Label>
                     <Input
                       type="number"
                       step="0.5"

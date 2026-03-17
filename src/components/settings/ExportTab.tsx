@@ -61,13 +61,13 @@ export function ExportTab() {
                     <Download className="h-5 w-5" />
                     Exportar Datos
                 </CardTitle>
-                <CardDescription>Descarga datos en formato CSV</CardDescription>
+                <CardDescription>{t("settings.downloadCsv")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card className="p-4">
                         <h3 className="font-medium mb-2">Tickets</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Historial de ventas y transacciones</p>
+                        <p className="text-sm text-muted-foreground mb-4">{t("settings.salesHistory")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('tickets')}>
                             <Download className="h-4 w-4 mr-2" />
                             Exportar
@@ -75,7 +75,7 @@ export function ExportTab() {
                     </Card>
                     <Card className="p-4">
                         <h3 className="font-medium mb-2">Empleados</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Lista de empleados y roles</p>
+                        <p className="text-sm text-muted-foreground mb-4">{t("settings.employeeList")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('employees')}>
                             <Download className="h-4 w-4 mr-2" />
                             Exportar
@@ -83,7 +83,7 @@ export function ExportTab() {
                     </Card>
                     <Card className="p-4">
                         <h3 className="font-medium mb-2">Inventario</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Items de inventario y stock</p>
+                        <p className="text-sm text-muted-foreground mb-4">{t("settings.inventoryItems")}</p>
                         <Button variant="outline" className="w-full" onClick={() => handleExport('inventory')}>
                             <Download className="h-4 w-4 mr-2" />
                             Exportar

@@ -99,10 +99,10 @@ export default function Integrations() {
             para sincronizar automáticamente:
           </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
-            <li>Catálogo de productos y menú</li>
-            <li>Pedidos y tickets</li>
-            <li>Pagos y transacciones</li>
-            <li>Información de ubicaciones</li>
+            <li>{t("integrations.productCatalog")}</li>
+            <li>{t("integrations.ordersAndTickets")}</li>
+            <li>{t("integrations.paymentsAndTransactions")}</li>
+            <li>{t("integrations.locationInfo")}</li>
           </ul>
           <p>
             Los datos se normalizan a un modelo canónico (CDM) que permite análisis

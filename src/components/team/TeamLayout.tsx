@@ -89,7 +89,7 @@ export function TeamLayout() {
           </div>
           <div>
             <span className="font-display font-bold text-lg">Josephine</span>
-            <p className="text-xs text-muted-foreground">Portal de Equipo</p>
+            <p className="text-xs text-muted-foreground">{t("team.teamPortal")}</p>
           </div>
         </div>
       </div>
@@ -150,7 +150,7 @@ export function TeamLayout() {
             onClick={() => navigate('/dashboard')}
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Panel de gestión</span>
+            <span>{t("team.managementPanel")}</span>
           </Button>
         )}
         <Button

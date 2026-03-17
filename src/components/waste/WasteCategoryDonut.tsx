@@ -72,7 +72,7 @@ export function WasteCategoryDonut({
     <Card className="border-border">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-foreground">Waste by ingredient category</CardTitle>
+          <CardTitle className="text-sm font-medium text-foreground">{t("waste.byIngredientCategory")}</CardTitle>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

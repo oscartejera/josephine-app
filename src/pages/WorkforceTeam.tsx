@@ -994,7 +994,7 @@ export default function WorkforceTeam() {
                                 <Select value={announcementForm.location_id} onValueChange={(v) => setAnnouncementForm((f) => ({ ...f, location_id: v }))}>
                                     <SelectTrigger><SelectValue placeholder={t('workforce.all')} /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Todos los locales</SelectItem>
+                                        <SelectItem value="">{t("common.allLocations")}</SelectItem>
                                         {locations.map((l) => (
                                             <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                                         ))}

@@ -248,7 +248,7 @@ export function BookingSettingsManager() {
 
       {!selectedLocationId && (
         <Alert>
-          <AlertDescription>Selecciona una ubicación para configurar las reservas online</AlertDescription>
+          <AlertDescription>{t("settings.selectLocationForBooking")}</AlertDescription>
         </Alert>
       )}
 
@@ -277,7 +277,7 @@ export function BookingSettingsManager() {
               {/* Enable Toggle */}
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Habilitar reservas online</Label>
+                  <Label>{t("settings.enableOnlineBooking")}</Label>
                   <p className="text-sm text-muted-foreground">
                     Los clientes podrán reservar desde tu web
                   </p>
@@ -326,7 +326,7 @@ export function BookingSettingsManager() {
 
               {/* Party Size */}
               <div className="space-y-4 border-t pt-4">
-                <h4 className="font-medium">Límites de personas</h4>
+                <h4 className="font-medium">{t("settings.peopleLimits")}</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Mínimo</Label>
@@ -373,7 +373,7 @@ export function BookingSettingsManager() {
 
               {/* Advance Days */}
               <div className="space-y-2 border-t pt-4">
-                <Label>Días de antelación máximos</Label>
+                <Label>{t("settings.maxAdvanceDays")}</Label>
                 <Select
                   value={String(formData.booking_advance_days)}
                   onValueChange={(v) =>
@@ -431,7 +431,7 @@ export function BookingSettingsManager() {
 
               {/* Notes */}
               <div className="space-y-2 border-t pt-4">
-                <Label htmlFor="booking_notes">Notas para clientes</Label>
+                <Label htmlFor="booking_notes">{t("settings.customerNotes")}</Label>
                 <Textarea
                   id="booking_notes"
                   value={formData.booking_notes}

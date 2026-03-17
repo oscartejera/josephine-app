@@ -186,7 +186,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Rendimiento del Equipo</h3>
+                    <h3 className="text-lg font-semibold">{t("workforce.teamPerformance")}</h3>
                 </div>
                 <Button size="sm" onClick={() => setDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />

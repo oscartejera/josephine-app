@@ -461,7 +461,7 @@ export default function DataImport() {
                                 <div className="text-center py-12 text-muted-foreground">
                                     <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                                     <p>{t("dataImport.noPreviousImports")}</p>
-                                    <p className="text-sm">Sube tu primer archivo CSV para empezar</p>
+                                    <p className="text-sm">{t("dataImport.uploadFirstCsv")}</p>
                                 </div>
                             ) : (
                                 <div className="border rounded-lg overflow-hidden">
@@ -542,7 +542,7 @@ export default function DataImport() {
                                     onClick={() => inputRef.current?.click()}
                                 >
                                     <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                                    <p className="text-lg font-medium mb-1">Arrastra tu archivo aquí</p>
+                                    <p className="text-lg font-medium mb-1">{t("dataImport.dragFileHere")}</p>
                                     <p className="text-sm text-muted-foreground mb-4">o haz click para seleccionar</p>
                                     <p className="text-xs text-muted-foreground">
                                         Formatos: CSV (.csv) · Separadores: coma, punto y coma, tabulación
@@ -703,7 +703,7 @@ export default function DataImport() {
                             <CardContent className="flex flex-col items-center justify-center py-16">
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4" />
                                 <p className="text-lg font-medium">Importando datos...</p>
-                                <p className="text-sm text-muted-foreground">Esto puede tardar unos segundos</p>
+                                <p className="text-sm text-muted-foreground">{t("dataImport.mayTakeSeconds")}</p>
                             </CardContent>
                         </Card>
                     )}

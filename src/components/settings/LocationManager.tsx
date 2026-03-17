@@ -671,11 +671,11 @@ export function LocationManager() {
                 </div>
 
                 <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">Se creará automáticamente:</p>
+                  <p className="font-medium text-foreground mb-1">{t("settings.autoCreated")}:</p>
                   <ul className="list-disc list-inside space-y-0.5">
-                    <li>Plano de sala con 5 mesas de ejemplo</li>
-                    <li>Configuración de objetivos (GP, COL)</li>
-                    <li>Configuración de nóminas (España)</li>
+                    <li>{t("settings.floorPlan5Tables")}</li>
+                    <li>{t("settings.objectivesConfig")}</li>
+                    <li>{t("settings.payrollConfig")}</li>
                     <li>Conexión con POS y KDS</li>
                   </ul>
                 </div>
@@ -711,7 +711,7 @@ export function LocationManager() {
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Local de origen</Label>
+              <Label>{t("settings.sourceLocation")}</Label>
               <Select value={sourceLocationId} onValueChange={setSourceLocationId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona el local a copiar" />
@@ -933,13 +933,13 @@ export function LocationManager() {
                                 ¿Eliminar "{loc.name}"?
                               </AlertDialogTitle>
                               <AlertDialogDescription className="space-y-2">
-                                <p>Esta acción eliminará permanentemente:</p>
+                                <p>{t("settings.deleteWarning")}:</p>
                                 <ul className="list-disc list-inside text-sm">
-                                  <li>Todos los tickets y ventas del local</li>
-                                  <li>Empleados asignados a este local</li>
+                                  <li>{t("settings.allTicketsAndSales")}</li>
+                                  <li>{t("settings.assignedEmployees")}</li>
                                   <li>Turnos, horarios y nóminas</li>
-                                  <li>Inventario y pedidos</li>
-                                  <li>Configuración de mesas y planos</li>
+                                  <li>{t("settings.inventoryAndOrders")}</li>
+                                  <li>{t("settings.tablesAndFloorPlans")}</li>
                                 </ul>
                                 <p className="font-medium text-destructive">
                                   Esta acción no se puede deshacer.
@@ -971,7 +971,7 @@ export function LocationManager() {
           <div className="text-center py-12 text-muted-foreground">
             <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>{t("dashboard.noLocations")}</p>
-            <p className="text-sm">Añade tu primer local para empezar</p>
+            <p className="text-sm">{t("settings.addFirstLocation")}</p>
           </div>
         )}
       </CardContent>

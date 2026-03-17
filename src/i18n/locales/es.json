@@ -244,7 +244,8 @@
     "noAccessibleLocations": "Sin locales accesibles",
     "noNotifications": "Sin notificaciones",
     "offlineBanner": "Sin conexión — los datos pueden no estar actualizados",
-    "contactPhone": "Teléfono de contacto"
+    "contactPhone": "Teléfono de contacto",
+    "somethingWentWrong": "Algo salió mal"
   },
   "nav": {
     "controlTower": "Control Tower",
@@ -383,7 +384,9 @@
     "enterSixDigitCode": "Por favor ingresa el código de 6 dígitos",
     "incorrectCode": "El código es incorrecto",
     "accountVerified": "Tu cuenta ha sido verificada",
-    "verificationError": "Ocurrió un error al verificar"
+    "verificationError": "Ocurrió un error al verificar",
+    "passwordChanged": "Tu contraseña ha sido cambiada exitosamente",
+    "enterNewPassword": "Ingresa tu nueva contraseña"
   },
   "dashboard": {
     "title": "Panel de Control",
@@ -411,7 +414,9 @@
     "ordersToday": "Pedidos hoy",
     "topProduct": "Top producto",
     "viewAnalysis": "Ver análisis",
-    "noLocations": "No hay locales configurados"
+    "noLocations": "No hay locales configurados",
+    "todayOperationsSummary": "Resumen de operaciones de hoy",
+    "noDataForPeriod": "Sin datos para este periodo"
   },
   "sales": {
     "title": "Ventas",
@@ -437,9 +442,10 @@
     "tryRefreshing": "Intenta actualizar la página o cambiar el rango de fechas.",
     "channelSplitRequiresPOS": "El desglose por canal requiere seguimiento de canales POS",
     "totalSales": "Total Sales",
-    "totalOrders": "Total Orders"
+    "totalOrders": "Total Orders",
+    "selectCustomRange": "O selecciona rango personalizado",
+    "askAboutSales": "Pregunta sobre tus ventas"
   },
-
   "waste": {
     "title": "Mermas",
     "totalWaste": "Merma total",
@@ -458,7 +464,10 @@
     "optimizedWasteLog": "Registro optimizado de merma",
     "wasteRegistered": "Merma registrada",
     "registering": "Registrando...",
-    "confirmWaste": "Confirmar Merma"
+    "confirmWaste": "Confirmar Merma",
+    "byReasonValue": "Merma por razón (valor)",
+    "loggedWasteValue": "Valor de merma registrado",
+    "byIngredientCategory": "Merma por categoría de ingrediente"
   },
   "menuEngineering": {
     "title": "Rentabilidad del Menú",
@@ -550,7 +559,12 @@
     "recipeUpdated": "Receta actualizada",
     "ingredientAdded": "Ingrediente añadido a la receta",
     "addIngredient": "Añadir Ingrediente",
-    "recipePrefix": "Receta"
+    "recipePrefix": "Receta",
+    "dishName": "Nombre del plato *",
+    "yieldUnit": "Unidad de rendimiento",
+    "notFound": "Receta no encontrada",
+    "details": "Detalles de la Receta",
+    "inventoryIngredient": "Ingrediente de inventario"
   },
   "scheduling": {
     "title": "Gestión de Turnos",
@@ -602,14 +616,22 @@
     "autoFillEmpty": "Auto-fill: No se encontraron huecos para rellenar",
     "analyzingForecast": "Analizando pronóstico de ventas y SPLH histórico",
     "calculatingStaffing": "Calculando niveles de dotación óptimos por estación",
-    "verifyingConstraints": "Verificando restricciones de disponibilidad y contratos"
+    "verifyingConstraints": "Verificando restricciones de disponibilidad y contratos",
+    "selectShiftToSwap": "Selecciona turno con el que intercambiar",
+    "noSwapRequests": "No hay solicitudes de intercambio aún",
+    "swapDescription": "Los empleados pueden solicitar intercambiar turnos con compañeros",
+    "serviceType": "Tipo de servicio",
+    "avgHourlyCost": "Coste horario medio €/h",
+    "noActualData": "Sin datos reales",
+    "noScheduleYet": "Aún no hay horario"
   },
   "budgets": {
     "title": "Presupuestos",
     "annualBudget": "Presupuesto anual",
     "monthlyBudget": "Presupuesto mensual",
     "actualVsBudget": "Real vs Presupuesto",
-    "variance": "Variación"
+    "variance": "Variación",
+    "comparePerformance": "Compara rendimiento real vs presupuesto"
   },
   "cashManagement": {
     "title": "Gestión de Caja",
@@ -680,7 +702,15 @@
     "totalVat": "Total VAT (21%)",
     "itemsAddedToCart": "Items added to cart",
     "reorder": "Reorder",
-    "deliveryReceived": "Entrega recibida"
+    "deliveryReceived": "Entrega recibida",
+    "resetSettings": "¿Restablecer toda la configuración?",
+    "noItemsInCart": "No hay artículos en el carrito",
+    "viewPastOrders": "Ver pedidos anteriores y reordenar rápidamente",
+    "noSuppliersFound": "No se encontraron proveedores",
+    "placeOrderToAdd": "Realiza un pedido para añadir proveedores",
+    "noOrdersYet": "No hay pedidos aún",
+    "noLineItems": "No se encontraron líneas de pedido",
+    "cartEmpty": "Tu carrito está vacío"
   },
   "reviews": {
     "title": "Reseñas",
@@ -716,9 +746,11 @@
     "reply": "Responder",
     "noReviews": "Sin reseñas",
     "noEmployees": "Sin empleados en este local",
-    "notEvaluated": "Sin evaluar"
+    "notEvaluated": "Sin evaluar",
+    "ratingOverTime": "Valoración a lo largo del tiempo",
+    "ratingByLocation": "Valoración por ubicación",
+    "noReviewsForPeriod": "No se encontraron reseñas para este periodo"
   },
-
   "pos": {
     "title": "Terminal Punto de Venta",
     "openTable": "Abrir Mesa",
@@ -886,7 +918,64 @@
     "exportError": "Error al exportar",
     "requestRegistered": "Solicitud registrada",
     "preferencesUpdated": "Preferencias actualizadas",
-    "demoDataRegenerated": "Datos demo regenerados"
+    "demoDataRegenerated": "Datos demo regenerados",
+    "noUserPermission": "No tienes permisos para gestionar usuarios",
+    "hasAccess": "Tiene acceso",
+    "noTeamPermission": "No tienes permisos para gestionar el equipo",
+    "addSuppliersFromWizard": "Añade proveedores desde el asistente de locales",
+    "shippingMethod": "Método de envío",
+    "orderEmail": "Email de pedidos",
+    "orderWebsite": "Web de pedidos",
+    "fallbackEmail": "Email de respaldo",
+    "managePaymentMethods": "Gestiona métodos de pago para autopago de compras",
+    "cardEncrypted": "Los datos de tu tarjeta están cifrados de forma segura",
+    "noPaymentMethods": "Sin métodos de pago",
+    "addPaymentMethodDesc": "Añade un método de pago para habilitar el autopago de pedidos",
+    "deletePaymentMethod": "¿Eliminar método de pago?",
+    "paymentHistory": "Histórico de Pagos",
+    "stripePayments": "Pagos con Stripe",
+    "allLocations": "Todos los locales",
+    "kpiObjectivesDesc": "Define los KPIs objetivo para cada local. Estos valores se usan en el scheduling y forecast.",
+    "objectivesImpact": "Cómo los objetivos afectan la generación automática de turnos",
+    "weeklyBudgetEst": "Budget semanal (est.)",
+    "maxHoursWeek": "Max horas/semana",
+    "loyaltyDesc": "Gestiona clientes frecuentes y recompensas",
+    "pointsInCirculation": "Puntos en circulación",
+    "activeRewards": "Recompensas activas",
+    "byLevel": "Por nivel",
+    "rewardsCatalog": "Catálogo de Recompensas",
+    "programConfig": "Configuración del Programa",
+    "welcomeBonus": "Bono de Bienvenida (puntos)",
+    "loyaltyLevels": "Niveles de Fidelización",
+    "costInPoints": "Coste en Puntos *",
+    "addCurrentSuppliers": "Añade tus proveedores actuales",
+    "autoCreated": "Se creará automáticamente",
+    "floorPlan5Tables": "Plano de sala con 5 mesas de ejemplo",
+    "objectivesConfig": "Configuración de objetivos (GP, COL)",
+    "payrollConfig": "Configuración de nóminas (España)",
+    "sourceLocation": "Local de origen",
+    "deleteWarning": "Esta acción eliminará permanentemente",
+    "allTicketsAndSales": "Todos los tickets y ventas del local",
+    "assignedEmployees": "Empleados asignados a este local",
+    "inventoryAndOrders": "Inventario y pedidos",
+    "tablesAndFloorPlans": "Configuración de mesas y planos",
+    "addFirstLocation": "Añade tu primer local para empezar",
+    "downloadCsv": "Descarga datos en formato CSV",
+    "salesHistory": "Historial de ventas y transacciones",
+    "employeeList": "Lista de empleados y roles",
+    "inventoryItems": "Items de inventario y stock",
+    "salesImpact": "Impacto en ventas",
+    "selectionMode": "Modo de selección",
+    "selectLocationForBooking": "Selecciona una ubicación para configurar las reservas online",
+    "enableOnlineBooking": "Habilitar reservas online",
+    "peopleLimits": "Límites de personas",
+    "maxAdvanceDays": "Días de antelación máximos",
+    "customerNotes": "Notas para clientes",
+    "currentPlanStatus": "Tu plan actual y estado de suscripción",
+    "billingAndPayments": "Facturación y pagos",
+    "updatePaymentMethod": "Actualizar tu método de pago",
+    "changeOrCancelSub": "Cambiar o cancelar tu suscripción",
+    "cookiePreferences": "Preferencias de cookies"
   },
   "reports": {
     "title": "Informes",
@@ -1047,7 +1136,18 @@
     "toastAnnouncementError": "Error al crear anuncio",
     "toastAnnouncementPublished": "Anuncio publicado",
     "toastDeleteError": "Error al eliminar",
-    "toastAnnouncementDeleted": "Anuncio eliminado"
+    "toastAnnouncementDeleted": "Anuncio eliminado",
+    "trainingAndCerts": "Formación y Certificados",
+    "issueDate": "Fecha emisión",
+    "expiryDate": "Fecha caducidad",
+    "activeContracts": "Contratos activos",
+    "avgSalary": "Salario medio",
+    "avgWorkday": "Jornada media",
+    "mostCommonType": "Tipo más común",
+    "createFirstContract": "Crea el primer contrato para tu equipo",
+    "contractType": "Tipo de contrato",
+    "grossSalaryMonth": "Salario bruto/mes (€)",
+    "teamPerformance": "Rendimiento del Equipo"
   },
   "onboarding": {
     "title": "Incorporación",
@@ -1094,7 +1194,15 @@
     "firstLocation": "Primer establecimiento",
     "yourMenu": "Tu Carta",
     "productsAndPrices": "Productos y precios",
-    "noPresetInventory": "No hay inventario predefinido para esta plantilla"
+    "noPresetInventory": "No hay inventario predefinido para esta plantilla",
+    "configTitle": "Configuración de Josephine",
+    "configProgress": "Progreso de configuración",
+    "verifyingConfig": "Verificando configuración...",
+    "pendingIntegrations": "Integraciones externas pendientes",
+    "configuringAccount": "Configurando tu cuenta...",
+    "connectPos": "Conecta tu sistema POS",
+    "directOauth": "Conexión directa vía OAuth",
+    "importAnyPos": "Importa datos de cualquier POS"
   },
   "availability": {
     "title": "Disponibilidad",
@@ -1150,7 +1258,16 @@
     "dataImport": "Importar Datos",
     "importStarted": "Importación iniciada",
     "importComplete": "Importación completada",
-    "importFailed": "Error en la importación"
+    "importFailed": "Error en la importación",
+    "productCatalog": "Catálogo de productos y menú",
+    "ordersAndTickets": "Pedidos y tickets",
+    "paymentsAndTransactions": "Pagos y transacciones",
+    "locationInfo": "Información de ubicaciones",
+    "squareAutoSync": "Sincronización automática con Square",
+    "connectSquare": "Conecta tu cuenta de Square",
+    "localesAndLocations": "Locales y ubicaciones",
+    "productCatalogFull": "Catálogo de productos (items y categorías)",
+    "paymentMethodsAndAmounts": "Métodos de pago y cantidades"
   },
   "bi": {
     "title": "Inteligencia de Negocio",
@@ -1191,7 +1308,8 @@
     "bias": "Bias",
     "hitRate10": "Hit Rate ±10%",
     "hitRate5": "Hit Rate ±5%",
-    "peakHour": "Hora punta"
+    "peakHour": "Hora punta",
+    "noDataForPeriod": "Sin datos para este periodo"
   },
   "gdpr": {
     "title": "Privacidad de Datos",
@@ -1253,7 +1371,13 @@
     "inviteError": "Error al invitar",
     "noClockInsThisMonth": "Sin fichajes este mes",
     "noShiftsPlanned": "Sin turnos planificados",
-    "noShiftScheduled": "Sin turno programado"
+    "noShiftScheduled": "Sin turno programado",
+    "teamPortal": "Portal de Equipo",
+    "managementPanel": "Panel de gestión",
+    "todayShift": "Turno de hoy",
+    "hoursAndPay": "Horas y pagos",
+    "teamNews": "Noticias del equipo",
+    "hoursControl": "Control de horas y estimaciones"
   },
   "notifications": {
     "title": "Notificaciones",
@@ -1562,7 +1686,10 @@
   "dataImport": {
     "toastSelectLocation": "Selecciona una ubicación específica antes de importar",
     "toastImportError": "Error inesperado durante la importación",
-    "noPreviousImports": "No hay importaciones previas"
+    "noPreviousImports": "No hay importaciones previas",
+    "uploadFirstCsv": "Sube tu primer archivo CSV para empezar",
+    "dragFileHere": "Arrastra tu archivo aquí",
+    "mayTakeSeconds": "Esto puede tardar unos segundos"
   },
   "workforceOnboarding": {
     "noRecentOnboardings": "Sin incorporaciones recientes",
@@ -1704,13 +1831,27 @@
   "menu": {
     "totalDishes": "Total platos",
     "noRecipe": "Sin escandallo",
-    "noIngredients": "Sin ingredientes"
+    "noIngredients": "Sin ingredientes",
+    "noDataForPeriod": "Sin datos para este periodo",
+    "selectCategory": "Selecciona una categoría",
+    "promoteMiddleBand": "Promueve productos de banda media",
+    "highIfPopularity": "Alto si popularity_pct ≥ umbral",
+    "highIfGP": "Alto si GP unitario ≥ GP medio",
+    "pricesNormalized": "Precios normalizados sin IVA (10%)",
+    "decisionSupport": "Herramienta de soporte a la decisión, no verdad absoluta",
+    "avgFoodCost": "Food cost medio"
   },
   "staff": {
-    "noTablesConfigured": "No hay mesas configuradas"
+    "noTablesConfigured": "No hay mesas configuradas",
+    "locationDetected": "Ubicación detectada",
+    "activeShiftSince": "Turno activo desde",
+    "thisWeek": "Esta semana",
+    "selectLocation": "Selecciona un local"
   },
   "dataHealth": {
-    "totalCounts": "Total conteos"
+    "totalCounts": "Total conteos",
+    "withParLevel": "Con par level",
+    "locationsWithCount": "Ubicaciones con conteo"
   },
   "training": {
     "noExpiry": "Sin caducidad",
@@ -1934,5 +2075,25 @@
     "medicalExpiry": "Reconocimiento médico vencido",
     "trainingExpiry": "Formación vencida",
     "documentExpiry": "Documento vencido"
+  },
+  "kiosk": {
+    "tapToUnlock": "Toca para desbloquear"
+  },
+  "cash": {
+    "monitorDescription": "Monitoriza ventas, pagos, reembolsos y fugas"
+  },
+  "stock": {
+    "theoreticalVsReal": "Stock teórico vs real — rojo = varianza negativa >5%"
+  },
+  "admin": {
+    "toolsDescription": "Herramientas para generar datos demo y gestión del sistema",
+    "actualsComplete": "Actuals completos",
+    "actualsCurrent": "Actuals actuales",
+    "sufficientForFeatures": "Suficiente para ver funcionalidades",
+    "advantagesOverV4": "Ventajas sobre v4",
+    "whatIsGenerated": "Qué se genera",
+    "verificationQueries": "Queries de Verificación",
+    "viewTotals": "Ver totales",
+    "viewSalesByMonth": "Ver sales por mes"
   }
 }

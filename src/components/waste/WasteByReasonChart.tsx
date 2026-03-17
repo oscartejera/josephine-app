@@ -83,7 +83,7 @@ export function WasteByReasonChart({
   return (
     <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">Waste by Reason Value</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">{t("waste.byReasonValue")}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px]">

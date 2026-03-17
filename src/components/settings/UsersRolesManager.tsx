@@ -277,7 +277,7 @@ export function UsersRolesManager() {
       <Card>
         <CardContent className="py-10 text-center">
           <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No tienes permisos para gestionar usuarios</p>
+          <p className="text-muted-foreground">{t("settings.noUserPermission")}</p>
         </CardContent>
       </Card>
     );

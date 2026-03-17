@@ -178,8 +178,8 @@ export function SwapRequestsPanel({
           {requests.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <ArrowRightLeft className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No swap requests yet</p>
-              <p className="text-xs mt-1">Employees can request to swap shifts with colleagues</p>
+              <p className="text-sm">{t("scheduling.noSwapRequests")}</p>
+              <p className="text-xs mt-1">{t("scheduling.swapDescription")}</p>
             </div>
           ) : (
             <div className="space-y-6">

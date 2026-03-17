@@ -274,7 +274,7 @@ export default function DataHealth() {
                   <strong>{data.inventory.with_recipes}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Con par level:</span>{' '}
+                  <span className="text-muted-foreground">{t("dataHealth.withParLevel")}:</span>{' '}
                   <strong>{data.inventory.with_par_level}</strong>
                 </div>
                 <div>
@@ -307,7 +307,7 @@ export default function DataHealth() {
                   <strong>{data.stock_counts.last_30d}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Ubicaciones con conteo:</span>{' '}
+                  <span className="text-muted-foreground">{t("dataHealth.locationsWithCount")}:</span>{' '}
                   <strong>{data.stock_counts.distinct_locations}</strong>
                 </div>
               </div>

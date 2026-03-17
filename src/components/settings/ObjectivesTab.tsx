@@ -96,7 +96,7 @@ export function ObjectivesTab() {
                         <Target className="h-5 w-5" />
                         Objetivos P&L por Local
                     </CardTitle>
-                    <CardDescription>Define los KPIs objetivo para cada local. Estos valores se usan en el scheduling y forecast.</CardDescription>
+                    <CardDescription>{t("settings.kpiObjectivesDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -190,7 +190,7 @@ export function ObjectivesTab() {
                         <span className="text-lg">📊</span>
                         Impacto en Scheduling
                     </CardTitle>
-                    <CardDescription>Cómo los objetivos afectan la generación automática de turnos</CardDescription>
+                    <CardDescription>{t("settings.objectivesImpact")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -208,11 +208,11 @@ export function ObjectivesTab() {
                                             <span className="font-semibold text-emerald-600">{s.target_col_percent}%</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Budget semanal (est.)</span>
+                                            <span className="text-muted-foreground">{t("settings.weeklyBudgetEst")}</span>
                                             <span className="font-medium">~€{weeklyBudget.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Max horas/semana</span>
+                                            <span className="text-muted-foreground">{t("settings.maxHoursWeek")}</span>
                                             <span className="font-medium">~{maxHours}h</span>
                                         </div>
                                         <div className="flex justify-between">

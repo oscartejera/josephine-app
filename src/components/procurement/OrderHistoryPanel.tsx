@@ -187,7 +187,7 @@ export function OrderHistoryPanel({ onReorder }: OrderHistoryPanelProps) {
               <Package className="h-5 w-5" />
               Order History
             </CardTitle>
-            <CardDescription>View past orders and quickly reorder</CardDescription>
+            <CardDescription>{t("procurement.viewPastOrders")}</CardDescription>
           </div>
         </div>
       </CardHeader>

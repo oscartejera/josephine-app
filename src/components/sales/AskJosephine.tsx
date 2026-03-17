@@ -62,7 +62,7 @@ export function AskJosephine({ salesData }: AskJosephineProps) {
       <PopoverContent className="w-[400px]" align="end">
         <div className="space-y-4">
           <div>
-            <h4 className="font-semibold mb-2">Ask about your sales</h4>
+            <h4 className="font-semibold mb-2">{t("sales.askAboutSales")}</h4>
             <p className="text-sm text-muted-foreground">
               Get AI insights based on your data
             </p>

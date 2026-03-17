@@ -68,7 +68,7 @@ export function CustomerReviewsPanel({
             ))}
             {displayedReviews.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">No reviews found for this period</p>
+                <p className="text-sm text-muted-foreground">{t("reviews.noReviewsForPeriod")}</p>
               </div>
             )}
           </div>

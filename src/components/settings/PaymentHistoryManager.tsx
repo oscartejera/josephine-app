@@ -133,7 +133,7 @@ export function PaymentHistoryManager() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Histórico de Pagos</CardTitle>
+          <CardTitle>{t("settings.paymentHistory")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {[...Array(5)].map((_, i) => (
@@ -179,7 +179,7 @@ export function PaymentHistoryManager() {
             <p className="text-xl font-bold">€{totalTips.toFixed(2)}</p>
           </div>
           <div className="bg-muted rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Pagos con Stripe</p>
+            <p className="text-xs text-muted-foreground">{t("settings.stripePayments")}</p>
             <p className="text-xl font-bold">{cardPayments.filter(p => p.stripe_payment_intent_id).length}</p>
           </div>
         </div>
@@ -211,7 +211,7 @@ export function PaymentHistoryManager() {
               <SelectValue placeholder={t('settings.location')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los locales</SelectItem>
+              <SelectItem value="all">{t("settings.allLocations")}</SelectItem>
               {locations.map(loc => (
                 <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
               ))}

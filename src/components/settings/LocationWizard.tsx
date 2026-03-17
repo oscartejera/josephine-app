@@ -1059,7 +1059,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                   {suppliers.length === 0 ? (
                     <div className="text-center py-6 text-muted-foreground">
                       <Truck className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p className="text-sm">Añade tus proveedores actuales</p>
+                      <p className="text-sm">{t("settings.addCurrentSuppliers")}</p>
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-[200px] overflow-y-auto">

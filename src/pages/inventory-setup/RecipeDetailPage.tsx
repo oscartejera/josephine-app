@@ -143,7 +143,7 @@ export default function RecipeDetailPage() {
     if (!recipe) {
         return (
             <div className="flex flex-col items-center justify-center h-64 gap-4">
-                <p className="text-muted-foreground">Receta no encontrada</p>
+                <p className="text-muted-foreground">{t("recipes.notFound")}</p>
                 <Button variant="outline" onClick={() => navigate('/inventory-setup/recipes')}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Volver a Escandallos
@@ -171,7 +171,7 @@ export default function RecipeDetailPage() {
             {/* Recipe Header Card */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Detalles de la Receta</CardTitle>
+                    <CardTitle className="text-base">{t("recipes.details")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -332,7 +332,7 @@ export default function RecipeDetailPage() {
                             <Select value={ingredientType} onValueChange={v => setIngredientType(v as 'item' | 'sub_recipe')}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="item">Ingrediente de inventario</SelectItem>
+                                    <SelectItem value="item">{t("recipes.inventoryIngredient")}</SelectItem>
                                     <SelectItem value="sub_recipe">Sub-receta</SelectItem>
                                 </SelectContent>
                             </Select>

@@ -222,7 +222,7 @@ export default function RecipesPage() {
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
-                            <Label>Nombre del plato *</Label>
+                            <Label>{t("recipes.dishName")}</Label>
                             <Input
                                 placeholder={t('recipes.namePlaceholder')}
                                 value={newRecipe.menu_item_name}
@@ -258,7 +258,7 @@ export default function RecipesPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Unidad de rendimiento</Label>
+                                <Label>{t("recipes.yieldUnit")}</Label>
                                 <Select value={newRecipe.yield_unit} onValueChange={v => setNewRecipe({ ...newRecipe, yield_unit: v })}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>

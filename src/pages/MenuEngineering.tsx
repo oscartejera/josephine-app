@@ -121,7 +121,7 @@ export default function MenuEngineering() {
         <Card>
           <CardContent className="py-12 text-center">
             <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No data for this period</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("menu.noDataForPeriod")}</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               No product sales found in the selected date range. Try expanding the
               period or selecting a different location.
@@ -207,13 +207,13 @@ export default function MenuEngineering() {
                     <p className="font-medium text-foreground mb-1">Popularity</p>
                     <p>popularity_pct = units sold / category total × 100</p>
                     <p>Threshold = (100 / N) × 70% (70% rule)</p>
-                    <p>High if popularity_pct ≥ threshold</p>
+                    <p>{t("menu.highIfPopularity")}</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-1">Profitability</p>
                     <p>Unit GP = price ex VAT − food cost</p>
                     <p>Avg GP = Σ(GP × units) / Σ(units) within category</p>
-                    <p>High if unit GP ≥ avg GP</p>
+                    <p>{t("menu.highIfGP")}</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-1">Quadrant</p>
@@ -225,8 +225,8 @@ export default function MenuEngineering() {
                   <div>
                     <p className="font-medium text-foreground mb-1">⚠️ Important</p>
                     <p>Per-category analysis only</p>
-                    <p>Prices normalized ex-VAT (10%)</p>
-                    <p>Decision support tool, not absolute truth</p>
+                    <p>{t("menu.pricesNormalized")}</p>
+                    <p>{t("menu.decisionSupport")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -239,7 +239,7 @@ export default function MenuEngineering() {
               <Card className="border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
                 <CardContent className="py-6 text-center">
                   <DollarSign className="h-8 w-8 mx-auto text-amber-500 mb-3" />
-                  <h3 className="text-base font-semibold mb-1">Select a category</h3>
+                  <h3 className="text-base font-semibold mb-1">{t("menu.selectCategory")}</h3>
                   <p className="text-sm text-muted-foreground">
                     OMNES analysis applies to an individual category. Select one from the filter above.
                   </p>
@@ -284,7 +284,7 @@ export default function MenuEngineering() {
                         <p className="font-medium text-foreground mb-1">OMNES 2: Band Distribution</p>
                         <p>3 equal bands: lower / middle / upper</p>
                         <p>Target: 25% lower · 50% middle · 25% upper</p>
-                        <p>Promote middle band products</p>
+                        <p>{t("menu.promoteMiddleBand")}</p>
                       </div>
                       <div>
                         <p className="font-medium text-foreground mb-1">OMNES 3: Category Ratio</p>

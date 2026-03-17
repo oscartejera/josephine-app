@@ -574,7 +574,7 @@ export default function SquareIntegration() {
               <span className="text-3xl">🔷</span>
               Square POS
             </h1>
-            <p className="text-muted-foreground">Sincronización automática con Square</p>
+            <p className="text-muted-foreground">{t("integrations.squareAutoSync")}</p>
           </div>
         </div>
 
@@ -622,7 +622,7 @@ export default function SquareIntegration() {
       {!isConnected && !isConnectedNoAccount && (
         <Card>
           <CardHeader>
-            <CardTitle>Conecta tu cuenta de Square</CardTitle>
+            <CardTitle>{t("integrations.connectSquare")}</CardTitle>
             <CardDescription>
               Sincroniza productos, pedidos y pagos automáticamente desde Square POS
             </CardDescription>
@@ -630,10 +630,10 @@ export default function SquareIntegration() {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">Josephine sincronizará:</p>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Locales y ubicaciones</li>
-              <li>Catálogo de productos (items y categorías)</li>
+              <li>{t("integrations.localesAndLocations")}</li>
+              <li>{t("integrations.productCatalogFull")}</li>
               <li>Pedidos y transacciones (hasta 1 año de histórico)</li>
-              <li>Métodos de pago y cantidades</li>
+              <li>{t("integrations.paymentMethodsAndAmounts")}</li>
             </ul>
             <p className="text-sm text-muted-foreground">
               Los datos se normalizan al modelo canónico (CDM) para análisis unificado.

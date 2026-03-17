@@ -161,7 +161,7 @@ export function TeamManagersTab() {
                             onChange={e => setLocationId(e.target.value)}
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         >
-                            <option value="">Selecciona una ubicación</option>
+                            <option value="">{t("settings.selectLocation")}</option>
                             {locations?.map(loc => (
                                 <option key={loc.id} value={loc.id}>{loc.name}</option>
                             ))}
@@ -226,7 +226,7 @@ export function TeamManagersTab() {
                 <CardContent>
                     <div className="grid gap-2 sm:grid-cols-2">
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-emerald-600">Tiene acceso</p>
+                            <p className="text-sm font-medium text-emerald-600">{t("settings.hasAccess")}</p>
                             {['Dashboard (su local)', 'Scheduling', 'Inventory / Waste', 'Procurement', 'Reviews', 'Equipo (solo ver)'].map(item => (
                                 <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <CheckCircle className="h-3 w-3 text-emerald-500" />

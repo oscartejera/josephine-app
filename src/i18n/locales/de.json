@@ -244,7 +244,8 @@
     "noAccessibleLocations": "Keine zugänglichen Standorte",
     "noNotifications": "Keine Benachrichtigungen",
     "offlineBanner": "Offline — Daten sind möglicherweise nicht aktuell",
-    "contactPhone": "Kontakttelefon"
+    "contactPhone": "Kontakttelefon",
+    "somethingWentWrong": "[ES] Algo salió mal"
   },
   "nav": {
     "controlTower": "Kontrollturm",
@@ -383,7 +384,9 @@
     "enterSixDigitCode": "Bitte 6-stelligen Code eingeben",
     "incorrectCode": "Der Code ist falsch",
     "accountVerified": "Ihr Konto wurde verifiziert",
-    "verificationError": "Fehler bei der Verifizierung"
+    "verificationError": "Fehler bei der Verifizierung",
+    "passwordChanged": "[ES] Tu contraseña ha sido cambiada exitosamente",
+    "enterNewPassword": "[ES] Ingresa tu nueva contraseña"
   },
   "dashboard": {
     "title": "Kontrollturm",
@@ -411,7 +414,9 @@
     "ordersToday": "Bestellungen heute",
     "topProduct": "Top-Produkt",
     "viewAnalysis": "Analyse anzeigen",
-    "noLocations": "Keine Standorte konfiguriert"
+    "noLocations": "Keine Standorte konfiguriert",
+    "todayOperationsSummary": "[ES] Resumen de operaciones de hoy",
+    "noDataForPeriod": "[ES] Sin datos para este periodo"
   },
   "sales": {
     "title": "Umsätze",
@@ -437,7 +442,9 @@
     "tryRefreshing": "Versuchen Sie, die Seite zu aktualisieren oder den Zeitraum zu ändern.",
     "channelSplitRequiresPOS": "Die Kanalaufteilung erfordert POS-Kanal-Tracking",
     "totalSales": "Gesamtumsatz",
-    "totalOrders": "Gesamtbestellungen"
+    "totalOrders": "Gesamtbestellungen",
+    "selectCustomRange": "[ES] O selecciona rango personalizado",
+    "askAboutSales": "[ES] Pregunta sobre tus ventas"
   },
   "labour": {
     "title": "Personal",
@@ -493,7 +500,10 @@
     "optimizedWasteLog": "Optimiertes Abfallprotokoll",
     "wasteRegistered": "Abfall registriert",
     "registering": "Registrieren...",
-    "confirmWaste": "Abfall bestätigen"
+    "confirmWaste": "Abfall bestätigen",
+    "byReasonValue": "[ES] Merma por razón (valor)",
+    "loggedWasteValue": "[ES] Valor de merma registrado",
+    "byIngredientCategory": "[ES] Merma por categoría de ingrediente"
   },
   "menuEngineering": {
     "title": "Menü-Engineering",
@@ -585,7 +595,12 @@
     "recipeUpdated": "Rezept aktualisiert",
     "ingredientAdded": "Zutat zum Rezept hinzugefügt",
     "addIngredient": "Zutat hinzufügen",
-    "recipePrefix": "Rezept"
+    "recipePrefix": "Rezept",
+    "dishName": "[ES] Nombre del plato *",
+    "yieldUnit": "[ES] Unidad de rendimiento",
+    "notFound": "[ES] Receta no encontrada",
+    "details": "[ES] Detalles de la Receta",
+    "inventoryIngredient": "[ES] Ingrediente de inventario"
   },
   "scheduling": {
     "title": "Dienstplanung",
@@ -637,14 +652,22 @@
     "autoFillEmpty": "Auto-Fill: Keine Lücken zum Füllen gefunden",
     "analyzingForecast": "Analyse der Umsatzprognose und historischer SPLH",
     "calculatingStaffing": "Berechnung optimaler Besetzungsniveaus pro Position",
-    "verifyingConstraints": "Überprüfung der Verfügbarkeits- und Vertragsbeschränkungen"
+    "verifyingConstraints": "Überprüfung der Verfügbarkeits- und Vertragsbeschränkungen",
+    "selectShiftToSwap": "[ES] Selecciona turno con el que intercambiar",
+    "noSwapRequests": "[ES] No hay solicitudes de intercambio aún",
+    "swapDescription": "[ES] Los empleados pueden solicitar intercambiar turnos con compañeros",
+    "serviceType": "[ES] Tipo de servicio",
+    "avgHourlyCost": "[ES] Coste horario medio €/h",
+    "noActualData": "[ES] Sin datos reales",
+    "noScheduleYet": "[ES] Aún no hay horario"
   },
   "budgets": {
     "title": "Budgets",
     "annualBudget": "Jahresbudget",
     "monthlyBudget": "Monatsbudget",
     "actualVsBudget": "Ist vs Budget",
-    "variance": "Abweichung"
+    "variance": "Abweichung",
+    "comparePerformance": "[ES] Compara rendimiento real vs presupuesto"
   },
   "cashManagement": {
     "title": "Kassenverwaltung",
@@ -715,7 +738,15 @@
     "totalVat": "MwSt. gesamt (21%)",
     "itemsAddedToCart": "Artikel zum Warenkorb hinzugefügt",
     "reorder": "Nachbestellen",
-    "deliveryReceived": "Lieferung erhalten"
+    "deliveryReceived": "Lieferung erhalten",
+    "resetSettings": "[ES] ¿Restablecer toda la configuración?",
+    "noItemsInCart": "[ES] No hay artículos en el carrito",
+    "viewPastOrders": "[ES] Ver pedidos anteriores y reordenar rápidamente",
+    "noSuppliersFound": "[ES] No se encontraron proveedores",
+    "placeOrderToAdd": "[ES] Realiza un pedido para añadir proveedores",
+    "noOrdersYet": "[ES] No hay pedidos aún",
+    "noLineItems": "[ES] No se encontraron líneas de pedido",
+    "cartEmpty": "[ES] Tu carrito está vacío"
   },
   "reviews": {
     "title": "Bewertungen",
@@ -751,7 +782,10 @@
     "reply": "Antworten",
     "noReviews": "Keine Bewertungen",
     "noEmployees": "Keine Mitarbeiter in diesem Standort",
-    "notEvaluated": "Nicht bewertet"
+    "notEvaluated": "Nicht bewertet",
+    "ratingOverTime": "[ES] Valoración a lo largo del tiempo",
+    "ratingByLocation": "[ES] Valoración por ubicación",
+    "noReviewsForPeriod": "[ES] No se encontraron reseñas para este periodo"
   },
   "payroll": {
     "title": "Lohnabrechnung",
@@ -1096,7 +1130,64 @@
     "exportError": "Exportfehler",
     "requestRegistered": "Anfrage registriert",
     "preferencesUpdated": "Einstellungen aktualisiert",
-    "demoDataRegenerated": "Demodaten neu generiert"
+    "demoDataRegenerated": "Demodaten neu generiert",
+    "noUserPermission": "[ES] No tienes permisos para gestionar usuarios",
+    "hasAccess": "[ES] Tiene acceso",
+    "noTeamPermission": "[ES] No tienes permisos para gestionar el equipo",
+    "addSuppliersFromWizard": "[ES] Añade proveedores desde el asistente de locales",
+    "shippingMethod": "[ES] Método de envío",
+    "orderEmail": "[ES] Email de pedidos",
+    "orderWebsite": "[ES] Web de pedidos",
+    "fallbackEmail": "[ES] Email de respaldo",
+    "managePaymentMethods": "[ES] Gestiona métodos de pago para autopago de compras",
+    "cardEncrypted": "[ES] Los datos de tu tarjeta están cifrados de forma segura",
+    "noPaymentMethods": "[ES] Sin métodos de pago",
+    "addPaymentMethodDesc": "[ES] Añade un método de pago para habilitar el autopago de pedidos",
+    "deletePaymentMethod": "[ES] ¿Eliminar método de pago?",
+    "paymentHistory": "[ES] Histórico de Pagos",
+    "stripePayments": "[ES] Pagos con Stripe",
+    "allLocations": "[ES] Todos los locales",
+    "kpiObjectivesDesc": "[ES] Define los KPIs objetivo para cada local. Estos valores se usan en el scheduling y forecast.",
+    "objectivesImpact": "[ES] Cómo los objetivos afectan la generación automática de turnos",
+    "weeklyBudgetEst": "[ES] Budget semanal (est.)",
+    "maxHoursWeek": "[ES] Max horas/semana",
+    "loyaltyDesc": "[ES] Gestiona clientes frecuentes y recompensas",
+    "pointsInCirculation": "[ES] Puntos en circulación",
+    "activeRewards": "[ES] Recompensas activas",
+    "byLevel": "[ES] Por nivel",
+    "rewardsCatalog": "[ES] Catálogo de Recompensas",
+    "programConfig": "[ES] Configuración del Programa",
+    "welcomeBonus": "[ES] Bono de Bienvenida (puntos)",
+    "loyaltyLevels": "[ES] Niveles de Fidelización",
+    "costInPoints": "[ES] Coste en Puntos *",
+    "addCurrentSuppliers": "[ES] Añade tus proveedores actuales",
+    "autoCreated": "[ES] Se creará automáticamente",
+    "floorPlan5Tables": "[ES] Plano de sala con 5 mesas de ejemplo",
+    "objectivesConfig": "[ES] Configuración de objetivos (GP, COL)",
+    "payrollConfig": "[ES] Configuración de nóminas (España)",
+    "sourceLocation": "[ES] Local de origen",
+    "deleteWarning": "[ES] Esta acción eliminará permanentemente",
+    "allTicketsAndSales": "[ES] Todos los tickets y ventas del local",
+    "assignedEmployees": "[ES] Empleados asignados a este local",
+    "inventoryAndOrders": "[ES] Inventario y pedidos",
+    "tablesAndFloorPlans": "[ES] Configuración de mesas y planos",
+    "addFirstLocation": "[ES] Añade tu primer local para empezar",
+    "downloadCsv": "[ES] Descarga datos en formato CSV",
+    "salesHistory": "[ES] Historial de ventas y transacciones",
+    "employeeList": "[ES] Lista de empleados y roles",
+    "inventoryItems": "[ES] Items de inventario y stock",
+    "salesImpact": "[ES] Impacto en ventas",
+    "selectionMode": "[ES] Modo de selección",
+    "selectLocationForBooking": "[ES] Selecciona una ubicación para configurar las reservas online",
+    "enableOnlineBooking": "[ES] Habilitar reservas online",
+    "peopleLimits": "[ES] Límites de personas",
+    "maxAdvanceDays": "[ES] Días de antelación máximos",
+    "customerNotes": "[ES] Notas para clientes",
+    "currentPlanStatus": "[ES] Tu plan actual y estado de suscripción",
+    "billingAndPayments": "[ES] Facturación y pagos",
+    "updatePaymentMethod": "[ES] Actualizar tu método de pago",
+    "changeOrCancelSub": "[ES] Cambiar o cancelar tu suscripción",
+    "cookiePreferences": "[ES] Preferencias de cookies"
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten",
@@ -1224,7 +1315,18 @@
     "toastAnnouncementError": "Fehler beim Erstellen der Ankündigung",
     "toastAnnouncementPublished": "Ankündigung veröffentlicht",
     "toastDeleteError": "Löschfehler",
-    "toastAnnouncementDeleted": "Ankündigung gelöscht"
+    "toastAnnouncementDeleted": "Ankündigung gelöscht",
+    "trainingAndCerts": "[ES] Formación y Certificados",
+    "issueDate": "[ES] Fecha emisión",
+    "expiryDate": "[ES] Fecha caducidad",
+    "activeContracts": "[ES] Contratos activos",
+    "avgSalary": "[ES] Salario medio",
+    "avgWorkday": "[ES] Jornada media",
+    "mostCommonType": "[ES] Tipo más común",
+    "createFirstContract": "[ES] Crea el primer contrato para tu equipo",
+    "contractType": "[ES] Tipo de contrato",
+    "grossSalaryMonth": "[ES] Salario bruto/mes (€)",
+    "teamPerformance": "[ES] Rendimiento del Equipo"
   },
   "onboarding": {
     "title": "Einarbeitung",
@@ -1271,7 +1373,15 @@
     "firstLocation": "Erster Standort",
     "yourMenu": "Deine Karte",
     "productsAndPrices": "Produkte und Preise",
-    "noPresetInventory": "Kein vordefiniertes Inventar für diese Vorlage"
+    "noPresetInventory": "Kein vordefiniertes Inventar für diese Vorlage",
+    "configTitle": "[ES] Configuración de Josephine",
+    "configProgress": "[ES] Progreso de configuración",
+    "verifyingConfig": "[ES] Verificando configuración...",
+    "pendingIntegrations": "[ES] Integraciones externas pendientes",
+    "configuringAccount": "[ES] Configurando tu cuenta...",
+    "connectPos": "[ES] Conecta tu sistema POS",
+    "directOauth": "[ES] Conexión directa vía OAuth",
+    "importAnyPos": "[ES] Importa datos de cualquier POS"
   },
   "availability": {
     "title": "Verfügbarkeit",
@@ -1327,7 +1437,16 @@
     "dataImport": "Datenimport",
     "importStarted": "Import gestartet",
     "importComplete": "Import abgeschlossen",
-    "importFailed": "Import fehlgeschlagen"
+    "importFailed": "Import fehlgeschlagen",
+    "productCatalog": "[ES] Catálogo de productos y menú",
+    "ordersAndTickets": "[ES] Pedidos y tickets",
+    "paymentsAndTransactions": "[ES] Pagos y transacciones",
+    "locationInfo": "[ES] Información de ubicaciones",
+    "squareAutoSync": "[ES] Sincronización automática con Square",
+    "connectSquare": "[ES] Conecta tu cuenta de Square",
+    "localesAndLocations": "[ES] Locales y ubicaciones",
+    "productCatalogFull": "[ES] Catálogo de productos (items y categorías)",
+    "paymentMethodsAndAmounts": "[ES] Métodos de pago y cantidades"
   },
   "bi": {
     "title": "Business Intelligence",
@@ -1368,7 +1487,8 @@
     "bias": "Bias",
     "hitRate10": "Trefferquote ±10%",
     "hitRate5": "Trefferquote ±5%",
-    "peakHour": "Stoßzeit"
+    "peakHour": "Stoßzeit",
+    "noDataForPeriod": "[ES] Sin datos para este periodo"
   },
   "gdpr": {
     "title": "Datenschutz",
@@ -1430,7 +1550,13 @@
     "inviteError": "Einladungsfehler",
     "noClockInsThisMonth": "Keine Stempelungen diesen Monat",
     "noShiftsPlanned": "Keine geplanten Schichten",
-    "noShiftScheduled": "Keine geplante Schicht"
+    "noShiftScheduled": "Keine geplante Schicht",
+    "teamPortal": "[ES] Portal de Equipo",
+    "managementPanel": "[ES] Panel de gestión",
+    "todayShift": "[ES] Turno de hoy",
+    "hoursAndPay": "[ES] Horas y pagos",
+    "teamNews": "[ES] Noticias del equipo",
+    "hoursControl": "[ES] Control de horas y estimaciones"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1739,7 +1865,10 @@
   "dataImport": {
     "toastSelectLocation": "Wähle einen bestimmten Standort vor dem Import",
     "toastImportError": "Unerwarteter Fehler beim Import",
-    "noPreviousImports": "Keine vorherigen Importe"
+    "noPreviousImports": "Keine vorherigen Importe",
+    "uploadFirstCsv": "[ES] Sube tu primer archivo CSV para empezar",
+    "dragFileHere": "[ES] Arrastra tu archivo aquí",
+    "mayTakeSeconds": "[ES] Esto puede tardar unos segundos"
   },
   "workforceOnboarding": {
     "noRecentOnboardings": "Keine aktuellen Neueinstellungen",
@@ -1881,13 +2010,27 @@
   "menu": {
     "totalDishes": "Gerichte gesamt",
     "noRecipe": "Ohne Kalkulation",
-    "noIngredients": "Ohne Zutaten"
+    "noIngredients": "Ohne Zutaten",
+    "noDataForPeriod": "[ES] Sin datos para este periodo",
+    "selectCategory": "[ES] Selecciona una categoría",
+    "promoteMiddleBand": "[ES] Promueve productos de banda media",
+    "highIfPopularity": "[ES] Alto si popularity_pct ≥ umbral",
+    "highIfGP": "[ES] Alto si GP unitario ≥ GP medio",
+    "pricesNormalized": "[ES] Precios normalizados sin IVA (10%)",
+    "decisionSupport": "[ES] Herramienta de soporte a la decisión, no verdad absoluta",
+    "avgFoodCost": "[ES] Food cost medio"
   },
   "staff": {
-    "noTablesConfigured": "Keine Tische konfiguriert"
+    "noTablesConfigured": "Keine Tische konfiguriert",
+    "locationDetected": "[ES] Ubicación detectada",
+    "activeShiftSince": "[ES] Turno activo desde",
+    "thisWeek": "[ES] Esta semana",
+    "selectLocation": "[ES] Selecciona un local"
   },
   "dataHealth": {
-    "totalCounts": "Zählungen gesamt"
+    "totalCounts": "Zählungen gesamt",
+    "withParLevel": "[ES] Con par level",
+    "locationsWithCount": "[ES] Ubicaciones con conteo"
   },
   "training": {
     "noExpiry": "Kein Ablaufdatum",
@@ -1932,5 +2075,25 @@
   },
   "sidebar": {
     "importData": "Daten importieren"
+  },
+  "kiosk": {
+    "tapToUnlock": "[ES] Toca para desbloquear"
+  },
+  "cash": {
+    "monitorDescription": "[ES] Monitoriza ventas, pagos, reembolsos y fugas"
+  },
+  "stock": {
+    "theoreticalVsReal": "[ES] Stock teórico vs real — rojo = varianza negativa >5%"
+  },
+  "admin": {
+    "toolsDescription": "[ES] Herramientas para generar datos demo y gestión del sistema",
+    "actualsComplete": "[ES] Actuals completos",
+    "actualsCurrent": "[ES] Actuals actuales",
+    "sufficientForFeatures": "[ES] Suficiente para ver funcionalidades",
+    "advantagesOverV4": "[ES] Ventajas sobre v4",
+    "whatIsGenerated": "[ES] Qué se genera",
+    "verificationQueries": "[ES] Queries de Verificación",
+    "viewTotals": "[ES] Ver totales",
+    "viewSalesByMonth": "[ES] Ver sales por mes"
   }
 }

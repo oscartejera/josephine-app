@@ -184,7 +184,7 @@ export function SupplierIntegrationManager() {
             <div className="text-center py-8 text-muted-foreground">
               <Truck className="h-12 w-12 mx-auto mb-4 opacity-20" />
               <p>{t("suppliers.noSuppliers")}</p>
-              <p className="text-sm">Añade proveedores desde el asistente de locales</p>
+              <p className="text-sm">{t("settings.addSuppliersFromWizard")}</p>
             </div>
           ) : (
             <Table>
@@ -245,7 +245,7 @@ export function SupplierIntegrationManager() {
               <div className="space-y-6 pr-4">
                 {/* Integration Type */}
                 <div className="space-y-3">
-                  <Label>Método de envío</Label>
+                  <Label>{t("settings.shippingMethod")}</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {INTEGRATION_TYPES.map((type) => {
                       const Icon = type.icon;
@@ -369,7 +369,7 @@ export function SupplierIntegrationManager() {
                 {editingSupplier.integration_type === 'email' && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="order_email">Email de pedidos</Label>
+                      <Label htmlFor="order_email">{t("settings.orderEmail")}</Label>
                       <Input
                         id="order_email"
                         type="email"
@@ -414,7 +414,7 @@ export function SupplierIntegrationManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="website">Web de pedidos</Label>
+                      <Label htmlFor="website">{t("settings.orderWebsite")}</Label>
                       <Input
                         id="website"
                         type="url"
@@ -463,7 +463,7 @@ export function SupplierIntegrationManager() {
                 {/* Fallback Email */}
                 {editingSupplier.integration_type !== 'email' && editingSupplier.integration_type !== 'manual' && (
                   <div className="space-y-2">
-                    <Label htmlFor="fallback_email">Email de respaldo</Label>
+                    <Label htmlFor="fallback_email">{t("settings.fallbackEmail")}</Label>
                     <Input
                       id="fallback_email"
                       type="email"

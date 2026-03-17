@@ -233,7 +233,7 @@ export default function ReviewsAll() {
           ))}
           {reviews.length === 0 && (
             <Card className="col-span-full p-8 text-center">
-              <p className="text-muted-foreground">No reviews found for this period</p>
+              <p className="text-muted-foreground">{t("reviews.noReviewsForPeriod")}</p>
             </Card>
           )}
         </div>

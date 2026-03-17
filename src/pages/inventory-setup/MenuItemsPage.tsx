@@ -168,7 +168,7 @@ export default function MenuItemsPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Food cost medio</p>
+            <p className="text-sm text-muted-foreground">{t("menu.avgFoodCost")}</p>
             <p className={`text-2xl font-bold ${getFoodCostColor(stats.avgFoodCost)}`}>
               {stats.avgFoodCost > 0 ? `${stats.avgFoodCost}%` : '—'}
             </p>

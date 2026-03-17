@@ -375,7 +375,7 @@ export default function KioskMode() {
                         </p>
                     </div>
                     <p className="text-slate-500 text-lg">{locationName || 'Josephine'}</p>
-                    <p className="text-slate-600 text-sm mt-8">Toca para desbloquear</p>
+                    <p className="text-slate-600 text-sm mt-8">{t("kiosk.tapToUnlock")}</p>
                 </div>
             </div>
         );

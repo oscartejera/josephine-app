@@ -95,7 +95,7 @@ export function SwapShiftDialog({
           
           {/* Available shifts to swap with */}
           <div>
-            <Label className="text-sm mb-2 block">Select shift to swap with</Label>
+            <Label className="text-sm mb-2 block">{t("scheduling.selectShiftToSwap")}</Label>
             <ScrollArea className="h-[200px] border rounded-lg p-2">
               {availableShifts.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-8">

@@ -151,7 +151,7 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <GraduationCap className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Formación y Certificados</h3>
+                    <h3 className="text-lg font-semibold">{t("workforce.trainingAndCerts")}</h3>
                     {(expiredCount + expiringCount) > 0 && (
                         <Badge variant="destructive" className="rounded-full">
                             {expiredCount + expiringCount} atención
@@ -239,11 +239,11 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                         </Select>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">Fecha emisión</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">{t("workforce.issueDate")}</label>
                                 <Input type="date" value={issuedDate} onChange={e => setIssuedDate(e.target.value)} />
                             </div>
                             <div>
-                                <label className="text-xs text-muted-foreground mb-1 block">Fecha caducidad</label>
+                                <label className="text-xs text-muted-foreground mb-1 block">{t("workforce.expiryDate")}</label>
                                 <Input type="date" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} />
                             </div>
                         </div>

@@ -135,7 +135,7 @@ export function DataPrivacySection() {
             <div className="flex items-center gap-3">
               <Cookie className="h-5 w-5 text-amber-600" />
               <div>
-                <p className="text-sm font-medium">Preferencias de cookies</p>
+                <p className="text-sm font-medium">{t("settings.cookiePreferences")}</p>
                 <p className="text-xs text-gray-500">
                   {currentConsent
                     ? `Analíticas: ${currentConsent.analytics ? 'Sí' : 'No'} · Marketing: ${currentConsent.marketing ? 'Sí' : 'No'}`

@@ -104,7 +104,7 @@ export function OrderSummaryPanel({
           </div>
         ) : (
           <div className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">No items in cart</p>
+            <p className="text-sm text-muted-foreground">{t("procurement.noItemsInCart")}</p>
           </div>
         )}
 

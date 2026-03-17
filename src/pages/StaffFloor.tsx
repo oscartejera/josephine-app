@@ -17,7 +17,7 @@ export default function StaffFloor() {
   if (!locationId) {
     return (
       <div className="p-6 flex items-center justify-center h-[calc(100vh-3.5rem)]">
-        <p className="text-muted-foreground">Selecciona un local</p>
+        <p className="text-muted-foreground">{t("staff.selectLocation")}</p>
       </div>
     );
   }

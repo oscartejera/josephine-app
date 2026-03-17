@@ -302,7 +302,7 @@ export default function TeamHome() {
                 <Calendar className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Turno de hoy</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("team.todayShift")}</p>
                 {todayShift ? (
                   <p className="font-semibold">
                     {todayShift.start_time?.slice(0, 5)} - {todayShift.end_time?.slice(0, 5)}
@@ -398,7 +398,7 @@ export default function TeamHome() {
             </div>
             <div>
               <p className="text-sm font-medium">Mi Nómina</p>
-              <p className="text-xs text-muted-foreground">Horas y pagos</p>
+              <p className="text-xs text-muted-foreground">{t("team.hoursAndPay")}</p>
             </div>
           </CardContent>
         </Card>
@@ -412,7 +412,7 @@ export default function TeamHome() {
             </div>
             <div>
               <p className="text-sm font-medium">Novedades</p>
-              <p className="text-xs text-muted-foreground">Noticias del equipo</p>
+              <p className="text-xs text-muted-foreground">{t("team.teamNews")}</p>
             </div>
           </CardContent>
         </Card>

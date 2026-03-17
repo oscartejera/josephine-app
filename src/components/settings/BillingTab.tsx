@@ -71,7 +71,7 @@ export function BillingTab() {
             <Icon className={`h-5 w-5 ${meta.color}`} />
             Plan {meta.label}
           </CardTitle>
-          <CardDescription>Tu plan actual y estado de suscripción</CardDescription>
+          <CardDescription>{t("settings.currentPlanStatus")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
@@ -117,7 +117,7 @@ export function BillingTab() {
       {/* Billing Portal Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Facturación y pagos</CardTitle>
+          <CardTitle className="text-base">{t("settings.billingAndPayments")}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
@@ -125,9 +125,9 @@ export function BillingTab() {
             Desde el portal de facturación puedes:
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Actualizar tu método de pago</li>
+            <li>{t("settings.updatePaymentMethod")}</li>
             <li>{t("billing.downloadPreviousInvoices")}</li>
-            <li>Cambiar o cancelar tu suscripción</li>
+            <li>{t("settings.changeOrCancelSub")}</li>
           </ul>
         </CardContent>
       </Card>

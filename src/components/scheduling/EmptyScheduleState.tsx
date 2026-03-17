@@ -45,7 +45,7 @@ export function EmptyScheduleState({ weekStart, dailyKPIs }: EmptyScheduleStateP
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
           <Calendar className="h-8 w-8 text-primary" />
         </div>
-        <h3 className="text-lg font-semibold mb-2">No schedule yet</h3>
+        <h3 className="text-lg font-semibold mb-2">{t("scheduling.noScheduleYet")}</h3>
         <p className="text-muted-foreground max-w-md mx-auto mb-6">
           Click "Create Schedule" to let Josephine AI generate an optimized schedule based on your forecast and team availability.
         </p>

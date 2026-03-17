@@ -143,7 +143,7 @@ export default function Dashboard() {
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
-          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
+          <p className="text-muted-foreground">{t("dashboard.todayOperationsSummary")}</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -167,7 +167,7 @@ export default function Dashboard() {
       <div className="space-y-6 animate-fade-in">
         <div>
           <h1 className="text-2xl font-display font-bold">{t('nav.controlTower')}</h1>
-          <p className="text-muted-foreground">Resumen de operaciones de hoy</p>
+          <p className="text-muted-foreground">{t("dashboard.todayOperationsSummary")}</p>
         </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">

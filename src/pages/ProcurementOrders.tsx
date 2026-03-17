@@ -379,8 +379,8 @@ export default function ProcurementOrders() {
               <Card>
                 <CardContent className="py-12 text-center">
                   <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">No suppliers found</p>
-                  <p className="text-sm text-muted-foreground mt-1">Place an order to add suppliers</p>
+                  <p className="text-muted-foreground">{t("procurement.noSuppliersFound")}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t("procurement.placeOrderToAdd")}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -464,7 +464,7 @@ export default function ProcurementOrders() {
               <Card>
                 <CardContent className="py-12 text-center">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground">No orders yet</p>
+                  <p className="text-muted-foreground">{t("procurement.noOrdersYet")}</p>
                   <Button className="mt-4" onClick={() => window.location.href = '/procurement'}>
                     Place First Order
                   </Button>
@@ -591,7 +591,7 @@ export default function ProcurementOrders() {
                     ))}
                   </div>
                 ) : orderLines.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">No line items found</p>
+                  <p className="text-muted-foreground text-center py-4">{t("procurement.noLineItems")}</p>
                 ) : (
                   <Table>
                     <TableHeader>

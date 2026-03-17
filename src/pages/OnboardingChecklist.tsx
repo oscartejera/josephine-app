@@ -184,7 +184,7 @@ export default function OnboardingChecklist() {
         <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold">Configuración de Josephine</h1>
+                <h1 className="text-2xl font-bold">{t("onboarding.configTitle")}</h1>
                 <p className="text-muted-foreground mt-1">
                     Sigue estos pasos para activar todas las funcionalidades de Josephine para tu restaurante.
                 </p>
@@ -194,7 +194,7 @@ export default function OnboardingChecklist() {
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Progreso de configuración</span>
+                        <span className="text-sm font-medium">{t("onboarding.configProgress")}</span>
                         <Badge variant={progressPercent === 100 ? 'default' : 'secondary'}>
                             {completedCount}/{totalCount} completados
                         </Badge>
@@ -217,7 +217,7 @@ export default function OnboardingChecklist() {
             {loading ? (
                 <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    <span className="ml-2 text-muted-foreground">Verificando configuración...</span>
+                    <span className="ml-2 text-muted-foreground">{t("onboarding.verifyingConfig")}</span>
                 </div>
             ) : (
                 categories.map(cat => {
@@ -310,7 +310,7 @@ export default function OnboardingChecklist() {
                         <Star className="h-5 w-5 text-amber-500" />
                         Próximamente
                     </CardTitle>
-                    <CardDescription>Integraciones externas pendientes</CardDescription>
+                    <CardDescription>{t("onboarding.pendingIntegrations")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">

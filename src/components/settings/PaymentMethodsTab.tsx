@@ -128,7 +128,7 @@ export function PaymentMethodsTab() {
                                 <CreditCard className="h-5 w-5" />
                                 Payment Methods
                             </CardTitle>
-                            <CardDescription>Manage payment methods for procurement autopay</CardDescription>
+                            <CardDescription>{t("settings.managePaymentMethods")}</CardDescription>
                         </div>
                         <Dialog open={showAddPayment} onOpenChange={setShowAddPayment}>
                             <DialogTrigger asChild>
@@ -224,7 +224,7 @@ export function PaymentMethodsTab() {
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
                                         <Shield className="h-4 w-4" />
-                                        <span>Your card details are securely encrypted</span>
+                                        <span>{t("settings.cardEncrypted")}</span>
                                     </div>
                                 </div>
                                 <DialogFooter>
@@ -243,8 +243,8 @@ export function PaymentMethodsTab() {
                     {paymentMethods.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                             <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-40" />
-                            <p className="font-medium">No payment methods</p>
-                            <p className="text-sm mt-1">Add a payment method to enable autopay for procurement orders</p>
+                            <p className="font-medium">{t("settings.noPaymentMethods")}</p>
+                            <p className="text-sm mt-1">{t("settings.addPaymentMethodDesc")}</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -313,7 +313,7 @@ export function PaymentMethodsTab() {
             <AlertDialog open={!!deletePaymentId} onOpenChange={(open) => !open && setDeletePaymentId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete payment method?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("settings.deletePaymentMethod")}</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will remove this payment method from your account. This action cannot be undone.
                         </AlertDialogDescription>

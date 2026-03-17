@@ -101,7 +101,7 @@ export default function ResetPassword() {
                 <CheckCircle2 className="w-6 h-6 text-primary" />
               </div>
               <CardTitle className="text-2xl font-display">Contraseña actualizada</CardTitle>
-              <CardDescription>Tu contraseña ha sido cambiada exitosamente</CardDescription>
+              <CardDescription>{t("auth.passwordChanged")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full" onClick={() => navigate('/dashboard')}>
@@ -123,7 +123,7 @@ export default function ResetPassword() {
               <ChefHat className="w-6 h-6 text-primary-foreground" />
             </div>
             <CardTitle className="text-2xl font-display">Nueva contraseña</CardTitle>
-            <CardDescription>Ingresa tu nueva contraseña</CardDescription>
+            <CardDescription>{t("auth.enterNewPassword")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

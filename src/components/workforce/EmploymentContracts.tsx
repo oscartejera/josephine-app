@@ -239,25 +239,25 @@ export function EmploymentContracts({ locationId }: Props) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">Contratos activos</p>
+                        <p className="text-xs text-muted-foreground">{t("workforce.activeContracts")}</p>
                         <p className="text-2xl font-bold mt-1">{activeContracts.length}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">Salario medio</p>
+                        <p className="text-xs text-muted-foreground">{t("workforce.avgSalary")}</p>
                         <p className="text-2xl font-bold mt-1">€{avgSalary.toFixed(0)}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">Jornada media</p>
+                        <p className="text-xs text-muted-foreground">{t("workforce.avgWorkday")}</p>
                         <p className="text-2xl font-bold mt-1">{avgJornada.toFixed(0)}%</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">Tipo más común</p>
+                        <p className="text-xs text-muted-foreground">{t("workforce.mostCommonType")}</p>
                         <p className="text-2xl font-bold mt-1">
                             {topType ? getContractLabel(topType[0]) : '—'}
                         </p>
@@ -304,7 +304,7 @@ export function EmploymentContracts({ locationId }: Props) {
                                     <TableCell colSpan={8} className="text-center py-12">
                                         <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
                                         <p className="text-muted-foreground">{t("contracts.noContracts")}</p>
-                                        <p className="text-xs text-muted-foreground/60">Crea el primer contrato para tu equipo</p>
+                                        <p className="text-xs text-muted-foreground/60">{t("workforce.createFirstContract")}</p>
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -390,7 +390,7 @@ export function EmploymentContracts({ locationId }: Props) {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Tipo de contrato</Label>
+                            <Label>{t("workforce.contractType")}</Label>
                             <Select value={form.contract_type} onValueChange={v => setForm(f => ({ ...f, contract_type: v }))}>
                                 <SelectTrigger>
                                     <SelectValue />
@@ -404,7 +404,7 @@ export function EmploymentContracts({ locationId }: Props) {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <Label>Salario bruto/mes (€)</Label>
+                                <Label>{t("workforce.grossSalaryMonth")}</Label>
                                 <Input
                                     type="number" step="0.01" placeholder="1500"
                                     value={form.base_salary_monthly}

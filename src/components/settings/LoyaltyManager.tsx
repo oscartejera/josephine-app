@@ -260,8 +260,8 @@ export function LoyaltyManager() {
             <div className="flex items-center gap-3">
               <Gift className="h-6 w-6 text-primary" />
               <div>
-                <CardTitle>Programa de Fidelización</CardTitle>
-                <CardDescription>Gestiona clientes frecuentes y recompensas</CardDescription>
+                <CardTitle>{t("settings.loyaltyProgram")}</CardTitle>
+                <CardDescription>{t("settings.loyaltyDesc")}</CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -292,7 +292,7 @@ export function LoyaltyManager() {
                     <Star className="h-5 w-5 text-yellow-500" />
                     <span className="text-2xl font-bold">{stats.totalPoints.toLocaleString()}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">Puntos en circulación</p>
+                  <p className="text-sm text-muted-foreground">{t("settings.pointsInCirculation")}</p>
                 </CardContent>
               </Card>
               <Card>
@@ -301,7 +301,7 @@ export function LoyaltyManager() {
                     <Gift className="h-5 w-5 text-primary" />
                     <span className="text-2xl font-bold">{stats.activeRewards}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">Recompensas activas</p>
+                  <p className="text-sm text-muted-foreground">{t("settings.activeRewards")}</p>
                 </CardContent>
               </Card>
               <Card>
@@ -316,7 +316,7 @@ export function LoyaltyManager() {
                       );
                     })}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">Por nivel</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t("settings.byLevel")}</p>
                 </CardContent>
               </Card>
             </div>
@@ -407,7 +407,7 @@ export function LoyaltyManager() {
           {/* Rewards Tab */}
           <TabsContent value="rewards" className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Catálogo de Recompensas</h3>
+              <h3 className="text-lg font-medium">{t("settings.rewardsCatalog")}</h3>
               <Button onClick={() => { setEditingReward(null); setRewardForm({ name: '', description: '', points_cost: 100, reward_type: 'discount', value: 5, is_active: true }); setShowRewardDialog(true); }}>
                 <Plus className="h-4 w-4 mr-2" /> Añadir Recompensa
               </Button>
@@ -467,12 +467,12 @@ export function LoyaltyManager() {
           <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Configuración del Programa</CardTitle>
+                <CardTitle>{t("settings.programConfig")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Puntos por Euro gastado</Label>
+                    <Label>{t("settings.pointsPerEuro")}</Label>
                     <Input
                       type="number"
                       defaultValue={settings?.points_per_euro || 1}
@@ -483,7 +483,7 @@ export function LoyaltyManager() {
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label>Bono de Bienvenida (puntos)</Label>
+                    <Label>{t("settings.welcomeBonus")}</Label>
                     <Input
                       type="number"
                       defaultValue={settings?.welcome_bonus || 50}
@@ -496,7 +496,7 @@ export function LoyaltyManager() {
                 </div>
 
                 <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-3">Niveles de Fidelización</h4>
+                  <h4 className="font-medium mb-3">{t("settings.loyaltyLevels")}</h4>
                   <div className="grid gap-2 md:grid-cols-4">
                     {Object.entries(TIER_CONFIG).map(([tier, config]) => {
                       const TierIcon = config.icon;
@@ -610,7 +610,7 @@ export function LoyaltyManager() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Coste en Puntos *</Label>
+                <Label>{t("settings.costInPoints")}</Label>
                 <Input
                   type="number"
                   value={rewardForm.points_cost}

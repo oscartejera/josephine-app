@@ -196,7 +196,7 @@ export function DataSourceSettings() {
         {/* Mode selector */}
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label>Modo de selección</Label>
+            <Label>{t("settings.selectionMode")}</Label>
             <Select value={topLevel} onValueChange={handleTopLevelChange}>
               <SelectTrigger className="w-[280px]">
                 <SelectValue />
@@ -216,7 +216,7 @@ export function DataSourceSettings() {
           {/* Manual source selector */}
           {isManual(localMode) && (
             <div className="space-y-1 pl-4 border-l-2 border-muted">
-              <Label>Fuente de datos</Label>
+              <Label>{t("settings.dataSource")}</Label>
               <Select value={subChoice} onValueChange={handleManualSourceChange}>
                 <SelectTrigger className="w-[280px]">
                   <SelectValue />

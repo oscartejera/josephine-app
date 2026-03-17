@@ -205,7 +205,7 @@ export default function InventoryLocation() {
             <div className="flex flex-col items-center text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-amber-500" />
               <div>
-                <h2 className="text-lg font-semibold">Something went wrong</h2>
+                <h2 className="text-lg font-semibold">{t("common.somethingWentWrong")}</h2>
                 <p className="text-muted-foreground mt-1">
                   {pageError}
                 </p>

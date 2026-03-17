@@ -53,7 +53,7 @@ export function WasteLeaderboard({
               <TableHead className="text-xs font-medium text-muted-foreground h-9">Team Member</TableHead>
               <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Waste Logs</TableHead>
               <TableHead className="text-xs font-medium text-muted-foreground h-9">Location</TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Logged waste value</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">{t("waste.loggedWasteValue")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
