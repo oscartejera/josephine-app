@@ -229,7 +229,22 @@
     "selectColumn": "— Seleccionar columna —",
     "addInstructions": "Afegeix instruccions especials per a aquesta comanda...",
     "actualQuantity": "Quantitat real...",
-    "searchCategory": "Buscar recepta o categoria..."
+    "searchCategory": "Buscar recepta o categoria...",
+    "days": "dies",
+    "logout": "Tancar sessió",
+    "lastName": "Cognom",
+    "city": "Ciutat",
+    "currentStatus": "Estat actual",
+    "created": "Creat",
+    "added": "Afegit",
+    "exported": "Exportat",
+    "copiedToClipboard": "Copiat al porta-retalls",
+    "copyError": "Error en copiar",
+    "configSaved": "Configuració desada",
+    "noAccessibleLocations": "Sense locals accessibles",
+    "noNotifications": "Sense notificacions",
+    "offlineBanner": "Sense connexió — les dades poden no estar actualitzades",
+    "contactPhone": "Telèfon de contacte"
   },
   "nav": {
     "controlTower": "Torre de Control",
@@ -271,7 +286,16 @@
     "store_manager": "Gerent Local",
     "finance": "Finances",
     "hr_payroll": "RRHH",
-    "employee": "Empleat"
+    "employee": "Empleat",
+    "opsManager": "Gerent Operacions",
+    "storeManager": "Gerent Local",
+    "manager": "Encarregat/da",
+    "waiter": "Cambrer/a",
+    "cook": "Cuiner/a",
+    "bartender": "Barista",
+    "host": "Hostessa",
+    "dishwasher": "Rentaplats",
+    "delivery": "Repartidor/a"
   },
   "auth": {
     "login": "Iniciar sessió",
@@ -386,7 +410,8 @@
     "salesToday": "Vendes avui",
     "ordersToday": "Comandes avui",
     "topProduct": "Top producte",
-    "viewAnalysis": "Veure anàlisi"
+    "viewAnalysis": "Veure anàlisi",
+    "noLocations": "No hi ha locals configurats"
   },
   "sales": {
     "title": "Vendes",
@@ -410,7 +435,9 @@
     "noProductData": "Sense dades de producte disponibles",
     "failedToLoad": "Error en carregar dades de vendes",
     "tryRefreshing": "Intenta actualitzar la pàgina o canviar el rang de dates.",
-    "channelSplitRequiresPOS": "El desglossament per canal requereix seguiment de canals POS"
+    "channelSplitRequiresPOS": "El desglossament per canal requereix seguiment de canals POS",
+    "totalSales": "Vendes totals",
+    "totalOrders": "Comandes totals"
   },
   "labour": {
     "title": "Personal",
@@ -438,7 +465,15 @@
     "actual": "real",
     "complianceHours": "Hores",
     "complianceRest": "Descans",
-    "complianceFree": "Lliure"
+    "complianceFree": "Lliure",
+    "insufficientData": "No hi ha dades suficients (últimes 4 setmanes)",
+    "noShiftData": "No hi ha dades de torns",
+    "complianceDashboard": "Compliment Laboral",
+    "overdueAlerts": "Alertes de venciment",
+    "contractExpiry": "Venciment de contracte",
+    "medicalExpiry": "Reconeixement mèdic vençut",
+    "trainingExpiry": "Formació vençuda",
+    "documentExpiry": "Document vençut"
   },
   "waste": {
     "title": "Pèrdues",
@@ -485,7 +520,10 @@
     "withEscandallo": "Amb escandall",
     "withIngredients": "Amb ingredients",
     "editEscandallo": "Editar escandall",
-    "exampleRecipeName": "Ex: Pasta Carbonara"
+    "exampleRecipeName": "Ex: Pasta Carbonara",
+    "toastActionSaved": "Pla d'acció desat",
+    "toastSaveError": "Error en desar",
+    "totalProfit": "Benefici total"
   },
   "inventory": {
     "title": "Control d'Inventari",
@@ -504,7 +542,13 @@
     "orderUnit": "Uds. comanda",
     "vatRate": "Tipus IVA",
     "mainSupplier": "Proveïdor principal",
-    "exportCsv": "Exportar a CSV"
+    "exportCsv": "Exportar a CSV",
+    "countsAndWaste": "Comptatges i Merma",
+    "counts": "Comptatges",
+    "reconciliationReport": "Informe de conciliació",
+    "insights": "Insights",
+    "inventory": "Inventari",
+    "noItemsBelowMinimum": "No hi ha ítems per sota del nivell mínim"
   },
   "recipes": {
     "title": "Escandallos",
@@ -524,7 +568,24 @@
     "searchRecipesPlaceholder": "Cercar receptes...",
     "example": "Ex: Pasta Carbonara",
     "selectIngredient": "Seleccionar ingredient",
-    "selectSubRecipe": "Seleccionar sub-recepta"
+    "selectSubRecipe": "Seleccionar sub-recepta",
+    "searchPlaceholder": "Cercar receptes...",
+    "addRecipe": "Afegir recepta",
+    "namePlaceholder": "Ex: Pasta Carbonara",
+    "name": "Nom",
+    "portions": "Porcions",
+    "cost": "Cost",
+    "margin": "Marge",
+    "actions": "Accions",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "noRecipes": "Sense receptes",
+    "noRecipesDesc": "Afegeix la teva primera recepta",
+    "editRecipe": "Editar escandall",
+    "recipeUpdated": "Recepta actualitzada",
+    "ingredientAdded": "Ingredient afegit a la recepta",
+    "addIngredient": "Afegir Ingredient",
+    "recipePrefix": "Recepta"
   },
   "scheduling": {
     "title": "Gestió de Torns",
@@ -567,7 +628,16 @@
     "autoFill": "Auto-emplenar",
     "viewEvents": "Veure Esdeveniments",
     "weatherForecast": "Temps",
-    "scheduleSettings": "Configuració d'Horaris"
+    "scheduleSettings": "Configuració d'Horaris",
+    "accepted": "Horari acceptat",
+    "reverted": "Horari revertit",
+    "published": "Horari publicat i notificacions enviades a tots els empleats",
+    "swapRequested": "Sol·licitud de canvi enviada per a aprovació",
+    "swapRejected": "Sol·licitud de canvi rebutjada",
+    "autoFillEmpty": "Auto-fill: No s'han trobat buits per omplir",
+    "analyzingForecast": "Analitzant pronòstic de vendes i SPLH històric",
+    "calculatingStaffing": "Calculant nivells de dotació òptims per estació",
+    "verifyingConstraints": "Verificant restriccions de disponibilitat i contractes"
   },
   "budgets": {
     "title": "Pressupostos",
@@ -635,7 +705,17 @@
     "expectedDelivery": "Lliurament Esperat",
     "settingsTitle": "Configuració de Compres",
     "leadTime": "Temps de Lliurament",
-    "deliveryDays": "Dies de Lliurament"
+    "deliveryDays": "Dies de Lliurament",
+    "specialInstructions": "Afegeix instruccions especials per a aquesta comanda...",
+    "toastNewOrder": "Nova comanda rebuda!",
+    "toastOrderSent": "Comanda enviada al proveïdor!",
+    "totalValue": "Valor total",
+    "subtotal": "Subtotal",
+    "subtotalItems": "Subtotal ({{count}} ítems)",
+    "totalVat": "IVA total (21%)",
+    "itemsAddedToCart": "Ítems afegits al carret",
+    "reorder": "Reordenar",
+    "deliveryReceived": "Lliurament rebut"
   },
   "reviews": {
     "title": "Ressenyes",
@@ -665,7 +745,13 @@
     "loadingReviews": "Carregant ressenyes...",
     "rating": "Valoració",
     "ratingsInPeriod": "Valoracions en el període",
-    "avgResponseTime": "Temps mitjà de resposta"
+    "avgResponseTime": "Temps mitjà de resposta",
+    "allPlatforms": "Totes les plataformes",
+    "allLocations": "Totes les ubicacions",
+    "reply": "Respondre",
+    "noReviews": "Sense ressenyes",
+    "noEmployees": "Sense empleats en aquest local",
+    "notEvaluated": "Sense avaluar"
   },
   "payroll": {
     "title": "Nòmines",
@@ -726,7 +812,89 @@
     "costBreakdown": "Desglossament de Costos",
     "employerCost": "Cost Empresa",
     "employeeCost": "Cost Empleat",
-    "basedOnProcessedPayroll": "Basat en nòmines processades"
+    "basedOnProcessedPayroll": "Basat en nòmines processades",
+    "noContract": "Sense contracte",
+    "configureCertificate": "Configurar Certificat Digital",
+    "payrollApproved": "Nòmina aprovada",
+    "proceedToSubmission": "Pots procedir a la presentació",
+    "allSubmissionsComplete": "Totes les presentacions completades",
+    "proceedToPayment": "Pots procedir al pagament",
+    "notSubmitted": "No presentat",
+    "reviewAndApproval": "Revisió i Aprovació",
+    "summary": "Resum",
+    "employeesLabel": "Empleats",
+    "totalGross": "Total Brut",
+    "totalNet": "Total Net",
+    "employerSS": "SS Empresa",
+    "byLocation": "Per Local",
+    "locationLabel": "Local",
+    "gross": "Brut",
+    "net": "Net",
+    "approvePayrollDesc": "Un cop aprovades, podràs presentar i pagar.",
+    "approve": "Aprovar",
+    "confirmApproval": "Confirmar Aprovació",
+    "confirmApprovalQuestion": "Aproves les nòmines de {{period}}?",
+    "totalEmployerCost": "Cost Total Empresa",
+    "confirmApprovalBtn": "Confirmar Aprovació",
+    "calculateBack": "Calcular",
+    "nextSubmit": "Següent: Presentar",
+    "payrollPayment": "Pagament de Nòmines",
+    "generateSepaAndConfirm": "Genera el fitxer SEPA i confirma el pagament",
+    "totalToPay": "Total a Pagar",
+    "statusLabel": "Estat",
+    "pendingPayment": "Pendent de pagament",
+    "sepaFile": "Fitxer SEPA (ISO 20022)",
+    "sepaDescription": "Genera un fitxer SEPA Credit Transfer (pain.001.001.03) compatible amb qualsevol banc espanyol. Ref: Reglament UE 260/2012 + Norma 34 Banco de España.",
+    "regenerateSepa": "Regenerar SEPA",
+    "generateSepaFile": "Generar Fitxer SEPA",
+    "sepaGenerated": "Fitxer SEPA generat",
+    "sepaTransfersSummary": "{{count}} transferències per €{{amount}}",
+    "sepaGenerateError": "Error generant SEPA",
+    "fileGenerated": "Fitxer generat correctament",
+    "messageId": "ID Missatge",
+    "transactions": "Transaccions",
+    "method": "Mètode",
+    "debtorIban": "IBAN Ordenant",
+    "bic": "BIC",
+    "downloadSepaXml": "Descarregar XML SEPA (pain.001.001.03)",
+    "employee": "Empleat",
+    "amountLabel": "Import",
+    "concept": "Concepte",
+    "andMore": "... i {{count}} més",
+    "confirmPayment": "Confirmar Pagament",
+    "confirmPaymentDesc": "Marca les nòmines com a pagades un cop hagis executat la transferència.",
+    "markAsPaid": "Marcar com a Pagat",
+    "confirmPaymentDialog": "Confirma que s'ha realitzat el pagament de €{{amount}} a {{count}} empleats.",
+    "confirmPayBtn": "Confirmar Pagament",
+    "payrollPaid": "Nòmines pagades",
+    "payrollPaidDesc": "S'han marcat {{count}} nòmines com a pagades.",
+    "payrollCompleted": "Nòmines Pagades",
+    "payrollCompletedDesc": "El procés de nòmines de {{period}} s'ha completat correctament.",
+    "submitBack": "Presentar",
+    "backToHome": "Tornar a Inici",
+    "officialSubmission": "Presentació Oficial",
+    "realSubmission": "Enviament real a organismes oficials",
+    "submitAll": "Presentar Tot",
+    "simulationCompleted": "Simulació completada",
+    "simulatedOk": "Simulat OK",
+    "sentOk": "Enviat correctament",
+    "submissionError": "Error en presentar",
+    "accepted": "Acceptat",
+    "rejected": "Rebutjat",
+    "pending": "Pendent",
+    "simulate": "Simular",
+    "submitAction": "Presentar",
+    "reviewBack": "Revisar",
+    "nextPay": "Següent: Pagar",
+    "agencyTGSS": "Seguretat Social",
+    "agencyTGSSDesc": "Liquidació de quotes a través del Sistema RED (Liquidació Directa)",
+    "agencyTGSSReg": "LGSS Art. 22 + Ordre ESS/484/2013",
+    "agencyAEAT": "Agència Tributària",
+    "agencyAEATDesc": "Retencions i ingressos a compte de l'IRPF",
+    "agencyAEATReg": "Model 111 - Ordre EHA/586/2011",
+    "agencySEPE": "SEPE Certific@2",
+    "agencySEPEDesc": "Certificats d'empresa per a prestacions d'atur",
+    "agencySEPEReg": "Art. 267 LGSS + RD 625/1985"
   },
   "pos": {
     "title": "Terminal Punt de Venda",
@@ -777,7 +945,11 @@
     "splitEqual": "Dividir igual",
     "splitByItems": "Per articles",
     "payFull": "Pagar tot",
-    "selectLocation": "Seleccionar ubicació"
+    "selectLocation": "Seleccionar ubicació",
+    "toastCajaAbierta": "Caixa oberta",
+    "toastCajaCerrada": "Caixa tancada",
+    "toastError": "Error",
+    "noOpenTables": "No hi ha taules obertes"
   },
   "kds": {
     "title": "Pantalla de Cuina",
@@ -875,7 +1047,23 @@
     "objectivesUpdated": "Objectius actualitzats",
     "objectivesError": "No s'ha pogut desar",
     "completeActuals": "Actuals complets",
-    "currentActuals": "Actuals actuals"
+    "currentActuals": "Actuals actuals",
+    "selectRole": "Seleccionar rol",
+    "selectScope": "Seleccionar scope",
+    "selectLocation": "Seleccionar ubicació",
+    "firstName": "Maria",
+    "lastName": "García",
+    "fullName": "Joan García",
+    "emailPlaceholder": "joan@exemple.com",
+    "paymentMethod": "Mètode",
+    "location": "Local",
+    "deleteMyAccount": "Eliminar el meu compte",
+    "exportMyData": "Exportar les meves dades",
+    "dataExported": "Dades exportades",
+    "exportError": "Error en exportar",
+    "requestRegistered": "Sol·licitud registrada",
+    "preferencesUpdated": "Preferències actualitzades",
+    "demoDataRegenerated": "Dades demo regenerades"
   },
   "reports": {
     "title": "Informes",
@@ -902,7 +1090,13 @@
     "redeemPoints": "Bescanviar Punts",
     "earnPoints": "Guanyar Punts",
     "pointsEarned": "Punts Guanyats",
-    "redemptionHistory": "Historial de Bescanvis"
+    "redemptionHistory": "Historial de Bescanvis",
+    "completeNameAndContact": "Completa nom i email o telèfon",
+    "memberUpdated": "Membre actualitzat",
+    "memberCreated": "Membre creat",
+    "completeNameAndCost": "Completa nom i cost en punts",
+    "rewardUpdated": "Recompensa actualitzada",
+    "rewardCreated": "Recompensa creada"
   },
   "errors": {
     "generic": "S'ha produït un error",
@@ -971,7 +1165,66 @@
     "memberAdded": "Membre afegit",
     "memberAddedDesc": "afegit a l'equip correctament",
     "shiftLog": "Registre de torn",
-    "shiftLogDesc": "Què ha passat durant el torn?"
+    "shiftLogDesc": "Què ha passat durant el torn?",
+    "searchPlaceholder": "Cercar empleat...",
+    "filterRole": "Rol",
+    "filterLocation": "Local",
+    "allRoles": "Tots els rols",
+    "allLocations": "Tots els locals",
+    "tableEmployee": "Empleat",
+    "tableRole": "Rol",
+    "tableLocation": "Local",
+    "tableCostHour": "Cost/h",
+    "tableStatus": "Estat",
+    "tableActions": "Accions",
+    "active": "Actiu",
+    "inactive": "Inactiu",
+    "onLeave": "De permís",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "noEmployees": "Sense empleats",
+    "noEmployeesDesc": "Afegeix el teu primer membre de l'equip",
+    "addEmployeeTitle": "Nou empleat",
+    "editEmployeeTitle": "Editar empleat",
+    "fullName": "Nom complet",
+    "fullNameRequired": "Nom complet *",
+    "namePlaceholder": "Maria López García",
+    "role": "Rol",
+    "costHour": "Cost/hora (€)",
+    "locationRequired": "Local *",
+    "selectLocation": "Seleccionar local",
+    "employeeStatus": "Estat de l'empleat",
+    "saveChanges": "Desar canvis",
+    "clockedIn": "Fitxats ara",
+    "noClockedIn": "Ningú fitxat ara",
+    "noClockedInDesc": "Els empleats apareixeran aquí en fitxar entrada",
+    "since": "des de",
+    "newAnnouncement": "Nou anunci",
+    "noAnnouncements": "Sense anuncis",
+    "noAnnouncementsDesc": "Crea el primer anunci per al teu equip",
+    "announcementContent": "Contingut",
+    "announcementPlaceholder": "Escriu el missatge per al teu equip...",
+    "announcementType": "Tipus",
+    "typeGeneral": "General",
+    "typeImportant": "Important",
+    "typeSchedule": "Horaris",
+    "typeCelebration": "Celebració",
+    "locationOptional": "Local (opcional)",
+    "all": "Tots",
+    "pinTop": "Fixar a la part superior",
+    "publish": "Publicar",
+    "toastNameLocationRequired": "Nom i local són obligatoris",
+    "toastAddError": "Error en afegir empleat",
+    "toastUpdateError": "Error en actualitzar",
+    "toastUpdated": "Empleat actualitzat",
+    "toastStatusError": "Error en canviar estat",
+    "toastTitleRequired": "El títol és obligatori",
+    "toastAnnouncementError": "Error en crear anunci",
+    "toastAnnouncementPublished": "Anunci publicat",
+    "toastDeleteError": "Error en eliminar",
+    "toastAnnouncementDeleted": "Anunci eliminat"
   },
   "onboarding": {
     "title": "Incorporació",
@@ -992,7 +1245,33 @@
     "importMenu": "Importar Menú",
     "addManually": "Afegir Manualment",
     "connectPOS": "Connectar TPV",
-    "configurePayments": "Configurar Pagaments"
+    "configurePayments": "Configurar Pagaments",
+    "toastError": "Error en configurar el teu compte. Torna-ho a provar.",
+    "toastWelcome": "Benvingut a Josephine",
+    "toastFinalError": "Error en finalitzar. Torna-ho a provar.",
+    "signedContract": "Contracte de treball signat",
+    "dniCopy": "Còpia DNI / NIE",
+    "ssNumber": "Número de Seguretat Social",
+    "bankAccount": "Compte bancari (IBAN)",
+    "employeePhoto": "Foto per a fitxa empleat",
+    "prlTraining": "Formació PRL rebuda",
+    "foodHandler": "Carnet de manipulador d'aliments",
+    "facilityTour": "Tour de l'establiment",
+    "allergenProtocol": "Protocol d'al·lèrgens",
+    "uniformDelivered": "Uniforme lliurat",
+    "systemAccess": "Accés al sistema configurat",
+    "trialShift": "Torn de prova completat",
+    "contracts": "Contractes",
+    "prlCertificates": "Certificats PRL",
+    "dniNie": "DNI / NIE",
+    "ss": "SS",
+    "yourBusiness": "El teu Negoci",
+    "companyName": "Nom de la teva empresa",
+    "yourLocation": "El teu Local",
+    "firstLocation": "Primer establiment",
+    "yourMenu": "La teva Carta",
+    "productsAndPrices": "Productes i preus",
+    "noPresetInventory": "No hi ha inventari predefinit per a aquesta plantilla"
   },
   "availability": {
     "title": "Disponibilitat",
@@ -1011,7 +1290,13 @@
     "denied": "Denegat",
     "reason": "Motiu",
     "startDate": "Data Inici",
-    "endDate": "Data Fi"
+    "endDate": "Data Fi",
+    "toastSaved": "Disponibilitat desada correctament",
+    "toastSaveError": "Error en desar disponibilitat",
+    "toastTimeOffSubmitted": "Sol·licitud d'absència enviada",
+    "toastApproved": "Sol·licitud aprovada",
+    "toastRejected": "Sol·licitud rebutjada",
+    "toastCancelled": "Sol·licitud cancel·lada"
   },
   "integrations": {
     "title": "Integracions",
@@ -1133,7 +1418,19 @@
     "grossEstimate": "Estimació bruta",
     "plannedShifts": "Torns planificats",
     "weeklySummary": "Resum setmanal",
-    "startDate": "Data d'inici"
+    "startDate": "Data d'inici",
+    "important": "Important",
+    "celebration": "Celebració",
+    "schedules": "Horaris",
+    "info": "Info",
+    "sendInvitation": "Enviar invitació",
+    "noAccess": "Sense accés",
+    "noTeamMembers": "Sense membres de l'equip",
+    "noRole": "Sense rol",
+    "inviteError": "Error en convidar",
+    "noClockInsThisMonth": "Sense fitxatges aquest mes",
+    "noShiftsPlanned": "Sense torns planificats",
+    "noShiftScheduled": "Sense torn programat"
   },
   "notifications": {
     "title": "Notificacions",
@@ -1171,7 +1468,20 @@
     "yourName": "El teu nom",
     "phone": "+34 600 000 000",
     "emailPlaceholder": "el-teu@email.com",
-    "specialRequests": "Al·lèrgies, cadira de bebè, celebració especial..."
+    "specialRequests": "Al·lèrgies, cadira de bebè, celebració especial...",
+    "title": "Reservar taula",
+    "date": "Data",
+    "time": "Hora",
+    "guests": "Comensals",
+    "guestsSuffix": "persones",
+    "name": "El teu nom",
+    "email": "tu@email.com",
+    "specialRequestsPlaceholder": "Al·lèrgies, cadira per a nadó, celebració especial...",
+    "confirm": "Confirmar reserva",
+    "confirmed": "Reserva confirmada!",
+    "confirmationMessage": "T'hem enviat un email de confirmació",
+    "guestName": "Nom",
+    "noTimesAvailable": "No hi ha horaris disponibles per a aquesta data"
   },
   "stockAudit": {
     "title": "Comptatge de Stock",
@@ -1184,6 +1494,443 @@
     "auditCompleted": "Auditoria completada",
     "variance": "Desviació",
     "theoretical": "Teòric",
-    "counted": "Comptat"
+    "counted": "Comptat",
+    "countRegistered": "Comptatge registrat",
+    "newCount": "Nou Comptatge",
+    "financialLoss": "Pèrdua Financera",
+    "criticalItems": "Ítems Crítics (>5% variança)",
+    "deadStock30": "Dead Stock (30 dies)",
+    "inventoryVariance": "Variança d'Inventari",
+    "varianceDesc": "Stock teòric vs real — vermell = variança negativa >5%",
+    "actual": "Real",
+    "variancePct": "Variança %",
+    "lossEuro": "Pèrdua €",
+    "noVarianceData": "No hi ha dades de variança. Registra comptatges físics per veure resultats.",
+    "critical": "CRÍTIC",
+    "deadStockTitle": "Dead Stock — Sense rotació 30+ dies",
+    "inStock": "En stock",
+    "daysIdle": "Dies inactiu",
+    "registerPhysicalCount": "Registrar Comptatge Físic",
+    "currentStock": "Stock actual",
+    "theoreticalStock": "Stock teòric (sistema)",
+    "actualStock": "Stock real (comptat)",
+    "actualQty": "Quantitat real...",
+    "economicImpact": "Impacte econòmic",
+    "registerCount": "Registrar Comptatge"
+  },
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Dashboard centralitzat de Business Intelligence amb AI-powered analytics",
+    "sales": "Vendes",
+    "salesDesc": "Analitza vendes, canals, productes i pronòstic en temps real",
+    "labour": "Personal",
+    "labourDesc": "Optimitza COL%, SPLH, OPLH i costos de personal",
+    "instantPL": "P&L Instantani",
+    "instantPLDesc": "P&L en temps real per ubicació amb drill-down",
+    "forecasting": "Pronòstic",
+    "forecastingDesc": "Models Prophet ML per a predicció de vendes i demanda",
+    "salesToday": "Vendes avui",
+    "salesMTD": "Vendes MTD",
+    "ordersToday": "Comandes avui",
+    "topProduct": "Producte top",
+    "vsYesterday": "vs ahir",
+    "modules": "Mòduls",
+    "viewAnalysis": "Veure anàlisi",
+    "needHelp": "Necessites ajuda amb les teves mètriques?",
+    "helpDescription": "Ask Josephine està disponible a cada mòdul per donar-te insights personalitzats basats en les teves dades en temps real.",
+    "learnMore": "Conèixer més sobre Josephine AI"
+  },
+  "prepList": {
+    "title": "Llista Prep",
+    "tomorrow": "Demà",
+    "progress": "Progrés",
+    "recipesToPrepare": "Receptes a preparar",
+    "lowStock": "Stock baix",
+    "searchRecipe": "Cercar recepta o categoria...",
+    "noItems": "No hi ha ítems de prep",
+    "addRecipesHint": "Afegeix receptes a Escandalls i les veuràs aquí amb quantitats basades en el pronòstic",
+    "recipes": "receptes"
+  },
+  "logWaste": {
+    "logWaste": "Registrar Merma",
+    "dialogTitle": "Registrar Esdeveniment de Merma",
+    "dialogDesc": "Registra un nou esdeveniment de merma per al seguiment d'inventari.",
+    "location": "Ubicació",
+    "selectLocation": "Seleccionar ubicació",
+    "item": "Article",
+    "selectItem": "Seleccionar article",
+    "loadingItems": "Carregant articles...",
+    "quantity": "Quantitat",
+    "enterQuantity": "Introdueix quantitat",
+    "reason": "Motiu",
+    "selectReason": "Seleccionar motiu",
+    "reasons": {
+      "broken": "Trencament",
+      "end_of_day": "Fi del dia",
+      "expired": "Caducat",
+      "theft": "Robatori",
+      "other": "Altre"
+    },
+    "photoOptional": "Foto (opcional)",
+    "takePhoto": "Fer / Pujar Foto",
+    "photoTooLarge": "Foto massa gran",
+    "maxSize": "Màxim 5 MB.",
+    "valueEuro": "Valor (€)",
+    "calculatedAuto": "Calculat automàticament",
+    "successTitle": "Merma registrada correctament",
+    "successDesc": "{{quantity}} unitats registrades com a {{reason}}",
+    "errorTitle": "Error en registrar merma",
+    "errorDesc": "Si us plau, torneu-ho a provar.",
+    "demoTitle": "Merma registrada (Demo)",
+    "demoDesc": "En producció, això es desaria a la base de dades."
+  },
+  "wasteTable": {
+    "noData": "No hi ha dades de merma",
+    "noDataDesc": "No es van registrar esdeveniments de merma per al període i ubicació seleccionats.",
+    "percentOfTotal": "% del total de merma",
+    "allReasons": "Tots els motius",
+    "searchByItem": "Cercar per article",
+    "items": "Articles",
+    "quantity": "Quantitat",
+    "value": "Valor",
+    "type": "Tipus",
+    "topReason": "Motiu principal per valor",
+    "percentOfSales": "% de vendes",
+    "ingredient": "Ingredient",
+    "menuItem": "Plat"
+  },
+  "logbook": {
+    "title": "Logbook del Manager",
+    "pending_one": "pendent",
+    "pending_other": "pendents",
+    "newEntry": "Nova Entrada",
+    "category": "Categoria",
+    "severity": "Severitat",
+    "placeholder": "Què ha passat durant el torn?",
+    "entryAdded": "Entrada afegida al logbook",
+    "saveError": "Error en desar",
+    "loading": "Carregant logbook...",
+    "noEntries": "Sense entrades aquesta setmana",
+    "noEntriesHint": "Registra incidències, notes de personal i esdeveniments del torn",
+    "resolved": "Resolt",
+    "markPending": "Marcar com a pendent",
+    "markResolved": "Marcar com a resolt",
+    "categories": {
+      "general": "General",
+      "incident": "Incidència",
+      "staffing": "Personal",
+      "inventory": "Inventari",
+      "maintenance": "Manteniment",
+      "customer": "Client"
+    },
+    "severities": {
+      "info": "Info",
+      "warning": "Avís",
+      "critical": "Crític"
+    }
+  },
+  "timesheet": {
+    "title": "Fitxatges",
+    "subtitle": "Revisió i control de fitxatges",
+    "allLocations": "Tots els locals",
+    "labourCost": "Cost laboral",
+    "clockIns": "Fitxatges",
+    "tableEmployee": "Empleat",
+    "tableDate": "Data",
+    "tableClockIn": "Entrada",
+    "tableClockOut": "Sortida",
+    "tableDuration": "Durada",
+    "tableCost": "Cost",
+    "tableSource": "Font",
+    "active": "Actiu",
+    "manual": "Manual",
+    "noClockIns": "Sense fitxatges aquesta setmana",
+    "anomalies": "Anomalies",
+    "noAnomalies": "Tot en ordre",
+    "clockInTime": "Hora d'entrada",
+    "clockOutTime": "Hora de sortida",
+    "toastUpdateError": "Error en actualitzar fitxatge",
+    "toastUpdated": "Fitxatge actualitzat",
+    "toastDeleteError": "Error en eliminar",
+    "toastDeleted": "Fitxatge eliminat",
+    "noAlerts": "No hi ha alertes aquesta setmana"
+  },
+  "menuItems": {
+    "searchPlaceholder": "Cercar plats...",
+    "category": "Categoria",
+    "allCategories": "Totes les categories",
+    "addItem": "Nou plat",
+    "name": "Nom",
+    "sellingPrice": "Preu de venda",
+    "cost": "Cost",
+    "margin": "Marge",
+    "actions": "Accions",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "noItems": "Sense plats",
+    "noItemsDesc": "Afegeix el teu primer plat del menú"
+  },
+  "inventoryItems": {
+    "searchPlaceholder": "Cercar per nom...",
+    "category": "Categoria",
+    "supplier": "Proveïdor",
+    "allLocations": "Totes les ubicacions",
+    "allCategories": "Totes les categories",
+    "allSuppliers": "Tots els proveïdors",
+    "addItem": "Nou article",
+    "exportPdf": "Exportar PDF",
+    "name": "Nom",
+    "unit": "Unitat",
+    "stock": "Stock",
+    "parLevel": "Nivell par",
+    "price": "Preu",
+    "actions": "Accions",
+    "noItems": "Sense articles",
+    "toastGeneratingPdf": "Generant PDF...",
+    "toastExported": "Exportat correctament"
+  },
+  "employeeReviews": {
+    "title": "Avaluacions",
+    "newReview": "Nova avaluació",
+    "selectEmployee": "Seleccionar empleat",
+    "overallScore": "Puntuació general",
+    "strengths": "Fortaleses",
+    "goals": "Objectius",
+    "date": "Data",
+    "score": "Puntuació",
+    "reviewer": "Avaluador",
+    "noReviews": "Sense avaluacions",
+    "toastSaved": "Avaluació desada",
+    "toastSaveError": "Error en desar"
+  },
+  "contracts": {
+    "title": "Contractes",
+    "newContract": "Nou contracte",
+    "selectEmployee": "Seleccionar empleat",
+    "contractType": "Tipus de contracte",
+    "permanent": "Indefinit",
+    "temporary": "Temporal",
+    "partTime": "Parcial",
+    "startDate": "Data inici",
+    "endDate": "Data fi",
+    "salary": "Salari anual",
+    "hoursWeek": "Hores/setmana",
+    "noContracts": "Sense contractes",
+    "toastSelectEmployee": "Selecciona un empleat",
+    "toastUpdateError": "Error en actualitzar contracte",
+    "toastUpdated": "Contracte actualitzat",
+    "toastCreateError": "Error en crear contracte",
+    "toastCreated": "Contracte creat",
+    "toastStatusError": "Error en canviar estat"
+  },
+  "teamDirectory": {
+    "searchPlaceholder": "Cercar company/a..."
+  },
+  "teamHome": {
+    "toastClockIn": "Entrada registrada",
+    "toastClockInError": "Error en registrar entrada",
+    "toastClockOut": "Sortida registrada",
+    "toastClockOutError": "Error en registrar sortida"
+  },
+  "pricing": {
+    "toastFreePlan": "Pla gratuït — ja estàs en aquest pla",
+    "toastPaymentError": "No s'ha pogut crear la sessió de pagament. Torna-ho a provar."
+  },
+  "dataImport": {
+    "toastSelectLocation": "Selecciona una ubicació específica abans d'importar",
+    "toastImportError": "Error inesperat durant la importació",
+    "noPreviousImports": "No hi ha importacions prèvies"
+  },
+  "workforceOnboarding": {
+    "noRecentOnboardings": "Sense incorporacions recents",
+    "allEmployees": "Tots els empleats",
+    "contractType": "Tipus de contracte",
+    "permanent": "Indefinit",
+    "temporary": "Temporal",
+    "partTime": "Parcial",
+    "intern": "Becari",
+    "toastContractRegistered": "Contracte registrat (demo)"
+  },
+  "square": {
+    "toastConnected": "Square connectat correctament",
+    "toastImported": "Dades importades correctament",
+    "toastSyncError": "Error en la sincronització inicial",
+    "toastDataAvailable": "Dades disponibles. Pots sincronitzar manualment si necessites actualitzar.",
+    "toastConnectError": "Error connectant Square",
+    "toastOrgNotFound": "No s'ha trobat l'organització. Recarrega la pàgina.",
+    "toastStartError": "Error iniciant connexió",
+    "toastSyncing": "Sincronització en curs",
+    "toastSyncComplete": "Sincronització completada",
+    "toastSyncFailed": "Error sincronitzant",
+    "toastDisconnected": "Square desconnectat. Mostrant dades de demostració.",
+    "toastDisconnectError": "Error en desconnectar",
+    "toastSyncInitialError": "Error en la sincronització inicial",
+    "connectionStatus": "Estat de la connexió",
+    "connecting": "Connectant amb Square...",
+    "importingLocations": "Important locals...",
+    "importingCatalog": "Important catàleg..."
+  },
+  "recommendations": {
+    "menuOptimization": "Optimització Menú",
+    "revenue": "Ingressos",
+    "laborSavings": "Estalvi laboral"
+  },
+  "staffing": {
+    "day": "Dia"
+  },
+  "lightspeed": {
+    "toastConnected": "Lightspeed connectat correctament!",
+    "toastConnectError": "Error en iniciar connexió",
+    "toastSyncComplete": "Sincronització completada",
+    "toastSyncError": "Error en sincronització",
+    "toastDisconnected": "Lightspeed desconnectat"
+  },
+  "scheduleSettings": {
+    "toastSaveError": "Error desant",
+    "toastSaved": "Ajustos d'horari desats"
+  },
+  "clockIn": {
+    "toastNotFound": "No s'ha trobat el teu registre d'empleat",
+    "toastClockInOk": "Entrada registrada correctament",
+    "toastClockInError": "Error en registrar entrada",
+    "toastClockOutOk": "Sortida registrada correctament",
+    "toastClockOutError": "Error en registrar sortida"
+  },
+  "eventCalendar": {
+    "toastAdded": "Esdeveniment afegit",
+    "toastError": "Error",
+    "toastDeleted": "Esdeveniment eliminat"
+  },
+  "locationWizard": {
+    "toastSessionExpired": "La teva sessió ha caducat. Si us plau, inicia sessió de nou.",
+    "toastPermissionsError": "Error de permisos. Recarrega la pàgina i torna-ho a provar.",
+    "toastNoPermissions": "No tens permisos per crear locals. Verifica que tens rol de propietari.",
+    "toastCreated": "Local creat correctament",
+    "toastCreateError": "Error creant el local"
+  },
+  "trainingTracker": {
+    "toastCertAdded": "Certificat afegit",
+    "toastError": "Error"
+  },
+  "adminTools": {
+    "toast18Months": "18 mesos de dades generats exitosament!",
+    "toast30Days": "30 dies de dades generats!"
+  },
+  "paymentHistory": {
+    "toastLoadError": "Error en carregar els pagaments",
+    "toastCopied": "ID copiat al porta-retalls",
+    "toastCopyError": "Error en copiar"
+  },
+  "locationManager": {
+    "toastNameRequired": "El nom del local és obligatori",
+    "toastGroupNotFound": "No s'ha trobat el grup",
+    "toastSessionExpired": "La teva sessió ha caducat. Si us plau, inicia sessió de nou.",
+    "toastPermissionsError": "Error de permisos. Recarrega la pàgina i torna-ho a provar.",
+    "toastNoPermissions": "No tens permisos per crear locals. Verifica que tens rol de propietari.",
+    "toastSelectSource": "Selecciona un local d'origen",
+    "toastUpdated": "Local actualitzat",
+    "toastCannotDelete": "No pots eliminar l'únic local del grup"
+  },
+  "teamManagers": {
+    "toastCompleteFields": "Completa nom, cognom i ubicació",
+    "toastEmailCopied": "Email copiat"
+  },
+  "reviewCard": {
+    "toastRefineSuccess": "Resposta refinada correctament",
+    "toastRefineError": "Error en refinar resposta",
+    "toastEnterReply": "Si us plau introdueix una resposta",
+    "toastReplySubmitted": "Resposta enviada correctament",
+    "toastReplyDraft": "No s'ha pogut publicar — desada com a esborrany"
+  },
+  "onboardingWizard": {
+    "toastComplete": "Configuració completada!",
+    "toastError": "Error en la configuració"
+  },
+  "inventoryHeader": {
+    "toastRegenerated": "Dades demo regenerades"
+  },
+  "smartCounting": {
+    "toastInvalidQty": "Introdueix una quantitat vàlida",
+    "toastNoCountsToSave": "No hi ha comptatges per desar",
+    "toastSaveError": "Error en desar"
+  },
+  "labourEmpty": {
+    "toastSeedError": "Error en generar dades demo",
+    "toastGenError": "Error generant dades demo"
+  },
+  "autoPurchase": {
+    "toastNoAlerts": "No hi ha alertes de stock baix!",
+    "toastScanError": "Error en escanejar inventari",
+    "toastNoSuppliers": "No hi ha proveïdors configurats",
+    "toastGenOrderError": "Error en generar ordre de compra"
+  },
+  "addItem": {
+    "toastRequired": "Nom i Preu són obligatoris",
+    "toastAdded": "Ítem afegit correctament",
+    "toastAddError": "Error afegint ítem"
+  },
+  "onboardingChecklist": {
+    "connectPOS": "Connectar el teu POS",
+    "createTeam": "Crear el teu equip",
+    "createSchedule": "Crear primer horari",
+    "configureSuppliers": "Configurar proveïdors",
+    "createRecipes": "Crear receptes amb costos",
+    "createInventory": "Crear catàleg d'inventari",
+    "setBudgets": "Establir pressupostos"
+  },
+  "menu": {
+    "totalDishes": "Total plats",
+    "noRecipe": "Sense escandall",
+    "noIngredients": "Sense ingredients"
+  },
+  "staff": {
+    "noTablesConfigured": "No hi ha taules configurades"
+  },
+  "dataHealth": {
+    "totalCounts": "Total comptatges"
+  },
+  "training": {
+    "noExpiry": "Sense caducitat",
+    "noCertificates": "Sense certificats registrats"
+  },
+  "location": {
+    "locationName": "Nom del Local",
+    "newLocationName": "Nom del nou local",
+    "addCustomProduct": "Afegir producte personalitzat",
+    "addTable": "Afegir taula",
+    "quickAddSuggested": "Afegir ràpid de suggerits",
+    "configureLater": "Configurar després"
+  },
+  "payments": {
+    "totalTransactions": "Total Transaccions",
+    "totalTips": "Total Propines",
+    "methodAdded": "Mètode de pagament afegit",
+    "defaultUpdated": "Predeterminat actualitzat",
+    "setAsDefault": "Mètode de pagament establert com a predeterminat",
+    "methodRemoved": "Mètode de pagament eliminat"
+  },
+  "suppliers": {
+    "noSuppliers": "No hi ha proveïdors configurats",
+    "connectionSuccess": "Connexió exitosa"
+  },
+  "users": {
+    "editRoles": "Editar Rols d'Usuari",
+    "addNewRole": "Afegir Nou Rol",
+    "noRoles": "Sense rols",
+    "noRolesAssigned": "Sense rols assignats",
+    "roleAssigned": "Rol assignat",
+    "roleRemoved": "Rol eliminat"
+  },
+  "objectives": {
+    "objectivesUpdated": "Objectius actualitzats"
+  },
+  "events": {
+    "noUpcomingEvents": "Sense esdeveniments propers"
+  },
+  "billing": {
+    "downloadPreviousInvoices": "Descarregar factures anteriors"
+  },
+  "sidebar": {
+    "importData": "Importar Dades"
   }
 }

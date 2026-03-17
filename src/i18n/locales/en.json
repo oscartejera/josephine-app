@@ -230,7 +230,22 @@
     "addInstructions": "Add any special instructions for this order...",
     "actualQuantity": "Actual quantity...",
     "confirmWaste": "Confirm Waste",
-    "searchCategory": "Search recipe or category..."
+    "searchCategory": "Search recipe or category...",
+    "days": "days",
+    "logout": "Log out",
+    "lastName": "Last name",
+    "city": "City",
+    "currentStatus": "Current status",
+    "created": "Created",
+    "added": "Added",
+    "exported": "Exported",
+    "copiedToClipboard": "Copied to clipboard",
+    "copyError": "Copy error",
+    "configSaved": "Settings saved",
+    "noAccessibleLocations": "No accessible locations",
+    "noNotifications": "No notifications",
+    "offlineBanner": "Offline — data may not be up to date",
+    "contactPhone": "Contact phone"
   },
   "nav": {
     "controlTower": "Control Tower",
@@ -272,7 +287,16 @@
     "store_manager": "Store Manager",
     "finance": "Finance",
     "hr_payroll": "HR & Payroll",
-    "employee": "Employee"
+    "employee": "Employee",
+    "opsManager": "Ops Manager",
+    "storeManager": "Store Manager",
+    "manager": "Shift Lead",
+    "waiter": "Waiter",
+    "cook": "Cook",
+    "bartender": "Bartender",
+    "host": "Host",
+    "dishwasher": "Dishwasher",
+    "delivery": "Delivery"
   },
   "auth": {
     "login": "Log in",
@@ -387,7 +411,8 @@
     "salesToday": "Sales today",
     "ordersToday": "Orders today",
     "topProduct": "Top product",
-    "viewAnalysis": "View analysis"
+    "viewAnalysis": "View analysis",
+    "noLocations": "No locations configured"
   },
   "sales": {
     "title": "Sales",
@@ -411,7 +436,9 @@
     "noProductData": "No product data available",
     "failedToLoad": "Failed to load sales data",
     "tryRefreshing": "Try refreshing the page or changing the date range.",
-    "channelSplitRequiresPOS": "Channel split requires POS channel tracking"
+    "channelSplitRequiresPOS": "Channel split requires POS channel tracking",
+    "totalSales": "Total Sales",
+    "totalOrders": "Total Orders"
   },
   "labour": {
     "title": "Labour",
@@ -439,7 +466,15 @@
     "actual": "actual",
     "complianceHours": "Hours",
     "complianceRest": "Rest",
-    "complianceFree": "Free"
+    "complianceFree": "Free",
+    "insufficientData": "Insufficient data (last 4 weeks)",
+    "noShiftData": "No shift data",
+    "complianceDashboard": "Labour Compliance",
+    "overdueAlerts": "Expiry alerts",
+    "contractExpiry": "Contract expiry",
+    "medicalExpiry": "Medical check-up expired",
+    "trainingExpiry": "Training expired",
+    "documentExpiry": "Document expired"
   },
   "waste": {
     "title": "Waste",
@@ -486,7 +521,10 @@
     "withEscandallo": "With recipe costing",
     "withIngredients": "With ingredients",
     "editEscandallo": "Edit recipe costing",
-    "exampleRecipeName": "e.g. Pasta Carbonara"
+    "exampleRecipeName": "e.g. Pasta Carbonara",
+    "toastActionSaved": "Action plan saved",
+    "toastSaveError": "Save error",
+    "totalProfit": "Total Profit"
   },
   "inventory": {
     "title": "Inventory Control",
@@ -505,7 +543,13 @@
     "orderUnit": "Order units",
     "vatRate": "VAT Rate",
     "mainSupplier": "Main supplier",
-    "exportCsv": "Export to CSV"
+    "exportCsv": "Export to CSV",
+    "countsAndWaste": "Counts & Waste",
+    "counts": "Counts",
+    "reconciliationReport": "Reconciliation report",
+    "insights": "Insights",
+    "inventory": "Inventory",
+    "noItemsBelowMinimum": "No items below minimum level"
   },
   "recipes": {
     "title": "Recipes",
@@ -525,7 +569,24 @@
     "searchRecipesPlaceholder": "Search recipes...",
     "example": "E.g.: Pasta Carbonara",
     "selectIngredient": "Select ingredient",
-    "selectSubRecipe": "Select sub-recipe"
+    "selectSubRecipe": "Select sub-recipe",
+    "searchPlaceholder": "Search recipes...",
+    "addRecipe": "Add recipe",
+    "namePlaceholder": "E.g.: Pasta Carbonara",
+    "name": "Name",
+    "portions": "Portions",
+    "cost": "Cost",
+    "margin": "Margin",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "noRecipes": "No recipes",
+    "noRecipesDesc": "Add your first recipe",
+    "editRecipe": "Edit recipe costing",
+    "recipeUpdated": "Recipe updated",
+    "ingredientAdded": "Ingredient added to recipe",
+    "addIngredient": "Add Ingredient",
+    "recipePrefix": "Recipe"
   },
   "scheduling": {
     "title": "Schedule Management",
@@ -568,7 +629,16 @@
     "autoFill": "Auto-fill",
     "viewEvents": "View Events",
     "weatherForecast": "Weather",
-    "scheduleSettings": "Schedule Settings"
+    "scheduleSettings": "Schedule Settings",
+    "accepted": "Schedule accepted",
+    "reverted": "Schedule reverted",
+    "published": "Schedule published and notifications sent to all employees",
+    "swapRequested": "Swap request sent for approval",
+    "swapRejected": "Swap request rejected",
+    "autoFillEmpty": "Auto-fill: No gaps found to fill",
+    "analyzingForecast": "Analysing sales forecast and historical SPLH",
+    "calculatingStaffing": "Calculating optimal staffing levels per station",
+    "verifyingConstraints": "Verifying availability and contract constraints"
   },
   "budgets": {
     "title": "Budgets",
@@ -636,7 +706,17 @@
     "expectedDelivery": "Expected Delivery",
     "settingsTitle": "Procurement Settings",
     "leadTime": "Lead Time",
-    "deliveryDays": "Delivery Days"
+    "deliveryDays": "Delivery Days",
+    "specialInstructions": "Add special instructions for this order...",
+    "toastNewOrder": "New order received!",
+    "toastOrderSent": "Order sent to supplier!",
+    "totalValue": "Total Value",
+    "subtotal": "Subtotal",
+    "subtotalItems": "Subtotal ({{count}} items)",
+    "totalVat": "Total VAT (21%)",
+    "itemsAddedToCart": "Items added to cart",
+    "reorder": "Reorder",
+    "deliveryReceived": "Delivery received"
   },
   "reviews": {
     "title": "Reviews",
@@ -666,7 +746,13 @@
     "loadingReviews": "Loading reviews...",
     "rating": "Rating",
     "ratingsInPeriod": "Ratings in the period",
-    "avgResponseTime": "Avg response time"
+    "avgResponseTime": "Avg response time",
+    "allPlatforms": "All platforms",
+    "allLocations": "All locations",
+    "reply": "Reply",
+    "noReviews": "No reviews",
+    "noEmployees": "No employees at this location",
+    "notEvaluated": "Not evaluated"
   },
   "payroll": {
     "title": "Payroll",
@@ -727,7 +813,89 @@
     "costBreakdown": "Cost Breakdown",
     "employerCost": "Employer Cost",
     "employeeCost": "Employee Cost",
-    "basedOnProcessedPayroll": "Based on processed payroll"
+    "basedOnProcessedPayroll": "Based on processed payroll",
+    "noContract": "No contract",
+    "configureCertificate": "Configure Digital Certificate",
+    "payrollApproved": "Payroll approved",
+    "proceedToSubmission": "You can proceed to submission",
+    "allSubmissionsComplete": "All submissions completed",
+    "proceedToPayment": "You can proceed to payment",
+    "notSubmitted": "Not submitted",
+    "reviewAndApproval": "Review and Approval",
+    "summary": "Summary",
+    "employeesLabel": "Employees",
+    "totalGross": "Total Gross",
+    "totalNet": "Total Net",
+    "employerSS": "Employer SS",
+    "byLocation": "By Location",
+    "locationLabel": "Location",
+    "gross": "Gross",
+    "net": "Net",
+    "approvePayrollDesc": "Once approved, you can submit and pay.",
+    "approve": "Approve",
+    "confirmApproval": "Confirm Approval",
+    "confirmApprovalQuestion": "Do you approve the payroll for {{period}}?",
+    "totalEmployerCost": "Total Employer Cost",
+    "confirmApprovalBtn": "Confirm Approval",
+    "calculateBack": "Calculate",
+    "nextSubmit": "Next: Submit",
+    "payrollPayment": "Payroll Payment",
+    "generateSepaAndConfirm": "Generate the SEPA file and confirm payment",
+    "totalToPay": "Total to Pay",
+    "statusLabel": "Status",
+    "pendingPayment": "Payment pending",
+    "sepaFile": "SEPA File (ISO 20022)",
+    "sepaDescription": "Generates a SEPA Credit Transfer file (pain.001.001.03) compatible with any Spanish bank. Ref: EU Regulation 260/2012 + Banco de España Norm 34.",
+    "regenerateSepa": "Regenerate SEPA",
+    "generateSepaFile": "Generate SEPA File",
+    "sepaGenerated": "SEPA file generated",
+    "sepaTransfersSummary": "{{count}} transfers for €{{amount}}",
+    "sepaGenerateError": "Error generating SEPA",
+    "fileGenerated": "File generated successfully",
+    "messageId": "Message ID",
+    "transactions": "Transactions",
+    "method": "Method",
+    "debtorIban": "Debtor IBAN",
+    "bic": "BIC",
+    "downloadSepaXml": "Download SEPA XML (pain.001.001.03)",
+    "employee": "Employee",
+    "amountLabel": "Amount",
+    "concept": "Concept",
+    "andMore": "... and {{count}} more",
+    "confirmPayment": "Confirm Payment",
+    "confirmPaymentDesc": "Mark payroll as paid once you have executed the transfer.",
+    "markAsPaid": "Mark as Paid",
+    "confirmPaymentDialog": "Confirm that payment of €{{amount}} has been made to {{count}} employees.",
+    "confirmPayBtn": "Confirm Payment",
+    "payrollPaid": "Payroll paid",
+    "payrollPaidDesc": "{{count}} payrolls have been marked as paid.",
+    "payrollCompleted": "Payroll Paid",
+    "payrollCompletedDesc": "The payroll process for {{period}} has been completed successfully.",
+    "submitBack": "Submit",
+    "backToHome": "Back to Home",
+    "officialSubmission": "Official Submission",
+    "realSubmission": "Real submission to official bodies",
+    "submitAll": "Submit All",
+    "simulationCompleted": "Simulation completed",
+    "simulatedOk": "Simulated OK",
+    "sentOk": "Sent successfully",
+    "submissionError": "Submission error",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "pending": "Pending",
+    "simulate": "Simulate",
+    "submitAction": "Submit",
+    "reviewBack": "Review",
+    "nextPay": "Next: Pay",
+    "agencyTGSS": "Social Security",
+    "agencyTGSSDesc": "Contribution settlement via the RED System (Direct Settlement)",
+    "agencyTGSSReg": "LGSS Art. 22 + Order ESS/484/2013",
+    "agencyAEAT": "Tax Agency",
+    "agencyAEATDesc": "IRPF withholdings and payments on account",
+    "agencyAEATReg": "Form 111 - Order EHA/586/2011",
+    "agencySEPE": "SEPE Certific@2",
+    "agencySEPEDesc": "Company certificates for unemployment benefits",
+    "agencySEPEReg": "Art. 267 LGSS + RD 625/1985"
   },
   "pos": {
     "title": "Point of Sale",
@@ -778,7 +946,11 @@
     "splitPayment": "Split Payment",
     "splitEqual": "Split equally",
     "splitByItems": "By items",
-    "payFull": "Pay full"
+    "payFull": "Pay full",
+    "toastCajaAbierta": "Till opened",
+    "toastCajaCerrada": "Till closed",
+    "toastError": "Error",
+    "noOpenTables": "No open tables"
   },
   "kds": {
     "title": "Kitchen Display",
@@ -819,7 +991,13 @@
     "redeemPoints": "Redeem Points",
     "earnPoints": "Earn Points",
     "pointsEarned": "Points Earned",
-    "redemptionHistory": "Redemption History"
+    "redemptionHistory": "Redemption History",
+    "completeNameAndContact": "Complete name and email or phone",
+    "memberUpdated": "Member updated",
+    "memberCreated": "Member created",
+    "completeNameAndCost": "Complete name and point cost",
+    "rewardUpdated": "Reward updated",
+    "rewardCreated": "Reward created"
   },
   "settings": {
     "title": "Settings",
@@ -903,7 +1081,23 @@
     "objectivesUpdated": "Objectives updated",
     "objectivesError": "Could not save",
     "completeActuals": "Complete actuals",
-    "currentActuals": "Current actuals"
+    "currentActuals": "Current actuals",
+    "selectRole": "Select role",
+    "selectScope": "Select scope",
+    "selectLocation": "Select location",
+    "firstName": "Mary",
+    "lastName": "García",
+    "fullName": "John García",
+    "emailPlaceholder": "john@example.com",
+    "paymentMethod": "Method",
+    "location": "Location",
+    "deleteMyAccount": "Delete my account",
+    "exportMyData": "Export my data",
+    "dataExported": "Data exported",
+    "exportError": "Export error",
+    "requestRegistered": "Request registered",
+    "preferencesUpdated": "Preferences updated",
+    "demoDataRegenerated": "Demo data regenerated"
   },
   "errors": {
     "generic": "An error occurred",
@@ -972,7 +1166,66 @@
     "memberAdded": "Team member added",
     "memberAddedDesc": "successfully added to the team",
     "shiftLog": "Shift Log",
-    "shiftLogDesc": "What happened during the shift?"
+    "shiftLogDesc": "What happened during the shift?",
+    "searchPlaceholder": "Search employee...",
+    "filterRole": "Role",
+    "filterLocation": "Location",
+    "allRoles": "All roles",
+    "allLocations": "All locations",
+    "tableEmployee": "Employee",
+    "tableRole": "Role",
+    "tableLocation": "Location",
+    "tableCostHour": "Cost/h",
+    "tableStatus": "Status",
+    "tableActions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "onLeave": "On leave",
+    "edit": "Edit",
+    "delete": "Delete",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "noEmployees": "No employees",
+    "noEmployeesDesc": "Add your first team member",
+    "addEmployeeTitle": "New employee",
+    "editEmployeeTitle": "Edit employee",
+    "fullName": "Full name",
+    "fullNameRequired": "Full name *",
+    "namePlaceholder": "Mary López García",
+    "role": "Role",
+    "costHour": "Cost/hour (€)",
+    "locationRequired": "Location *",
+    "selectLocation": "Select location",
+    "employeeStatus": "Employee status",
+    "saveChanges": "Save changes",
+    "clockedIn": "Clocked in now",
+    "noClockedIn": "No one clocked in now",
+    "noClockedInDesc": "Employees will appear here when they clock in",
+    "since": "since",
+    "newAnnouncement": "New announcement",
+    "noAnnouncements": "No announcements",
+    "noAnnouncementsDesc": "Create the first announcement for your team",
+    "announcementContent": "Content",
+    "announcementPlaceholder": "Write the message for your team...",
+    "announcementType": "Type",
+    "typeGeneral": "General",
+    "typeImportant": "Important",
+    "typeSchedule": "Schedules",
+    "typeCelebration": "Celebration",
+    "locationOptional": "Location (optional)",
+    "all": "All",
+    "pinTop": "Pin to top",
+    "publish": "Publish",
+    "toastNameLocationRequired": "Name and location are required",
+    "toastAddError": "Error adding employee",
+    "toastUpdateError": "Update error",
+    "toastUpdated": "Employee updated",
+    "toastStatusError": "Error changing status",
+    "toastTitleRequired": "Title is required",
+    "toastAnnouncementError": "Error creating announcement",
+    "toastAnnouncementPublished": "Announcement published",
+    "toastDeleteError": "Delete error",
+    "toastAnnouncementDeleted": "Announcement deleted"
   },
   "onboarding": {
     "title": "Onboarding",
@@ -993,7 +1246,33 @@
     "importMenu": "Import Menu",
     "addManually": "Add Manually",
     "connectPOS": "Connect POS",
-    "configurePayments": "Configure Payments"
+    "configurePayments": "Configure Payments",
+    "toastError": "Error setting up your account. Try again.",
+    "toastWelcome": "Welcome to Josephine",
+    "toastFinalError": "Error finishing. Try again.",
+    "signedContract": "Employment contract signed",
+    "dniCopy": "ID card copy (DNI/NIE)",
+    "ssNumber": "Social Security number",
+    "bankAccount": "Bank account (IBAN)",
+    "employeePhoto": "Employee profile photo",
+    "prlTraining": "OHS training received",
+    "foodHandler": "Food handler certificate",
+    "facilityTour": "Facility tour",
+    "allergenProtocol": "Allergen protocol",
+    "uniformDelivered": "Uniform delivered",
+    "systemAccess": "System access configured",
+    "trialShift": "Trial shift completed",
+    "contracts": "Contracts",
+    "prlCertificates": "OHS Certificates",
+    "dniNie": "DNI / NIE",
+    "ss": "SS",
+    "yourBusiness": "Your Business",
+    "companyName": "Your company name",
+    "yourLocation": "Your Location",
+    "firstLocation": "First establishment",
+    "yourMenu": "Your Menu",
+    "productsAndPrices": "Products and prices",
+    "noPresetInventory": "No preset inventory for this template"
   },
   "availability": {
     "title": "Availability",
@@ -1012,7 +1291,13 @@
     "denied": "Denied",
     "reason": "Reason",
     "startDate": "Start Date",
-    "endDate": "End Date"
+    "endDate": "End Date",
+    "toastSaved": "Availability saved successfully",
+    "toastSaveError": "Error saving availability",
+    "toastTimeOffSubmitted": "Time off request submitted",
+    "toastApproved": "Request approved",
+    "toastRejected": "Request rejected",
+    "toastCancelled": "Request cancelled"
   },
   "integrations": {
     "title": "Integrations",
@@ -1134,7 +1419,19 @@
     "grossEstimate": "Gross estimate",
     "plannedShifts": "Planned shifts",
     "weeklySummary": "Weekly summary",
-    "startDate": "Start date"
+    "startDate": "Start date",
+    "important": "Important",
+    "celebration": "Celebration",
+    "schedules": "Schedules",
+    "info": "Info",
+    "sendInvitation": "Send invitation",
+    "noAccess": "No access",
+    "noTeamMembers": "No team members",
+    "noRole": "No role",
+    "inviteError": "Invite error",
+    "noClockInsThisMonth": "No clock-ins this month",
+    "noShiftsPlanned": "No shifts planned",
+    "noShiftScheduled": "No shift scheduled"
   },
   "notifications": {
     "title": "Notifications",
@@ -1172,7 +1469,20 @@
     "yourName": "Your name",
     "phone": "+34 600 000 000",
     "emailPlaceholder": "your@email.com",
-    "specialRequests": "Allergies, baby chair, special celebration..."
+    "specialRequests": "Allergies, baby chair, special celebration...",
+    "title": "Book a table",
+    "date": "Date",
+    "time": "Time",
+    "guests": "Guests",
+    "guestsSuffix": "people",
+    "name": "Your name",
+    "email": "you@email.com",
+    "specialRequestsPlaceholder": "Allergies, high chair, special celebration...",
+    "confirm": "Confirm booking",
+    "confirmed": "Booking confirmed!",
+    "confirmationMessage": "We have sent you a confirmation email",
+    "guestName": "Name",
+    "noTimesAvailable": "No time slots available for this date"
   },
   "stockAudit": {
     "title": "Stock Count",
@@ -1185,6 +1495,443 @@
     "auditCompleted": "Audit completed",
     "variance": "Variance",
     "theoretical": "Theoretical",
-    "counted": "Counted"
+    "counted": "Counted",
+    "countRegistered": "Count registered",
+    "newCount": "New Count",
+    "financialLoss": "Financial Loss",
+    "criticalItems": "Critical Items (>5% variance)",
+    "deadStock30": "Dead Stock (30 days)",
+    "inventoryVariance": "Inventory Variance",
+    "varianceDesc": "Theoretical vs actual stock — red = negative variance >5%",
+    "actual": "Actual",
+    "variancePct": "Variance %",
+    "lossEuro": "Loss €",
+    "noVarianceData": "No variance data. Register physical counts to see results.",
+    "critical": "CRITICAL",
+    "deadStockTitle": "Dead Stock — No movement 30+ days",
+    "inStock": "In stock",
+    "daysIdle": "Days idle",
+    "registerPhysicalCount": "Register Physical Count",
+    "currentStock": "Current stock",
+    "theoreticalStock": "Theoretical stock (system)",
+    "actualStock": "Actual stock (counted)",
+    "actualQty": "Actual quantity...",
+    "economicImpact": "Economic impact",
+    "registerCount": "Register Count"
+  },
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Centralised Business Intelligence dashboard with AI-powered analytics",
+    "sales": "Sales",
+    "salesDesc": "Analyse sales, channels, products, and forecast in real time",
+    "labour": "Labour",
+    "labourDesc": "Optimise COL%, SPLH, OPLH and labour costs",
+    "instantPL": "Instant P&L",
+    "instantPLDesc": "Real-time P&L by location with drill-down",
+    "forecasting": "Forecasting",
+    "forecastingDesc": "Prophet ML models for sales and demand forecasting",
+    "salesToday": "Sales today",
+    "salesMTD": "Sales MTD",
+    "ordersToday": "Orders today",
+    "topProduct": "Top product",
+    "vsYesterday": "vs yesterday",
+    "modules": "Modules",
+    "viewAnalysis": "View analysis",
+    "needHelp": "Need help with your metrics?",
+    "helpDescription": "Ask Josephine is available in every module to give you personalised insights based on your real-time data.",
+    "learnMore": "Learn more about Josephine AI"
+  },
+  "prepList": {
+    "title": "Prep List",
+    "tomorrow": "Tomorrow",
+    "progress": "Progress",
+    "recipesToPrepare": "Recipes to prepare",
+    "lowStock": "Low stock",
+    "searchRecipe": "Search recipe or category...",
+    "noItems": "No prep items",
+    "addRecipesHint": "Add recipes in Costings and they will appear here with quantities based on the forecast",
+    "recipes": "recipes"
+  },
+  "logWaste": {
+    "logWaste": "Log Waste",
+    "dialogTitle": "Log Waste Event",
+    "dialogDesc": "Log a new waste event for inventory tracking.",
+    "location": "Location",
+    "selectLocation": "Select location",
+    "item": "Item",
+    "selectItem": "Select item",
+    "loadingItems": "Loading items...",
+    "quantity": "Quantity",
+    "enterQuantity": "Enter quantity",
+    "reason": "Reason",
+    "selectReason": "Select reason",
+    "reasons": {
+      "broken": "Breakage",
+      "end_of_day": "End of day",
+      "expired": "Expired",
+      "theft": "Theft",
+      "other": "Other"
+    },
+    "photoOptional": "Photo (optional)",
+    "takePhoto": "Take / Upload Photo",
+    "photoTooLarge": "Photo too large",
+    "maxSize": "Maximum 5 MB.",
+    "valueEuro": "Value (€)",
+    "calculatedAuto": "Calculated automatically",
+    "successTitle": "Waste logged successfully",
+    "successDesc": "{{quantity}} units logged as {{reason}}",
+    "errorTitle": "Error logging waste",
+    "errorDesc": "Please try again.",
+    "demoTitle": "Waste logged (Demo)",
+    "demoDesc": "In production, this would be saved to the database."
+  },
+  "wasteTable": {
+    "noData": "No waste data",
+    "noDataDesc": "No waste events recorded for the selected period and location.",
+    "percentOfTotal": "% of total waste",
+    "allReasons": "All reasons",
+    "searchByItem": "Search by item",
+    "items": "Items",
+    "quantity": "Quantity",
+    "value": "Value",
+    "type": "Type",
+    "topReason": "Top reason by value",
+    "percentOfSales": "% of sales",
+    "ingredient": "Ingredient",
+    "menuItem": "Dish"
+  },
+  "logbook": {
+    "title": "Manager Logbook",
+    "pending_one": "pending",
+    "pending_other": "pending",
+    "newEntry": "New Entry",
+    "category": "Category",
+    "severity": "Severity",
+    "placeholder": "What happened during the shift?",
+    "entryAdded": "Entry added to logbook",
+    "saveError": "Save error",
+    "loading": "Loading logbook...",
+    "noEntries": "No entries this week",
+    "noEntriesHint": "Log incidents, staff notes, and shift events",
+    "resolved": "Resolved",
+    "markPending": "Mark as pending",
+    "markResolved": "Mark as resolved",
+    "categories": {
+      "general": "General",
+      "incident": "Incident",
+      "staffing": "Staffing",
+      "inventory": "Inventory",
+      "maintenance": "Maintenance",
+      "customer": "Customer"
+    },
+    "severities": {
+      "info": "Info",
+      "warning": "Warning",
+      "critical": "Critical"
+    }
+  },
+  "timesheet": {
+    "title": "Clock-ins",
+    "subtitle": "Clock-in review and control",
+    "allLocations": "All locations",
+    "labourCost": "Labour cost",
+    "clockIns": "Clock-ins",
+    "tableEmployee": "Employee",
+    "tableDate": "Date",
+    "tableClockIn": "Clock in",
+    "tableClockOut": "Clock out",
+    "tableDuration": "Duration",
+    "tableCost": "Cost",
+    "tableSource": "Source",
+    "active": "Active",
+    "manual": "Manual",
+    "noClockIns": "No clock-ins this week",
+    "anomalies": "Anomalies",
+    "noAnomalies": "All in order",
+    "clockInTime": "Clock-in time",
+    "clockOutTime": "Clock-out time",
+    "toastUpdateError": "Error updating clock-in",
+    "toastUpdated": "Clock-in updated",
+    "toastDeleteError": "Delete error",
+    "toastDeleted": "Clock-in deleted",
+    "noAlerts": "No alerts this week"
+  },
+  "menuItems": {
+    "searchPlaceholder": "Search dishes...",
+    "category": "Category",
+    "allCategories": "All categories",
+    "addItem": "New dish",
+    "name": "Name",
+    "sellingPrice": "Selling price",
+    "cost": "Cost",
+    "margin": "Margin",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "noItems": "No dishes",
+    "noItemsDesc": "Add your first menu dish"
+  },
+  "inventoryItems": {
+    "searchPlaceholder": "Search by name...",
+    "category": "Category",
+    "supplier": "Supplier",
+    "allLocations": "All locations",
+    "allCategories": "All categories",
+    "allSuppliers": "All suppliers",
+    "addItem": "New item",
+    "exportPdf": "Export PDF",
+    "name": "Name",
+    "unit": "Unit",
+    "stock": "Stock",
+    "parLevel": "Par level",
+    "price": "Price",
+    "actions": "Actions",
+    "noItems": "No items",
+    "toastGeneratingPdf": "Generating PDF...",
+    "toastExported": "Exported successfully"
+  },
+  "employeeReviews": {
+    "title": "Reviews",
+    "newReview": "New review",
+    "selectEmployee": "Select employee",
+    "overallScore": "Overall score",
+    "strengths": "Strengths",
+    "goals": "Goals",
+    "date": "Date",
+    "score": "Score",
+    "reviewer": "Reviewer",
+    "noReviews": "No reviews",
+    "toastSaved": "Review saved",
+    "toastSaveError": "Save error"
+  },
+  "contracts": {
+    "title": "Contracts",
+    "newContract": "New contract",
+    "selectEmployee": "Select employee",
+    "contractType": "Contract type",
+    "permanent": "Permanent",
+    "temporary": "Temporary",
+    "partTime": "Part-time",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "salary": "Annual salary",
+    "hoursWeek": "Hours/week",
+    "noContracts": "No contracts",
+    "toastSelectEmployee": "Select an employee",
+    "toastUpdateError": "Error updating contract",
+    "toastUpdated": "Contract updated",
+    "toastCreateError": "Error creating contract",
+    "toastCreated": "Contract created",
+    "toastStatusError": "Error changing status"
+  },
+  "teamDirectory": {
+    "searchPlaceholder": "Search colleague..."
+  },
+  "teamHome": {
+    "toastClockIn": "Clock-in registered",
+    "toastClockInError": "Error registering clock-in",
+    "toastClockOut": "Clock-out registered",
+    "toastClockOutError": "Error registering clock-out"
+  },
+  "pricing": {
+    "toastFreePlan": "Free plan — you are already on this plan",
+    "toastPaymentError": "Could not create payment session. Try again."
+  },
+  "dataImport": {
+    "toastSelectLocation": "Select a specific location before importing",
+    "toastImportError": "Unexpected error during import",
+    "noPreviousImports": "No previous imports"
+  },
+  "workforceOnboarding": {
+    "noRecentOnboardings": "No recent onboardings",
+    "allEmployees": "All employees",
+    "contractType": "Contract type",
+    "permanent": "Permanent",
+    "temporary": "Temporary",
+    "partTime": "Part-time",
+    "intern": "Intern",
+    "toastContractRegistered": "Contract registered (demo)"
+  },
+  "square": {
+    "toastConnected": "Square connected successfully",
+    "toastImported": "Data imported successfully",
+    "toastSyncError": "Error in initial sync",
+    "toastDataAvailable": "Data available. You can sync manually if you need to update.",
+    "toastConnectError": "Error connecting Square",
+    "toastOrgNotFound": "Organisation not found. Reload the page.",
+    "toastStartError": "Error starting connection",
+    "toastSyncing": "Sync in progress",
+    "toastSyncComplete": "Sync completed",
+    "toastSyncFailed": "Sync error",
+    "toastDisconnected": "Square disconnected. Showing demo data.",
+    "toastDisconnectError": "Disconnect error",
+    "toastSyncInitialError": "Error in initial sync",
+    "connectionStatus": "Connection status",
+    "connecting": "Connecting to Square...",
+    "importingLocations": "Importing locations...",
+    "importingCatalog": "Importing catalogue..."
+  },
+  "recommendations": {
+    "menuOptimization": "Menu Optimisation",
+    "revenue": "Revenue",
+    "laborSavings": "Labour savings"
+  },
+  "staffing": {
+    "day": "Day"
+  },
+  "lightspeed": {
+    "toastConnected": "Lightspeed connected successfully!",
+    "toastConnectError": "Error starting connection",
+    "toastSyncComplete": "Sync completed",
+    "toastSyncError": "Sync error",
+    "toastDisconnected": "Lightspeed disconnected"
+  },
+  "scheduleSettings": {
+    "toastSaveError": "Save error",
+    "toastSaved": "Schedule settings saved"
+  },
+  "clockIn": {
+    "toastNotFound": "Your employee record was not found",
+    "toastClockInOk": "Clock-in registered successfully",
+    "toastClockInError": "Error registering clock-in",
+    "toastClockOutOk": "Clock-out registered successfully",
+    "toastClockOutError": "Error registering clock-out"
+  },
+  "eventCalendar": {
+    "toastAdded": "Event added",
+    "toastError": "Error",
+    "toastDeleted": "Event deleted"
+  },
+  "locationWizard": {
+    "toastSessionExpired": "Your session has expired. Please log in again.",
+    "toastPermissionsError": "Permissions error. Reload the page and try again.",
+    "toastNoPermissions": "You do not have permission to create locations. Verify you have the owner role.",
+    "toastCreated": "Location created successfully",
+    "toastCreateError": "Error creating location"
+  },
+  "trainingTracker": {
+    "toastCertAdded": "Certificate added",
+    "toastError": "Error"
+  },
+  "adminTools": {
+    "toast18Months": "18 months of data generated successfully!",
+    "toast30Days": "30 days of data generated!"
+  },
+  "paymentHistory": {
+    "toastLoadError": "Error loading payments",
+    "toastCopied": "ID copied to clipboard",
+    "toastCopyError": "Copy error"
+  },
+  "locationManager": {
+    "toastNameRequired": "Location name is required",
+    "toastGroupNotFound": "Group not found",
+    "toastSessionExpired": "Your session has expired. Please log in again.",
+    "toastPermissionsError": "Permissions error. Reload the page and try again.",
+    "toastNoPermissions": "You do not have permission to create locations. Verify you have the owner role.",
+    "toastSelectSource": "Select a source location",
+    "toastUpdated": "Location updated",
+    "toastCannotDelete": "You cannot delete the only location in the group"
+  },
+  "teamManagers": {
+    "toastCompleteFields": "Complete first name, last name, and location",
+    "toastEmailCopied": "Email copied"
+  },
+  "reviewCard": {
+    "toastRefineSuccess": "Reply refined successfully",
+    "toastRefineError": "Error refining reply",
+    "toastEnterReply": "Please enter a reply",
+    "toastReplySubmitted": "Reply submitted successfully",
+    "toastReplyDraft": "Could not publish — saved as draft"
+  },
+  "onboardingWizard": {
+    "toastComplete": "Setup completed!",
+    "toastError": "Setup error"
+  },
+  "inventoryHeader": {
+    "toastRegenerated": "Demo data regenerated"
+  },
+  "smartCounting": {
+    "toastInvalidQty": "Enter a valid quantity",
+    "toastNoCountsToSave": "No counts to save",
+    "toastSaveError": "Save error"
+  },
+  "labourEmpty": {
+    "toastSeedError": "Error generating demo data",
+    "toastGenError": "Error generating demo data"
+  },
+  "autoPurchase": {
+    "toastNoAlerts": "No low stock alerts!",
+    "toastScanError": "Error scanning inventory",
+    "toastNoSuppliers": "No suppliers configured",
+    "toastGenOrderError": "Error generating purchase order"
+  },
+  "addItem": {
+    "toastRequired": "Name and Price are required",
+    "toastAdded": "Item added successfully",
+    "toastAddError": "Error adding item"
+  },
+  "onboardingChecklist": {
+    "connectPOS": "Connect your POS",
+    "createTeam": "Create your team",
+    "createSchedule": "Create first schedule",
+    "configureSuppliers": "Configure suppliers",
+    "createRecipes": "Create recipes with costs",
+    "createInventory": "Create inventory catalogue",
+    "setBudgets": "Set budgets"
+  },
+  "menu": {
+    "totalDishes": "Total dishes",
+    "noRecipe": "No costing",
+    "noIngredients": "No ingredients"
+  },
+  "staff": {
+    "noTablesConfigured": "No tables configured"
+  },
+  "dataHealth": {
+    "totalCounts": "Total counts"
+  },
+  "training": {
+    "noExpiry": "No expiry",
+    "noCertificates": "No certificates registered"
+  },
+  "location": {
+    "locationName": "Location Name",
+    "newLocationName": "New location name",
+    "addCustomProduct": "Add custom product",
+    "addTable": "Add table",
+    "quickAddSuggested": "Quick add from suggestions",
+    "configureLater": "Configure later"
+  },
+  "payments": {
+    "totalTransactions": "Total Transactions",
+    "totalTips": "Total Tips",
+    "methodAdded": "Payment method added",
+    "defaultUpdated": "Default updated",
+    "setAsDefault": "Payment method set as default",
+    "methodRemoved": "Payment method removed"
+  },
+  "suppliers": {
+    "noSuppliers": "No suppliers configured",
+    "connectionSuccess": "Connection successful"
+  },
+  "users": {
+    "editRoles": "Edit User Roles",
+    "addNewRole": "Add New Role",
+    "noRoles": "No roles",
+    "noRolesAssigned": "No roles assigned",
+    "roleAssigned": "Role assigned",
+    "roleRemoved": "Role removed"
+  },
+  "objectives": {
+    "objectivesUpdated": "Objectives updated"
+  },
+  "events": {
+    "noUpcomingEvents": "No upcoming events"
+  },
+  "billing": {
+    "downloadPreviousInvoices": "Download previous invoices"
+  },
+  "sidebar": {
+    "importData": "Import Data"
   }
 }
