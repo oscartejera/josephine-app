@@ -92,12 +92,12 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
                 source: 'manual',
             });
             if (error) throw error;
-            toast.success('Evento añadido');
+            toast.success(t('eventCalendar.toastAdded'));
             setDialogOpen(false);
             resetForm();
             loadEvents();
         } catch (err: any) {
-            toast.error('Error', { description: err.message });
+            toast.error(t('eventCalendar.toastError'), { description: err.message });
         } finally {
             setSubmitting(false);
         }
@@ -106,7 +106,7 @@ export function EventCalendarManager({ locationId }: { locationId: string | null
     const deleteEvent = async (id: string) => {
         await supabase.from('event_calendar').update({ is_active: false }).eq('id', id);
         loadEvents();
-        toast.success('Evento eliminado');
+        toast.success(t('eventCalendar.toastDeleted'));
     };
 
     const resetForm = () => {

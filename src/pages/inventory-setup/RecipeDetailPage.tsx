@@ -346,7 +346,7 @@ export default function RecipeDetailPage() {
                                     const item = inventoryItems?.find(i => i.id === v);
                                     if (item) setAddUnit(item.unit ?? 'kg');
                                 }}>
-                                    <SelectTrigger><SelectValue placeholder="Seleccionar ingrediente" /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder={t('recipes.selectIngredient')} /></SelectTrigger>
                                     <SelectContent>
                                         {(inventoryItems ?? []).map(item => (
                                             <SelectItem key={item.id} value={item.id}>
@@ -360,7 +360,7 @@ export default function RecipeDetailPage() {
                             <div className="space-y-2">
                                 <Label>Sub-receta</Label>
                                 <Select value={selectedSubRecipeId} onValueChange={setSelectedSubRecipeId}>
-                                    <SelectTrigger><SelectValue placeholder="Seleccionar sub-receta" /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder={t('recipes.selectSubRecipe')} /></SelectTrigger>
                                     <SelectContent>
                                         {subRecipeOptions.map(r => (
                                             <SelectItem key={r.id} value={r.id}>

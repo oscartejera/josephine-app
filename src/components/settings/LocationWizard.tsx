@@ -401,7 +401,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
       // Verificar sesión activa antes de insertar
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+        toast.error(t('locationWizard.toastSessionExpired'));
         setLoading(false);
         return;
       }
@@ -414,7 +414,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
         .single();
 
       if (userProfile?.group_id !== groupId) {
-        toast.error('Error de permisos. Recarga la página e intenta de nuevo.');
+        toast.error(t('locationWizard.toastPermissionsError'));
         setLoading(false);
         return;
       }
@@ -540,7 +540,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
     } catch (error: any) {
       console.error('Error creating location:', error);
       if (error.code === '42501') {
-        toast.error('No tienes permisos para crear locales. Verifica que tienes rol de propietario.');
+        toast.error(t('locationWizard.toastNoPermissions'));
       } else {
         toast.error(error.message || 'Error al crear el local');
       }

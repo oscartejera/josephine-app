@@ -47,7 +47,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
 
   const handleSave = async () => {
     if (!name || !price) {
-      toast.error('Name and Price are required');
+      toast.error(t('addItem.toastRequired'));
       return;
     }
 
@@ -70,7 +70,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
 
       if (error) throw error;
 
-      toast.success('Item added successfully');
+      toast.success(t('addItem.toastAdded'));
 
       // Reset form
       setName('');
@@ -85,7 +85,7 @@ export function AddItemDialog({ open, onClose, onSuccess }: AddItemDialogProps) 
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error('Error adding item: ' + error.message);
+      toast.error(t('addItem.toastAddError') + ': ' + error.message);
       console.error('Error:', error);
     } finally {
       setSaving(false);

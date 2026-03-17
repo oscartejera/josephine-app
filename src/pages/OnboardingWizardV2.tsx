@@ -152,7 +152,7 @@ export default function OnboardingWizardV2() {
 
                 if (error) {
                     console.error('Setup new owner error:', error);
-                    toast.error('Error al configurar tu cuenta. Intenta de nuevo.');
+                    toast.error(t('onboarding.toastError'));
                     setSaving(false);
                     setShowTransition(false);
                     return;
@@ -191,10 +191,10 @@ export default function OnboardingWizardV2() {
                 navigate('/dashboard');
             }
 
-            toast.success('Bienvenido a Josephine');
+            toast.success(t('onboarding.toastWelcome'));
         } catch (err) {
             console.error('Onboarding finish error:', err);
-            toast.error('Error al finalizar. Intenta de nuevo.');
+            toast.error(t('onboarding.toastFinalError'));
             setShowTransition(false);
         } finally {
             setSaving(false);

@@ -296,7 +296,7 @@ export default function BookingWidget() {
                   id="guest_name"
                   value={formData.guest_name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, guest_name: e.target.value }))}
-                  placeholder="Tu nombre"
+                  placeholder={t('booking.name')}
                   required
                   minLength={2}
                 />
@@ -320,7 +320,7 @@ export default function BookingWidget() {
                 type="email"
                 value={formData.guest_email}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guest_email: e.target.value }))}
-                placeholder="tu@email.com"
+                placeholder={t('booking.email')}
                 required
               />
             </div>
@@ -334,7 +334,7 @@ export default function BookingWidget() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, special_requests: e.target.value }))
                 }
-                placeholder="Alergias, silla para bebé, celebración especial..."
+                placeholder={t('booking.specialRequestsPlaceholder')}
                 rows={3}
                 maxLength={500}
               />

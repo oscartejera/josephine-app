@@ -121,10 +121,10 @@ export function MenuEngineeringActions({
     setSaving(true);
     try {
       await onSaveAction(null, selectedAction.actionType, selectedAction.classification, selectedAction.impact > 0 ? selectedAction.impact : null);
-      toast.success('Action plan saved');
+      toast.success(t('menuEngineering.toastActionSaved'));
       setModalOpen(false);
     } catch {
-      toast.error('Error saving');
+      toast.error(t('menuEngineering.toastSaveError'));
     } finally {
       setSaving(false);
     }

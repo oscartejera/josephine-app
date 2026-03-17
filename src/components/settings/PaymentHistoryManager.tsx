@@ -68,7 +68,7 @@ export function PaymentHistoryManager() {
       setPayments(data || []);
     } catch (error) {
       console.error('Error fetching payments:', error);
-      toast.error('Error al cargar los pagos');
+      toast.error(t('paymentHistory.toastLoadError'));
     } finally {
       setLoading(false);
     }
@@ -78,10 +78,10 @@ export function PaymentHistoryManager() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(text);
-      toast.success('ID copiado al portapapeles');
+      toast.success(t('paymentHistory.toastCopied'));
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      toast.error('Error al copiar');
+      toast.error(t('paymentHistory.toastCopyError'));
     }
   };
 
@@ -197,7 +197,7 @@ export function PaymentHistoryManager() {
           </div>
           <Select value={methodFilter} onValueChange={setMethodFilter}>
             <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="Método" />
+              <SelectValue placeholder={t('settings.paymentMethod')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -208,7 +208,7 @@ export function PaymentHistoryManager() {
           </Select>
           <Select value={locationFilter} onValueChange={setLocationFilter}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Local" />
+              <SelectValue placeholder={t('settings.location')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los locales</SelectItem>

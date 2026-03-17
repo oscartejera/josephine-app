@@ -181,7 +181,7 @@ export default function MenuItemsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar platos..."
+            placeholder={t('menuItems.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -189,7 +189,7 @@ export default function MenuItemsPage() {
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Categoría" />
+            <SelectValue placeholder={t('menuItems.category')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>

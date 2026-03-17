@@ -163,7 +163,7 @@ export function EmploymentContracts({ locationId }: Props) {
 
     const handleSave = async () => {
         if (!form.employee_id) {
-            toast.error('Selecciona un empleado');
+            toast.error(t('contracts.toastSelectEmployee'));
             return;
         }
         setSaving(true);
@@ -184,18 +184,18 @@ export function EmploymentContracts({ locationId }: Props) {
                 .update(payload)
                 .eq('id', editingId);
             if (error) {
-                toast.error('Error al actualizar contrato');
+                toast.error(t('contracts.toastUpdateError'));
             } else {
-                toast.success('Contrato actualizado');
+                toast.success(t('contracts.toastUpdated'));
             }
         } else {
             const { error } = await (supabase as any)
                 .from('employment_contracts')
                 .insert(payload);
             if (error) {
-                toast.error('Error al crear contrato');
+                toast.error(t('contracts.toastCreateError'));
             } else {
-                toast.success('Contrato creado');
+                toast.success(t('contracts.toastCreated'));
             }
         }
 
@@ -212,7 +212,7 @@ export function EmploymentContracts({ locationId }: Props) {
             .eq('id', c.id);
 
         if (error) {
-            toast.error('Error al cambiar estado');
+            toast.error(t('contracts.toastStatusError'));
         } else {
             toast.success(c.active ? 'Contrato desactivado' : 'Contrato reactivado');
             fetchData();
@@ -380,7 +380,7 @@ export function EmploymentContracts({ locationId }: Props) {
                             <Label>Empleado</Label>
                             <Select value={form.employee_id} onValueChange={v => setForm(f => ({ ...f, employee_id: v }))} disabled={!!editingId}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar empleado" />
+                                    <SelectValue placeholder={t('contracts.selectEmployee')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {employees.map(e => (

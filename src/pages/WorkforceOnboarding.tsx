@@ -278,7 +278,7 @@ export default function WorkforceOnboarding() {
                                     <Card className="col-span-full">
                                         <CardContent className="p-12 text-center">
                                             <UserPlus className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
-                                            <p className="text-lg font-medium text-muted-foreground">Sin incorporaciones recientes</p>
+                                            <p className="text-lg font-medium text-muted-foreground">{t('workforceOnboarding.noRecentOnboardings')}</p>
                                             <p className="text-sm text-muted-foreground/60">
                                                 Los empleados añadidos en los últimos 30 días aparecerán aquí
                                             </p>
@@ -290,7 +290,7 @@ export default function WorkforceOnboarding() {
                             {/* All employees for onboarding */}
                             {employees.length > recentEmployees.length && (
                                 <div>
-                                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Todos los empleados</h3>
+                                    <h3 className="text-sm font-medium text-muted-foreground mb-3">{t('workforceOnboarding.allEmployees')}</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {employees.filter((e) => !recentEmployees.includes(e)).slice(0, 12).map((emp) => (
                                             <Card
@@ -533,11 +533,11 @@ export default function WorkforceOnboarding() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Tipo de contrato</Label>
+                            <Label>{t('workforceOnboarding.contractType')}</Label>
                             <Select value={contractForm.type} onValueChange={(v) => setContractForm((f) => ({ ...f, type: v }))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="indefinido">Indefinido</SelectItem>
+                                    <SelectItem value="indefinido">{t('workforceOnboarding.permanent')}</SelectItem>
                                     <SelectItem value="temporal">Temporal</SelectItem>
                                     <SelectItem value="practicas">Prácticas</SelectItem>
                                     <SelectItem value="formacion">Formación</SelectItem>
@@ -575,7 +575,7 @@ export default function WorkforceOnboarding() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setContractOpen(false)}>{t("common.cancel")}</Button>
-                        <Button onClick={() => { toast.success('Contrato registrado (demo)'); setContractOpen(false); }}>
+                        <Button onClick={() => { toast.success(t('workforceOnboarding.toastContractRegistered')); setContractOpen(false); }}>
                             Guardar contrato
                         </Button>
                     </DialogFooter>

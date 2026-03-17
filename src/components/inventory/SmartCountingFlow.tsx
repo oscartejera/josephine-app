@@ -97,7 +97,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
     const submitCount = () => {
         const value = parseFloat(countValue);
         if (isNaN(value) || value < 0) {
-            toast.error('Introduce una cantidad válida');
+            toast.error(t('smartCounting.toastInvalidQty'));
             return;
         }
 
@@ -137,7 +137,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
         try {
             const counted = items.filter(i => i.countedQty !== null);
             if (counted.length === 0) {
-                toast.error('No hay contajes para guardar');
+                toast.error(t('smartCounting.toastNoCountsToSave'));
                 setSaving(false);
                 return;
             }
@@ -159,7 +159,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
             setPhase('idle');
             loadItems();
         } catch (err: any) {
-            toast.error('Error al guardar', { description: err.message });
+            toast.error(t('smartCounting.toastSaveError'), { description: err.message });
         } finally {
             setSaving(false);
         }

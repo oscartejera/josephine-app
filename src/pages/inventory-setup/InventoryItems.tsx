@@ -152,7 +152,7 @@ export default function InventoryItems() {
 
   // Export to PDF
   const handleExportPDF = () => {
-    toast.info('Generating PDF...');
+    toast.info(t('inventoryItems.toastGeneratingPdf'));
 
     // Simple CSV export for now (PDF library would add ~200KB)
     const headers = ['Name', 'Type', 'Category', 'Supplier', 'Order Unit', 'Price', 'VAT Rate'];
@@ -179,7 +179,7 @@ export default function InventoryItems() {
     a.click();
     URL.revokeObjectURL(url);
 
-    toast.success('Exported successfully');
+    toast.success(t('inventoryItems.toastExported'));
   };
 
   return (
@@ -220,7 +220,7 @@ export default function InventoryItems() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name..."
+            placeholder={t('inventoryItems.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -229,7 +229,7 @@ export default function InventoryItems() {
 
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger>
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder={t('inventoryItems.category')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
@@ -241,7 +241,7 @@ export default function InventoryItems() {
 
         <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
           <SelectTrigger>
-            <SelectValue placeholder="Supplier" />
+            <SelectValue placeholder={t('inventoryItems.supplier')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Suppliers</SelectItem>
@@ -253,7 +253,7 @@ export default function InventoryItems() {
 
         <Select value={selectedLocation} onValueChange={setSelectedLocation}>
           <SelectTrigger>
-            <SelectValue placeholder="All Locations" />
+            <SelectValue placeholder={t('inventoryItems.allLocations')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Locations</SelectItem>

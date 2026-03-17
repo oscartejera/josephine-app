@@ -165,9 +165,9 @@ export default function TeamHome() {
       if (error) throw error;
       setActiveRecord(data);
       setWeekRecords((prev) => [data, ...prev]);
-      toast.success('Entrada registrada');
+      toast.success(t('teamHome.toastClockIn'));
     } catch {
-      toast.error('Error al registrar entrada');
+      toast.error(t('teamHome.toastClockInError'));
     } finally {
       setLoading(false);
     }
@@ -192,9 +192,9 @@ export default function TeamHome() {
         )
       );
       setActiveRecord(null);
-      toast.success('Salida registrada');
+      toast.success(t('teamHome.toastClockOut'));
     } catch {
-      toast.error('Error al registrar salida');
+      toast.error(t('teamHome.toastClockOutError'));
     } finally {
       setLoading(false);
     }

@@ -244,18 +244,18 @@ export default function Scheduling() {
   const handleAccept = useCallback(() => {
     actualAcceptSchedule();
     setShowToast(false);
-    toast.success('Schedule accepted');
+    toast.success(t('scheduling.accepted'));
   }, [actualAcceptSchedule]);
 
   const handleUndo = useCallback(() => {
     actualUndoSchedule();
     setShowToast(false);
-    toast.info('Schedule reverted');
+    toast.info(t('scheduling.reverted'));
   }, [actualUndoSchedule]);
 
   const handlePublish = useCallback(async (emailBody: string) => {
     await actualPublishSchedule(emailBody);
-    toast.success('Schedule published and notifications sent to all employees');
+    toast.success(t('scheduling.published'));
   }, [actualPublishSchedule]);
 
   const handleApprove = useCallback(async () => {
@@ -269,17 +269,17 @@ export default function Scheduling() {
   const handleSubmitSwap = useCallback((targetShift: Shift, reason?: string) => {
     if (!swapDialogData) return;
     actualCreateSwapRequest(swapDialogData.shift, targetShift, reason);
-    toast.success('Swap request sent for approval');
+    toast.success(t('scheduling.swapRequested'));
   }, [swapDialogData, actualCreateSwapRequest]);
 
   const handleApproveSwap = useCallback((requestId: string) => {
     actualApproveSwapRequest(requestId);
-    toast.success('Swap approved - shifts have been exchanged');
+    toast.success(t('scheduling.swapApproved'));
   }, [actualApproveSwapRequest]);
 
   const handleRejectSwap = useCallback((requestId: string) => {
     actualRejectSwapRequest(requestId);
-    toast.info('Swap request rejected');
+    toast.info(t('scheduling.swapRejected'));
   }, [actualRejectSwapRequest]);
 
   // Get available shifts to swap with (other employees' shifts)
@@ -310,7 +310,7 @@ export default function Scheduling() {
           if (count && count > 0) {
             toast.success(`Auto-fill: ${count} turno${count > 1 ? 's' : ''} añadido${count > 1 ? 's' : ''}`);
           } else {
-            toast.info('Auto-fill: No se encontraron huecos para rellenar');
+            toast.info(t('scheduling.autoFillEmpty'));
           }
         }}
         onPublish={() => setShowPublishModal(true)}

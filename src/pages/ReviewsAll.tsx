@@ -179,7 +179,7 @@ export default function ReviewsAll() {
           <div className="flex items-center gap-2">
             <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
               <SelectTrigger className="h-9 w-[150px] text-sm">
-                <SelectValue placeholder="All Platforms" />
+                <SelectValue placeholder={t('reviews.allPlatforms')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Platforms</SelectItem>
@@ -191,7 +191,7 @@ export default function ReviewsAll() {
 
             <Select value={locationId} onValueChange={setLocationId}>
               <SelectTrigger className="h-9 w-[150px] text-sm">
-                <SelectValue placeholder="All Locations" />
+                <SelectValue placeholder={t('reviews.allLocations')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>

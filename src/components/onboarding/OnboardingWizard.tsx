@@ -400,7 +400,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         }
       }
 
-      toast.success('¡Configuración completada!', {
+      toast.success(t('onboardingWizard.toastComplete'), {
         description: 'Tu negocio está listo para empezar',
       });
 
@@ -410,7 +410,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       navigate('/dashboard');
     } catch (error) {
       console.error('Onboarding error:', error);
-      toast.error('Error en la configuración', {
+      toast.error(t('onboardingWizard.toastError'), {
         description: 'Por favor, inténtalo de nuevo',
       });
     } finally {

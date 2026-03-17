@@ -488,7 +488,7 @@ export function UsersRolesManager() {
                   onValueChange={(value) => setNewAssignment({ ...newAssignment, role_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar rol" />
+                    <SelectValue placeholder={t('settings.selectRole')} />
                   </SelectTrigger>
                   <SelectContent>
                     {roles.map(role => {
@@ -518,7 +518,7 @@ export function UsersRolesManager() {
                   })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar scope" />
+                    <SelectValue placeholder={t('settings.selectScope')} />
                   </SelectTrigger>
                   <SelectContent>
                     {!requiresLocation && (

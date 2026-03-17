@@ -36,7 +36,7 @@ export default function AdminTools() {
 
       console.log('✅ Seed result:', data);
       setSeedResult(data);
-      toast.success('18 meses de datos generados exitosamente!');
+      toast.success(t('adminTools.toast18Months'));
 
     } catch (err) {
       console.error('❌ Seed error:', err);
@@ -60,7 +60,7 @@ export default function AdminTools() {
       if (error) throw error;
 
       setSeedResult(data);
-      toast.success('30 días de datos generados!');
+      toast.success(t('adminTools.toast30Days'));
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMsg);

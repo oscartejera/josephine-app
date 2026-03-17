@@ -486,7 +486,9 @@
     "withEscandallo": "Con escandallo",
     "withIngredients": "Con ingredientes",
     "editEscandallo": "Editar escandallo",
-    "exampleRecipeName": "Ej: Pasta Carbonara"
+    "exampleRecipeName": "Ej: Pasta Carbonara",
+    "toastActionSaved": "Plan de acción guardado",
+    "toastSaveError": "Error al guardar"
   },
   "inventory": {
     "title": "Control de Inventario",
@@ -525,7 +527,19 @@
     "searchRecipesPlaceholder": "Buscar recetas...",
     "example": "Ej: Pasta Carbonara",
     "selectIngredient": "Seleccionar ingrediente",
-    "selectSubRecipe": "Seleccionar sub-receta"
+    "selectSubRecipe": "Seleccionar sub-receta",
+    "searchPlaceholder": "Buscar recetas...",
+    "addRecipe": "Añadir receta",
+    "namePlaceholder": "Ej: Pasta Carbonara",
+    "name": "Nombre",
+    "portions": "Porciones",
+    "cost": "Coste",
+    "margin": "Margen",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "noRecipes": "Sin recetas",
+    "noRecipesDesc": "Añade tu primera receta"
   },
   "scheduling": {
     "title": "Gestión de Turnos",
@@ -568,7 +582,13 @@
     "autoFill": "Auto-rellenar",
     "viewEvents": "Ver Eventos",
     "weatherForecast": "Tiempo",
-    "scheduleSettings": "Configuración de Horarios"
+    "scheduleSettings": "Configuración de Horarios",
+    "accepted": "Horario aceptado",
+    "reverted": "Horario revertido",
+    "published": "Horario publicado y notificaciones enviadas a todos los empleados",
+    "swapRequested": "Solicitud de cambio enviada para aprobación",
+    "swapRejected": "Solicitud de cambio rechazada",
+    "autoFillEmpty": "Auto-fill: No se encontraron huecos para rellenar"
   },
   "budgets": {
     "title": "Presupuestos",
@@ -636,7 +656,10 @@
     "expectedDelivery": "Entrega Esperada",
     "settingsTitle": "Configuración de Compras",
     "leadTime": "Tiempo de Entrega",
-    "deliveryDays": "Días de Entrega"
+    "deliveryDays": "Días de Entrega",
+    "specialInstructions": "Añade instrucciones especiales para este pedido...",
+    "toastNewOrder": "¡Nuevo pedido recibido!",
+    "toastOrderSent": "¡Pedido enviado al proveedor!"
   },
   "reviews": {
     "title": "Reseñas",
@@ -666,7 +689,11 @@
     "loadingReviews": "Cargando reseñas...",
     "rating": "Valoración",
     "ratingsInPeriod": "Valoraciones en el período",
-    "avgResponseTime": "Tiempo medio de respuesta"
+    "avgResponseTime": "Tiempo medio de respuesta",
+    "allPlatforms": "Todas las plataformas",
+    "allLocations": "Todas las ubicaciones",
+    "reply": "Responder",
+    "noReviews": "Sin reseñas"
   },
   "payroll": {
     "title": "Nóminas",
@@ -778,7 +805,10 @@
     "splitEqual": "Dividir igual",
     "splitByItems": "Por artículos",
     "payFull": "Pagar todo",
-    "selectLocation": "Seleccionar ubicación"
+    "selectLocation": "Seleccionar ubicación",
+    "toastCajaAbierta": "Caja abierta",
+    "toastCajaCerrada": "Caja cerrada",
+    "toastError": "Error"
   },
   "kds": {
     "title": "Pantalla de Cocina",
@@ -876,7 +906,16 @@
     "objectivesUpdated": "Objetivos actualizados",
     "objectivesError": "No se pudo guardar",
     "completeActuals": "Actuals completos",
-    "currentActuals": "Actuals actuales"
+    "currentActuals": "Actuals actuales",
+    "selectRole": "Seleccionar rol",
+    "selectScope": "Seleccionar scope",
+    "selectLocation": "Seleccionar ubicación",
+    "firstName": "María",
+    "lastName": "García",
+    "fullName": "Juan García",
+    "emailPlaceholder": "juan@ejemplo.com",
+    "paymentMethod": "Método",
+    "location": "Local"
   },
   "reports": {
     "title": "Informes",
@@ -972,7 +1011,66 @@
     "memberAdded": "Miembro añadido",
     "memberAddedDesc": "añadido al equipo correctamente",
     "shiftLog": "Registro de turno",
-    "shiftLogDesc": "¿Qué ha ocurrido durante el turno?"
+    "shiftLogDesc": "¿Qué ha ocurrido durante el turno?",
+    "searchPlaceholder": "Buscar empleado...",
+    "filterRole": "Rol",
+    "filterLocation": "Local",
+    "allRoles": "Todos los roles",
+    "allLocations": "Todos los locales",
+    "tableEmployee": "Empleado",
+    "tableRole": "Rol",
+    "tableLocation": "Local",
+    "tableCostHour": "Coste/h",
+    "tableStatus": "Estado",
+    "tableActions": "Acciones",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "onLeave": "De permiso",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "noEmployees": "Sin empleados",
+    "noEmployeesDesc": "Añade tu primer miembro del equipo",
+    "addEmployeeTitle": "Nuevo empleado",
+    "editEmployeeTitle": "Editar empleado",
+    "fullName": "Nombre completo",
+    "fullNameRequired": "Nombre completo *",
+    "namePlaceholder": "María López García",
+    "role": "Rol",
+    "costHour": "Coste/hora (€)",
+    "locationRequired": "Local *",
+    "selectLocation": "Seleccionar local",
+    "employeeStatus": "Estado del empleado",
+    "saveChanges": "Guardar cambios",
+    "clockedIn": "Fichados ahora",
+    "noClockedIn": "Nadie fichado ahora",
+    "noClockedInDesc": "Los empleados aparecerán aquí al fichar entrada",
+    "since": "desde",
+    "newAnnouncement": "Nuevo anuncio",
+    "noAnnouncements": "Sin anuncios",
+    "noAnnouncementsDesc": "Crea el primer anuncio para tu equipo",
+    "announcementContent": "Contenido",
+    "announcementPlaceholder": "Escribe el mensaje para tu equipo...",
+    "announcementType": "Tipo",
+    "typeGeneral": "General",
+    "typeImportant": "Importante",
+    "typeSchedule": "Horarios",
+    "typeCelebration": "Celebración",
+    "locationOptional": "Local (opcional)",
+    "all": "Todos",
+    "pinTop": "Fijar en la parte superior",
+    "publish": "Publicar",
+    "toastNameLocationRequired": "Nombre y local son obligatorios",
+    "toastAddError": "Error al añadir empleado",
+    "toastUpdateError": "Error al actualizar",
+    "toastUpdated": "Empleado actualizado",
+    "toastStatusError": "Error al cambiar estado",
+    "toastTitleRequired": "El título es obligatorio",
+    "toastAnnouncementError": "Error al crear anuncio",
+    "toastAnnouncementPublished": "Anuncio publicado",
+    "toastDeleteError": "Error al eliminar",
+    "toastAnnouncementDeleted": "Anuncio eliminado"
   },
   "onboarding": {
     "title": "Incorporación",
@@ -993,7 +1091,10 @@
     "importMenu": "Importar Menú",
     "addManually": "Añadir Manualmente",
     "connectPOS": "Conectar TPV",
-    "configurePayments": "Configurar Pagos"
+    "configurePayments": "Configurar Pagos",
+    "toastError": "Error al configurar tu cuenta. Intenta de nuevo.",
+    "toastWelcome": "Bienvenido a Josephine",
+    "toastFinalError": "Error al finalizar. Intenta de nuevo."
   },
   "availability": {
     "title": "Disponibilidad",
@@ -1012,7 +1113,13 @@
     "denied": "Denegado",
     "reason": "Motivo",
     "startDate": "Fecha Inicio",
-    "endDate": "Fecha Fin"
+    "endDate": "Fecha Fin",
+    "toastSaved": "Disponibilidad guardada correctamente",
+    "toastSaveError": "Error al guardar disponibilidad",
+    "toastTimeOffSubmitted": "Solicitud de ausencia enviada",
+    "toastApproved": "Solicitud aprobada",
+    "toastRejected": "Solicitud rechazada",
+    "toastCancelled": "Solicitud cancelada"
   },
   "integrations": {
     "title": "Integraciones",
@@ -1172,7 +1279,18 @@
     "yourName": "Tu nombre",
     "phone": "+34 600 000 000",
     "emailPlaceholder": "tu@email.com",
-    "specialRequests": "Alergias, silla para bebé, celebración especial..."
+    "specialRequests": "Alergias, silla para bebé, celebración especial...",
+    "title": "Reservar mesa",
+    "date": "Fecha",
+    "time": "Hora",
+    "guests": "Comensales",
+    "guestsSuffix": "personas",
+    "name": "Tu nombre",
+    "email": "tu@email.com",
+    "specialRequestsPlaceholder": "Alergias, silla para bebé, celebración especial...",
+    "confirm": "Confirmar reserva",
+    "confirmed": "¡Reserva confirmada!",
+    "confirmationMessage": "Te hemos enviado un email de confirmación"
   },
   "insights": {
     "title": "Insights",
@@ -1319,5 +1437,239 @@
       "warning": "Aviso",
       "critical": "Crítico"
     }
+  },
+  "timesheet": {
+    "title": "Fichajes",
+    "subtitle": "Revisión y control de fichajes",
+    "allLocations": "Todos los locales",
+    "labourCost": "Coste laboral",
+    "clockIns": "Fichajes",
+    "tableEmployee": "Empleado",
+    "tableDate": "Fecha",
+    "tableClockIn": "Entrada",
+    "tableClockOut": "Salida",
+    "tableDuration": "Duración",
+    "tableCost": "Coste",
+    "tableSource": "Fuente",
+    "active": "Activo",
+    "manual": "Manual",
+    "noClockIns": "Sin fichajes esta semana",
+    "anomalies": "Anomalías",
+    "noAnomalies": "Todo en orden",
+    "clockInTime": "Hora de entrada",
+    "clockOutTime": "Hora de salida",
+    "toastUpdateError": "Error al actualizar fichaje",
+    "toastUpdated": "Fichaje actualizado",
+    "toastDeleteError": "Error al eliminar",
+    "toastDeleted": "Fichaje eliminado"
+  },
+  "menuItems": {
+    "searchPlaceholder": "Buscar platos...",
+    "category": "Categoría",
+    "allCategories": "Todas las categorías",
+    "addItem": "Nuevo plato",
+    "name": "Nombre",
+    "sellingPrice": "Precio venta",
+    "cost": "Coste",
+    "margin": "Margen",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "noItems": "Sin platos",
+    "noItemsDesc": "Añade tu primer plato del menú"
+  },
+  "inventoryItems": {
+    "searchPlaceholder": "Buscar por nombre...",
+    "category": "Categoría",
+    "supplier": "Proveedor",
+    "allLocations": "Todas las ubicaciones",
+    "allCategories": "Todas las categorías",
+    "allSuppliers": "Todos los proveedores",
+    "addItem": "Nuevo artículo",
+    "exportPdf": "Exportar PDF",
+    "name": "Nombre",
+    "unit": "Unidad",
+    "stock": "Stock",
+    "parLevel": "Par level",
+    "price": "Precio",
+    "actions": "Acciones",
+    "noItems": "Sin artículos",
+    "toastGeneratingPdf": "Generando PDF...",
+    "toastExported": "Exportado correctamente"
+  },
+  "employeeReviews": {
+    "title": "Evaluaciones",
+    "newReview": "Nueva evaluación",
+    "selectEmployee": "Seleccionar empleado",
+    "overallScore": "Puntuación general",
+    "strengths": "Fortalezas",
+    "goals": "Objetivos",
+    "date": "Fecha",
+    "score": "Puntuación",
+    "reviewer": "Evaluador",
+    "noReviews": "Sin evaluaciones",
+    "toastSaved": "Evaluación guardada",
+    "toastSaveError": "Error al guardar"
+  },
+  "contracts": {
+    "title": "Contratos",
+    "newContract": "Nuevo contrato",
+    "selectEmployee": "Seleccionar empleado",
+    "contractType": "Tipo de contrato",
+    "permanent": "Indefinido",
+    "temporary": "Temporal",
+    "partTime": "Parcial",
+    "startDate": "Fecha inicio",
+    "endDate": "Fecha fin",
+    "salary": "Salario anual",
+    "hoursWeek": "Horas/semana",
+    "noContracts": "Sin contratos",
+    "toastSelectEmployee": "Selecciona un empleado",
+    "toastUpdateError": "Error al actualizar contrato",
+    "toastUpdated": "Contrato actualizado",
+    "toastCreateError": "Error al crear contrato",
+    "toastCreated": "Contrato creado",
+    "toastStatusError": "Error al cambiar estado"
+  },
+  "teamDirectory": {
+    "searchPlaceholder": "Buscar compañero/a..."
+  },
+  "teamHome": {
+    "toastClockIn": "Entrada registrada",
+    "toastClockInError": "Error al registrar entrada",
+    "toastClockOut": "Salida registrada",
+    "toastClockOutError": "Error al registrar salida"
+  },
+  "pricing": {
+    "toastFreePlan": "Plan gratuito — ya estás en este plan",
+    "toastPaymentError": "No se pudo crear la sesión de pago. Intenta de nuevo."
+  },
+  "dataImport": {
+    "toastSelectLocation": "Selecciona una ubicación específica antes de importar",
+    "toastImportError": "Error inesperado durante la importación"
+  },
+  "workforceOnboarding": {
+    "noRecentOnboardings": "Sin incorporaciones recientes",
+    "allEmployees": "Todos los empleados",
+    "contractType": "Tipo de contrato",
+    "permanent": "Indefinido",
+    "temporary": "Temporal",
+    "partTime": "Parcial",
+    "intern": "Becario",
+    "toastContractRegistered": "Contrato registrado (demo)"
+  },
+  "square": {
+    "toastConnected": "Square conectado correctamente",
+    "toastImported": "Datos importados correctamente",
+    "toastSyncError": "Error en la sincronización inicial",
+    "toastDataAvailable": "Datos disponibles. Puedes sincronizar manualmente si necesitas actualizar.",
+    "toastConnectError": "Error conectando Square",
+    "toastOrgNotFound": "No se encontró la organización. Recarga la página.",
+    "toastStartError": "Error iniciando conexión",
+    "toastSyncing": "Sincronización en curso",
+    "toastSyncComplete": "Sincronización completada",
+    "toastSyncFailed": "Error sincronizando",
+    "toastDisconnected": "Square desconectado. Mostrando datos de demostración.",
+    "toastDisconnectError": "Error al desconectar",
+    "toastSyncInitialError": "Error en la sincronización inicial"
+  },
+  "recommendations": {
+    "menuOptimization": "Optimización Menú",
+    "revenue": "Revenue",
+    "laborSavings": "Labor savings"
+  },
+  "staffing": {
+    "day": "Día"
+  },
+  "lightspeed": {
+    "toastConnected": "¡Lightspeed conectado correctamente!",
+    "toastConnectError": "Error al iniciar conexión",
+    "toastSyncComplete": "Sincronización completada",
+    "toastSyncError": "Error en sincronización",
+    "toastDisconnected": "Lightspeed desconectado"
+  },
+  "scheduleSettings": {
+    "toastSaveError": "Error guardando",
+    "toastSaved": "Ajustes de horario guardados"
+  },
+  "clockIn": {
+    "toastNotFound": "No se encontró tu registro de empleado",
+    "toastClockInOk": "Entrada registrada correctamente",
+    "toastClockInError": "Error al registrar entrada",
+    "toastClockOutOk": "Salida registrada correctamente",
+    "toastClockOutError": "Error al registrar salida"
+  },
+  "eventCalendar": {
+    "toastAdded": "Evento añadido",
+    "toastError": "Error",
+    "toastDeleted": "Evento eliminado"
+  },
+  "locationWizard": {
+    "toastSessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
+    "toastPermissionsError": "Error de permisos. Recarga la página e intenta de nuevo.",
+    "toastNoPermissions": "No tienes permisos para crear locales. Verifica que tienes rol de propietario.",
+    "toastCreated": "Local creado correctamente",
+    "toastCreateError": "Error creando el local"
+  },
+  "trainingTracker": {
+    "toastCertAdded": "Certificado añadido",
+    "toastError": "Error"
+  },
+  "adminTools": {
+    "toast18Months": "18 meses de datos generados exitosamente!",
+    "toast30Days": "30 días de datos generados!"
+  },
+  "paymentHistory": {
+    "toastLoadError": "Error al cargar los pagos",
+    "toastCopied": "ID copiado al portapapeles",
+    "toastCopyError": "Error al copiar"
+  },
+  "locationManager": {
+    "toastNameRequired": "El nombre del local es obligatorio",
+    "toastGroupNotFound": "No se encontró el grupo",
+    "toastSessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
+    "toastPermissionsError": "Error de permisos. Recarga la página e intenta de nuevo.",
+    "toastNoPermissions": "No tienes permisos para crear locales. Verifica que tienes rol de propietario.",
+    "toastSelectSource": "Selecciona un local de origen",
+    "toastUpdated": "Local actualizado",
+    "toastCannotDelete": "No puedes eliminar el único local del grupo"
+  },
+  "teamManagers": {
+    "toastCompleteFields": "Completa nombre, apellido y ubicación",
+    "toastEmailCopied": "Email copiado"
+  },
+  "reviewCard": {
+    "toastRefineSuccess": "Respuesta refinada correctamente",
+    "toastRefineError": "Error al refinar respuesta",
+    "toastEnterReply": "Por favor introduce una respuesta",
+    "toastReplySubmitted": "Respuesta enviada correctamente",
+    "toastReplyDraft": "No se pudo publicar — guardada como borrador"
+  },
+  "onboardingWizard": {
+    "toastComplete": "¡Configuración completada!",
+    "toastError": "Error en la configuración"
+  },
+  "inventoryHeader": {
+    "toastRegenerated": "Datos demo regenerados"
+  },
+  "smartCounting": {
+    "toastInvalidQty": "Introduce una cantidad válida",
+    "toastNoCountsToSave": "No hay contajes para guardar",
+    "toastSaveError": "Error al guardar"
+  },
+  "labourEmpty": {
+    "toastSeedError": "Error al generar datos demo",
+    "toastGenError": "Error generando datos demo"
+  },
+  "autoPurchase": {
+    "toastNoAlerts": "¡No hay alertas de stock bajo!",
+    "toastScanError": "Error al escanear inventario",
+    "toastNoSuppliers": "No hay proveedores configurados",
+    "toastGenOrderError": "Error al generar orden de compra"
+  },
+  "addItem": {
+    "toastRequired": "Nombre y Precio son obligatorios",
+    "toastAdded": "Item añadido correctamente",
+    "toastAddError": "Error añadiendo item"
   }
 }

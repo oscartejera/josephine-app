@@ -102,7 +102,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
   const handleClockIn = async () => {
     if (!employeeId) {
-      toast.error('No se encontró tu registro de empleado');
+      toast.error(t('clockIn.toastNotFound'));
       return;
     }
 
@@ -125,10 +125,10 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
       setActiveRecord(data);
       setWeekRecords(prev => [data, ...prev]);
-      toast.success('Entrada registrada correctamente');
+      toast.success(t('clockIn.toastClockInOk'));
     } catch (error) {
       console.error('Clock in error:', error);
-      toast.error('Error al registrar entrada');
+      toast.error(t('clockIn.toastClockInError'));
     } finally {
       setLoading(false);
     }
@@ -157,10 +157,10 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
         )
       );
       setActiveRecord(null);
-      toast.success('Salida registrada correctamente');
+      toast.success(t('clockIn.toastClockOutOk'));
     } catch (error) {
       console.error('Clock out error:', error);
-      toast.error('Error al registrar salida');
+      toast.error(t('clockIn.toastClockOutError'));
     } finally {
       setLoading(false);
     }

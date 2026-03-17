@@ -42,9 +42,9 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
     try {
       const refined = await onRefine(review.id, tone, replyText || 'Thank you for your feedback!');
       setReplyText(refined);
-      toast.success('Reply refined successfully');
+      toast.success(t('reviewCard.toastRefineSuccess'));
     } catch (error) {
-      toast.error('Failed to refine reply');
+      toast.error(t('reviewCard.toastRefineError'));
     } finally {
       setIsRefining(false);
     }
@@ -52,15 +52,15 @@ export function ReviewCard({ review, onRefine, onSubmit }: ReviewCardProps) {
 
   const handleSubmit = async () => {
     if (!replyText.trim()) {
-      toast.error('Please enter a reply');
+      toast.error(t('reviewCard.toastEnterReply'));
       return;
     }
     setIsSubmitting(true);
     try {
       await onSubmit(review.id, replyText);
-      toast.success('Reply submitted successfully');
+      toast.success(t('reviewCard.toastReplySubmitted'));
     } catch (error) {
-      toast.error('Couldn\'t publish — saved as draft');
+      toast.error(t('reviewCard.toastReplyDraft'));
     } finally {
       setIsSubmitting(false);
     }

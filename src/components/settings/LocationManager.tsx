@@ -78,12 +78,12 @@ export function LocationManager() {
 
   const handleAddLocation = async () => {
     if (!formData.name.trim()) {
-      toast.error('El nombre del local es obligatorio');
+      toast.error(t('locationManager.toastNameRequired'));
       return;
     }
 
     if (!group?.id) {
-      toast.error('No se encontró el grupo');
+      toast.error(t('locationManager.toastGroupNotFound'));
       return;
     }
 
@@ -92,7 +92,7 @@ export function LocationManager() {
       // Verificar sesión activa antes de insertar
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+        toast.error(t('locationManager.toastSessionExpired'));
         setLoading(false);
         return;
       }
@@ -105,7 +105,7 @@ export function LocationManager() {
         .single();
 
       if (userProfile?.group_id !== group.id) {
-        toast.error('Error de permisos. Recarga la página e intenta de nuevo.');
+        toast.error(t('locationManager.toastPermissionsError'));
         setLoading(false);
         return;
       }
@@ -178,7 +178,7 @@ export function LocationManager() {
     } catch (error: any) {
       console.error('Error creating location:', error);
       if (error.code === '42501') {
-        toast.error('No tienes permisos para crear locales. Verifica que tienes rol de propietario.');
+        toast.error(t('locationManager.toastNoPermissions'));
       } else {
         toast.error(error.message || 'Error al crear el local');
       }
@@ -189,17 +189,17 @@ export function LocationManager() {
 
   const handleDuplicateLocation = async () => {
     if (!formData.name.trim()) {
-      toast.error('El nombre del local es obligatorio');
+      toast.error(t('locationManager.toastNameRequired'));
       return;
     }
 
     if (!sourceLocationId) {
-      toast.error('Selecciona un local de origen');
+      toast.error(t('locationManager.toastSelectSource'));
       return;
     }
 
     if (!group?.id) {
-      toast.error('No se encontró el grupo');
+      toast.error(t('locationManager.toastGroupNotFound'));
       return;
     }
 
@@ -208,7 +208,7 @@ export function LocationManager() {
       // Verificar sesión activa antes de insertar
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+        toast.error(t('locationManager.toastSessionExpired'));
         setLoading(false);
         return;
       }
@@ -221,7 +221,7 @@ export function LocationManager() {
         .single();
 
       if (userProfile?.group_id !== group.id) {
-        toast.error('Error de permisos. Recarga la página e intenta de nuevo.');
+        toast.error(t('locationManager.toastPermissionsError'));
         setLoading(false);
         return;
       }
@@ -495,7 +495,7 @@ export function LocationManager() {
 
   const handleEditLocation = async (locationId: string) => {
     if (!formData.name.trim()) {
-      toast.error('El nombre del local es obligatorio');
+      toast.error(t('locationManager.toastNameRequired'));
       return;
     }
 
@@ -513,7 +513,7 @@ export function LocationManager() {
 
       if (error) throw error;
 
-      toast.success('Local actualizado');
+      toast.success(t('locationManager.toastUpdated'));
       setEditingLocation(null);
       setFormData(initialFormData);
       window.location.reload();
@@ -529,7 +529,7 @@ export function LocationManager() {
     const location = locations.find(l => l.id === locationId);
     
     if (locations.length <= 1) {
-      toast.error('No puedes eliminar el único local del grupo');
+      toast.error(t('locationManager.toastCannotDelete'));
       return;
     }
 

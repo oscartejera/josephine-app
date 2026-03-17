@@ -97,7 +97,7 @@ export default function Pricing() {
 
     const handleUpgrade = async (plan: Plan) => {
         if (!plan.stripePriceId) {
-            toast.info('Plan gratuito — ya estás en este plan');
+            toast.info(t('pricing.toastFreePlan'));
             return;
         }
 
@@ -139,7 +139,7 @@ export default function Pricing() {
                 window.location.href = data.url;
             } else {
                 console.error('No checkout URL received:', data);
-                toast.error('No se pudo crear la sesión de pago. Intenta de nuevo.');
+                toast.error(t('pricing.toastPaymentError'));
             }
         } catch (err: any) {
             console.error('Stripe checkout error:', err);

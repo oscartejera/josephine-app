@@ -302,9 +302,9 @@ export default function WorkforceTimesheet() {
             .eq('id', editRecord.id);
 
         if (error) {
-            toast.error('Error al actualizar fichaje');
+            toast.error(t('timesheet.toastUpdateError'));
         } else {
-            toast.success('Fichaje actualizado');
+            toast.success(t('timesheet.toastUpdated'));
             setEditRecord(null);
             fetchData();
         }
@@ -317,9 +317,9 @@ export default function WorkforceTimesheet() {
             .eq('id', id);
 
         if (error) {
-            toast.error('Error al eliminar');
+            toast.error(t('timesheet.toastDeleteError'));
         } else {
-            toast.success('Fichaje eliminado');
+            toast.success(t('timesheet.toastDeleted'));
             fetchData();
         }
     };
@@ -343,7 +343,7 @@ export default function WorkforceTimesheet() {
                         <FileText className="h-6 w-6 text-primary" />
                         Timesheet
                     </h1>
-                    <p className="text-muted-foreground">Revisión y control de fichajes</p>
+                    <p className="text-muted-foreground">{t('timesheet.subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {accessibleLocations.length > 1 && (
@@ -352,7 +352,7 @@ export default function WorkforceTimesheet() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Todos los locales</SelectItem>
+                                <SelectItem value="all">{t('timesheet.allLocations')}</SelectItem>
                                 {accessibleLocations.map((l) => (
                                     <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                                 ))}
@@ -397,13 +397,13 @@ export default function WorkforceTimesheet() {
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">Coste laboral</p>
+                        <p className="text-xs text-muted-foreground">{t('timesheet.labourCost')}</p>
                         <p className="text-2xl font-bold mt-1">{stats.totalCost}€</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4">
-                        <p className="text-xs text-muted-foreground">Fichajes</p>
+                        <p className="text-xs text-muted-foreground">{t('timesheet.clockIns')}</p>
                         <p className="text-2xl font-bold mt-1">{stats.records}</p>
                     </CardContent>
                 </Card>
@@ -457,7 +457,7 @@ export default function WorkforceTimesheet() {
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <Clock className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
-                                <p className="text-lg font-medium text-muted-foreground">Sin fichajes esta semana</p>
+                                <p className="text-lg font-medium text-muted-foreground">{t('timesheet.noClockIns')}</p>
                             </CardContent>
                         </Card>
                     ) : (
@@ -543,13 +543,13 @@ export default function WorkforceTimesheet() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[200px]">Empleado</TableHead>
-                                        <TableHead>Fecha</TableHead>
-                                        <TableHead>Entrada</TableHead>
-                                        <TableHead>Salida</TableHead>
-                                        <TableHead className="text-right">Duración</TableHead>
-                                        <TableHead className="text-right">Coste</TableHead>
-                                        <TableHead>Fuente</TableHead>
+                                        <TableHead className="w-[200px]">{t('timesheet.tableEmployee')}</TableHead>
+                                        <TableHead>{t('timesheet.tableDate')}</TableHead>
+                                        <TableHead>{t('timesheet.tableClockIn')}</TableHead>
+                                        <TableHead>{t('timesheet.tableClockOut')}</TableHead>
+                                        <TableHead className="text-right">{t('timesheet.tableDuration')}</TableHead>
+                                        <TableHead className="text-right">{t('timesheet.tableCost')}</TableHead>
+                                        <TableHead>{t('timesheet.tableSource')}</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -594,7 +594,7 @@ export default function WorkforceTimesheet() {
                                                     </TableCell>
                                                     <TableCell className="font-mono text-sm">
                                                         {r.clock_out ? format(new Date(r.clock_out), 'HH:mm') : (
-                                                            <Badge variant="outline" className="text-amber-600 border-amber-300">Activo</Badge>
+                                                            <Badge variant="outline" className="text-amber-600 border-amber-300">{t('timesheet.active')}</Badge>
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-right font-mono text-sm">
@@ -735,7 +735,7 @@ export default function WorkforceTimesheet() {
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <CheckCircle2 className="h-12 w-12 text-emerald-500/40 mx-auto mb-3" />
-                                <p className="text-lg font-medium text-muted-foreground">Todo en orden</p>
+                                <p className="text-lg font-medium text-muted-foreground">{t('timesheet.noAnomalies')}</p>
                                 <p className="text-sm text-muted-foreground/60">No hay alertas esta semana</p>
                             </CardContent>
                         </Card>
@@ -754,7 +754,7 @@ export default function WorkforceTimesheet() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Hora de entrada</Label>
+                            <Label>{t('timesheet.clockInTime')}</Label>
                             <Input
                                 type="datetime-local"
                                 value={editForm.clock_in}
@@ -762,7 +762,7 @@ export default function WorkforceTimesheet() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Hora de salida</Label>
+                            <Label>{t('timesheet.clockOutTime')}</Label>
                             <Input
                                 type="datetime-local"
                                 value={editForm.clock_out}

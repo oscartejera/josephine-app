@@ -37,9 +37,9 @@ export default function Availability() {
     setIsSaving(true);
     try {
       await saveAvailability();
-      toast.success('Availability saved successfully');
+      toast.success(t('availability.toastSaved'));
     } catch (error) {
-      toast.error('Failed to save availability');
+      toast.error(t('availability.toastSaveError'));
     } finally {
       setIsSaving(false);
     }
@@ -49,22 +49,22 @@ export default function Availability() {
     request: Omit<TimeOffRequest, 'id' | 'employeeId' | 'employeeName' | 'employeeInitials' | 'status' | 'createdAt'>
   ) => {
     await createTimeOffRequest(request);
-    toast.success('Time off request submitted');
+    toast.success(t('availability.toastTimeOffSubmitted'));
   }, [createTimeOffRequest]);
   
   const handleApproveRequest = useCallback(async (requestId: string) => {
     await approveTimeOffRequest(requestId);
-    toast.success('Request approved');
+    toast.success(t('availability.toastApproved'));
   }, [approveTimeOffRequest]);
   
   const handleRejectRequest = useCallback(async (requestId: string) => {
     await rejectTimeOffRequest(requestId);
-    toast.info('Request rejected');
+    toast.info(t('availability.toastRejected'));
   }, [rejectTimeOffRequest]);
   
   const handleCancelRequest = useCallback(async (requestId: string) => {
     await cancelTimeOffRequest(requestId);
-    toast.success('Request cancelled');
+    toast.success(t('availability.toastCancelled'));
   }, [cancelTimeOffRequest]);
   
   return (

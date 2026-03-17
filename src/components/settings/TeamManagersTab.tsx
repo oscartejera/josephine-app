@@ -85,7 +85,7 @@ export function TeamManagersTab() {
 
     const handleInvite = async () => {
         if (!firstName.trim() || !lastName.trim() || !locationId) {
-            toast.error('Completa nombre, apellido y ubicación');
+            toast.error(t('teamManagers.toastCompleteFields'));
             return;
         }
 
@@ -113,7 +113,7 @@ export function TeamManagersTab() {
     const copyEmail = () => {
         if (lastCreated) {
             navigator.clipboard.writeText(lastCreated.email);
-            toast.success('Email copiado');
+            toast.success(t('teamManagers.toastEmailCopied'));
         }
     };
 
@@ -137,7 +137,7 @@ export function TeamManagersTab() {
                             <Label htmlFor="firstName">Nombre</Label>
                             <Input
                                 id="firstName"
-                                placeholder="María"
+                                placeholder={t('settings.firstName')}
                                 value={firstName}
                                 onChange={e => setFirstName(e.target.value)}
                             />
@@ -146,7 +146,7 @@ export function TeamManagersTab() {
                             <Label htmlFor="lastName">Apellido</Label>
                             <Input
                                 id="lastName"
-                                placeholder="García"
+                                placeholder={t('settings.lastName')}
                                 value={lastName}
                                 onChange={e => setLastName(e.target.value)}
                             />

@@ -392,7 +392,7 @@ export function TeamManager() {
                   <Label htmlFor="full_name">Nombre Completo *</Label>
                   <Input
                     id="full_name"
-                    placeholder="Juan García"
+                    placeholder={t('settings.fullName')}
                     value={newMember.full_name}
                     onChange={(e) => setNewMember({ ...newMember, full_name: e.target.value })}
                     disabled={inviting}
@@ -406,7 +406,7 @@ export function TeamManager() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="juan@ejemplo.com"
+                      placeholder={t('settings.emailPlaceholder')}
                       className="pl-10"
                       value={newMember.email}
                       onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
@@ -423,7 +423,7 @@ export function TeamManager() {
                     disabled={inviting}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar rol" />
+                      <SelectValue placeholder={t('settings.selectRole')} />
                     </SelectTrigger>
                     <SelectContent>
                       {roles.filter(r => r.name !== 'owner').map(role => {
@@ -461,7 +461,7 @@ export function TeamManager() {
                     disabled={inviting}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar ubicación" />
+                      <SelectValue placeholder={t('settings.selectLocation')} />
                     </SelectTrigger>
                     <SelectContent>
                       {!requiresLocation && (

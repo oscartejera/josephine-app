@@ -142,7 +142,7 @@ export default function LightspeedIntegration() {
     // Show success toast if just connected
     useEffect(() => {
         if (searchParams.get('connected') === 'true') {
-            toast.success('¡Lightspeed conectado correctamente!');
+            toast.success(t('lightspeed.toastConnected'));
         }
     }, [searchParams]);
 
@@ -171,7 +171,7 @@ export default function LightspeedIntegration() {
             const { authUrl } = await response.json();
             window.location.href = authUrl;
         } catch (e: any) {
-            toast.error('Error al iniciar conexión: ' + e.message);
+            toast.error(t('lightspeed.toastConnectError') + ': ' + e.message);
             setConnecting(false);
         }
     };
@@ -198,10 +198,10 @@ export default function LightspeedIntegration() {
                 throw new Error(err.error || 'Sync failed');
             }
 
-            toast.success('Sincronización completada');
+            toast.success(t('lightspeed.toastSyncComplete'));
             loadData();
         } catch (e: any) {
-            toast.error('Error en sincronización: ' + e.message);
+            toast.error(t('lightspeed.toastSyncError') + ': ' + e.message);
         } finally {
             setSyncing(false);
         }
@@ -217,7 +217,7 @@ export default function LightspeedIntegration() {
             is_enabled: false,
         }).eq('id', integration.id);
 
-        toast.success('Lightspeed desconectado');
+        toast.success(t('lightspeed.toastDisconnected'));
         loadData();
     };
 

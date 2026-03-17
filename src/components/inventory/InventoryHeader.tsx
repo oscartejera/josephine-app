@@ -66,7 +66,7 @@ export function InventoryHeader({
 
   const handleReseedData = () => {
     resetDemoGenerator();
-    toast.success('Demo data regenerated', {
+    toast.success(t('inventoryHeader.toastRegenerated'), {
       description: 'New realistic data has been generated for all locations.'
     });
     if (onReseedData) {

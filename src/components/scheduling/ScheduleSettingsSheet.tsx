@@ -151,9 +151,9 @@ export function ScheduleSettingsSheet({ isOpen, onClose, locationId, locationNam
 
     setSaving(false);
     if (error) {
-      toast.error('Error guardando: ' + error.message);
+      toast.error(t('scheduleSettings.toastSaveError') + ': ' + error.message);
     } else {
-      toast.success('Schedule settings guardados');
+      toast.success(t('scheduleSettings.toastSaved'));
       onClose();
     }
   }, [settings, locationId, onClose]);

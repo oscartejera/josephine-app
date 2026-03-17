@@ -308,7 +308,7 @@ export default function DataImport() {
     // ── Import ─────────────────────────────────────────────────────
     const handleImport = async () => {
         if (!parsed || !selectedLocationId || selectedLocationId === 'all') {
-            toast.error('Selecciona una ubicación específica antes de importar');
+            toast.error(t('dataImport.toastSelectLocation'));
             return;
         }
 
@@ -369,7 +369,7 @@ export default function DataImport() {
             toast.success(`${inserted} registros importados correctamente`);
             loadHistory();
         } catch (err: any) {
-            toast.error('Error inesperado durante la importación');
+            toast.error(t('dataImport.toastImportError'));
             console.error(err);
             setStep('preview');
         }

@@ -53,11 +53,11 @@ export function POSCashSession({
 
       if (error) throw error;
 
-      toast.success('Caja abierta');
+      toast.success(t('pos.toastCajaAbierta'));
       onSessionChange();
       setDialogOpen(false);
     } catch (error: any) {
-      toast.error('Error: ' + error.message);
+      toast.error(t('pos.toastError') + ': ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -80,11 +80,11 @@ export function POSCashSession({
 
       if (error) throw error;
 
-      toast.success('Caja cerrada');
+      toast.success(t('pos.toastCajaCerrada'));
       onSessionChange();
       setDialogOpen(false);
     } catch (error: any) {
-      toast.error('Error: ' + error.message);
+      toast.error(t('pos.toastError') + ': ' + error.message);
     } finally {
       setLoading(false);
     }

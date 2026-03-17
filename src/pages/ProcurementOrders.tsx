@@ -218,7 +218,7 @@ export default function ProcurementOrders() {
               };
             }
 
-            toast.success('New order received!', {
+            toast.success(t('procurement.toastNewOrder'), {
               description: 'The orders list has been updated.',
               icon: <CheckCircle className="h-5 w-5 text-success" />,
             });
@@ -235,7 +235,7 @@ export default function ProcurementOrders() {
   // Check if we came from a successful order placement
   useEffect(() => {
     if (location.state?.orderSuccess) {
-      toast.success('Order sent to supplier!', {
+      toast.success(t('procurement.toastOrderSent'), {
         description: `Order ${location.state.orderId} has been submitted successfully.`,
         duration: 5000,
         icon: <CheckCircle className="h-5 w-5 text-success" />,

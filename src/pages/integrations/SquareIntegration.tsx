@@ -298,7 +298,7 @@ export default function SquareIntegration() {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (searchParams.get('connected') === 'true') {
-      toast.success('Square conectado correctamente', {
+      toast.success(t('square.toastConnected'), {
         description: 'Sincronización inicial en curso...',
       });
       setSyncing(true);
@@ -349,7 +349,7 @@ export default function SquareIntegration() {
           clearInterval(poll);
           if (isSyncSuccess(latest.status)) {
             completeProgressAnimation();
-            toast.success('Datos importados correctamente');
+            toast.success(t('square.toastImported'));
             setTimeout(() => {
               showSplashScreen('Cargando tus datos de Square...');
               queryClient.invalidateQueries();
@@ -360,7 +360,7 @@ export default function SquareIntegration() {
             }, 1500);
           } else {
             resetSyncState();
-            toast.error('Error en la sincronización inicial', {
+            toast.error(t('square.toastSyncInitialError'), {
               description: latest.error || 'Error desconocido',
             });
           }
@@ -375,7 +375,7 @@ export default function SquareIntegration() {
         setTimeout(() => {
           hideSplashScreen();
           setSyncing(false);
-          toast.info('Datos disponibles. Puedes sincronizar manualmente si necesitas actualizar.');
+          toast.info(t('square.toastDataAvailable'));
         }, 1500);
       }, 30_000);
 
@@ -386,7 +386,7 @@ export default function SquareIntegration() {
     }
 
     if (searchParams.get('error')) {
-      toast.error('Error conectando Square', {
+      toast.error(t('square.toastConnectError'), {
         description: searchParams.get('error'),
       });
       setSearchParams({});
@@ -398,7 +398,7 @@ export default function SquareIntegration() {
   // ---------------------------------------------------------------------------
   const handleConnect = async () => {
     if (!orgId) {
-      toast.error('No se encontró la organización. Recarga la página.');
+      toast.error(t('square.toastOrgNotFound'));
       return;
     }
 
@@ -437,7 +437,7 @@ export default function SquareIntegration() {
       window.location.href = data.authUrl;
     } catch (err: any) {
       console.error('OAuth start error:', err);
-      toast.error('Error iniciando conexión', { description: err.message });
+      toast.error(t('square.toastStartError'), { description: err.message });
       setConnecting(false);
     }
   };
@@ -471,7 +471,7 @@ export default function SquareIntegration() {
 
       if (data.message === 'Sync already running') {
         stopProgressAnimation();
-        toast.info('Sincronización en curso', {
+        toast.info(t('square.toastSyncing'), {
           description: 'Ya hay una sincronización activa. Espera a que termine.',
         });
         setSyncing(false);
@@ -482,11 +482,11 @@ export default function SquareIntegration() {
       completeProgressAnimation();
 
       if (data.stats) {
-        toast.success('Sincronización completada', {
+        toast.success(t('square.toastSyncComplete'), {
           description: `${data.stats.locations || 0} locales, ${data.stats.items || 0} productos, ${data.stats.orders || 0} pedidos`,
         });
       } else {
-        toast.success('Sincronización completada');
+        toast.success(t('square.toastSyncComplete'));
       }
 
       // Refresh all data via splash
@@ -503,7 +503,7 @@ export default function SquareIntegration() {
     } catch (err: any) {
       console.error('Sync error:', err);
       stopProgressAnimation();
-      toast.error('Error sincronizando', { description: err.message });
+      toast.error(t('square.toastSyncFailed'), { description: err.message });
       setSyncing(false);
     }
   };
@@ -530,12 +530,12 @@ export default function SquareIntegration() {
 
       setTimeout(() => {
         hideSplashScreen();
-        toast.info('Square desconectado. Mostrando datos de demostración.');
+        toast.info(t('square.toastDisconnected'));
       }, 2500);
     } catch (err: any) {
       console.error('Disconnect error:', err);
       hideSplashScreen();
-      toast.error('Error al desconectar', { description: err.message });
+      toast.error(t('square.toastDisconnectError'), { description: err.message });
     }
   };
 

@@ -26,11 +26,11 @@ export function LabourEmptyState({ onDataSeeded }: LabourEmptyStateProps) {
         toast.success(`Demo data generated: ${result.locations} locations, ${result.days} days`);
         onDataSeeded();
       } else {
-        toast.error('Failed to seed demo data');
+        toast.error(t('labourEmpty.toastSeedError'));
       }
     } catch (error) {
       console.error('Seed error:', error);
-      toast.error('Error generating demo data');
+      toast.error(t('labourEmpty.toastGenError'));
     } finally {
       setIsSeeding(false);
     }

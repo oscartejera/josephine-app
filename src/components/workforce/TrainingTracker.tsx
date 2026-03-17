@@ -116,12 +116,12 @@ export function TrainingTracker({ locationId }: { locationId: string | null }) {
                 status,
             });
             if (error) throw error;
-            toast.success('Certificado añadido');
+            toast.success(t('trainingTracker.toastCertAdded'));
             setDialogOpen(false);
             resetForm();
             loadData();
         } catch (err: any) {
-            toast.error('Error', { description: err.message });
+            toast.error(t('trainingTracker.toastError'), { description: err.message });
         } finally {
             setSubmitting(false);
         }

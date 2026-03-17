@@ -257,7 +257,7 @@ export default function ProcurementCart() {
                   </div>
                   <Textarea
                     id="comments"
-                    placeholder="Add any special instructions for this order..."
+                    placeholder={t('procurement.specialInstructions')}
                     value={comments}
                     onChange={(e) => setComments(e.target.value.slice(0, 300))}
                     className="min-h-[80px] resize-none"

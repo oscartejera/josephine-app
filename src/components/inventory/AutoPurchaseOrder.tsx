@@ -65,13 +65,13 @@ export function AutoPurchaseOrder() {
             setAlerts(result);
             setScanned(true);
             if (result.length === 0) {
-                toast.success('¡No hay alertas de stock bajo!');
+                toast.success(t('autoPurchase.toastNoAlerts'));
             } else {
                 toast.info(`${result.length} items por debajo del nivel mínimo`);
             }
         } catch (err) {
             console.error('Error scanning alerts:', err);
-            toast.error('Error al escanear inventario');
+            toast.error(t('autoPurchase.toastScanError'));
         }
         setLoading(false);
     };
@@ -90,7 +90,7 @@ export function AutoPurchaseOrder() {
 
             const supplierId = supplierData?.id;
             if (!supplierId) {
-                toast.error('No hay proveedores configurados');
+                toast.error(t('autoPurchase.toastNoSuppliers'));
                 setGenerating(false);
                 return;
             }
@@ -113,7 +113,7 @@ export function AutoPurchaseOrder() {
             toast.success(`Orden de compra creada con ${result.totalLines} líneas`);
         } catch (err) {
             console.error('Error generating PO:', err);
-            toast.error('Error al generar orden de compra');
+            toast.error(t('autoPurchase.toastGenOrderError'));
         }
         setGenerating(false);
     };

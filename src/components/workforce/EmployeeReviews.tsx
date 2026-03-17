@@ -143,12 +143,12 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                 status: 'submitted',
             });
             if (error) throw error;
-            toast.success('Evaluación guardada');
+            toast.success(t('employeeReviews.toastSaved'));
             setDialogOpen(false);
             resetForm();
             loadData();
         } catch (err: any) {
-            toast.error('Error al guardar', { description: err.message });
+            toast.error(t('employeeReviews.toastSaveError'), { description: err.message });
         } finally {
             setSubmitting(false);
         }
@@ -269,7 +269,7 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                     <div className="space-y-4 py-2">
                         <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar empleado" />
+                                <SelectValue placeholder={t('employeeReviews.selectEmployee')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {employees.map(e => (
@@ -299,9 +299,9 @@ export function EmployeeReviews({ locationId }: { locationId: string | null }) {
                             ))}
                         </div>
 
-                        <Textarea placeholder="Fortalezas" value={strengths} onChange={e => setStrengths(e.target.value)} rows={2} />
+                        <Textarea placeholder={t('employeeReviews.strengths')} value={strengths} onChange={e => setStrengths(e.target.value)} rows={2} />
                         <Textarea placeholder={t("workforce.areasOfImprovement")} value={improvements} onChange={e => setImprovements(e.target.value)} rows={2} />
-                        <Textarea placeholder="Objetivos" value={goals} onChange={e => setGoals(e.target.value)} rows={2} />
+                        <Textarea placeholder={t('employeeReviews.goals')} value={goals} onChange={e => setGoals(e.target.value)} rows={2} />
                     </div>
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
