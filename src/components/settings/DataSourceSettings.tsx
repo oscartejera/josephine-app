@@ -93,12 +93,12 @@ export function DataSourceSettings() {
         toast({
           variant: 'destructive',
           title: t("common.error"),
-          description: 'No se pudo guardar la configuración de fuente de datos.',
+          description: t('settings.dataSourceSaveError'),
         });
       } else {
         toast({
           title: t('common.saved'),
-          description: 'Configuración de fuente de datos actualizada.',
+          description: t('settings.dataSourceUpdated'),
         });
         refetch();
       }
@@ -107,7 +107,7 @@ export function DataSourceSettings() {
       toast({
         variant: 'destructive',
         title: t("common.error"),
-        description: 'Error inesperado al guardar.',
+        description: t('settings.unexpectedSaveError'),
       });
     } finally {
       setSaving(false);
@@ -117,15 +117,15 @@ export function DataSourceSettings() {
   // ── Display helpers ────────────────────────────────────────────────
 
   const formatSyncTime = (date: Date | null) => {
-    if (!date) return 'Nunca';
+    if (!date) return t('common.never');
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMin = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMin / 60);
 
-    if (diffMin < 1) return 'Hace unos segundos';
-    if (diffMin < 60) return `Hace ${diffMin} min`;
-    if (diffHours < 24) return `Hace ${diffHours}h`;
+    if (diffMin < 1) return t('common.secondsAgo');
+    if (diffMin < 60) return t('common.minutesAgo', { count: diffMin });
+    if (diffHours < 24) return t('common.hoursAgo', { count: diffHours });
     return date.toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
@@ -135,16 +135,16 @@ export function DataSourceSettings() {
   };
 
   const reasonLabels: Record<string, string> = {
-    auto_pos_recent: 'Datos POS (sincronización reciente)',
-    auto_demo_no_sync: 'Datos Demo (sin sincronización reciente)',
-    manual_demo: 'Demo (selección manual)',
-    manual_pos_recent: 'Datos POS (selección manual)',
+    auto_pos_recent: t('settings.posRecentSync'),
+    auto_demo_no_sync: t('settings.demoNoRecentSync'),
+    manual_demo: t('settings.demoManualSelection'),
+    manual_pos_recent: t('settings.posManualSelection'),
     manual_pos_blocked_no_sync: t('settings.bloqueadoPosSeleccionadoPeroSin'),
-    legacy_pos_connected: 'Datos POS (detección automática legacy)',
-    legacy_no_pos: 'Datos Demo (sin conexión POS)',
-    legacy_error: 'Datos Demo (error de detección)',
-    no_session: 'Datos Demo (sin sesión)',
-    loading: 'Cargando...',
+    legacy_pos_connected: t('settings.posAutoLegacy'),
+    legacy_no_pos: t('settings.demoNoPosConnection'),
+    legacy_error: t('settings.demoDetectionError'),
+    no_session: t('settings.demoNoSession'),
+    loading: t('settings.loadingEllipsis'),
   };
 
   const savedMode = deriveMode(mode, reason);
@@ -159,10 +159,10 @@ export function DataSourceSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="h-5 w-5" />
-          Fuente de Datos
+          {t('settings.dataSourceTitle')}
         </CardTitle>
         <CardDescription>
-          Controla si la aplicación muestra datos reales del POS o datos de demostración.
+          {t('settings.dataSourceDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -177,7 +177,7 @@ export function DataSourceSettings() {
               {blocked && (
                 <Badge variant="destructive" className="text-xs">
                   <AlertTriangle className="h-3 w-3 mr-1" />
-                  Bloqueado
+                  {t('common.blocked')}
                 </Badge>
               )}
             </div>
@@ -185,7 +185,7 @@ export function DataSourceSettings() {
               {reasonLabels[reason] || reason}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Última sincronización: {formatSyncTime(lastSyncedAt)}
+              {t('settings.lastSync')}: {formatSyncTime(lastSyncedAt)}
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={refetch} disabled={dsLoading}>
@@ -208,8 +208,8 @@ export function DataSourceSettings() {
             </Select>
             <p className="text-xs text-muted-foreground">
               {topLevel === 'auto'
-                ? 'Usa datos POS si hay una sincronización en las últimas 24h, si no datos demo.'
-                : 'Elige manualmente qué fuente de datos usar.'}
+                ? t('settings.autoModeDescription')
+                : t('settings.manualModeDescription')}
             </p>
           </div>
 
@@ -241,7 +241,7 @@ export function DataSourceSettings() {
                 <div className="flex items-start gap-2 mt-2 p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                   <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                    Última sincronización: {formatSyncTime(lastSyncedAt)}. Datos POS disponibles.
+                    {t('settings.lastSync')}: {formatSyncTime(lastSyncedAt)}. {t('settings.posDataAvailable')}
                   </p>
                 </div>
               )}
@@ -252,7 +252,7 @@ export function DataSourceSettings() {
         {/* Save button */}
         <Button onClick={handleSave} disabled={saving || !hasChanged}>
           {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          Guardar cambios
+          {t('settings.saveChanges')}
         </Button>
 
         {/* Help text */}

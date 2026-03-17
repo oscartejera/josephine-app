@@ -218,7 +218,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
                                 min="0"
                                 value={countValue}
                                 onChange={e => setCountValue(e.target.value)}
-                                placeholder={`Cantidad en ${current.unit}`}
+                                placeholder={t('inventory.quantityInUnit', { unit: current.unit })}
                                 className="text-center text-lg"
                                 autoFocus
                                 onKeyDown={e => e.key === 'Enter' && submitCount()}
@@ -295,7 +295,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
                 </Button>
                 <Button onClick={saveAll} disabled={saving}>
                     <CheckCircle2 className="h-4 w-4 mr-1" />
-                    {saving ? 'Guardando...' : `Guardar ${countedCount} contajes`}
+                    {saving ? 'Guardando...' : t('inventory.saveCounts', { count: countedCount })}
                 </Button>
             </div>
         </div>

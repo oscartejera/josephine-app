@@ -99,7 +99,7 @@ export default function PayrollHome({
     if (withIban < totalEmps) {
       newIssues.push({
         type: 'info',
-        message: `${totalEmps - withIban} empleado(s) sin IBAN (no se podrá generar SEPA)`,
+        message: t('payroll.employeesWithoutIbanSepa', { count: totalEmps - withIban }),
         action: 'employees',
         count: totalEmps - withIban,
       });

@@ -1,0 +1,285 @@
+
+=== components/settings/DataSourceSettings.tsx (14) ===
+  L96: No se pudo guardar la configuración de fuente de datos.
+  L101: Configuración de fuente de datos actualizada.
+  L110: Error inesperado al guardar.
+  L138: Datos POS (sincronización reciente)
+  L139: Datos Demo (sin sincronización reciente)
+  L140: Demo (selección manual)
+  L141: Datos POS (selección manual)
+  L143: Datos POS (detección automática legacy)
+  L144: Datos Demo (sin conexión POS)
+  L145: Datos Demo (error de detección)
+  L146: Datos Demo (sin sesión)
+  L147: Cargando...
+  L211: Usa datos POS si hay una sincronización en las últimas 24h, si no datos demo.
+  L212: Elige manualmente qué fuente de datos usar.
+
+=== components/payroll/PayrollValidate.tsx (11) ===
+  L81:  (sandbox: se usarán valores estimados)
+  L81: ${missingNif.length} empleado(s) sin NIF${isSandboxMode ? ' (sandbox: se usarán 
+  L91:  (sandbox: se usarán valores estimados)
+  L91: ${missingNss.length} empleado(s) sin NSS${isSandboxMode ? ' (sandbox: se usarán 
+  L101: ${missingIban.length} empleado(s) sin IBAN (no se podrá generar SEPA)
+  L125:  (sandbox: se usarán salarios del convenio)
+  L125: ${missingContract.length} empleado(s) sin contrato activo${isSandboxMode ? ' (sa
+  L171:  (sandbox: se usarán horas de contrato)
+  L171: No hay variables cargadas${isSandboxMode ? ' (sandbox: se usarán horas de contra
+  L185:  (sandbox: presentaciones se simularán)
+  L185: Entidad sin CCC${isSandboxMode ? ' (sandbox: presentaciones se simularán)' : ''}
+
+=== components/dashboard/ExecutiveBriefing.tsx (10) ===
+  L59: Revisa la distribución de turnos en ${loc.name} para esta semana. Objetivo: ${lo
+  L66: Ventas ${salesVar.toFixed(0)}% por debajo del presupuesto
+  L68: Evalúa acciones comerciales en ${loc.name}: promociones, eventos o ajustes de ca
+  L78: ⚠️ ${loc.name}: coste laboral +${labourVar.toFixed(0)}% sobre presupuesto. Revis
+  L99: El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (Labor €${Math.rou
+  L106: No se han registrado ventas. Verifica la conexión POS o que los datos estén sinc
+  L108: ⚠️ Sin datos de ventas: revisa que el POS esté conectado y sincronizando correct
+  L112: Todos los locales operan dentro de los márgenes objetivo. Excelente jornada.
+  L116: No se requieren ajustes inmediatos. Mantén la estrategia actual.
+  L241: Verifica que los datos de ventas y labor estén sincronizados.
+
+=== components/settings/LocationWizard.tsx (10) ===
+  L72: España (Madrid)
+  L74: Francia (París)
+  L75: Alemania (Berlín)
+  L77: EEUU (Los Ángeles)
+  L78: México (Ciudad de México)
+  L83: $ Dólar
+  L337: ${template.name} ya está en tu lista
+  L348: ${template.name} añadido
+  L537: ¡Local "${basicInfo.name}" creado con ${selectedProducts.length} productos, ${ta
+  L1071: Nombre *
+
+=== pages/OnboardingWizardV2.tsx (9) ===
+  L39: Aquí tienes el menú principal. Navega entre las distintas secciones de Josephine
+  L45: El Control Tower es tu centro de mando. Aquí ves un resumen de todo tu negocio.
+  L50: Las tarjetas KPI muestran métricas clave: ventas, personal, costes y previsiones
+  L55: En Insights encontrarás análisis detallados: ventas, personal, P&L, reseñas, inv
+  L60: Workforce gestiona tu equipo: turnos, fichajes, onboarding y más.
+  L138: ${pos === 'square' ? 'Square' : 'Lightspeed'} seleccionado. Lo conectaremos desp
+  L297: Square (se conectará al finalizar)
+  L298: Lightspeed (se conectará al finalizar)
+  L447: Siguiente
+
+=== components/integrations/SyncSplashScreen.tsx (8) ===
+  L13: Calculando cuántas servilletas necesitas mañana...
+  L14: Analizando por qué todos piden postre los viernes...
+  L15: Prediciendo la próxima tendencia gastronómica...
+  L17: Tu sous-chef digital está calentando motores...
+  L18: Optimizando el flujo de la cocina con matemáticas...
+  L20: La IA ya sabe qué van a pedir antes que ellos...
+  L21: Sincronizando datos más rápido que un camarero veterano...
+  L22: Procesando números como si fueran mise en place...
+
+=== components/ai/JosephineChat.tsx (7) ===
+  L27: ¿Cuál es el coste de personal actual vs el presupuesto? ¿Estamos dentro del obje
+  L28: ¿Qué ingredientes están por debajo del nivel mínimo y necesito pedir?
+  L29: Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predi
+  L44: ¡Hola! 👋 Soy **Josephine**, tu asistente de operaciones. Pregúntame sobre venta
+  L86: No he podido obtener la información en este momento. Intenta de nuevo.
+  L122: No se pudo conectar con el asistente AI. Verifica que OPENAI_API_KEY esté config
+  L122: ⚠️ Error: ${err.message || 'No se pudo conectar con el asistente AI. Verifica qu
+
+=== components/settings/LocationManager.tsx (6) ===
+  L35: España (Madrid)
+  L37: Francia (París)
+  L38: Alemania (Berlín)
+  L40: EEUU (Los Ángeles)
+  L41: México (Ciudad de México)
+  L46: $ Dólar (USD)
+
+=== pages/integrations/SquareIntegration.tsx (6) ===
+  L55: La sincronización está tardando demasiado. Verifica el historial en unos minutos
+  L104: Procesando datos...
+  L302: Sincronización inicial en curso...
+  L354: Cargando tus datos de Square...
+  L475: Ya hay una sincronización activa. Espera a que termine.
+  L672: Sincronización en curso...
+
+=== pages/DataImport.tsx (5) ===
+  L68: Fecha (requerido)
+  L69: Ventas Netas (requerido)
+  L200: Fecha inválida: "${row[dateIdx]}"
+  L209: Ventas netas inválidas: "${row[salesIdx]}"
+  L418: Importar
+
+=== components/bi/AskJosephinePanel.tsx (4) ===
+  L166: ¿Por qué las ventas están por encima/debajo del forecast?
+  L167: ¿Cuáles son los principales drivers de ventas?
+  L168: ¿Qué productos están underperforming?
+  L169: ¿Cómo podemos mejorar el ticket medio?
+
+=== components/InsightErrorBoundary.tsx (4) ===
+  L88: ${this.props.pageName} — Error al cargar datos
+  L92: Reintento automático ${this.state.retryCount + 1} de ${MAX_RETRIES}…
+  L96: Los reintentos automáticos se agotaron. Puedes reintentar manualmente.
+  L97: Se produjo un error inesperado al cargar esta sección.
+
+=== components/inventory/AskJosephineDrawer.tsx (4) ===
+  L75: ¿Por qué mi COGS actual está por encima del teórico?
+  L76: ¿Cuáles son las principales fuentes de merma?
+  L77: ¿Qué categoría tiene mayor varianza?
+  L113: Analiza mi situación actual de inventario y dame un resumen ejecutivo con los pu
+
+=== components/labour/AskJosephineLabourPanel.tsx (4) ===
+  L180: ¿Por qué el COL% está por encima/debajo del objetivo?
+  L181: ¿Qué locations necesitan ajustes de staffing?
+  L182: ¿Cómo puedo mejorar el SPLH en las peores locations?
+  L183: ¿Cuánto podría ahorrar optimizando turnos?
+
+=== components/payroll/PayrollCalculate.tsx (4) ===
+  L103: No hay nómina iniciada para este período. Vuelve a Inicio y pulsa 
+  L119: Se han calculado ${result.employees_calculated || 0} nóminas. Total neto: €${res
+  L126: Error al calcular nóminas.
+  L244: Calcular Nóminas
+
+=== components/sales/AskJosephineSalesDrawer.tsx (4) ===
+  L48: ¿Por qué bajaron las ventas el miércoles?
+  L49: ¿Qué canal está teniendo mejor desempeño?
+  L51: ¿Cómo está el ticket promedio comparado con forecast?
+  L83: Analiza mi situación actual de ventas y dame un resumen ejecutivo con los puntos
+
+=== hooks/useSchedulingSupabase.ts (4) ===
+  L558: 0 horas: No hay ventas proyectadas cargadas para esta semana.
+  L562: 0 horas: No hay empleados activos asignados a este local.
+  L639: ${dayISO}: El presupuesto (Target COL% ${targetCol}%) es demasiado bajo para cub
+  L652: ${dayISO}: No hay empleados disponibles.
+
+=== pages/Settings/DataPrivacySection.tsx (4) ===
+  L77: No se pudieron exportar los datos. Inténtalo de nuevo.
+  L100: Tu cuenta se eliminará en 30 días. Puedes cancelar desde este panel.
+  L107: No se pudo procesar la solicitud. Inténtalo de nuevo.
+  L141: Analíticas: ${currentConsent.analytics ? 'Sí' : 'No'} · Marketing: ${currentCons
+
+=== components/auth/EmailOTPVerification.tsx (3) ===
+  L66: Hemos enviado un código de 6 dígitos a ${email}
+  L73: No se pudo enviar el código. Intenta de nuevo.
+  L151: Ocurrió un error al verificar. Intenta de nuevo.
+
+=== hooks/useGlobalRealtimeNotifications.ts (3) ===
+  L76: Ventas diarias de €${amount.toFixed(2)}
+  L98: ${item.name} está por debajo del nivel PAR (${item.current_stock}/${item.par_lev
+  L135: El pedido cambió a estado: ${statusLabels[order.status || ''] || order.status}
+
+=== pages/inventory-setup/RecipesPage.tsx (3) ===
+  L58: Receta "${newRecipe.menu_item_name}" creada
+  L68: ¿Eliminar la receta "${name}"?
+  L71: Receta "${name}" eliminada
+
+=== pages/KioskMode.tsx (3) ===
+  L147: No se pudo acceder a la cámara. Permite el acceso para fichar.
+  L228: PIN no reconocido. Inténtalo de nuevo.
+  L271: Debes tomar una foto para fichar. Permite el acceso a la cámara.
+
+=== pages/Reviews.tsx (3) ===
+  L148: ¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que
+  L149: Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opi
+  L150: Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!
+
+=== pages/ReviewsAll.tsx (3) ===
+  L117: ¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que
+  L118: Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opi
+  L119: Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!
+
+=== components/errors/ModuleErrorBoundary.tsx (2) ===
+  L81: Reintentando automáticamente (${this.state.retryCount + 1}/${MAX_RETRIES})…
+  L83: Los reintentos automáticos se agotaron.
+
+=== components/inventory/AddItemDialog.tsx (2) ===
+  L110: e.g., Salmón Fresco
+  L161: e.g., Pescaderías del Norte
+
+=== components/inventory/AutoPurchaseOrder.tsx (2) ===
+  L70: ${result.length} items por debajo del nivel mínimo
+  L113: Orden de compra creada con ${result.totalLines} líneas
+
+=== components/inventory/SmartCountingFlow.tsx (2) ===
+  L221: Cantidad en ${current.unit}
+  L298: Guardar ${countedCount} contajes
+
+=== components/payroll/PayrollHome.tsx (2) ===
+  L102: ${totalEmps - withIban} empleado(s) sin IBAN (no se podrá generar SEPA)
+  L279: Selecciona entidad...
+
+=== components/settings/LoyaltyManager.tsx (2) ===
+  L204: ${pointsForm.points > 0 ? '+' : ''}${pointsForm.points} puntos añadidos
+  L600: Café gratis, 10% descuento...
+
+=== components/settings/UsersRolesManager.tsx (2) ===
+  L180: El rol "${selectedRole?.name}" requiere una ubicación específica
+  L505:  (requiere ubicación)
+
+=== hooks/useAIPredictiveOrdering.ts (2) ===
+  L74: No hay datos de forecast. Usando estimación por defecto.
+  L89: No hay recetas configuradas.
+
+=== lib/pdfReports.ts (2) ===
+  L120: Periodo: ${data.period}
+  L230: Periodo: ${data.period}
+
+=== pages/OnboardingChecklist.tsx (2) ===
+  L121: Añade tus proveedores para activar Procurement (pedidos inteligentes)
+  L144: ✓ ${inventoryRes.count} artículos en catálogo
+
+=== pages/Scheduling.tsx (2) ===
+  L311: } añadido${count > 1 ? 
+  L311: Auto-fill: ${count} turno${count > 1 ? 's' : ''} añadido${count > 1 ? 's' : ''}
+
+=== components/common/NoAccess.tsx (1) ===
+  L15: No tienes permisos para ver esta página. Contacta a tu administrador si crees qu
+
+=== components/forecast/ForecastExplainDrawer.tsx (1) ===
+  L143: Efecto del día de la semana (${format(parseISO(date), 'EEEE', { locale: es })})
+
+=== components/layout/DataSourceBadge.tsx (1) ===
+  L54: Razón: ${reasonLabel}
+
+=== components/onboarding/OnboardingWizard.tsx (1) ===
+  L438: Ej: Restaurantes García S.L.
+
+=== components/payroll/PayrollEmployees.tsx (1) ===
+  L201: Buscar empleado...
+
+=== components/pos/POSCashSession.tsx (1) ===
+  L122: Introduce el efectivo contado para cerrar la sesión.
+
+=== components/pos/POSQuickOrder.tsx (1) ===
+  L89: Buscar producto...
+
+=== components/pricing-omnes/PricingOmnesTable.tsx (1) ===
+  L82: Buscar...
+
+=== components/scheduling/CreateScheduleModal.tsx (1) ===
+  L22: Respeta automáticamente las normas laborales, la disponibilidad del equipo y las
+
+=== components/scheduling/PublishModal.tsx (1) ===
+  L78: Añade un mensaje con la notificación del horario...
+
+=== components/settings/BookingSettingsManager.tsx (1) ===
+  L441: Información importante que los clientes deben saber...
+
+=== components/settings/TeamManager.tsx (1) ===
+  L185: El rol "${selectedRole.name}" requiere una ubicación específica
+
+=== components/ui/DataSourceBadge.tsx (1) ===
+  L26: Cargando...
+
+=== components/ui/DemoDataBanner.tsx (1) ===
+  L29: Estás viendo datos de demostración. Conecta tu POS para ver datos reales.
+
+=== pages/integrations/LightspeedIntegration.tsx (1) ===
+  L213: ¿Desconectar Lightspeed? Los datos sincronizados se mantendrán.
+
+=== pages/inventory-setup/RecipeDetailPage.tsx (1) ===
+  L252: Añadir Ingrediente
+
+=== pages/Pricing.tsx (1) ===
+  L227: El plan Starter es gratuito para siempre. Pro y Enterprise tienen 14 días de pru
+
+=== pages/ResetPassword.tsx (1) ===
+  L27: El enlace de recuperación ha expirado o es inválido. Por favor solicita uno nuev
+
+=== pages/WorkforceTeam.tsx (1) ===
+  L317: ${form.full_name} añadido al equipo

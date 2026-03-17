@@ -182,7 +182,7 @@ export function TeamManager() {
       toast({
         variant: 'destructive',
         title: t("common.error"),
-        description: `El rol "${selectedRole.name}" requiere una ubicación específica`
+        description: t('settings.roleRequiresLocation', { role: selectedRole.name })
       });
       return;
     }

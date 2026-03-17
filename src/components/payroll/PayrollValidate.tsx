@@ -78,7 +78,7 @@ export default function PayrollValidate({
       description: t('payroll.empleadosConNif'),
       severity: critSeverity,
       status: missingNif.length === 0 ? 'pass' : 'fail',
-      details: missingNif.length > 0 ? `${missingNif.length} empleado(s) sin NIF${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
+      details: missingNif.length > 0 ? t('payroll.employeesWithoutNif', { count: missingNif.length }) + (isSandboxMode ? t('payroll.sandboxEstimatedValues') : '') : undefined,
       action: 'employees',
     });
     
@@ -88,7 +88,7 @@ export default function PayrollValidate({
       description: t('payroll.empleadosConNss'),
       severity: critSeverity,
       status: missingNss.length === 0 ? 'pass' : 'fail',
-      details: missingNss.length > 0 ? `${missingNss.length} empleado(s) sin NSS${isSandboxMode ? ' (sandbox: se usarán valores estimados)' : ''}` : undefined,
+      details: missingNss.length > 0 ? t('payroll.employeesWithoutNss', { count: missingNss.length }) + (isSandboxMode ? t('payroll.sandboxEstimatedValues') : '') : undefined,
       action: 'employees',
     });
     
@@ -98,7 +98,7 @@ export default function PayrollValidate({
       description: t('payroll.empleadosConIban'),
       severity: 'warning',
       status: missingIban.length === 0 ? 'pass' : 'fail',
-      details: missingIban.length > 0 ? `${missingIban.length} empleado(s) sin IBAN (no se podrá generar SEPA)` : undefined,
+      details: missingIban.length > 0 ? t('payroll.employeesWithoutIban', { count: missingIban.length }) : undefined,
       action: 'employees',
     });
     
@@ -118,11 +118,11 @@ export default function PayrollValidate({
     
     results.push({
       id: 'contracts',
-      category: 'Contratos',
-      description: 'Contratos activos',
+      category: t('payroll.contracts'),
+      description: t('payroll.activeContracts'),
       severity: critSeverity,
       status: missingContract.length === 0 ? 'pass' : 'fail',
-      details: missingContract.length > 0 ? `${missingContract.length} empleado(s) sin contrato activo${isSandboxMode ? ' (sandbox: se usarán salarios del convenio)' : ''}` : undefined,
+      details: missingContract.length > 0 ? t('payroll.employeesWithoutContract', { count: missingContract.length }) + (isSandboxMode ? t('payroll.sandboxConvenioSalaries') : '') : undefined,
       action: 'employees',
     });
     
@@ -144,10 +144,10 @@ export default function PayrollValidate({
     results.push({
       id: 'timesheets',
       category: 'Timesheets',
-      description: 'Timesheets aprobados',
+      description: t('payroll.timesheetsApproved'),
       severity: 'warning',
       status: pendingTsCount === 0 ? 'pass' : 'fail',
-      details: pendingTsCount > 0 ? `${pendingTsCount} timesheet(s) pendientes de aprobar` : undefined,
+      details: pendingTsCount > 0 ? t('payroll.pendingTimesheets', { count: pendingTsCount }) : undefined,
       action: 'inputs',
     });
     
@@ -164,11 +164,11 @@ export default function PayrollValidate({
     
     results.push({
       id: 'inputs',
-      category: 'Variables',
-      description: 'Variables del mes cargadas',
+      category: t('payroll.variables'),
+      description: t('payroll.monthVariablesLoaded'),
       severity: 'warning',
       status: inputsCount > 0 ? 'pass' : 'fail',
-      details: inputsCount === 0 ? `No hay variables cargadas${isSandboxMode ? ' (sandbox: se usarán horas de contrato)' : ''}` : undefined,
+      details: inputsCount === 0 ? t('payroll.noVariablesLoaded') + (isSandboxMode ? t('payroll.sandboxContractHours') : '') : undefined,
       action: 'inputs',
     });
     
@@ -178,11 +178,11 @@ export default function PayrollValidate({
       : false;
     results.push({
       id: 'ccc',
-      category: 'Entidad',
+      category: t('payroll.entity'),
       description: t('payroll.codigoCuentaCotizacion'),
       severity: critSeverity,
       status: hasCCC ? 'pass' : 'fail',
-      details: !hasCCC ? `Entidad sin CCC${isSandboxMode ? ' (sandbox: presentaciones se simularán)' : ''}` : undefined,
+      details: !hasCCC ? t('payroll.entityWithoutCcc') + (isSandboxMode ? t('payroll.sandboxSimulatedSubmissions') : '') : undefined,
     });
     
     setValidations(results);

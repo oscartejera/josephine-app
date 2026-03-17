@@ -23,7 +23,7 @@ const REASON_LABELS: Record<string, string> = {
   legacy_pos_connected: 'POS conectado (legacy)',
   legacy_no_pos: 'Sin POS (legacy)',
   no_session: t('data.sinSesion'),
-  loading: 'Cargando...',
+  loading: t('common.loading'),
 };
 
 export function DataSourceBadge() {

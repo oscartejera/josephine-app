@@ -65,8 +65,8 @@ const REQUIRED_FIELDS = ['date', 'net_sales'] as const;
 const OPTIONAL_FIELDS = ['orders', 'gross_sales', 'taxes', 'discounts'] as const;
 
 const FIELD_LABELS: Record<string, string> = {
-    date: 'Fecha (requerido)',
-    net_sales: 'Ventas Netas (requerido)',
+    date: t('common.dateRequired'),
+    net_sales: t('common.netSalesRequired'),
     orders: t('ai.nPedidos'),
     gross_sales: t('ai.ventasBrutas'),
     taxes: 'Impuestos',
@@ -197,7 +197,7 @@ function validateRow(row: string[], headers: string[], mapping: ColumnMapping): 
         errors.push(t('ai.fechaVacia'));
     } else {
         const parsed = tryParseDate(row[dateIdx]);
-        if (!parsed) errors.push(`Fecha inválida: "${row[dateIdx]}"`);
+        if (!parsed) errors.push(t('common.invalidDate', { value: row[dateIdx] }));
     }
 
     // Check net_sales
@@ -206,7 +206,7 @@ function validateRow(row: string[], headers: string[], mapping: ColumnMapping): 
         errors.push(t('ai.ventasNetasVacias'));
     } else {
         const num = tryParseNumber(row[salesIdx]);
-        if (num === null) errors.push(`Ventas netas inválidas: "${row[salesIdx]}"`);
+        if (num === null) errors.push(t('common.invalidNetSales', { value: row[salesIdx] }));
         else if (num < 0) errors.push(t('ai.ventasNetasNegativas'));
     }
 

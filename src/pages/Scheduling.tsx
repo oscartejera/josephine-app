@@ -308,7 +308,7 @@ export default function Scheduling() {
         onAutoFill={async () => {
           const count = await actualAutoFillShifts();
           if (count && count > 0) {
-            toast.success(`Auto-fill: ${count} turno${count > 1 ? 's' : ''} añadido${count > 1 ? 's' : ''}`);
+            toast.success(t('scheduling.autoFillResult', { count }));
           } else {
             toast.info(t('scheduling.autoFillEmpty'));
           }

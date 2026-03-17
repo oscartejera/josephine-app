@@ -118,7 +118,7 @@ export default function OnboardingChecklist() {
                     title: t('onboardingChecklist.configureSuppliers'),
                     description: hasSuppliers
                         ? `✓ ${suppliersRes.count} proveedores registrados`
-                        : 'Añade tus proveedores para activar Procurement (pedidos inteligentes)',
+                        : t('onboarding.addSuppliersForProcurement'),
                     icon: <Package className="h-5 w-5" />,
                     link: '/procurement',
                     category: 'inventory',
@@ -141,7 +141,7 @@ export default function OnboardingChecklist() {
                     id: 'inventory',
                     title: t('onboardingChecklist.createInventory'),
                     description: hasInventory
-                        ? `✓ ${inventoryRes.count} artículos en catálogo`
+                        ? t('onboarding.itemsInCatalog', { count: inventoryRes.count })
                         : t('onboarding.anadeLosProductosQueGestionas'),
                     icon: <Package className="h-5 w-5" />,
                     link: '/inventory-setup/items',

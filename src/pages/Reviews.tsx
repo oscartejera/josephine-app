@@ -147,7 +147,7 @@ export default function Reviews() {
         const fallback: Record<string, string> = {
           friendly: `¡Hola ${review.author_name}! Muchas gracias por tu opinión. Nos alegra saber que disfrutaste de tu experiencia. ¡Te esperamos pronto! 😊`,
           professional: `Estimado/a ${review.author_name}, agradecemos sinceramente su valoración. Su opinión es muy importante para nosotros y nos ayuda a seguir mejorando.`,
-          concise: `Gracias por tu reseña, ${review.author_name}. ¡Esperamos verte pronto!`,
+          concise: t('reviews.replyQuick', { author: review.author_name }),
         };
         return fallback[tone] || currentText;
       }

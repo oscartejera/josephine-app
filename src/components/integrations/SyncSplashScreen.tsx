@@ -10,16 +10,16 @@ import { useTranslation } from 'react-i18next';
 const QUOTES = [
   'La IA dice que tu plato estrella es el que menos vendes... awkward.',
   'Entrenando redes neuronales con recetas de la abuela...',
-  'Calculando cuántas servilletas necesitas mañana...',
-  'Analizando por qué todos piden postre los viernes...',
-  'Prediciendo la próxima tendencia gastronómica...',
+  t('integrations.splashMsg1'),
+  t('integrations.splashMsg2'),
+  t('integrations.splashMsg3'),
   'Convirtiendo tickets en insights... sin propina.',
-  'Tu sous-chef digital está calentando motores...',
-  'Optimizando el flujo de la cocina con matemáticas...',
+  t('integrations.splashMsg4'),
+  t('integrations.splashMsg5'),
   'Buscando patrones en tus pedidos como un detective...',
-  'La IA ya sabe qué van a pedir antes que ellos...',
-  'Sincronizando datos más rápido que un camarero veterano...',
-  'Procesando números como si fueran mise en place...',
+  t('integrations.splashMsg6'),
+  t('integrations.splashMsg7'),
+  t('integrations.splashMsg8'),
 ];
 
 interface SyncSplashScreenProps {

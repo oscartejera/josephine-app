@@ -15,6 +15,14 @@ After EVERY deploy/push to main, you MUST:
 
 This is NON-NEGOTIABLE. Never skip this step. The user must see proof that the deploy works correctly in the real UI.
 
+## ⚠️ Mandatory Commit & Push (ALWAYS)
+
+After finishing ANY task (bug fix, feature, refactor, etc.), you MUST:
+1. **`git add` the changed files** and **`git commit`** with a clear conventional commit message
+2. **`git push origin main`** — always push to main on GitHub, no exceptions
+3. **If DB changes were made** (new tables, columns, RLS policies, functions, etc.), **run `supabase db push`** to apply them to production
+4. Never consider a task "done" until the code is committed and pushed to `main` on GitHub.
+
 ## Project Overview
 
 Josephine is an AI-powered operations platform for restaurants. It connects to existing POS systems (Square, Lightspeed, Toast) via OAuth + webhooks and provides intelligent insights, forecasting, recommendations, and automated operations management.

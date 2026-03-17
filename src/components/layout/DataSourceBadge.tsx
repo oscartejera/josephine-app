@@ -51,7 +51,7 @@ export function DataSourceBadge({ collapsed = false }: DataSourceBadgeProps) {
     const tooltipText = [
         `Fuente: ${isPos ? 'POS (real)' : 'Demo'}`,
         `Modo: ${isAuto ? t('settings.automatico') : 'Manual'}`,
-        `Razón: ${reasonLabel}`,
+        t('common.reason', { reason: reasonLabel }),
         dataSourceBlocked ? '⚠️ Bloqueado: datos POS no disponibles' : null,
     ].filter(Boolean).join('\n');
 

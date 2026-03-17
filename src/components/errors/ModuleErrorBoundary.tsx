@@ -78,9 +78,9 @@ export class ModuleErrorBoundary extends React.Component<Props, State> {
               </p>
               <p className="text-xs text-amber-700 mt-0.5">
                 {this.state.retrying && canAutoRetry
-                  ? `Reintentando automáticamente (${this.state.retryCount + 1}/${MAX_RETRIES})…`
+                  ? t('common.autoRetrying', { current: this.state.retryCount + 1, max: MAX_RETRIES })
                   : this.state.retryCount >= MAX_RETRIES
-                    ? 'Los reintentos automáticos se agotaron.'
+                    ? t('common.autoRetriesExhausted')
                     : this.state.error?.message?.slice(0, 120)}
               </p>
             </div>

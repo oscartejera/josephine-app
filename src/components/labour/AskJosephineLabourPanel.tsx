@@ -177,10 +177,10 @@ export function AskJosephineLabourPanel({ open, onClose, kpis, locations }: AskJ
   };
 
   const suggestedQuestions = [
-    '¿Por qué el COL% está por encima/debajo del objetivo?',
-    '¿Qué locations necesitan ajustes de staffing?',
-    '¿Cómo puedo mejorar el SPLH en las peores locations?',
-    '¿Cuánto podría ahorrar optimizando turnos?'
+    t('ai.suggestedColAboveBelow'),
+    t('ai.suggestedStaffingAdjust'),
+    t('ai.suggestedSplhImprove'),
+    t('ai.suggestedShiftSavings')
   ];
 
   return (

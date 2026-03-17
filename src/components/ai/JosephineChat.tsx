@@ -25,7 +25,7 @@ interface Message {
 const QUICK_PROMPTS = [
     { label: t('ai.ventasHoy'), prompt: '¿Cómo van las ventas de hoy comparadas con la semana pasada?', icon: TrendingUp },
     { label: '👥 Labour cost', prompt: '¿Cuál es el coste de personal actual vs el presupuesto? ¿Estamos dentro del objetivo?', icon: Users },
-    { label: '📦 Stock bajo', prompt: '¿Qué ingredientes están por debajo del nivel mínimo y necesito pedir?', icon: Package },
+    { label: '📦 Stock bajo', prompt: t('ai.suggestedIngredients'), icon: Package },
     { label: '✨ Briefing', prompt: 'Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predicción para mañana.', icon: Sparkles },
 ];
 
@@ -83,7 +83,7 @@ export function JosephineChat({
             });
 
             const reply = res.data?.insight || res.data?.narrative || res.data?.text
-                || 'No he podido obtener la información en este momento. Intenta de nuevo.';
+                || t('ai.errorRetry');
 
             const assistantMsg: Message = {
                 id: crypto.randomUUID(),

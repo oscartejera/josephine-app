@@ -177,7 +177,7 @@ export function UsersRolesManager() {
       toast({
         variant: 'destructive',
         title: t("common.error"),
-        description: `El rol "${selectedRole?.name}" requiere una ubicación específica`
+        description: t('settings.roleRequiresLocation', { role: selectedRole?.name })
       });
       return;
     }
@@ -502,7 +502,7 @@ export function UsersRolesManager() {
                           disabled={alreadyHas && !LOCATION_REQUIRED_ROLES.includes(role.name)}
                         >
                           {display.label}
-                          {LOCATION_REQUIRED_ROLES.includes(role.name) && ' (requiere ubicación)'}
+                          {LOCATION_REQUIRED_ROLES.includes(role.name) && t('settings.requiresLocation')}
                         </SelectItem>
                       );
                     })}

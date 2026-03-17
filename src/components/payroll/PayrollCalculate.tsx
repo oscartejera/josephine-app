@@ -123,7 +123,7 @@ export default function PayrollCalculate({
       toast({ 
         variant: 'destructive', 
         title: t('payroll.errorAlCalcular'), 
-        description: error instanceof Error ? error.message : 'Error al calcular nóminas.' 
+        description: error instanceof Error ? error.message : t('payroll.calculateError') 
       });
     } finally {
       setCalculating(false);
@@ -241,7 +241,7 @@ export default function PayrollCalculate({
             <Calculator className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Listo para calcular</h3>
             <p className="text-muted-foreground mb-4">
-              Pulsa "Calcular Nóminas" para generar los cálculos del período.
+              Pulsa "{t('payroll.calculatePayrolls')}" para generar los cálculos del período.
             </p>
             <Button onClick={handleCalculate} size="lg">
               <Calculator className="h-4 w-4 mr-2" />{t('payroll.calcularNominas')}</Button>

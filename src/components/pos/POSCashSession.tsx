@@ -119,7 +119,7 @@ export function POSCashSession({
             </DialogTitle>
             <DialogDescription>
               {session
-                ? 'Introduce el efectivo contado para cerrar la sesión.'
+                ? t('pos.cashCountInstructions')
                 : 'Introduce el efectivo inicial para abrir la caja.'}
             </DialogDescription>
           </DialogHeader>

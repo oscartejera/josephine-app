@@ -163,10 +163,10 @@ export function AskJosephinePanel({ open, onClose, data }: AskJosephinePanelProp
   };
 
   const suggestedQuestions = [
-    '¿Por qué las ventas están por encima/debajo del forecast?',
-    '¿Cuáles son los principales drivers de ventas?',
-    '¿Qué productos están underperforming?',
-    '¿Cómo podemos mejorar el ticket medio?'
+    t('ai.suggestedSalesAboveBelow'),
+    t('ai.suggestedSalesDrivers'),
+    t('ai.suggestedUnderperforming'),
+    t('ai.suggestedTicketMedio')
   ];
 
   return (

@@ -1,0 +1,98 @@
+lib\pricing-omnes-engine.ts (13)\n  L1: Rango de precios demasiado amplio (ratio > 3.0). Riesgo de percepción incoherent\n  L1: Banda media débil. Mover productos hacia precios intermedios.\n  L1: Demasiados productos en banda baja. Riesgo de canibalización.\n  L1: ,
+      description: `Ratio ${result.price_range_ratio} (< 2.5). Añadir opciones\n  L1: ,
+      description: `${result.lower_band_pct}% de productos en banda baja. Ries\n  L1: ,
+      description: `Ratio ${result.category_ratio} (< 0.90). Los clientes elig\n  L1: ,
+      description: `Ratio ${result.category_ratio} (> 1.00). Clientes dispuest\n  L1: Clientes eligen platos más baratos (ratio ${cr.ratio}). Revisar percepción de va\n  L1: Clientes pagan más que la media de carta (ratio ${cr.ratio}). Oportunidad de sub\n  L1: Ratio ${result.price_range_ratio} (< 2.5). Añadir opciones premium o de entrada \n  L1: ${result.lower_band_pct}% de productos en banda baja. Riesgo de canibalización y\n  L1: Ratio ${result.category_ratio} (< 0.90). Los clientes eligen platos más baratos.\n  L1: Ratio ${result.category_ratio} (> 1.00). Clientes dispuestos a pagar más. Consid\nlib\demoDataGenerator.ts (12)\n  L1: Carlos López\n  L1: Ana Martínez\n  L1: José Rodríguez\n  L1: Laura Sánchez\n  L1: Miguel Fernández\n  L1: Elena Díaz\n  L1: Isabel Jiménez\n  L1: Lucía Navarro\n  L1: Café con Leche\n  L1: Croquetas Jamón\n  L1: Jamón Ibérico\n  L1: Secreto Ibérico\ncomponents\dashboard\ExecutiveBriefing.tsx (9)\n  L1: No se han registrado ventas. Verifica la conexión POS o que los datos estén sinc\n  L1: ⚠️ Sin datos de ventas: revisa que el POS esté conectado y sincronizando correct\n  L1: Todos los locales operan dentro de los márgenes objetivo. Excelente jornada.\n  L1: No se requieren ajustes inmediatos. Mantén la estrategia actual.\n  L1: Verifica que los datos de ventas y labor estén sincronizados.\n  L1: Revisa la distribución de turnos en ${loc.name} para esta semana. Objetivo: ${lo\n  L1: Evalúa acciones comerciales en ${loc.name}: promociones, eventos o ajustes de ca\n  L1: ⚠️ ${loc.name}: coste laboral +${labourVar.toFixed(0)}% sobre presupuesto. Revis\n  L1: El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (Labor €${Math.rou\ncomponents\ai\JosephineChat.tsx (5)\n  L1: ¿Cómo van las ventas de hoy comparadas con la semana pasada?\n  L1: ¿Cuál es el coste de personal actual vs el presupuesto? ¿Estamos dentro del obje\n  L1: Dame un resumen ejecutivo del día de hoy: ventas, personal, incidencias, y predi\n  L1: ¡Hola! 👋 Soy **Josephine**, tu asistente de operaciones. Pregúntame sobre venta\n  L1: ⚠️ Error: ${err.message || 'No se pudo conectar con el asistente AI. Verifica qu\nlib\data-generator\year-data-generator.ts (4)\n  L1: Jamón Ibérico\n  L1: Croquetas de Jamón\n  L1: Chuletón de Buey\n  L1: Tortilla Española\npages\PrivacyPolicy.tsx (4)\n  L1: }
+              <a href="mailto:privacy@josephine.app" className="text-emerald-6\n  L1: }
+              <strong>Ajustes → Privacidad</strong> o haciendo clic en el enla\n  L1: }
+              <a href="mailto:privacy@josephine.app" className="text-emerald-6\n  L1: }
+              <a href="mailto:privacy@josephine.app" className="text-emerald-6\ncomponents\forecast\ForecastExplainDrawer.tsx (3)\n  L1: ;
+
+    return (
+        <Sheet open={open} onOpenChange={() => onClose()}>
+ \n  L1: }
+                                    detail={`Efecto del día de la semana (${f\n  L1: Efecto del día de la semana (${format(parseISO(date), 'EEEE', { locale: es })})\ndata\__tests__\pricing-omnes-engine.test.ts (3)\n  L1: Croquetas de jamón\n  L1: Tortilla española\n  L1: Jamón ibérico\npages\DataImport.tsx (3)\n  L3: )}</CardTitle>
+                                <CardDescription>
+             \n  L3: )}>
+                                                                    ⚠ {vali\n  L3: ); setParsed(null); }}>
+                                        Importar más da\npages\integrations\SquareIntegration.tsx (3)\n  L1: }`}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+    \n  L1: )}</li>
+              <li>{t("integrations.paymentMethodsAndAmounts")}</li>
+  \n  L1: }
+              </Button>
+              <Button variant="destructive" size="sm\ncomponents\inventory\AddItemDialog.tsx (2)\n  L1: , error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+\n  L1: )}</SelectItem>
+                <SelectItem value="Desechables">Desechables</Se\ncomponents\inventory\SmartCountingFlow.tsx (2)\n  L1: ) {
+        return (
+            <Card>
+                <CardContent classNam\n  L1: ) {
+        const current = items[currentIndex];
+        return (
+           \ncomponents\labour\PayrollForecast.tsx (2)\n  L1: } Día {data.days.elapsed} de {data.days.total}
+                        </p>
+  \n  L1: )}</div>
+                        <div className="text-xl font-bold text-indigo-\ncomponents\ui\DataSourceBadge.tsx (2)\n  L1: Automático\n  L1: Última sync\npages\OnboardingChecklist.tsx (2)\n  L1: }`}>
+                                                {step.title}
+            \n  L1: ,
+                        ].map(feature => (
+                            <div \npages\OnboardingWizardV2.tsx (2)\n  L1: ));
+            setShowTransition(false);
+        } finally {
+            set\n  L1: )}</p>
+                                <p className="text-indigo-600 dark:text-\ncomponents\errors\GlobalErrorBoundary.tsx (1)\n  L1: ;
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div \ncomponents\forecast\ForecastAccuracyCard.tsx (1)\n  L1: }
+                </p>
+            </div>
+        </div>
+    );
+}
+
+// ── \ncomponents\gdpr\CookieConsentBanner.tsx (1)\n  L1:  }
+        ).then(() => {});
+      }
+    }
+  }, [user?.id]);
+
+  const handleAcce\ncomponents\labour\EmployeeRevenueTable.tsx (1)\n  L1: )}</CardTitle></CardHeader>
+                <CardContent>
+                    \ncomponents\labour\StaffingRecommendation.tsx (1)\n  L1: )}</CardTitle>
+                        <p className="text-xs text-gray-500 mt-0\ncomponents\settings\EventCalendarManager.tsx (1)\n  L1: ;
+    };
+
+    return (
+        <div className="space-y-4">
+            <div\ncomponents\workforce\TrainingTracker.tsx (1)\n  L1: );
+    };
+
+    // Stats
+    const expiredCount = records.filter(r => {
+    \npages\DataHealth.tsx (1)\n  L1: }`} />
+            Recargar
+          </Button>
+        </div>
+      </div>\npages\DebugDataCoherence.tsx (1)\n  L1: }`} />
+            Auditar
+          </Button>
+        </div>
+      </div>
+\npages\integrations\LightspeedIntegration.tsx (1)\n  L1: )}>
+                    <ChevronLeft className="h-5 w-5" />
+                </\npages\Settings\DataPrivacySection.tsx (1)\n  L1: )}</CardTitle>
+          <CardDescription>
+            Gestiona tus datos person\nTOTAL: 82 in 27 files

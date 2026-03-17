@@ -74,7 +74,7 @@ export function DataPrivacySection() {
       console.error('Export error:', error);
       toast({
         title: t('settings.exportError'),
-        description: 'No se pudieron exportar los datos. Inténtalo de nuevo.',
+        description: t('settings.exportError'),
         variant: 'destructive',
       });
     } finally {
@@ -97,14 +97,14 @@ export function DataPrivacySection() {
 
       toast({
         title: t('settings.requestRegistered'),
-        description: 'Tu cuenta se eliminará en 30 días. Puedes cancelar desde este panel.',
+        description: t('settings.accountDeleteScheduled'),
       });
       setShowDelete(false);
     } catch (error) {
       console.error('Delete request error:', error);
       toast({
         title: t("common.error"),
-        description: 'No se pudo procesar la solicitud. Inténtalo de nuevo.',
+        description: t('settings.requestError'),
         variant: 'destructive',
       });
     } finally {
@@ -138,7 +138,7 @@ export function DataPrivacySection() {
                 <p className="text-sm font-medium">{t("settings.cookiePreferences")}</p>
                 <p className="text-xs text-gray-500">
                   {currentConsent
-                    ? `Analíticas: ${currentConsent.analytics ? 'Sí' : 'No'} · Marketing: ${currentConsent.marketing ? 'Sí' : 'No'}`
+                    ? t('settings.consentStatus', { analytics: currentConsent.analytics ? t('common.yes') : t('common.no'), marketing: currentConsent.marketing ? t('common.yes') : t('common.no') })
                     : t('settings.sinConfigurar')}
                 </p>
               </div>

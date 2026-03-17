@@ -210,7 +210,7 @@ export default function LightspeedIntegration() {
     // Disconnect
     const handleDisconnect = async () => {
         if (!integration) return;
-        if (!confirm('¿Desconectar Lightspeed? Los datos sincronizados se mantendrán.')) return;
+        if (!confirm(t('integrations.disconnectLightspeed'))) return;
 
         await supabase.from('integrations').update({
             status: 'inactive',

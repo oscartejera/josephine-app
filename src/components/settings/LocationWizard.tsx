@@ -69,18 +69,18 @@ interface SupplierEntry {
 type SupplierMode = 'suggested' | 'custom' | 'skip';
 
 const TIMEZONES = [
-  { value: 'Europe/Madrid', label: 'España (Madrid)' },
+  { value: 'Europe/Madrid', label: t('settings.countrySpain') },
   { value: 'Europe/London', label: 'Reino Unido (Londres)' },
-  { value: 'Europe/Paris', label: 'Francia (París)' },
-  { value: 'Europe/Berlin', label: 'Alemania (Berlín)' },
+  { value: 'Europe/Paris', label: t('settings.countryFrance') },
+  { value: 'Europe/Berlin', label: t('settings.countryGermany') },
   { value: 'America/New_York', label: 'EEUU (Nueva York)' },
-  { value: 'America/Los_Angeles', label: 'EEUU (Los Ángeles)' },
-  { value: 'America/Mexico_City', label: 'México (Ciudad de México)' },
+  { value: 'America/Los_Angeles', label: t('settings.countryUS') },
+  { value: 'America/Mexico_City', label: t('settings.countryMexico') },
 ];
 
 const CURRENCIES = [
   { value: 'EUR', label: '€ Euro' },
-  { value: 'USD', label: '$ Dólar' },
+  { value: 'USD', label: t('settings.currencyDollar') },
   { value: 'GBP', label: '£ Libra' },
   { value: 'MXN', label: '$ Peso MX' },
 ];
@@ -334,7 +334,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
   const addTemplateToCustom = (template: SupplierTemplate) => {
     // Check if already added
     if (suppliers.some(s => s.name === template.name)) {
-      toast.info(`${template.name} ya está en tu lista`);
+      toast.info(t('settings.templateAlreadyAdded', { name: template.name }));
       return;
     }
     setSuppliers(prev => [...prev, {
@@ -345,7 +345,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
       website: template.website || '',
       isTemplate: true,
     }]);
-    toast.success(`${template.name} añadido`);
+    toast.success(t('settings.templateAdded', { name: template.name }));
   };
 
   const getSelectedTemplateSuppliers = (): SupplierEntry[] => {
@@ -1068,7 +1068,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
                           <div className="flex gap-2 items-start">
                             <div className="flex-1 grid grid-cols-2 gap-2">
                               <Input
-                                placeholder="Nombre *"
+                                placeholder="{t('common.nameRequired')}"
                                 value={supplier.name}
                                 onChange={(e) => updateSupplier(index, 'name', e.target.value)}
                                 className="h-9"

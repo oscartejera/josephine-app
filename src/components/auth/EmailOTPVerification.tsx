@@ -63,7 +63,7 @@ export function EmailOTPVerification({
 
       toast({
         title: t('auth.codigoEnviado'),
-        description: `Hemos enviado un código de 6 dígitos a ${email}`
+        description: t('auth.otpSent', { email })
       });
     } catch (error: any) {
       console.error('Error sending OTP:', error);

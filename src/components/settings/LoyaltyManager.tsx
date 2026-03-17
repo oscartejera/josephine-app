@@ -201,7 +201,7 @@ export function LoyaltyManager() {
     setSaving(true);
     try {
       await addPoints(selectedMember.id, pointsForm.points, pointsForm.type, pointsForm.description);
-      toast({ title: `${pointsForm.points > 0 ? '+' : ''}${pointsForm.points} puntos añadidos` });
+      toast({ title: t('settings.pointsAdded', { points: `${pointsForm.points > 0 ? '+' : ''}${pointsForm.points}` }) });
       setShowPointsDialog(false);
       setSelectedMember(null);
       setPointsForm({ points: 0, type: 'bonus', description: '' });

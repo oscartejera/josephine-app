@@ -144,7 +144,7 @@ export default function KioskMode() {
             setShowCamera(true);
         } catch (err) {
             console.error('Camera error:', err);
-            setError('No se pudo acceder a la cámara. Permite el acceso para fichar.');
+            setError(t('workforce.cameraAccessDenied'));
         }
     };
 
@@ -225,7 +225,7 @@ export default function KioskMode() {
                 .single() as any);
 
             if (err || !data) {
-                setError('PIN no reconocido. Inténtalo de nuevo.');
+                setError(t('workforce.pinNotRecognized'));
                 setPin('');
                 setLoading(false);
                 return;
@@ -268,7 +268,7 @@ export default function KioskMode() {
             // Capture photo (mandatory)
             const photo = await capturePhoto();
             if (!photo) {
-                setError('Debes tomar una foto para fichar. Permite el acceso a la cámara.');
+                setError(t('workforce.photoRequiredForClock'));
                 setLoading(false);
                 return;
             }

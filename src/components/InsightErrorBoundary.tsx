@@ -85,16 +85,16 @@ export class InsightErrorBoundary extends React.Component<Props, State> {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                         {this.state.retrying
                             ? `${this.props.pageName} — Reintentando…`
-                            : `${this.props.pageName} — Error al cargar datos`}
+                            : t('common.errorLoadingData', { pageName: this.props.pageName })}
                     </h3>
                     <p className="text-sm text-gray-500 max-w-md mb-1">
                         {this.state.retrying
-                            ? `Reintento automático ${this.state.retryCount + 1} de ${MAX_RETRIES}…`
+                            ? t('common.autoRetryCount', { current: this.state.retryCount + 1, max: MAX_RETRIES })
                             : isRpcError
                                 ? 'Los datos del servidor no coinciden con el formato esperado. Esto suele pasar tras un cambio en la base de datos.'
                                 : autoRetriesExhausted
-                                    ? 'Los reintentos automáticos se agotaron. Puedes reintentar manualmente.'
-                                    : 'Se produjo un error inesperado al cargar esta sección.'}
+                                    ? t('common.autoRetryExhausted')
+                                    : t('common.unexpectedSectionError')}
                     </p>
                     <p className="text-xs text-gray-400 font-mono mb-6 max-w-lg break-all">
                         {this.state.error?.message?.slice(0, 200)}

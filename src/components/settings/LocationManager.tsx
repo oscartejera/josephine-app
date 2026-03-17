@@ -32,18 +32,18 @@ interface DuplicateOptions {
 }
 
 const TIMEZONES = [
-  { value: 'Europe/Madrid', label: 'España (Madrid)' },
+  { value: 'Europe/Madrid', label: t('settings.countrySpain') },
   { value: 'Europe/London', label: 'Reino Unido (Londres)' },
-  { value: 'Europe/Paris', label: 'Francia (París)' },
-  { value: 'Europe/Berlin', label: 'Alemania (Berlín)' },
+  { value: 'Europe/Paris', label: t('settings.countryFrance') },
+  { value: 'Europe/Berlin', label: t('settings.countryGermany') },
   { value: 'America/New_York', label: 'EEUU (Nueva York)' },
-  { value: 'America/Los_Angeles', label: 'EEUU (Los Ángeles)' },
-  { value: 'America/Mexico_City', label: 'México (Ciudad de México)' },
+  { value: 'America/Los_Angeles', label: t('settings.countryUS') },
+  { value: 'America/Mexico_City', label: t('settings.countryMexico') },
 ];
 
 const CURRENCIES = [
   { value: 'EUR', label: '€ Euro (EUR)' },
-  { value: 'USD', label: '$ Dólar (USD)' },
+  { value: 'USD', label: t('settings.currencyDollarUsd') },
   { value: 'GBP', label: '£ Libra (GBP)' },
   { value: 'MXN', label: '$ Peso Mexicano (MXN)' },
 ];

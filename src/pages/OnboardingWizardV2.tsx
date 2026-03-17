@@ -36,28 +36,28 @@ type WizardStep = 1 | 2;
 const TOUR_STEPS: JoyrideStep[] = [
     {
         target: '[data-tour="sidebar"]',
-        content: 'Aquí tienes el menú principal. Navega entre las distintas secciones de Josephine.',
+        content: t('onboarding.tourMainMenu'),
         placement: 'right',
         disableBeacon: true,
     },
     {
         target: '[data-tour="control-tower"]',
-        content: 'El Control Tower es tu centro de mando. Aquí ves un resumen de todo tu negocio.',
+        content: t('onboarding.tourControlTower'),
         placement: 'bottom',
     },
     {
         target: '[data-tour="kpi-cards"]',
-        content: 'Las tarjetas KPI muestran métricas clave: ventas, personal, costes y previsiones.',
+        content: t('onboarding.tourKpiCards'),
         placement: 'bottom',
     },
     {
         target: '[data-tour="insights"]',
-        content: 'En Insights encontrarás análisis detallados: ventas, personal, P&L, reseñas, inventario y más.',
+        content: t('onboarding.tourInsights'),
         placement: 'right',
     },
     {
         target: '[data-tour="workforce"]',
-        content: 'Workforce gestiona tu equipo: turnos, fichajes, onboarding y más.',
+        content: t('onboarding.tourWorkforce'),
         placement: 'right',
     },
     {
@@ -135,7 +135,7 @@ export default function OnboardingWizardV2() {
     // ── POS connect handlers ─────────────────────────────────────
     const handlePosConnect = (pos: 'square' | 'lightspeed') => {
         setPosChoice(pos);
-        toast.success(`${pos === 'square' ? 'Square' : 'Lightspeed'} seleccionado. Lo conectaremos después.`);
+        toast.success(t('onboarding.posSelectedLater', { pos: pos === 'square' ? 'Square' : 'Lightspeed' }));
     };
 
     // ── Finalize onboarding ──────────────────────────────────────
@@ -294,8 +294,8 @@ export default function OnboardingWizardV2() {
                             <CheckCircle className="h-5 w-5 text-emerald-500" />
                             <span className="text-sm">
                                 <strong>POS:</strong>{' '}
-                                {posChoice === 'square' ? 'Square (se conectará al finalizar)' :
-                                    posChoice === 'lightspeed' ? 'Lightspeed (se conectará al finalizar)' :
+                                {posChoice === 'square' ? t('onboarding.squareConnectLater') :
+                                    posChoice === 'lightspeed' ? t('onboarding.lightspeedConnectLater') :
                                         posChoice === 'csv' ? t('onboarding.importacionCsv') : t('onboarding.seConfiguraraDespues')}
                             </span>
                         </div>

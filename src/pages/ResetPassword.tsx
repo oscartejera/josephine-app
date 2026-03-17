@@ -24,7 +24,7 @@ export default function ResetPassword() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setError('El enlace de recuperación ha expirado o es inválido. Por favor solicita uno nuevo.');
+        setError(t('auth.resetLinkExpired'));
       }
     };
     checkSession();

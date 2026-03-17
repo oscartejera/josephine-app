@@ -314,7 +314,7 @@ export default function WorkforceTeam() {
         if (error) {
             toast.error(t('workforce.toastAddError'));
         } else {
-            toast.success(`${form.full_name} añadido al equipo`);
+            toast.success(t('workforce.employeeAddedToTeam', { name: form.full_name }));
             setForm({ full_name: '', role_name: 'employee', location_id: '', hourly_cost: '' });
             setAddOpen(false);
             fetchEmployees();

@@ -52,7 +52,7 @@ async function invokeEdgeFunction(name: string, body: Record<string, unknown>, t
     return data;
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      throw new Error('La sincronización está tardando demasiado. Verifica el historial en unos minutos.');
+      throw new Error(t('integrations.syncTakingTooLong'));
     }
     throw err;
   } finally {
@@ -101,7 +101,7 @@ const SYNC_PHASES = [
   { label: t('square.importingLocations'), target: 20, durationMs: 5_000 },
   { label: t('square.importingCatalog'), target: 40, durationMs: 15_000 },
   { label: 'Importando pedidos...', target: 70, durationMs: 60_000 },
-  { label: 'Procesando datos...', target: 90, durationMs: 40_000 },
+  { label: t('integrations.processingData'), target: 90, durationMs: 40_000 },
 ];
 
 /** True when the sync status represents a terminal state. */
@@ -299,7 +299,7 @@ export default function SquareIntegration() {
   useEffect(() => {
     if (searchParams.get('connected') === 'true') {
       toast.success(t('square.toastConnected'), {
-        description: 'Sincronización inicial en curso...',
+        description: t('integrations.initialSyncInProgress'),
       });
       setSyncing(true);
       startProgressAnimation();
@@ -351,7 +351,7 @@ export default function SquareIntegration() {
             completeProgressAnimation();
             toast.success(t('square.toastImported'));
             setTimeout(() => {
-              showSplashScreen('Cargando tus datos de Square...');
+              showSplashScreen(t('integrations.loadingSquareData'));
               queryClient.invalidateQueries();
               setTimeout(() => {
                 hideSplashScreen();
@@ -472,7 +472,7 @@ export default function SquareIntegration() {
       if (data.message === 'Sync already running') {
         stopProgressAnimation();
         toast.info(t('square.toastSyncing'), {
-          description: 'Ya hay una sincronización activa. Espera a que termine.',
+          description: t('integrations.syncAlreadyActive'),
         });
         setSyncing(false);
         return;
@@ -669,7 +669,7 @@ export default function SquareIntegration() {
                 ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
-                {syncing ? 'Sincronizando...' : isRunningFromDB ? 'Sincronización en curso...' : 'Sincronizar ahora'}
+                {syncing ? 'Sincronizando...' : isRunningFromDB ? t('integrations.syncInProgress') : 'Sincronizar ahora'}
               </Button>
               <Button variant="destructive" size="sm" onClick={handleDisconnect}>
                 Desconectar

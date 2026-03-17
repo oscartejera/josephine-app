@@ -55,7 +55,7 @@ export default function RecipesPage() {
                 yield_unit: newRecipe.yield_unit,
                 is_sub_recipe: newRecipe.is_sub_recipe,
             });
-            toast({ title: 'Creado', description: `Receta "${newRecipe.menu_item_name}" creada` });
+            toast({ title: 'Creado', description: t('inventory.recipeCreated', { name: newRecipe.menu_item_name }) });
             setShowCreateDialog(false);
             setNewRecipe({ menu_item_name: '', selling_price: '', category: 'Main', yield_qty: '1', yield_unit: 'portion', is_sub_recipe: false });
             navigate(`/inventory-setup/recipes/${result.id}`);
@@ -65,10 +65,10 @@ export default function RecipesPage() {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`¿Eliminar la receta "${name}"?`)) return;
+        if (!confirm(t('inventory.deleteRecipeConfirm', { name }))) return;
         try {
             await deleteRecipe.mutateAsync(id);
-            toast({ title: 'Eliminado', description: `Receta "${name}" eliminada` });
+            toast({ title: 'Eliminado', description: t('inventory.recipeDeleted', { name }) });
         } catch (err: any) {
             toast({ variant: 'destructive', title: t("common.error"), description: err.message });
         }

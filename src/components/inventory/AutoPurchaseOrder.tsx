@@ -67,7 +67,7 @@ export function AutoPurchaseOrder() {
             if (result.length === 0) {
                 toast.success(t('autoPurchase.toastNoAlerts'));
             } else {
-                toast.info(`${result.length} items por debajo del nivel mínimo`);
+                toast.info(t('inventory.itemsBelowMinimum', { count: result.length }));
             }
         } catch (err) {
             console.error('Error scanning alerts:', err);
@@ -110,7 +110,7 @@ export function AutoPurchaseOrder() {
 
             const result = await createPurchaseOrderDraftFromAlerts(ctx, draft);
             setLastResult({ id: result.id, totalLines: result.totalLines });
-            toast.success(`Orden de compra creada con ${result.totalLines} líneas`);
+            toast.success(t('inventory.purchaseOrderCreated', { count: result.totalLines }));
         } catch (err) {
             console.error('Error generating PO:', err);
             toast.error(t('autoPurchase.toastGenOrderError'));
