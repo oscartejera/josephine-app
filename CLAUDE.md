@@ -13,6 +13,8 @@ Keep the following in **English**:
 
 At the start of every session, **read `memory/lessons.md`** before doing any work. It contains hard-won lessons from past bugs and regressions. Ignoring it means repeating mistakes that already cost time.
 
+**After fixing any bug or regression**, ask the user: _"¿Quieres que registre esta lección en `memory/lessons.md`?"_ — then use `/log-lesson` workflow to add the entry.
+
 ---
 
 ## Mission
