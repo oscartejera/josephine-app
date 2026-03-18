@@ -47,6 +47,7 @@ serve(async (req) => {
 
     if (existingLocs && existingLocs.length > 0) {
       const locIds = existingLocs.map(l => l.id);
+      await supabase.from('daily_sales').delete().in('location_id', locIds);
       await supabase.from('facts_sales_15m').delete().in('location_id', locIds);
       await supabase.from('facts_labor_daily').delete().in('location_id', locIds);
       await supabase.from('employees').delete().in('location_id', locIds);
@@ -131,7 +132,7 @@ serve(async (req) => {
     if (itemsError) console.error('Items error:', itemsError);
     console.log('✅ Items created:', items.length);
 
-    // ========== PASO 5: Generar facts_sales_15m ==========
+    // ========== PASO 5: Generar facts_sales_15m + daily_sales ==========
     const salesRecords = [];
     const now = new Date();
     
@@ -189,6 +190,65 @@ serve(async (req) => {
     }
 
     console.log('✅ Total sales records:', salesRecords.length);
+
+    // ========== PASO 5b: Agregar facts_sales_15m → daily_sales ==========
+    // The dashboard reads from sales_daily_unified which uses daily_sales.
+    // Aggregate the 15-min granular data into daily rows.
+    const dailyMap = new Map<string, {
+      org_id: string; location_id: string; day: string;
+      net_sales: number; gross_sales: number; orders_count: number;
+      payments_total: number;
+    }>();
+
+    for (const r of salesRecords) {
+      const day = r.ts_bucket.split('T')[0];
+      const key = `${r.location_id}|${day}`;
+      const existing = dailyMap.get(key);
+      if (existing) {
+        existing.net_sales += r.sales_net;
+        existing.gross_sales += r.sales_gross;
+        existing.orders_count += r.tickets;
+        existing.payments_total += r.sales_net;
+      } else {
+        dailyMap.set(key, {
+          org_id: groupId,
+          location_id: r.location_id,
+          day,
+          net_sales: r.sales_net,
+          gross_sales: r.sales_gross,
+          orders_count: r.tickets,
+          payments_total: r.sales_net,
+        });
+      }
+    }
+
+    const dailyRows = Array.from(dailyMap.values()).map(d => ({
+      org_id: d.org_id,
+      location_id: d.location_id,
+      day: d.day,
+      net_sales: Math.round(d.net_sales * 100) / 100,
+      gross_sales: Math.round(d.gross_sales * 100) / 100,
+      orders_count: d.orders_count,
+      payments_total: Math.round(d.payments_total * 100) / 100,
+      payments_cash: Math.round(d.payments_total * 0.25 * 100) / 100,
+      payments_card: Math.round(d.payments_total * 0.75 * 100) / 100,
+      refunds: Math.round(d.net_sales * 0.005 * 100) / 100,
+      discounts: Math.round(d.net_sales * 0.03 * 100) / 100,
+      comps: Math.round(d.net_sales * 0.01 * 100) / 100,
+      voids: Math.round(d.net_sales * 0.002 * 100) / 100,
+    }));
+
+    for (let i = 0; i < dailyRows.length; i += 200) {
+      const batch = dailyRows.slice(i, i + 200);
+      const { error } = await supabase.from('daily_sales').upsert(batch, {
+        onConflict: 'location_id,day',
+        ignoreDuplicates: false,
+      });
+      if (error) {
+        console.error('Error inserting daily_sales batch', i, error);
+      }
+    }
+    console.log('✅ daily_sales aggregated rows:', dailyRows.length);
 
     // ========== PASO 6: Generar facts_labor_daily ==========
     // Agregar sales por día y calcular labour coherente

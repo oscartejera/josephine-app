@@ -113,3 +113,33 @@ Each entry should be:
 ## New Entries
 
 Add new lessons below this line using the template above.
+
+### Seed data using absolute dates expires silently
+
+**Date:** 2026-03-18
+**Area:** Demo / DB
+**Root cause:** The baseline migration seeded `daily_sales` with `CURRENT_DATE - 30 to +7` evaluated once at migration time. After ~37 days the data fell outside all valid query ranges.
+**What failed:** All dashboard KPIs showed zero because `sales_daily_unified` and `rpc_kpi_range_summary` found no rows within the selected date range.
+**Prevention:** All seed/demo data must use rolling `CURRENT_DATE` offsets or be regenerated on a schedule. Never seed demo tables with fixed absolute dates. Prefer cron-based reseed or wide windows (≥90 days).
+**Validation:** `SELECT count(*) FROM daily_sales WHERE day >= CURRENT_DATE - 7;` must return >0 for each active location.
+**Notes:** This affected `daily_sales`, `budget_days`, `forecast_daily_metrics`, and `planned_shifts` simultaneously.
+
+### Seed function must write to the table the dashboard actually reads
+
+**Date:** 2026-03-18
+**Area:** Data / Edge Functions
+**Root cause:** `seed_josephine_demo` wrote granular 15-min data to `facts_sales_15m`, but the dashboard pipeline reads from `daily_sales` via `sales_daily_unified` → `rpc_kpi_range_summary`.
+**What failed:** Even after re-running the seed function, dashboard KPIs remained zero because the data landed in a table nothing reads from for KPI display.
+**Prevention:** Before writing seed data, trace the full read path from the UI component back to the source table. Confirm the seed target is the same table the UI queries. Document the pipeline in `docs/data-pipeline.md`.
+**Validation:** After seeding, query the exact RPC/view the dashboard uses (e.g. `SELECT * FROM sales_daily_unified WHERE day = CURRENT_DATE LIMIT 1`) and confirm rows exist.
+**Notes:** `facts_sales_15m` is only used by granular intra-day analytics, not the main dashboard KPIs.
+
+### Default date range should not require exact-day data match
+
+**Date:** 2026-03-18
+**Area:** UI / Data
+**Root cause:** Default `dateRange` was `'today'`, which requires seed data for exactly today's date. If the seed window doesn't include today (or data hasn't been ingested yet), the dashboard shows nothing.
+**What failed:** New users and demos saw all-zero KPIs on first load because demo data didn't always cover `CURRENT_DATE`.
+**Prevention:** Default date range should be `'7d'` (or wider) so there's always some data visible even if today's data is missing. Reserve `'today'` for users who explicitly select it.
+**Validation:** Load the dashboard with a fresh session and confirm KPIs are non-zero without changing the date picker.
+**Notes:** This is especially important for demo/sales contexts where first impression matters.
