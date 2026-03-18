@@ -143,3 +143,13 @@ Add new lessons below this line using the template above.
 **Prevention:** Default date range should be `'7d'` (or wider) so there's always some data visible even if today's data is missing. Reserve `'today'` for users who explicitly select it.
 **Validation:** Load the dashboard with a fresh session and confirm KPIs are non-zero without changing the date picker.
 **Notes:** This is especially important for demo/sales contexts where first impression matters.
+
+### Supabase CLI reads SUPABASE_DB_PASSWORD from shell env, not .env.local
+
+**Date:** 2026-03-18
+**Area:** Tooling / DB
+**Root cause:** `npx supabase db push` requires `SUPABASE_DB_PASSWORD` as a **shell environment variable**. Adding it to `.env.local` is not enough because `.env.local` is for Next.js/Vite, not for CLI tools.
+**What failed:** `supabase db push` returned 401 even after the password was in `.env.local`. The CLI also needs a valid `SUPABASE_ACCESS_TOKEN` or must load the password into the shell via `$env:SUPABASE_DB_PASSWORD = ...` before running.
+**Prevention:** When running `supabase db push`, always load the password into the shell first: `$env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value }); npx supabase db push`
+**Validation:** `npx supabase db push` returns `Remote database is up to date` without 401 errors.
+**Notes:** The `--db-url` flag is an alternative but requires the correct direct host format: `postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres`.
