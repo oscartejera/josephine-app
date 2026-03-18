@@ -13,12 +13,16 @@ cd "$PROJECT_DIR"
 npm install
 
 # --- 2. Create .env.local if missing ---
+# IMPORTANT: Set these env vars in your CI/remote environment BEFORE this runs:
+#   SUPABASE_ANON_KEY         — Supabase publishable/anon key
+#   SUPABASE_SERVICE_ROLE_KEY — Supabase service role key (NEVER commit this)
+#   GH_TOKEN                  — GitHub personal access token (NEVER commit this)
 if [ ! -f "$PROJECT_DIR/.env.local" ]; then
-  cat > "$PROJECT_DIR/.env.local" << 'ENVEOF'
+  cat > "$PROJECT_DIR/.env.local" << ENVEOF
 VITE_SUPABASE_PROJECT_ID="qixipveebfhurbarksib"
 VITE_SUPABASE_URL="https://qixipveebfhurbarksib.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwODk4OTMsImV4cCI6MjA4NjY2NTg5M30.twpFHzJqDL-M37THYNs1oC23ZktjGTYodcSJkxHUyR8"
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTA4OTg5MywiZXhwIjoyMDg2NjY1ODkzfQ.12A4ocHkOX86VnVA2nRm4oxZVL6jEHYE02-rJlVj9Qg"
+VITE_SUPABASE_PUBLISHABLE_KEY="${SUPABASE_ANON_KEY:?ERROR: SUPABASE_ANON_KEY not set}"
+SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:?ERROR: SUPABASE_SERVICE_ROLE_KEY not set}"
 ENVEOF
 fi
 
@@ -33,5 +37,9 @@ fi
 
 # --- 4. Authenticate gh CLI if not already ---
 if ! gh auth status &> /dev/null; then
-  echo "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" | gh auth login --with-token
+  if [ -z "${GH_TOKEN:-}" ]; then
+    echo "WARNING: GH_TOKEN not set — gh CLI will not be authenticated."
+  else
+    echo "$GH_TOKEN" | gh auth login --with-token
+  fi
 fi

@@ -26,7 +26,7 @@ Your job is to answer a specific question about the codebase with concrete evide
 - Check `src/lib/` for utilities and helpers.
 - Check `src/integrations/supabase/types.ts` for generated Supabase types.
 - Check `docs/` for documented architecture decisions and data pipeline info.
-- Check `docs/memory/lessons.md` for known gotchas before answering.
+- Check `memory/lessons.md` for known gotchas before answering.
 
 ## Output format
 

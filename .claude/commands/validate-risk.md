@@ -26,7 +26,7 @@ Your job is to assess the risk of a proposed or completed change BEFORE it ships
    - What could go wrong
    - How to verify it won't
    - Severity (low / medium / high / critical)
-5. Recommend the minimum validation checklist from `docs/memory/checklists.md`.
+5. Recommend the minimum validation checklist from `memory/checklists.md`.
 
 ## Output format
 
@@ -43,7 +43,7 @@ Your job is to assess the risk of a proposed or completed change BEFORE it ships
 | 1 | ... | ... | ... |
 
 ### Recommended Checklist
-<name of the matching checklist from `docs/memory/checklists.md`>
+<name of the matching checklist from `memory/checklists.md`>
 
 ### Verdict
 - **SAFE** — low risk, standard validation sufficient

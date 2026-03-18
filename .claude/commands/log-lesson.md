@@ -2,7 +2,7 @@
 
 You are in lesson-logging mode for the Josephine repo.
 
-Your job is to record a new lesson in `docs/memory/lessons.md`.
+Your job is to record a new lesson in `memory/lessons.md`.
 
 ## When to use
 
@@ -18,7 +18,7 @@ Use this after:
 1. Ask the user (or infer from context) what happened.
 2. Classify the area: UI / Data / Auth / Demo / DB / i18n / Edge Functions / Tooling / Testing / Security
 3. Identify root cause, what failed, and how to prevent it.
-4. Write the entry using the exact template from `docs/memory/lessons.md`.
+4. Write the entry using the exact template from `memory/lessons.md`.
 5. Append it under the `## New Entries` section at the bottom of the file.
 
 ## Entry template
