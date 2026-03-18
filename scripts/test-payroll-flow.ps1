@@ -1,9 +1,12 @@
 $ErrorActionPreference = "Continue"
+$anonKey = $env:SUPABASE_ANON_KEY
+if (-not $anonKey) { Write-Host "ERROR: SUPABASE_ANON_KEY env var is required" -ForegroundColor Red; exit 1 }
+$sbUrl = if ($env:SUPABASE_URL) { $env:SUPABASE_URL } else { "https://qixipveebfhurbarksib.supabase.co" }
 $h = @{
-  "Authorization"="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwODk4OTMsImV4cCI6MjA4NjY2NTg5M30.twpFHzJqDL-M37THYNs1oC23ZktjGTYodcSJkxHUyR8"
-  "apikey"="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwODk4OTMsImV4cCI6MjA4NjY2NTg5M30.twpFHzJqDL-M37THYNs1oC23ZktjGTYodcSJkxHUyR8"
+  "Authorization"="Bearer $anonKey"
+  "apikey"="$anonKey"
 }
-$u = "https://qixipveebfhurbarksib.supabase.co/functions/v1/payroll_api"
+$u = "$sbUrl/functions/v1/payroll_api"
 
 # Real IDs from the database
 $groupId = "e54e12d7-018e-434e-a166-d041a97854c2"

@@ -17,8 +17,9 @@ import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 
 // --- Config ---
-const SUPABASE_URL = 'https://qixipveebfhurbarksib.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTA4OTg5MywiZXhwIjoyMDg2NjY1ODkzfQ.12A4ocHkOX86VnVA2nRm4oxZVL6jEHYE02-rJlVj9Qg';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qixipveebfhurbarksib.supabase.co';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SERVICE_ROLE_KEY) { console.error('ERROR: SUPABASE_SERVICE_ROLE_KEY env var is required'); process.exit(1); }
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 

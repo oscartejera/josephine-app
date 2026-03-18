@@ -103,7 +103,7 @@ export default function DataHealth() {
     setRefreshing(true);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       // Use the RPC directly via service_role (the Edge Function requires CRON_SECRET,
       // but we can call the refresh function directly via RPC)
       const { error } = await supabase.rpc('refresh_all_mvs', {

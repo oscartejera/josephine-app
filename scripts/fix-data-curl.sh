@@ -2,8 +2,8 @@
 # Fix restaurant data via Supabase REST API (curl)
 # Generates realistic casual dining Madrid data for all 7 daily tables
 
-SB_URL="https://qixipveebfhurbarksib.supabase.co"
-SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeGlwdmVlYmZodXJiYXJrc2liIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTA4OTg5MywiZXhwIjoyMDg2NjY1ODkzfQ.12A4ocHkOX86VnVA2nRm4oxZVL6jEHYE02-rJlVj9Qg"
+SB_URL="${SUPABASE_URL:-https://qixipveebfhurbarksib.supabase.co}"
+SB_KEY="${SUPABASE_SERVICE_ROLE_KEY:?ERROR: SUPABASE_SERVICE_ROLE_KEY env var is required}"
 
 HEADERS=(-H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY" -H "Content-Type: application/json" -H "Prefer: return=minimal")
 
