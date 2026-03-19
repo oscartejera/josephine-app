@@ -23,7 +23,7 @@ workflows:
 
     environment:
       xcode: latest
-      node: 20
+      node: 22
       cocoapods: default
       vars:
         BUNDLE_ID: app.josephine.dashboard
