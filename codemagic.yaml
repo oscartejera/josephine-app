@@ -24,7 +24,7 @@ workflows:
     environment:
       xcode: latest
       node: 22
-      cocoapods: default
+
       vars:
         BUNDLE_ID: app.josephine.dashboard
         APP_NAME: Josephine
@@ -56,16 +56,20 @@ workflows:
           fi
           npx cap sync ios
 
-      # ── 4. Install CocoaPods ──
-      - name: Install CocoaPods
+
+      # ── 4. Resolve Swift Package Manager dependencies ──
+      - name: Resolve SPM dependencies
         script: |
-          cd ios/App && pod install
+          cd ios/App
+          xcodebuild -resolvePackageDependencies \
+            -project App.xcodeproj \
+            -scheme "App"
 
       # ── 5. Build without signing (verify compilation) ──
       - name: Build iOS (no signing)
         script: |
           xcodebuild \
-            -workspace "ios/App/App.xcworkspace" \
+            -project "ios/App/App.xcodeproj" \
             -scheme "App" \
             -configuration "Release" \
             -destination "generic/platform=iOS" \
