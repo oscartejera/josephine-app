@@ -48,9 +48,12 @@ workflows:
         script: |
           npm run build
 
-      # ── 3. Sync iOS platform ──
+      # ── 3. Add & Sync iOS platform ──
       - name: Sync iOS platform
         script: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
           npx cap sync ios
 
       # ── 4. Install CocoaPods ──
