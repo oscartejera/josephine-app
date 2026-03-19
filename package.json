@@ -22,13 +22,20 @@
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "npx playwright test --headed",
     "i18n:sync": "node scripts/sync-i18n.cjs",
-    "i18n:audit": "node scripts/audit-i18n.cjs"
+    "i18n:audit": "node scripts/audit-i18n.cjs",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "mobile:build": "vite build && npx cap sync"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.1",
-    "@capacitor/cli": "^8.0.1",
-    "@capacitor/core": "^8.0.1",
-    "@capacitor/ios": "^8.0.1",
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/haptics": "^8.0.1",
+    "@capacitor/keyboard": "^8.0.1",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -94,6 +101,9 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/ios": "^8.0.1",
     "@eslint/js": "^9.32.0",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/typography": "^0.5.16",

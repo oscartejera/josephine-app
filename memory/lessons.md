@@ -153,3 +153,43 @@ Add new lessons below this line using the template above.
 **Prevention:** When running `supabase db push`, always load the password into the shell first: `$env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value }); npx supabase db push`
 **Validation:** `npx supabase db push` returns `Remote database is up to date` without 401 errors.
 **Notes:** The `--db-url` flag is an alternative but requires the correct direct host format: `postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres`.
+
+### Capacitor CLI and platform packages belong in devDependencies
+
+**Date:** 2026-03-19
+**Area:** Tooling
+**Root cause:** `npm install @capacitor/cli @capacitor/android @capacitor/ios` placed all three in `dependencies` by default. No manual correction was made during the Capacitor setup.
+**What failed:** Build-time-only packages (`@capacitor/cli`, `@capacitor/android`, `@capacitor/ios`) were listed in `dependencies`, bloating the production dependency tree and sending the wrong signal about what the app actually imports at runtime.
+**Prevention:** After installing Capacitor packages, always move CLI tools and native platform packages to `devDependencies`. Only `@capacitor/core` and the plugin APIs the app imports at runtime (`@capacitor/app`, `@capacitor/status-bar`, etc.) belong in `dependencies`.
+**Validation:** `grep -c '"@capacitor/cli"' package.json` should only match inside `devDependencies`. Same for `@capacitor/android` and `@capacitor/ios`.
+**Notes:** `npm install --save-dev` would have placed them correctly from the start.
+
+### Always pin major version when installing Capacitor packages
+
+**Date:** 2026-03-19
+**Area:** Tooling
+**Root cause:** The implementation plan specified Capacitor 6, but the install command used `@capacitor/core` without `@6`, so npm resolved the latest (v8.2.0).
+**What failed:** The installed version didn't match the plan. While v8 works fine for this project, the version mismatch could cause confusion or compatibility issues if someone follows the plan as spec'd.
+**Prevention:** Always pin the major version in the install command: `npm install @capacitor/core@6 @capacitor/cli@6`. Before installing, check if any Capacitor packages are already installed (`grep @capacitor package.json`) and match the existing version.
+**Validation:** `npx cap --version` should return the expected major version. `cat package.json | grep @capacitor` should show consistent versions.
+**Notes:** This is a general lesson: when a plan says "version X", the install command must explicit pin `@X`.
+
+### Import statements must appear at the top of the module, not after usage
+
+**Date:** 2026-03-19
+**Area:** Tooling / Code quality
+**Root cause:** When adding the `initNativePlugins()` call to `main.tsx`, the import was written on the line immediately before the call (line 51-52) instead of at the top with other imports.
+**What failed:** ES module hoisting makes it work, but the code reads as if the function is called before being imported, which is confusing to anyone reading the file. It also breaks the convention established by all other imports in the same file.
+**Prevention:** Always place new imports at the top of the file with other imports. Place the function call where it needs to execute, but never place an import statement inline next to its call site.
+**Validation:** Visual review — all `import` statements should be grouped at the top of each file. `eslint --rule 'import/first: error'` catches this.
+
+### safe-area-inset CSS requires viewport-fit=cover in the viewport meta tag
+
+**Date:** 2026-03-19
+**Area:** UI / Mobile
+**Root cause:** `env(safe-area-inset-*)` CSS values are only populated by the browser when the viewport meta tag includes `viewport-fit=cover`. Without it, the values are `0` and the padding has no effect.
+**What failed:** Nothing failed in this case because `index.html` already had `viewport-fit=cover`. But if it hadn't been there, the safe-area padding added to `index.css` would have silently done nothing — no error, just no padding on notch devices.
+**Prevention:** Before adding `env(safe-area-inset-*)` CSS, verify the viewport meta tag includes `viewport-fit=cover`. If it doesn't, add it.
+**Validation:** `grep 'viewport-fit=cover' index.html` must match before safe-area CSS is considered functional.
+**Notes:** This is a silent failure — the CSS is valid but ineffective without the meta tag. Always check the dependency chain.
+

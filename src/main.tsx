@@ -5,6 +5,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { initNativePlugins } from './lib/native';
 
 // ── Error Monitoring: Sentry ──
 import * as Sentry from "@sentry/react";
@@ -45,3 +46,7 @@ createRoot(document.getElementById("root")!).render(
         <App />
     </StrictMode>
 );
+
+// Initialise Capacitor native plugins after React mounts
+// (safe no-op on web — only runs on iOS/Android)
+initNativePlugins();
