@@ -1,0 +1,106 @@
+# ──────────────────────────────────────────────────────────
+# Codemagic CI/CD – Josephine iOS + iPad Universal Build
+# ──────────────────────────────────────────────────────────
+# Docs: https://docs.codemagic.io/yaml-quick-start/building-a-capacitor-app/
+#
+# Prerequisites (configured in Codemagic UI):
+#   1. Connect your GitHub/GitLab/Bitbucket repo
+#   2. Add App Store Connect API Key (Settings → Code signing → iOS)
+#   3. Enable automatic provisioning (Codemagic manages certs for you)
+#
+# Triggers: push to main branch, or manual run from Codemagic dashboard.
+# ──────────────────────────────────────────────────────────
+
+workflows:
+  ios-build:
+    name: Josephine iOS Universal
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+
+    environment:
+      xcode: latest
+      node: 20
+      cocoapods: default
+      groups:
+        # These env vars are configured in Codemagic UI → Environment variables
+        # Required for App Store / TestFlight publishing:
+        #   APP_STORE_CONNECT_KEY_IDENTIFIER
+        #   APP_STORE_CONNECT_ISSUER_ID
+        #   APP_STORE_CONNECT_PRIVATE_KEY  (p8 file contents)
+        - app_store_credentials
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: app.josephine.dashboard
+      vars:
+        BUNDLE_ID: app.josephine.dashboard
+        APP_NAME: Josephine
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+      cancel_previous_builds: true
+
+    scripts:
+      # ── 1. Install Node dependencies ──
+      - name: Install dependencies
+        script: |
+          npm ci
+
+      # ── 2. Build web app → dist/ ──
+      - name: Build web app
+        script: |
+          npm run build
+
+      # ── 3. Add iOS platform (if not already) ──
+      - name: Add iOS platform
+        script: |
+          npx cap sync ios
+
+      # ── 4. Generate app icons from resources/ ──
+      - name: Generate app icons
+        script: |
+          if [ -f resources/icon.png ]; then
+            npx capacitor-assets generate --iconBackgroundColor '#7c3aed' --splashBackgroundColor '#0d1117' --ios
+          fi
+
+      # ── 5. Install CocoaPods ──
+      - name: Install CocoaPods
+        script: |
+          cd ios/App && pod install
+
+      # ── 6. Set bundle version from build number ──
+      - name: Set build version
+        script: |
+          cd ios/App
+          agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0) + 1))
+
+      # ── 7. Build iOS archive ──
+      - name: Build iOS
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/App/App.xcworkspace" \
+            --scheme "App" \
+            --config "Release"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - ios/App/App/Info.plist
+
+    publishing:
+      # Email notification on build complete
+      email:
+        recipients:
+          - oscar@josephine.app    # ← Change to your email
+        notify:
+          success: true
+          failure: true
+
+      # Uncomment when you have Apple Developer Account:
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
+      #   expire_build_submitted_for_review: true
