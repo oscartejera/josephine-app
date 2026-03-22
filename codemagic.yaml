@@ -103,6 +103,8 @@ workflows:
       node: 22
       groups:
         - app_store_credentials
+      integrations:
+        app_store_connect: Josephine
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.josephine.team
