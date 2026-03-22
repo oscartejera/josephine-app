@@ -155,49 +155,79 @@ workflows:
       - name: Add certificates to keychain
         script: keychain add-certificates
 
-      # ── 8. Force manual signing in Xcode project ──
-      - name: Configure manual signing
+      # ── 8. Get signing info & configure project ──
+      - name: Prepare signing
         script: |
-          # Get the provisioning profile name
-          PROFILE_NAME=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" -exec \
-            /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin \; 2>/dev/null | head -1)
+          # Find the provisioning profile UUID
+          PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" -print -quit)
+          PROFILE_UUID=$(basename "$PROFILE_PATH" .mobileprovision)
           
-          PROFILE_UUID=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" -print -quit | \
-            xargs basename | sed 's/.mobileprovision//')
+          # Extract profile name using security cms
+          PLIST=$(/usr/bin/security cms -D -i "$PROFILE_PATH")
+          PROFILE_NAME=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin)
+          TEAM_ID_FROM_PROFILE=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /dev/stdin)
           
-          echo "Profile Name: $PROFILE_NAME"
-          echo "Profile UUID: $PROFILE_UUID"
+          echo "PROFILE_UUID=$PROFILE_UUID"
+          echo "PROFILE_NAME=$PROFILE_NAME"
+          echo "TEAM_ID=$TEAM_ID_FROM_PROFILE"
           
-          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
-          
-          # Force manual code signing
-          sed -i '' 's/ProvisioningStyle = Automatic/ProvisioningStyle = Manual/g' "$PBXPROJ"
-          
-          # Set CODE_SIGN_STYLE to Manual
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$PBXPROJ"
+          # Export for subsequent steps
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $CM_ENV
+          echo "PROFILE_NAME=$PROFILE_NAME" >> $CM_ENV
+          echo "SIGNING_TEAM_ID=$TEAM_ID_FROM_PROFILE" >> $CM_ENV
 
-      # ── 9. Apply provisioning profiles to Xcode project ──
-      - name: Use provisioning profiles
-        script: xcode-project use-profiles --project "ios/App/App.xcodeproj"
-
-      # ── 10. Auto-increment build number ──
+      # ── 9. Auto-increment build number ──
       - name: Set build version
         script: |
           cd ios/App
           LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)
           agvtool new-version -all $(($LATEST + 1))
 
-      # ── 11. Build signed IPA ──
-      - name: Build iOS
+      # ── 10. Archive with explicit signing ──
+      - name: Build iOS archive
         script: |
-          xcode-project build-ipa \
-            --project "ios/App/App.xcodeproj" \
-            --scheme "App" \
-            --config "Release"
+          xcodebuild archive \
+            -project "ios/App/App.xcodeproj" \
+            -scheme "App" \
+            -configuration "Release" \
+            -archivePath "build/ios/App.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            DEVELOPMENT_TEAM="$SIGNING_TEAM_ID" \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      # ── 11. Export IPA ──
+      - name: Export IPA
+        script: |
+          cat > build/ios/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>${SIGNING_TEAM_ID}</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>${BUNDLE_ID}</key>
+                  <string>${PROFILE_NAME}</string>
+              </dict>
+          </dict>
+          </plist>
+          EOF
+          
+          xcodebuild -exportArchive \
+            -archivePath "build/ios/App.xcarchive" \
+            -exportPath "build/ios/ipa" \
+            -exportOptionsPlist "build/ios/ExportOptions.plist"
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
+      - build/ios/App.xcarchive
 
     publishing:
       email:
