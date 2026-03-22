@@ -153,7 +153,7 @@ workflows:
 
       # ── 7. Apply provisioning profiles to Xcode project ──
       - name: Use provisioning profiles
-        script: xcode-project use-profiles
+        script: xcode-project use-profiles --project "ios/App/App.xcodeproj"
 
       # ── 8. Auto-increment build number ──
       - name: Set build version
@@ -168,7 +168,8 @@ workflows:
           xcode-project build-ipa \
             --project "ios/App/App.xcodeproj" \
             --scheme "App" \
-            --config "Release"
+            --config "Release" \
+            --archive-flags="CODE_SIGN_STYLE=Manual"
 
     artifacts:
       - build/ios/ipa/*.ipa
