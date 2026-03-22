@@ -98,17 +98,11 @@ workflows:
     max_build_duration: 45
     instance_type: mac_mini_m2
 
-    integrations:
-      app_store_connect: Josephine
-
     environment:
       xcode: latest
       node: 22
       groups:
         - app_store_credentials
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.josephine.team
       vars:
         BUNDLE_ID: com.josephine.team
         APP_NAME: Josephine
@@ -146,14 +140,29 @@ workflows:
             -project App.xcodeproj \
             -scheme "App"
 
-      # ── 5. Auto-increment build number ──
+      # ── 5. Initialize keychain for code signing ──
+      - name: Set up keychain
+        script: keychain initialize
+
+      # ── 6. Fetch or CREATE signing files (cert + profile) ──
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      # ── 7. Apply provisioning profiles to Xcode project ──
+      - name: Use provisioning profiles
+        script: xcode-project use-profiles
+
+      # ── 8. Auto-increment build number ──
       - name: Set build version
         script: |
           cd ios/App
           LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)
           agvtool new-version -all $(($LATEST + 1))
 
-      # ── 6. Build signed IPA ──
+      # ── 9. Build signed IPA ──
       - name: Build iOS
         script: |
           xcode-project build-ipa \
