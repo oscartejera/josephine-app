@@ -151,25 +151,49 @@ workflows:
             --type IOS_APP_STORE \
             --create
 
-      # ── 7. Apply provisioning profiles to Xcode project ──
+      # ── 7. Install certs into keychain ──
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+
+      # ── 8. Force manual signing in Xcode project ──
+      - name: Configure manual signing
+        script: |
+          # Get the provisioning profile name
+          PROFILE_NAME=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" -exec \
+            /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin \; 2>/dev/null | head -1)
+          
+          PROFILE_UUID=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" -print -quit | \
+            xargs basename | sed 's/.mobileprovision//')
+          
+          echo "Profile Name: $PROFILE_NAME"
+          echo "Profile UUID: $PROFILE_UUID"
+          
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          
+          # Force manual code signing
+          sed -i '' 's/ProvisioningStyle = Automatic/ProvisioningStyle = Manual/g' "$PBXPROJ"
+          
+          # Set CODE_SIGN_STYLE to Manual
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' "$PBXPROJ"
+
+      # ── 9. Apply provisioning profiles to Xcode project ──
       - name: Use provisioning profiles
         script: xcode-project use-profiles --project "ios/App/App.xcodeproj"
 
-      # ── 8. Auto-increment build number ──
+      # ── 10. Auto-increment build number ──
       - name: Set build version
         script: |
           cd ios/App
           LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)
           agvtool new-version -all $(($LATEST + 1))
 
-      # ── 9. Build signed IPA ──
+      # ── 11. Build signed IPA ──
       - name: Build iOS
         script: |
           xcode-project build-ipa \
             --project "ios/App/App.xcodeproj" \
             --scheme "App" \
-            --config "Release" \
-            --archive-flags="CODE_SIGN_STYLE=Manual"
+            --config "Release"
 
     artifacts:
       - build/ios/ipa/*.ipa
