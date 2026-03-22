@@ -155,37 +155,77 @@ workflows:
       - name: Add certificates to keychain
         script: keychain add-certificates
 
-      # ── 8. Get signing info & configure project ──
-      - name: Prepare signing
+      # ── 8. Patch project, archive, and export IPA (single script) ──
+      - name: Build and sign IPA
         script: |
-          # Find the provisioning profile UUID
+          set -euo pipefail
+          
+          # ── Find provisioning profile ──
           PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles -name "*.mobileprovision" -print -quit)
+          if [ -z "$PROFILE_PATH" ]; then
+            echo "ERROR: No provisioning profile found!"
+            ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || true
+            exit 1
+          fi
+          
           PROFILE_UUID=$(basename "$PROFILE_PATH" .mobileprovision)
           
-          # Extract profile name using security cms
+          # Extract profile details
           PLIST=$(/usr/bin/security cms -D -i "$PROFILE_PATH")
           PROFILE_NAME=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin)
-          TEAM_ID_FROM_PROFILE=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /dev/stdin)
+          TEAM_ID=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /dev/stdin)
           
-          echo "PROFILE_UUID=$PROFILE_UUID"
-          echo "PROFILE_NAME=$PROFILE_NAME"
-          echo "TEAM_ID=$TEAM_ID_FROM_PROFILE"
+          echo "========================================="
+          echo "PROFILE_UUID: $PROFILE_UUID"
+          echo "PROFILE_NAME: $PROFILE_NAME"
+          echo "TEAM_ID:      $TEAM_ID"
+          echo "BUNDLE_ID:    $BUNDLE_ID"
+          echo "========================================="
           
-          # Export for subsequent steps
-          echo "PROFILE_UUID=$PROFILE_UUID" >> $CM_ENV
-          echo "PROFILE_NAME=$PROFILE_NAME" >> $CM_ENV
-          echo "SIGNING_TEAM_ID=$TEAM_ID_FROM_PROFILE" >> $CM_ENV
-
-      # ── 9. Auto-increment build number ──
-      - name: Set build version
-        script: |
+          # ── Patch the Xcode project with Ruby ──
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          
+          echo "Before patching - signing settings:"
+          grep -n "ProvisioningStyle\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM\|PROVISIONING_PROFILE" "$PBXPROJ" || true
+          
+          ruby <<RUBY
+          content = File.read("$PBXPROJ")
+          
+          # 1. Change ProvisioningStyle = Automatic → Manual in TargetAttributes
+          content.gsub!(/ProvisioningStyle\s*=\s*Automatic/, 'ProvisioningStyle = Manual')
+          
+          # 2. If no ProvisioningStyle exists, add before the closing of TargetAttributes blocks
+          # (Capacitor projects always have this, so #1 should catch it)
+          
+          # 3. Replace or add DEVELOPMENT_TEAM in build settings
+          if content.include?('DEVELOPMENT_TEAM')
+            content.gsub!(/DEVELOPMENT_TEAM\s*=\s*"[^"]*"/, 'DEVELOPMENT_TEAM = "$TEAM_ID"')
+            content.gsub!(/DEVELOPMENT_TEAM\s*=\s*[^";]*;/, 'DEVELOPMENT_TEAM = "$TEAM_ID";')
+          end
+          
+          # 4. Replace CODE_SIGN_STYLE if exists
+          content.gsub!(/CODE_SIGN_STYLE\s*=\s*Automatic/, 'CODE_SIGN_STYLE = Manual')
+          
+          # 5. Add DEVELOPMENT_TEAM to DevelopmentTeam in TargetAttributes if present
+          content.gsub!(/DevelopmentTeam\s*=\s*"[^"]*"/, 'DevelopmentTeam = "$TEAM_ID"')
+          content.gsub!(/DevelopmentTeam\s*=\s*[^";]*;/, 'DevelopmentTeam = "$TEAM_ID";')
+          
+          File.write("$PBXPROJ", content)
+          puts "✅ pbxproj patched successfully"
+          RUBY
+          
+          echo ""
+          echo "After patching - signing settings:"
+          grep -n "ProvisioningStyle\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM\|PROVISIONING_PROFILE" "$PBXPROJ" || true
+          echo ""
+          
+          # ── Auto-increment build number ──
           cd ios/App
           LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)
           agvtool new-version -all $(($LATEST + 1))
-
-      # ── 10. Archive with explicit signing ──
-      - name: Build iOS archive
-        script: |
+          cd ../..
+          
+          # ── Archive ──
           xcodebuild archive \
             -project "ios/App/App.xcodeproj" \
             -scheme "App" \
@@ -194,12 +234,10 @@ workflows:
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
-            DEVELOPMENT_TEAM="$SIGNING_TEAM_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
             COMPILER_INDEX_STORE_ENABLE=NO
-
-      # ── 11. Export IPA ──
-      - name: Export IPA
-        script: |
+          
+          # ── Export IPA ──
           cat > build/ios/ExportOptions.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -208,7 +246,7 @@ workflows:
               <key>method</key>
               <string>app-store</string>
               <key>teamID</key>
-              <string>${SIGNING_TEAM_ID}</string>
+              <string>${TEAM_ID}</string>
               <key>signingStyle</key>
               <string>manual</string>
               <key>provisioningProfiles</key>
@@ -227,7 +265,6 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - build/ios/App.xcarchive
 
     publishing:
       email:
