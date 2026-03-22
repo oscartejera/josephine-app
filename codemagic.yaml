@@ -147,13 +147,34 @@ workflows:
       # ── 6. Fetch or CREATE signing files (cert + profile) ──
       - name: Fetch signing files
         script: |
+          set -e
+          echo ">>> Fetching signing files for bundle ID: $BUNDLE_ID"
+          echo ">>> Key ID: $APP_STORE_CONNECT_KEY_IDENTIFIER"
+          echo ">>> Issuer ID: $APP_STORE_CONNECT_ISSUER_ID"
+          echo ">>> Private key length: $(echo "$APP_STORE_CONNECT_PRIVATE_KEY" | wc -c) chars"
+          
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --create
+            --create \
+            --verbose
+          
+          echo ""
+          echo ">>> Certificates installed:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "EMPTY!"
+          echo ""
+          echo ">>> Keychain certs:"
+          security find-identity -v -p codesigning || echo "No signing identities found"
 
       # ── 7. Install certs into keychain ──
       - name: Add certificates to keychain
-        script: keychain add-certificates
+        script: |
+          keychain add-certificates
+          echo ""
+          echo ">>> Signing identities after adding certificates:"
+          security find-identity -v -p codesigning
+          echo ""
+          echo ">>> Provisioning profiles after install:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "EMPTY!"
 
       # ── 8. Patch project, archive, and export IPA (single script) ──
       - name: Build and sign IPA
