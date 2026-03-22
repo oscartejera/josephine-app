@@ -223,13 +223,16 @@ workflows:
             content.gsub!(/DEVELOPMENT_TEAM\s*=\s*"[^"]*"/, 'DEVELOPMENT_TEAM = "$TEAM_ID"')
             content.gsub!(/DEVELOPMENT_TEAM\s*=\s*[^";]*;/, 'DEVELOPMENT_TEAM = "$TEAM_ID";')
           end
-          
-          # 4. Replace CODE_SIGN_STYLE if exists
-          content.gsub!(/CODE_SIGN_STYLE\s*=\s*Automatic/, 'CODE_SIGN_STYLE = Manual')
-          
-          # 5. Add DEVELOPMENT_TEAM to DevelopmentTeam in TargetAttributes if present
-          content.gsub!(/DevelopmentTeam\s*=\s*"[^"]*"/, 'DevelopmentTeam = "$TEAM_ID"')
-          content.gsub!(/DevelopmentTeam\s*=\s*[^";]*;/, 'DevelopmentTeam = "$TEAM_ID";')
+                    # 4. Replace CODE_SIGN_STYLE if exists
+           content.gsub!(/CODE_SIGN_STYLE\s*=\s*Automatic/, 'CODE_SIGN_STYLE = Manual')
+           
+           # 5. Add DEVELOPMENT_TEAM to DevelopmentTeam in TargetAttributes if present
+           content.gsub!(/DevelopmentTeam\s*=\s*"[^"]*"/, 'DevelopmentTeam = "$TEAM_ID"')
+           content.gsub!(/DevelopmentTeam\s*=\s*[^";]*;/, 'DevelopmentTeam = "$TEAM_ID";')
+           
+           # 6. Replace PRODUCT_BUNDLE_IDENTIFIER to match provisioning profile
+           content.gsub!(/PRODUCT_BUNDLE_IDENTIFIER\s*=\s*"[^"]*"/, 'PRODUCT_BUNDLE_IDENTIFIER = "$BUNDLE_ID"')
+           content.gsub!(/PRODUCT_BUNDLE_IDENTIFIER\s*=\s*[^";]*;/, 'PRODUCT_BUNDLE_IDENTIFIER = "$BUNDLE_ID";')
           
           File.write("$PBXPROJ", content)
           puts "✅ pbxproj patched successfully"
@@ -237,7 +240,7 @@ workflows:
           
           echo ""
           echo "After patching - signing settings:"
-          grep -n "ProvisioningStyle\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM\|PROVISIONING_PROFILE" "$PBXPROJ" || true
+          grep -n "ProvisioningStyle\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM\|PROVISIONING_PROFILE\|PRODUCT_BUNDLE_IDENTIFIER" "$PBXPROJ" || true
           echo ""
           
           # ── Auto-increment build number ──
@@ -256,6 +259,7 @@ workflows:
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
             COMPILER_INDEX_STORE_ENABLE=NO
           
           # ── Export IPA ──
