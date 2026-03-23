@@ -304,15 +304,11 @@ workflows:
           echo ""
           echo "=== Uploading IPA to App Store Connect ==="
           
-          # Write the API key to the expected location for xcrun
-          mkdir -p ~/.private_keys
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8
+          # Use Codemagic CLI (NOT xcrun altool, which is deprecated)
+          app-store-connect publish \
+            --path "build/ios/ipa/App.ipa"
           
-          xcrun altool --upload-app \
-            --type ios \
-            --file "build/ios/ipa/App.ipa" \
-            --apiKey "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+          echo "✅ IPA uploaded to App Store Connect!"
 
     artifacts:
       - build/ios/ipa/*.ipa
