@@ -33,7 +33,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: "Josephine Team"
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Necesitamos tu ubicación para verificar el fichaje en tu restaurante"
         INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: "Necesitamos tu ubicación para verificar el fichaje en tu restaurante"
         SWIFT_STRICT_CONCURRENCY: complete
