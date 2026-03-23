@@ -168,7 +168,17 @@ workflows:
             "$BUNDLE_ID" 2>/dev/null || echo "0")
           NEW_BUILD=$((LATEST_BUILD + 1))
           echo "Build number: $LATEST_BUILD → $NEW_BUILD"
-          agvtool new-version -all $NEW_BUILD
+
+          # Patch the generated Info.plist directly
+          PLIST="JosephineTeam-Info.plist"
+          if [ -f "$PLIST" ]; then
+            plutil -replace CFBundleVersion -string "$NEW_BUILD" "$PLIST"
+            echo "✅ Patched $PLIST → CFBundleVersion = $NEW_BUILD"
+          fi
+
+          # Also inject via build settings (belt-and-suspenders)
+          echo "CURRENT_PROJECT_VERSION = $NEW_BUILD" >> Signing.xcconfig
+          echo "✅ Appended CURRENT_PROJECT_VERSION to Signing.xcconfig"
 
       # ── 5. Initialize keychain ──
       - name: Initialize keychain
