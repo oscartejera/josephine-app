@@ -12,6 +12,8 @@ struct ClockView: View {
     @State private var isProcessing = false
     @State private var elapsedSeconds: Int = 0
     @State private var timerCancellable: AnyCancellable?
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
 
@@ -19,6 +21,7 @@ struct ClockView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: JSpacing.xl) {
+                    OfflineBanner()
 
                     // MARK: - Clock Display
                     clockDisplay
@@ -38,7 +41,9 @@ struct ClockView: View {
             .background(JColor.background)
             .navigationTitle("Fichaje")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .refreshable { await loadClockData() }
             .task { await loadClockData() }
+            .errorBanner(errorMessage, isPresented: $showError)
         }
     }
 
@@ -186,9 +191,12 @@ struct ClockView: View {
                 .from("employee_clock_records")
                 .insert(insert)
                 .execute()
+            HapticManager.play(.clockIn)
             await loadClockData()
         } catch {
-            // TODO: Show error toast
+            errorMessage = "Error al fichar entrada. Inténtalo de nuevo."
+            showError = true
+            HapticManager.play(.error)
         }
     }
 
@@ -211,10 +219,13 @@ struct ClockView: View {
                 .update(update)
                 .eq("id", value: record.id.uuidString)
                 .execute()
+            HapticManager.play(.clockOut)
             stopTimer()
             await loadClockData()
         } catch {
-            // TODO: Show error toast
+            errorMessage = "Error al fichar salida. Inténtalo de nuevo."
+            showError = true
+            HapticManager.play(.error)
         }
     }
 
@@ -245,8 +256,9 @@ struct ClockView: View {
                 stopTimer()
             }
         } catch {
-            todayRecords = []
-            activeRecord = nil
+            errorMessage = "No se pudieron cargar los fichajes. Tira hacia abajo para reintentar."
+            showError = true
+            HapticManager.play(.error)
         }
     }
 

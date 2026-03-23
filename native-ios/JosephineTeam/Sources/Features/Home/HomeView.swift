@@ -8,6 +8,8 @@ struct HomeView: View {
     @State private var activeClockRecord: ClockRecord?
     @State private var weekHours: Double = 0
     @State private var isLoading = true
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
 
@@ -15,6 +17,7 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: JSpacing.lg) {
+                    OfflineBanner()
 
                     // MARK: - Welcome Header
                     welcomeHeader
@@ -41,6 +44,7 @@ struct HomeView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .refreshable { await loadData() }
             .task { await loadData() }
+            .errorBanner(errorMessage, isPresented: $showError)
         }
     }
 
@@ -224,7 +228,9 @@ struct HomeView: View {
                 return Double(mins) / 60.0
             }.reduce(0, +)
         } catch {
-            // Handle errors silently for now
+            errorMessage = "No se pudieron cargar los datos. Tira hacia abajo para reintentar."
+            showError = true
+            HapticManager.play(.error)
         }
     }
 }

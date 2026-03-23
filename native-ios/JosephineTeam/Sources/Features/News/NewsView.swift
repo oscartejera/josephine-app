@@ -5,6 +5,8 @@ struct NewsView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @State private var announcements: [Announcement] = []
     @State private var isLoading = false
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
 
@@ -12,6 +14,8 @@ struct NewsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: JSpacing.lg) {
+                    OfflineBanner()
+
                     if isLoading {
                         ProgressView()
                             .tint(JColor.accent)
@@ -37,6 +41,7 @@ struct NewsView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .refreshable { await loadAnnouncements() }
             .task { await loadAnnouncements() }
+            .errorBanner(errorMessage, isPresented: $showError)
         }
     }
 
@@ -133,7 +138,9 @@ struct NewsView: View {
                 .execute()
                 .value
         } catch {
-            announcements = []
+            errorMessage = "No se pudieron cargar las noticias. Tira hacia abajo para reintentar."
+            showError = true
+            HapticManager.play(.error)
         }
     }
 }

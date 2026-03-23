@@ -7,6 +7,8 @@ struct PayView: View {
     @State private var tips: [TipDistribution] = []
     @State private var selectedMonth = Date()
     @State private var isLoading = false
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
 
@@ -14,6 +16,8 @@ struct PayView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: JSpacing.lg) {
+                    OfflineBanner()
+
                     // MARK: - Month Selector
                     monthSelector
 
@@ -32,7 +36,9 @@ struct PayView: View {
             .background(JColor.background)
             .navigationTitle("Nómina")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .refreshable { await loadPayData() }
             .task { await loadPayData() }
+            .errorBanner(errorMessage, isPresented: $showError)
         }
     }
 
@@ -242,8 +248,9 @@ struct PayView: View {
                 .execute()
                 .value
         } catch {
-            monthRecords = []
-            tips = []
+            errorMessage = "No se pudo cargar la nómina. Tira hacia abajo para reintentar."
+            showError = true
+            HapticManager.play(.error)
         }
     }
 }

@@ -7,6 +7,8 @@ struct ScheduleView: View {
     @State private var shifts: [PlannedShift] = []
     @State private var weekShifts: [PlannedShift] = []
     @State private var isLoading = false
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
     private let calendar = Calendar.current
@@ -15,6 +17,8 @@ struct ScheduleView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: JSpacing.lg) {
+                    OfflineBanner()
+
                     // MARK: - Week Selector
                     weekSelector
 
@@ -33,10 +37,12 @@ struct ScheduleView: View {
             .background(JColor.background)
             .navigationTitle("Horario")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .refreshable { await loadWeekShifts() }
             .task { await loadWeekShifts() }
             .onChange(of: selectedDate) { _, _ in
                 filterShiftsForSelectedDay()
             }
+            .errorBanner(errorMessage, isPresented: $showError)
         }
     }
 
@@ -205,8 +211,9 @@ struct ScheduleView: View {
 
             filterShiftsForSelectedDay()
         } catch {
-            weekShifts = []
-            shifts = []
+            errorMessage = "No se pudo cargar el horario. Tira hacia abajo para reintentar."
+            showError = true
+            HapticManager.play(.error)
         }
     }
 }
