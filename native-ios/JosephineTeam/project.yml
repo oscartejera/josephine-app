@@ -3,7 +3,7 @@ options:
   bundleIdPrefix: com.josephine
   deploymentTarget:
     iOS: "17.0"
-  xcodeVersion: "26.0"
+  xcodeVersion: "16.2"
   generateEmptyDirectories: true
   createIntermediateGroups: true
 
@@ -20,10 +20,12 @@ targets:
     platform: iOS
     sources:
       - Sources
+      - path: Resources/Assets.xcassets
     resources:
       - path: Resources
         excludes:
           - "Info.plist"
+          - "Assets.xcassets"
     configFiles:
       Debug: Signing.xcconfig
       Release: Signing.xcconfig
