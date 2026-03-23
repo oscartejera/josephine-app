@@ -169,16 +169,9 @@ workflows:
           NEW_BUILD=$((LATEST_BUILD + 1))
           echo "Build number: $LATEST_BUILD → $NEW_BUILD"
 
-          # Patch the generated Info.plist directly
-          PLIST="JosephineTeam-Info.plist"
-          if [ -f "$PLIST" ]; then
-            plutil -replace CFBundleVersion -string "$NEW_BUILD" "$PLIST"
-            echo "✅ Patched $PLIST → CFBundleVersion = $NEW_BUILD"
-          fi
-
-          # Also inject via build settings (belt-and-suspenders)
-          echo "CURRENT_PROJECT_VERSION = $NEW_BUILD" >> Signing.xcconfig
-          echo "✅ Appended CURRENT_PROJECT_VERSION to Signing.xcconfig"
+          # Persist for subsequent steps via CM_ENV
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD" >> $CM_ENV
+          echo "✅ NEW_BUILD_NUMBER=$NEW_BUILD persisted to CM_ENV"
 
       # ── 5. Initialize keychain ──
       - name: Initialize keychain
@@ -261,13 +254,15 @@ workflows:
 
           # ── Archive (signing comes from xcconfig, not global overrides) ──
           cd native-ios/JosephineTeam
+          echo ">>> Archiving with CURRENT_PROJECT_VERSION=$NEW_BUILD_NUMBER"
           xcodebuild archive \
             -project "JosephineTeam.xcodeproj" \
             -scheme "$XCODE_SCHEME" \
             -configuration "Release" \
             -destination "generic/platform=iOS" \
             -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
-            COMPILER_INDEX_STORE_ENABLE=NO
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CURRENT_PROJECT_VERSION="$NEW_BUILD_NUMBER"
           cd ../..
 
           # ── Diagnostic: inspect archive bundle ──
