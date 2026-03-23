@@ -34,7 +34,7 @@ struct OfflineBanner: View {
             .animation(.spring(duration: 0.4), value: networkMonitor.isConnected)
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Sin conexión a internet. Mostrando datos guardados.")
-            .accessibilityAddTraits(.isStatusElement)
+            .accessibilityAddTraits(.updatesFrequently)
         }
     }
 }

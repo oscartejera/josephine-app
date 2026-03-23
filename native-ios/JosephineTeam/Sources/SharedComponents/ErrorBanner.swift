@@ -63,7 +63,7 @@ struct ErrorBanner: View {
             .transition(.move(edge: .top).combined(with: .opacity))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("\(severity == .error ? "Error" : "Aviso"): \(message)")
-            .accessibilityAddTraits(.isStatusElement)
+            .accessibilityAddTraits(.updatesFrequently)
             .accessibilityAction(.escape) {
                 withAnimation(.easeInOut(duration: 0.25)) { isPresented = false }
             }
