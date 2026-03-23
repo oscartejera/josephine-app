@@ -2,6 +2,10 @@ import SwiftUI
 
 // MARK: - Color Palette
 enum JColor {
+    /// Josephine brand purple (pwa-icon gradient)
+    static let brandPurple = Color(hex: 0x7C3AED)
+    static let brandPurpleDark = Color(hex: 0x6D28D9)
+
     /// Josephine accent: orange #F97316
     static let accent = Color(hex: 0xF97316)
 
