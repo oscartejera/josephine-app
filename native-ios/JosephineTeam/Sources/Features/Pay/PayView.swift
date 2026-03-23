@@ -37,7 +37,10 @@ struct PayView: View {
             .background(JColor.background)
             .navigationTitle("Nómina")
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .refreshable { await loadPayData() }
+            .refreshable {
+                await loadPayData()
+                HapticManager.play(.success)
+            }
             .task { await loadPayData() }
             .errorBanner(errorMessage, isPresented: $showError)
         }

@@ -82,11 +82,17 @@ struct AsyncContentView<Value, Content: View>: View {
 
             case .loaded(let value):
                 content(value)
-                    .refreshable { await load() }
+                    .refreshable {
+                        await load()
+                        HapticManager.play(.success)
+                    }
 
             case .empty:
                 emptyView
-                    .refreshable { await load() }
+                    .refreshable {
+                        await load()
+                        HapticManager.play(.success)
+                    }
 
             case .error(let error):
                 errorView(error)

@@ -43,7 +43,10 @@ struct HomeView: View {
             .background(JColor.background)
             .navigationTitle("Inicio")
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .refreshable { await loadData() }
+            .refreshable {
+                await loadData()
+                HapticManager.play(.success)
+            }
             .task { await loadData() }
             .errorBanner(errorMessage, isPresented: $showError)
         }

@@ -15,6 +15,12 @@ struct ClockView: View {
     @State private var showError = false
     @State private var errorMessage = ""
 
+    // Animation states
+    @State private var showClockResult = false
+    @State private var clockResultIcon = "checkmark.circle.fill"
+    @State private var clockResultColor: Color = .green
+    @State private var buttonScale: CGFloat = 1.0
+
     private let supabase = SupabaseManager.shared
     private let cache = CacheManager.shared
 
@@ -42,7 +48,10 @@ struct ClockView: View {
             .background(JColor.background)
             .navigationTitle("Fichaje")
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .refreshable { await loadClockData() }
+            .refreshable {
+                await loadClockData()
+                HapticManager.play(.success)
+            }
             .task { await loadClockData() }
             .errorBanner(errorMessage, isPresented: $showError)
         }
@@ -81,30 +90,46 @@ struct ClockView: View {
 
         return Button {
             Task {
+                // Press-in animation
+                withAnimation(.easeIn(duration: 0.1)) { buttonScale = 0.9 }
                 if isClockedIn {
                     await clockOut()
                 } else {
                     await clockIn()
                 }
+                // Release animation
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { buttonScale = 1.0 }
             }
         } label: {
-            VStack(spacing: JSpacing.sm) {
-                if isProcessing {
-                    ProgressView()
-                        .tint(.white)
-                        .frame(width: 120, height: 120)
-                } else {
-                    Image(systemName: isClockedIn ? "stop.circle.fill" : "play.circle.fill")
-                        .font(.system(size: 72))
-                        .foregroundStyle(isClockedIn ? JColor.error : JColor.success)
-                        .frame(width: 120, height: 120)
-                }
+            ZStack {
+                VStack(spacing: JSpacing.sm) {
+                    if isProcessing {
+                        ProgressView()
+                            .tint(.white)
+                            .frame(width: 120, height: 120)
+                    } else {
+                        Image(systemName: isClockedIn ? "stop.circle.fill" : "play.circle.fill")
+                            .font(.system(size: 72))
+                            .foregroundStyle(isClockedIn ? JColor.error : JColor.success)
+                            .frame(width: 120, height: 120)
+                    }
 
-                Text(isClockedIn ? "Fichar Salida" : "Fichar Entrada")
-                    .font(.jTitle3)
-                    .foregroundStyle(.white)
+                    Text(isClockedIn ? "Fichar Salida" : "Fichar Entrada")
+                        .font(.jTitle3)
+                        .foregroundStyle(.white)
+                }
+                .opacity(showClockResult ? 0.3 : 1.0)
+
+                // Success / Error result overlay
+                if showClockResult {
+                    Image(systemName: clockResultIcon)
+                        .font(.system(size: 64))
+                        .foregroundStyle(clockResultColor)
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
         }
+        .scaleEffect(buttonScale)
         .disabled(isProcessing)
     }
 
@@ -193,11 +218,13 @@ struct ClockView: View {
                 .insert(insert)
                 .execute()
             HapticManager.play(.clockIn)
+            await showResultAnimation(success: true)
             await loadClockData()
         } catch {
             errorMessage = "Error al fichar entrada. Inténtalo de nuevo."
             showError = true
             HapticManager.play(.error)
+            await showResultAnimation(success: false)
         }
     }
 
@@ -221,12 +248,14 @@ struct ClockView: View {
                 .eq("id", value: record.id.uuidString)
                 .execute()
             HapticManager.play(.clockOut)
+            await showResultAnimation(success: true)
             stopTimer()
             await loadClockData()
         } catch {
             errorMessage = "Error al fichar salida. Inténtalo de nuevo."
             showError = true
             HapticManager.play(.error)
+            await showResultAnimation(success: false)
         }
     }
 
@@ -292,6 +321,19 @@ struct ClockView: View {
         let minutes = (totalSeconds % 3600) / 60
         let seconds = totalSeconds % 60
         return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+    }
+
+    // MARK: - Result Animation
+    private func showResultAnimation(success: Bool) async {
+        clockResultIcon = success ? "checkmark.circle.fill" : "xmark.circle.fill"
+        clockResultColor = success ? JColor.success : JColor.error
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+            showClockResult = true
+        }
+        try? await Task.sleep(for: .seconds(1.2))
+        withAnimation(.easeOut(duration: 0.3)) {
+            showClockResult = false
+        }
     }
 }
 

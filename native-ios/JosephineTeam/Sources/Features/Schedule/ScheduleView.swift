@@ -38,7 +38,10 @@ struct ScheduleView: View {
             .background(JColor.background)
             .navigationTitle("Horario")
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .refreshable { await loadWeekShifts() }
+            .refreshable {
+                await loadWeekShifts()
+                HapticManager.play(.success)
+            }
             .task { await loadWeekShifts() }
             .onChange(of: selectedDate) { _, _ in
                 filterShiftsForSelectedDay()
