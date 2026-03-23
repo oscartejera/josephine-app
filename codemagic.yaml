@@ -494,15 +494,48 @@ workflows:
         script: |
           keychain add-certificates
 
-      # ── 8. Apply profiles to Xcode project ──
-      - name: Set up code signing
+      # ── 8. Archive + Export IPA with manual signing overrides ──
+      # XcodeGen projects don't work with `xcode-project use-profiles`.
+      # We extract profile details and pass them directly to xcodebuild.
+      - name: Archive and export IPA
         script: |
-          cd native-ios/JosephineTeam
-          xcode-project use-profiles
+          set -euo pipefail
 
-      # ── 9. Archive ──
-      - name: Archive
-        script: |
+          # ── Find the provisioning profile installed by Codemagic ──
+          PROFILE_PATH=$(find ~/Library/MobileDevice/Provisioning\ Profiles \
+                              ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles \
+                              -name "*.mobileprovision" -print -quit 2>/dev/null || true)
+
+          if [ -z "$PROFILE_PATH" ]; then
+            echo "❌ No provisioning profile found!"
+            find ~/Library -name "*.mobileprovision" 2>/dev/null || echo "None anywhere"
+            exit 1
+          fi
+          echo "✅ Found profile: $PROFILE_PATH"
+
+          # ── Extract profile metadata ──
+          PLIST=$(/usr/bin/security cms -D -i "$PROFILE_PATH")
+          PROFILE_NAME=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin)
+          PROFILE_UUID=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin)
+          TEAM_ID=$(echo "$PLIST" | /usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /dev/stdin)
+
+          echo "═══════════════════════════════════"
+          echo "PROFILE_NAME: $PROFILE_NAME"
+          echo "PROFILE_UUID: $PROFILE_UUID"
+          echo "TEAM_ID:      $TEAM_ID"
+          echo "BUNDLE_ID:    $BUNDLE_ID"
+          echo "═══════════════════════════════════"
+
+          # ── Copy profile to where Xcode expects it ──
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision 2>/dev/null || true
+
+          # ── List signing identities ──
+          echo ""
+          echo ">>> Available signing identities:"
+          security find-identity -v -p codesigning
+
+          # ── Archive with all signing overrides ──
           cd native-ios/JosephineTeam
           xcodebuild archive \
             -project "JosephineTeam.xcodeproj" \
@@ -510,21 +543,31 @@ workflows:
             -configuration "Release" \
             -destination "generic/platform=iOS" \
             -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            | xcpretty
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+            COMPILER_INDEX_STORE_ENABLE=NO
+          cd ../..
 
-      # ── 10. Export IPA ──
-      - name: Export IPA
-        script: |
-          xcode-project build-ipa \
-            --archive "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
-            --export-options-plist /dev/stdin <<EOF
+          # ── Export IPA ──
+          cat > "$CM_BUILD_DIR/ExportOptions.plist" <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
             <string>app-store</string>
+            <key>teamID</key>
+            <string>${TEAM_ID}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key>
+              <string>${PROFILE_NAME}</string>
+            </dict>
             <key>uploadBitcode</key>
             <false/>
             <key>uploadSymbols</key>
@@ -532,6 +575,14 @@ workflows:
           </dict>
           </plist>
           EOF
+
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/ipa" \
+            -exportOptionsPlist "$CM_BUILD_DIR/ExportOptions.plist"
+
+          echo "✅ IPA exported to $CM_BUILD_DIR/ipa/"
+          ls -la "$CM_BUILD_DIR/ipa/"
 
     artifacts:
       - "**/*.ipa"
