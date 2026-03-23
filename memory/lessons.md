@@ -468,3 +468,18 @@ xcrun altool --upload-package "App.ipa" \
 **Validation:** Archive build succeeds in Codemagic without strict concurrency errors.
 **Notes:** This pattern applies to any Objective-C delegate protocol (`MKMapViewDelegate`, `UITableViewDelegate`, etc.) used on `@MainActor` classes with `SWIFT_STRICT_CONCURRENCY: complete`.
 
+### MANDATORY: Always commit, push, and db push after every task
+
+**Date:** 2026-03-23
+**Area:** Workflow / Tooling
+**Root cause:** Changes left uncommitted or unpushed get lost, and database migrations not pushed leave staging/production out of sync.
+**What failed:** Work was completed but not pushed to `main`, requiring extra prompts to finish the job.
+**Prevention:** After completing ANY task that changes files, ALWAYS:
+  1. `git add` the changed files
+  2. `git commit -m "type(scope): description"` with a conventional commit message
+  3. `git push origin main`
+  4. If any SQL migration files were created or modified in `supabase/migrations/`, also run: `$env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value }); npx supabase db push`
+This is not optional — it must happen at the end of every prompt where code or config was changed.
+**Validation:** `git status` shows clean working tree. `npx supabase db push` returns "Remote database is up to date" if migrations were involved.
+**Notes:** Use separate `run_command` calls (never `&&`). If the user didn't explicitly say "don't push", push. This is the default behavior.
+
