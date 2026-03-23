@@ -8,29 +8,35 @@ struct ContentView: View {
             OfflineBanner()
 
             TabView {
-                Tab("Inicio", systemImage: "house.fill") {
-                    HomeView()
-                }
+                HomeView()
+                    .tabItem {
+                        Label("Inicio", systemImage: "house.fill")
+                    }
 
-                Tab("Horario", systemImage: "calendar") {
-                    ScheduleView()
-                }
+                ScheduleView()
+                    .tabItem {
+                        Label("Horario", systemImage: "calendar")
+                    }
 
-                Tab("Fichaje", systemImage: "clock.fill") {
-                    ClockView()
-                }
+                ClockView()
+                    .tabItem {
+                        Label("Fichaje", systemImage: "clock.fill")
+                    }
 
-                Tab("Nómina", systemImage: "banknote.fill") {
-                    PayView()
-                }
+                PayView()
+                    .tabItem {
+                        Label("Nómina", systemImage: "banknote.fill")
+                    }
 
-                Tab("Noticias", systemImage: "megaphone.fill") {
-                    NewsView()
-                }
+                NewsView()
+                    .tabItem {
+                        Label("Noticias", systemImage: "megaphone.fill")
+                    }
 
-                Tab("Perfil", systemImage: "person.circle.fill") {
-                    ProfileView()
-                }
+                ProfileView()
+                    .tabItem {
+                        Label("Perfil", systemImage: "person.circle.fill")
+                    }
             }
             .tint(JColor.accent)
         }

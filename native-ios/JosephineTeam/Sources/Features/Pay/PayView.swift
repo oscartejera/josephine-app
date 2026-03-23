@@ -11,6 +11,7 @@ struct PayView: View {
     @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
+    private let cache = CacheManager.shared
 
     var body: some View {
         NavigationStack {
@@ -219,38 +220,42 @@ struct PayView: View {
     // MARK: - Data Loading
     private func loadPayData() async {
         guard let emp = authVM.employee else { return }
-        isLoading = true
-        defer { isLoading = false }
 
         let cal = Calendar.current
         let comps = cal.dateComponents([.year, .month], from: selectedMonth)
         guard let monthStart = cal.date(from: comps),
               let monthEnd = cal.date(byAdding: DateComponents(month: 1, second: -1), to: monthStart) else { return }
 
-        let startStr = ISO8601DateFormatter().string(from: monthStart)
-        let endStr = ISO8601DateFormatter().string(from: monthEnd)
-
+        // 1. Read from cache instantly
         do {
-            monthRecords = try await supabase.client
-                .from("employee_clock_records")
-                .select()
-                .eq("employee_id", value: emp.id.uuidString)
-                .gte("clock_in", value: startStr)
-                .lte("clock_in", value: endStr)
-                .order("clock_in", ascending: true)
-                .execute()
-                .value
+            let cachedRecords = try cache.clockRecords(for: emp.id)
+            let cachedTips = try cache.tipDistributions(for: emp.id)
+            let filtered = cachedRecords.filter { $0.clockIn >= monthStart && $0.clockIn <= monthEnd }
+                .sorted { $0.clockIn < $1.clockIn }
+            if !filtered.isEmpty || !cachedTips.isEmpty {
+                monthRecords = filtered
+                tips = cachedTips
+            }
+        } catch { /* Cache miss */ }
 
-            tips = try await supabase.client
-                .from("tip_distributions")
-                .select()
-                .eq("employee_id", value: emp.id.uuidString)
-                .execute()
-                .value
+        isLoading = monthRecords.isEmpty
+        defer { isLoading = false }
+
+        // 2. Sync from network in background
+        do {
+            try await cache.sync(.clockRecords, force: true)
+            try await cache.sync(.tipDistributions, force: true)
+            // 3. Re-read from cache after sync
+            let freshRecords = try cache.clockRecords(for: emp.id)
+            monthRecords = freshRecords.filter { $0.clockIn >= monthStart && $0.clockIn <= monthEnd }
+                .sorted { $0.clockIn < $1.clockIn }
+            tips = try cache.tipDistributions(for: emp.id)
         } catch {
-            errorMessage = "No se pudo cargar la nómina. Tira hacia abajo para reintentar."
-            showError = true
-            HapticManager.play(.error)
+            if monthRecords.isEmpty {
+                errorMessage = "No se pudo cargar la nómina. Tira hacia abajo para reintentar."
+                showError = true
+                HapticManager.play(.error)
+            }
         }
     }
 }

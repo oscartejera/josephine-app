@@ -9,6 +9,7 @@ struct NewsView: View {
     @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
+    private let cache = CacheManager.shared
 
     var body: some View {
         NavigationStack {
@@ -123,24 +124,33 @@ struct NewsView: View {
 
     // MARK: - Data Loading
     private func loadAnnouncements() async {
-        guard let emp = authVM.employee else { return }
+        guard authVM.employee != nil else { return }
+
+        // 1. Read from cache instantly
+        do {
+            let cached = try cache.announcements()
+            if !cached.isEmpty {
+                announcements = cached
+            }
+        } catch {
+            // Cache read failed — will load from network
+        }
+
         isLoading = announcements.isEmpty
         defer { isLoading = false }
 
+        // 2. Sync from network in background
         do {
-            announcements = try await supabase.client
-                .from("announcements")
-                .select()
-                .eq("location_id", value: emp.locationId.uuidString)
-                .order("pinned", ascending: false)
-                .order("created_at", ascending: false)
-                .limit(20)
-                .execute()
-                .value
+            try await cache.sync(.announcements, force: true)
+            // 3. Re-read from cache after sync
+            announcements = try cache.announcements()
         } catch {
-            errorMessage = "No se pudieron cargar las noticias. Tira hacia abajo para reintentar."
-            showError = true
-            HapticManager.play(.error)
+            // Only show error if we have no cached data to display
+            if announcements.isEmpty {
+                errorMessage = "No se pudieron cargar las noticias. Tira hacia abajo para reintentar."
+                showError = true
+                HapticManager.play(.error)
+            }
         }
     }
 }

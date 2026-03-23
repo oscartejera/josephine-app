@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
+    private let cache = CacheManager.shared
 
     var body: some View {
         NavigationStack {
@@ -180,58 +181,57 @@ struct HomeView: View {
     // MARK: - Data Loading
     private func loadData() async {
         guard let emp = authVM.employee else { return }
-        isLoading = true
-        defer { isLoading = false }
 
         let today = DateFormatter.yyyyMMdd.string(from: Date())
         let (weekStart, weekEnd) = Date.currentWeekBounds()
 
-        async let fetchTodayShift: [PlannedShift] = supabase.client
-            .from("planned_shifts")
-            .select()
-            .eq("employee_id", value: emp.id.uuidString)
-            .eq("shift_date", value: today)
-            .eq("status", value: "published")
-            .execute()
-            .value
-
-        async let fetchUpcoming: [PlannedShift] = supabase.client
-            .from("planned_shifts")
-            .select()
-            .eq("employee_id", value: emp.id.uuidString)
-            .gt("shift_date", value: today)
-            .eq("status", value: "published")
-            .order("shift_date", ascending: true)
-            .limit(5)
-            .execute()
-            .value
-
-        async let fetchClockRecords: [ClockRecord] = supabase.client
-            .from("employee_clock_records")
-            .select()
-            .eq("employee_id", value: emp.id.uuidString)
-            .gte("clock_in", value: weekStart)
-            .lte("clock_in", value: weekEnd)
-            .order("clock_in", ascending: false)
-            .execute()
-            .value
-
+        // 1. Read from cache instantly
         do {
-            let (todayShifts, upcoming, records) = try await (fetchTodayShift, fetchUpcoming, fetchClockRecords)
-            todayShift = todayShifts.first
-            upcomingShifts = upcoming
-            activeClockRecord = records.first(where: { $0.isActive })
+            let cachedShifts = try cache.plannedShifts(for: emp.id)
+            let cachedRecords = try cache.clockRecords(for: emp.id)
+            if !cachedShifts.isEmpty || !cachedRecords.isEmpty {
+                applyData(shifts: cachedShifts, records: cachedRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
+            }
+        } catch { /* Cache miss — will load from network */ }
 
-            // Calculate week hours
-            weekHours = records.compactMap { record -> Double? in
-                guard let mins = record.durationMinutes else { return nil }
-                return Double(mins) / 60.0
-            }.reduce(0, +)
+        isLoading = todayShift == nil && upcomingShifts.isEmpty
+        defer { isLoading = false }
+
+        // 2. Sync from network in background
+        do {
+            try await cache.sync(.plannedShifts, force: true)
+            try await cache.sync(.clockRecords, force: true)
+            // 3. Re-read from cache after sync
+            let freshShifts = try cache.plannedShifts(for: emp.id)
+            let freshRecords = try cache.clockRecords(for: emp.id)
+            applyData(shifts: freshShifts, records: freshRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
         } catch {
-            errorMessage = "No se pudieron cargar los datos. Tira hacia abajo para reintentar."
-            showError = true
-            HapticManager.play(.error)
+            if todayShift == nil && upcomingShifts.isEmpty {
+                errorMessage = "No se pudieron cargar los datos. Tira hacia abajo para reintentar."
+                showError = true
+                HapticManager.play(.error)
+            }
         }
+    }
+
+    private func applyData(shifts: [PlannedShift], records: [ClockRecord], today: String, weekStart: String, weekEnd: String) {
+        let published = shifts.filter { $0.status == "published" }
+        todayShift = published.first(where: { $0.shiftDate == today })
+        upcomingShifts = published
+            .filter { $0.shiftDate > today }
+            .sorted { $0.shiftDate < $1.shiftDate }
+            .prefix(5)
+            .map { $0 }
+
+        let weekRecords = records.filter { record in
+            let clockStr = DateFormatter.yyyyMMdd.string(from: record.clockIn)
+            return clockStr >= weekStart && clockStr <= weekEnd
+        }
+        activeClockRecord = weekRecords.first(where: { $0.isActive })
+        weekHours = weekRecords.compactMap { record -> Double? in
+            guard let mins = record.durationMinutes else { return nil }
+            return Double(mins) / 60.0
+        }.reduce(0, +)
     }
 }
 

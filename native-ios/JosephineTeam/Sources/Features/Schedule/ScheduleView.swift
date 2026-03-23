@@ -11,6 +11,7 @@ struct ScheduleView: View {
     @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
+    private let cache = CacheManager.shared
     private let calendar = Calendar.current
 
     var body: some View {
@@ -189,31 +190,39 @@ struct ScheduleView: View {
     // MARK: - Data Loading
     private func loadWeekShifts() async {
         guard let emp = authVM.employee else { return }
-        isLoading = true
-        defer { isLoading = false }
 
         let days = weekDays
         guard let first = days.first, let last = days.last else { return }
         let startStr = DateFormatter.yyyyMMdd.string(from: first)
         let endStr = DateFormatter.yyyyMMdd.string(from: last)
 
+        // 1. Read from cache instantly
         do {
-            weekShifts = try await supabase.client
-                .from("planned_shifts")
-                .select()
-                .eq("employee_id", value: emp.id.uuidString)
-                .gte("shift_date", value: startStr)
-                .lte("shift_date", value: endStr)
-                .eq("status", value: "published")
-                .order("shift_date", ascending: true)
-                .execute()
-                .value
+            let cached = try cache.plannedShifts(for: emp.id)
+            let filtered = cached.filter { $0.status == "published" && $0.shiftDate >= startStr && $0.shiftDate <= endStr }
+            if !filtered.isEmpty {
+                weekShifts = filtered.sorted { $0.shiftDate < $1.shiftDate }
+                filterShiftsForSelectedDay()
+            }
+        } catch { /* Cache miss */ }
 
+        isLoading = weekShifts.isEmpty
+        defer { isLoading = false }
+
+        // 2. Sync from network in background
+        do {
+            try await cache.sync(.plannedShifts, force: true)
+            // 3. Re-read from cache after sync
+            let fresh = try cache.plannedShifts(for: emp.id)
+            weekShifts = fresh.filter { $0.status == "published" && $0.shiftDate >= startStr && $0.shiftDate <= endStr }
+                .sorted { $0.shiftDate < $1.shiftDate }
             filterShiftsForSelectedDay()
         } catch {
-            errorMessage = "No se pudo cargar el horario. Tira hacia abajo para reintentar."
-            showError = true
-            HapticManager.play(.error)
+            if weekShifts.isEmpty {
+                errorMessage = "No se pudo cargar el horario. Tira hacia abajo para reintentar."
+                showError = true
+                HapticManager.play(.error)
+            }
         }
     }
 }

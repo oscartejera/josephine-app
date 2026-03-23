@@ -16,6 +16,7 @@ struct ClockView: View {
     @State private var errorMessage = ""
 
     private let supabase = SupabaseManager.shared
+    private let cache = CacheManager.shared
 
     var body: some View {
         NavigationStack {
@@ -234,31 +235,34 @@ struct ClockView: View {
         guard let emp = authVM.employee else { return }
 
         let today = DateFormatter.yyyyMMdd.string(from: Date())
-        let todayStart = "\(today)T00:00:00"
-        let todayEnd = "\(today)T23:59:59"
 
+        // 1. Read from cache instantly
         do {
-            todayRecords = try await supabase.client
-                .from("employee_clock_records")
-                .select()
-                .eq("employee_id", value: emp.id.uuidString)
-                .gte("clock_in", value: todayStart)
-                .lte("clock_in", value: todayEnd)
-                .order("clock_in", ascending: false)
-                .execute()
-                .value
-
-            activeRecord = todayRecords.first(where: { $0.isActive })
-
-            if activeRecord != nil {
-                startTimer()
-            } else {
-                stopTimer()
+            let cached = try cache.clockRecords(for: emp.id)
+            let todayCached = cached.filter { DateFormatter.yyyyMMdd.string(from: $0.clockIn) == today }
+                .sorted { $0.clockIn > $1.clockIn }
+            if !todayCached.isEmpty {
+                todayRecords = todayCached
+                activeRecord = todayCached.first(where: { $0.isActive })
+                if activeRecord != nil { startTimer() } else { stopTimer() }
             }
+        } catch { /* Cache miss */ }
+
+        // 2. Sync from network in background
+        do {
+            try await cache.sync(.clockRecords, force: true)
+            // 3. Re-read from cache after sync
+            let fresh = try cache.clockRecords(for: emp.id)
+            todayRecords = fresh.filter { DateFormatter.yyyyMMdd.string(from: $0.clockIn) == today }
+                .sorted { $0.clockIn > $1.clockIn }
+            activeRecord = todayRecords.first(where: { $0.isActive })
+            if activeRecord != nil { startTimer() } else { stopTimer() }
         } catch {
-            errorMessage = "No se pudieron cargar los fichajes. Tira hacia abajo para reintentar."
-            showError = true
-            HapticManager.play(.error)
+            if todayRecords.isEmpty {
+                errorMessage = "No se pudieron cargar los fichajes. Tira hacia abajo para reintentar."
+                showError = true
+                HapticManager.play(.error)
+            }
         }
     }
 
