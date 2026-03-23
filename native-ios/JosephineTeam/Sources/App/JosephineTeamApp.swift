@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct JosephineTeamApp: App {
@@ -19,9 +20,15 @@ struct JosephineTeamApp: App {
             }
             .tint(JColor.accent)
             .preferredColorScheme(.dark)
+            .task {
+                // Background sync on launch — non-blocking
+                await CacheManager.shared.syncAll()
+            }
         }
+        .modelContainer(CacheManager.shared.container)
     }
 }
+
 
 // MARK: - Splash Screen
 struct SplashView: View {

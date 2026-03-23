@@ -417,3 +417,121 @@ workflows:
         notify:
           success: true
           failure: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # NATIVE iOS — SIGNED RELEASE → TestFlight
+  # ═══════════════════════════════════════════════════════════════
+  native-ios-release:
+    name: Native iOS — Release → TestFlight
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      xcode: 16.2
+      groups:
+        - app_store_credentials
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.josephine.team-staff
+      vars:
+        XCODE_WORKSPACE: native-ios/JosephineTeam/JosephineTeam.xcodeproj
+        XCODE_SCHEME: JosephineTeam
+        BUNDLE_ID: com.josephine.team-staff
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: release/native-ios/*
+          include: true
+          source: true
+      tag_patterns:
+        - pattern: native-ios/v*
+          include: true
+
+    scripts:
+      # ── 1. Install XcodeGen ──
+      - name: Install XcodeGen
+        script: |
+          brew install xcodegen
+
+      # ── 2. Generate Xcode Project ──
+      - name: Generate Xcode project
+        script: |
+          cd native-ios/JosephineTeam
+          xcodegen generate
+
+      # ── 3. Resolve SPM dependencies ──
+      - name: Resolve SPM dependencies
+        script: |
+          cd native-ios/JosephineTeam
+          xcodebuild -resolvePackageDependencies \
+            -project JosephineTeam.xcodeproj \
+            -scheme "$XCODE_SCHEME"
+
+      # ── 4. Increment build number ──
+      - name: Increment build number
+        script: |
+          cd native-ios/JosephineTeam
+          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number \
+            "$BUNDLE_ID" 2>/dev/null || echo "0")
+          NEW_BUILD=$((LATEST_BUILD + 1))
+          echo "Build number: $LATEST_BUILD → $NEW_BUILD"
+          agvtool new-version -all $NEW_BUILD
+
+      # ── 5. Set up code signing ──
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+
+      # ── 6. Archive ──
+      - name: Archive
+        script: |
+          cd native-ios/JosephineTeam
+          xcodebuild archive \
+            -project "JosephineTeam.xcodeproj" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration "Release" \
+            -destination "generic/platform=iOS" \
+            -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            | xcpretty
+
+      # ── 7. Export IPA ──
+      - name: Export IPA
+        script: |
+          xcode-project build-ipa \
+            --archive "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
+            --export-options-plist /dev/stdin <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+    artifacts:
+      - "**/*.ipa"
+      - "$CM_BUILD_DIR/JosephineTeam.xcarchive/**/*.dSYM"
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
+      email:
+        recipients:
+          - oscar.tejera99@gmail.com
+        notify:
+          success: true
+          failure: true

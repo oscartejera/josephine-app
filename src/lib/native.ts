@@ -69,4 +69,18 @@ export async function initNativePlugins(): Promise<void> {
   } catch (e) {
     console.warn('[native] Network bridge failed', e);
   }
+
+  // ── iOS-specific keyboard handling ─────────
+  if (platform === 'ios') {
+    try {
+      const { Keyboard, KeyboardResize } = await import('@capacitor/keyboard');
+      await Keyboard.setResizeMode({ mode: KeyboardResize.Ionic });
+      await Keyboard.setScroll({ isDisabled: false });
+    } catch (e) {
+      console.warn('[native] iOS Keyboard config failed', e);
+    }
+  }
+
+  // ── Platform body class for CSS targeting ──
+  document.body.classList.add(`native-${platform}`);
 }

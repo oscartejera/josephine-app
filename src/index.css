@@ -198,4 +198,31 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
   }
+
+  /* ── iOS-native polish ──────────────────────── */
+
+  /* Prevent Safari auto-zoom on input focus (iOS zooms if font < 16px) */
+  .native-ios input,
+  .native-ios select,
+  .native-ios textarea {
+    font-size: max(16px, 1em) !important;
+  }
+
+  /* Remove tap highlight on all native platforms */
+  .native-ios *,
+  .native-android * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth momentum scrolling on iOS */
+  .native-ios main {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Ensure buttons don't have iOS Safari default styles */
+  .native-ios button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
 }

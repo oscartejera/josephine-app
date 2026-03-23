@@ -2,24 +2,28 @@ import Foundation
 import Supabase
 
 // MARK: - Supabase Singleton
+
+/// Single source of truth for the Supabase client.
+/// Configuration is driven by `AppEnvironment.current`.
 @MainActor
 final class SupabaseManager: Sendable {
     static let shared = SupabaseManager()
 
     let client: SupabaseClient
+    let environment: AppEnvironment
 
     private init() {
-        // These values should match your .env / Supabase dashboard
-        // In production, inject via Info.plist or xcconfig per environment
-        let url = URL(string: ProcessInfo.processInfo.environment["SUPABASE_URL"]
-            ?? Bundle.main.infoDictionary?["SUPABASE_URL"] as? String
-            ?? "https://YOUR_PROJECT.supabase.co")!
+        let env = AppEnvironment.current
+        self.environment = env
 
-        let anonKey = ProcessInfo.processInfo.environment["SUPABASE_ANON_KEY"]
-            ?? Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String
-            ?? "YOUR_ANON_KEY"
+        client = SupabaseClient(
+            supabaseURL: env.supabaseURL,
+            supabaseKey: env.supabaseAnonKey
+        )
 
-        client = SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
+        #if DEBUG
+        print("🔌 Supabase [\(env.displayName)] → \(env.supabaseURL.absoluteString)")
+        #endif
     }
 
     // MARK: - Convenience Accessors

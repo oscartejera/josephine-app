@@ -419,3 +419,32 @@ Add new lessons below this line using the template above.
 **Validation:** After uploading, the build should appear in TestFlight without the compliance warning banner.
 **Notes:** Only set to `false` if your app uses ONLY standard HTTPS (exempt). If you add custom encryption (e.g., AES for local storage, custom TLS), you need to set `true` and register an ERN (Encryption Registration Number).
 
+### `xcrun altool --upload-app` fails for new apps — "Cannot determine Apple ID from Bundle ID"
+
+**Date:** 2026-03-23
+**Area:** CI/CD / iOS Build / App Store Connect
+**Root cause:** `xcrun altool --upload-app` resolves the app's Apple ID from the bundle ID via an API lookup. For newly created apps, this lookup fails with: `Cannot determine the Apple ID from Bundle ID 'com.xxx.yyy' and platform 'IOS'. (12)`. `altool` is also deprecated by Apple.
+**What failed:** Build compiled and signed successfully, IPA exported, but upload failed. First attempt used `xcrun altool --upload-app` directly. Error code 12.
+**Prevention:** Use `xcrun altool --upload-package` instead of `--upload-app`. The `--upload-package` command accepts `--apple-id` directly, bypassing the bundle ID → Apple ID lookup entirely. Get the Apple ID from App Store Connect URL (`apps/XXXXXXXXXX`).
+**Validation:** Codemagic build should finish green. IPA appears in TestFlight within 15-30 minutes.
+
+### `app-store-connect publish` also uses altool internally — same error
+
+**Date:** 2026-03-23
+**Area:** CI/CD / Codemagic CLI
+**Root cause:** Codemagic CLI's `app-store-connect publish --path App.ipa` internally calls `xcrun altool --upload-app`, NOT `--upload-package`. So switching from direct altool to the Codemagic CLI wrapper does NOT fix the "Cannot determine Apple ID" error.
+**What failed:** After replacing `xcrun altool --upload-app` with `app-store-connect publish`, the exact same error occurred because the CLI wraps the same broken command.
+**Prevention:** Skip the Codemagic CLI wrapper entirely for upload. Use `xcrun altool --upload-package` directly with explicit `--apple-id`:
+```bash
+xcrun altool --upload-package "App.ipa" \
+  --type ios \
+  --apple-id "XXXXXXXXXX" \
+  --bundle-id "$BUNDLE_ID" \
+  --bundle-version "$BUILD_NUM" \
+  --bundle-short-version-string "$MARKETING_VER" \
+  --apiKey "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+  --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+```
+**Validation:** Build #26 succeeded with this approach. All steps green, IPA uploaded to App Store Connect.
+**Notes:** The Apple ID is a numeric value (e.g., `6760979967`) found in the App Store Connect URL: `appstoreconnect.apple.com/apps/XXXXXXXXXX`. It never changes for an app. You also need to write the `.p8` API key to `~/.private_keys/AuthKey_KEYID.p8` before calling altool.
+

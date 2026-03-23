@@ -4,31 +4,36 @@ struct ContentView: View {
     @EnvironmentObject var authVM: AuthViewModel
 
     var body: some View {
-        TabView {
-            Tab("Inicio", systemImage: "house.fill") {
-                HomeView()
-            }
+        VStack(spacing: 0) {
+            OfflineBanner()
 
-            Tab("Horario", systemImage: "calendar") {
-                ScheduleView()
-            }
+            TabView {
+                Tab("Inicio", systemImage: "house.fill") {
+                    HomeView()
+                }
 
-            Tab("Fichaje", systemImage: "clock.fill") {
-                ClockView()
-            }
+                Tab("Horario", systemImage: "calendar") {
+                    ScheduleView()
+                }
 
-            Tab("Nómina", systemImage: "banknote.fill") {
-                PayView()
-            }
+                Tab("Fichaje", systemImage: "clock.fill") {
+                    ClockView()
+                }
 
-            Tab("Noticias", systemImage: "megaphone.fill") {
-                NewsView()
-            }
+                Tab("Nómina", systemImage: "banknote.fill") {
+                    PayView()
+                }
 
-            Tab("Perfil", systemImage: "person.circle.fill") {
-                ProfileView()
+                Tab("Noticias", systemImage: "megaphone.fill") {
+                    NewsView()
+                }
+
+                Tab("Perfil", systemImage: "person.circle.fill") {
+                    ProfileView()
+                }
             }
+            .tint(JColor.accent)
         }
-        .tint(JColor.accent)
     }
 }
+
