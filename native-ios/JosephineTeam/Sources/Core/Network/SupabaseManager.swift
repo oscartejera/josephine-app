@@ -27,10 +27,6 @@ final class SupabaseManager: @unchecked Sendable {
 
     // MARK: - Convenience Accessors
     var auth: AuthClient { client.auth }
-
-    /// Direct access to the Postgrest client for raw queries.
-    /// Feature views should prefer `client.from("table_name")` instead.
-    var db: PostgrestClient { client.rest }
 }
 
 
