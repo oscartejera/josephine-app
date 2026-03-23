@@ -111,7 +111,7 @@ struct AsyncContentView<Value, Content: View>: View {
             VStack(spacing: 12) {
                 ForEach(0..<4, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(JColor.card.opacity(0.5))
+                        .fill(JColor.surface.opacity(0.5))
                         .frame(height: 72)
                         .shimmer()
                 }

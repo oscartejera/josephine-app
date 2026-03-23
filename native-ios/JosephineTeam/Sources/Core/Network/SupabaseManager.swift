@@ -5,8 +5,7 @@ import Supabase
 
 /// Single source of truth for the Supabase client.
 /// Configuration is driven by `AppEnvironment.current`.
-@MainActor
-final class SupabaseManager: Sendable {
+final class SupabaseManager: @unchecked Sendable {
     static let shared = SupabaseManager()
 
     let client: SupabaseClient
