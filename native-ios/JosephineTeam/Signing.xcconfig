@@ -1,0 +1,27 @@
+// ───────────────────────────────────────────────
+// Signing.xcconfig
+// ───────────────────────────────────────────────
+// Manages code signing for both local (Automatic) and CI (Manual).
+//
+// Locally:
+//   XcodeGen picks up this file via configFiles in project.yml.
+//   Set CODE_SIGN_STYLE = Automatic for Xcode to manage signing.
+//
+// In Codemagic CI:
+//   The CI script patches these settings at build-time via
+//   xcodebuild overrides — so the values here are defaults only.
+// ───────────────────────────────────────────────
+
+// Use Automatic signing for local development (Xcode manages certs)
+CODE_SIGN_STYLE = Automatic
+
+// Your Apple Developer Team ID — fill in for local builds
+// In CI this is overridden by the pipeline
+DEVELOPMENT_TEAM =
+
+// For Debug builds, use "Apple Development" identity.
+// For Release, this is overridden by CI to "iPhone Distribution".
+CODE_SIGN_IDENTITY = Apple Development
+
+// Let Xcode resolve automatically in local; CI patches to specific profile
+PROVISIONING_PROFILE_SPECIFIER =

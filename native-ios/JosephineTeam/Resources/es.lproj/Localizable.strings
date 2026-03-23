@@ -1,0 +1,88 @@
+/* Localizable.strings – Spanish (es)
+   JosephineTeam – Employee app for Josephine restaurants */
+
+// MARK: - Tab Bar
+"tab.home"       = "Inicio";
+"tab.schedule"   = "Horario";
+"tab.clock"      = "Fichar";
+"tab.pay"        = "Nómina";
+"tab.news"       = "Noticias";
+"tab.profile"    = "Perfil";
+
+// MARK: - Login
+"login.title"           = "Josephine";
+"login.subtitle"        = "Portal del Empleado";
+"login.email"           = "Email";
+"login.password"        = "Contraseña";
+"login.button"          = "Iniciar Sesión";
+"login.footer"          = "Si no tienes cuenta, contacta a tu encargado";
+"login.error.invalid"   = "Email o contraseña incorrectos";
+
+// MARK: - Home
+"home.greeting"         = "Hola, %@!";
+"home.active_clock"     = "FICHAJE ACTIVO";
+"home.since"            = "Desde %@";
+"home.hours_week"       = "Horas esta semana";
+"home.upcoming_shifts"  = "Próximos turnos";
+"home.today_shift"      = "Turno de hoy";
+"home.no_shift_today"   = "No tienes turno hoy";
+"home.no_upcoming"      = "No hay turnos programados";
+
+// MARK: - Schedule
+"schedule.title"        = "Horario";
+"schedule.hours"        = "Horas";
+"schedule.days"         = "Días";
+"schedule.day_off"      = "Día libre";
+
+// MARK: - Clock
+"clock.title"           = "Fichar";
+"clock.entry"           = "Entrada";
+"clock.exit"            = "Salida";
+"clock.today_records"   = "Registros de hoy";
+"clock.no_records"      = "Sin registros hoy";
+"clock.active"          = "Activo";
+"clock.total_today"     = "Total hoy";
+"clock.error.location"  = "Se necesitan los permisos de ubicación para fichar";
+
+// MARK: - Pay
+"pay.title"             = "Nómina";
+"pay.hours_worked"      = "Horas trabajadas";
+"pay.gross_salary"      = "Salario bruto";
+"pay.days_worked"       = "Días trabajados";
+"pay.tips"              = "Propinas";
+"pay.breakdown"         = "Desglose";
+"pay.total_hours"       = "Horas totales";
+"pay.hourly_cost"       = "Coste/hora";
+"pay.estimated_total"   = "Total estimado";
+"pay.daily_detail"      = "Detalle diario";
+"pay.no_records"        = "Sin registros este mes";
+
+// MARK: - News
+"news.title"            = "Noticias";
+"news.empty_title"      = "Sin noticias";
+"news.empty_message"    = "No hay anuncios publicados todavía";
+
+// MARK: - Announcement Types
+"announcement.info"         = "Info";
+"announcement.important"    = "Importante";
+"announcement.celebration"  = "Celebración";
+"announcement.schedule"     = "Horario";
+
+// MARK: - Profile
+"profile.title"         = "Perfil";
+"profile.employee"      = "Empleado";
+"profile.email"         = "Email";
+"profile.employee_id"   = "ID Empleado";
+"profile.hourly_cost"   = "Coste/hora";
+"profile.settings"      = "Ajustes";
+"profile.notifications" = "Notificaciones";
+"profile.language"      = "Idioma";
+"profile.help"          = "Ayuda";
+"profile.privacy"       = "Política de privacidad";
+"profile.sign_out"      = "Cerrar Sesión";
+
+// MARK: - General
+"general.error"         = "Error";
+"general.ok"            = "OK";
+"general.cancel"        = "Cancelar";
+"general.loading"       = "Cargando…";

@@ -343,3 +343,77 @@ workflows:
         notify:
           success: true
           failure: true
+
+  # ═══════════════════════════════════════════════
+  # WORKFLOW 3: Native iOS (SwiftUI) — Verify Build
+  # ═══════════════════════════════════════════════
+  # Pure Swift/SwiftUI project at native-ios/JosephineTeam/
+  # Uses XcodeGen + SPM (no npm, no Capacitor)
+  # This is a BUILD-ONLY verification — no signing, no TestFlight
+  native-ios-verify:
+    name: Josephine Native iOS Verify (XcodeGen + SwiftUI)
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+
+    environment:
+      xcode: 16.0        # Explicit version — lessons learned from Capacitor pipeline
+      node: 22            # XcodeGen is installed via Homebrew, not Node
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: false    # Manual trigger only — flip to true when ready
+      cancel_previous_builds: true
+
+    scripts:
+      # ── 1. Install XcodeGen ──
+      - name: Install XcodeGen
+        script: |
+          brew install xcodegen
+          xcodegen --version
+
+      # ── 2. Generate Xcode project from project.yml ──
+      - name: Generate Xcode project
+        script: |
+          cd native-ios/JosephineTeam
+          xcodegen generate
+          echo ""
+          echo ">>> Generated .xcodeproj contents:"
+          ls -la JosephineTeam.xcodeproj/
+
+      # ── 3. Resolve Swift Package Manager dependencies ──
+      - name: Resolve SPM dependencies
+        script: |
+          cd native-ios/JosephineTeam
+          xcodebuild -resolvePackageDependencies \
+            -project JosephineTeam.xcodeproj \
+            -scheme "JosephineTeam"
+
+      # ── 4. Build without signing (verify compilation) ──
+      - name: Build iOS (no signing)
+        script: |
+          cd native-ios/JosephineTeam
+          xcodebuild \
+            -project "JosephineTeam.xcodeproj" \
+            -scheme "JosephineTeam" \
+            -configuration "Release" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            | xcpretty
+
+    artifacts:
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - oscar.tejera99@gmail.com
+        notify:
+          success: true
+          failure: true

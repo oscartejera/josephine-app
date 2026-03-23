@@ -1,0 +1,35 @@
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.swp
+*.moved-aside
+*.hmap
+
+# Swift Package Manager
+.build/
+Package.resolved
+*.xcframework
+
+# CocoaPods (not used but just in case)
+Pods/
+
+# Tuist / XcodeGen generated
+*.xcodeproj
+
+# macOS
+.DS_Store
+*.dSYM.zip
+*.dSYM
+
+# Archives
+*.ipa
+*.xcarchive
+
+# Secrets
+.env
+.env.local
+Secrets.swift
