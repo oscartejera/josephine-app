@@ -30,12 +30,14 @@ struct AsyncContentView<Value, Content: View>: View {
     let loadingStyle: LoadingStyle
     let emptyMessage: String
     let emptyIcon: String
+    let initialValue: Value?
     let fetch: () async throws -> Value
     let isEmpty: (Value) -> Bool
     let content: (Value) -> Content
 
     @State private var phase: Phase = .idle
 
+    /// Standard initializer — shows spinner/skeleton while `fetch` runs.
     init(
         loadingStyle: LoadingStyle = .spinner,
         emptyMessage: String = "No hay datos disponibles",
@@ -47,6 +49,26 @@ struct AsyncContentView<Value, Content: View>: View {
         self.loadingStyle = loadingStyle
         self.emptyMessage = emptyMessage
         self.emptyIcon = emptyIcon
+        self.initialValue = nil
+        self.fetch = fetch
+        self.isEmpty = isEmpty
+        self.content = content
+    }
+
+    /// Cache-first initializer — shows `initialValue` instantly, then refreshes via `fetch` in background.
+    /// If `initialValue` is nil, behaves like the standard initializer (full loading flow).
+    init(
+        initialValue: Value?,
+        emptyMessage: String = "No hay datos disponibles",
+        emptyIcon: String = "tray",
+        fetch: @escaping () async throws -> Value,
+        isEmpty: @escaping (Value) -> Bool = { _ in false },
+        @ViewBuilder content: @escaping (Value) -> Content
+    ) {
+        self.loadingStyle = .spinner // unused when initialValue is set
+        self.emptyMessage = emptyMessage
+        self.emptyIcon = emptyIcon
+        self.initialValue = initialValue
         self.fetch = fetch
         self.isEmpty = isEmpty
         self.content = content
@@ -70,10 +92,23 @@ struct AsyncContentView<Value, Content: View>: View {
                 errorView(error)
             }
         }
-        .task { await load() }
+        .task {
+            // Cache-first: show cached data right away, then silently refresh
+            if let cached = initialValue {
+                if isEmpty(cached) {
+                    phase = .empty
+                } else {
+                    phase = .loaded(cached)
+                }
+                // Background refresh — errors are silent since we already have data
+                await refreshSilently()
+            } else {
+                await load()
+            }
+        }
     }
 
-    // MARK: - Load
+    // MARK: - Load (full — sets loading state)
 
     private func load() async {
         phase = .loading
@@ -87,7 +122,31 @@ struct AsyncContentView<Value, Content: View>: View {
                 }
             }
         } catch {
+            // Only show error if we have no data at all
+            if case .loaded = phase { return }
             phase = .error(error)
+        }
+    }
+
+    // MARK: - Silent refresh (cache-first background update)
+
+    private func refreshSilently() async {
+        do {
+            let value = try await fetch()
+            if isEmpty(value) {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    phase = .empty
+                }
+            } else {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    phase = .loaded(value)
+                }
+            }
+        } catch {
+            // Silent — we already have cached data showing
+            #if DEBUG
+            print("⚠️ AsyncContentView silent refresh failed: \(error.localizedDescription)")
+            #endif
         }
     }
 
