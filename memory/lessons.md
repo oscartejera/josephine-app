@@ -448,3 +448,23 @@ xcrun altool --upload-package "App.ipa" \
 **Validation:** Build #26 succeeded with this approach. All steps green, IPA uploaded to App Store Connect.
 **Notes:** The Apple ID is a numeric value (e.g., `6760979967`) found in the App Store Connect URL: `appstoreconnect.apple.com/apps/XXXXXXXXXX`. It never changes for an app. You also need to write the `.p8` API key to `~/.private_keys/AuthKey_KEYID.p8` before calling altool.
 
+### PowerShell does not support `&&` — use `;` or separate commands
+
+**Date:** 2026-03-23
+**Area:** Tooling / Shell
+**Root cause:** The user's OS is Windows with PowerShell as the default shell. PowerShell (pre-7.x) does not support `&&` as a command chaining operator — it throws `ParserError: InvalidEndOfLine`.
+**What failed:** `git status --short && echo "---" && git branch --show-current` failed with a parser error.
+**Prevention:** Never use `&&` in commands. Use `;` for sequential execution or run commands as separate `run_command` calls. If conditional chaining is needed, use `if ($LASTEXITCODE -eq 0) { next-command }`.
+**Validation:** Commands execute without `ParserError` or `InvalidEndOfLine` errors.
+**Notes:** PowerShell 7+ supports `&&` but the default Windows PowerShell (5.x) does not. Always assume 5.x.
+
+### Strict concurrency: `CLLocationManagerDelegate` methods must be `nonisolated` on `@MainActor` classes
+
+**Date:** 2026-03-23
+**Area:** iOS / Swift / Concurrency
+**Root cause:** `project.yml` sets `SWIFT_STRICT_CONCURRENCY: complete`, which promotes concurrency warnings to errors. `CLLocationManagerDelegate` is an Objective-C protocol with no actor isolation annotation. When a `@MainActor` class conforms to it, the delegate methods violate strict concurrency rules.
+**What failed:** Archive/Release build failed in Codemagic. Debug builds may tolerate the warnings but archive builds treat them as errors.
+**Prevention:** When a `@MainActor` class conforms to an Objective-C delegate protocol, mark delegate methods `nonisolated` and use `MainActor.assumeIsolated { }` inside the method body. This is safe when the underlying framework (e.g., CoreLocation) guarantees main-thread dispatch.
+**Validation:** Archive build succeeds in Codemagic without strict concurrency errors.
+**Notes:** This pattern applies to any Objective-C delegate protocol (`MKMapViewDelegate`, `UITableViewDelegate`, etc.) used on `@MainActor` classes with `SWIFT_STRICT_CONCURRENCY: complete`.
+
