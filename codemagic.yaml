@@ -245,24 +245,45 @@ workflows:
           echo "═══════════════════════════════════"
           echo ">>> Build Number Increment"
           echo "═══════════════════════════════════"
-          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number \
-            "$BUNDLE_ID" 2>/dev/null || echo "0")
-          echo ">>> TestFlight latest build: [$LATEST_BUILD]"
-          # Sanitize: strip whitespace, default to 0 if empty
-          LATEST_BUILD=$(echo "$LATEST_BUILD" | tr -d '[:space:]')
-          LATEST_BUILD=${LATEST_BUILD:-0}
+
+          # Try to get the latest build number from TestFlight
+          echo ">>> Running: app-store-connect get-latest-testflight-build-number $BUNDLE_ID"
+          LATEST_BUILD_RAW=$(app-store-connect get-latest-testflight-build-number \
+            "$BUNDLE_ID" 2>&1) || true
+          echo ">>> Raw output: [$LATEST_BUILD_RAW]"
+
+          # Extract only the numeric part (last line that looks like a number)
+          LATEST_BUILD=$(echo "$LATEST_BUILD_RAW" | grep -Eo '^[0-9]+$' | tail -1)
+          echo ">>> Extracted build number: [$LATEST_BUILD]"
+
+          # Default to 1 if empty (meaning TestFlight has at least build 1 already)
+          if [ -z "$LATEST_BUILD" ] || [ "$LATEST_BUILD" -eq 0 ]; then
+            echo ">>> WARNING: Could not get build number from TestFlight, defaulting to 1"
+            LATEST_BUILD=1
+          fi
+
           NEW_BUILD=$((LATEST_BUILD + 1))
-          echo ">>> New build number: $NEW_BUILD"
+          echo ">>> Previous build: $LATEST_BUILD → New build: $NEW_BUILD"
 
-          # Patch the plist directly (CFBundleVersion is a literal, no variable resolution)
-          PLIST="native-ios/JosephineTeam/JosephineTeam-Info.plist"
-          plutil -replace CFBundleVersion -string "$NEW_BUILD" "$PLIST"
-          echo "✅ Patched $PLIST → CFBundleVersion = $NEW_BUILD"
-          echo ">>> Verify plist CFBundleVersion:"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST"
+          # METHOD 1: Patch the generated Info.plist directly
+          PLIST_PATH="native-ios/JosephineTeam/JosephineTeam-Info.plist"
+          if [ -f "$PLIST_PATH" ]; then
+            plutil -replace CFBundleVersion -string "$NEW_BUILD" "$PLIST_PATH"
+            echo "✅ Patched $PLIST_PATH → CFBundleVersion = $NEW_BUILD"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST_PATH"
+          else
+            echo "⚠️ Plist not found at $PLIST_PATH (XcodeGen may use build settings instead)"
+          fi
 
-          # ── Archive (signing comes from xcconfig, not global overrides) ──
+          # METHOD 2: Also update the xcconfig and build settings
+          echo "CURRENT_PROJECT_VERSION = $NEW_BUILD" >> native-ios/JosephineTeam/Signing.xcconfig
+          echo "✅ Appended CURRENT_PROJECT_VERSION=$NEW_BUILD to Signing.xcconfig"
+          echo ">>> Final Signing.xcconfig:"
+          cat native-ios/JosephineTeam/Signing.xcconfig
+
+          # ── Archive (signing comes from xcconfig, build number from override) ──
           cd native-ios/JosephineTeam
+          echo ""
           echo ">>> Archiving with CURRENT_PROJECT_VERSION=$NEW_BUILD"
           xcodebuild archive \
             -project "JosephineTeam.xcodeproj" \
@@ -271,31 +292,33 @@ workflows:
             -destination "generic/platform=iOS" \
             -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            CURRENT_PROJECT_VERSION="$NEW_BUILD"
+            CURRENT_PROJECT_VERSION="$NEW_BUILD" \
+            INFOPLIST_KEY_CFBundleVersion="$NEW_BUILD"
           cd ../..
 
-          # ── Diagnostic: inspect archive bundle ──
+          # ── Diagnostic: verify build number in final bundle ──
           APP="$CM_BUILD_DIR/JosephineTeam.xcarchive/Products/Applications/JosephineTeam.app"
           echo ""
           echo "═══════════════════════════════════"
-          echo ">>> Archive .app bundle contents:"
+          echo ">>> Post-Archive Verification"
           echo "═══════════════════════════════════"
-          ls -la "$APP/" || echo "❌ .app not found"
+          BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist" 2>&1 || echo "UNKNOWN")
+          echo ">>> CFBundleVersion in final bundle: [$BUNDLE_VERSION]"
+          if [ "$BUNDLE_VERSION" = "1" ] || [ "$BUNDLE_VERSION" = "UNKNOWN" ]; then
+            echo "❌ ERROR: Build number was NOT incremented! Bundle still has version $BUNDLE_VERSION"
+            echo ">>> Attempting emergency plist patch on bundle..."
+            plutil -replace CFBundleVersion -string "$NEW_BUILD" "$APP/Info.plist"
+            echo ">>> After emergency patch:"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist"
+          else
+            echo "✅ Build number correctly set to $BUNDLE_VERSION"
+          fi
           echo ""
           echo ">>> Assets.car exists?"
           ls -la "$APP/Assets.car" 2>&1 || echo "❌ Assets.car NOT FOUND"
           echo ""
-          echo ">>> Info.plist in bundle:"
-          /usr/libexec/PlistBuddy -c "Print" "$APP/Info.plist" 2>&1 || echo "❌ Cannot read Info.plist"
-          echo ""
-          echo ">>> CFBundleIconName in bundle plist:"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$APP/Info.plist" 2>&1 || echo "❌ CFBundleIconName NOT in bundle plist"
-          echo ""
-          echo ">>> CFBundleIcons in bundle plist:"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons" "$APP/Info.plist" 2>&1 || echo "(no CFBundleIcons)"
-          echo ""
-          echo ">>> Asset catalog dump (actool info):"
-          xcrun --sdk iphoneos assetutil --info "$APP/Assets.car" 2>&1 | head -100 || echo "❌ Cannot read Assets.car"
+          echo ">>> CFBundleIconName in bundle:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$APP/Info.plist" 2>&1 || echo "❌ NOT FOUND"
 
 
 
