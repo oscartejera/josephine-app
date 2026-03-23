@@ -281,6 +281,20 @@ workflows:
           echo ">>> Final Signing.xcconfig:"
           cat native-ios/JosephineTeam/Signing.xcconfig
 
+          # ── Force CFBundleIconName into generated plist ──
+          PLIST_PATH="native-ios/JosephineTeam/JosephineTeam-Info.plist"
+          if [ -f "$PLIST_PATH" ]; then
+            /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string AppIcon" "$PLIST_PATH" 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Set :CFBundleIconName AppIcon" "$PLIST_PATH"
+            echo "✅ Ensured CFBundleIconName=AppIcon in $PLIST_PATH"
+          fi
+
+          # ── Verify asset catalog contents ──
+          echo ""
+          echo ">>> Asset catalog verification:"
+          ls -la native-ios/JosephineTeam/Resources/Assets.xcassets/AppIcon.appiconset/
+          cat native-ios/JosephineTeam/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json
+
           # ── Archive (signing comes from xcconfig, build number from override) ──
           cd native-ios/JosephineTeam
           echo ""
@@ -293,7 +307,9 @@ workflows:
             -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             CURRENT_PROJECT_VERSION="$NEW_BUILD" \
-            INFOPLIST_KEY_CFBundleVersion="$NEW_BUILD"
+            INFOPLIST_KEY_CFBundleVersion="$NEW_BUILD" \
+            ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon \
+            ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS=YES
           cd ../..
 
           # ── Diagnostic: verify build number in final bundle ──
