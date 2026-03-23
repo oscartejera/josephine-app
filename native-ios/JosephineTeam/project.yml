@@ -12,9 +12,7 @@ packages:
     url: https://github.com/supabase/supabase-swift
     from: "2.0.0"
 
-configFiles:
-  Debug: Signing.xcconfig
-  Release: Signing.xcconfig
+
 
 targets:
   JosephineTeam:
@@ -24,6 +22,9 @@ targets:
       - Sources
     resources:
       - Resources
+    configFiles:
+      Debug: Signing.xcconfig
+      Release: Signing.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.josephine.team-staff
