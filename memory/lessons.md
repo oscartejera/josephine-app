@@ -483,3 +483,13 @@ This is not optional — it must happen at the end of every prompt where code or
 **Validation:** `git status` shows clean working tree. `npx supabase db push` returns "Remote database is up to date" if migrations were involved.
 **Notes:** Use separate `run_command` calls (never `&&`). If the user didn't explicitly say "don't push", push. This is the default behavior.
 
+### Codemagic: `grep -Eo '^[0-9]+$'` silently fails when output contains mixed text
+
+**Date:** 2026-03-24
+**Area:** CI/CD / Versioning
+**Root cause:** `app-store-connect get-latest-testflight-build-number` can return output with text surrounding the number (e.g. log prefixes, status messages). The regex `^[0-9]+$` only matches lines that are ENTIRELY a number — if the number appears alongside any other text on the same line, the grep returns empty.
+**What failed:** The extraction returned empty → fallback defaulted to `1` → calculated `NEW_BUILD=2` → but build 2 already existed in TestFlight → upload rejected with `previousBundleVersion = 2`.
+**Prevention:** Use `grep -Eo '[0-9]+' | sort -n | tail -1` to extract the highest number from ANY position in the output. Also set the fallback default to the highest known existing build number (not `1`), so even total extraction failure produces a valid next number.
+**Validation:** Codemagic build #37 succeeded with this fix — build number auto-incremented to 3.
+**Notes:** This is a general shell scripting lesson: when extracting numbers from CLI tool output, never assume the number will be on its own line. Always use a permissive regex with a max-value selector.
+
