@@ -253,7 +253,7 @@ workflows:
           echo ">>> Raw output: [$LATEST_BUILD_RAW]"
 
           # Extract only the numeric part (last line that looks like a number)
-          LATEST_BUILD=$(echo "$LATEST_BUILD_RAW" | grep -Eo '^[0-9]+$' | tail -1)
+          LATEST_BUILD=$(echo "$LATEST_BUILD_RAW" | grep -Eo '^[0-9]+$' | tail -1 || true)
           echo ">>> Extracted build number: [$LATEST_BUILD]"
 
           # Default to 1 if empty (meaning TestFlight has at least build 1 already)
