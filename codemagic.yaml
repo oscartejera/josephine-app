@@ -160,18 +160,6 @@ workflows:
             -project JosephineTeam.xcodeproj \
             -scheme "$XCODE_SCHEME"
 
-      # ── 4. Increment build number ──
-      - name: Increment build number
-        script: |
-          cd native-ios/JosephineTeam
-          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number \
-            "$BUNDLE_ID" 2>/dev/null || echo "0")
-          NEW_BUILD=$((LATEST_BUILD + 1))
-          echo "Build number: $LATEST_BUILD → $NEW_BUILD"
-
-          # Persist for subsequent steps via CM_ENV
-          echo "NEW_BUILD_NUMBER=$NEW_BUILD" >> $CM_ENV
-          echo "✅ NEW_BUILD_NUMBER=$NEW_BUILD persisted to CM_ENV"
 
       # ── 5. Initialize keychain ──
       - name: Initialize keychain
@@ -252,9 +240,30 @@ workflows:
           echo ">>> Entitlements after stripping Associated Domains:"
           cat "$ENTITLEMENTS"
 
+          # ── Increment build number (inline – no cross-step deps) ──
+          echo ""
+          echo "═══════════════════════════════════"
+          echo ">>> Build Number Increment"
+          echo "═══════════════════════════════════"
+          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number \
+            "$BUNDLE_ID" 2>/dev/null || echo "0")
+          echo ">>> TestFlight latest build: [$LATEST_BUILD]"
+          # Sanitize: strip whitespace, default to 0 if empty
+          LATEST_BUILD=$(echo "$LATEST_BUILD" | tr -d '[:space:]')
+          LATEST_BUILD=${LATEST_BUILD:-0}
+          NEW_BUILD=$((LATEST_BUILD + 1))
+          echo ">>> New build number: $NEW_BUILD"
+
+          # Patch the plist directly (CFBundleVersion is a literal, no variable resolution)
+          PLIST="native-ios/JosephineTeam/JosephineTeam-Info.plist"
+          plutil -replace CFBundleVersion -string "$NEW_BUILD" "$PLIST"
+          echo "✅ Patched $PLIST → CFBundleVersion = $NEW_BUILD"
+          echo ">>> Verify plist CFBundleVersion:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST"
+
           # ── Archive (signing comes from xcconfig, not global overrides) ──
           cd native-ios/JosephineTeam
-          echo ">>> Archiving with CURRENT_PROJECT_VERSION=$NEW_BUILD_NUMBER"
+          echo ">>> Archiving with CURRENT_PROJECT_VERSION=$NEW_BUILD"
           xcodebuild archive \
             -project "JosephineTeam.xcodeproj" \
             -scheme "$XCODE_SCHEME" \
@@ -262,7 +271,7 @@ workflows:
             -destination "generic/platform=iOS" \
             -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            CURRENT_PROJECT_VERSION="$NEW_BUILD_NUMBER"
+            CURRENT_PROJECT_VERSION="$NEW_BUILD"
           cd ../..
 
           # ── Diagnostic: inspect archive bundle ──
