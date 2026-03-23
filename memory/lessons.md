@@ -233,3 +233,189 @@ Add new lessons below this line using the template above.
 **Validation:** `ls ios/App/*.xcodeproj` should exist. `ls ios/App/*.xcworkspace` should NOT exist for SPM projects.
 **Notes:** This is a common mistake when copying CI configs from pre-Capacitor-6 tutorials.
 
+### Codemagic: Must select Xcode version explicitly when multiple are installed
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Tooling
+**Root cause:** Codemagic M2 machines can have multiple Xcode versions installed. The default may not match the one expected by the project or may lack required SDKs.
+**What failed:** Build could fail or use unexpected SDK versions if the wrong Xcode is active.
+**Prevention:** Always include `xcode: latest` (or a specific version like `16.2`) in the `environment:` section of `codemagic.yaml`. Verify with `xcode-select -p` in the build script.
+**Validation:** The build log should show the expected Xcode version in the "Preparing build machine" step.
+**Notes:** Use `latest` for most projects. Pin a specific version only if the project requires it.
+
+### Codemagic: Apple signing certificates require the private key, not just the .cer
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Signing
+**Root cause:** An Apple Distribution certificate `.cer` only contains the public key. Code signing requires the private key that was used to generate the original CSR (Certificate Signing Request).
+**What failed:** `security find-identity -v -p codesigning` returned 0 valid identities even after importing the `.cer` because the private key was missing from the keychain.
+**Prevention:** When setting up Codemagic manually (not using `app-store-connect fetch-signing-files`), you must export the certificate as a `.p12` (which bundles cert + private key) from Keychain Access on the Mac where the CSR was generated. Alternatively, use Codemagic's automatic signing with `app-store-connect fetch-signing-files` which handles everything.
+**Validation:** After importing, `security find-identity -v -p codesigning` must return at least 1 valid identity with the expected team name.
+**Notes:** If you've lost the private key, you must revoke the certificate and create a new one.
+
+### Codemagic: `app-store-connect fetch-signing-files` is the simplest signing setup
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Signing
+**Root cause:** Manual certificate and provisioning profile management in CI is error-prone — you need the right `.p12`, password, profile UUID, and correct keychain imports.
+**What failed:** Multiple manual signing attempts failed due to missing private keys, wrong profile names, and incorrect identity references.
+**Prevention:** Use Codemagic's built-in `app-store-connect fetch-signing-files` command. It uses the App Store Connect API key to automatically: (1) fetch or create the distribution certificate, (2) fetch or create the provisioning profile, (3) install both into the keychain. All you need is the API key, key ID, and issuer ID as environment variables.
+**Validation:** Build log shows "Fetch signing files" step completing with certificate and profile details. `xcode-project use-profiles` succeeds.
+**Notes:** This replaced ~30 lines of manual keychain/signing scripting with 3 lines. Always prefer this approach.
+
+### Codemagic: Capacitor's generated Info.plist may be empty, causing archive failure
+
+**Date:** 2026-03-22
+**Area:** CI/CD / iOS Build
+**Root cause:** When `cap add ios` generates the project in CI, the `Info.plist` may be minimal or empty. `xcodebuild archive` requires `CFBundleVersion` and `CFBundleShortVersionString` to be present.
+**What failed:** Archive step failed with missing bundle version errors, or the IPA had version "1.0" with build number "1" regardless of what was intended.
+**Prevention:** Before archiving, inject version info into `Info.plist` using `plutil`: `plutil -replace CFBundleShortVersionString -string "1.0" ios/App/App/Info.plist` and `plutil -replace CFBundleVersion -string "$BUILD_NUMBER" ios/App/App/Info.plist`.
+**Validation:** `plutil -p ios/App/App/Info.plist` shows correct `CFBundleVersion` and `CFBundleShortVersionString` values before archiving.
+**Notes:** For auto-incrementing build numbers, use `app-store-connect get-latest-testflight-build-number` and add 1.
+
+### Codemagic: Bundle ID in Xcode project must match provisioning profile's app ID
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Signing
+**Root cause:** Capacitor generates the Xcode project with a default bundle ID (e.g., `app.josephine.dashboard` from `capacitor.config.ts`). But the Apple provisioning profile was created for a different bundle ID (`com.josephine.team`).
+**What failed:** `xcodebuild archive` failed with: `Provisioning profile has app ID "com.josephine.team" which does not match bundle identifier "app.josephine.dashboard"`.
+**Prevention:** Ensure `appId` in `capacitor.config.ts` matches the bundle ID registered in your Apple Developer Portal. If they differ, patch the Xcode project's `PRODUCT_BUNDLE_IDENTIFIER` in CI before archiving: `ruby -pi -e 'gsub(/PRODUCT_BUNDLE_IDENTIFIER = .*?;/, "PRODUCT_BUNDLE_IDENTIFIER = com.josephine.team;")' ios/App/App.xcodeproj/project.pbxproj`. Also pass it as an xcodebuild parameter: `PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID`.
+**Validation:** `grep PRODUCT_BUNDLE_IDENTIFIER ios/App/App.xcodeproj/project.pbxproj` should show the correct bundle ID before archiving.
+**Notes:** The cleanest fix is to update `appId` in `capacitor.config.ts` to match the Apple bundle ID from the start.
+
+### Codemagic: ExportOptions.plist must reference the correct profile name and method
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Signing
+**Root cause:** `xcodebuild -exportArchive` requires an `ExportOptions.plist` that specifies the export method, team ID, signing style, and a mapping of bundle ID to provisioning profile name.
+**What failed:** If the profile name in ExportOptions.plist doesn't match the actual installed profile, export fails with signing errors.
+**Prevention:** When using `app-store-connect fetch-signing-files`, capture the profile name with: `PROFILE_NAME=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1 | xargs -I{} /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin 2>/dev/null || echo "")`. Use this in the ExportOptions.plist under `provisioningProfiles` dictionary.
+**Validation:** The "Build and sign IPA" step produces an `App.ipa` file in the artifacts directory without signing errors.
+**Notes:** `method` should be `app-store` for App Store/TestFlight distribution, `ad-hoc` for direct device installs, or `development` for debug builds.
+
+### Codemagic: `app-store-connect publish` may fail with altool "Cannot determine the Apple ID"
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Publishing
+**Root cause:** Codemagic's built-in `app_store_connect:` publisher in the `publishing:` section uses Apple's `altool` internally. `altool` sometimes cannot resolve the bundle ID to the App Store Connect app record, even when the app exists and the API key has App Manager permissions.
+**What failed:** `altool` returned: `Cannot determine the Apple ID from Bundle ID 'com.josephine.team' and platform 'IOS'. (12)`. The IPA was built and signed correctly but could not be uploaded.
+**Prevention:** Instead of using the built-in `app_store_connect:` publisher, upload the IPA manually in the build script using `xcrun altool --upload-app`. This gives more control and better error messages. Steps: (1) Write the API key to `~/.private_keys/AuthKey_KEYID.p8`, (2) Run `xcrun altool --upload-app --type ios --file path/to/App.ipa --apiKey KEY_ID --apiIssuer ISSUER_ID`.
+**Validation:** Build log shows `No errors uploading` after the xcrun altool command.
+**Notes:** Remove the `app_store_connect:` section from `publishing:` when using the manual approach to avoid duplicate upload attempts.
+
+### Codemagic: API key file must be at ~/.private_keys/AuthKey_KEYID.p8 for xcrun altool
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Publishing
+**Root cause:** `xcrun altool --apiKey` looks for the private key file at a specific path: `~/.private_keys/AuthKey_<KEY_ID>.p8`. If the file is not there, the command fails with authentication errors.
+**What failed:** Would have failed if we hadn't created the directory and written the key file before calling altool.
+**Prevention:** Before calling `xcrun altool --upload-app`, create the directory and write the key: `mkdir -p ~/.private_keys && echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8`.
+**Validation:** `ls ~/.private_keys/AuthKey_*.p8` should return exactly one file before calling altool.
+**Notes:** The key content should be the raw `.p8` file contents (starts with `-----BEGIN PRIVATE KEY-----`).
+
+### Codemagic: Secret variables must go in environment groups, not in YAML vars
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Security
+**Root cause:** The `codemagic.yaml` `vars:` section is committed to the repo and visible in the YAML file. Sensitive values (API keys, passwords, cert contents) must NOT be placed there.
+**What failed:** Initially we considered putting the App Store Connect key directly in the YAML, which would have exposed it in the Git history.
+**Prevention:** Create an **environment group** in the Codemagic UI (Settings → Environment variables → Add group). Put all secrets there: `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_KEY_IDENTIFIER`, `APP_STORE_CONNECT_ISSUER_ID`, `APPLE_TEAM_ID`. Reference the group in YAML with `groups: [app_store_credentials]`. Only non-secret vars (BUNDLE_ID, APP_NAME) go in `vars:`.
+**Validation:** `grep -i "private\|secret\|password\|key_id\|issuer" codemagic.yaml` should NOT return any actual credential values — only variable references like `$APP_STORE_CONNECT_PRIVATE_KEY`.
+**Notes:** Codemagic encrypts group variables and they never appear in build logs. The 3 required variables for Apple API are: `APP_STORE_CONNECT_KEY_IDENTIFIER` (Key ID), `APP_STORE_CONNECT_ISSUER_ID`, and `APP_STORE_CONNECT_PRIVATE_KEY` (full .p8 content).
+
+### Codemagic: App must be created in App Store Connect before first upload
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Publishing
+**Root cause:** `xcrun altool --upload-app` and Codemagic's publisher both require the app to already exist in App Store Connect with a matching bundle ID.
+**What failed:** The upload failed because there was no app record in App Store Connect for `com.josephine.team`. Altool couldn't resolve the bundle ID to an Apple ID.
+**Prevention:** Before the first CI build that uploads to TestFlight, manually create the app in App Store Connect: (1) Go to appstoreconnect.apple.com → My Apps → "+" → New App, (2) Set the bundle ID to match `$BUNDLE_ID` in codemagic.yaml, (3) Set name, primary language, and SKU. The app record must exist BEFORE the first upload attempt.
+**Validation:** In App Store Connect, the app appears under "My Apps" with the correct bundle ID.
+**Notes:** This only needs to be done once. After creation, all subsequent builds upload automatically.
+
+### Codemagic: The golden CI step order for Capacitor 8 + iOS
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Architecture
+**Root cause:** Multiple build failures were caused by steps being in the wrong order or missing. The order is strict because each step depends on outputs from previous steps.
+**What failed:** Various steps failed when dependencies weren't met: syncing before building web, archiving before fetching profiles, exporting without correct ExportOptions.
+**Prevention:** The correct order for a Capacitor 8 + iOS + TestFlight pipeline is:
+  1. `npm ci` (install Node dependencies from lockfile)
+  2. `npm run build` (build web app → dist/)
+  3. `cap add ios` (only if ios/ doesn't exist) + `cap sync ios`
+  4. `xcodebuild -resolvePackageDependencies` (SPM, NOT CocoaPods)
+  5. `keychain initialize` (prepare macOS keychain for signing)
+  6. `app-store-connect fetch-signing-files` (get cert + profile)
+  7. `keychain add-certificates` (install cert into keychain)
+  8. Patch project.pbxproj (bundle ID, ProvisioningStyle=Manual, team ID)
+  9. Patch Info.plist (version + build number)
+  10. `xcodebuild archive` (with manual signing flags)
+  11. Create ExportOptions.plist + `xcodebuild -exportArchive`
+  12. `xcrun altool --upload-app` (upload IPA to App Store Connect)
+**Validation:** All 12 steps complete green in the Codemagic build log.
+**Notes:** Skipping or reordering ANY step will cause failures. This is the proven sequence.
+
+### Codemagic: Xcode project must be patched to Manual signing in CI
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Signing
+**Root cause:** Capacitor generates the Xcode project with `ProvisioningStyle = Automatic` and no `DEVELOPMENT_TEAM`. CI environments don't have Xcode accounts configured, so automatic signing fails.
+**What failed:** `xcodebuild archive` failed because automatic signing couldn't find a team or profile in the CI keychain.
+**Prevention:** Before archiving, patch the `project.pbxproj` file using Ruby or sed to: (1) Change `ProvisioningStyle = Automatic` → `Manual`, (2) Set `DEVELOPMENT_TEAM` to the Apple Team ID, (3) Set `CODE_SIGN_STYLE = Manual`, (4) Set `DevelopmentTeam` in TargetAttributes, (5) Set `PRODUCT_BUNDLE_IDENTIFIER` to match the provisioning profile. Also pass these as xcodebuild arguments: `CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" CODE_SIGN_IDENTITY="iPhone Distribution" DEVELOPMENT_TEAM="$TEAM_ID"`.
+**Validation:** After patching, `grep "ProvisioningStyle" ios/App/App.xcodeproj/project.pbxproj` should show `Manual`, not `Automatic`.
+**Notes:** Both the pbxproj patch AND the xcodebuild arguments are needed. The pbxproj patch alone isn't always enough.
+
+### Codemagic: Use `agvtool` for auto-incrementing build numbers
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Versioning
+**Root cause:** Each TestFlight upload requires a unique, incrementing `CFBundleVersion` (build number). Hardcoding "1" means the second upload will be rejected by Apple.
+**What failed:** Would have failed on the second build if we hadn't set up auto-incrementing.
+**Prevention:** Use this pattern in the CI script: `LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)` then `cd ios/App && agvtool new-version -all $(($LATEST + 1))`. This queries the latest build number from TestFlight and increments by 1.
+**Validation:** After running, `agvtool what-version` should show the new build number. Each successful upload should show an incrementing number in TestFlight.
+**Notes:** `agvtool` modifies both `Info.plist` and the project's `CURRENT_PROJECT_VERSION`. It requires `Versioning System = Apple Generic` in the Xcode project (Capacitor sets this by default).
+
+### Codemagic: Use `npm ci` not `npm install` in CI
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Tooling
+**Root cause:** `npm install` can modify `package-lock.json` and resolve different versions than on the developer's machine. This introduces non-determinism in CI builds.
+**What failed:** Not a failure per se, but `npm install` is slower and less predictable than `npm ci`.
+**Prevention:** Always use `npm ci` in CI scripts. It installs from `package-lock.json` exactly, fails if lockfile is out of sync with `package.json`, and is faster because it deletes `node_modules/` first.
+**Validation:** The "Install dependencies" step completes without modifying `package-lock.json`.
+**Notes:** This means `package-lock.json` MUST be committed to the repo. If it's in `.gitignore`, `npm ci` will fail.
+
+### Codemagic: Capacitor uses scheme "App" and IPA is named "App.ipa"
+
+**Date:** 2026-03-22
+**Area:** CI/CD / iOS Build
+**Root cause:** Capacitor's `cap add ios` creates an Xcode project with a fixed scheme name "App". The exported IPA inherits this name, becoming `App.ipa`, not `YourAppName.ipa`.
+**What failed:** An early attempt to find `Josephine.ipa` failed because the file was actually `App.ipa`.
+**Prevention:** In the xcodebuild commands, always use `-scheme "App"` (with quotes). In the artifact collection and upload steps, reference `App.ipa`, not a custom name. The display name shown to users comes from `Info.plist CFBundleDisplayName`, not the filename.
+**Validation:** `ls build/ios/ipa/App.ipa` should exist after export.
+**Notes:** If you need a different scheme name, you'd have to modify the Xcode project, but it's not worth the complexity for Capacitor apps.
+
+### Codemagic: `--create` flag on `fetch-signing-files` auto-creates missing cert/profile
+
+**Date:** 2026-03-22
+**Area:** CI/CD / Signing
+**Root cause:** Without `--create`, `app-store-connect fetch-signing-files` will fail if no distribution certificate or provisioning profile exists yet in the Apple Developer Portal for the given bundle ID.
+**What failed:** Without `--create`, the first run on a new app would fail with "no profiles found".
+**Prevention:** Always use `app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create`. The `--create` flag tells Codemagic to automatically create a distribution certificate and provisioning profile if they don't exist. It's idempotent — if they already exist, it fetches them.
+**Validation:** The "Fetch signing files" step logs show either "Creating new..." or "Using existing..." for both certificate and profile.
+**Notes:** The `--type IOS_APP_STORE` specifies App Store distribution. Other options: `IOS_APP_DEVELOPMENT` (dev builds), `IOS_APP_ADHOC` (ad-hoc distribution).
+
+### Automate `ITSAppUsesNonExemptEncryption` in CI to skip export compliance prompt
+
+**Date:** 2026-03-23
+**Area:** CI/CD / iOS Build / App Store Connect
+**Root cause:** Every time you upload a build to App Store Connect, Apple asks "Does your app use non-exempt encryption?" in the TestFlight tab. This blocks the build from being distributed to testers until you answer.
+**What failed:** Manual step required after every build upload — easy to forget and delays TestFlight distribution.
+**Prevention:** Add a CI step to patch `Info.plist` with `ITSAppUsesNonExemptEncryption = false` before archiving. For Capacitor apps that only use HTTPS via WKWebView, this is always `false` (HTTPS is exempt). Use PlistBuddy:
+```bash
+/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+/usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+```
+**Validation:** After uploading, the build should appear in TestFlight without the compliance warning banner.
+**Notes:** Only set to `false` if your app uses ONLY standard HTTPS (exempt). If you add custom encryption (e.g., AES for local storage, custom TLS), you need to set `true` and register an ERN (Encryption Registration Number).
+

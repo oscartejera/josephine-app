@@ -132,7 +132,19 @@ workflows:
           fi
           npx cap sync ios
 
-      # ── 4. Resolve Swift Package Manager dependencies ──
+      # ── 4. Patch Info.plist (export compliance + metadata) ──
+      - name: Patch Info.plist
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          
+          # Export compliance — app does NOT use non-exempt encryption
+          # (only HTTPS via WKWebView, which is exempt)
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          
+          echo "✅ Info.plist patched: ITSAppUsesNonExemptEncryption = false"
+
+      # ── 5. Resolve Swift Package Manager dependencies ──
       - name: Resolve SPM dependencies
         script: |
           cd ios/App
@@ -140,11 +152,11 @@ workflows:
             -project App.xcodeproj \
             -scheme "App"
 
-      # ── 5. Initialize keychain for code signing ──
+      # ── 6. Initialize keychain for code signing ──
       - name: Set up keychain
         script: keychain initialize
 
-      # ── 6. Fetch or CREATE signing files (cert + profile) ──
+      # ── 7. Fetch or CREATE signing files (cert + profile) ──
       - name: Fetch signing files
         script: |
           set -e
@@ -162,7 +174,7 @@ workflows:
           echo ">>> Certificates saved by Codemagic:"
           find ~/Library/Developer/Xcode/UserData -name "*.p12" 2>/dev/null || echo "None!"
 
-      # ── 7. Install certs into keychain ──
+      # ── 8. Install certs into keychain ──
       - name: Add certificates to keychain
         script: |
           keychain add-certificates
@@ -173,7 +185,7 @@ workflows:
           echo ">>> Provisioning profiles:"
           find ~/Library/Developer/Xcode/UserData -name "*.mobileprovision" 2>/dev/null || echo "EMPTY!"
 
-      # ── 8. Patch project, archive, and export IPA (single script) ──
+      # ── 9. Patch project, archive, and export IPA (single script) ──
       - name: Build and sign IPA
         script: |
           set -euo pipefail
