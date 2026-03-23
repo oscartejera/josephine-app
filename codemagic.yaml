@@ -421,6 +421,8 @@ workflows:
   # ═══════════════════════════════════════════════════════════════
   # NATIVE iOS — SIGNED RELEASE → TestFlight
   # ═══════════════════════════════════════════════════════════════
+  # Manual signing: fetch-signing-files --create handles new App IDs
+  # that don't have profiles yet (declarative ios_signing fails for those)
   native-ios-release:
     name: Native iOS — Release → TestFlight
     max_build_duration: 30
@@ -429,11 +431,7 @@ workflows:
       xcode: 16.2
       groups:
         - app_store_credentials
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.josephine.team-staff
       vars:
-        XCODE_WORKSPACE: native-ios/JosephineTeam/JosephineTeam.xcodeproj
         XCODE_SCHEME: JosephineTeam
         BUNDLE_ID: com.josephine.team-staff
 
@@ -478,12 +476,31 @@ workflows:
           echo "Build number: $LATEST_BUILD → $NEW_BUILD"
           agvtool new-version -all $NEW_BUILD
 
-      # ── 5. Set up code signing ──
+      # ── 5. Initialize keychain ──
+      - name: Initialize keychain
+        script: |
+          keychain initialize
+
+      # ── 6. Fetch or CREATE signing files ──
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create \
+            --verbose
+
+      # ── 7. Install certs into keychain ──
+      - name: Add certificates to keychain
+        script: |
+          keychain add-certificates
+
+      # ── 8. Apply profiles to Xcode project ──
       - name: Set up code signing
         script: |
+          cd native-ios/JosephineTeam
           xcode-project use-profiles
 
-      # ── 6. Archive ──
+      # ── 9. Archive ──
       - name: Archive
         script: |
           cd native-ios/JosephineTeam
@@ -496,7 +513,7 @@ workflows:
             COMPILER_INDEX_STORE_ENABLE=NO \
             | xcpretty
 
-      # ── 7. Export IPA ──
+      # ── 10. Export IPA ──
       - name: Export IPA
         script: |
           xcode-project build-ipa \
