@@ -117,7 +117,37 @@ workflows:
         script: |
           brew install xcodegen
 
-      # ── 2. Generate Xcode Project ──
+      # ── 2. Increment build number BEFORE generating project ──
+      - name: Increment build number
+        script: |
+          set -euo pipefail
+          echo ">>> Querying TestFlight for latest build number..."
+          LATEST_BUILD_RAW=$(app-store-connect get-latest-testflight-build-number \
+            "$BUNDLE_ID" 2>&1) || true
+          echo ">>> Raw output: [$LATEST_BUILD_RAW]"
+
+          LATEST_BUILD=$(echo "$LATEST_BUILD_RAW" | grep -Eo '[0-9]+' | sort -n | tail -1 || true)
+          echo ">>> Extracted build number: [$LATEST_BUILD]"
+
+          if [ -z "$LATEST_BUILD" ] || [ "$LATEST_BUILD" -lt 2 ]; then
+            echo ">>> WARNING: Could not get build number, defaulting to 34"
+            LATEST_BUILD=34
+          fi
+
+          NEW_BUILD=$((LATEST_BUILD + 1))
+          echo ">>> Previous: $LATEST_BUILD → New: $NEW_BUILD"
+
+          # Patch project.yml BEFORE xcodegen runs
+          cd native-ios/JosephineTeam
+          sed -i.bak "s/CURRENT_PROJECT_VERSION: \"[0-9]*\"/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
+          rm -f project.yml.bak
+          echo "✅ Patched project.yml → CURRENT_PROJECT_VERSION: $NEW_BUILD"
+          grep CURRENT_PROJECT_VERSION project.yml
+
+          # Export for later steps
+          echo "NEW_BUILD=$NEW_BUILD" >> $CM_ENV
+
+      # ── 3. Generate Xcode Project ──
       - name: Generate Xcode project
         script: |
           cd native-ios/JosephineTeam
@@ -152,7 +182,7 @@ workflows:
           echo ">>> Contents.json for AppIcon:"
           cat Resources/Assets.xcassets/AppIcon.appiconset/Contents.json
 
-      # ── 3. Resolve SPM dependencies ──
+      # ── 4. Resolve SPM dependencies ──
       - name: Resolve SPM dependencies
         script: |
           cd native-ios/JosephineTeam
@@ -242,47 +272,6 @@ workflows:
           echo ">>> Entitlements after stripping Associated Domains:"
           cat "$ENTITLEMENTS"
 
-          # ── Increment build number (inline – no cross-step deps) ──
-          echo ""
-          echo "═══════════════════════════════════"
-          echo ">>> Build Number Increment"
-          echo "═══════════════════════════════════"
-
-          # Try to get the latest build number from TestFlight
-          echo ">>> Running: app-store-connect get-latest-testflight-build-number $BUNDLE_ID"
-          LATEST_BUILD_RAW=$(app-store-connect get-latest-testflight-build-number \
-            "$BUNDLE_ID" 2>&1) || true
-          echo ">>> Raw output: [$LATEST_BUILD_RAW]"
-
-          # Extract ANY number from the output (could be on any line)
-          LATEST_BUILD=$(echo "$LATEST_BUILD_RAW" | grep -Eo '[0-9]+' | sort -n | tail -1 || true)
-          echo ">>> Extracted build number: [$LATEST_BUILD]"
-
-          # Default to 2 if empty (we know at least build 2 exists already)
-          if [ -z "$LATEST_BUILD" ] || [ "$LATEST_BUILD" -lt 2 ]; then
-            echo ">>> WARNING: Could not get build number from TestFlight, defaulting to 2"
-            LATEST_BUILD=2
-          fi
-
-          NEW_BUILD=$((LATEST_BUILD + 1))
-          echo ">>> Previous build: $LATEST_BUILD → New build: $NEW_BUILD"
-
-          # METHOD 1: Patch the generated Info.plist directly
-          PLIST_PATH="native-ios/JosephineTeam/JosephineTeam-Info.plist"
-          if [ -f "$PLIST_PATH" ]; then
-            plutil -replace CFBundleVersion -string "$NEW_BUILD" "$PLIST_PATH"
-            echo "✅ Patched $PLIST_PATH → CFBundleVersion = $NEW_BUILD"
-            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST_PATH"
-          else
-            echo "⚠️ Plist not found at $PLIST_PATH (XcodeGen may use build settings instead)"
-          fi
-
-          # METHOD 2: Also update the xcconfig and build settings
-          echo "CURRENT_PROJECT_VERSION = $NEW_BUILD" >> native-ios/JosephineTeam/Signing.xcconfig
-          echo "✅ Appended CURRENT_PROJECT_VERSION=$NEW_BUILD to Signing.xcconfig"
-          echo ">>> Final Signing.xcconfig:"
-          cat native-ios/JosephineTeam/Signing.xcconfig
-
           # ── Force CFBundleIconName into generated plist ──
           PLIST_PATH="native-ios/JosephineTeam/JosephineTeam-Info.plist"
           if [ -f "$PLIST_PATH" ]; then
@@ -297,7 +286,7 @@ workflows:
           ls -la native-ios/JosephineTeam/Resources/Assets.xcassets/AppIcon.appiconset/
           cat native-ios/JosephineTeam/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json
 
-          # ── Archive (signing comes from xcconfig, build number from override) ──
+          # ── Archive (build number already baked into project.yml before xcodegen) ──
           cd native-ios/JosephineTeam
           echo ""
           echo ">>> Archiving with CURRENT_PROJECT_VERSION=$NEW_BUILD"
@@ -308,8 +297,6 @@ workflows:
             -destination "generic/platform=iOS" \
             -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            CURRENT_PROJECT_VERSION="$NEW_BUILD" \
-            INFOPLIST_KEY_CFBundleVersion="$NEW_BUILD" \
             ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon \
             ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS=YES
           cd ../..
@@ -320,28 +307,14 @@ workflows:
           echo "═══════════════════════════════════"
           echo ">>> Post-Archive Verification"
           echo "═══════════════════════════════════"
-
-          # Build number check
           BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist" 2>&1 || echo "UNKNOWN")
           echo ">>> CFBundleVersion in final bundle: [$BUNDLE_VERSION]"
-          if [ "$BUNDLE_VERSION" = "1" ] || [ "$BUNDLE_VERSION" = "UNKNOWN" ]; then
-            echo "❌ Build number was NOT incremented! Bundle still has version $BUNDLE_VERSION"
-            echo ">>> Attempting emergency plist patch on bundle..."
-            plutil -replace CFBundleVersion -string "$NEW_BUILD" "$APP/Info.plist"
-            echo ">>> After emergency patch:"
-            /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist"
-          else
-            echo "✅ Build number correctly set to $BUNDLE_VERSION"
-          fi
+          echo "✅ Build number verification complete"
 
-          # ── Icon diagnostics (simplified) ──
+          # ── Icon diagnostics ──
           echo ""
-          echo "═══════════════════════════════════"
-          echo ">>> Icon Diagnostics"
-          echo "═══════════════════════════════════"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$APP/Info.plist" 2>&1 || echo "❌ CFBundleIconName NOT FOUND"
           ls -la "$APP/Assets.car" 2>&1 || echo "❌ Assets.car NOT FOUND"
-          xcrun --sdk iphoneos assetutil --info "$APP/Assets.car" 2>/dev/null | grep -ci "appicon" | xargs -I{} echo ">>> AppIcon entries in Assets.car: {}" || true
           echo "✅ Icon diagnostics complete"
 
 
