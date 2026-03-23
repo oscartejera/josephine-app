@@ -5,6 +5,7 @@ import SwiftData
 struct JosephineTeamApp: App {
     @StateObject private var authVM = AuthViewModel()
     @State private var showSplash = true
+    @State private var minimumTimeElapsed = false
 
     var body: some Scene {
         WindowGroup {
@@ -31,9 +32,18 @@ struct JosephineTeamApp: App {
             .task {
                 await CacheManager.shared.syncAll()
             }
+            .task {
+                // Minimum 2s so splash animations play fully
+                try? await Task.sleep(for: .seconds(2))
+                minimumTimeElapsed = true
+                if !authVM.isLoading {
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        showSplash = false
+                    }
+                }
+            }
             .onChange(of: authVM.isLoading) { _, isLoading in
-                guard !isLoading else { return }
-                // Auth finished — dismiss splash with animation
+                guard !isLoading, minimumTimeElapsed else { return }
                 withAnimation(.easeOut(duration: 0.5)) {
                     showSplash = false
                 }
