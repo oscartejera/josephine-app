@@ -20,12 +20,10 @@ targets:
     platform: iOS
     sources:
       - Sources
-      - path: Resources/Assets.xcassets
     resources:
       - path: Resources
         excludes:
           - "Info.plist"
-          - "Assets.xcassets"
     configFiles:
       Debug: Signing.xcconfig
       Release: Signing.xcconfig
