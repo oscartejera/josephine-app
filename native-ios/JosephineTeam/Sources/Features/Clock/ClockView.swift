@@ -131,6 +131,9 @@ struct ClockView: View {
         }
         .scaleEffect(buttonScale)
         .disabled(isProcessing)
+        .accessibilityLabel(isClockedIn ? "Fichar salida" : "Fichar entrada")
+        .accessibilityIdentifier("clock_button")
+        .accessibilityHint(isProcessing ? "Procesando" : "")
     }
 
     // MARK: - Location Status

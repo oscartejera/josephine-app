@@ -34,6 +34,8 @@ struct JBadge: View {
             .background(color.opacity(0.2))
             .clipShape(Capsule())
             .overlay(Capsule().stroke(color.opacity(0.4), lineWidth: 1))
+            .accessibilityLabel(text)
+            .accessibilityAddTraits(.isStaticText)
     }
 }
 
@@ -61,6 +63,9 @@ struct JStatCard: View {
                     .foregroundStyle(JColor.textSecondary)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(value), \(label)")
+        .accessibilityIdentifier("stat_\(label.lowercased().replacingOccurrences(of: " ", with: "_"))")
     }
 }
 
@@ -75,6 +80,7 @@ struct JEmptyState: View {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundStyle(JColor.textMuted)
+                .accessibilityHidden(true)
             Text(title)
                 .font(.jTitle3)
                 .foregroundStyle(JColor.textSecondary)
@@ -84,6 +90,8 @@ struct JEmptyState: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, JSpacing.xxxl)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). \(message)")
     }
 }
 
@@ -97,6 +105,7 @@ struct ShiftRow: View {
             RoundedRectangle(cornerRadius: 2)
                 .fill(JColor.forRole(shift.role))
                 .frame(width: 4, height: 44)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: JSpacing.xs) {
                 Text("\(shift.startTime) – \(shift.endTime)")
@@ -114,5 +123,8 @@ struct ShiftRow: View {
                 .foregroundStyle(JColor.textSecondary)
         }
         .padding(.vertical, JSpacing.sm)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(shift.role.capitalized), \(shift.startTime) a \(shift.endTime), \(String(format: "%.1f", shift.plannedHours)) horas")
+        .accessibilityIdentifier("shift_row_\(shift.id)")
     }
 }

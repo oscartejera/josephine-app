@@ -23,8 +23,8 @@ enum JColor {
     /// Secondary text
     static let textSecondary = Color.white.opacity(0.6)
 
-    /// Muted text
-    static let textMuted = Color.white.opacity(0.35)
+    /// Muted text (opacity tuned for WCAG AA against #0F0F0F)
+    static let textMuted = Color.white.opacity(0.45)
 
     // MARK: - Semantic Colors
     static let success = Color(hex: 0x22C55E)

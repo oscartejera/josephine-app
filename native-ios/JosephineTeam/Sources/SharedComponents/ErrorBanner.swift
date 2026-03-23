@@ -61,6 +61,12 @@ struct ErrorBanner: View {
             .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
             .padding(.horizontal, JSpacing.lg)
             .transition(.move(edge: .top).combined(with: .opacity))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(severity == .error ? "Error" : "Aviso"): \(message)")
+            .accessibilityAddTraits(.isStatusElement)
+            .accessibilityAction(.escape) {
+                withAnimation(.easeInOut(duration: 0.25)) { isPresented = false }
+            }
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
                     withAnimation(.easeInOut(duration: 0.25)) {
