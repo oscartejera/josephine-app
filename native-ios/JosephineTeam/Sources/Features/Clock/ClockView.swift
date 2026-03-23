@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import Combine
 import Supabase
 
 struct ClockView: View {
@@ -10,7 +11,7 @@ struct ClockView: View {
     @State private var todayRecords: [ClockRecord] = []
     @State private var isProcessing = false
     @State private var elapsedSeconds: Int = 0
-    @State private var timer: Timer?
+    @State private var timerCancellable: AnyCancellable?
 
     private let supabase = SupabaseManager.shared
 
@@ -253,14 +254,16 @@ struct ClockView: View {
     private func startTimer() {
         guard let record = activeRecord else { return }
         updateElapsed(from: record.clockIn)
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            updateElapsed(from: record.clockIn)
-        }
+        timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
+            .autoconnect()
+            .sink { _ in
+                updateElapsed(from: record.clockIn)
+            }
     }
 
     private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
+        timerCancellable?.cancel()
+        timerCancellable = nil
         elapsedSeconds = 0
     }
 
@@ -277,6 +280,7 @@ struct ClockView: View {
 }
 
 // MARK: - Location Manager
+@MainActor
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
 
@@ -291,12 +295,19 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.startUpdatingLocation()
     }
 
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        lastLocation = locations.last
-        hasLocation = lastLocation != nil
+    // CLLocationManagerDelegate callbacks are dispatched on the main thread
+    // by CoreLocation, but the protocol is not annotated as @MainActor.
+    // With SWIFT_STRICT_CONCURRENCY=complete these must be nonisolated.
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        MainActor.assumeIsolated {
+            lastLocation = locations.last
+            hasLocation = lastLocation != nil
+        }
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        hasLocation = false
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        MainActor.assumeIsolated {
+            hasLocation = false
+        }
     }
 }
