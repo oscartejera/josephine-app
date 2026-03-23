@@ -123,6 +123,35 @@ workflows:
           cd native-ios/JosephineTeam
           xcodegen generate
 
+      # ── 2b. Diagnostic: verify generated project ──
+      - name: Verify generated Info.plist and build settings
+        script: |
+          cd native-ios/JosephineTeam
+          echo "═══════════════════════════════════"
+          echo ">>> Generated JosephineTeam-Info.plist:"
+          echo "═══════════════════════════════════"
+          cat JosephineTeam-Info.plist || echo "❌ JosephineTeam-Info.plist NOT FOUND"
+          echo ""
+          echo "═══════════════════════════════════"
+          echo ">>> CFBundleIconName in plist:"
+          echo "═══════════════════════════════════"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" JosephineTeam-Info.plist 2>&1 || echo "❌ CFBundleIconName NOT in plist"
+          echo ""
+          echo "═══════════════════════════════════"
+          echo ">>> Relevant build settings:"
+          echo "═══════════════════════════════════"
+          xcodebuild -project JosephineTeam.xcodeproj \
+            -scheme "$XCODE_SCHEME" \
+            -showBuildSettings 2>/dev/null | grep -E "(INFOPLIST|ASSETCATALOG|GENERATE_INFO|PRODUCT_BUNDLE)" || true
+          echo ""
+          echo "═══════════════════════════════════"
+          echo ">>> Asset catalog files on disk:"
+          echo "═══════════════════════════════════"
+          find Resources/Assets.xcassets -type f | sort
+          echo ""
+          echo ">>> Contents.json for AppIcon:"
+          cat Resources/Assets.xcassets/AppIcon.appiconset/Contents.json
+
       # ── 3. Resolve SPM dependencies ──
       - name: Resolve SPM dependencies
         script: |
@@ -230,6 +259,31 @@ workflows:
             -archivePath "$CM_BUILD_DIR/JosephineTeam.xcarchive" \
             COMPILER_INDEX_STORE_ENABLE=NO
           cd ../..
+
+          # ── Diagnostic: inspect archive bundle ──
+          APP="$CM_BUILD_DIR/JosephineTeam.xcarchive/Products/Applications/JosephineTeam.app"
+          echo ""
+          echo "═══════════════════════════════════"
+          echo ">>> Archive .app bundle contents:"
+          echo "═══════════════════════════════════"
+          ls -la "$APP/" || echo "❌ .app not found"
+          echo ""
+          echo ">>> Assets.car exists?"
+          ls -la "$APP/Assets.car" 2>&1 || echo "❌ Assets.car NOT FOUND"
+          echo ""
+          echo ">>> Info.plist in bundle:"
+          /usr/libexec/PlistBuddy -c "Print" "$APP/Info.plist" 2>&1 || echo "❌ Cannot read Info.plist"
+          echo ""
+          echo ">>> CFBundleIconName in bundle plist:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$APP/Info.plist" 2>&1 || echo "❌ CFBundleIconName NOT in bundle plist"
+          echo ""
+          echo ">>> CFBundleIcons in bundle plist:"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons" "$APP/Info.plist" 2>&1 || echo "(no CFBundleIcons)"
+          echo ""
+          echo ">>> Asset catalog dump (actool info):"
+          xcrun --sdk iphoneos assetutil --info "$APP/Assets.car" 2>&1 | head -100 || echo "❌ Cannot read Assets.car"
+
+
 
           # ── Export IPA ──
           cat > "$CM_BUILD_DIR/ExportOptions.plist" <<EOF
