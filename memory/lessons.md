@@ -493,3 +493,21 @@ This is not optional — it must happen at the end of every prompt where code or
 **Validation:** Codemagic build #37 succeeded with this fix — build number auto-incremented to 3.
 **Notes:** This is a general shell scripting lesson: when extracting numbers from CLI tool output, never assume the number will be on its own line. Always use a permissive regex with a max-value selector.
 
+### Codemagic + XcodeGen: Build number must be set BEFORE `xcodegen generate`
+
+**Date:** 2026-03-24
+**Area:** CI/CD / Versioning
+**Root cause:** XcodeGen reads `project.yml` and bakes `CURRENT_PROJECT_VERSION` into the generated `.pbxproj` at the **target level**. If `project.yml` says `CURRENT_PROJECT_VERSION: "1"`, the `.pbxproj` gets `CURRENT_PROJECT_VERSION = 1;` inside the target's build settings. Xcodebuild CLI arguments (e.g., `CURRENT_PROJECT_VERSION=35`) set a **project-level** override, but Xcode resolves target-level settings with higher precedence than project-level — so the CLI override is silently ignored.
+**What failed:** Build number was always `1` regardless of CLI overrides. TestFlight rejected uploads with "duplicate build number" because the previous build also had `CURRENT_PROJECT_VERSION=1` baked in, and `agvtool` + `plutil` patches only hit `Info.plist` (not the `.pbxproj` target-level setting). Xcode used the `.pbxproj` value over the plist value.
+**Prevention:** Increment the build number BEFORE running `xcodegen generate`. Patch `project.yml` directly with `sed`:
+```bash
+LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)
+LATEST=$(echo "$LATEST" | grep -Eo '[0-9]+' | sort -n | tail -1)
+NEW_BUILD=$(( ${LATEST:-0} + 1 ))
+sed -i "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
+# THEN run xcodegen generate
+```
+This ensures the correct build number is baked into `.pbxproj` from the start.
+**Validation:** After `xcodegen generate`, run `grep CURRENT_PROJECT_VERSION ios/App.xcodeproj/project.pbxproj` — it should show the incremented number (e.g., `35`), NOT `1`.
+**Notes:** This is a general lesson about Xcode build setting precedence: target-level > project-level > CLI. If a value is set at the target level in `.pbxproj`, the only reliable ways to override it are: (1) change it at the target level (source of truth), or (2) use `xcconfig` files. CLI arguments alone are NOT sufficient.
+
