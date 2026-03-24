@@ -233,6 +233,9 @@ Deno.serve(async (req) => {
 
     // Send welcome email with credentials using Resend API directly
     const appUrl = req.headers.get('origin') || 'https://josephine.lovable.app';
+    let emailSent = false;
+    let emailError: string | null = null;
+    console.log('[invite] RESEND_API_KEY present:', !!RESEND_API_KEY, '| EMAIL_FROM:', Deno.env.get('EMAIL_FROM') || '(not set, using default)');
 
     try {
       const emailHtml = `
@@ -303,17 +306,28 @@ Deno.serve(async (req) => {
       });
 
       const emailResult = await emailResponse.json();
-      console.log('Welcome email sent:', emailResult);
-    } catch (emailError) {
-      console.error('Error sending email:', emailError);
-      // Don't fail the whole request if email fails - user was created successfully
+      console.log('[invite] Resend response status:', emailResponse.status, '| body:', JSON.stringify(emailResult));
+
+      if (emailResponse.ok) {
+        emailSent = true;
+      } else {
+        emailError = emailResult?.message || emailResult?.error || `Resend HTTP ${emailResponse.status}`;
+        console.error('[invite] Resend API rejected email:', emailError);
+      }
+    } catch (err) {
+      emailError = err instanceof Error ? err.message : 'Unknown email error';
+      console.error('[invite] Email send failed:', emailError);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Usuario ${full_name} creado exitosamente. Se ha enviado un email con las credenciales.`,
-        user_id: userId
+        message: emailSent
+          ? `Usuario ${full_name} creado exitosamente. Se ha enviado un email con las credenciales.`
+          : `Usuario ${full_name} creado exitosamente. ⚠️ No se pudo enviar el email (${emailError}). Comparte las credenciales manualmente: ${email} / ${password}`,
+        user_id: userId,
+        email_sent: emailSent,
+        ...(emailError && { email_error: emailError })
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -10,6 +10,10 @@ verify_jwt = false
 [functions.invite_manager]
 verify_jwt = true
 
+# Team member invitation — manages its own JWT validation internally
+[functions.invite_team_member]
+verify_jwt = false
+
 # Email notification functions
 [functions.send_schedule_published]
 verify_jwt = false
