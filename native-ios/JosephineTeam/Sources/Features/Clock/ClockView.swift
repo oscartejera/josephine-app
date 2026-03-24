@@ -1,7 +1,7 @@
 import SwiftUI
 import CoreLocation
 import Combine
-import Supabase
+@preconcurrency import Supabase
 
 struct ClockView: View {
     @EnvironmentObject var authVM: AuthViewModel

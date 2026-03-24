@@ -123,7 +123,7 @@ struct ForgotPasswordView: View {
                 .frame(height: 52)
                 .background(
                     RoundedRectangle(cornerRadius: JRadius.md)
-                        .fill(isValidEmail ? JColor.brandPurple : JColor.brandPurple.opacity(0.4))
+                        .fill(email.isValidEmail ? JColor.brandPurple : JColor.brandPurple.opacity(0.4))
                 )
             }
             .disabled(!email.isValidEmail || isLoading)
