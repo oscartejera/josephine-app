@@ -586,3 +586,63 @@ sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"
 **Prevention:** Before using `CREATE TABLE IF NOT EXISTS` in migrations, check if the remote DB might have a pre-existing table with the same name but different schema (e.g., from a previous migration, manual SQL, or Supabase Studio edits). If the table may exist with an incompatible schema, use `DROP TABLE IF EXISTS ... CASCADE` followed by `CREATE TABLE` to guarantee a clean state. Always add `CASCADE` to handle dependent foreign keys.
 **Validation:** After `supabase db push`, run `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'roles' ORDER BY ordinal_position;` to verify the schema matches expectations.
 **Notes:** This is especially common with tables that were manually created or modified via Supabase Studio dashboard. The `IF NOT EXISTS` clause only checks for table *existence*, not schema *compatibility*.
+
+### Cómo ejecutar SQL en la base de datos Supabase "No hay cerditos" — paso a paso
+
+**Date:** 2026-03-24
+**Area:** DB / Tooling
+**Root cause:** El agente necesita acceder a la base de datos Supabase para crear funciones, ejecutar migraciones, inspeccionar schema, o corregir datos. Hay dos métodos y ambos tienen trampas específicas.
+**What failed:** Intentos previos de usar `supabase db push` fallaron por falta de contraseña en el shell. Acceder al SQL Editor requiere conocer la URL exacta del proyecto.
+**Prevention:** Seguir estos pasos exactos según el método elegido:
+
+**MÉTODO 1 — SQL Editor en el navegador (PREFERIDO para queries ad-hoc, funciones, y cambios rápidos):**
+1. Abrir el navegador con `browser_subagent` y navegar a:
+   `https://supabase.com/dashboard/project/qixipveebfhurbarksib/sql/new`
+   - El project ref es siempre: `qixipveebfhurbarksib`
+   - El proyecto se llama "No hay cerditos" (organización "Josephine")
+2. Si pide login, el usuario ya está autenticado (cookie persistente). Si no, pedirle al usuario que haga login.
+3. Escribir el SQL en el editor de texto (el textarea principal).
+4. Hacer clic en el botón "Run" (esquina inferior derecha, o Ctrl+Enter).
+5. Leer el resultado en el panel inferior — "Success. No rows returned." para DDL, o las filas para SELECT.
+
+**MÉTODO 2 — CLI `supabase db push` (para migraciones versionadas en `supabase/migrations/`):**
+1. Crear el archivo `.sql` en `supabase/migrations/` con formato `YYYYMMDDHHMMSS_nombre.sql`.
+2. Cargar la contraseña en el shell PowerShell ANTES de ejecutar:
+   ```powershell
+   $env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value })
+   ```
+3. Ejecutar: `npx supabase db push`
+4. Confirmar que devuelve "Remote database is up to date" o muestra las migraciones aplicadas.
+
+**MÉTODO 3 — Conexión directa con `--db-url` (para debugging):**
+- Formato: `postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-eu-west-2.pooler.supabase.com:6543/postgres`
+- El project ref es `qixipveebfhurbarksib`.
+- La contraseña está en `.env.local` como `SUPABASE_DB_PASSWORD`.
+
+**Validation:** Para cualquier método, verificar el resultado ejecutando un SELECT de confirmación. Por ejemplo, tras crear una función: `SELECT proname FROM pg_proc WHERE proname = 'nombre_funcion';`.
+**Notes:** El Método 1 (SQL Editor) es el más rápido y fiable para cambios ad-hoc. El Método 2 (CLI) es obligatorio para cambios que deben quedar versionados en el repo. Datos clave del proyecto:
+- **Project ref:** `qixipveebfhurbarksib`
+- **URL del dashboard:** `https://supabase.com/dashboard/project/qixipveebfhurbarksib`
+- **SQL Editor:** `https://supabase.com/dashboard/project/qixipveebfhurbarksib/sql/new`
+- **Organización:** Josephine
+- **Nombre del proyecto:** No hay cerditos
+
+### Supabase: Always verify the project-ref before deploying edge functions
+
+**Date:** 2026-03-24
+**Area:** Edge Functions / Tooling
+**Root cause:** The agent used a project-ref from a different project (`rybvdxoofmcvmumxhwil`) instead of the actual project ref (`qixipveebfhurbarksib`) when running `supabase functions deploy`. The wrong ref was likely memorized from a previous session or fabricated.
+**What failed:** `supabase functions deploy invite_team_member --project-ref rybvdxoofmcvmumxhwil` would have deployed to the wrong project (or failed with auth error).
+**Prevention:** Always extract the project ref from the VITE_SUPABASE_URL in `.env.local`. The ref is the subdomain: `https://PROJECTREF.supabase.co`. For this project it is ALWAYS `qixipveebfhurbarksib`. Never hardcode or guess the ref — always verify.
+**Validation:** `grep VITE_SUPABASE_URL .env.local` and extract the subdomain before passing `--project-ref`.
+**Notes:** Quick one-liner to extract: `$ref = (Select-String -Path .env.local -Pattern 'VITE_SUPABASE_URL=https://(.+?)\.supabase\.co' | ForEach-Object { $_.Matches.Groups[1].Value })`
+
+### Supabase: Access tokens expire — rotate and update `.env.local`
+
+**Date:** 2026-03-24
+**Area:** Auth / Tooling
+**Root cause:** Supabase Personal Access Tokens (`sbp_...`) have a limited lifespan. The token stored in `.env.local` (`sbp_b1a6...`) was expired/revoked. Edge function deploys and CLI commands that depend on `SUPABASE_ACCESS_TOKEN` fail silently or with auth errors when the token is stale.
+**What failed:** `supabase functions deploy` failed with an access-control error because the stored token was no longer valid.
+**Prevention:** When a `supabase functions deploy` or any CLI command that needs `SUPABASE_ACCESS_TOKEN` fails with auth/access errors, first check if the token is still valid. Generate a new one at `https://supabase.com/dashboard/account/tokens`. Update `.env.local` immediately.
+**Validation:** After updating, run a quick `supabase functions list --project-ref qixipveebfhurbarksib` to confirm the new token works before attempting a deploy.
+**Notes:** The token in `.env.local` needs to be loaded into the shell: `$env:SUPABASE_ACCESS_TOKEN = (Select-String -Path .env.local -Pattern '^SUPABASE_ACCESS_TOKEN=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value })`
