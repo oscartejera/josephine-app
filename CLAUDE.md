@@ -516,3 +516,60 @@ Good work in this repo means:
 - avoiding secret leakage
 - keeping changes narrow and intentional
 - preferring correctness over speed theater
+
+---
+
+## Mandatory Workflow (Superpowers-Inspired)
+
+Every task, no matter how small, MUST follow this cycle:
+
+1. **BRAINSTORM** — Understand what the user wants. Identify affected files, layers, risks, and relevant memory (`lessons.md`, `patterns.md`, `decisions.md`). Present analysis before proceeding.
+2. **PLAN** — List exact files and changes. Define validation strategy and rollback. Get user approval.
+3. **TDD** — RED (failing test) → GREEN (pass) → REFACTOR (clean). Skip only for purely presentational changes, and document why.
+4. **REVIEW** — Self-review against plan. Verify demo mode, auth, types, lint. Show evidence.
+5. **FINISH** — Summarize changes, propose commit, update memory if needed.
+
+Even for 1-line fixes, use the **Quick-Fix Mode** (compressed cycle — see `/plan-and-build` workflow).
+
+**NEVER skip brainstorm.** Even quick fixes must identify risks first.
+
+---
+
+## Agent Discipline (Everything-Claude-Code)
+
+- Before any task, think in specialist roles: **Scout → Architect → Implementer → Reviewer**
+- Research before coding: check existing patterns (`memory/patterns.md`), past bugs (`memory/lessons.md`), and architecture decisions (`memory/decisions.md`)
+- After every non-trivial fix, prompt the user to `/log-lesson`
+- After architecture decisions, log to `memory/decisions.md`
+- After discovering a reusable pattern, log to `memory/patterns.md`
+- Always run `/code-review` before committing
+- Never claim "done" without evidence (test output, screenshot, or command result)
+
+---
+
+## Memory System (Claude-Mem Inspired)
+
+### Session Start (MANDATORY — `/00-session-start`)
+Read these files BEFORE any work:
+1. `memory/lessons.md` — bugs and regressions
+2. `memory/session-context.md` — last session state and pending TODOs
+3. `memory/decisions.md` — active architecture decisions
+4. `memory/patterns.md` — reusable patterns
+5. `memory/checklists.md` — validation checklists
+
+Present a briefing to the user.
+
+### Session End (MANDATORY — `/session-end`)
+Update `memory/session-context.md` with:
+- what was done
+- decisions made
+- pending TODOs
+- known issues
+- next session priority
+
+### Continuous Memory
+- After bug fixes → `/log-lesson`
+- After architecture decisions → `memory/decisions.md`
+- After discovering patterns → `memory/patterns.md`
+
+**Memory files are local-only** (not versioned). They persist on the developer's machine across sessions.

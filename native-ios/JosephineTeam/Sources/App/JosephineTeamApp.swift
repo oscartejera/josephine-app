@@ -6,14 +6,25 @@ struct JosephineTeamApp: App {
     @StateObject private var authVM = AuthViewModel()
     @State private var showSplash = true
     @State private var minimumTimeElapsed = false
+    @State private var onboardingStep: OnboardingStep = .faceID
+    @State private var needsOnboarding = false
+
+    enum OnboardingStep {
+        case faceID, notifications, done
+    }
 
     var body: some Scene {
         WindowGroup {
             ZStack {
                 Group {
                     if authVM.isAuthenticated {
-                        ContentView()
-                            .environmentObject(authVM)
+                        if needsOnboarding {
+                            onboardingFlow
+                                .environmentObject(authVM)
+                        } else {
+                            ContentView()
+                                .environmentObject(authVM)
+                        }
                     } else {
                         LoginView()
                             .environmentObject(authVM)
@@ -48,8 +59,54 @@ struct JosephineTeamApp: App {
                     showSplash = false
                 }
             }
+            .onChange(of: authVM.isAuthenticated) { _, isAuthenticated in
+                if isAuthenticated {
+                    let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: UserDefaultsKey.hasCompletedOnboarding)
+                    needsOnboarding = !hasCompletedOnboarding
+                    onboardingStep = .faceID
+                } else {
+                    needsOnboarding = false
+                }
+            }
         }
         .modelContainer(CacheManager.shared.container)
+    }
+
+    // MARK: - Post-Login Onboarding Flow
+    @ViewBuilder
+    private var onboardingFlow: some View {
+        switch onboardingStep {
+        case .faceID:
+            FaceIDSetupView(onboardingComplete: Binding(
+                get: { onboardingStep != .faceID },
+                set: { if $0 {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                        onboardingStep = .notifications
+                    }
+                }}
+            ))
+            .transition(.asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)
+            ))
+
+        case .notifications:
+            NotificationPermissionView {
+                UserDefaults.standard.set(true, forKey: UserDefaultsKey.hasCompletedOnboarding)
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                    onboardingStep = .done
+                    needsOnboarding = false
+                }
+            }
+            .transition(.asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)
+            ))
+
+        case .done:
+            ContentView()
+                .environmentObject(authVM)
+        }
     }
 }
 

@@ -7,8 +7,7 @@ final class AuthViewModel: ObservableObject {
     // MARK: - Published State
     @Published var isAuthenticated = false
     @Published var isLoading = true
-    @Published var email = ""
-    @Published var password = ""
+
     @Published var errorMessage: String?
     @Published var currentUser: User?
 
@@ -38,7 +37,9 @@ final class AuthViewModel: ObservableObject {
     }
 
     // MARK: - Sign In
-    func signIn() async {
+
+    /// Overload used by the new multi-step LoginView
+    func signIn(email: String, password: String) async {
         guard !email.isEmpty, !password.isEmpty else {
             errorMessage = "Introduce tu email y contraseña"
             return
@@ -73,6 +74,11 @@ final class AuthViewModel: ObservableObject {
         employee = nil
         locationName = nil
         isAuthenticated = false
+    }
+
+    // MARK: - Reset Password
+    func resetPassword(email: String) async throws {
+        try await supabase.auth.resetPasswordForEmail(email)
     }
 
     // MARK: - Load Employee Context

@@ -53,6 +53,14 @@ enum JColor {
         default:                        return accent
         }
     }
+
+    // MARK: - Login (light mode)
+    static let loginBackground = Color.white
+    static let loginText = Color(hex: 0x111827)
+    static let loginTextSecondary = Color(hex: 0x6B7280)
+    static let loginInputBorder = Color(hex: 0xD1D5DB)
+    static let loginInputFocusBorder = Color(hex: 0x7C3AED)
+    static let loginPlaceholder = Color(hex: 0x9CA3AF)
 }
 
 // MARK: - Color Extension

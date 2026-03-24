@@ -49,3 +49,8 @@ test-results/
 # Lighthouse
 lighthouse-*.json
 lighthouse-*.html
+
+# Agent memory (local only — not versioned)
+memory/session-context.md
+memory/decisions.md
+memory/patterns.md

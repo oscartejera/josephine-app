@@ -55,6 +55,11 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         NSLocationWhenInUseUsageDescription: "Necesitamos tu ubicación para verificar los fichajes geográficamente."
+        NSFaceIDUsageDescription: "Usa Face ID para iniciar sesión de forma rápida y segura."
+        UIAppFonts:
+          - PlusJakartaSans-Bold.ttf
+          - PlusJakartaSans-SemiBold.ttf
+          - PlusJakartaSans-Medium.ttf
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UIUserInterfaceStyle: Dark

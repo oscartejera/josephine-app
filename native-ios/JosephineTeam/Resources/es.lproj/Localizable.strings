@@ -9,14 +9,7 @@
 "tab.news"       = "Noticias";
 "tab.profile"    = "Perfil";
 
-// MARK: - Login
-"login.title"           = "Josephine";
-"login.subtitle"        = "Portal del Empleado";
-"login.email"           = "Email";
-"login.password"        = "Contraseña";
-"login.button"          = "Iniciar Sesión";
-"login.footer"          = "Si no tienes cuenta, contacta a tu encargado";
-"login.error.invalid"   = "Email o contraseña incorrectos";
+// MARK: - Login (strings managed inline in LoginView.swift)
 
 // MARK: - Home
 "home.greeting"         = "Hola, %@!";

@@ -23,6 +23,13 @@ extension Font {
     static let jClock = Font.system(size: 64, weight: .thin, design: .rounded)
     static let jTimer = Font.system(size: 48, weight: .light, design: .monospaced)
     static let jStatNumber = Font.system(size: 32, weight: .bold, design: .rounded)
+
+    // Plus Jakarta Sans (brand display — login, onboarding)
+    static let jDisplayTitle = Font.custom("PlusJakartaSans-Bold", size: 28)
+    static let jDisplayHeadline = Font.custom("PlusJakartaSans-Bold", size: 22)
+    static let jDisplaySubtitle = Font.custom("PlusJakartaSans-Medium", size: 16)
+    static let jDisplayButton = Font.custom("PlusJakartaSans-SemiBold", size: 17)
+    static let jDisplayCaption = Font.custom("PlusJakartaSans-Medium", size: 13)
 }
 
 // MARK: - Spacing
