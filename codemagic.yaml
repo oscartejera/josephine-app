@@ -129,9 +129,10 @@ workflows:
           LATEST_BUILD=$(echo "$LATEST_BUILD_RAW" | grep -Eo '[0-9]+' | sort -n | tail -1 || true)
           echo ">>> Extracted build number: [$LATEST_BUILD]"
 
+          # Fallback must be HIGHER than any known existing build
           if [ -z "$LATEST_BUILD" ] || [ "$LATEST_BUILD" -lt 2 ]; then
-            echo ">>> WARNING: Could not get build number, defaulting to 34"
-            LATEST_BUILD=34
+            echo ">>> WARNING: Could not get build number, defaulting to 40"
+            LATEST_BUILD=40
           fi
 
           NEW_BUILD=$((LATEST_BUILD + 1))
@@ -139,10 +140,24 @@ workflows:
 
           # Patch project.yml BEFORE xcodegen runs
           cd native-ios/JosephineTeam
-          sed -i.bak "s/CURRENT_PROJECT_VERSION: \"[0-9]*\"/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
-          rm -f project.yml.bak
-          echo "✅ Patched project.yml → CURRENT_PROJECT_VERSION: $NEW_BUILD"
+          echo ">>> project.yml BEFORE sed:"
           grep CURRENT_PROJECT_VERSION project.yml
+
+          sed -i '' "s/CURRENT_PROJECT_VERSION: \"[0-9]*\"/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
+
+          echo ">>> project.yml AFTER sed:"
+          grep CURRENT_PROJECT_VERSION project.yml
+
+          # ── GUARD: Abort if sed didn't patch correctly ──
+          PATCHED_VALUE=$(grep 'CURRENT_PROJECT_VERSION' project.yml | grep -Eo '[0-9]+' | head -1)
+          if [ "$PATCHED_VALUE" != "$NEW_BUILD" ]; then
+            echo "❌ FATAL: sed failed to patch project.yml!"
+            echo "   Expected CURRENT_PROJECT_VERSION: $NEW_BUILD"
+            echo "   Got: $PATCHED_VALUE"
+            echo "   Full line: $(grep CURRENT_PROJECT_VERSION project.yml)"
+            exit 1
+          fi
+          echo "✅ Verified project.yml → CURRENT_PROJECT_VERSION: $NEW_BUILD"
 
           # Export for later steps
           echo "NEW_BUILD=$NEW_BUILD" >> $CM_ENV
@@ -152,6 +167,18 @@ workflows:
         script: |
           cd native-ios/JosephineTeam
           xcodegen generate
+
+          # ── GUARD: Verify xcodegen baked the correct build number ──
+          echo ">>> Checking CURRENT_PROJECT_VERSION in generated .pbxproj:"
+          grep CURRENT_PROJECT_VERSION JosephineTeam.xcodeproj/project.pbxproj || true
+          PBXPROJ_VALUE=$(grep 'CURRENT_PROJECT_VERSION' JosephineTeam.xcodeproj/project.pbxproj | grep -Eo '[0-9]+' | sort -n | tail -1)
+          if [ "$PBXPROJ_VALUE" != "$NEW_BUILD" ]; then
+            echo "❌ FATAL: xcodegen did NOT bake the correct build number!"
+            echo "   Expected: $NEW_BUILD"
+            echo "   Got in .pbxproj: $PBXPROJ_VALUE"
+            exit 1
+          fi
+          echo "✅ .pbxproj has CURRENT_PROJECT_VERSION=$NEW_BUILD"
 
       # ── 2b. Diagnostic: verify generated project ──
       - name: Verify generated Info.plist and build settings
@@ -309,7 +336,14 @@ workflows:
           echo "═══════════════════════════════════"
           BUNDLE_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist" 2>&1 || echo "UNKNOWN")
           echo ">>> CFBundleVersion in final bundle: [$BUNDLE_VERSION]"
-          echo "✅ Build number verification complete"
+
+          # ── GUARD: Abort BEFORE publishing if version is wrong ──
+          if [ "$BUNDLE_VERSION" != "$NEW_BUILD" ]; then
+            echo "❌ FATAL: CFBundleVersion ($BUNDLE_VERSION) != expected ($NEW_BUILD)"
+            echo "   This would cause a duplicate version upload. Aborting."
+            exit 1
+          fi
+          echo "✅ Build number $BUNDLE_VERSION matches expected $NEW_BUILD"
 
           # ── Icon diagnostics ──
           echo ""
