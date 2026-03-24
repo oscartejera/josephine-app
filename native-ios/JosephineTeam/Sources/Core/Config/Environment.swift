@@ -31,16 +31,15 @@ enum AppEnvironment {
     }
 
     var supabaseAnonKey: String {
-        switch self {
-        case .development, .staging:
-            // Read from Info.plist (injected by CI) or fallback
-            return Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String
-                ?? ProcessInfo.processInfo.environment["SUPABASE_ANON_KEY"]
-                ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder"
-        case .production:
-            return Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String
-                ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder"
+        guard let key = Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String,
+              !key.isEmpty,
+              !key.contains("PLACEHOLDER") else {
+            fatalError(
+                "SUPABASE_ANON_KEY not configured. "
+                + "Set it in Codemagic env group 'supabase_keys'."
+            )
         }
+        return key
     }
 
     // MARK: - Feature Flags

@@ -56,6 +56,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         NSLocationWhenInUseUsageDescription: "Necesitamos tu ubicación para verificar los fichajes geográficamente."
         NSFaceIDUsageDescription: "Usa Face ID para iniciar sesión de forma rápida y segura."
+        SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
         UIAppFonts:
           - PlusJakartaSans-Bold.ttf
           - PlusJakartaSans-SemiBold.ttf
@@ -66,6 +67,7 @@ targets:
 
     settings:
       base:
+        SUPABASE_ANON_KEY: "PLACEHOLDER_CONFIGURE_IN_CI"
         PRODUCT_BUNDLE_IDENTIFIER: com.josephine.team-staff
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
