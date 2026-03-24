@@ -257,9 +257,9 @@ Deno.serve(async (req) => {
             </a>
           </div>
           
-          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="margin: 0; font-size: 13px; color: #92400e;">
-              ⚠️ <strong>Importante:</strong> Te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.
+          <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 13px; color: #1e40af;">
+              💡 <strong>Consejo:</strong> Guarda tus credenciales en un lugar seguro. Una vez inicies sesión, permanecerás conectado.
             </p>
           </div>
           

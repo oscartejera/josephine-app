@@ -16,7 +16,7 @@ import { PaymentMethodsTab } from '@/components/settings/PaymentMethodsTab';
 import { ExportTab } from '@/components/settings/ExportTab';
 import { DataPrivacySection } from '@/pages/Settings/DataPrivacySection';
 import { BillingTab } from '@/components/settings/BillingTab';
-import { TeamManagersTab } from '@/components/settings/TeamManagersTab';
+import { TeamManager } from '@/components/settings/TeamManager';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -52,7 +52,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="team">
-          <TeamManagersTab />
+          <TeamManager />
         </TabsContent>
 
         <TabsContent value="locations">
