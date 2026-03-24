@@ -104,6 +104,9 @@ workflows:
       events:
         - push
       branch_patterns:
+        - pattern: main
+          include: true
+          source: true
         - pattern: release/native-ios/*
           include: true
           source: true

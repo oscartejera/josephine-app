@@ -38,6 +38,24 @@ Each entry should be:
 
 ## Seed Lessons
 
+### Codemagic native-ios-release must trigger on push to main
+
+**Date:** 2026-03-24
+**Area:** Tooling / CI
+**Root cause:** Release workflow only triggered on tags/release branches, requiring manual tag creation for each build.
+**What failed:** Developer friction — manual tags for every TestFlight upload is unsustainable.
+**Prevention:** Always keep `main` in `branch_patterns` for `native-ios-release` in `codemagic.yaml`. Every push to main auto-publishes to TestFlight.
+**Validation:** Check `codemagic.yaml` → `native-ios-release` → `triggering.branch_patterns` includes `main`.
+
+### macOS sed requires `sed -i ''` not `sed -i.bak`
+
+**Date:** 2026-03-24
+**Area:** Tooling / CI
+**Root cause:** `sed -i.bak` is GNU/Linux syntax. macOS `sed` interprets `.bak` as a command, failing silently.
+**What failed:** Build number patch on `project.yml` didn't apply on Codemagic (macOS), resulting in duplicate version uploads.
+**Prevention:** Always use `sed -i '' "s/.../"` in Codemagic scripts. Add post-sed verification guards that abort on mismatch.
+**Validation:** Grep the patched value after sed and compare with expected.
+
 ### Regex bulk edits corrupted TypeScript / JSX structure
 
 **Date:** 2026-03-18
