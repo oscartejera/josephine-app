@@ -38,6 +38,15 @@ Each entry should be:
 
 ## Seed Lessons
 
+### Never query TestFlight for build numbers — use Codemagic BUILD_NUMBER
+
+**Date:** 2026-03-24
+**Area:** Tooling / CI
+**Root cause:** `app-store-connect get-latest-testflight-build-number` returns stale data — it returned 33 when build 34 already existed, causing duplicate uploads.
+**What failed:** 3 consecutive builds failed with "previousBundleVersion = 34" duplicate error.
+**Prevention:** Always use `NEW_BUILD="$BUILD_NUMBER"` in Codemagic. This auto-increments per workflow run and is guaranteed unique. Never query TestFlight API for version numbers.
+**Validation:** Check the IPA `Version code` in Codemagic publish logs.
+
 ### Codemagic native-ios-release must trigger on push to main
 
 **Date:** 2026-03-24
