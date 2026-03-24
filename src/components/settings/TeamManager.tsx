@@ -119,7 +119,7 @@ export function TeamManager() {
           id: profile.id,
           email: '', // Email not available from profiles
           full_name: profile.full_name,
-          roles: (userRoles || []).map((ur: any) => ({
+          roles: (userRoles || []).map((ur: { id: string; role_id: string; roles?: { name: string } | null; location_id?: string | null; locations?: { name: string } | null }) => ({
             id: ur.id,
             role_id: ur.role_id,
             role_name: ur.roles?.name || 'Unknown',
@@ -154,6 +154,15 @@ export function TeamManager() {
   };
 
   const handleInvite = async () => {
+    if (!group?.id) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'El grupo no está cargado. Recarga la página.'
+      });
+      return;
+    }
+
     if (!newMember.email || !newMember.full_name || !newMember.role_id) {
       toast({
         variant: 'destructive',
@@ -194,16 +203,14 @@ export function TeamManager() {
           full_name: newMember.full_name,
           role_id: newMember.role_id,
           location_id: newMember.location_id || null,
-          group_id: group?.id
+          group_id: group.id
         }
       });
 
       if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
+        // supabase.functions.invoke devuelve el body en 'data' incluso en errores
+        const serverMessage = data?.error || error.message;
+        throw new Error(serverMessage);
       }
 
       setInviteSuccess(true);
@@ -221,12 +228,12 @@ export function TeamManager() {
         setInviteSuccess(false);
       }, 2000);
 
-    } catch (error: any) {
-      console.error('Error inviting member:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'No se pudo enviar la invitación';
       toast({
         variant: 'destructive',
         title: 'Error al invitar',
-        description: error.message || 'No se pudo enviar la invitación'
+        description: message
       });
     } finally {
       setInviting(false);
