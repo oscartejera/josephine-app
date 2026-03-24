@@ -36,23 +36,24 @@ Each entry should be:
 
 ---
 
-## Seed Lessons
+## New Entries
 
 ### Never query TestFlight for build numbers — use Codemagic BUILD_NUMBER
 
 **Date:** 2026-03-24
 **Area:** Tooling / CI
 **Root cause:** `app-store-connect get-latest-testflight-build-number` returns stale data — it returned 33 when build 34 already existed, causing duplicate uploads.
-**What failed:** 3 consecutive builds failed with "previousBundleVersion = 34" duplicate error.
+**What failed:** 3 consecutive builds (Index 38–40) failed with "previousBundleVersion = 34" duplicate error. Guards that verified sed correctness passed because the computed number itself was wrong.
 **Prevention:** Always use `NEW_BUILD="$BUILD_NUMBER"` in Codemagic. This auto-increments per workflow run and is guaranteed unique. Never query TestFlight API for version numbers.
-**Validation:** Check the IPA `Version code` in Codemagic publish logs.
+**Validation:** Check the IPA `Version code` in Codemagic publish logs matches the build Index.
+**Notes:** Build #42 (version 42) was the first successful upload after this fix.
 
 ### Codemagic native-ios-release must trigger on push to main
 
 **Date:** 2026-03-24
 **Area:** Tooling / CI
 **Root cause:** Release workflow only triggered on tags/release branches, requiring manual tag creation for each build.
-**What failed:** Developer friction — manual tags for every TestFlight upload is unsustainable.
+**What failed:** Developer friction — manual tags for every TestFlight upload is unsustainable for solo/small teams.
 **Prevention:** Always keep `main` in `branch_patterns` for `native-ios-release` in `codemagic.yaml`. Every push to main auto-publishes to TestFlight.
 **Validation:** Check `codemagic.yaml` → `native-ios-release` → `triggering.branch_patterns` includes `main`.
 
@@ -64,6 +65,10 @@ Each entry should be:
 **What failed:** Build number patch on `project.yml` didn't apply on Codemagic (macOS), resulting in duplicate version uploads.
 **Prevention:** Always use `sed -i '' "s/.../"` in Codemagic scripts. Add post-sed verification guards that abort on mismatch.
 **Validation:** Grep the patched value after sed and compare with expected.
+
+---
+
+## Seed Lessons
 
 ### Regex bulk edits corrupted TypeScript / JSX structure
 
