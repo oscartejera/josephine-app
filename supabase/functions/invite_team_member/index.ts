@@ -74,12 +74,21 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
+    console.log('invite_team_member: parsing body');
     const { email, full_name, role_id, location_id, group_id }: InviteUserRequest = await req.json();
+    console.log('invite_team_member: body parsed', { email: !!email, full_name: !!full_name, role_id: !!role_id, group_id: !!group_id });
 
     // Validate required fields
-    if (!email || !full_name || !role_id || !group_id) {
+    const missingFields: string[] = [];
+    if (!email) missingFields.push('email');
+    if (!full_name) missingFields.push('full_name');
+    if (!role_id) missingFields.push('role_id');
+    if (!group_id) missingFields.push('group_id');
+
+    if (missingFields.length > 0) {
+      console.error('invite_team_member: missing fields:', missingFields);
       return new Response(
-        JSON.stringify({ error: 'Faltan campos requeridos' }),
+        JSON.stringify({ error: `Faltan campos requeridos: ${missingFields.join(', ')}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -166,16 +175,23 @@ Deno.serve(async (req) => {
     const userId = newUser.user.id;
 
     // Update profile with group_id and full_name
+    // NOTE: profiles.id is GENERATED ALWAYS — must use update(), not upsert()
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .upsert({
-        id: userId,
+      .update({
         full_name,
         group_id
-      });
+      })
+      .eq('id', userId);
 
     if (profileError) {
       console.error('Error updating profile:', profileError);
+      // Clean up: delete the auth user if profile update fails
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      return new Response(
+        JSON.stringify({ error: `Error al actualizar perfil: ${profileError.message}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Assign role with location scope
