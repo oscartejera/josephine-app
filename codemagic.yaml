@@ -121,25 +121,16 @@ workflows:
           brew install xcodegen
 
       # ── 2. Increment build number BEFORE generating project ──
+      # Strategy: Use Codemagic's auto-incrementing BUILD_NUMBER.
+      # TestFlight API returns stale data, so we NEVER query it.
       - name: Increment build number
         script: |
           set -euo pipefail
-          echo ">>> Querying TestFlight for latest build number..."
-          LATEST_BUILD_RAW=$(app-store-connect get-latest-testflight-build-number \
-            "$BUNDLE_ID" 2>&1) || true
-          echo ">>> Raw output: [$LATEST_BUILD_RAW]"
 
-          LATEST_BUILD=$(echo "$LATEST_BUILD_RAW" | grep -Eo '[0-9]+' | sort -n | tail -1 || true)
-          echo ">>> Extracted build number: [$LATEST_BUILD]"
-
-          # Fallback must be HIGHER than any known existing build
-          if [ -z "$LATEST_BUILD" ] || [ "$LATEST_BUILD" -lt 2 ]; then
-            echo ">>> WARNING: Could not get build number, defaulting to 40"
-            LATEST_BUILD=40
-          fi
-
-          NEW_BUILD=$((LATEST_BUILD + 1))
-          echo ">>> Previous: $LATEST_BUILD → New: $NEW_BUILD"
+          # Codemagic BUILD_NUMBER auto-increments per workflow run
+          # This build was Index 40, next will be 41, etc. Always unique.
+          NEW_BUILD="$BUILD_NUMBER"
+          echo ">>> Using Codemagic BUILD_NUMBER: $NEW_BUILD"
 
           # Patch project.yml BEFORE xcodegen runs
           cd native-ios/JosephineTeam
@@ -157,7 +148,6 @@ workflows:
             echo "❌ FATAL: sed failed to patch project.yml!"
             echo "   Expected CURRENT_PROJECT_VERSION: $NEW_BUILD"
             echo "   Got: $PATCHED_VALUE"
-            echo "   Full line: $(grep CURRENT_PROJECT_VERSION project.yml)"
             exit 1
           fi
           echo "✅ Verified project.yml → CURRENT_PROJECT_VERSION: $NEW_BUILD"
