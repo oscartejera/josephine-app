@@ -543,3 +543,36 @@ This ensures the correct build number is baked into `.pbxproj` from the start.
 **Validation:** After `xcodegen generate`, run `grep CURRENT_PROJECT_VERSION ios/App.xcodeproj/project.pbxproj` — it should show the incremented number (e.g., `35`), NOT `1`.
 **Notes:** This is a general lesson about Xcode build setting precedence: target-level > project-level > CLI. If a value is set at the target level in `.pbxproj`, the only reliable ways to override it are: (1) change it at the target level (source of truth), or (2) use `xcconfig` files. CLI arguments alone are NOT sufficient.
 
+### NEVER touch the web app when working on native-ios
+
+**Date:** 2026-03-24
+**Area:** Workflow / Scope Discipline
+**Root cause:** The repo contains both a web app (`src/`, `public/`, `index.html` — deployed as www.josephine-ai.com) and a native iOS app (`native-ios/`). They are independent codebases sharing the same Git repo. An agent or developer working on native-ios changes can accidentally stage, modify, or delete web app files.
+**What failed:** A Capacitor cleanup was proposed that would have removed web app files (the Capacitor hybrid approach was abandoned in favor of native Swift). The web app is a live production site — deleting it would take www.josephine-ai.com offline.
+**Prevention:** When working on native-ios tasks, ONLY stage files under `native-ios/`. Never `git add .` — always `git add native-ios/` explicitly. Before committing, run `git diff --cached --name-status` and verify no `src/`, `public/`, or root config files (besides `.gitignore`, `CLAUDE.md`) are staged. If the task mentions "remove Capacitor", it means remove Capacitor *config/dependencies*, NOT the web app itself.
+**Validation:** `git diff --cached --name-status | grep -v native-ios | grep -v .gitignore | grep -v CLAUDE.md` should return empty before committing native-ios work.
+**Notes:** The web app and native app will eventually diverge into separate repos, but for now they coexist. Treat them as completely separate projects that happen to share a Git remote.
+
+### Localizable.strings must stay in sync with SwiftUI views
+
+**Date:** 2026-03-24
+**Area:** i18n / iOS
+**Root cause:** When LoginView.swift was refactored from a single-screen design to a multi-step flow, the old localization keys (e.g., `"login_email_placeholder"`, `"login_password_placeholder"`, `"login_button"`) were left orphaned in `Localizable.strings`. The new SwiftUI views use inline Spanish strings or different key patterns.
+**What failed:** `Localizable.strings` contained 8 entries for keys that no Swift file referenced, inflating the file and creating confusion about which strings are active.
+**Prevention:** After ANY refactor that changes or removes UI text in Swift views, grep for the old localization keys across all `.swift` files. Remove keys from `Localizable.strings` that have zero references: `Get-ChildItem -Recurse -Filter *.swift | Select-String "KEY_NAME"` — if 0 matches, delete the key.
+**Validation:** Every key in `Localizable.strings` must have at least one corresponding `NSLocalizedString("key", ...)` or `LocalizedStringKey("key")` reference in the Swift source. Zero-reference keys must be removed.
+**Notes:** This is especially important in early development where UI designs change rapidly. Consider using `swiftgen` or a linting rule to catch orphaned keys automatically.
+
+### Never use `app-store-connect get-latest-testflight-build-number` as source of truth
+
+**Date:** 2026-03-24
+**Area:** CI/CD / Versioning
+**Root cause:** The Codemagic CLI command `app-store-connect get-latest-testflight-build-number` queries the App Store Connect API, which has eventual consistency — it can return stale values. It returned `33` when build `34` already existed, causing a duplicate upload that Apple rejected.
+**What failed:** 3 consecutive CI builds (Index 38–40) failed with `previousBundleVersion = 34` duplicate error. All guards that verified the sed patch passed because the *computed* number itself (34) was wrong — it was based on stale API data.
+**Prevention:** Use Codemagic's auto-incrementing `$BUILD_NUMBER` environment variable instead. This is guaranteed unique per workflow run and doesn't depend on external API calls. Set it in `project.yml` before `xcodegen generate`:
+```bash
+NEW_BUILD="$BUILD_NUMBER"
+sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
+```
+**Validation:** Check the IPA `Version code` in Codemagic publish logs matches the Codemagic build Index number.
+**Notes:** Build #42 (using `$BUILD_NUMBER`) was the first successful upload after this fix. The earlier lesson about `grep -Eo` regex also contributed to the failure, but even with correct grep, the stale API response would have eventually caused a collision.
