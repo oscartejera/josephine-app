@@ -576,3 +576,13 @@ sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"
 ```
 **Validation:** Check the IPA `Version code` in Codemagic publish logs matches the Codemagic build Index number.
 **Notes:** Build #42 (using `$BUILD_NUMBER`) was the first successful upload after this fix. The earlier lesson about `grep -Eo` regex also contributed to the failure, but even with correct grep, the stale API response would have eventually caused a collision.
+
+### `CREATE TABLE IF NOT EXISTS` silently skips when remote table has incompatible schema
+
+**Date:** 2026-03-24
+**Area:** DB
+**Root cause:** The remote Supabase database already had a `roles` table with a different schema (missing `is_system` column, different column types). `CREATE TABLE IF NOT EXISTS roles (...)` silently succeeded — it saw the table existed and did nothing. Subsequent statements (`INSERT INTO roles ... (is_system)`) failed because the columns didn't match.
+**What failed:** `supabase db push` failed with column-mismatch errors. The migration assumed the table either didn't exist or matched the expected schema, but neither was true.
+**Prevention:** Before using `CREATE TABLE IF NOT EXISTS` in migrations, check if the remote DB might have a pre-existing table with the same name but different schema (e.g., from a previous migration, manual SQL, or Supabase Studio edits). If the table may exist with an incompatible schema, use `DROP TABLE IF EXISTS ... CASCADE` followed by `CREATE TABLE` to guarantee a clean state. Always add `CASCADE` to handle dependent foreign keys.
+**Validation:** After `supabase db push`, run `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'roles' ORDER BY ordinal_position;` to verify the schema matches expectations.
+**Notes:** This is especially common with tables that were manually created or modified via Supabase Studio dashboard. The `IF NOT EXISTS` clause only checks for table *existence*, not schema *compatibility*.
