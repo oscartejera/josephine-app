@@ -7,8 +7,7 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showPassword = false
-    @State private var emailFieldFocused = true
-    @State private var passwordFieldFocused = false
+
     @State private var showForgotPassword = false
     @FocusState private var focusedField: LoginField?
 
@@ -52,9 +51,7 @@ struct LoginView: View {
             ForgotPasswordView(email: email)
                 .environmentObject(authVM)
         }
-        .onAppear {
-            focusedField = .email
-        }
+
     }
 
     // MARK: - Logo
