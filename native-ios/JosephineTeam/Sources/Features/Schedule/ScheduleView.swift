@@ -9,6 +9,7 @@ struct ScheduleView: View {
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var selectedShiftForSwap: PlannedShift?
 
     private let supabase = SupabaseManager.shared
     private let cache = CacheManager.shared
@@ -37,6 +38,30 @@ struct ScheduleView: View {
             }
             .background(JColor.background)
             .navigationTitle("Horario")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        if let emp = authVM.employee {
+                            AvailabilityView(employeeId: emp.id)
+                        }
+                    } label: {
+                        Image(systemName: "calendar.badge.clock")
+                            .foregroundStyle(JColor.accent)
+                    }
+                }
+            }
+            .sheet(item: $selectedShiftForSwap) { shift in
+                if let emp = authVM.employee {
+                    SwapRequestSheet(
+                        shift: shift,
+                        employeeId: emp.id,
+                        locationId: emp.locationId,
+                        onDismiss: { selectedShiftForSwap = nil }
+                    )
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
+            }
             .refreshable {
                 await loadWeekShifts()
                 HapticManager.play(.success)
@@ -156,9 +181,14 @@ struct ScheduleView: View {
                 }
             } else {
                 ForEach(shifts) { shift in
-                    JCard {
-                        ShiftRow(shift: shift)
+                    Button {
+                        selectedShiftForSwap = shift
+                    } label: {
+                        JCard {
+                            ShiftRow(shift: shift)
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
