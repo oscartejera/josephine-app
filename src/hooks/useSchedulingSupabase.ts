@@ -831,17 +831,76 @@ export function useSchedulingSupabase(
     return newShift;
   }, []);
 
-  // Swap request handlers (local state for now)
-  const createSwapRequest = useCallback((requesterShift: Shift, targetShift: Shift, reason?: string) => {
-    if (!data) return;
+  // ─── Load swap requests from DB ─────────────────────────
+  const loadSwapRequests = useCallback(async () => {
+    if (!locationId) return;
+    try {
+      // Get employee IDs for this location so we can filter swap requests
+      const { data: locEmployees } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('location_id', locationId);
+
+      const empIds = (locEmployees ?? []).map(e => e.id);
+      if (empIds.length === 0) return;
+
+      const { data: rows, error } = await supabase
+        .from('shift_swap_requests')
+        .select(`
+          id, status, reason, created_at,
+          requester:employees!requester_id(id, first_name, last_name),
+          target:employees!target_id(id, first_name, last_name),
+          requester_shift:planned_shifts!requester_shift_id(id, shift_date, start_time, end_time),
+          target_shift:planned_shifts!target_shift_id(id, shift_date, start_time, end_time)
+        `)
+        .in('requester_id', empIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: SwapRequest[] = (rows ?? []).map((r: any) => {
+        const reqName = `${r.requester?.first_name ?? ''} ${r.requester?.last_name ?? ''}`.trim();
+        const tgtName = `${r.target?.first_name ?? ''} ${r.target?.last_name ?? ''}`.trim();
+        return {
+          id: r.id,
+          requesterId: r.requester?.id ?? '',
+          requesterName: reqName,
+          requesterInitials: reqName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+          requesterShiftId: r.requester_shift?.id ?? '',
+          requesterShiftDate: r.requester_shift?.shift_date ?? '',
+          requesterShiftTime: `${r.requester_shift?.start_time ?? ''} - ${r.requester_shift?.end_time ?? ''}`,
+          targetId: r.target?.id ?? '',
+          targetName: tgtName,
+          targetInitials: tgtName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+          targetShiftId: r.target_shift?.id ?? '',
+          targetShiftDate: r.target_shift?.shift_date ?? '',
+          targetShiftTime: `${r.target_shift?.start_time ?? ''} - ${r.target_shift?.end_time ?? ''}`,
+          status: r.status as SwapRequest['status'],
+          createdAt: r.created_at,
+          reason: r.reason ?? undefined,
+        };
+      });
+      setSwapRequests(mapped);
+    } catch (err) {
+      console.error('[scheduling] loadSwapRequests error:', err);
+    }
+  }, [locationId]);
+
+  // Load swap requests on mount / location change
+  useEffect(() => { loadSwapRequests(); }, [loadSwapRequests]);
+
+  // ─── Swap request CRUD (DB-backed) ──────────────────────
+  const createSwapRequest = useCallback(async (requesterShift: Shift, targetShift: Shift, reason?: string) => {
+    if (!data || !locationId) return;
 
     const requester = data.employees.find(e => e.id === requesterShift.employeeId);
     const target = data.employees.find(e => e.id === targetShift.employeeId);
-
     if (!requester || !target) return;
 
+    // Optimistic UI
+    const optimisticId = `swap-${Date.now()}`;
     const newRequest: SwapRequest = {
-      id: `swap-${Date.now()}`,
+      id: optimisticId,
       requesterId: requester.id,
       requesterName: requester.name,
       requesterInitials: requester.initials,
@@ -858,30 +917,82 @@ export function useSchedulingSupabase(
       createdAt: new Date().toISOString(),
       reason,
     };
-
     setSwapRequests(prev => [...prev, newRequest]);
-    return newRequest;
-  }, [data]);
 
-  const approveSwapRequest = useCallback((requestId: string) => {
+    // Persist to DB
+    const { data: inserted, error } = await supabase
+      .from('shift_swap_requests')
+      .insert({
+        location_id: locationId,
+        requester_id: requester.id,
+        target_id: target.id,
+        requester_shift_id: requesterShift.id,
+        target_shift_id: targetShift.id,
+        reason: reason ?? null,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      toast.error('Error al crear solicitud de intercambio');
+      setSwapRequests(prev => prev.filter(r => r.id !== optimisticId));
+      return;
+    }
+
+    // Replace optimistic ID with DB ID
+    setSwapRequests(prev => prev.map(r => r.id === optimisticId ? { ...r, id: inserted.id } : r));
+    toast.success('Solicitud de intercambio creada');
+    return { ...newRequest, id: inserted.id };
+  }, [data, locationId]);
+
+  const approveSwapRequest = useCallback(async (requestId: string) => {
     const request = swapRequests.find(r => r.id === requestId);
     if (!request) return;
 
+    // Optimistic UI — swap employee assignments
     setShiftOverrides(prev => ({
       ...prev,
       [request.requesterShiftId]: { employeeId: request.targetId, date: request.requesterShiftDate },
       [request.targetShiftId]: { employeeId: request.requesterId, date: request.targetShiftDate },
     }));
-
     setSwapRequests(prev =>
       prev.map(r => r.id === requestId ? { ...r, status: 'approved' as const } : r)
     );
+
+    // Persist
+    const { error } = await supabase
+      .from('shift_swap_requests')
+      .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+      .eq('id', requestId);
+
+    if (error) {
+      toast.error('Error al aprobar intercambio');
+      // Rollback optimistic
+      setSwapRequests(prev =>
+        prev.map(r => r.id === requestId ? { ...r, status: 'pending' as const } : r)
+      );
+    } else {
+      toast.success('Intercambio aprobado');
+    }
   }, [swapRequests]);
 
-  const rejectSwapRequest = useCallback((requestId: string) => {
+  const rejectSwapRequest = useCallback(async (requestId: string) => {
+    // Optimistic
     setSwapRequests(prev =>
       prev.map(r => r.id === requestId ? { ...r, status: 'rejected' as const } : r)
     );
+
+    const { error } = await supabase
+      .from('shift_swap_requests')
+      .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
+      .eq('id', requestId);
+
+    if (error) {
+      toast.error('Error al rechazar intercambio');
+      setSwapRequests(prev =>
+        prev.map(r => r.id === requestId ? { ...r, status: 'pending' as const } : r)
+      );
+    }
   }, []);
 
   const pendingSwapRequests = swapRequests.filter(r => r.status === 'pending');
