@@ -22,6 +22,9 @@ struct PayView: View {
                     // MARK: - Month Selector
                     monthSelector
 
+                    // MARK: - Hero Total
+                    heroTotal
+
                     // MARK: - Summary Cards
                     summaryCards
 
@@ -63,6 +66,33 @@ struct PayView: View {
             }
         }
         .padding(.top, JSpacing.md)
+    }
+
+    // MARK: - Hero Total
+    private var heroTotal: some View {
+        let hourlyRate = authVM.employee?.hourlyCost ?? 0
+        let grossPay = totalWorkedHours * hourlyRate
+        let totalTips = tips.reduce(0) { $0 + $1.shareAmount }
+        let total = grossPay + totalTips
+
+        return VStack(spacing: JSpacing.xs) {
+            Text(String(format: "%.2f€", total))
+                .font(.jHeroNumber)
+                .foregroundStyle(JColor.accent)
+
+            Text("Total estimado")
+                .font(.jCallout)
+                .foregroundStyle(JColor.textSecondary)
+
+            Text(monthString)
+                .font(.jCaption)
+                .foregroundStyle(JColor.textMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, JSpacing.lg)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Total estimado \(String(format: "%.2f", total)) euros para \(monthString)")
+        .accessibilityIdentifier("pay_hero_total")
     }
 
     // MARK: - Summary Cards
@@ -117,29 +147,29 @@ struct PayView: View {
 
             JCard {
                 VStack(spacing: JSpacing.md) {
-                    breakdownRow(label: "Horas totales", value: String(format: "%.1fh", totalWorkedHours))
+                    breakdownRow(label: "Horas totales", value: String(format: "%.1fh", totalWorkedHours), color: JColor.textSecondary)
                     Divider().background(JColor.border)
-                    breakdownRow(label: "Coste/hora", value: String(format: "%.2f€", hourlyRate))
+                    breakdownRow(label: "Coste/hora", value: String(format: "%.2f€", hourlyRate), color: JColor.textSecondary)
                     Divider().background(JColor.border)
-                    breakdownRow(label: "Salario bruto", value: String(format: "%.2f€", grossPay))
+                    breakdownRow(label: "Salario bruto", value: String(format: "%.2f€", grossPay), color: JColor.success)
                     Divider().background(JColor.border)
-                    breakdownRow(label: "Propinas", value: String(format: "%.2f€", totalTips))
+                    breakdownRow(label: "Propinas", value: String(format: "%.2f€", totalTips), color: JColor.success)
                     Divider().background(JColor.border)
-                    breakdownRow(label: "Total estimado", value: String(format: "%.2f€", grossPay + totalTips), highlight: true)
+                    breakdownRow(label: "Total estimado", value: String(format: "%.2f€", grossPay + totalTips), color: JColor.accent, highlight: true)
                 }
             }
         }
     }
 
-    private func breakdownRow(label: String, value: String, highlight: Bool = false) -> some View {
+    private func breakdownRow(label: String, value: String, color: Color, highlight: Bool = false) -> some View {
         HStack {
             Text(label)
                 .font(highlight ? .jBodyBold : .jCallout)
-                .foregroundStyle(highlight ? JColor.accent : JColor.textSecondary)
+                .foregroundStyle(highlight ? color : JColor.textSecondary)
             Spacer()
             Text(value)
                 .font(highlight ? .jBodyBold : .jBody)
-                .foregroundStyle(highlight ? JColor.accent : JColor.textPrimary)
+                .foregroundStyle(color)
         }
     }
 

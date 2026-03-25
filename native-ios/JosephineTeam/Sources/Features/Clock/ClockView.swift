@@ -20,6 +20,7 @@ struct ClockView: View {
     @State private var clockResultIcon = "checkmark.circle.fill"
     @State private var clockResultColor: Color = .green
     @State private var buttonScale: CGFloat = 1.0
+    @State private var glowPulse = false
 
     private let supabase = SupabaseManager.shared
     private let cache = CacheManager.shared
@@ -63,7 +64,7 @@ struct ClockView: View {
                 // Active timer
                 Text(formatElapsed(elapsedSeconds))
                     .font(.jTimer)
-                    .foregroundStyle(JColor.success)
+                    .foregroundStyle(JColor.accent)
                     .monospacedDigit()
 
                 Text("Tiempo trabajado")
@@ -86,50 +87,75 @@ struct ClockView: View {
     // MARK: - Clock In / Out Button
     private var clockButton: some View {
         let isClockedIn = activeRecord != nil
+        let ringColor = isClockedIn ? JColor.success : JColor.accent
 
         return Button {
             Task {
-                // Press-in animation
                 withAnimation(.easeIn(duration: 0.1)) { buttonScale = 0.9 }
                 if isClockedIn {
                     await clockOut()
                 } else {
                     await clockIn()
                 }
-                // Release animation
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { buttonScale = 1.0 }
             }
         } label: {
             ZStack {
-                VStack(spacing: JSpacing.sm) {
+                // Outer glow rings
+                Circle()
+                    .stroke(ringColor.opacity(0.08), lineWidth: 32)
+                    .frame(width: 200, height: 200)
+                    .scaleEffect(glowPulse ? 1.1 : 1.0)
+
+                Circle()
+                    .stroke(ringColor.opacity(0.15), lineWidth: 16)
+                    .frame(width: 170, height: 170)
+                    .scaleEffect(glowPulse ? 1.05 : 1.0)
+
+                Circle()
+                    .stroke(ringColor.opacity(0.25), lineWidth: 6)
+                    .frame(width: 146, height: 146)
+
+                // Main button circle
+                Circle()
+                    .fill(ringColor)
+                    .frame(width: 140, height: 140)
+                    .shadow(color: ringColor.opacity(0.4), radius: 20, x: 0, y: 8)
+
+                // Content inside the circle
+                VStack(spacing: JSpacing.xs) {
                     if isProcessing {
                         ProgressView()
-                            .tint(JColor.accent)
-                            .frame(width: 120, height: 120)
+                            .tint(.white)
                     } else {
-                        Image(systemName: isClockedIn ? "stop.circle.fill" : "play.circle.fill")
-                            .font(.system(size: 72))
-                            .foregroundStyle(isClockedIn ? JColor.error : JColor.success)
-                            .frame(width: 120, height: 120)
+                        Image(systemName: isClockedIn ? "stop.fill" : "play.fill")
+                            .font(.system(size: 32, weight: .medium))
+                            .foregroundStyle(.white)
                     }
 
-                    Text(isClockedIn ? "Fichar Salida" : "Fichar Entrada")
-                        .font(.jTitle3)
-                        .foregroundStyle(JColor.textPrimary)
+                    Text(isClockedIn ? "SALIDA" : "ENTRADA")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .tracking(1.5)
                 }
                 .opacity(showClockResult ? 0.3 : 1.0)
 
                 // Success / Error result overlay
                 if showClockResult {
                     Image(systemName: clockResultIcon)
-                        .font(.system(size: 64))
-                        .foregroundStyle(clockResultColor)
+                        .font(.system(size: 48))
+                        .foregroundStyle(.white)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
         }
         .scaleEffect(buttonScale)
         .disabled(isProcessing)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                glowPulse = true
+            }
+        }
         .accessibilityLabel(isClockedIn ? "Fichar salida" : "Fichar entrada")
         .accessibilityIdentifier("clock_button")
         .accessibilityHint(isProcessing ? "Procesando" : "")
@@ -150,12 +176,13 @@ struct ClockView: View {
         }
     }
 
-    // MARK: - Today's Records
+    // MARK: - Today's Records (horizontal scroll)
     private var todayRecordsList: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Fichajes de hoy")
                 .font(.jTitle3)
                 .foregroundStyle(JColor.textPrimary)
+                .padding(.horizontal, JSpacing.lg)
 
             if todayRecords.isEmpty {
                 JCard {
@@ -169,32 +196,57 @@ struct ClockView: View {
                     }
                 }
             } else {
-                ForEach(todayRecords) { record in
-                    JCard {
-                        HStack {
-                            VStack(alignment: .leading, spacing: JSpacing.xs) {
-                                Text(record.clockIn.formatted(date: .omitted, time: .shortened))
-                                    .font(.jBodyBold)
-                                    .foregroundStyle(JColor.textPrimary)
-                                Text(record.isActive ? "En curso" : record.durationString)
-                                    .font(.jCaption)
-                                    .foregroundStyle(record.isActive ? JColor.success : JColor.textSecondary)
-                            }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: JSpacing.md) {
+                        ForEach(todayRecords) { record in
+                            VStack(alignment: .leading, spacing: JSpacing.sm) {
+                                // Time range
+                                HStack(spacing: JSpacing.xs) {
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(record.isActive ? JColor.success : JColor.accent)
+                                        .frame(width: 3, height: 32)
 
-                            Spacer()
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(record.clockIn.formatted(date: .omitted, time: .shortened))
+                                            .font(.jBodyBold)
+                                            .foregroundStyle(JColor.textPrimary)
+                                        if let clockOut = record.clockOut {
+                                            Text(clockOut.formatted(date: .omitted, time: .shortened))
+                                                .font(.jCaption)
+                                                .foregroundStyle(JColor.textSecondary)
+                                        } else {
+                                            Text("En curso")
+                                                .font(.jCaption)
+                                                .foregroundStyle(JColor.success)
+                                        }
+                                    }
+                                }
 
-                            if let clockOut = record.clockOut {
-                                Text(clockOut.formatted(date: .omitted, time: .shortened))
-                                    .font(.jBody)
-                                    .foregroundStyle(JColor.textSecondary)
-                            } else {
-                                JBadge(text: "Activo", color: JColor.success)
+                                // Duration or active badge
+                                if record.isActive {
+                                    JBadge(text: "Activo", color: JColor.success)
+                                } else {
+                                    Text(record.durationString)
+                                        .font(.jCaption)
+                                        .foregroundStyle(JColor.accent)
+                                        .padding(.horizontal, JSpacing.sm)
+                                        .padding(.vertical, JSpacing.xs)
+                                        .background(JColor.accent.opacity(0.1))
+                                        .clipShape(Capsule())
+                                }
                             }
+                            .padding(JSpacing.lg)
+                            .frame(width: 140)
+                            .background(JColor.card)
+                            .clipShape(RoundedRectangle(cornerRadius: JRadius.lg))
+                            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
                         }
                     }
+                    .padding(.horizontal, JSpacing.lg)
                 }
             }
         }
+        .padding(.horizontal, -JSpacing.lg) // compensate parent padding for full-bleed scroll
     }
 
     // MARK: - Actions
