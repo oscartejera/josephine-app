@@ -190,7 +190,7 @@ struct HomeView: View {
             if !announcements.isEmpty {
                 VStack(alignment: .leading, spacing: JSpacing.md) {
                     Text("Noticias")
-                        .font(.jHeadline)
+                        .font(.jTitle3)
                         .foregroundStyle(JColor.textPrimary)
 
                     ForEach(sortedAnnouncements) { item in
