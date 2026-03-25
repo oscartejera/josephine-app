@@ -135,6 +135,28 @@ struct EmployeeBreak: Codable, Identifiable, Sendable {
     }
 }
 
+// MARK: - Break Start Insert DTO
+struct BreakStartInsert: Codable, Sendable {
+    let clockRecordId: UUID
+    let breakStart: Date
+    let breakType: String
+
+    enum CodingKeys: String, CodingKey {
+        case clockRecordId = "clock_record_id"
+        case breakStart = "break_start"
+        case breakType = "break_type"
+    }
+}
+
+// MARK: - Break End Update DTO
+struct BreakEndUpdate: Codable, Sendable {
+    let breakEnd: Date
+
+    enum CodingKeys: String, CodingKey {
+        case breakEnd = "break_end"
+    }
+}
+
 // MARK: - Planned Shift
 struct PlannedShift: Codable, Identifiable, Sendable {
     let id: UUID

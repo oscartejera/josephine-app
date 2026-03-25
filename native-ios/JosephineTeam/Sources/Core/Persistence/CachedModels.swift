@@ -128,6 +128,48 @@ final class CachedClockRecord {
     }
 }
 
+// MARK: - Cached Employee Break
+@Model
+final class CachedEmployeeBreak {
+    @Attribute(.unique) var id: UUID
+    var clockRecordId: UUID
+    var breakStart: Date
+    var breakEnd: Date?
+    var breakType: String
+    var durationMinutes: Int?
+    var lastSyncedAt: Date
+
+    init(from model: EmployeeBreak) {
+        self.id = model.id
+        self.clockRecordId = model.clockRecordId
+        self.breakStart = model.breakStart
+        self.breakEnd = model.breakEnd
+        self.breakType = model.breakType
+        self.durationMinutes = model.durationMinutes
+        self.lastSyncedAt = Date()
+    }
+
+    func update(from model: EmployeeBreak) {
+        self.clockRecordId = model.clockRecordId
+        self.breakStart = model.breakStart
+        self.breakEnd = model.breakEnd
+        self.breakType = model.breakType
+        self.durationMinutes = model.durationMinutes
+        self.lastSyncedAt = Date()
+    }
+
+    func toModel() -> EmployeeBreak {
+        EmployeeBreak(
+            id: id,
+            clockRecordId: clockRecordId,
+            breakStart: breakStart,
+            breakEnd: breakEnd,
+            breakType: breakType,
+            durationMinutes: durationMinutes
+        )
+    }
+}
+
 // MARK: - Cached Planned Shift
 @Model
 final class CachedPlannedShift {

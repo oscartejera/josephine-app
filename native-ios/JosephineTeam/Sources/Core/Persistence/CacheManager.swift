@@ -27,6 +27,7 @@ final class CacheManager {
             CachedEmployee.self,
             CachedLocation.self,
             CachedClockRecord.self,
+            CachedEmployeeBreak.self,
             CachedPlannedShift.self,
             CachedAnnouncement.self,
             CachedTipDistribution.self,
@@ -54,6 +55,7 @@ final class CacheManager {
         case employees
         case locations
         case clockRecords = "employee_clock_records"
+        case employeeBreaks = "employee_breaks"
         case plannedShifts = "planned_shifts"
         case announcements
         case tipDistributions = "tip_distributions"
@@ -87,6 +89,15 @@ final class CacheManager {
         let descriptor = FetchDescriptor<CachedPlannedShift>(
             predicate: #Predicate { $0.employeeId == employeeId },
             sortBy: [SortDescriptor(\.shiftDate, order: .reverse)]
+        )
+        return try context.fetch(descriptor).map { $0.toModel() }
+    }
+
+    func employeeBreaks(for clockRecordId: UUID) throws -> [EmployeeBreak] {
+        let context = container.mainContext
+        let descriptor = FetchDescriptor<CachedEmployeeBreak>(
+            predicate: #Predicate { $0.clockRecordId == clockRecordId },
+            sortBy: [SortDescriptor(\.breakStart, order: .reverse)]
         )
         return try context.fetch(descriptor).map { $0.toModel() }
     }
@@ -150,6 +161,16 @@ final class CacheManager {
                 .execute()
                 .value
             try upsertClockRecords(items)
+
+        case .employeeBreaks:
+            let breakCutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
+            let breakISO = ISO8601DateFormatter().string(from: breakCutoff)
+            let items: [EmployeeBreak] = try await db.from("employee_breaks")
+                .select()
+                .gte("break_start", value: breakISO)
+                .execute()
+                .value
+            try upsertEmployeeBreaks(items)
 
         case .plannedShifts:
             let shiftFrom = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
@@ -226,6 +247,10 @@ final class CacheManager {
                 var d = FetchDescriptor<CachedClockRecord>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
                 d.fetchLimit = 1
                 return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
+            case .employeeBreaks:
+                var d = FetchDescriptor<CachedEmployeeBreak>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             case .plannedShifts:
                 var d = FetchDescriptor<CachedPlannedShift>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
                 d.fetchLimit = 1
@@ -291,6 +316,21 @@ final class CacheManager {
         try context.save()
     }
 
+    private func upsertEmployeeBreaks(_ items: [EmployeeBreak]) throws {
+        let context = container.mainContext
+        let existing = try context.fetch(FetchDescriptor<CachedEmployeeBreak>())
+        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
+
+        for item in items {
+            if let cached = existingById[item.id] {
+                cached.update(from: item)
+            } else {
+                context.insert(CachedEmployeeBreak(from: item))
+            }
+        }
+        try context.save()
+    }
+
     private func upsertPlannedShifts(_ items: [PlannedShift]) throws {
         let context = container.mainContext
         let existing = try context.fetch(FetchDescriptor<CachedPlannedShift>())
@@ -350,6 +390,12 @@ final class CacheManager {
             predicate: #Predicate { $0.clockIn < cutoff }
         ))
         oldClocks.forEach { context.delete($0) }
+
+        // Employee breaks older than retention
+        let oldBreaks = try context.fetch(FetchDescriptor<CachedEmployeeBreak>(
+            predicate: #Predicate { $0.breakStart < cutoff }
+        ))
+        oldBreaks.forEach { context.delete($0) }
 
         // Planned shifts older than retention (shiftDate is String "yyyy-MM-dd")
         let oldShifts = try context.fetch(FetchDescriptor<CachedPlannedShift>(

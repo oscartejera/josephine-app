@@ -18,6 +18,7 @@ extension Font {
     static let jSectionHeader = Font.system(size: 15, weight: .semibold)
     static let jFootnote = Font.system(size: 13)
     static let jCaption = Font.system(size: 12, weight: .medium)
+    static let jCaptionBold = Font.system(size: 12, weight: .bold)
     static let jCaption2 = Font.system(size: 11)
 
     // Special
