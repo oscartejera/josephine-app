@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var isLoading = true
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var glowPulse = false
 
     private let supabase = SupabaseManager.shared
     private let cache = CacheManager.shared
@@ -64,6 +65,10 @@ struct HomeView: View {
                     // MARK: - Active Clock Banner
                     if let record = activeClockRecord {
                         activeClockBanner(record)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .move(edge: .top).combined(with: .opacity)
+                            ))
                     }
 
                     // MARK: - Today's Shift
@@ -108,10 +113,14 @@ struct HomeView: View {
                     Circle()
                         .fill(JColor.success)
                         .frame(width: 8, height: 8)
+                        .scaleEffect(glowPulse ? 1.3 : 1.0)
+                        .opacity(glowPulse ? 0.7 : 1.0)
+                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: glowPulse)
                     Text("Activo")
                         .font(.jCaption)
                         .foregroundStyle(JColor.success)
                 }
+                .onAppear { glowPulse = true }
             }
         }
         .padding(.top, JSpacing.md)

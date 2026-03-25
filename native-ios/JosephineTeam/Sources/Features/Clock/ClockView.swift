@@ -92,6 +92,7 @@ struct ClockView: View {
                     .font(.jTimer)
                     .foregroundStyle(activeBreak != nil ? JColor.warning : JColor.accent)
                     .monospacedDigit()
+                    .animation(.easeInOut(duration: 0.5), value: activeBreak != nil)
 
                 Text(activeBreak != nil ? "En descanso" : "Tiempo trabajado")
                     .font(.jCallout)
@@ -157,6 +158,7 @@ struct ClockView: View {
                         Image(systemName: isClockedIn ? "stop.fill" : "play.fill")
                             .font(.system(size: 32, weight: .medium))
                             .foregroundStyle(.white)
+                            .contentTransition(.symbolEffect(.replace))
                     }
 
                     Text(isClockedIn ? "SALIDA" : "ENTRADA")
@@ -234,6 +236,7 @@ struct ClockView: View {
                 .padding(JSpacing.lg)
                 .background(JColor.warning.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: JRadius.lg))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
                 // Show start break button
                 Button {
@@ -255,6 +258,7 @@ struct ClockView: View {
                     )
                 }
                 .accessibilityIdentifier("start_break_button")
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }

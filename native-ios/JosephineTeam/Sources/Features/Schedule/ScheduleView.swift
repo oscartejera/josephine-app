@@ -96,6 +96,8 @@ struct ScheduleView: View {
             Text(weekRangeString)
                 .font(.jSubheadline)
                 .foregroundStyle(JColor.textPrimary)
+                .contentTransition(.numericText())
+                .animation(.easeInOut(duration: 0.3), value: weekRangeString)
 
             Spacer()
 
@@ -115,7 +117,11 @@ struct ScheduleView: View {
                 let isToday = calendar.isDateInToday(day)
                 let hasShift = weekShifts.contains { $0.shiftDate == DateFormatter.yyyyMMdd.string(from: day) }
 
-                Button { selectedDate = day } label: {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                        selectedDate = day
+                    }
+                } label: {
                     VStack(spacing: JSpacing.xs) {
                         Text(dayAbbrev(day))
                             .font(.jCaption2)
@@ -138,6 +144,7 @@ struct ScheduleView: View {
                 }
             }
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.75), value: selectedDate)
     }
 
     // MARK: - Week Summary
@@ -179,6 +186,7 @@ struct ScheduleView: View {
                         Spacer()
                     }
                 }
+                .transition(.opacity)
             } else {
                 ForEach(shifts) { shift in
                     Button {
@@ -189,6 +197,7 @@ struct ScheduleView: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
             }
         }

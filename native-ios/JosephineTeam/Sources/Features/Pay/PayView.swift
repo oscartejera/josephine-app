@@ -59,6 +59,8 @@ struct PayView: View {
             Text(monthString)
                 .font(.jSubheadline)
                 .foregroundStyle(JColor.textPrimary)
+                .contentTransition(.numericText())
+                .animation(.easeInOut(duration: 0.3), value: monthString)
             Spacer()
             Button { changeMonth(1) } label: {
                 Image(systemName: "chevron.right")
@@ -79,6 +81,8 @@ struct PayView: View {
             Text(String(format: "%.2f€", total))
                 .font(.jHeroNumber)
                 .foregroundStyle(JColor.accent)
+                .contentTransition(.numericText(countsDown: false))
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: total)
 
             Text("Total estimado")
                 .font(.jCallout)
@@ -132,6 +136,7 @@ struct PayView: View {
                 )
             }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedMonth)
     }
 
     // MARK: - Breakdown
