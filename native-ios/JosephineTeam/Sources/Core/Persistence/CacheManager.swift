@@ -165,14 +165,14 @@ final class CacheManager {
                 .select()
                 .execute()
                 .value
-            try upsert(items, as: CachedEmployee.self)
+            try upsert(items, into: CachedEmployee.self)
 
         case .locations:
             let items: [Location] = try await db.from("locations")
                 .select()
                 .execute()
                 .value
-            try upsert(items, as: CachedLocation.self)
+            try upsert(items, into: CachedLocation.self)
 
         case .clockRecords:
             let clockCutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
@@ -182,7 +182,7 @@ final class CacheManager {
                 .gte("clock_in", value: clockISO)
                 .execute()
                 .value
-            try upsertClockRecords(items)
+            try upsert(items, into: CachedClockRecord.self)
 
         case .employeeBreaks:
             let breakCutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
@@ -192,7 +192,7 @@ final class CacheManager {
                 .gte("break_start", value: breakISO)
                 .execute()
                 .value
-            try upsertEmployeeBreaks(items)
+            try upsert(items, into: CachedEmployeeBreak.self)
 
         case .plannedShifts:
             let shiftFrom = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
@@ -205,21 +205,21 @@ final class CacheManager {
                 .lte("shift_date", value: toStr)
                 .execute()
                 .value
-            try upsertPlannedShifts(items)
+            try upsert(items, into: CachedPlannedShift.self)
 
         case .announcements:
             let items: [Announcement] = try await db.from("announcements")
                 .select()
                 .execute()
                 .value
-            try upsertAnnouncements(items)
+            try upsert(items, into: CachedAnnouncement.self)
 
         case .tipDistributions:
             let items: [TipDistribution] = try await db.from("tip_distributions")
                 .select()
                 .execute()
                 .value
-            try upsertTipDistributions(items)
+            try upsert(items, into: CachedTipDistribution.self)
 
         case .swapRequests:
             let swapCutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
@@ -229,7 +229,7 @@ final class CacheManager {
                 .gte("created_at", value: swapISO)
                 .execute()
                 .value
-            try upsertSwapRequests(items)
+            try upsert(items, into: CachedSwapRequest.self)
 
         case .availability:
             let items: [AvailabilityRow] = try await db.from("employee_availability")
@@ -269,174 +269,55 @@ final class CacheManager {
     // MARK: - TTL Check
 
     private func isFresh(_ table: Table) -> Bool {
+        switch table {
+        case .employees:        return isCacheFresh(CachedEmployee.self)
+        case .locations:        return isCacheFresh(CachedLocation.self)
+        case .clockRecords:     return isCacheFresh(CachedClockRecord.self)
+        case .employeeBreaks:   return isCacheFresh(CachedEmployeeBreak.self)
+        case .plannedShifts:    return isCacheFresh(CachedPlannedShift.self)
+        case .announcements:    return isCacheFresh(CachedAnnouncement.self)
+        case .tipDistributions: return isCacheFresh(CachedTipDistribution.self)
+        case .swapRequests:     return isCacheFresh(CachedSwapRequest.self)
+        case .availability:     return isCacheFresh(CachedAvailability.self)
+        }
+    }
+
+    /// Generic TTL check for any SwiftData model with a `lastSyncedAt` property.
+    private func isCacheFresh<T: PersistentModel>(_ type: T.Type) -> Bool {
         let context = container.mainContext
         let cutoff = Date().addingTimeInterval(-ttl)
-
         do {
-            switch table {
-            case .employees:
-                var d = FetchDescriptor<CachedEmployee>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .locations:
-                var d = FetchDescriptor<CachedLocation>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .clockRecords:
-                var d = FetchDescriptor<CachedClockRecord>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .employeeBreaks:
-                var d = FetchDescriptor<CachedEmployeeBreak>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .plannedShifts:
-                var d = FetchDescriptor<CachedPlannedShift>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .announcements:
-                var d = FetchDescriptor<CachedAnnouncement>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .tipDistributions:
-                var d = FetchDescriptor<CachedTipDistribution>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .swapRequests:
-                var d = FetchDescriptor<CachedSwapRequest>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            case .availability:
-                var d = FetchDescriptor<CachedAvailability>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
-                d.fetchLimit = 1
-                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
-            }
+            var d = FetchDescriptor<T>(sortBy: [SortDescriptor(\.persistentModelID)])
+            d.fetchLimit = 1
+            guard let row = try context.fetch(d).first else { return false }
+            let mirror = Mirror(reflecting: row)
+            guard let syncDate = mirror.children.first(where: { $0.label == "lastSyncedAt" })?.value as? Date else { return false }
+            return syncDate > cutoff
         } catch {
             return false
         }
     }
 
-    // MARK: - Upsert Helpers
+    // MARK: - Generic Upsert
 
-    private func upsert(_ items: [Employee], as _: CachedEmployee.Type) throws {
+    /// Single generic upsert for any CacheUpsertable model.
+    /// Fetches all existing rows, builds a dictionary by UUID, then inserts or updates.
+    private func upsert<C: CacheUpsertable>(_ items: [C.DTO], into _: C.Type) throws {
         let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedEmployee>())
+        let existing = try context.fetch(FetchDescriptor<C>())
         let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
 
         for item in items {
             if let cached = existingById[item.id] {
                 cached.update(from: item)
             } else {
-                context.insert(CachedEmployee(from: item))
+                context.insert(C(from: item))
             }
         }
         try context.save()
     }
 
-    private func upsert(_ items: [Location], as _: CachedLocation.Type) throws {
-        let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedLocation>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
-
-        for item in items {
-            if let cached = existingById[item.id] {
-                cached.update(from: item)
-            } else {
-                context.insert(CachedLocation(from: item))
-            }
-        }
-        try context.save()
-    }
-
-    private func upsertClockRecords(_ items: [ClockRecord]) throws {
-        let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedClockRecord>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
-
-        for item in items {
-            if let cached = existingById[item.id] {
-                cached.update(from: item)
-            } else {
-                context.insert(CachedClockRecord(from: item))
-            }
-        }
-        try context.save()
-    }
-
-    private func upsertEmployeeBreaks(_ items: [EmployeeBreak]) throws {
-        let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedEmployeeBreak>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
-
-        for item in items {
-            if let cached = existingById[item.id] {
-                cached.update(from: item)
-            } else {
-                context.insert(CachedEmployeeBreak(from: item))
-            }
-        }
-        try context.save()
-    }
-
-    private func upsertPlannedShifts(_ items: [PlannedShift]) throws {
-        let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedPlannedShift>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
-
-        for item in items {
-            if let cached = existingById[item.id] {
-                cached.update(from: item)
-            } else {
-                context.insert(CachedPlannedShift(from: item))
-            }
-        }
-        try context.save()
-    }
-
-    private func upsertAnnouncements(_ items: [Announcement]) throws {
-        let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedAnnouncement>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
-
-        for item in items {
-            if let cached = existingById[item.id] {
-                cached.update(from: item)
-            } else {
-                context.insert(CachedAnnouncement(from: item))
-            }
-        }
-        try context.save()
-    }
-
-    private func upsertTipDistributions(_ items: [TipDistribution]) throws {
-        let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedTipDistribution>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
-
-        for item in items {
-            if let cached = existingById[item.id] {
-                cached.update(from: item)
-            } else {
-                context.insert(CachedTipDistribution(from: item))
-            }
-        }
-        try context.save()
-    }
-
-    private func upsertSwapRequests(_ items: [ShiftSwapRequest]) throws {
-        let context = container.mainContext
-        let existing = try context.fetch(FetchDescriptor<CachedSwapRequest>())
-        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
-
-        for item in items {
-            if let cached = existingById[item.id] {
-                cached.update(from: item)
-            } else {
-                context.insert(CachedSwapRequest(from: item))
-            }
-        }
-        try context.save()
-    }
+    // MARK: - Availability Upsert (composite key)
 
     private func upsertAvailability(_ items: [AvailabilityRow]) throws {
         let context = container.mainContext

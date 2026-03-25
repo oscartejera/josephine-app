@@ -448,3 +448,14 @@ final class CachedAvailability {
         )
     }
 }
+
+// MARK: - CacheUpsertable Conformances
+
+extension CachedEmployee: CacheUpsertable { typealias DTO = Employee }
+extension CachedLocation: CacheUpsertable { typealias DTO = Location }
+extension CachedClockRecord: CacheUpsertable { typealias DTO = ClockRecord }
+extension CachedEmployeeBreak: CacheUpsertable { typealias DTO = EmployeeBreak }
+extension CachedPlannedShift: CacheUpsertable { typealias DTO = PlannedShift }
+extension CachedAnnouncement: CacheUpsertable { typealias DTO = Announcement }
+extension CachedTipDistribution: CacheUpsertable { typealias DTO = TipDistribution }
+extension CachedSwapRequest: CacheUpsertable { typealias DTO = ShiftSwapRequest }
