@@ -6,20 +6,25 @@ enum JColor {
     static let brandPurple = Color(hex: 0x7C3AED)
     static let brandPurpleDark = Color(hex: 0x6D28D9)
 
-    /// Josephine accent: orange #F97316
-    static let accent = Color(hex: 0xF97316)
+    /// Josephine accent — aligned with web --primary: 245 58% 51%
+    static let accent      = Color(hex: 0x5B3FD9)
+    static let accentLight = Color(hex: 0x7C5CE7)
+    static let accentViolet = Color(hex: 0x9333EA)
 
     /// Light background
-    static let background = Color(hex: 0xF5F5F5)
+    static let background = Color(hex: 0xF5F4F9)
 
     /// Card surface
     static let surface = Color.white
+
+    /// Card background (same as surface, semantic alias)
+    static let card = Color.white
 
     /// Elevated surface (cards, sheets)
     static let surfaceElevated = Color.white
 
     /// Subtle border
-    static let border = Color.black.opacity(0.08)
+    static let border = Color(hex: 0xE4E5EB)
 
     /// Primary text
     static let textPrimary = Color(hex: 0x1A1A1A)

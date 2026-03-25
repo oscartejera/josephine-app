@@ -135,11 +135,11 @@ struct PayView: View {
         HStack {
             Text(label)
                 .font(highlight ? .jBodyBold : .jCallout)
-                .foregroundStyle(highlight ? .white : JColor.textSecondary)
+                .foregroundStyle(highlight ? JColor.accent : JColor.textSecondary)
             Spacer()
             Text(value)
                 .font(highlight ? .jBodyBold : .jBody)
-                .foregroundStyle(highlight ? JColor.accent : .white)
+                .foregroundStyle(highlight ? JColor.accent : JColor.textPrimary)
         }
     }
 

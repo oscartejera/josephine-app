@@ -11,12 +11,9 @@ struct JCard<Content: View>: View {
     var body: some View {
         content()
             .padding(JSpacing.lg)
-            .background(JColor.surface)
+            .background(JColor.card)
             .clipShape(RoundedRectangle(cornerRadius: JRadius.lg))
-            .overlay(
-                RoundedRectangle(cornerRadius: JRadius.lg)
-                    .stroke(JColor.border, lineWidth: 1)
-            )
+            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
     }
 }
 

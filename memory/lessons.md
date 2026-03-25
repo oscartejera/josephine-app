@@ -646,3 +646,64 @@ sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"
 **Prevention:** When a `supabase functions deploy` or any CLI command that needs `SUPABASE_ACCESS_TOKEN` fails with auth/access errors, first check if the token is still valid. Generate a new one at `https://supabase.com/dashboard/account/tokens`. Update `.env.local` immediately.
 **Validation:** After updating, run a quick `supabase functions list --project-ref qixipveebfhurbarksib` to confirm the new token works before attempting a deploy.
 **Notes:** The token in `.env.local` needs to be loaded into the shell: `$env:SUPABASE_ACCESS_TOKEN = (Select-String -Path .env.local -Pattern '^SUPABASE_ACCESS_TOKEN=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value })`
+
+### Supabase RLS: Never use self-referencing queries inside RLS policies
+
+**Date:** 2026-03-24
+**Area:** Auth / DB / Security
+**Root cause:** An RLS policy on the `roles` table included a subquery like `EXISTS (SELECT 1 FROM roles WHERE ...)` — which itself triggered the same RLS policy on `roles`, creating infinite recursion. PostgreSQL aborts with "stack depth limit exceeded" or hangs the connection.
+**What failed:** ALL queries to the `roles` table failed — `SELECT`, `INSERT`, `UPDATE`. The `invite_team_member` Edge Function couldn't insert new team member roles because every DB operation on `roles` hit the recursion. The entire team management feature was broken.
+**Prevention:** RLS policies on table X must NEVER contain `SELECT ... FROM X` in their policy body. For authorization checks that need to read the same table, use one of these patterns:
+  1. **`auth.jwt()` claims:** Move role/permission into the JWT via a custom access token hook and check `(auth.jwt() ->> 'user_role')` — no table query needed.
+  2. **`SECURITY DEFINER` helper function:** Create a function that reads the table bypassing RLS and call it from the policy.
+  3. **Separate permissions table:** Store permissions in a different table that doesn't have self-referencing RLS.
+**Validation:** After changing RLS policies, test with: `SELECT * FROM roles LIMIT 1;` as an authenticated user. If it returns rows without error, the recursion is fixed. Also verify `INSERT` and `UPDATE` work.
+**Notes:** This is the #1 most dangerous Supabase pattern. It's easy to create during initial RLS setup because the logic "check if user has admin role in roles table" seems natural. The recursion doesn't show in local dev if RLS is disabled.
+
+### Supabase Edge Functions: JWT gateway rejects tokens when `config.toml` is missing or lacks `project_id`
+
+**Date:** 2026-03-24
+**Area:** Edge Functions / Auth / Tooling
+**Root cause:** Supabase Edge Functions validate the JWT's `iss` (issuer) claim against the project's expected issuer URL. The expected URL is derived from the `project_id` in `supabase/config.toml`. If `config.toml` doesn't exist or doesn't have the correct `project_id`, the gateway rejects ALL authenticated requests with `401 Invalid JWT` — even when the token is perfectly valid.
+**What failed:** The `invite_team_member` Edge Function returned `{"error":"Invalid JWT"}` for every request. The JWT was valid (verified manually), the `Authorization: Bearer` header was correct, but the Supabase gateway rejected it before the function code even executed.
+**Prevention:** After deploying ANY Edge Function, ensure `supabase/config.toml` exists and contains:
+```toml
+[api]
+enabled = true
+
+[project]
+project_id = "qixipveebfhurbarksib"
+```
+The `project_id` MUST match the project ref from `VITE_SUPABASE_URL`. Without this, the gateway cannot validate JWTs and rejects them all.
+**Validation:** After deploying, test with: `curl -H "Authorization: Bearer <valid_token>" https://qixipveebfhurbarksib.supabase.co/functions/v1/function_name` — should NOT return `Invalid JWT`.
+**Notes:** This is especially tricky because the error message ("Invalid JWT") points to the token, not the config. You can waste hours debugging the token when the real problem is a missing config file.
+
+### Supabase Edge Functions: `supabase.auth.admin.inviteUserByEmail()` fails silently — use `createUser()` instead
+
+**Date:** 2026-03-24
+**Area:** Edge Functions / Auth
+**Root cause:** `supabase.auth.admin.inviteUserByEmail()` depends on SMTP being configured in the Supabase project to send the invitation email. If SMTP is not configured (common in early-stage projects), the function returns a user object but the invite email is never sent — the invited user has no way to know they were invited or set their password.
+**What failed:** The `invite_team_member` Edge Function called `inviteUserByEmail()` and returned `{ success: true }`, but the invited user never received an email. The function appeared to work but was useless in practice.
+**Prevention:** Use `supabase.auth.admin.createUser()` with `email_confirm: true` and a temporary password instead of `inviteUserByEmail()`. Then send a custom invite email through the app's own email system (or log the temp password for manual sharing). This way the feature works regardless of SMTP configuration:
+```typescript
+const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  email: inviteeEmail,
+  password: tempPassword,
+  email_confirm: true,
+});
+```
+**Validation:** After calling the function, verify the user exists in `auth.users` with `email_confirmed_at IS NOT NULL`. Then verify the user can log in with the temp password.
+**Notes:** `inviteUserByEmail()` is the "correct" approach long-term, but only works with SMTP configured. For MVP/early-stage, `createUser()` with temp password is more reliable. Document the SMTP dependency for future setup.
+
+### Supabase Edge Functions: GitHub Actions deploy needs `SUPABASE_ACCESS_TOKEN` as a repo secret
+
+**Date:** 2026-03-24
+**Area:** Edge Functions / CI/CD / Security
+**Root cause:** The GitHub Actions workflow `.github/workflows/deploy-edge-functions.yml` runs `supabase functions deploy` which requires a valid `SUPABASE_ACCESS_TOKEN`. This token was stored in `.env.local` (local dev) but never added as a GitHub Actions secret. The workflow failed with access denied.
+**What failed:** The CI/CD pipeline for Edge Functions couldn't deploy because the secret wasn't available in the GitHub Actions environment.
+**Prevention:** Whenever you add a new Supabase CLI command to a GitHub Actions workflow, check if it needs `SUPABASE_ACCESS_TOKEN`. If yes:
+  1. Generate a new token at `https://supabase.com/dashboard/account/tokens`
+  2. Add it as a GitHub repo secret: Settings → Secrets and variables → Actions → New repository secret → Name: `SUPABASE_ACCESS_TOKEN`
+  3. Reference it in the workflow YAML: `env: SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}`
+**Validation:** Push a commit that triggers the workflow. The "Deploy Supabase Edge Functions" job should complete green.
+**Notes:** The token in `.env.local` and the GitHub secret can be the same token, but consider using separate tokens for local dev and CI so you can rotate them independently.

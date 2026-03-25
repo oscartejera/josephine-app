@@ -104,7 +104,7 @@ struct ClockView: View {
                 VStack(spacing: JSpacing.sm) {
                     if isProcessing {
                         ProgressView()
-                            .tint(.white)
+                            .tint(JColor.accent)
                             .frame(width: 120, height: 120)
                     } else {
                         Image(systemName: isClockedIn ? "stop.circle.fill" : "play.circle.fill")

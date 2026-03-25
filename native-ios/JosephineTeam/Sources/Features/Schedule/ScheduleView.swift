@@ -84,10 +84,10 @@ struct ScheduleView: View {
                     VStack(spacing: JSpacing.xs) {
                         Text(dayAbbrev(day))
                             .font(.jCaption2)
-                            .foregroundStyle(isSelected ? .white : JColor.textMuted)
+                            .foregroundStyle(isSelected ? JColor.accent : JColor.textMuted)
                         Text("\(calendar.component(.day, from: day))")
                             .font(.jBodyBold)
-                            .foregroundStyle(isSelected ? .white : JColor.textSecondary)
+                            .foregroundStyle(isSelected ? JColor.accent : JColor.textSecondary)
                         Circle()
                             .fill(hasShift ? JColor.accent : .clear)
                             .frame(width: 5, height: 5)
