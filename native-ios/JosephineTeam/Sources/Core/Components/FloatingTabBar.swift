@@ -42,6 +42,7 @@ enum AppTab: Int, CaseIterable {
 // MARK: - Floating Tab Bar
 struct FloatingTabBar: View {
     @Binding var selectedTab: AppTab
+    @ObservedObject private var realtime = RealtimeManager.shared
 
     var body: some View {
         HStack(spacing: 0) {
@@ -85,6 +86,15 @@ struct FloatingTabBar: View {
                         .symbolEffect(.bounce, value: isSelected)
                 }
                 .frame(height: 30)
+                .overlay(alignment: .topTrailing) {
+                    if showBadge(for: tab) {
+                        Circle()
+                            .fill(.red)
+                            .frame(width: 8, height: 8)
+                            .offset(x: 4, y: -2)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                }
 
                 Text(tab.title)
                     .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
@@ -97,5 +107,14 @@ struct FloatingTabBar: View {
         .buttonStyle(.plain)
         .accessibilityIdentifier(tab.accessibilityId)
         .accessibilityLabel(tab.title)
+    }
+
+    // MARK: - Badge Logic
+    private func showBadge(for tab: AppTab) -> Bool {
+        switch tab {
+        case .schedule: return realtime.hasNewShifts
+        case .profile:  return realtime.hasNewAnnouncements
+        default:        return false
+        }
     }
 }

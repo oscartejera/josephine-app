@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NewsView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @State private var refreshToken = UUID()
 
     private let cache = CacheManager.shared
 
@@ -27,12 +28,24 @@ struct NewsView: View {
                             announcementCard(item)
                         }
                     }
+                    .id(refreshToken) // Force reload on realtime change
                 }
                 .padding(.horizontal, JSpacing.lg)
                 .padding(.bottom, JSpacing.xxl)
             }
             .background(JColor.background)
             .navigationTitle("Noticias")
+            .onAppear {
+                RealtimeManager.shared.onAnnouncementChange = {
+                    await MainActor.run {
+                        refreshToken = UUID()
+                    }
+                }
+                RealtimeManager.shared.clearAnnouncementBadge()
+            }
+            .onDisappear {
+                RealtimeManager.shared.onAnnouncementChange = nil
+            }
         }
     }
 

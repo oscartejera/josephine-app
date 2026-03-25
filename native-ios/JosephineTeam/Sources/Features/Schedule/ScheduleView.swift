@@ -42,6 +42,15 @@ struct ScheduleView: View {
                 HapticManager.play(.success)
             }
             .task { await loadWeekShifts() }
+            .onAppear {
+                RealtimeManager.shared.onShiftChange = { [self] in
+                    await loadWeekShifts()
+                }
+                RealtimeManager.shared.clearShiftBadge()
+            }
+            .onDisappear {
+                RealtimeManager.shared.onShiftChange = nil
+            }
             .onChange(of: selectedDate) { _, _ in
                 filterShiftsForSelectedDay()
             }

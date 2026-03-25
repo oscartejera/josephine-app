@@ -14,7 +14,7 @@ struct ClockView: View {
     @State private var timerCancellable: AnyCancellable?
     @State private var showError = false
     @State private var errorMessage = ""
-    @State private var realtimeTask: Task<Void, Never>?
+
 
     // Break states
     @State private var activeBreak: EmployeeBreak?
@@ -65,10 +65,13 @@ struct ClockView: View {
                 HapticManager.play(.success)
             }
             .task { await loadClockData() }
-            .task { await startRealtimeSync() }
+            .onAppear {
+                RealtimeManager.shared.onClockChange = { [self] in
+                    await loadClockData()
+                }
+            }
             .onDisappear {
-                realtimeTask?.cancel()
-                realtimeTask = nil
+                RealtimeManager.shared.onClockChange = nil
                 breakTimerCancellable?.cancel()
             }
             .confirmationDialog("Tipo de descanso", isPresented: $showBreakTypePicker) {
@@ -576,44 +579,7 @@ struct ClockView: View {
         return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 
-    // MARK: - Realtime Sync
-    private func startRealtimeSync() async {
-        guard let emp = authVM.employee else { return }
 
-        let channel = supabase.client.realtimeV2.channel("clock-ios-\(emp.id)")
-
-        let clockChanges = channel.postgresChange(
-            AnyAction.self,
-            schema: "public",
-            table: "employee_clock_records",
-            filter: "employee_id=eq.\(emp.id)"
-        )
-
-        let breakChanges = channel.postgresChange(
-            AnyAction.self,
-            schema: "public",
-            table: "employee_breaks"
-        )
-
-        await channel.subscribe()
-
-        realtimeTask = Task {
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask {
-                    for await _ in clockChanges {
-                        guard !Task.isCancelled else { break }
-                        await loadClockData()
-                    }
-                }
-                group.addTask {
-                    for await _ in breakChanges {
-                        guard !Task.isCancelled else { break }
-                        await loadClockData()
-                    }
-                }
-            }
-        }
-    }
 
     // MARK: - Result Animation
     private func showResultAnimation(success: Bool) async {
