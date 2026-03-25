@@ -13,7 +13,6 @@ struct ContentView: View {
                 case .schedule: ScheduleView()
                 case .clock:    ClockView()
                 case .pay:      PayView()
-                case .news:     NewsView()
                 case .profile:  ProfileView()
                 }
             }
@@ -29,3 +28,4 @@ struct ContentView: View {
         .background(JColor.background)
     }
 }
+

@@ -6,7 +6,6 @@ enum AppTab: Int, CaseIterable {
     case schedule
     case clock
     case pay
-    case news
     case profile
 
     var title: String {
@@ -15,7 +14,6 @@ enum AppTab: Int, CaseIterable {
         case .schedule: return "Horario"
         case .clock:    return "Fichaje"
         case .pay:      return "Nómina"
-        case .news:     return "Noticias"
         case .profile:  return "Perfil"
         }
     }
@@ -26,7 +24,6 @@ enum AppTab: Int, CaseIterable {
         case .schedule: return "calendar"
         case .clock:    return "clock.fill"
         case .pay:      return "banknote.fill"
-        case .news:     return "megaphone.fill"
         case .profile:  return "person.circle.fill"
         }
     }
@@ -37,7 +34,6 @@ enum AppTab: Int, CaseIterable {
         case .schedule: return "tab_schedule"
         case .clock:    return "tab_clock"
         case .pay:      return "tab_pay"
-        case .news:     return "tab_news"
         case .profile:  return "tab_profile"
         }
     }

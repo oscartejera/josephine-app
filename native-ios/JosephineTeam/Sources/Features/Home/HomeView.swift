@@ -7,6 +7,9 @@ struct HomeView: View {
     @State private var upcomingShifts: [PlannedShift] = []
     @State private var activeClockRecord: ClockRecord?
     @State private var weekHours: Double = 0
+    @State private var weekPlannedHours: Double = 0
+    @State private var completedDays: Set<Int> = []   // 1=Mon...7=Sun
+    @State private var announcements: [Announcement] = []
     @State private var isLoading = true
     @State private var showError = false
     @State private var errorMessage = ""
@@ -14,28 +17,52 @@ struct HomeView: View {
     private let supabase = SupabaseManager.shared
     private let cache = CacheManager.shared
 
+    /// Current ISO day of week (1=Mon ... 7=Sun)
+    private var currentDayOfWeek: Int {
+        let weekday = Calendar.current.component(.weekday, from: Date())
+        // .weekday: Sun=1 ... Sat=7  → ISO Mon=1 ... Sun=7
+        return weekday == 1 ? 7 : weekday - 1
+    }
+
+    /// Formatted date string for header
+    private var formattedDate: String {
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "es_ES")
+        fmt.dateFormat = "EEEE, d MMMM"
+        return fmt.string(from: Date()).capitalizedFirstLetter
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: JSpacing.lg) {
+                VStack(spacing: JSpacing.xl) {
                     OfflineBanner()
 
                     // MARK: - Welcome Header
                     welcomeHeader
+
+                    // MARK: - Weekly Progress Ring
+                    WeeklyProgressRing(
+                        worked: weekHours,
+                        planned: weekPlannedHours,
+                        completedDays: completedDays,
+                        currentDayOfWeek: currentDayOfWeek
+                    )
+                    .padding(.vertical, JSpacing.sm)
 
                     // MARK: - Active Clock Banner
                     if let record = activeClockRecord {
                         activeClockBanner(record)
                     }
 
-                    // MARK: - Stats Row
-                    statsRow
-
                     // MARK: - Today's Shift
                     todayShiftCard
 
                     // MARK: - Upcoming Shifts
                     upcomingShiftsList
+
+                    // MARK: - News Feed
+                    newsFeed
                 }
                 .padding(.horizontal, JSpacing.lg)
                 .padding(.bottom, JSpacing.xxl)
@@ -58,15 +85,10 @@ struct HomeView: View {
                 Text("Hola, \(authVM.employee?.fullName.components(separatedBy: " ").first ?? "")!")
                     .font(.jTitle2)
                     .foregroundStyle(JColor.textPrimary)
-                if let location = authVM.locationName {
-                    HStack(spacing: JSpacing.xs) {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.jCaption)
-                        Text(location)
-                            .font(.jCallout)
-                    }
+
+                Text(formattedDate)
+                    .font(.jCallout)
                     .foregroundStyle(JColor.textSecondary)
-                }
             }
             Spacer()
             // Clock status indicator
@@ -102,28 +124,10 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Stats Row
-    private var statsRow: some View {
-        HStack(spacing: JSpacing.md) {
-            JStatCard(
-                value: String(format: "%.1f", weekHours),
-                label: "Horas esta semana",
-                icon: "clock",
-                color: JColor.accent
-            )
-            JStatCard(
-                value: "\(upcomingShifts.count)",
-                label: "Próximos turnos",
-                icon: "calendar",
-                color: JColor.info
-            )
-        }
-    }
-
     // MARK: - Today's Shift
     private var todayShiftCard: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
-            Text("Turno de hoy")
+            Text("Hoy")
                 .font(.jTitle3)
                 .foregroundStyle(JColor.textPrimary)
 
@@ -149,7 +153,7 @@ struct HomeView: View {
     // MARK: - Upcoming Shifts
     private var upcomingShiftsList: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
-            Text("Próximos turnos")
+            Text("Próximos")
                 .font(.jTitle3)
                 .foregroundStyle(JColor.textPrimary)
 
@@ -180,6 +184,100 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - News Feed
+    private var newsFeed: some View {
+        Group {
+            if !announcements.isEmpty {
+                VStack(alignment: .leading, spacing: JSpacing.md) {
+                    ForEach(sortedAnnouncements) { item in
+                        newsCard(item)
+                    }
+                }
+            }
+        }
+    }
+
+    private func newsCard(_ item: Announcement) -> some View {
+        JCard {
+            VStack(alignment: .leading, spacing: JSpacing.md) {
+                // Badge row
+                HStack {
+                    HStack(spacing: JSpacing.xs) {
+                        Image(systemName: item.announcementType.icon)
+                            .font(.system(size: 12))
+                        Text(item.announcementType.label)
+                            .font(.jCaption)
+                    }
+                    .padding(.horizontal, JSpacing.sm)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule().fill(badgeColor(for: item.announcementType).opacity(0.15))
+                    )
+                    .foregroundStyle(badgeColor(for: item.announcementType))
+
+                    if item.pinned {
+                        Image(systemName: "pin.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(JColor.warning)
+                    }
+
+                    Spacer()
+
+                    Text(relativeDate(item.createdAt))
+                        .font(.jCaption2)
+                        .foregroundStyle(JColor.textMuted)
+                }
+
+                // Title
+                Text(item.title)
+                    .font(.jBodyBold)
+                    .foregroundStyle(JColor.textPrimary)
+
+                // Body (if present)
+                if let body = item.body, !body.isEmpty {
+                    Text(body)
+                        .font(.jCallout)
+                        .foregroundStyle(JColor.textSecondary)
+                        .lineLimit(3)
+                }
+
+                // Author
+                if let author = item.authorName {
+                    HStack(spacing: JSpacing.xs) {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 12))
+                        Text(author)
+                            .font(.jCaption)
+                    }
+                    .foregroundStyle(JColor.textMuted)
+                }
+            }
+        }
+    }
+
+    private var sortedAnnouncements: [Announcement] {
+        announcements.sorted { a, b in
+            if a.pinned != b.pinned { return a.pinned }
+            return a.createdAt > b.createdAt
+        }
+    }
+
+    private func badgeColor(for type: AnnouncementType) -> Color {
+        switch type {
+        case .info:        return JColor.info
+        case .important:   return JColor.error
+        case .celebration: return JColor.warning
+        case .schedule:    return JColor.accent
+        }
+    }
+
+    private func relativeDate(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "es_ES")
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
     // MARK: - Data Loading
     private func loadData() async {
         guard let emp = authVM.employee else { return }
@@ -194,6 +292,7 @@ struct HomeView: View {
             if !cachedShifts.isEmpty || !cachedRecords.isEmpty {
                 applyData(shifts: cachedShifts, records: cachedRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
             }
+            announcements = (try? cache.announcements()) ?? []
         } catch { /* Cache miss — will load from network */ }
 
         isLoading = todayShift == nil && upcomingShifts.isEmpty
@@ -203,10 +302,12 @@ struct HomeView: View {
         do {
             try await cache.sync(.plannedShifts, force: true)
             try await cache.sync(.clockRecords, force: true)
+            try await cache.sync(.announcements, force: true)
             // 3. Re-read from cache after sync
             let freshShifts = try cache.plannedShifts(for: emp.id)
             let freshRecords = try cache.clockRecords(for: emp.id)
             applyData(shifts: freshShifts, records: freshRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
+            announcements = (try? cache.announcements()) ?? []
         } catch {
             if todayShift == nil && upcomingShifts.isEmpty {
                 errorMessage = "No se pudieron cargar los datos. Tira hacia abajo para reintentar."
@@ -218,6 +319,8 @@ struct HomeView: View {
 
     private func applyData(shifts: [PlannedShift], records: [ClockRecord], today: String, weekStart: String, weekEnd: String) {
         let published = shifts.filter { $0.status == "published" }
+
+        // Today & upcoming shifts
         todayShift = published.first(where: { $0.shiftDate == today })
         upcomingShifts = published
             .filter { $0.shiftDate > today }
@@ -225,6 +328,7 @@ struct HomeView: View {
             .prefix(5)
             .map { $0 }
 
+        // Week's clock records
         let weekRecords = records.filter { record in
             let clockStr = DateFormatter.yyyyMMdd.string(from: record.clockIn)
             return clockStr >= weekStart && clockStr <= weekEnd
@@ -234,6 +338,30 @@ struct HomeView: View {
             guard let mins = record.durationMinutes else { return nil }
             return Double(mins) / 60.0
         }.reduce(0, +)
+
+        // NEW: Week's planned hours (sum of all published shifts this week)
+        let weekShifts = published.filter { $0.shiftDate >= weekStart && $0.shiftDate <= weekEnd }
+        weekPlannedHours = weekShifts.reduce(0) { $0 + $1.plannedHours }
+
+        // NEW: Completed days (days that have at least one completed clock record)
+        let cal = Calendar.current
+        var days = Set<Int>()
+        for record in weekRecords {
+            guard record.clockOut != nil else { continue }
+            let weekday = cal.component(.weekday, from: record.clockIn)
+            // .weekday: Sun=1 ... Sat=7 → ISO Mon=1 ... Sun=7
+            let iso = weekday == 1 ? 7 : weekday - 1
+            days.insert(iso)
+        }
+        completedDays = days
+    }
+}
+
+// MARK: - String Helpers
+private extension String {
+    var capitalizedFirstLetter: String {
+        guard let first = self.first else { return self }
+        return String(first).uppercased() + self.dropFirst()
     }
 }
 
