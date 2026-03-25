@@ -337,3 +337,114 @@ final class CachedUserProfile {
         )
     }
 }
+
+// MARK: - Cached Swap Request
+@Model
+final class CachedSwapRequest {
+    @Attribute(.unique) var id: UUID
+    var locationId: UUID
+    var requesterId: UUID
+    var targetId: UUID?
+    var requesterShiftId: UUID
+    var targetShiftId: UUID?
+    var status: String
+    var reason: String?
+    var reviewedBy: UUID?
+    var reviewedAt: Date?
+    var createdAt: Date
+    var updatedAt: Date
+    var lastSyncedAt: Date
+
+    init(from model: ShiftSwapRequest) {
+        self.id = model.id
+        self.locationId = model.locationId
+        self.requesterId = model.requesterId
+        self.targetId = model.targetId
+        self.requesterShiftId = model.requesterShiftId
+        self.targetShiftId = model.targetShiftId
+        self.status = model.status
+        self.reason = model.reason
+        self.reviewedBy = model.reviewedBy
+        self.reviewedAt = model.reviewedAt
+        self.createdAt = model.createdAt
+        self.updatedAt = model.updatedAt
+        self.lastSyncedAt = Date()
+    }
+
+    func update(from model: ShiftSwapRequest) {
+        self.locationId = model.locationId
+        self.requesterId = model.requesterId
+        self.targetId = model.targetId
+        self.requesterShiftId = model.requesterShiftId
+        self.targetShiftId = model.targetShiftId
+        self.status = model.status
+        self.reason = model.reason
+        self.reviewedBy = model.reviewedBy
+        self.reviewedAt = model.reviewedAt
+        self.createdAt = model.createdAt
+        self.updatedAt = model.updatedAt
+        self.lastSyncedAt = Date()
+    }
+
+    func toModel() -> ShiftSwapRequest {
+        ShiftSwapRequest(
+            id: id,
+            locationId: locationId,
+            requesterId: requesterId,
+            targetId: targetId,
+            requesterShiftId: requesterShiftId,
+            targetShiftId: targetShiftId,
+            status: status,
+            reason: reason,
+            reviewedBy: reviewedBy,
+            reviewedAt: reviewedAt,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+}
+
+// MARK: - Cached Availability
+@Model
+final class CachedAvailability {
+    var employeeId: UUID
+    var dayIndex: Int
+    var status: String
+    var startTime: String?
+    var endTime: String?
+    var note: String?
+    var lastSyncedAt: Date
+
+    /// Composite key for uniqueness (employee + day)
+    @Attribute(.unique) var compositeKey: String
+
+    init(from model: AvailabilityRow) {
+        self.employeeId = model.employeeId
+        self.dayIndex = model.dayIndex
+        self.status = model.status
+        self.startTime = model.startTime
+        self.endTime = model.endTime
+        self.note = model.note
+        self.compositeKey = "\(model.employeeId)_\(model.dayIndex)"
+        self.lastSyncedAt = Date()
+    }
+
+    func update(from model: AvailabilityRow) {
+        self.status = model.status
+        self.startTime = model.startTime
+        self.endTime = model.endTime
+        self.note = model.note
+        self.lastSyncedAt = Date()
+    }
+
+    func toModel() -> AvailabilityRow {
+        AvailabilityRow(
+            employeeId: employeeId,
+            dayIndex: dayIndex,
+            status: status,
+            startTime: startTime,
+            endTime: endTime,
+            note: note
+        )
+    }
+}

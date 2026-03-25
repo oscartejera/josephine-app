@@ -31,7 +31,9 @@ final class CacheManager {
             CachedPlannedShift.self,
             CachedAnnouncement.self,
             CachedTipDistribution.self,
-            CachedUserProfile.self
+            CachedUserProfile.self,
+            CachedSwapRequest.self,
+            CachedAvailability.self
         ])
 
         let config = ModelConfiguration(
@@ -59,6 +61,8 @@ final class CacheManager {
         case plannedShifts = "planned_shifts"
         case announcements
         case tipDistributions = "tip_distributions"
+        case swapRequests = "shift_swap_requests"
+        case availability = "employee_availability"
     }
 
     // MARK: - Public API: Read from Cache
@@ -112,6 +116,24 @@ final class CacheManager {
         let context = container.mainContext
         let descriptor = FetchDescriptor<CachedTipDistribution>(
             predicate: #Predicate { $0.employeeId == employeeId }
+        )
+        return try context.fetch(descriptor).map { $0.toModel() }
+    }
+
+    func swapRequests(for employeeId: UUID) throws -> [ShiftSwapRequest] {
+        let context = container.mainContext
+        let descriptor = FetchDescriptor<CachedSwapRequest>(
+            predicate: #Predicate { $0.requesterId == employeeId || $0.targetId == employeeId },
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        return try context.fetch(descriptor).map { $0.toModel() }
+    }
+
+    func availability(for employeeId: UUID) throws -> [AvailabilityRow] {
+        let context = container.mainContext
+        let descriptor = FetchDescriptor<CachedAvailability>(
+            predicate: #Predicate { $0.employeeId == employeeId },
+            sortBy: [SortDescriptor(\.dayIndex)]
         )
         return try context.fetch(descriptor).map { $0.toModel() }
     }
@@ -198,6 +220,23 @@ final class CacheManager {
                 .execute()
                 .value
             try upsertTipDistributions(items)
+
+        case .swapRequests:
+            let swapCutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
+            let swapISO = ISO8601DateFormatter().string(from: swapCutoff)
+            let items: [ShiftSwapRequest] = try await db.from("shift_swap_requests")
+                .select()
+                .gte("created_at", value: swapISO)
+                .execute()
+                .value
+            try upsertSwapRequests(items)
+
+        case .availability:
+            let items: [AvailabilityRow] = try await db.from("employee_availability")
+                .select()
+                .execute()
+                .value
+            try upsertAvailability(items)
         }
 
         #if DEBUG
@@ -261,6 +300,14 @@ final class CacheManager {
                 return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             case .tipDistributions:
                 var d = FetchDescriptor<CachedTipDistribution>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
+            case .swapRequests:
+                var d = FetchDescriptor<CachedSwapRequest>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
+            case .availability:
+                var d = FetchDescriptor<CachedAvailability>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
                 d.fetchLimit = 1
                 return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             }
@@ -371,6 +418,37 @@ final class CacheManager {
                 cached.update(from: item)
             } else {
                 context.insert(CachedTipDistribution(from: item))
+            }
+        }
+        try context.save()
+    }
+
+    private func upsertSwapRequests(_ items: [ShiftSwapRequest]) throws {
+        let context = container.mainContext
+        let existing = try context.fetch(FetchDescriptor<CachedSwapRequest>())
+        let existingById = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
+
+        for item in items {
+            if let cached = existingById[item.id] {
+                cached.update(from: item)
+            } else {
+                context.insert(CachedSwapRequest(from: item))
+            }
+        }
+        try context.save()
+    }
+
+    private func upsertAvailability(_ items: [AvailabilityRow]) throws {
+        let context = container.mainContext
+        let existing = try context.fetch(FetchDescriptor<CachedAvailability>())
+        let existingByKey = Dictionary(uniqueKeysWithValues: existing.map { ($0.compositeKey, $0) })
+
+        for item in items {
+            let key = "\(item.employeeId)_\(item.dayIndex)"
+            if let cached = existingByKey[key] {
+                cached.update(from: item)
+            } else {
+                context.insert(CachedAvailability(from: item))
             }
         }
         try context.save()

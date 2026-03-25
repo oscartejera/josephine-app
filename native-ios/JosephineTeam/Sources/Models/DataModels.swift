@@ -245,3 +245,130 @@ struct TipDistribution: Codable, Identifiable, Sendable {
         case shareAmount = "share_amount"
     }
 }
+
+// MARK: - Shift Swap Request
+struct ShiftSwapRequest: Codable, Identifiable, Sendable {
+    let id: UUID
+    let locationId: UUID
+    let requesterId: UUID
+    let targetId: UUID?
+    let requesterShiftId: UUID
+    let targetShiftId: UUID?
+    let status: String          // pending | approved | rejected | cancelled
+    let reason: String?
+    let reviewedBy: UUID?
+    let reviewedAt: Date?
+    let createdAt: Date
+    let updatedAt: Date
+
+    var swapStatus: SwapStatus {
+        SwapStatus(rawValue: status) ?? .pending
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case locationId = "location_id"
+        case requesterId = "requester_id"
+        case targetId = "target_id"
+        case requesterShiftId = "requester_shift_id"
+        case targetShiftId = "target_shift_id"
+        case status, reason
+        case reviewedBy = "reviewed_by"
+        case reviewedAt = "reviewed_at"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+enum SwapStatus: String, CaseIterable, Sendable {
+    case pending, approved, rejected, cancelled
+
+    var label: String {
+        switch self {
+        case .pending:   return "Pendiente"
+        case .approved:  return "Aprobado"
+        case .rejected:  return "Rechazado"
+        case .cancelled: return "Cancelado"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .pending:   return "clock.badge.questionmark"
+        case .approved:  return "checkmark.circle.fill"
+        case .rejected:  return "xmark.circle.fill"
+        case .cancelled: return "minus.circle.fill"
+        }
+    }
+}
+
+// MARK: - Shift Swap Insert DTO
+struct ShiftSwapInsert: Codable, Sendable {
+    let locationId: UUID
+    let requesterId: UUID
+    let targetId: UUID?
+    let requesterShiftId: UUID
+    let targetShiftId: UUID?
+    let reason: String?
+
+    enum CodingKeys: String, CodingKey {
+        case locationId = "location_id"
+        case requesterId = "requester_id"
+        case targetId = "target_id"
+        case requesterShiftId = "requester_shift_id"
+        case targetShiftId = "target_shift_id"
+        case reason
+    }
+}
+
+// MARK: - Swap Status Update DTO
+struct SwapStatusUpdate: Codable, Sendable {
+    let status: String
+    let reviewedBy: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case reviewedBy = "reviewed_by"
+    }
+}
+
+// MARK: - Availability Row (read from employee_availability)
+struct AvailabilityRow: Codable, Sendable, Identifiable {
+    let employeeId: UUID
+    let dayIndex: Int           // 0=Mon … 6=Sun
+    let status: String          // available | unavailable | preferred_off
+    let startTime: String?      // HH:mm
+    let endTime: String?        // HH:mm
+    let note: String?
+
+    /// Synthetic id for SwiftUI lists
+    var id: String { "\(employeeId)_\(dayIndex)" }
+
+    enum CodingKeys: String, CodingKey {
+        case employeeId = "employee_id"
+        case dayIndex = "day_index"
+        case status
+        case startTime = "start_time"
+        case endTime = "end_time"
+        case note
+    }
+}
+
+// MARK: - Availability Upsert DTO
+struct AvailabilityUpsert: Codable, Sendable {
+    let employeeId: UUID
+    let dayIndex: Int
+    let status: String
+    let startTime: String
+    let endTime: String
+    let note: String?
+
+    enum CodingKeys: String, CodingKey {
+        case employeeId = "employee_id"
+        case dayIndex = "day_index"
+        case status
+        case startTime = "start_time"
+        case endTime = "end_time"
+        case note
+    }
+}
