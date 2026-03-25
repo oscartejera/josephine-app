@@ -12,7 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, UserPlus, Mail, MapPin, Globe, Shield, Loader2, CheckCircle2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Users, UserPlus, Mail, MapPin, Globe, Shield, Loader2, CheckCircle2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TeamMember {
@@ -61,6 +62,10 @@ export function TeamManager() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+
+  // Delete member state
+  const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // New member form state
   const [newMember, setNewMember] = useState({
@@ -243,6 +248,42 @@ export function TeamManager() {
   const selectedRole = roles.find(r => r.id === newMember.role_id);
   const requiresLocation = selectedRole ? LOCATION_REQUIRED_ROLES.includes(selectedRole.name) : false;
 
+  const handleDelete = async () => {
+    if (!memberToDelete) return;
+
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete_team_member', {
+        body: { user_id: memberToDelete.id }
+      });
+
+      if (error) {
+        const serverMessage = data?.error || error.message;
+        throw new Error(serverMessage);
+      }
+
+      toast({
+        title: 'Miembro eliminado',
+        description: data?.message || `${memberToDelete.full_name || 'Usuario'} ha sido eliminado del equipo.`
+      });
+
+      await fetchData();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'No se pudo eliminar al miembro';
+      toast({
+        variant: 'destructive',
+        title: 'Error al eliminar',
+        description: message
+      });
+    } finally {
+      setDeleting(false);
+      setMemberToDelete(null);
+    }
+  };
+
+  const isOwnerMember = (member: TeamMember) =>
+    member.roles.some(r => r.role_name === 'owner');
+
   if (!canManageUsers) {
     return (
       <Card>
@@ -301,6 +342,7 @@ export function TeamManager() {
                   <TableHead>Rol</TableHead>
                   <TableHead>Ubicación</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -358,6 +400,18 @@ export function TeamManager() {
                       <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                         Activo
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {member.id !== currentUser?.id && !isOwnerMember(member) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => setMemberToDelete(member)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -512,6 +566,35 @@ export function TeamManager() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!memberToDelete} onOpenChange={(open) => { if (!open) setMemberToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar a {memberToDelete?.full_name || 'este usuario'}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción es irreversible. Se eliminará al usuario del sistema junto con todos sus roles y datos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                'Eliminar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
