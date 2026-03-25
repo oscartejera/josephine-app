@@ -159,7 +159,7 @@ export function useGlobalRealtimeNotifications() {
       // ── NEW: Clock in/out events
       .on(
         'postgres_changes' as any,
-        { event: 'INSERT', schema: 'public', table: 'clock_records' },
+        { event: 'INSERT', schema: 'public', table: 'employee_clock_records' },
         (payload: RealtimePostgresChangesPayload<ClockRecordPayload>) => {
           queryClient.invalidateQueries({ queryKey: ['clock'] });
           queryClient.invalidateQueries({ queryKey: ['timesheet'] });
@@ -167,7 +167,7 @@ export function useGlobalRealtimeNotifications() {
       )
       .on(
         'postgres_changes' as any,
-        { event: 'UPDATE', schema: 'public', table: 'clock_records' },
+        { event: 'UPDATE', schema: 'public', table: 'employee_clock_records' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['clock'] });
           queryClient.invalidateQueries({ queryKey: ['timesheet'] });

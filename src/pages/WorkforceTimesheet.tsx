@@ -159,6 +159,31 @@ export default function WorkforceTimesheet() {
         fetchData();
     }, [weekStart, selectedLocationId]);
 
+    // ─── Realtime: auto-refresh when employees clock in/out ───
+    useEffect(() => {
+        const channel = supabase
+            .channel('timesheet-clock-sync')
+            .on(
+                'postgres_changes' as any,
+                { event: '*', schema: 'public', table: 'employee_clock_records' },
+                (payload: any) => {
+                    const record = payload.new || payload.old;
+                    const locationIds = selectedLocationId === 'all'
+                        ? accessibleLocations.map((l) => l.id)
+                        : [selectedLocationId];
+                    // Only refetch if the change is for a location we're viewing
+                    if (!record?.location_id || locationIds.includes(record.location_id)) {
+                        fetchData();
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [weekStart, selectedLocationId, accessibleLocations]);
+
     const fetchData = async () => {
         setLoading(true);
         const locationIds = selectedLocationId === 'all'

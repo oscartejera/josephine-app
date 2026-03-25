@@ -14,6 +14,7 @@ struct ClockView: View {
     @State private var timerCancellable: AnyCancellable?
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var realtimeTask: Task<Void, Never>?
 
     // Animation states
     @State private var showClockResult = false
@@ -53,6 +54,11 @@ struct ClockView: View {
                 HapticManager.play(.success)
             }
             .task { await loadClockData() }
+            .task { await startRealtimeSync() }
+            .onDisappear {
+                realtimeTask?.cancel()
+                realtimeTask = nil
+            }
             .errorBanner(errorMessage, isPresented: $showError)
         }
     }
@@ -375,6 +381,29 @@ struct ClockView: View {
         let minutes = (totalSeconds % 3600) / 60
         let seconds = totalSeconds % 60
         return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+    }
+
+    // MARK: - Realtime Sync
+    private func startRealtimeSync() async {
+        guard let emp = authVM.employee else { return }
+
+        let channel = supabase.client.realtimeV2.channel("clock-ios-\(emp.id)")
+
+        let changes = channel.postgresChange(
+            AnyAction.self,
+            schema: "public",
+            table: "employee_clock_records",
+            filter: "employee_id=eq.\(emp.id)"
+        )
+
+        await channel.subscribe()
+
+        realtimeTask = Task {
+            for await _ in changes {
+                guard !Task.isCancelled else { break }
+                await loadClockData()
+            }
+        }
     }
 
     // MARK: - Result Animation

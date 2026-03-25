@@ -39,12 +39,34 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch employee ID and clock records
+  // Fetch clock records for the current employee
+  const fetchClockData = async (empId?: string) => {
+    const resolvedEmpId = empId || employeeId;
+    if (!resolvedEmpId) return;
+
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+    const { data: records } = await (supabase as any)
+      .from('employee_clock_records')
+      .select('*')
+      .eq('employee_id', resolvedEmpId)
+      .gte('clock_in', weekStart.toISOString())
+      .lte('clock_in', weekEnd.toISOString())
+      .order('clock_in', { ascending: false });
+
+    if (records) {
+      setWeekRecords(records);
+      const active = records.find((r: ClockRecord) => !r.clock_out);
+      setActiveRecord(active || null);
+    }
+  };
+
+  // Resolve employee ID and do initial fetch
   useEffect(() => {
     if (!user) return;
 
-    const fetchData = async () => {
-      // Get employee ID for current user
+    const init = async () => {
       const { data: employee } = await supabase
         .from('employees')
         .select('id')
@@ -54,31 +76,37 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
       if (employee) {
         setEmployeeId(employee.id);
-
-        // Get week range
-        const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
-
-        // Fetch clock records for this week
-        const { data: records } = await (supabase as any)
-          .from('employee_clock_records')
-          .select('*')
-          .eq('employee_id', employee.id)
-          .gte('clock_in', weekStart.toISOString())
-          .lte('clock_in', weekEnd.toISOString())
-          .order('clock_in', { ascending: false });
-
-        if (records) {
-          setWeekRecords(records);
-          // Find active (not clocked out) record
-          const active = records.find(r => !r.clock_out);
-          setActiveRecord(active || null);
-        }
+        await fetchClockData(employee.id);
       }
     };
 
-    fetchData();
+    init();
   }, [user, locationId]);
+
+  // ─── Realtime: auto-refresh when another device changes this employee's records
+  useEffect(() => {
+    if (!employeeId) return;
+
+    const channel = supabase
+      .channel(`clock-panel-${employeeId}`)
+      .on(
+        'postgres_changes' as any,
+        {
+          event: '*',
+          schema: 'public',
+          table: 'employee_clock_records',
+          filter: `employee_id=eq.${employeeId}`,
+        },
+        () => {
+          fetchClockData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [employeeId, locationId]);
 
   // Try to get geolocation
   useEffect(() => {
