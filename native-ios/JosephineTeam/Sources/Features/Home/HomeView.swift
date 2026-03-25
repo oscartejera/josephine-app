@@ -284,39 +284,47 @@ struct HomeView: View {
 
     // MARK: - Data Loading
     private func loadData() async {
-        guard let emp = authVM.employee else { return }
-
         let today = DateFormatter.yyyyMMdd.string(from: Date())
         let (weekStart, weekEnd) = Date.currentWeekBounds()
 
-        // 1. Read from cache instantly
-        do {
-            let cachedShifts = try cache.plannedShifts(for: emp.id)
-            let cachedRecords = try cache.clockRecords(for: emp.id)
-            if !cachedShifts.isEmpty || !cachedRecords.isEmpty {
-                applyData(shifts: cachedShifts, records: cachedRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
-            }
-            announcements = (try? cache.announcements()) ?? []
-        } catch { /* Cache miss — will load from network */ }
+        // Load announcements from cache immediately (no employee needed)
+        announcements = (try? cache.announcements()) ?? []
+
+        // Load employee-dependent data only when available
+        if let emp = authVM.employee {
+            // 1. Read from cache instantly
+            do {
+                let cachedShifts = try cache.plannedShifts(for: emp.id)
+                let cachedRecords = try cache.clockRecords(for: emp.id)
+                if !cachedShifts.isEmpty || !cachedRecords.isEmpty {
+                    applyData(shifts: cachedShifts, records: cachedRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
+                }
+            } catch { /* Cache miss — will load from network */ }
+        }
 
         isLoading = todayShift == nil && upcomingShifts.isEmpty
         defer { isLoading = false }
 
-        // 2. Sync from network in background
+        // 2. Sync announcements from network (always)
         do {
-            try await cache.sync(.plannedShifts, force: true)
-            try await cache.sync(.clockRecords, force: true)
             try await cache.sync(.announcements, force: true)
-            // 3. Re-read from cache after sync
-            let freshShifts = try cache.plannedShifts(for: emp.id)
-            let freshRecords = try cache.clockRecords(for: emp.id)
-            applyData(shifts: freshShifts, records: freshRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
             announcements = (try? cache.announcements()) ?? []
-        } catch {
-            if todayShift == nil && upcomingShifts.isEmpty {
-                errorMessage = "No se pudieron cargar los datos. Tira hacia abajo para reintentar."
-                showError = true
-                HapticManager.play(.error)
+        } catch { /* Announcements sync failed — keep cached */ }
+
+        // 3. Sync employee-dependent data from network
+        if let emp = authVM.employee {
+            do {
+                try await cache.sync(.plannedShifts, force: true)
+                try await cache.sync(.clockRecords, force: true)
+                let freshShifts = try cache.plannedShifts(for: emp.id)
+                let freshRecords = try cache.clockRecords(for: emp.id)
+                applyData(shifts: freshShifts, records: freshRecords, today: today, weekStart: weekStart, weekEnd: weekEnd)
+            } catch {
+                if todayShift == nil && upcomingShifts.isEmpty {
+                    errorMessage = "No se pudieron cargar los datos. Tira hacia abajo para reintentar."
+                    showError = true
+                    HapticManager.play(.error)
+                }
             }
         }
     }
