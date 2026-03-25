@@ -82,7 +82,7 @@ struct HomeView: View {
     private var welcomeHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: JSpacing.xs) {
-                Text("Hola, \(authVM.employee?.fullName.components(separatedBy: " ").first ?? "")!")
+                Text("Bienvenido, \(authVM.employee?.fullName ?? "")")
                     .font(.jTitle2)
                     .foregroundStyle(JColor.textPrimary)
 
@@ -189,6 +189,10 @@ struct HomeView: View {
         Group {
             if !announcements.isEmpty {
                 VStack(alignment: .leading, spacing: JSpacing.md) {
+                    Text("Noticias")
+                        .font(.jHeadline)
+                        .foregroundStyle(JColor.textPrimary)
+
                     ForEach(sortedAnnouncements) { item in
                         newsCard(item)
                     }
