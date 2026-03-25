@@ -142,7 +142,7 @@ struct PayView: View {
 
         return VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Desglose")
-                .font(.jTitle3)
+                .font(.jSectionHeader)
                 .foregroundStyle(JColor.textPrimary)
 
             JCard {
@@ -177,7 +177,7 @@ struct PayView: View {
     private var dailyDetail: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Detalle diario")
-                .font(.jTitle3)
+                .font(.jSectionHeader)
                 .foregroundStyle(JColor.textPrimary)
 
             if monthRecords.isEmpty {

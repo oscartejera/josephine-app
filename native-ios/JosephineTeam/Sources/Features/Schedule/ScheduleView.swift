@@ -78,27 +78,28 @@ struct ScheduleView: View {
         HStack(spacing: JSpacing.sm) {
             ForEach(weekDays, id: \.self) { day in
                 let isSelected = calendar.isDate(day, inSameDayAs: selectedDate)
+                let isToday = calendar.isDateInToday(day)
                 let hasShift = weekShifts.contains { $0.shiftDate == DateFormatter.yyyyMMdd.string(from: day) }
 
                 Button { selectedDate = day } label: {
                     VStack(spacing: JSpacing.xs) {
                         Text(dayAbbrev(day))
                             .font(.jCaption2)
-                            .foregroundStyle(isSelected ? JColor.accent : JColor.textMuted)
+                            .foregroundStyle(isSelected ? .white : JColor.textMuted)
                         Text("\(calendar.component(.day, from: day))")
                             .font(.jBodyBold)
-                            .foregroundStyle(isSelected ? JColor.accent : JColor.textSecondary)
+                            .foregroundStyle(isSelected ? .white : JColor.textSecondary)
                         Circle()
-                            .fill(hasShift ? JColor.accent : .clear)
+                            .fill(isSelected ? .white : (hasShift ? JColor.accent : .clear))
                             .frame(width: 5, height: 5)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, JSpacing.sm)
-                    .background(isSelected ? JColor.accent.opacity(0.2) : .clear)
+                    .background(isSelected ? JColor.accent : (isToday ? JColor.accent.opacity(0.08) : .clear))
                     .clipShape(RoundedRectangle(cornerRadius: JRadius.sm))
                     .overlay(
                         RoundedRectangle(cornerRadius: JRadius.sm)
-                            .stroke(isSelected ? JColor.accent : .clear, lineWidth: 1)
+                            .stroke(isToday && !isSelected ? JColor.accent.opacity(0.3) : .clear, lineWidth: 1)
                     )
                 }
             }
@@ -130,7 +131,7 @@ struct ScheduleView: View {
     private var selectedDayShifts: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text(selectedDate.formatted(date: .complete, time: .omitted).capitalized)
-                .font(.jTitle3)
+                .font(.jSectionHeader)
                 .foregroundStyle(JColor.textPrimary)
 
             if shifts.isEmpty {

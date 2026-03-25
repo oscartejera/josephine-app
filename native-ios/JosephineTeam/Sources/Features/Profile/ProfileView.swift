@@ -98,7 +98,7 @@ struct ProfileView: View {
     private var actionsSection: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Ajustes")
-                .font(.jTitle3)
+                .font(.jSectionHeader)
                 .foregroundStyle(JColor.textPrimary)
 
             JCard {

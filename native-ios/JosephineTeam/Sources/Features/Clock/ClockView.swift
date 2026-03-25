@@ -185,10 +185,23 @@ struct ClockView: View {
     // MARK: - Today's Records (horizontal scroll)
     private var todayRecordsList: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
-            Text("Fichajes de hoy")
-                .font(.jTitle3)
-                .foregroundStyle(JColor.textPrimary)
-                .padding(.horizontal, JSpacing.lg)
+            HStack {
+                Text("Fichajes de hoy")
+                    .font(.jSectionHeader)
+                    .foregroundStyle(JColor.textPrimary)
+
+                Spacer()
+
+                if !todayRecords.isEmpty {
+                    let totalMins = todayRecords.compactMap { $0.durationMinutes }.reduce(0, +)
+                    let hrs = totalMins / 60
+                    let mins = totalMins % 60
+                    Text("\(hrs)h \(mins)m · \(todayRecords.count) fichaje\(todayRecords.count == 1 ? "" : "s")")
+                        .font(.jCaption)
+                        .foregroundStyle(JColor.textMuted)
+                }
+            }
+            .padding(.horizontal, JSpacing.lg)
 
             if todayRecords.isEmpty {
                 JCard {

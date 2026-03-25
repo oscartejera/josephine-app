@@ -32,6 +32,17 @@ struct HomeView: View {
         return fmt.string(from: Date()).capitalizedFirstLetter
     }
 
+    /// Time-based greeting
+    private var greetingText: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let name = authVM.employee?.fullName.components(separatedBy: " ").first ?? ""
+        switch hour {
+        case 6..<14:  return "Buenos días, \(name)"
+        case 14..<21: return "Buenas tardes, \(name)"
+        default:      return "Buenas noches, \(name)"
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -82,7 +93,7 @@ struct HomeView: View {
     private var welcomeHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: JSpacing.xs) {
-                Text("Bienvenido, \(authVM.employee?.fullName ?? "")")
+                Text(greetingText)
                     .font(.jTitle2)
                     .foregroundStyle(JColor.textPrimary)
 
@@ -92,43 +103,63 @@ struct HomeView: View {
             }
             Spacer()
             // Clock status indicator
-            Circle()
-                .fill(activeClockRecord != nil ? JColor.success : JColor.textMuted)
-                .frame(width: 10, height: 10)
+            if activeClockRecord != nil {
+                HStack(spacing: JSpacing.xs) {
+                    Circle()
+                        .fill(JColor.success)
+                        .frame(width: 8, height: 8)
+                    Text("Activo")
+                        .font(.jCaption)
+                        .foregroundStyle(JColor.success)
+                }
+            }
         }
         .padding(.top, JSpacing.md)
     }
 
     // MARK: - Active Clock Banner
     private func activeClockBanner(_ record: ClockRecord) -> some View {
-        JCard {
-            HStack {
-                VStack(alignment: .leading, spacing: JSpacing.xs) {
-                    HStack(spacing: JSpacing.sm) {
-                        Circle()
-                            .fill(JColor.success)
-                            .frame(width: 8, height: 8)
-                        Text("FICHAJE ACTIVO")
-                            .font(.jCaption)
-                            .foregroundStyle(JColor.success)
-                    }
-                    Text("Desde \(record.clockIn.formatted(date: .omitted, time: .shortened))")
-                        .font(.jBody)
-                        .foregroundStyle(JColor.textPrimary)
+        HStack {
+            VStack(alignment: .leading, spacing: JSpacing.xs) {
+                HStack(spacing: JSpacing.sm) {
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 8, height: 8)
+                        .overlay(
+                            Circle()
+                                .fill(.white.opacity(0.5))
+                                .frame(width: 16, height: 16)
+                        )
+                    Text("FICHAJE ACTIVO")
+                        .font(.jCaption)
+                        .foregroundStyle(.white.opacity(0.9))
                 }
-                Spacer()
-                Image(systemName: "clock.fill")
-                    .font(.title2)
-                    .foregroundStyle(JColor.accent)
+                Text("Desde \(record.clockIn.formatted(date: .omitted, time: .shortened))")
+                    .font(.jBodyBold)
+                    .foregroundStyle(.white)
             }
+            Spacer()
+            Image(systemName: "clock.fill")
+                .font(.title2)
+                .foregroundStyle(.white.opacity(0.8))
         }
+        .padding(JSpacing.lg)
+        .background(
+            LinearGradient(
+                colors: [JColor.accent, JColor.accentViolet],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: JRadius.lg))
+        .shadow(color: JColor.accent.opacity(0.3), radius: 12, x: 0, y: 6)
     }
 
     // MARK: - Today's Shift
     private var todayShiftCard: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
-            Text("Hoy")
-                .font(.jTitle3)
+            Text("Turno de hoy")
+                .font(.jSectionHeader)
                 .foregroundStyle(JColor.textPrimary)
 
             if let shift = todayShift {
@@ -153,8 +184,8 @@ struct HomeView: View {
     // MARK: - Upcoming Shifts
     private var upcomingShiftsList: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
-            Text("Próximos")
-                .font(.jTitle3)
+            Text("Próximos turnos")
+                .font(.jSectionHeader)
                 .foregroundStyle(JColor.textPrimary)
 
             if upcomingShifts.isEmpty {
@@ -190,7 +221,7 @@ struct HomeView: View {
             if !announcements.isEmpty {
                 VStack(alignment: .leading, spacing: JSpacing.md) {
                     Text("Noticias")
-                        .font(.jTitle3)
+                        .font(.jSectionHeader)
                         .foregroundStyle(JColor.textPrimary)
 
                     ForEach(sortedAnnouncements) { item in
