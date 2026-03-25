@@ -48,6 +48,7 @@ struct ScheduleView: View {
                         Image(systemName: "calendar.badge.clock")
                             .foregroundStyle(JColor.accent)
                     }
+                    .accessibilityLabel("Disponibilidad")
                 }
             }
             .sheet(item: $selectedShiftForSwap) { shift in
@@ -90,6 +91,7 @@ struct ScheduleView: View {
                 Image(systemName: "chevron.left")
                     .foregroundStyle(JColor.textSecondary)
             }
+            .accessibilityLabel("Semana anterior")
 
             Spacer()
 
@@ -98,6 +100,7 @@ struct ScheduleView: View {
                 .foregroundStyle(JColor.textPrimary)
                 .contentTransition(.numericText())
                 .animation(.easeInOut(duration: 0.3), value: weekRangeString)
+                .accessibilityLabel("Semana del \(weekRangeString)")
 
             Spacer()
 
@@ -105,6 +108,7 @@ struct ScheduleView: View {
                 Image(systemName: "chevron.right")
                     .foregroundStyle(JColor.textSecondary)
             }
+            .accessibilityLabel("Semana siguiente")
         }
         .padding(.top, JSpacing.md)
     }
@@ -142,6 +146,8 @@ struct ScheduleView: View {
                             .stroke(isToday && !isSelected ? JColor.accent.opacity(0.3) : .clear, lineWidth: 1)
                     )
                 }
+                .accessibilityLabel("\(dayAbbrev(day)) \(calendar.component(.day, from: day))\(hasShift ? ", con turno" : "")\(isToday ? ", hoy" : "")")
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.75), value: selectedDate)
@@ -180,12 +186,14 @@ struct ScheduleView: View {
                     HStack {
                         Image(systemName: "moon.zzz.fill")
                             .foregroundStyle(JColor.textMuted)
+                            .accessibilityHidden(true)
                         Text("Día libre")
                             .font(.jCallout)
                             .foregroundStyle(JColor.textSecondary)
                         Spacer()
                     }
                 }
+                .accessibilityLabel("No hay turnos, día libre")
                 .transition(.opacity)
             } else {
                 ForEach(shifts) { shift in

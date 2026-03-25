@@ -106,6 +106,8 @@ struct HomeView: View {
                     .font(.jCallout)
                     .foregroundStyle(JColor.textSecondary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(greetingText). \(formattedDate)")
             Spacer()
             // Clock status indicator
             if activeClockRecord != nil {
@@ -120,6 +122,7 @@ struct HomeView: View {
                         .font(.jCaption)
                         .foregroundStyle(JColor.success)
                 }
+                .accessibilityLabel("Estado: fichaje activo")
                 .onAppear { glowPulse = true }
             }
         }
@@ -151,7 +154,10 @@ struct HomeView: View {
             Image(systemName: "clock.fill")
                 .font(.title2)
                 .foregroundStyle(.white.opacity(0.8))
+                .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Fichaje activo desde \(record.clockIn.formatted(date: .omitted, time: .shortened))")
         .padding(JSpacing.lg)
         .background(
             LinearGradient(
@@ -180,12 +186,14 @@ struct HomeView: View {
                     HStack {
                         Image(systemName: "moon.zzz.fill")
                             .foregroundStyle(JColor.textMuted)
+                            .accessibilityHidden(true)
                         Text("No tienes turno hoy")
                             .font(.jCallout)
                             .foregroundStyle(JColor.textSecondary)
                         Spacer()
                     }
                 }
+                .accessibilityLabel("Turno de hoy: día libre")
             }
         }
     }
@@ -202,12 +210,14 @@ struct HomeView: View {
                     HStack {
                         Image(systemName: "calendar.badge.minus")
                             .foregroundStyle(JColor.textMuted)
+                            .accessibilityHidden(true)
                         Text("No hay turnos programados")
                             .font(.jCallout)
                             .foregroundStyle(JColor.textSecondary)
                         Spacer()
                     }
                 }
+                .accessibilityLabel("Próximos turnos: sin turnos programados")
             } else {
                 JCard {
                     LazyVStack(spacing: 0) {
@@ -263,6 +273,7 @@ struct HomeView: View {
                         Image(systemName: "pin.fill")
                             .font(.system(size: 10))
                             .foregroundStyle(JColor.warning)
+                            .accessibilityLabel("Fijada")
                     }
 
                     Spacer()

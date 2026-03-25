@@ -60,11 +60,14 @@ struct LoginView: View {
             Image(systemName: "fork.knife.circle.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(JColor.brandPurple)
+                .accessibilityHidden(true)
 
             Text("Josephine")
                 .font(.jDisplayTitle)
                 .foregroundColor(JColor.loginText)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Josephine")
     }
 
     // MARK: - Title
@@ -145,6 +148,7 @@ struct LoginView: View {
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(JColor.brandPurple)
                         }
+                        .accessibilityLabel("Editar email")
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 14)
@@ -185,6 +189,7 @@ struct LoginView: View {
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(JColor.loginTextSecondary)
                         }
+                        .accessibilityLabel(showPassword ? "Ocultar contraseña" : "Mostrar contraseña")
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 14)
@@ -219,6 +224,7 @@ struct LoginView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.circle.fill")
                         .font(.system(size: 14))
+                        .accessibilityHidden(true)
                     Text(error)
                         .font(.jFootnote)
                 }
@@ -231,6 +237,7 @@ struct LoginView: View {
                         .fill(JColor.error.opacity(0.08))
                 )
                 .transition(.move(edge: .top).combined(with: .opacity))
+                .accessibilityLabel("Error: \(error)")
             }
 
             // CTA button
@@ -254,6 +261,8 @@ struct LoginView: View {
                 )
             }
             .disabled(!ctaEnabled || authVM.isLoading)
+            .accessibilityLabel(authVM.isLoading ? "Iniciando sesión" : "Continuar")
+            .accessibilityHint(step == .email ? "Introduce tu email y pulsa para continuar" : "Pulsa para iniciar sesión")
             .padding(.top, 8)
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: step)

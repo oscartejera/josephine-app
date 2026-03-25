@@ -40,20 +40,24 @@ struct ProfileView: View {
                     .font(.jTitle1)
                     .foregroundStyle(JColor.accent)
             }
+            .accessibilityHidden(true)
             .padding(.top, JSpacing.xl)
 
             Text(authVM.employee?.fullName ?? "Empleado")
                 .font(.jTitle2)
                 .foregroundStyle(JColor.textPrimary)
+                .accessibilityLabel(authVM.employee?.fullName ?? "Empleado")
 
             if let location = authVM.locationName {
                 HStack(spacing: JSpacing.xs) {
                     Image(systemName: "mappin.circle.fill")
                         .font(.jCaption)
+                        .accessibilityHidden(true)
                     Text(location)
                         .font(.jCallout)
                 }
                 .foregroundStyle(JColor.textSecondary)
+                .accessibilityLabel("Ubicación: \(location)")
             }
         }
     }
@@ -81,6 +85,7 @@ struct ProfileView: View {
                 .font(.jBody)
                 .foregroundStyle(JColor.accent)
                 .frame(width: 28)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: JSpacing.xs) {
                 Text(label)
@@ -92,6 +97,8 @@ struct ProfileView: View {
             }
             Spacer()
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     // MARK: - Actions
@@ -121,6 +128,7 @@ struct ProfileView: View {
                 .font(.jBody)
                 .foregroundStyle(color)
                 .frame(width: 28)
+                .accessibilityHidden(true)
 
             Text(label)
                 .font(.jBody)
@@ -131,8 +139,12 @@ struct ProfileView: View {
             Image(systemName: "chevron.right")
                 .font(.jCaption)
                 .foregroundStyle(JColor.textMuted)
+                .accessibilityHidden(true)
         }
         .padding(.vertical, JSpacing.sm)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityHint("Pulsa para abrir \(label)")
     }
 
     // MARK: - Sign Out
@@ -153,6 +165,8 @@ struct ProfileView: View {
         .tint(JColor.error.opacity(0.2))
         .clipShape(RoundedRectangle(cornerRadius: JRadius.md))
         .padding(.top, JSpacing.lg)
+        .accessibilityLabel("Cerrar sesión")
+        .accessibilityHint("Pulsa para cerrar tu sesión y volver al login")
     }
 
     // MARK: - Helpers

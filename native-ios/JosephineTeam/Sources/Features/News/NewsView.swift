@@ -74,6 +74,7 @@ struct NewsView: View {
                 HStack {
                     Image(systemName: item.announcementType.icon)
                         .foregroundStyle(iconColor(for: item.announcementType))
+                        .accessibilityHidden(true)
 
                     JBadge(
                         text: item.announcementType.label,
@@ -84,6 +85,7 @@ struct NewsView: View {
                         Image(systemName: "pin.fill")
                             .font(.jCaption)
                             .foregroundStyle(JColor.warning)
+                            .accessibilityLabel("Fijada")
                     }
 
                     Spacer()
@@ -111,10 +113,12 @@ struct NewsView: View {
                     HStack(spacing: JSpacing.xs) {
                         Image(systemName: "person.circle.fill")
                             .font(.jCaption)
+                            .accessibilityHidden(true)
                         Text(author)
                             .font(.jCaption)
                     }
                     .foregroundStyle(JColor.textMuted)
+                    .accessibilityLabel("Publicado por \(author)")
                 }
             }
         }

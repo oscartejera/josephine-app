@@ -61,6 +61,8 @@ struct SwapRequestSheet: View {
                 ShiftRow(shift: shift)
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Turno a intercambiar")
     }
 
     // MARK: - Reason Input
@@ -77,6 +79,8 @@ struct SwapRequestSheet: View {
                     .foregroundStyle(JColor.textPrimary)
                     .frame(minHeight: 100)
                     .scrollContentBackground(.hidden)
+                    .accessibilityLabel("Motivo del intercambio")
+                    .accessibilityHint("Escribe por qué necesitas intercambiar este turno")
             }
 
             Text("Escribe por qué necesitas intercambiar este turno.")
@@ -93,11 +97,13 @@ struct SwapRequestSheet: View {
                 HStack(spacing: JSpacing.sm) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(JColor.success)
+                        .accessibilityHidden(true)
                     Text("Solicitud enviada correctamente")
                         .font(.jCallout)
                         .foregroundStyle(JColor.success)
                 }
                 .transition(.opacity.combined(with: .scale))
+                .accessibilityLabel("Solicitud enviada correctamente")
             }
 
             Button {
@@ -118,6 +124,8 @@ struct SwapRequestSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: JRadius.md))
             }
             .disabled(isSending || showSuccess)
+            .accessibilityLabel(isSending ? "Enviando solicitud" : (showSuccess ? "Solicitud enviada" : "Solicitar intercambio"))
+            .accessibilityHint(showSuccess ? "" : "Pulsa para enviar la solicitud de intercambio de turno")
         }
     }
 
