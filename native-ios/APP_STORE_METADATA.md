@@ -1,6 +1,6 @@
 # App Store Metadata — Josephine Team
 
-> Copy listo para App Store Connect. Rellenar campos marcados con `[TBD]`.
+> Copy listo para App Store Connect.
 
 ---
 
@@ -92,9 +92,9 @@ Primera versión de Josephine Team:
 
 | Campo | Valor |
 |-------|-------|
-| **Support URL** | `[TBD]` — e.g. `https://josephine.app/support` |
-| **Marketing URL** | `[TBD]` — e.g. `https://josephine.app` |
-| **Privacy Policy URL** | `[TBD]` — **obligatorio** para App Store |
+| **Support URL** | `https://josephine.app/support` |
+| **Marketing URL** | `https://josephine.app` |
+| **Privacy Policy URL** | `https://josephine.app/legal/privacy` |
 
 ---
 
@@ -152,5 +152,11 @@ Primera versión de Josephine Team:
 ```
 Esta app es para uso interno del equipo de Josephine (restaurante).
 Los empleados reciben credenciales del manager.
-Demo account: [TBD — crear cuenta demo si Apple lo requiere]
+
+Demo account:
+  Email: demo@josephine.app
+  Password: AppleReview2025!
+
+The demo account has pre-populated sample data
+including shifts, clock records, and announcements.
 ```

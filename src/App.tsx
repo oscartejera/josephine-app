@@ -70,6 +70,7 @@ const WorkforceOnboarding = lazy(() => import("@/pages/WorkforceOnboarding"));
 const KioskMode = lazy(() => import("@/pages/KioskMode"));
 const OnboardingWizardV2 = lazy(() => import("@/pages/OnboardingWizardV2"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const Support = lazy(() => import("@/pages/Support"));
 
 // Team (Employee Portal) — lazy loaded
 const TeamHome = lazy(() => import("@/pages/team/TeamHome"));
@@ -323,8 +324,9 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
-          {/* Legal (public) */}
+          {/* Legal & Support (public) */}
           <Route path="/legal/privacy" element={<Suspense fallback={<SectionLoader section="Privacidad" />}><PrivacyPolicy /></Suspense>} />
+          <Route path="/support" element={<Suspense fallback={<SectionLoader section="Soporte" />}><Support /></Suspense>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
