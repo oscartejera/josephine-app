@@ -24,7 +24,6 @@ struct ProfileView: View {
             }
             .background(JColor.background)
             .navigationTitle("Perfil")
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
 
@@ -45,7 +44,7 @@ struct ProfileView: View {
 
             Text(authVM.employee?.fullName ?? "Empleado")
                 .font(.jTitle2)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             if let location = authVM.locationName {
                 HStack(spacing: JSpacing.xs) {
@@ -89,7 +88,7 @@ struct ProfileView: View {
                     .foregroundStyle(JColor.textMuted)
                 Text(value)
                     .font(.jBody)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(JColor.textPrimary)
             }
             Spacer()
         }
@@ -100,7 +99,7 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Ajustes")
                 .font(.jTitle3)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             JCard {
                 VStack(spacing: 0) {
@@ -125,7 +124,7 @@ struct ProfileView: View {
 
             Text(label)
                 .font(.jBody)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             Spacer()
 

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Color Palette
+// MARK: - Color Palette (Light Theme)
 enum JColor {
     /// Josephine brand purple (pwa-icon gradient)
     static let brandPurple = Color(hex: 0x7C3AED)
@@ -9,39 +9,39 @@ enum JColor {
     /// Josephine accent: orange #F97316
     static let accent = Color(hex: 0xF97316)
 
-    /// Dark background
-    static let background = Color(hex: 0x0F0F0F)
+    /// Light background
+    static let background = Color(hex: 0xF5F5F5)
 
     /// Card surface
-    static let surface = Color(hex: 0x1A1A1A)
+    static let surface = Color.white
 
     /// Elevated surface (cards, sheets)
-    static let surfaceElevated = Color(hex: 0x242424)
+    static let surfaceElevated = Color.white
 
     /// Subtle border
-    static let border = Color.white.opacity(0.08)
+    static let border = Color.black.opacity(0.08)
 
     /// Primary text
-    static let textPrimary = Color.white
+    static let textPrimary = Color(hex: 0x1A1A1A)
 
     /// Secondary text
-    static let textSecondary = Color.white.opacity(0.6)
+    static let textSecondary = Color(hex: 0x6B7280)
 
-    /// Muted text (opacity tuned for WCAG AA against #0F0F0F)
-    static let textMuted = Color.white.opacity(0.45)
+    /// Muted text (WCAG AA against white / #F5F5F5)
+    static let textMuted = Color(hex: 0x9CA3AF)
 
     // MARK: - Semantic Colors
-    static let success = Color(hex: 0x22C55E)
-    static let warning = Color(hex: 0xEAB308)
-    static let error = Color(hex: 0xEF4444)
-    static let info = Color(hex: 0x3B82F6)
+    static let success = Color(hex: 0x16A34A)
+    static let warning = Color(hex: 0xCA8A04)
+    static let error = Color(hex: 0xDC2626)
+    static let info = Color(hex: 0x2563EB)
 
     // MARK: - Role Colors (shift calendar)
-    static let roleCamarero = Color(hex: 0x8B5CF6)  // purple
-    static let roleCocinero = Color(hex: 0xF97316)   // orange
-    static let roleBarra = Color(hex: 0x06B6D4)      // cyan
-    static let roleLimpieza = Color(hex: 0x84CC16)    // lime
-    static let roleEncargado = Color(hex: 0xEC4899)   // pink
+    static let roleCamarero = Color(hex: 0x7C3AED)  // purple
+    static let roleCocinero = Color(hex: 0xEA580C)   // orange
+    static let roleBarra = Color(hex: 0x0891B2)      // cyan
+    static let roleLimpieza = Color(hex: 0x65A30D)    // lime
+    static let roleEncargado = Color(hex: 0xDB2777)   // pink
 
     static func forRole(_ role: String) -> Color {
         switch role.lowercased() {
@@ -54,7 +54,7 @@ enum JColor {
         }
     }
 
-    // MARK: - Login (light mode)
+    // MARK: - Login (light mode — unchanged)
     static let loginBackground = Color.white
     static let loginText = Color(hex: 0x111827)
     static let loginTextSecondary = Color(hex: 0x6B7280)

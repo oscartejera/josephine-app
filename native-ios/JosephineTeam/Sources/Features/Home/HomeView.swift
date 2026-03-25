@@ -42,7 +42,6 @@ struct HomeView: View {
             }
             .background(JColor.background)
             .navigationTitle("Inicio")
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .refreshable {
                 await loadData()
                 HapticManager.play(.success)
@@ -58,7 +57,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: JSpacing.xs) {
                 Text("Hola, \(authVM.employee?.fullName.components(separatedBy: " ").first ?? "")!")
                     .font(.jTitle2)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(JColor.textPrimary)
                 if let location = authVM.locationName {
                     HStack(spacing: JSpacing.xs) {
                         Image(systemName: "mappin.circle.fill")
@@ -93,7 +92,7 @@ struct HomeView: View {
                     }
                     Text("Desde \(record.clockIn.formatted(date: .omitted, time: .shortened))")
                         .font(.jBody)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(JColor.textPrimary)
                 }
                 Spacer()
                 Image(systemName: "clock.fill")
@@ -126,7 +125,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Turno de hoy")
                 .font(.jTitle3)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             if let shift = todayShift {
                 JCard {
@@ -152,7 +151,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Próximos turnos")
                 .font(.jTitle3)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             if upcomingShifts.isEmpty {
                 JCard {

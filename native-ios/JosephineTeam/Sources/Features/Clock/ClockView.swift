@@ -47,7 +47,6 @@ struct ClockView: View {
             }
             .background(JColor.background)
             .navigationTitle("Fichaje")
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .refreshable {
                 await loadClockData()
                 HapticManager.play(.success)
@@ -74,7 +73,7 @@ struct ClockView: View {
                 // Current time
                 Text(Date().formatted(date: .omitted, time: .shortened))
                     .font(.jClock)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(JColor.textPrimary)
 
                 Text(Date().formatted(date: .complete, time: .omitted).capitalized)
                     .font(.jCallout)
@@ -116,7 +115,7 @@ struct ClockView: View {
 
                     Text(isClockedIn ? "Fichar Salida" : "Fichar Entrada")
                         .font(.jTitle3)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(JColor.textPrimary)
                 }
                 .opacity(showClockResult ? 0.3 : 1.0)
 
@@ -156,7 +155,7 @@ struct ClockView: View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Fichajes de hoy")
                 .font(.jTitle3)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             if todayRecords.isEmpty {
                 JCard {
@@ -176,7 +175,7 @@ struct ClockView: View {
                             VStack(alignment: .leading, spacing: JSpacing.xs) {
                                 Text(record.clockIn.formatted(date: .omitted, time: .shortened))
                                     .font(.jBodyBold)
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(JColor.textPrimary)
                                 Text(record.isActive ? "En curso" : record.durationString)
                                     .font(.jCaption)
                                     .foregroundStyle(record.isActive ? JColor.success : JColor.textSecondary)

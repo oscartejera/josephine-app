@@ -39,7 +39,7 @@ struct JosephineTeamApp: App {
                 }
             }
             .tint(JColor.accent)
-            .preferredColorScheme(.dark)
+            .preferredColorScheme(.light)
             .task {
                 await CacheManager.shared.syncAll()
             }

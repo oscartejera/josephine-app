@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - JCard — Reusable dark card container
+// MARK: - JCard — Reusable card container
 struct JCard<Content: View>: View {
     let content: () -> Content
 
@@ -28,7 +28,7 @@ struct JBadge: View {
     var body: some View {
         Text(text)
             .font(.jCaption)
-            .foregroundStyle(.white)
+            .foregroundStyle(color)
             .padding(.horizontal, JSpacing.sm)
             .padding(.vertical, JSpacing.xs)
             .background(color.opacity(0.2))
@@ -57,7 +57,7 @@ struct JStatCard: View {
                 }
                 Text(value)
                     .font(.jStatNumber)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(JColor.textPrimary)
                 Text(label)
                     .font(.jCaption)
                     .foregroundStyle(JColor.textSecondary)
@@ -110,7 +110,7 @@ struct ShiftRow: View {
             VStack(alignment: .leading, spacing: JSpacing.xs) {
                 Text("\(shift.startTime) – \(shift.endTime)")
                     .font(.jBodyBold)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(JColor.textPrimary)
                 Text(shift.role.capitalized)
                     .font(.jCaption)
                     .foregroundStyle(JColor.textSecondary)

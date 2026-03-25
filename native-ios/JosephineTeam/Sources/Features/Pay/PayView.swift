@@ -36,7 +36,6 @@ struct PayView: View {
             }
             .background(JColor.background)
             .navigationTitle("Nómina")
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .refreshable {
                 await loadPayData()
                 HapticManager.play(.success)
@@ -56,7 +55,7 @@ struct PayView: View {
             Spacer()
             Text(monthString)
                 .font(.jSubheadline)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
             Spacer()
             Button { changeMonth(1) } label: {
                 Image(systemName: "chevron.right")
@@ -114,7 +113,7 @@ struct PayView: View {
         return VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Desglose")
                 .font(.jTitle3)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             JCard {
                 VStack(spacing: JSpacing.md) {
@@ -149,7 +148,7 @@ struct PayView: View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text("Detalle diario")
                 .font(.jTitle3)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             if monthRecords.isEmpty {
                 JCard {
@@ -170,7 +169,7 @@ struct PayView: View {
                                 VStack(alignment: .leading, spacing: JSpacing.xs) {
                                     Text(record.clockIn.formatted(date: .abbreviated, time: .omitted))
                                         .font(.jBody)
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(JColor.textPrimary)
                                     Text("\(record.clockIn.formatted(date: .omitted, time: .shortened)) – \(record.clockOut?.formatted(date: .omitted, time: .shortened) ?? "...")")
                                         .font(.jCaption)
                                         .foregroundStyle(JColor.textSecondary)

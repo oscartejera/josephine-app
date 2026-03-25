@@ -33,7 +33,6 @@ struct NewsView: View {
             }
             .background(JColor.background)
             .navigationTitle("Noticias")
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
 
@@ -84,7 +83,7 @@ struct NewsView: View {
                 // Title
                 Text(item.title)
                     .font(.jBodyBold)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(JColor.textPrimary)
 
                 // Body
                 if let body = item.body, !body.isEmpty {

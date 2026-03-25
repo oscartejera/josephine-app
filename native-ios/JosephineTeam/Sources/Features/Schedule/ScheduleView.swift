@@ -37,7 +37,6 @@ struct ScheduleView: View {
             }
             .background(JColor.background)
             .navigationTitle("Horario")
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .refreshable {
                 await loadWeekShifts()
                 HapticManager.play(.success)
@@ -62,7 +61,7 @@ struct ScheduleView: View {
 
             Text(weekRangeString)
                 .font(.jSubheadline)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             Spacer()
 
@@ -132,7 +131,7 @@ struct ScheduleView: View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
             Text(selectedDate.formatted(date: .complete, time: .omitted).capitalized)
                 .font(.jTitle3)
-                .foregroundStyle(.white)
+                .foregroundStyle(JColor.textPrimary)
 
             if shifts.isEmpty {
                 JCard {
