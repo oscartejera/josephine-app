@@ -65,6 +65,9 @@ final class AuthViewModel: ObservableObject {
 
     // MARK: - Sign Out
     func signOut() async {
+        // Deactivate push token before sign-out
+        await AppDelegate.removeDeviceToken()
+
         do {
             try await supabase.auth.signOut()
         } catch {

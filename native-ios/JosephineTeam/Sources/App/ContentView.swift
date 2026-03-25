@@ -27,6 +27,15 @@ struct ContentView: View {
             FloatingTabBar(selectedTab: $selectedTab)
         }
         .background(JColor.background)
+        // MARK: - Push Deep Link
+        .onReceive(NotificationCenter.default.publisher(for: PushNotificationRouter.deepLinkNotification)) { notification in
+            if let tabRaw = notification.userInfo?["tab"] as? Int,
+               let tab = AppTab(rawValue: tabRaw) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    selectedTab = tab
+                }
+            }
+        }
         // MARK: - Realtime Lifecycle
         .task {
             if let emp = authVM.employee {
