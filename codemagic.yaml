@@ -31,7 +31,7 @@ workflows:
         - push
       branch_patterns:
         - pattern: main
-          include: false    # Manual trigger only — flip to true when ready
+          include: true     # Auto-trigger on push to main
       cancel_previous_builds: true
 
     scripts:
@@ -74,6 +74,18 @@ workflows:
             PROVISIONING_PROFILE="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             | xcpretty
+
+      # ── 5. Run Unit Tests ──
+      - name: Run Unit Tests
+        script: |
+          cd native-ios/JosephineTeam
+          xcodebuild test \
+            -project "JosephineTeam.xcodeproj" \
+            -scheme "JosephineTeam" \
+            -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            | xcpretty --report junit
 
     artifacts:
       - /tmp/xcodebuild_logs/*.log

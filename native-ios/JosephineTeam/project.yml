@@ -91,3 +91,15 @@ targets:
         com.apple.developer.associated-domains:
           - "applinks:josephine.app"
         aps-environment: development
+
+  JosephineTeamTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: ../../JosephineTeamTests
+    dependencies:
+      - target: JosephineTeam
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: true
