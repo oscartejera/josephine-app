@@ -53,7 +53,7 @@ final class CacheManager {
     enum Table: String, CaseIterable {
         case employees
         case locations
-        case clockRecords = "clock_records"
+        case clockRecords = "employee_clock_records"
         case plannedShifts = "planned_shifts"
         case announcements
         case tipDistributions = "tip_distributions"
@@ -75,14 +75,20 @@ final class CacheManager {
 
     func clockRecords(for employeeId: UUID) throws -> [ClockRecord] {
         let context = container.mainContext
-        let all = try context.fetch(FetchDescriptor<CachedClockRecord>())
-        return all.filter { $0.employeeId == employeeId }.map { $0.toModel() }
+        var descriptor = FetchDescriptor<CachedClockRecord>(
+            predicate: #Predicate { $0.employeeId == employeeId },
+            sortBy: [SortDescriptor(\.clockIn, order: .reverse)]
+        )
+        return try context.fetch(descriptor).map { $0.toModel() }
     }
 
     func plannedShifts(for employeeId: UUID) throws -> [PlannedShift] {
         let context = container.mainContext
-        let all = try context.fetch(FetchDescriptor<CachedPlannedShift>())
-        return all.filter { $0.employeeId == employeeId }.map { $0.toModel() }
+        let descriptor = FetchDescriptor<CachedPlannedShift>(
+            predicate: #Predicate { $0.employeeId == employeeId },
+            sortBy: [SortDescriptor(\.shiftDate, order: .reverse)]
+        )
+        return try context.fetch(descriptor).map { $0.toModel() }
     }
 
     func announcements() throws -> [Announcement] {
@@ -93,8 +99,10 @@ final class CacheManager {
 
     func tipDistributions(for employeeId: UUID) throws -> [TipDistribution] {
         let context = container.mainContext
-        let all = try context.fetch(FetchDescriptor<CachedTipDistribution>())
-        return all.filter { $0.employeeId == employeeId }.map { $0.toModel() }
+        let descriptor = FetchDescriptor<CachedTipDistribution>(
+            predicate: #Predicate { $0.employeeId == employeeId }
+        )
+        return try context.fetch(descriptor).map { $0.toModel() }
     }
 
     // MARK: - Public API: Sync from Network
@@ -134,15 +142,24 @@ final class CacheManager {
             try upsert(items, as: CachedLocation.self)
 
         case .clockRecords:
-            let items: [ClockRecord] = try await db.from("clock_records")
+            let clockCutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())!
+            let clockISO = ISO8601DateFormatter().string(from: clockCutoff)
+            let items: [ClockRecord] = try await db.from("employee_clock_records")
                 .select()
+                .gte("clock_in", value: clockISO)
                 .execute()
                 .value
             try upsertClockRecords(items)
 
         case .plannedShifts:
+            let shiftFrom = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+            let shiftTo = Calendar.current.date(byAdding: .day, value: 60, to: Date())!
+            let fromStr = DateFormatter.yyyyMMdd.string(from: shiftFrom)
+            let toStr = DateFormatter.yyyyMMdd.string(from: shiftTo)
             let items: [PlannedShift] = try await db.from("planned_shifts")
                 .select()
+                .gte("shift_date", value: fromStr)
+                .lte("shift_date", value: toStr)
                 .execute()
                 .value
             try upsertPlannedShifts(items)
@@ -178,6 +195,15 @@ final class CacheManager {
                 #endif
             }
         }
+
+        // Purge stale cached data after sync
+        do {
+            try purgeStaleData()
+        } catch {
+            #if DEBUG
+            print("⚠️ Purge failed: \(error.localizedDescription)")
+            #endif
+        }
     }
 
     // MARK: - TTL Check
@@ -189,23 +215,29 @@ final class CacheManager {
         do {
             switch table {
             case .employees:
-                let items = try context.fetch(FetchDescriptor<CachedEmployee>())
-                return items.first.map { $0.lastSyncedAt > cutoff } ?? false
+                var d = FetchDescriptor<CachedEmployee>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             case .locations:
-                let items = try context.fetch(FetchDescriptor<CachedLocation>())
-                return items.first.map { $0.lastSyncedAt > cutoff } ?? false
+                var d = FetchDescriptor<CachedLocation>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             case .clockRecords:
-                let items = try context.fetch(FetchDescriptor<CachedClockRecord>())
-                return items.first.map { $0.lastSyncedAt > cutoff } ?? false
+                var d = FetchDescriptor<CachedClockRecord>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             case .plannedShifts:
-                let items = try context.fetch(FetchDescriptor<CachedPlannedShift>())
-                return items.first.map { $0.lastSyncedAt > cutoff } ?? false
+                var d = FetchDescriptor<CachedPlannedShift>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             case .announcements:
-                let items = try context.fetch(FetchDescriptor<CachedAnnouncement>())
-                return items.first.map { $0.lastSyncedAt > cutoff } ?? false
+                var d = FetchDescriptor<CachedAnnouncement>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             case .tipDistributions:
-                let items = try context.fetch(FetchDescriptor<CachedTipDistribution>())
-                return items.first.map { $0.lastSyncedAt > cutoff } ?? false
+                var d = FetchDescriptor<CachedTipDistribution>(sortBy: [SortDescriptor(\.lastSyncedAt, order: .reverse)])
+                d.fetchLimit = 1
+                return try context.fetch(d).first.map { $0.lastSyncedAt > cutoff } ?? false
             }
         } catch {
             return false
@@ -302,5 +334,34 @@ final class CacheManager {
             }
         }
         try context.save()
+    }
+
+    // MARK: - Cache Purge
+
+    /// Remove cached records older than retention period.
+    /// Called automatically after syncAll completes.
+    func purgeStaleData(retentionDays: Int = 90) throws {
+        let context = container.mainContext
+        let cutoff = Calendar.current.date(byAdding: .day, value: -retentionDays, to: Date())!
+        let cutoffStr = DateFormatter.yyyyMMdd.string(from: cutoff)
+
+        // Clock records older than retention
+        let oldClocks = try context.fetch(FetchDescriptor<CachedClockRecord>(
+            predicate: #Predicate { $0.clockIn < cutoff }
+        ))
+        oldClocks.forEach { context.delete($0) }
+
+        // Planned shifts older than retention (shiftDate is String "yyyy-MM-dd")
+        let oldShifts = try context.fetch(FetchDescriptor<CachedPlannedShift>(
+            predicate: #Predicate { $0.shiftDate < cutoffStr }
+        ))
+        oldShifts.forEach { context.delete($0) }
+
+        if context.hasChanges {
+            try context.save()
+            #if DEBUG
+            print("🗑 Purged \(oldClocks.count) old clock records, \(oldShifts.count) old shifts")
+            #endif
+        }
     }
 }
