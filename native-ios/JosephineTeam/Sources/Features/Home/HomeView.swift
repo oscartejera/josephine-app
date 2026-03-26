@@ -179,7 +179,15 @@ struct HomeView: View {
 
             if let shift = todayShift {
                 JCard {
-                    ShiftRow(shift: shift)
+                    VStack(spacing: JSpacing.md) {
+                        ShiftRow(shift: shift)
+
+                        // Shift progress indicator (only when shift is today)
+                        if let progress = shiftProgress(shift) {
+                            Divider().background(JColor.border)
+                            shiftProgressView(shift, progress: progress)
+                        }
+                    }
                 }
             } else {
                 JCard {
@@ -196,6 +204,92 @@ struct HomeView: View {
                 .accessibilityLabel("Turno de hoy: día libre")
             }
         }
+    }
+
+    // MARK: - Shift Progress Helpers
+
+    /// Returns progress 0.0–1.0 if the current time falls within the shift window, nil otherwise
+    private func shiftProgress(_ shift: PlannedShift) -> Double? {
+        let cal = Calendar.current
+        let now = Date()
+        let today = cal.startOfDay(for: now)
+
+        guard let startDate = parseTime(shift.safeStartTime, on: today),
+              let endDate = parseTime(shift.safeEndTime, on: today) else { return nil }
+
+        // Before shift → show 0, after shift → show 1, between → fraction
+        if now < startDate { return 0 }
+        if now >= endDate  { return 1 }
+
+        let total = endDate.timeIntervalSince(startDate)
+        let elapsed = now.timeIntervalSince(startDate)
+        return min(max(elapsed / total, 0), 1)
+    }
+
+    private func parseTime(_ time: String, on day: Date) -> Date? {
+        let parts = time.split(separator: ":").compactMap { Int($0) }
+        guard parts.count >= 2 else { return nil }
+        return Calendar.current.date(bySettingHour: parts[0], minute: parts[1], second: 0, of: day)
+    }
+
+    private func shiftProgressView(_ shift: PlannedShift, progress: Double) -> some View {
+        let remaining = shift.plannedHours * (1 - progress)
+        let isComplete = progress >= 1.0
+        let hasStarted = progress > 0
+
+        return VStack(alignment: .leading, spacing: JSpacing.sm) {
+            // Progress bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(JColor.border)
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            isComplete
+                                ? AnyShapeStyle(JColor.success)
+                                : AnyShapeStyle(LinearGradient(
+                                    colors: [JColor.accent, JColor.accentViolet],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                  ))
+                        )
+                        .frame(width: geo.size.width * CGFloat(progress), height: 6)
+                        .animation(.easeInOut(duration: 0.5), value: progress)
+                }
+            }
+            .frame(height: 6)
+
+            // Status text
+            HStack {
+                Image(systemName: isComplete ? "checkmark.circle.fill" : (hasStarted ? "clock.fill" : "clock"))
+                    .font(.system(size: 12))
+                    .foregroundStyle(isComplete ? JColor.success : JColor.textSecondary)
+                    .accessibilityHidden(true)
+
+                if isComplete {
+                    Text("Turno completado")
+                        .font(.jCaption)
+                        .foregroundStyle(JColor.success)
+                } else if hasStarted {
+                    Text("Quedan \(String(format: "%.1f", remaining))h")
+                        .font(.jCaption)
+                        .foregroundStyle(JColor.textSecondary)
+                } else {
+                    Text("Empieza a las \(shift.safeStartTime)")
+                        .font(.jCaption)
+                        .foregroundStyle(JColor.textSecondary)
+                }
+
+                Spacer()
+
+                Text("\(Int(progress * 100))%")
+                    .font(.jCaption)
+                    .foregroundStyle(JColor.textMuted)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(isComplete ? "Turno completado" : (hasStarted ? "Progreso del turno: \(Int(progress * 100)) por ciento, quedan \(String(format: "%.1f", remaining)) horas" : "Turno empieza a las \(shift.safeStartTime)"))
     }
 
     // MARK: - Upcoming Shifts

@@ -170,8 +170,8 @@ struct PlannedShift: Codable, Identifiable, Sendable {
     let status: String?         // draft | published
 
     // Safe accessors with sensible defaults
-    var safeStartTime: String { startTime ?? "09:00" }
-    var safeEndTime: String   { endTime ?? "17:00" }
+    var safeStartTime: String { String((startTime ?? "09:00").prefix(5)) }
+    var safeEndTime: String   { String((endTime ?? "17:00").prefix(5)) }
     var safeRole: String      { role ?? "staff" }
     var safeStatus: String    { status ?? "published" }
 
