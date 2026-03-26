@@ -96,7 +96,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: ../../JosephineTeamTests
+      - path: ../JosephineTeamTests
     dependencies:
       - target: JosephineTeam
     settings:
