@@ -295,9 +295,19 @@ struct HomeView: View {
     // MARK: - Upcoming Shifts
     private var upcomingShiftsList: some View {
         VStack(alignment: .leading, spacing: JSpacing.md) {
-            Text("Próximos turnos")
-                .font(.jSectionHeader)
-                .foregroundStyle(JColor.textPrimary)
+            // Header with total upcoming hours
+            HStack(alignment: .firstTextBaseline) {
+                Text("Próximos turnos")
+                    .font(.jSectionHeader)
+                    .foregroundStyle(JColor.textPrimary)
+                Spacer()
+                if !upcomingShifts.isEmpty {
+                    let totalHours = upcomingShifts.reduce(0) { $0 + $1.plannedHours }
+                    Text("\(totalHours, specifier: "%.0f")h")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(JColor.textSecondary)
+                }
+            }
 
             if upcomingShifts.isEmpty {
                 JCard {
@@ -313,17 +323,16 @@ struct HomeView: View {
                 }
                 .accessibilityLabel("Próximos turnos: sin turnos programados")
             } else {
-                JCard {
-                    LazyVStack(spacing: 0) {
-                        ForEach(upcomingShifts) { shift in
-                            ShiftRow(shift: shift)
-                            if shift.id != upcomingShifts.last?.id {
-                                Divider()
-                                    .background(JColor.border)
-                            }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: JSpacing.md) {
+                        ForEach(Array(upcomingShifts.enumerated()), id: \.element.id) { index, shift in
+                            UpcomingShiftCard(shift: shift, isFirst: index == 0)
                         }
                     }
+                    .scrollTargetLayout()
                 }
+                .scrollTargetBehavior(.viewAligned)
+                .contentMargins(.horizontal, 0, for: .scrollContent)
             }
         }
     }
