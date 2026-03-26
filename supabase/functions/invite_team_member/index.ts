@@ -213,6 +213,23 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Create corresponding employee record so user appears in workforce
+    const { error: employeeError } = await supabaseAdmin
+      .from('employees')
+      .insert({
+        full_name,
+        profile_user_id: userId,
+        org_id: group_id,
+        location_id: location_id || null,
+        role_name: roleData?.name || 'Empleado',
+        active: true,
+      });
+
+    if (employeeError) {
+      console.error('Error creating employee record:', employeeError);
+      // Non-fatal: user can still log in, employee can be created manually
+    }
+
     // Get inviter's name for the email
     const { data: inviterProfile } = await supabaseAdmin
       .from('profiles')

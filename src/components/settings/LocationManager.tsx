@@ -369,6 +369,7 @@ export function LocationManager() {
               location_id: newLocation.id,
               hourly_cost: e.hourly_cost,
               active: true,
+              org_id: group.id,
             }));
             await supabase.from('employees').insert(newEmployees);
             copiedItems.employees = realEmployees.length;

@@ -475,6 +475,7 @@ export function LocationWizard({ open, onOpenChange, groupId, onSuccess }: Locat
           role_name: e.role,
           location_id: newLocation.id,
           active: true,
+          org_id: groupId,
         }));
         await supabase.from('employees').insert(employeeInserts);
       }

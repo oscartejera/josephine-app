@@ -344,6 +344,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             location_id: newLocation.id,
             is_active: true,
             hourly_cost: e.hourlyCost,
+            org_id: newGroup.id,
           }));
         
         if (employeesToInsert.length > 0) {
