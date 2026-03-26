@@ -188,24 +188,24 @@ final class CachedPlannedShift {
         self.id = model.id
         self.employeeId = model.employeeId
         self.shiftDate = model.shiftDate
-        self.startTime = model.startTime
-        self.endTime = model.endTime
+        self.startTime = model.safeStartTime
+        self.endTime = model.safeEndTime
         self.plannedHours = model.plannedHours
         self.plannedCost = model.plannedCost
-        self.role = model.role
-        self.status = model.status
+        self.role = model.safeRole
+        self.status = model.safeStatus
         self.lastSyncedAt = Date()
     }
 
     func update(from model: PlannedShift) {
         self.employeeId = model.employeeId
         self.shiftDate = model.shiftDate
-        self.startTime = model.startTime
-        self.endTime = model.endTime
+        self.startTime = model.safeStartTime
+        self.endTime = model.safeEndTime
         self.plannedHours = model.plannedHours
         self.plannedCost = model.plannedCost
-        self.role = model.role
-        self.status = model.status
+        self.role = model.safeRole
+        self.status = model.safeStatus
         self.lastSyncedAt = Date()
     }
 
