@@ -1,6 +1,6 @@
 import UIKit
 import UserNotifications
-import Supabase
+@preconcurrency import Supabase
 
 // MARK: - AppDelegate (Push Notifications)
 

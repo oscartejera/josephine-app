@@ -1,5 +1,5 @@
 import SwiftUI
-import Supabase
+@preconcurrency import Supabase
 
 struct HomeView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -381,7 +381,7 @@ struct HomeView: View {
     }
 
     private func applyData(shifts: [PlannedShift], records: [ClockRecord], today: String, weekStart: String, weekEnd: String) {
-        let published = shifts.filter { $0.status == "published" }
+        let published = shifts.filter { $0.safeStatus == "published" }
 
         // Today & upcoming shifts
         todayShift = published.first(where: { $0.shiftDate == today })

@@ -1,6 +1,6 @@
 import Foundation
 import SwiftData
-import Supabase
+@preconcurrency import Supabase
 
 // MARK: - Cache Manager
 

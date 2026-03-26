@@ -1,5 +1,5 @@
 import SwiftUI
-import Supabase
+@preconcurrency import Supabase
 
 struct PayView: View {
     @EnvironmentObject var authVM: AuthViewModel

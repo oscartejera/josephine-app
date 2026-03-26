@@ -1,5 +1,5 @@
 import SwiftUI
-import Supabase
+@preconcurrency import Supabase
 
 struct ScheduleView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -258,7 +258,7 @@ struct ScheduleView: View {
         // 1. Read from cache instantly
         do {
             let cached = try cache.plannedShifts(for: emp.id)
-            let filtered = cached.filter { $0.status == "published" && $0.shiftDate >= startStr && $0.shiftDate <= endStr }
+            let filtered = cached.filter { $0.safeStatus == "published" && $0.shiftDate >= startStr && $0.shiftDate <= endStr }
             if !filtered.isEmpty {
                 weekShifts = filtered.sorted { $0.shiftDate < $1.shiftDate }
                 filterShiftsForSelectedDay()
@@ -273,7 +273,7 @@ struct ScheduleView: View {
             try await cache.sync(.plannedShifts, force: true)
             // 3. Re-read from cache after sync
             let fresh = try cache.plannedShifts(for: emp.id)
-            weekShifts = fresh.filter { $0.status == "published" && $0.shiftDate >= startStr && $0.shiftDate <= endStr }
+            weekShifts = fresh.filter { $0.safeStatus == "published" && $0.shiftDate >= startStr && $0.shiftDate <= endStr }
                 .sorted { $0.shiftDate < $1.shiftDate }
             filterShiftsForSelectedDay()
         } catch {

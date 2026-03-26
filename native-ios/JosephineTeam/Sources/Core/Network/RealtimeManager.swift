@@ -14,9 +14,9 @@ final class RealtimeManager: ObservableObject {
     @Published var hasNewAnnouncements = false
 
     // MARK: - Callbacks (set by each view)
-    var onClockChange: (() async -> Void)?
-    var onShiftChange: (() async -> Void)?
-    var onAnnouncementChange: (() async -> Void)?
+    var onClockChange: (@Sendable () async -> Void)?
+    var onShiftChange: (@Sendable () async -> Void)?
+    var onAnnouncementChange: (@Sendable () async -> Void)?
 
     // MARK: - Internal
     private var channelTask: Task<Void, Never>?
