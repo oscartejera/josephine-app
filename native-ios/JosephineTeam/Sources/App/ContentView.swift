@@ -8,14 +8,24 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             // MARK: - Tab Content
-            Group {
-                switch selectedTab {
-                case .home:     HomeView()
-                case .schedule: ScheduleView()
-                case .clock:    ClockView()
-                case .pay:      PayView()
-                case .profile:  ProfileView()
-                }
+            // ZStack keeps all views alive so @State (timers, selections, data)
+            // survives tab switches — equivalent to UITabBarController behavior.
+            ZStack {
+                HomeView()
+                    .opacity(selectedTab == .home ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .home)
+                ScheduleView()
+                    .opacity(selectedTab == .schedule ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .schedule)
+                ClockView()
+                    .opacity(selectedTab == .clock ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .clock)
+                PayView()
+                    .opacity(selectedTab == .pay ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .pay)
+                ProfileView()
+                    .opacity(selectedTab == .profile ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .profile)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Extra bottom padding so content doesn't hide behind the tab bar
