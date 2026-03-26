@@ -92,9 +92,9 @@ Primera versión de Josephine Team:
 
 | Campo | Valor |
 |-------|-------|
-| **Support URL** | `https://josephine.app/support` |
-| **Marketing URL** | `https://josephine.app` |
-| **Privacy Policy URL** | `https://josephine.app/legal/privacy` |
+| **Support URL** | `https://www.josephine-ai.com/support` |
+| **Marketing URL** | `https://www.josephine-ai.com` |
+| **Privacy Policy URL** | `https://www.josephine-ai.com/legal/privacy` |
 
 ---
 
