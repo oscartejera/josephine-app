@@ -1,709 +1,116 @@
-# Project Lessons
+# Lessons Learned — Josephine App
 
-This file captures hard-won technical lessons from bugs, regressions, fragile fixes, and architectural surprises.
-
-Use this file to avoid paying twice for the same mistake.
-
-## How to use this file
-
-Add a new entry when:
-- a bug reveals a reusable pattern
-- a regression exposes a fragile surface
-- a fix required non-obvious validation
-- code, schema, or tooling drift caused confusion
-- a repo-specific gotcha should be remembered
-
-Each entry should be:
-- specific
-- technical
-- actionable
-- tied to a prevention rule
-- tied to a validation method
+> Compressed reference. All lessons preserved, grouped by category.
 
 ---
 
-## Entry Template
+## CI/CD — Codemagic + iOS
 
-### <Lesson Title>
+### Golden step order for Capacitor 8 + iOS + TestFlight
+1. `npm ci` → 2. `npm run build` → 3. `cap add ios` (if missing) + `cap sync ios` → 4. `xcodebuild -resolvePackageDependencies` (SPM, NOT CocoaPods) → 5. `keychain initialize` → 6. `app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create` → 7. `keychain add-certificates` → 8. Patch project.pbxproj (bundle ID, ProvisioningStyle=Manual, team ID) → 9. Patch Info.plist (version + build number) → 10. `xcodebuild archive` (manual signing flags) → 11. Create ExportOptions.plist + `xcodebuild -exportArchive` → 12. `xcrun altool --upload-package` (NOT `--upload-app`)
 
-**Date:** YYYY-MM-DD
-**Area:** <UI / Data / Auth / Demo / DB / i18n / Edge Functions / Tooling / Testing>
-**Root cause:** <short explanation>
-**What failed:** <short explanation>
-**Prevention:** <specific rule>
-**Validation:** <specific checks>
-**Notes:** <optional concise note>
+### Build numbers
+- **Never use `app-store-connect get-latest-testflight-build-number`** — has eventual consistency, returns stale values. Use Codemagic's `$BUILD_NUMBER` env var instead.
+- **XcodeGen:** Build number must be set in `project.yml` BEFORE `xcodegen generate`. Target-level settings override CLI args. Patch with `sed` first.
+- **Regex:** Use `grep -Eo '[0-9]+' | sort -n | tail -1` to extract numbers — never assume number is on its own line.
 
----
+### Signing
+- **`app-store-connect fetch-signing-files --create`** is the simplest approach — auto-creates cert + profile. Replaces ~30 lines of manual keychain scripting.
+- Xcode project must be patched to **Manual signing** in CI (`ProvisioningStyle = Manual`, `CODE_SIGN_STYLE = Manual`, `DEVELOPMENT_TEAM`). Both pbxproj patch AND xcodebuild arguments needed.
+- Apple signing certificates require the **.p12** (cert + private key), not just the `.cer`.
+- Bundle ID in Xcode project must match provisioning profile's app ID.
+- ExportOptions.plist must reference the correct profile name and method.
 
-## New Entries
+### SPM vs CocoaPods
+- Capacitor 6+ uses **Swift Package Manager**, NOT CocoaPods. No `Podfile` or `.xcworkspace`.
+- Use `-project .xcodeproj` not `-workspace .xcworkspace`.
+- Resolve SPM deps with `xcodebuild -resolvePackageDependencies`.
 
-### Never query TestFlight for build numbers — use Codemagic BUILD_NUMBER
+### Upload to App Store Connect
+- **Use `xcrun altool --upload-package`** with explicit `--apple-id`, NOT `--upload-app` (which fails for new apps with "Cannot determine Apple ID").
+- `app-store-connect publish` wraps `--upload-app` internally — same bug.
+- API key file must be at `~/.private_keys/AuthKey_KEYID.p8`.
+- App must be created in App Store Connect before first upload.
 
-**Date:** 2026-03-24
-**Area:** Tooling / CI
-**Root cause:** `app-store-connect get-latest-testflight-build-number` returns stale data — it returned 33 when build 34 already existed, causing duplicate uploads.
-**What failed:** 3 consecutive builds (Index 38–40) failed with "previousBundleVersion = 34" duplicate error. Guards that verified sed correctness passed because the computed number itself was wrong.
-**Prevention:** Always use `NEW_BUILD="$BUILD_NUMBER"` in Codemagic. This auto-increments per workflow run and is guaranteed unique. Never query TestFlight API for version numbers.
-**Validation:** Check the IPA `Version code` in Codemagic publish logs matches the build Index.
-**Notes:** Build #42 (version 42) was the first successful upload after this fix.
-
-### Codemagic native-ios-release must trigger on push to main
-
-**Date:** 2026-03-24
-**Area:** Tooling / CI
-**Root cause:** Release workflow only triggered on tags/release branches, requiring manual tag creation for each build.
-**What failed:** Developer friction — manual tags for every TestFlight upload is unsustainable for solo/small teams.
-**Prevention:** Always keep `main` in `branch_patterns` for `native-ios-release` in `codemagic.yaml`. Every push to main auto-publishes to TestFlight.
-**Validation:** Check `codemagic.yaml` → `native-ios-release` → `triggering.branch_patterns` includes `main`.
-
-### macOS sed requires `sed -i ''` not `sed -i.bak`
-
-**Date:** 2026-03-24
-**Area:** Tooling / CI
-**Root cause:** `sed -i.bak` is GNU/Linux syntax. macOS `sed` interprets `.bak` as a command, failing silently.
-**What failed:** Build number patch on `project.yml` didn't apply on Codemagic (macOS), resulting in duplicate version uploads.
-**Prevention:** Always use `sed -i '' "s/.../"` in Codemagic scripts. Add post-sed verification guards that abort on mismatch.
-**Validation:** Grep the patched value after sed and compare with expected.
+### Misc Codemagic
+- **Node version:** Must match Capacitor CLI requirements (Capacitor 8+ → Node ≥22).
+- `cap sync` fails if `cap add ios` was never run — check `ios/` dir first.
+- **Use `npm ci`** not `npm install` in CI — deterministic, faster.
+- Capacitor uses scheme **"App"** and IPA is named **"App.ipa"**.
+- Select **Xcode version** explicitly (`xcode: latest` in environment).
+- **Secrets** go in Codemagic environment groups, never in YAML `vars:`.
+- Info.plist may be empty from `cap add` — inject `CFBundleVersion` + `CFBundleShortVersionString` with `plutil`.
+- Set `ITSAppUsesNonExemptEncryption = false` in Info.plist to skip export compliance prompt (valid for HTTPS-only apps).
 
 ---
 
-## Seed Lessons
+## Supabase
 
-### Regex bulk edits corrupted TypeScript / JSX structure
+### Database
+- **`CREATE TABLE IF NOT EXISTS` silently skips** when remote table has incompatible schema. Use `DROP TABLE IF EXISTS ... CASCADE` then `CREATE TABLE` if schema may differ.
+- **RLS: NEVER use self-referencing queries** in RLS policies (e.g., `SELECT FROM roles` in a policy on `roles`). Causes infinite recursion. Use JWT claims, `SECURITY DEFINER` functions, or separate permissions table.
 
-**Date:** 2026-03-18
-**Area:** i18n / Tooling
-**Root cause:** Regex-based bulk edits were used on `.ts` / `.tsx` files during a large-scale i18n migration.
-**What failed:** Regex could not safely distinguish JSX tags, TypeScript generics, imports, and user-facing string replacements, creating structural corruption that was not reliably caught by basic checks.
-**Prevention:** Never use regex-based bulk edits on `.ts` or `.tsx` for structural or large-scale source changes. Use AST-based tools or targeted manual edits.
-**Validation:** `npx tsc --noEmit`, `npm run build`, and browser verification on affected flows.
-**Notes:** Passing typecheck alone is not enough when UI structure may have been altered.
+### Edge Functions
+- **JWT gateway rejects tokens** when `supabase/config.toml` is missing or lacks correct `project_id`. Error says "Invalid JWT" but real problem is config.
+- `supabase.auth.admin.inviteUserByEmail()` fails silently without SMTP — use `createUser()` with temp password instead.
+- GitHub Actions deploy needs `SUPABASE_ACCESS_TOKEN` as a repo secret.
+- Always verify **project-ref** before deploying (`qixipveebfhurbarksib`). Extract from `VITE_SUPABASE_URL`.
+- Access tokens expire — rotate and update `.env.local` when deploys fail with auth errors.
 
-### Missing provider normalization can make valid POS data invisible
-
-**Date:** 2026-03-18
-**Area:** Data / Integrations
-**Root cause:** Frontend logic depends on normalized provider-specific `data_source` values.
-**What failed:** If a new POS provider is added and `normaliseDataSource()` is not updated, valid POS-backed data may be treated as non-POS data and appear missing in the UI.
-**Prevention:** Every new POS integration must update `normaliseDataSource()` in `src/data/client.ts` and validate downstream dashboard behavior.
-**Validation:** Verify affected analytics, KPI cards, and data-backed screens with the new provider path.
-**Notes:** This is a repo-specific gotcha and should always be checked during integration work.
-
-### Demo mode and real mode can silently diverge
-
-**Date:** 2026-03-18
-**Area:** Demo / UI / Data
-**Root cause:** Some features or fixes are implemented only against real Supabase-backed data paths without verifying demo-mode branches.
-**What failed:** The product appeared correct in real mode but demo mode regressed, which is especially harmful because demo mode is a primary sales surface.
-**Prevention:** Any change touching dashboards, flows, or data surfaces must consider both real mode and demo mode unless the task explicitly targets only one mode.
-**Validation:** `npm run demo:verify` plus manual verification of the affected flow in demo mode.
-**Notes:** Demo mode is not a fallback; it is a first-class product surface.
-
-### Materialized views can be stale and should not be treated as guaranteed fresh
-
-**Date:** 2026-03-18
-**Area:** Data / Analytics
-**Root cause:** Some analytics paths assume materialized views are fresh at read time.
-**What failed:** KPIs or derived analytics can lag behind reality if the path relies only on stale matviews without fallback logic.
-**Prevention:** Treat `*_mv` as potentially stale and prefer resilient access paths or fallback logic where freshness matters.
-**Validation:** Review query path, RPC behavior, and fallback logic for affected metrics.
-**Notes:** This matters most in KPI, reporting, and operational dashboard flows.
-
-### Secrets must never be distributed through repo hooks or versioned scripts
-
-**Date:** 2026-03-18
-**Area:** Security / Tooling
-**Root cause:** Hooks or helper scripts can become a channel for distributing live credentials if they create env files or inject tokens.
-**What failed:** A session hook can accidentally expose Supabase or GitHub credentials and normalize insecure behavior.
-**Prevention:** Never place live credentials in `.claude/hooks/*`, scripts, committed examples, or versioned `.env*` files. Use local environment variables or secure secret managers.
-**Validation:** Review hooks and scripts for hardcoded credentials, token writes, CLI auth injection, and service-role usage.
-**Notes:** If a real secret is detected in repo code, remove it and rotate it.
-
-### Root and nested Playwright configs are not interchangeable
-
-**Date:** 2026-03-18
-**Area:** Testing / Tooling
-**Root cause:** The repo contains two Playwright configurations with different test directory assumptions.
-**What failed:** A contributor can run the wrong E2E suite or assume both configs cover the same behavior.
-**Prevention:** Default to the root Playwright setup unless the task explicitly targets the alternate one. Document which suite is being used.
-**Validation:** Confirm which config is active and run `npm run test:e2e` unless there is a deliberate reason to target the alternate config.
-**Notes:** Avoid assuming E2E coverage from one config applies to the other.
-
-### `src/data/*` is a contract surface, not just a helper layer
-
-**Date:** 2026-03-18
-**Area:** Data / Frontend contracts
-**Root cause:** Changes in `src/data/*` can look local but actually affect many screens and typed assumptions.
-**What failed:** Frontend pages, hooks, KPIs, and tests can break when data-layer contract shapes change without corresponding validation.
-**Prevention:** Treat `src/data/*` as a contract boundary. Validate typed shapes, RPC compatibility, and downstream consumers before closing changes.
-**Validation:** `npx tsc --noEmit`, `npx vitest run src/data/__tests__/rpc-contracts.test.ts`, and targeted UI verification.
-**Notes:** Small data-layer edits can have broad product impact.
+### Running SQL (project: "No hay cerditos", ref: `qixipveebfhurbarksib`)
+- **SQL Editor (preferred for ad-hoc):** `https://supabase.com/dashboard/project/qixipveebfhurbarksib/sql/new`
+- **CLI (`supabase db push`):** Load password first: `$env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value })`
+- CLI reads `SUPABASE_DB_PASSWORD` from **shell env**, not `.env.local`.
 
 ---
 
-## New Entries
+## Data / DB / Analytics
 
-Add new lessons below this line using the template above.
+- **Seed data with absolute dates expires silently.** Use rolling `CURRENT_DATE` offsets or reseed on schedule. Never seed with fixed absolute dates.
+- **Seed function must write to the table the dashboard actually reads.** Trace the full read path from UI → RPC → table before seeding.
+- **Default date range should be `'7d'`** not `'today'` — ensures data is visible even if today's data is missing.
+- **Materialized views can be stale** — treat `*_mv` as potentially stale, add fallback logic where freshness matters.
+- **`src/data/*` is a contract surface** — changes affect many screens. Validate typed shapes, RPC compatibility, and downstream consumers.
+- **TypeScript types must match DB column nullability.** Every nullable column → `field?: type | null`. Crashes at runtime otherwise.
 
-### Seed data using absolute dates expires silently
+---
 
-**Date:** 2026-03-18
-**Area:** Demo / DB
-**Root cause:** The baseline migration seeded `daily_sales` with `CURRENT_DATE - 30 to +7` evaluated once at migration time. After ~37 days the data fell outside all valid query ranges.
-**What failed:** All dashboard KPIs showed zero because `sales_daily_unified` and `rpc_kpi_range_summary` found no rows within the selected date range.
-**Prevention:** All seed/demo data must use rolling `CURRENT_DATE` offsets or be regenerated on a schedule. Never seed demo tables with fixed absolute dates. Prefer cron-based reseed or wide windows (≥90 days).
-**Validation:** `SELECT count(*) FROM daily_sales WHERE day >= CURRENT_DATE - 7;` must return >0 for each active location.
-**Notes:** This affected `daily_sales`, `budget_days`, `forecast_daily_metrics`, and `planned_shifts` simultaneously.
+## iOS / Swift
 
-### Seed function must write to the table the dashboard actually reads
+- **`CLLocationManagerDelegate` methods must be `nonisolated`** on `@MainActor` classes when `SWIFT_STRICT_CONCURRENCY: complete`. Use `MainActor.assumeIsolated { }` inside.
+- **`Localizable.strings` must stay in sync** with SwiftUI views. After refactors, grep for orphaned keys and remove them.
 
-**Date:** 2026-03-18
-**Area:** Data / Edge Functions
-**Root cause:** `seed_josephine_demo` wrote granular 15-min data to `facts_sales_15m`, but the dashboard pipeline reads from `daily_sales` via `sales_daily_unified` → `rpc_kpi_range_summary`.
-**What failed:** Even after re-running the seed function, dashboard KPIs remained zero because the data landed in a table nothing reads from for KPI display.
-**Prevention:** Before writing seed data, trace the full read path from the UI component back to the source table. Confirm the seed target is the same table the UI queries. Document the pipeline in `docs/data-pipeline.md`.
-**Validation:** After seeding, query the exact RPC/view the dashboard uses (e.g. `SELECT * FROM sales_daily_unified WHERE day = CURRENT_DATE LIMIT 1`) and confirm rows exist.
-**Notes:** `facts_sales_15m` is only used by granular intra-day analytics, not the main dashboard KPIs.
+---
 
-### Default date range should not require exact-day data match
+## Tooling / Shell
 
-**Date:** 2026-03-18
-**Area:** UI / Data
-**Root cause:** Default `dateRange` was `'today'`, which requires seed data for exactly today's date. If the seed window doesn't include today (or data hasn't been ingested yet), the dashboard shows nothing.
-**What failed:** New users and demos saw all-zero KPIs on first load because demo data didn't always cover `CURRENT_DATE`.
-**Prevention:** Default date range should be `'7d'` (or wider) so there's always some data visible even if today's data is missing. Reserve `'today'` for users who explicitly select it.
-**Validation:** Load the dashboard with a fresh session and confirm KPIs are non-zero without changing the date picker.
-**Notes:** This is especially important for demo/sales contexts where first impression matters.
+- **PowerShell does not support `&&`** — use `;` or separate commands. Always assume PowerShell 5.x.
+- **Import statements** must appear at the top of the module, not inline next to call sites.
+- **`safe-area-inset` CSS** requires `viewport-fit=cover` in the viewport meta tag.
+- **Capacitor CLI/platform packages** belong in `devDependencies`. Only `@capacitor/core` and runtime plugins in `dependencies`.
+- **Always pin major version** when installing Capacitor packages (`@capacitor/core@6`).
 
-### Supabase CLI reads SUPABASE_DB_PASSWORD from shell env, not .env.local
+---
 
-**Date:** 2026-03-18
-**Area:** Tooling / DB
-**Root cause:** `npx supabase db push` requires `SUPABASE_DB_PASSWORD` as a **shell environment variable**. Adding it to `.env.local` is not enough because `.env.local` is for Next.js/Vite, not for CLI tools.
-**What failed:** `supabase db push` returned 401 even after the password was in `.env.local`. The CLI also needs a valid `SUPABASE_ACCESS_TOKEN` or must load the password into the shell via `$env:SUPABASE_DB_PASSWORD = ...` before running.
-**Prevention:** When running `supabase db push`, always load the password into the shell first: `$env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value }); npx supabase db push`
-**Validation:** `npx supabase db push` returns `Remote database is up to date` without 401 errors.
-**Notes:** The `--db-url` flag is an alternative but requires the correct direct host format: `postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres`.
+## Workflow / Scope Discipline
 
-### Capacitor CLI and platform packages belong in devDependencies
-
-**Date:** 2026-03-19
-**Area:** Tooling
-**Root cause:** `npm install @capacitor/cli @capacitor/android @capacitor/ios` placed all three in `dependencies` by default. No manual correction was made during the Capacitor setup.
-**What failed:** Build-time-only packages (`@capacitor/cli`, `@capacitor/android`, `@capacitor/ios`) were listed in `dependencies`, bloating the production dependency tree and sending the wrong signal about what the app actually imports at runtime.
-**Prevention:** After installing Capacitor packages, always move CLI tools and native platform packages to `devDependencies`. Only `@capacitor/core` and the plugin APIs the app imports at runtime (`@capacitor/app`, `@capacitor/status-bar`, etc.) belong in `dependencies`.
-**Validation:** `grep -c '"@capacitor/cli"' package.json` should only match inside `devDependencies`. Same for `@capacitor/android` and `@capacitor/ios`.
-**Notes:** `npm install --save-dev` would have placed them correctly from the start.
-
-### Always pin major version when installing Capacitor packages
-
-**Date:** 2026-03-19
-**Area:** Tooling
-**Root cause:** The implementation plan specified Capacitor 6, but the install command used `@capacitor/core` without `@6`, so npm resolved the latest (v8.2.0).
-**What failed:** The installed version didn't match the plan. While v8 works fine for this project, the version mismatch could cause confusion or compatibility issues if someone follows the plan as spec'd.
-**Prevention:** Always pin the major version in the install command: `npm install @capacitor/core@6 @capacitor/cli@6`. Before installing, check if any Capacitor packages are already installed (`grep @capacitor package.json`) and match the existing version.
-**Validation:** `npx cap --version` should return the expected major version. `cat package.json | grep @capacitor` should show consistent versions.
-**Notes:** This is a general lesson: when a plan says "version X", the install command must explicit pin `@X`.
-
-### Import statements must appear at the top of the module, not after usage
-
-**Date:** 2026-03-19
-**Area:** Tooling / Code quality
-**Root cause:** When adding the `initNativePlugins()` call to `main.tsx`, the import was written on the line immediately before the call (line 51-52) instead of at the top with other imports.
-**What failed:** ES module hoisting makes it work, but the code reads as if the function is called before being imported, which is confusing to anyone reading the file. It also breaks the convention established by all other imports in the same file.
-**Prevention:** Always place new imports at the top of the file with other imports. Place the function call where it needs to execute, but never place an import statement inline next to its call site.
-**Validation:** Visual review — all `import` statements should be grouped at the top of each file. `eslint --rule 'import/first: error'` catches this.
-
-### safe-area-inset CSS requires viewport-fit=cover in the viewport meta tag
-
-**Date:** 2026-03-19
-**Area:** UI / Mobile
-**Root cause:** `env(safe-area-inset-*)` CSS values are only populated by the browser when the viewport meta tag includes `viewport-fit=cover`. Without it, the values are `0` and the padding has no effect.
-**What failed:** Nothing failed in this case because `index.html` already had `viewport-fit=cover`. But if it hadn't been there, the safe-area padding added to `index.css` would have silently done nothing — no error, just no padding on notch devices.
-**Prevention:** Before adding `env(safe-area-inset-*)` CSS, verify the viewport meta tag includes `viewport-fit=cover`. If it doesn't, add it.
-**Validation:** `grep 'viewport-fit=cover' index.html` must match before safe-area CSS is considered functional.
-**Notes:** This is a silent failure — the CSS is valid but ineffective without the meta tag. Always check the dependency chain.
-
-### Codemagic: Node version must match Capacitor CLI requirements
-
-**Date:** 2026-03-19
-**Area:** CI/CD / Tooling
-**Root cause:** `codemagic.yaml` specified `node: 20`, but Capacitor CLI v8 requires Node >=22.0.0.
-**What failed:** The "Sync iOS platform" step failed with `[fatal] The Capacitor CLI requires NodeJS >=22.0.0`.
-**Prevention:** Before setting the Node version in CI, check what the project's key tools require: `npx cap --version` and read the Capacitor docs for minimum Node version. For Capacitor 8+, always use `node: 22` or later.
-**Validation:** The CI build's "Sync iOS platform" step completes without Node version errors.
-**Notes:** This applies to any CI — always verify runtime version requirements of all CLI tools, not just the app framework.
-
-### Codemagic: `cap sync` fails if `cap add ios` was never run
-
-**Date:** 2026-03-19
-**Area:** CI/CD / Tooling
-**Root cause:** `npx cap sync ios` assumes the `ios/` directory already exists (i.e., the platform was added). If `ios/` is gitignored or never committed, the CI environment has no `ios/` folder.
-**What failed:** "Sync iOS platform" step failed with `[error] ios platform has not been added yet`.
-**Prevention:** In CI scripts, always check if the `ios/` directory exists before syncing. Use: `if [ ! -d "ios" ]; then npx cap add ios; fi` followed by `npx cap sync ios`.
-**Validation:** The CI "Sync iOS platform" step creates the `ios/` folder and syncs without errors.
-**Notes:** Alternatively, commit the `ios/` directory to the repo. But generating it in CI is cleaner and avoids Xcode project merge conflicts.
-
-### Codemagic: Capacitor 8 uses Swift Package Manager, not CocoaPods
-
-**Date:** 2026-03-19
-**Area:** CI/CD / Tooling
-**Root cause:** Capacitor 6+ migrated from CocoaPods to Swift Package Manager (SPM). The `ios/App/` directory generated by `cap add ios` contains `App.xcodeproj` but no `Podfile` or `App.xcworkspace`.
-**What failed:** The "Install CocoaPods" step (`cd ios/App && pod install`) failed with `No 'Podfile' found in the project directory`.
-**Prevention:** Check the Capacitor version (`npx cap --version`). For Capacitor 6+, do NOT use CocoaPods. Instead: (1) resolve SPM deps with `xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme "App"`, and (2) build with `-project App.xcodeproj` instead of `-workspace App.xcworkspace`.
-**Validation:** CI build completes "Resolve SPM dependencies" and "Build iOS" steps without CocoaPods errors.
-**Notes:** Many Capacitor tutorials online still reference CocoaPods — always verify against the actual version installed.
-
-### Codemagic: Use `-project .xcodeproj` not `-workspace .xcworkspace` with SPM
-
-**Date:** 2026-03-19
-**Area:** CI/CD / Tooling
-**Root cause:** When Capacitor uses SPM instead of CocoaPods, there is no `.xcworkspace` file — only `.xcodeproj`. Using `-workspace` in `xcodebuild` would fail because the file doesn't exist.
-**What failed:** Would have failed if we hadn't caught it during the CocoaPods fix. The xcodebuild command referenced `App.xcworkspace` which doesn't exist in SPM-based projects.
-**Prevention:** Match the xcodebuild flag to the dependency manager: CocoaPods → `-workspace .xcworkspace`, SPM → `-project .xcodeproj`. Check which file exists in `ios/App/` before writing the CI config.
-**Validation:** `ls ios/App/*.xcodeproj` should exist. `ls ios/App/*.xcworkspace` should NOT exist for SPM projects.
-**Notes:** This is a common mistake when copying CI configs from pre-Capacitor-6 tutorials.
-
-### Codemagic: Must select Xcode version explicitly when multiple are installed
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Tooling
-**Root cause:** Codemagic M2 machines can have multiple Xcode versions installed. The default may not match the one expected by the project or may lack required SDKs.
-**What failed:** Build could fail or use unexpected SDK versions if the wrong Xcode is active.
-**Prevention:** Always include `xcode: latest` (or a specific version like `16.2`) in the `environment:` section of `codemagic.yaml`. Verify with `xcode-select -p` in the build script.
-**Validation:** The build log should show the expected Xcode version in the "Preparing build machine" step.
-**Notes:** Use `latest` for most projects. Pin a specific version only if the project requires it.
-
-### Codemagic: Apple signing certificates require the private key, not just the .cer
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Signing
-**Root cause:** An Apple Distribution certificate `.cer` only contains the public key. Code signing requires the private key that was used to generate the original CSR (Certificate Signing Request).
-**What failed:** `security find-identity -v -p codesigning` returned 0 valid identities even after importing the `.cer` because the private key was missing from the keychain.
-**Prevention:** When setting up Codemagic manually (not using `app-store-connect fetch-signing-files`), you must export the certificate as a `.p12` (which bundles cert + private key) from Keychain Access on the Mac where the CSR was generated. Alternatively, use Codemagic's automatic signing with `app-store-connect fetch-signing-files` which handles everything.
-**Validation:** After importing, `security find-identity -v -p codesigning` must return at least 1 valid identity with the expected team name.
-**Notes:** If you've lost the private key, you must revoke the certificate and create a new one.
-
-### Codemagic: `app-store-connect fetch-signing-files` is the simplest signing setup
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Signing
-**Root cause:** Manual certificate and provisioning profile management in CI is error-prone — you need the right `.p12`, password, profile UUID, and correct keychain imports.
-**What failed:** Multiple manual signing attempts failed due to missing private keys, wrong profile names, and incorrect identity references.
-**Prevention:** Use Codemagic's built-in `app-store-connect fetch-signing-files` command. It uses the App Store Connect API key to automatically: (1) fetch or create the distribution certificate, (2) fetch or create the provisioning profile, (3) install both into the keychain. All you need is the API key, key ID, and issuer ID as environment variables.
-**Validation:** Build log shows "Fetch signing files" step completing with certificate and profile details. `xcode-project use-profiles` succeeds.
-**Notes:** This replaced ~30 lines of manual keychain/signing scripting with 3 lines. Always prefer this approach.
-
-### Codemagic: Capacitor's generated Info.plist may be empty, causing archive failure
-
-**Date:** 2026-03-22
-**Area:** CI/CD / iOS Build
-**Root cause:** When `cap add ios` generates the project in CI, the `Info.plist` may be minimal or empty. `xcodebuild archive` requires `CFBundleVersion` and `CFBundleShortVersionString` to be present.
-**What failed:** Archive step failed with missing bundle version errors, or the IPA had version "1.0" with build number "1" regardless of what was intended.
-**Prevention:** Before archiving, inject version info into `Info.plist` using `plutil`: `plutil -replace CFBundleShortVersionString -string "1.0" ios/App/App/Info.plist` and `plutil -replace CFBundleVersion -string "$BUILD_NUMBER" ios/App/App/Info.plist`.
-**Validation:** `plutil -p ios/App/App/Info.plist` shows correct `CFBundleVersion` and `CFBundleShortVersionString` values before archiving.
-**Notes:** For auto-incrementing build numbers, use `app-store-connect get-latest-testflight-build-number` and add 1.
-
-### Codemagic: Bundle ID in Xcode project must match provisioning profile's app ID
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Signing
-**Root cause:** Capacitor generates the Xcode project with a default bundle ID (e.g., `app.josephine.dashboard` from `capacitor.config.ts`). But the Apple provisioning profile was created for a different bundle ID (`com.josephine.team`).
-**What failed:** `xcodebuild archive` failed with: `Provisioning profile has app ID "com.josephine.team" which does not match bundle identifier "app.josephine.dashboard"`.
-**Prevention:** Ensure `appId` in `capacitor.config.ts` matches the bundle ID registered in your Apple Developer Portal. If they differ, patch the Xcode project's `PRODUCT_BUNDLE_IDENTIFIER` in CI before archiving: `ruby -pi -e 'gsub(/PRODUCT_BUNDLE_IDENTIFIER = .*?;/, "PRODUCT_BUNDLE_IDENTIFIER = com.josephine.team;")' ios/App/App.xcodeproj/project.pbxproj`. Also pass it as an xcodebuild parameter: `PRODUCT_BUNDLE_IDENTIFIER=$BUNDLE_ID`.
-**Validation:** `grep PRODUCT_BUNDLE_IDENTIFIER ios/App/App.xcodeproj/project.pbxproj` should show the correct bundle ID before archiving.
-**Notes:** The cleanest fix is to update `appId` in `capacitor.config.ts` to match the Apple bundle ID from the start.
-
-### Codemagic: ExportOptions.plist must reference the correct profile name and method
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Signing
-**Root cause:** `xcodebuild -exportArchive` requires an `ExportOptions.plist` that specifies the export method, team ID, signing style, and a mapping of bundle ID to provisioning profile name.
-**What failed:** If the profile name in ExportOptions.plist doesn't match the actual installed profile, export fails with signing errors.
-**Prevention:** When using `app-store-connect fetch-signing-files`, capture the profile name with: `PROFILE_NAME=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision | head -1 | xargs -I{} /usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin 2>/dev/null || echo "")`. Use this in the ExportOptions.plist under `provisioningProfiles` dictionary.
-**Validation:** The "Build and sign IPA" step produces an `App.ipa` file in the artifacts directory without signing errors.
-**Notes:** `method` should be `app-store` for App Store/TestFlight distribution, `ad-hoc` for direct device installs, or `development` for debug builds.
-
-### Codemagic: `app-store-connect publish` may fail with altool "Cannot determine the Apple ID"
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Publishing
-**Root cause:** Codemagic's built-in `app_store_connect:` publisher in the `publishing:` section uses Apple's `altool` internally. `altool` sometimes cannot resolve the bundle ID to the App Store Connect app record, even when the app exists and the API key has App Manager permissions.
-**What failed:** `altool` returned: `Cannot determine the Apple ID from Bundle ID 'com.josephine.team' and platform 'IOS'. (12)`. The IPA was built and signed correctly but could not be uploaded.
-**Prevention:** Instead of using the built-in `app_store_connect:` publisher, upload the IPA manually in the build script using `xcrun altool --upload-app`. This gives more control and better error messages. Steps: (1) Write the API key to `~/.private_keys/AuthKey_KEYID.p8`, (2) Run `xcrun altool --upload-app --type ios --file path/to/App.ipa --apiKey KEY_ID --apiIssuer ISSUER_ID`.
-**Validation:** Build log shows `No errors uploading` after the xcrun altool command.
-**Notes:** Remove the `app_store_connect:` section from `publishing:` when using the manual approach to avoid duplicate upload attempts.
-
-### Codemagic: API key file must be at ~/.private_keys/AuthKey_KEYID.p8 for xcrun altool
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Publishing
-**Root cause:** `xcrun altool --apiKey` looks for the private key file at a specific path: `~/.private_keys/AuthKey_<KEY_ID>.p8`. If the file is not there, the command fails with authentication errors.
-**What failed:** Would have failed if we hadn't created the directory and written the key file before calling altool.
-**Prevention:** Before calling `xcrun altool --upload-app`, create the directory and write the key: `mkdir -p ~/.private_keys && echo "$APP_STORE_CONNECT_PRIVATE_KEY" > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8`.
-**Validation:** `ls ~/.private_keys/AuthKey_*.p8` should return exactly one file before calling altool.
-**Notes:** The key content should be the raw `.p8` file contents (starts with `-----BEGIN PRIVATE KEY-----`).
-
-### Codemagic: Secret variables must go in environment groups, not in YAML vars
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Security
-**Root cause:** The `codemagic.yaml` `vars:` section is committed to the repo and visible in the YAML file. Sensitive values (API keys, passwords, cert contents) must NOT be placed there.
-**What failed:** Initially we considered putting the App Store Connect key directly in the YAML, which would have exposed it in the Git history.
-**Prevention:** Create an **environment group** in the Codemagic UI (Settings → Environment variables → Add group). Put all secrets there: `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_KEY_IDENTIFIER`, `APP_STORE_CONNECT_ISSUER_ID`, `APPLE_TEAM_ID`. Reference the group in YAML with `groups: [app_store_credentials]`. Only non-secret vars (BUNDLE_ID, APP_NAME) go in `vars:`.
-**Validation:** `grep -i "private\|secret\|password\|key_id\|issuer" codemagic.yaml` should NOT return any actual credential values — only variable references like `$APP_STORE_CONNECT_PRIVATE_KEY`.
-**Notes:** Codemagic encrypts group variables and they never appear in build logs. The 3 required variables for Apple API are: `APP_STORE_CONNECT_KEY_IDENTIFIER` (Key ID), `APP_STORE_CONNECT_ISSUER_ID`, and `APP_STORE_CONNECT_PRIVATE_KEY` (full .p8 content).
-
-### Codemagic: App must be created in App Store Connect before first upload
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Publishing
-**Root cause:** `xcrun altool --upload-app` and Codemagic's publisher both require the app to already exist in App Store Connect with a matching bundle ID.
-**What failed:** The upload failed because there was no app record in App Store Connect for `com.josephine.team`. Altool couldn't resolve the bundle ID to an Apple ID.
-**Prevention:** Before the first CI build that uploads to TestFlight, manually create the app in App Store Connect: (1) Go to appstoreconnect.apple.com → My Apps → "+" → New App, (2) Set the bundle ID to match `$BUNDLE_ID` in codemagic.yaml, (3) Set name, primary language, and SKU. The app record must exist BEFORE the first upload attempt.
-**Validation:** In App Store Connect, the app appears under "My Apps" with the correct bundle ID.
-**Notes:** This only needs to be done once. After creation, all subsequent builds upload automatically.
-
-### Codemagic: The golden CI step order for Capacitor 8 + iOS
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Architecture
-**Root cause:** Multiple build failures were caused by steps being in the wrong order or missing. The order is strict because each step depends on outputs from previous steps.
-**What failed:** Various steps failed when dependencies weren't met: syncing before building web, archiving before fetching profiles, exporting without correct ExportOptions.
-**Prevention:** The correct order for a Capacitor 8 + iOS + TestFlight pipeline is:
-  1. `npm ci` (install Node dependencies from lockfile)
-  2. `npm run build` (build web app → dist/)
-  3. `cap add ios` (only if ios/ doesn't exist) + `cap sync ios`
-  4. `xcodebuild -resolvePackageDependencies` (SPM, NOT CocoaPods)
-  5. `keychain initialize` (prepare macOS keychain for signing)
-  6. `app-store-connect fetch-signing-files` (get cert + profile)
-  7. `keychain add-certificates` (install cert into keychain)
-  8. Patch project.pbxproj (bundle ID, ProvisioningStyle=Manual, team ID)
-  9. Patch Info.plist (version + build number)
-  10. `xcodebuild archive` (with manual signing flags)
-  11. Create ExportOptions.plist + `xcodebuild -exportArchive`
-  12. `xcrun altool --upload-app` (upload IPA to App Store Connect)
-**Validation:** All 12 steps complete green in the Codemagic build log.
-**Notes:** Skipping or reordering ANY step will cause failures. This is the proven sequence.
-
-### Codemagic: Xcode project must be patched to Manual signing in CI
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Signing
-**Root cause:** Capacitor generates the Xcode project with `ProvisioningStyle = Automatic` and no `DEVELOPMENT_TEAM`. CI environments don't have Xcode accounts configured, so automatic signing fails.
-**What failed:** `xcodebuild archive` failed because automatic signing couldn't find a team or profile in the CI keychain.
-**Prevention:** Before archiving, patch the `project.pbxproj` file using Ruby or sed to: (1) Change `ProvisioningStyle = Automatic` → `Manual`, (2) Set `DEVELOPMENT_TEAM` to the Apple Team ID, (3) Set `CODE_SIGN_STYLE = Manual`, (4) Set `DevelopmentTeam` in TargetAttributes, (5) Set `PRODUCT_BUNDLE_IDENTIFIER` to match the provisioning profile. Also pass these as xcodebuild arguments: `CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" CODE_SIGN_IDENTITY="iPhone Distribution" DEVELOPMENT_TEAM="$TEAM_ID"`.
-**Validation:** After patching, `grep "ProvisioningStyle" ios/App/App.xcodeproj/project.pbxproj` should show `Manual`, not `Automatic`.
-**Notes:** Both the pbxproj patch AND the xcodebuild arguments are needed. The pbxproj patch alone isn't always enough.
-
-### Codemagic: Use `agvtool` for auto-incrementing build numbers
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Versioning
-**Root cause:** Each TestFlight upload requires a unique, incrementing `CFBundleVersion` (build number). Hardcoding "1" means the second upload will be rejected by Apple.
-**What failed:** Would have failed on the second build if we hadn't set up auto-incrementing.
-**Prevention:** Use this pattern in the CI script: `LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)` then `cd ios/App && agvtool new-version -all $(($LATEST + 1))`. This queries the latest build number from TestFlight and increments by 1.
-**Validation:** After running, `agvtool what-version` should show the new build number. Each successful upload should show an incrementing number in TestFlight.
-**Notes:** `agvtool` modifies both `Info.plist` and the project's `CURRENT_PROJECT_VERSION`. It requires `Versioning System = Apple Generic` in the Xcode project (Capacitor sets this by default).
-
-### Codemagic: Use `npm ci` not `npm install` in CI
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Tooling
-**Root cause:** `npm install` can modify `package-lock.json` and resolve different versions than on the developer's machine. This introduces non-determinism in CI builds.
-**What failed:** Not a failure per se, but `npm install` is slower and less predictable than `npm ci`.
-**Prevention:** Always use `npm ci` in CI scripts. It installs from `package-lock.json` exactly, fails if lockfile is out of sync with `package.json`, and is faster because it deletes `node_modules/` first.
-**Validation:** The "Install dependencies" step completes without modifying `package-lock.json`.
-**Notes:** This means `package-lock.json` MUST be committed to the repo. If it's in `.gitignore`, `npm ci` will fail.
-
-### Codemagic: Capacitor uses scheme "App" and IPA is named "App.ipa"
-
-**Date:** 2026-03-22
-**Area:** CI/CD / iOS Build
-**Root cause:** Capacitor's `cap add ios` creates an Xcode project with a fixed scheme name "App". The exported IPA inherits this name, becoming `App.ipa`, not `YourAppName.ipa`.
-**What failed:** An early attempt to find `Josephine.ipa` failed because the file was actually `App.ipa`.
-**Prevention:** In the xcodebuild commands, always use `-scheme "App"` (with quotes). In the artifact collection and upload steps, reference `App.ipa`, not a custom name. The display name shown to users comes from `Info.plist CFBundleDisplayName`, not the filename.
-**Validation:** `ls build/ios/ipa/App.ipa` should exist after export.
-**Notes:** If you need a different scheme name, you'd have to modify the Xcode project, but it's not worth the complexity for Capacitor apps.
-
-### Codemagic: `--create` flag on `fetch-signing-files` auto-creates missing cert/profile
-
-**Date:** 2026-03-22
-**Area:** CI/CD / Signing
-**Root cause:** Without `--create`, `app-store-connect fetch-signing-files` will fail if no distribution certificate or provisioning profile exists yet in the Apple Developer Portal for the given bundle ID.
-**What failed:** Without `--create`, the first run on a new app would fail with "no profiles found".
-**Prevention:** Always use `app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create`. The `--create` flag tells Codemagic to automatically create a distribution certificate and provisioning profile if they don't exist. It's idempotent — if they already exist, it fetches them.
-**Validation:** The "Fetch signing files" step logs show either "Creating new..." or "Using existing..." for both certificate and profile.
-**Notes:** The `--type IOS_APP_STORE` specifies App Store distribution. Other options: `IOS_APP_DEVELOPMENT` (dev builds), `IOS_APP_ADHOC` (ad-hoc distribution).
-
-### Automate `ITSAppUsesNonExemptEncryption` in CI to skip export compliance prompt
-
-**Date:** 2026-03-23
-**Area:** CI/CD / iOS Build / App Store Connect
-**Root cause:** Every time you upload a build to App Store Connect, Apple asks "Does your app use non-exempt encryption?" in the TestFlight tab. This blocks the build from being distributed to testers until you answer.
-**What failed:** Manual step required after every build upload — easy to forget and delays TestFlight distribution.
-**Prevention:** Add a CI step to patch `Info.plist` with `ITSAppUsesNonExemptEncryption = false` before archiving. For Capacitor apps that only use HTTPS via WKWebView, this is always `false` (HTTPS is exempt). Use PlistBuddy:
-```bash
-/usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
-/usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
-```
-**Validation:** After uploading, the build should appear in TestFlight without the compliance warning banner.
-**Notes:** Only set to `false` if your app uses ONLY standard HTTPS (exempt). If you add custom encryption (e.g., AES for local storage, custom TLS), you need to set `true` and register an ERN (Encryption Registration Number).
-
-### `xcrun altool --upload-app` fails for new apps — "Cannot determine Apple ID from Bundle ID"
-
-**Date:** 2026-03-23
-**Area:** CI/CD / iOS Build / App Store Connect
-**Root cause:** `xcrun altool --upload-app` resolves the app's Apple ID from the bundle ID via an API lookup. For newly created apps, this lookup fails with: `Cannot determine the Apple ID from Bundle ID 'com.xxx.yyy' and platform 'IOS'. (12)`. `altool` is also deprecated by Apple.
-**What failed:** Build compiled and signed successfully, IPA exported, but upload failed. First attempt used `xcrun altool --upload-app` directly. Error code 12.
-**Prevention:** Use `xcrun altool --upload-package` instead of `--upload-app`. The `--upload-package` command accepts `--apple-id` directly, bypassing the bundle ID → Apple ID lookup entirely. Get the Apple ID from App Store Connect URL (`apps/XXXXXXXXXX`).
-**Validation:** Codemagic build should finish green. IPA appears in TestFlight within 15-30 minutes.
-
-### `app-store-connect publish` also uses altool internally — same error
-
-**Date:** 2026-03-23
-**Area:** CI/CD / Codemagic CLI
-**Root cause:** Codemagic CLI's `app-store-connect publish --path App.ipa` internally calls `xcrun altool --upload-app`, NOT `--upload-package`. So switching from direct altool to the Codemagic CLI wrapper does NOT fix the "Cannot determine Apple ID" error.
-**What failed:** After replacing `xcrun altool --upload-app` with `app-store-connect publish`, the exact same error occurred because the CLI wraps the same broken command.
-**Prevention:** Skip the Codemagic CLI wrapper entirely for upload. Use `xcrun altool --upload-package` directly with explicit `--apple-id`:
-```bash
-xcrun altool --upload-package "App.ipa" \
-  --type ios \
-  --apple-id "XXXXXXXXXX" \
-  --bundle-id "$BUNDLE_ID" \
-  --bundle-version "$BUILD_NUM" \
-  --bundle-short-version-string "$MARKETING_VER" \
-  --apiKey "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-  --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
-```
-**Validation:** Build #26 succeeded with this approach. All steps green, IPA uploaded to App Store Connect.
-**Notes:** The Apple ID is a numeric value (e.g., `6760979967`) found in the App Store Connect URL: `appstoreconnect.apple.com/apps/XXXXXXXXXX`. It never changes for an app. You also need to write the `.p8` API key to `~/.private_keys/AuthKey_KEYID.p8` before calling altool.
-
-### PowerShell does not support `&&` — use `;` or separate commands
-
-**Date:** 2026-03-23
-**Area:** Tooling / Shell
-**Root cause:** The user's OS is Windows with PowerShell as the default shell. PowerShell (pre-7.x) does not support `&&` as a command chaining operator — it throws `ParserError: InvalidEndOfLine`.
-**What failed:** `git status --short && echo "---" && git branch --show-current` failed with a parser error.
-**Prevention:** Never use `&&` in commands. Use `;` for sequential execution or run commands as separate `run_command` calls. If conditional chaining is needed, use `if ($LASTEXITCODE -eq 0) { next-command }`.
-**Validation:** Commands execute without `ParserError` or `InvalidEndOfLine` errors.
-**Notes:** PowerShell 7+ supports `&&` but the default Windows PowerShell (5.x) does not. Always assume 5.x.
-
-### Strict concurrency: `CLLocationManagerDelegate` methods must be `nonisolated` on `@MainActor` classes
-
-**Date:** 2026-03-23
-**Area:** iOS / Swift / Concurrency
-**Root cause:** `project.yml` sets `SWIFT_STRICT_CONCURRENCY: complete`, which promotes concurrency warnings to errors. `CLLocationManagerDelegate` is an Objective-C protocol with no actor isolation annotation. When a `@MainActor` class conforms to it, the delegate methods violate strict concurrency rules.
-**What failed:** Archive/Release build failed in Codemagic. Debug builds may tolerate the warnings but archive builds treat them as errors.
-**Prevention:** When a `@MainActor` class conforms to an Objective-C delegate protocol, mark delegate methods `nonisolated` and use `MainActor.assumeIsolated { }` inside the method body. This is safe when the underlying framework (e.g., CoreLocation) guarantees main-thread dispatch.
-**Validation:** Archive build succeeds in Codemagic without strict concurrency errors.
-**Notes:** This pattern applies to any Objective-C delegate protocol (`MKMapViewDelegate`, `UITableViewDelegate`, etc.) used on `@MainActor` classes with `SWIFT_STRICT_CONCURRENCY: complete`.
-
-### MANDATORY: Always commit, push, and db push after every task
-
-**Date:** 2026-03-23
-**Area:** Workflow / Tooling
-**Root cause:** Changes left uncommitted or unpushed get lost, and database migrations not pushed leave staging/production out of sync.
-**What failed:** Work was completed but not pushed to `main`, requiring extra prompts to finish the job.
-**Prevention:** After completing ANY task that changes files, ALWAYS:
-  1. `git add` the changed files
-  2. `git commit -m "type(scope): description"` with a conventional commit message
-  3. `git push origin main`
-  4. If any SQL migration files were created or modified in `supabase/migrations/`, also run: `$env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value }); npx supabase db push`
-This is not optional — it must happen at the end of every prompt where code or config was changed.
-**Validation:** `git status` shows clean working tree. `npx supabase db push` returns "Remote database is up to date" if migrations were involved.
-**Notes:** Use separate `run_command` calls (never `&&`). If the user didn't explicitly say "don't push", push. This is the default behavior.
-
-### Codemagic: `grep -Eo '^[0-9]+$'` silently fails when output contains mixed text
-
-**Date:** 2026-03-24
-**Area:** CI/CD / Versioning
-**Root cause:** `app-store-connect get-latest-testflight-build-number` can return output with text surrounding the number (e.g. log prefixes, status messages). The regex `^[0-9]+$` only matches lines that are ENTIRELY a number — if the number appears alongside any other text on the same line, the grep returns empty.
-**What failed:** The extraction returned empty → fallback defaulted to `1` → calculated `NEW_BUILD=2` → but build 2 already existed in TestFlight → upload rejected with `previousBundleVersion = 2`.
-**Prevention:** Use `grep -Eo '[0-9]+' | sort -n | tail -1` to extract the highest number from ANY position in the output. Also set the fallback default to the highest known existing build number (not `1`), so even total extraction failure produces a valid next number.
-**Validation:** Codemagic build #37 succeeded with this fix — build number auto-incremented to 3.
-**Notes:** This is a general shell scripting lesson: when extracting numbers from CLI tool output, never assume the number will be on its own line. Always use a permissive regex with a max-value selector.
-
-### Codemagic + XcodeGen: Build number must be set BEFORE `xcodegen generate`
-
-**Date:** 2026-03-24
-**Area:** CI/CD / Versioning
-**Root cause:** XcodeGen reads `project.yml` and bakes `CURRENT_PROJECT_VERSION` into the generated `.pbxproj` at the **target level**. If `project.yml` says `CURRENT_PROJECT_VERSION: "1"`, the `.pbxproj` gets `CURRENT_PROJECT_VERSION = 1;` inside the target's build settings. Xcodebuild CLI arguments (e.g., `CURRENT_PROJECT_VERSION=35`) set a **project-level** override, but Xcode resolves target-level settings with higher precedence than project-level — so the CLI override is silently ignored.
-**What failed:** Build number was always `1` regardless of CLI overrides. TestFlight rejected uploads with "duplicate build number" because the previous build also had `CURRENT_PROJECT_VERSION=1` baked in, and `agvtool` + `plutil` patches only hit `Info.plist` (not the `.pbxproj` target-level setting). Xcode used the `.pbxproj` value over the plist value.
-**Prevention:** Increment the build number BEFORE running `xcodegen generate`. Patch `project.yml` directly with `sed`:
-```bash
-LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo 0)
-LATEST=$(echo "$LATEST" | grep -Eo '[0-9]+' | sort -n | tail -1)
-NEW_BUILD=$(( ${LATEST:-0} + 1 ))
-sed -i "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
-# THEN run xcodegen generate
-```
-This ensures the correct build number is baked into `.pbxproj` from the start.
-**Validation:** After `xcodegen generate`, run `grep CURRENT_PROJECT_VERSION ios/App.xcodeproj/project.pbxproj` — it should show the incremented number (e.g., `35`), NOT `1`.
-**Notes:** This is a general lesson about Xcode build setting precedence: target-level > project-level > CLI. If a value is set at the target level in `.pbxproj`, the only reliable ways to override it are: (1) change it at the target level (source of truth), or (2) use `xcconfig` files. CLI arguments alone are NOT sufficient.
+### MANDATORY: Commit, push, and db push after every task
+After ANY task that changes files:
+1. `git add` changed files
+2. `git commit -m "type(scope): description"`
+3. `git push origin main`
+4. If SQL migrations changed: load password + `npx supabase db push`
 
 ### NEVER touch the web app when working on native-ios
+- Only stage files under `native-ios/`. Never `git add .`.
+- Before committing: `git diff --cached --name-status` — verify no `src/`, `public/`, or root config files staged.
+- Web app = live production site (www.josephine-ai.com). Deleting it takes the site offline.
 
-**Date:** 2026-03-24
-**Area:** Workflow / Scope Discipline
-**Root cause:** The repo contains both a web app (`src/`, `public/`, `index.html` — deployed as www.josephine-ai.com) and a native iOS app (`native-ios/`). They are independent codebases sharing the same Git repo. An agent or developer working on native-ios changes can accidentally stage, modify, or delete web app files.
-**What failed:** A Capacitor cleanup was proposed that would have removed web app files (the Capacitor hybrid approach was abandoned in favor of native Swift). The web app is a live production site — deleting it would take www.josephine-ai.com offline.
-**Prevention:** When working on native-ios tasks, ONLY stage files under `native-ios/`. Never `git add .` — always `git add native-ios/` explicitly. Before committing, run `git diff --cached --name-status` and verify no `src/`, `public/`, or root config files (besides `.gitignore`, `CLAUDE.md`) are staged. If the task mentions "remove Capacitor", it means remove Capacitor *config/dependencies*, NOT the web app itself.
-**Validation:** `git diff --cached --name-status | grep -v native-ios | grep -v .gitignore | grep -v CLAUDE.md` should return empty before committing native-ios work.
-**Notes:** The web app and native app will eventually diverge into separate repos, but for now they coexist. Treat them as completely separate projects that happen to share a Git remote.
+---
 
-### Localizable.strings must stay in sync with SwiftUI views
+## Architecture / Security
 
-**Date:** 2026-03-24
-**Area:** i18n / iOS
-**Root cause:** When LoginView.swift was refactored from a single-screen design to a multi-step flow, the old localization keys (e.g., `"login_email_placeholder"`, `"login_password_placeholder"`, `"login_button"`) were left orphaned in `Localizable.strings`. The new SwiftUI views use inline Spanish strings or different key patterns.
-**What failed:** `Localizable.strings` contained 8 entries for keys that no Swift file referenced, inflating the file and creating confusion about which strings are active.
-**Prevention:** After ANY refactor that changes or removes UI text in Swift views, grep for the old localization keys across all `.swift` files. Remove keys from `Localizable.strings` that have zero references: `Get-ChildItem -Recurse -Filter *.swift | Select-String "KEY_NAME"` — if 0 matches, delete the key.
-**Validation:** Every key in `Localizable.strings` must have at least one corresponding `NSLocalizedString("key", ...)` or `LocalizedStringKey("key")` reference in the Swift source. Zero-reference keys must be removed.
-**Notes:** This is especially important in early development where UI designs change rapidly. Consider using `swiftgen` or a linting rule to catch orphaned keys automatically.
-
-### Never use `app-store-connect get-latest-testflight-build-number` as source of truth
-
-**Date:** 2026-03-24
-**Area:** CI/CD / Versioning
-**Root cause:** The Codemagic CLI command `app-store-connect get-latest-testflight-build-number` queries the App Store Connect API, which has eventual consistency — it can return stale values. It returned `33` when build `34` already existed, causing a duplicate upload that Apple rejected.
-**What failed:** 3 consecutive CI builds (Index 38–40) failed with `previousBundleVersion = 34` duplicate error. All guards that verified the sed patch passed because the *computed* number itself (34) was wrong — it was based on stale API data.
-**Prevention:** Use Codemagic's auto-incrementing `$BUILD_NUMBER` environment variable instead. This is guaranteed unique per workflow run and doesn't depend on external API calls. Set it in `project.yml` before `xcodegen generate`:
-```bash
-NEW_BUILD="$BUILD_NUMBER"
-sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: \"$NEW_BUILD\"/" project.yml
-```
-**Validation:** Check the IPA `Version code` in Codemagic publish logs matches the Codemagic build Index number.
-**Notes:** Build #42 (using `$BUILD_NUMBER`) was the first successful upload after this fix. The earlier lesson about `grep -Eo` regex also contributed to the failure, but even with correct grep, the stale API response would have eventually caused a collision.
-
-### `CREATE TABLE IF NOT EXISTS` silently skips when remote table has incompatible schema
-
-**Date:** 2026-03-24
-**Area:** DB
-**Root cause:** The remote Supabase database already had a `roles` table with a different schema (missing `is_system` column, different column types). `CREATE TABLE IF NOT EXISTS roles (...)` silently succeeded — it saw the table existed and did nothing. Subsequent statements (`INSERT INTO roles ... (is_system)`) failed because the columns didn't match.
-**What failed:** `supabase db push` failed with column-mismatch errors. The migration assumed the table either didn't exist or matched the expected schema, but neither was true.
-**Prevention:** Before using `CREATE TABLE IF NOT EXISTS` in migrations, check if the remote DB might have a pre-existing table with the same name but different schema (e.g., from a previous migration, manual SQL, or Supabase Studio edits). If the table may exist with an incompatible schema, use `DROP TABLE IF EXISTS ... CASCADE` followed by `CREATE TABLE` to guarantee a clean state. Always add `CASCADE` to handle dependent foreign keys.
-**Validation:** After `supabase db push`, run `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'roles' ORDER BY ordinal_position;` to verify the schema matches expectations.
-**Notes:** This is especially common with tables that were manually created or modified via Supabase Studio dashboard. The `IF NOT EXISTS` clause only checks for table *existence*, not schema *compatibility*.
-
-### Cómo ejecutar SQL en la base de datos Supabase "No hay cerditos" — paso a paso
-
-**Date:** 2026-03-24
-**Area:** DB / Tooling
-**Root cause:** El agente necesita acceder a la base de datos Supabase para crear funciones, ejecutar migraciones, inspeccionar schema, o corregir datos. Hay dos métodos y ambos tienen trampas específicas.
-**What failed:** Intentos previos de usar `supabase db push` fallaron por falta de contraseña en el shell. Acceder al SQL Editor requiere conocer la URL exacta del proyecto.
-**Prevention:** Seguir estos pasos exactos según el método elegido:
-
-**MÉTODO 1 — SQL Editor en el navegador (PREFERIDO para queries ad-hoc, funciones, y cambios rápidos):**
-1. Abrir el navegador con `browser_subagent` y navegar a:
-   `https://supabase.com/dashboard/project/qixipveebfhurbarksib/sql/new`
-   - El project ref es siempre: `qixipveebfhurbarksib`
-   - El proyecto se llama "No hay cerditos" (organización "Josephine")
-2. Si pide login, el usuario ya está autenticado (cookie persistente). Si no, pedirle al usuario que haga login.
-3. Escribir el SQL en el editor de texto (el textarea principal).
-4. Hacer clic en el botón "Run" (esquina inferior derecha, o Ctrl+Enter).
-5. Leer el resultado en el panel inferior — "Success. No rows returned." para DDL, o las filas para SELECT.
-
-**MÉTODO 2 — CLI `supabase db push` (para migraciones versionadas en `supabase/migrations/`):**
-1. Crear el archivo `.sql` en `supabase/migrations/` con formato `YYYYMMDDHHMMSS_nombre.sql`.
-2. Cargar la contraseña en el shell PowerShell ANTES de ejecutar:
-   ```powershell
-   $env:SUPABASE_DB_PASSWORD = (Select-String -Path .env.local -Pattern '^SUPABASE_DB_PASSWORD=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value })
-   ```
-3. Ejecutar: `npx supabase db push`
-4. Confirmar que devuelve "Remote database is up to date" o muestra las migraciones aplicadas.
-
-**MÉTODO 3 — Conexión directa con `--db-url` (para debugging):**
-- Formato: `postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-eu-west-2.pooler.supabase.com:6543/postgres`
-- El project ref es `qixipveebfhurbarksib`.
-- La contraseña está en `.env.local` como `SUPABASE_DB_PASSWORD`.
-
-**Validation:** Para cualquier método, verificar el resultado ejecutando un SELECT de confirmación. Por ejemplo, tras crear una función: `SELECT proname FROM pg_proc WHERE proname = 'nombre_funcion';`.
-**Notes:** El Método 1 (SQL Editor) es el más rápido y fiable para cambios ad-hoc. El Método 2 (CLI) es obligatorio para cambios que deben quedar versionados en el repo. Datos clave del proyecto:
-- **Project ref:** `qixipveebfhurbarksib`
-- **URL del dashboard:** `https://supabase.com/dashboard/project/qixipveebfhurbarksib`
-- **SQL Editor:** `https://supabase.com/dashboard/project/qixipveebfhurbarksib/sql/new`
-- **Organización:** Josephine
-- **Nombre del proyecto:** No hay cerditos
-
-### Supabase: Always verify the project-ref before deploying edge functions
-
-**Date:** 2026-03-24
-**Area:** Edge Functions / Tooling
-**Root cause:** The agent used a project-ref from a different project (`rybvdxoofmcvmumxhwil`) instead of the actual project ref (`qixipveebfhurbarksib`) when running `supabase functions deploy`. The wrong ref was likely memorized from a previous session or fabricated.
-**What failed:** `supabase functions deploy invite_team_member --project-ref rybvdxoofmcvmumxhwil` would have deployed to the wrong project (or failed with auth error).
-**Prevention:** Always extract the project ref from the VITE_SUPABASE_URL in `.env.local`. The ref is the subdomain: `https://PROJECTREF.supabase.co`. For this project it is ALWAYS `qixipveebfhurbarksib`. Never hardcode or guess the ref — always verify.
-**Validation:** `grep VITE_SUPABASE_URL .env.local` and extract the subdomain before passing `--project-ref`.
-**Notes:** Quick one-liner to extract: `$ref = (Select-String -Path .env.local -Pattern 'VITE_SUPABASE_URL=https://(.+?)\.supabase\.co' | ForEach-Object { $_.Matches.Groups[1].Value })`
-
-### Supabase: Access tokens expire — rotate and update `.env.local`
-
-**Date:** 2026-03-24
-**Area:** Auth / Tooling
-**Root cause:** Supabase Personal Access Tokens (`sbp_...`) have a limited lifespan. The token stored in `.env.local` (`sbp_b1a6...`) was expired/revoked. Edge function deploys and CLI commands that depend on `SUPABASE_ACCESS_TOKEN` fail silently or with auth errors when the token is stale.
-**What failed:** `supabase functions deploy` failed with an access-control error because the stored token was no longer valid.
-**Prevention:** When a `supabase functions deploy` or any CLI command that needs `SUPABASE_ACCESS_TOKEN` fails with auth/access errors, first check if the token is still valid. Generate a new one at `https://supabase.com/dashboard/account/tokens`. Update `.env.local` immediately.
-**Validation:** After updating, run a quick `supabase functions list --project-ref qixipveebfhurbarksib` to confirm the new token works before attempting a deploy.
-**Notes:** The token in `.env.local` needs to be loaded into the shell: `$env:SUPABASE_ACCESS_TOKEN = (Select-String -Path .env.local -Pattern '^SUPABASE_ACCESS_TOKEN=(.+)$' | ForEach-Object { $_.Matches.Groups[1].Value })`
-
-### Supabase RLS: Never use self-referencing queries inside RLS policies
-
-**Date:** 2026-03-24
-**Area:** Auth / DB / Security
-**Root cause:** An RLS policy on the `roles` table included a subquery like `EXISTS (SELECT 1 FROM roles WHERE ...)` — which itself triggered the same RLS policy on `roles`, creating infinite recursion. PostgreSQL aborts with "stack depth limit exceeded" or hangs the connection.
-**What failed:** ALL queries to the `roles` table failed — `SELECT`, `INSERT`, `UPDATE`. The `invite_team_member` Edge Function couldn't insert new team member roles because every DB operation on `roles` hit the recursion. The entire team management feature was broken.
-**Prevention:** RLS policies on table X must NEVER contain `SELECT ... FROM X` in their policy body. For authorization checks that need to read the same table, use one of these patterns:
-  1. **`auth.jwt()` claims:** Move role/permission into the JWT via a custom access token hook and check `(auth.jwt() ->> 'user_role')` — no table query needed.
-  2. **`SECURITY DEFINER` helper function:** Create a function that reads the table bypassing RLS and call it from the policy.
-  3. **Separate permissions table:** Store permissions in a different table that doesn't have self-referencing RLS.
-**Validation:** After changing RLS policies, test with: `SELECT * FROM roles LIMIT 1;` as an authenticated user. If it returns rows without error, the recursion is fixed. Also verify `INSERT` and `UPDATE` work.
-**Notes:** This is the #1 most dangerous Supabase pattern. It's easy to create during initial RLS setup because the logic "check if user has admin role in roles table" seems natural. The recursion doesn't show in local dev if RLS is disabled.
-
-### Supabase Edge Functions: JWT gateway rejects tokens when `config.toml` is missing or lacks `project_id`
-
-**Date:** 2026-03-24
-**Area:** Edge Functions / Auth / Tooling
-**Root cause:** Supabase Edge Functions validate the JWT's `iss` (issuer) claim against the project's expected issuer URL. The expected URL is derived from the `project_id` in `supabase/config.toml`. If `config.toml` doesn't exist or doesn't have the correct `project_id`, the gateway rejects ALL authenticated requests with `401 Invalid JWT` — even when the token is perfectly valid.
-**What failed:** The `invite_team_member` Edge Function returned `{"error":"Invalid JWT"}` for every request. The JWT was valid (verified manually), the `Authorization: Bearer` header was correct, but the Supabase gateway rejected it before the function code even executed.
-**Prevention:** After deploying ANY Edge Function, ensure `supabase/config.toml` exists and contains:
-```toml
-[api]
-enabled = true
-
-[project]
-project_id = "qixipveebfhurbarksib"
-```
-The `project_id` MUST match the project ref from `VITE_SUPABASE_URL`. Without this, the gateway cannot validate JWTs and rejects them all.
-**Validation:** After deploying, test with: `curl -H "Authorization: Bearer <valid_token>" https://qixipveebfhurbarksib.supabase.co/functions/v1/function_name` — should NOT return `Invalid JWT`.
-**Notes:** This is especially tricky because the error message ("Invalid JWT") points to the token, not the config. You can waste hours debugging the token when the real problem is a missing config file.
-
-### Supabase Edge Functions: `supabase.auth.admin.inviteUserByEmail()` fails silently — use `createUser()` instead
-
-**Date:** 2026-03-24
-**Area:** Edge Functions / Auth
-**Root cause:** `supabase.auth.admin.inviteUserByEmail()` depends on SMTP being configured in the Supabase project to send the invitation email. If SMTP is not configured (common in early-stage projects), the function returns a user object but the invite email is never sent — the invited user has no way to know they were invited or set their password.
-**What failed:** The `invite_team_member` Edge Function called `inviteUserByEmail()` and returned `{ success: true }`, but the invited user never received an email. The function appeared to work but was useless in practice.
-**Prevention:** Use `supabase.auth.admin.createUser()` with `email_confirm: true` and a temporary password instead of `inviteUserByEmail()`. Then send a custom invite email through the app's own email system (or log the temp password for manual sharing). This way the feature works regardless of SMTP configuration:
-```typescript
-const { data, error } = await supabaseAdmin.auth.admin.createUser({
-  email: inviteeEmail,
-  password: tempPassword,
-  email_confirm: true,
-});
-```
-**Validation:** After calling the function, verify the user exists in `auth.users` with `email_confirmed_at IS NOT NULL`. Then verify the user can log in with the temp password.
-**Notes:** `inviteUserByEmail()` is the "correct" approach long-term, but only works with SMTP configured. For MVP/early-stage, `createUser()` with temp password is more reliable. Document the SMTP dependency for future setup.
-
-### Supabase Edge Functions: GitHub Actions deploy needs `SUPABASE_ACCESS_TOKEN` as a repo secret
-
-**Date:** 2026-03-24
-**Area:** Edge Functions / CI/CD / Security
-**Root cause:** The GitHub Actions workflow `.github/workflows/deploy-edge-functions.yml` runs `supabase functions deploy` which requires a valid `SUPABASE_ACCESS_TOKEN`. This token was stored in `.env.local` (local dev) but never added as a GitHub Actions secret. The workflow failed with access denied.
-**What failed:** The CI/CD pipeline for Edge Functions couldn't deploy because the secret wasn't available in the GitHub Actions environment.
-**Prevention:** Whenever you add a new Supabase CLI command to a GitHub Actions workflow, check if it needs `SUPABASE_ACCESS_TOKEN`. If yes:
-  1. Generate a new token at `https://supabase.com/dashboard/account/tokens`
-  2. Add it as a GitHub repo secret: Settings → Secrets and variables → Actions → New repository secret → Name: `SUPABASE_ACCESS_TOKEN`
-  3. Reference it in the workflow YAML: `env: SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}`
-**Validation:** Push a commit that triggers the workflow. The "Deploy Supabase Edge Functions" job should complete green.
-**Notes:** The token in `.env.local` and the GitHub secret can be the same token, but consider using separate tokens for local dev and CI so you can rotate them independently.
+- **Demo mode is a first-class product surface** — it must work, have tests, use stable seed data, and never be broken by "real mode" changes.
+- **`src/hooks/useDemoMode.ts` is the single source of truth** for demo detection.
+- **Root and nested Playwright configs are not interchangeable** — default to root config.
+- **Secrets must never be in repo hooks or versioned scripts.** Use local env vars or secret managers. If detected, remove and rotate.
