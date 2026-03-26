@@ -100,15 +100,15 @@ struct ShiftRow: View {
         HStack(spacing: JSpacing.md) {
             // Role color bar
             RoundedRectangle(cornerRadius: 2)
-                .fill(JColor.forRole(shift.role))
+                .fill(JColor.forRole(shift.safeRole))
                 .frame(width: 4, height: 44)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: JSpacing.xs) {
-                Text("\(shift.startTime) – \(shift.endTime)")
+                Text("\(shift.safeStartTime) – \(shift.safeEndTime)")
                     .font(.jBodyBold)
                     .foregroundStyle(JColor.textPrimary)
-                Text(shift.role.capitalized)
+                Text(shift.safeRole.capitalized)
                     .font(.jCaption)
                     .foregroundStyle(JColor.textSecondary)
             }
@@ -121,7 +121,7 @@ struct ShiftRow: View {
         }
         .padding(.vertical, JSpacing.sm)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(shift.role.capitalized), \(shift.startTime) a \(shift.endTime), \(String(format: "%.1f", shift.plannedHours)) horas")
+        .accessibilityLabel("\(shift.safeRole.capitalized), \(shift.safeStartTime) a \(shift.safeEndTime), \(String(format: "%.1f", shift.plannedHours)) horas")
         .accessibilityIdentifier("shift_row_\(shift.id)")
     }
 }

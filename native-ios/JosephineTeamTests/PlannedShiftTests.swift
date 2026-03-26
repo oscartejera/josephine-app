@@ -7,12 +7,12 @@ final class PlannedShiftTests: XCTestCase {
 
     private func makeShift(
         shiftDate: String = "2025-03-25",
-        startTime: String = "09:00",
-        endTime: String = "17:00",
+        startTime: String? = "09:00",
+        endTime: String? = "17:00",
         plannedHours: Double = 8.0,
         plannedCost: Double? = nil,
-        role: String = "waiter",
-        status: String = "published"
+        role: String? = "waiter",
+        status: String? = "published"
     ) -> PlannedShift {
         PlannedShift(
             id: UUID(),
@@ -60,11 +60,39 @@ final class PlannedShiftTests: XCTestCase {
     func testStatus_published() {
         let shift = makeShift(status: "published")
         XCTAssertEqual(shift.status, "published")
+        XCTAssertEqual(shift.safeStatus, "published")
     }
 
     func testStatus_draft() {
         let shift = makeShift(status: "draft")
         XCTAssertEqual(shift.status, "draft")
+        XCTAssertEqual(shift.safeStatus, "draft")
+    }
+
+    // MARK: - Safe defaults when nil
+
+    func testSafeStatus_nil_returnsPublished() {
+        let shift = makeShift(status: nil)
+        XCTAssertNil(shift.status)
+        XCTAssertEqual(shift.safeStatus, "published")
+    }
+
+    func testSafeStartTime_nil_returnsDefault() {
+        let shift = makeShift(startTime: nil)
+        XCTAssertNil(shift.startTime)
+        XCTAssertEqual(shift.safeStartTime, "09:00")
+    }
+
+    func testSafeEndTime_nil_returnsDefault() {
+        let shift = makeShift(endTime: nil)
+        XCTAssertNil(shift.endTime)
+        XCTAssertEqual(shift.safeEndTime, "17:00")
+    }
+
+    func testSafeRole_nil_returnsStaff() {
+        let shift = makeShift(role: nil)
+        XCTAssertNil(shift.role)
+        XCTAssertEqual(shift.safeRole, "staff")
     }
 
     // MARK: - Fields

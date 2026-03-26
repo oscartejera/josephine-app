@@ -162,12 +162,18 @@ struct PlannedShift: Codable, Identifiable, Sendable {
     let id: UUID
     let employeeId: UUID
     let shiftDate: String       // yyyy-MM-dd
-    let startTime: String       // HH:mm
-    let endTime: String         // HH:mm
+    let startTime: String?      // HH:mm — nullable until migration runs
+    let endTime: String?        // HH:mm — nullable until migration runs
     let plannedHours: Double
     let plannedCost: Double?
-    let role: String
-    let status: String          // draft | published
+    let role: String?
+    let status: String?         // draft | published
+
+    // Safe accessors with sensible defaults
+    var safeStartTime: String { startTime ?? "09:00" }
+    var safeEndTime: String   { endTime ?? "17:00" }
+    var safeRole: String      { role ?? "staff" }
+    var safeStatus: String    { status ?? "published" }
 
     /// Parse shift_date to a Date
     var date: Date? {
