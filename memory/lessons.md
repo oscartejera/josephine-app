@@ -90,6 +90,16 @@
 - **Capacitor CLI/platform packages** belong in `devDependencies`. Only `@capacitor/core` and runtime plugins in `dependencies`.
 - **Always pin major version** when installing Capacitor packages (`@capacitor/core@6`).
 
+### Dev environment: Windows + Codemagic (no Xcode)
+
+**Date:** 2026-03-26
+**Area:** Tooling
+**Root cause:** Agent assumed Xcode was available locally and tried `xcodebuild` on Windows.
+**What failed:** Build verification step failed — `xcodebuild` not found on Windows.
+**Prevention:** The developer uses **Windows** as their primary machine. iOS builds run exclusively on **Codemagic** (CI). There is **no local Xcode or iOS Simulator**. The project uses **XcodeGen** (`project.yml`) — new Swift files in the source tree are auto-discovered, no manual `.pbxproj` editing needed. Every `/plan-and-build` for native-ios must skip local build verification and rely on Codemagic CI.
+**Validation:** Before any iOS build step, check `$env:OS` or remember: Windows → no `xcodebuild`. Push to `main` and verify on Codemagic dashboard.
+**Notes:** Web app builds (`npm run build`) work locally on Windows. Only native-ios requires CI.
+
 ---
 
 ## Workflow / Scope Discipline
