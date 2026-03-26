@@ -107,7 +107,7 @@ BEGIN
                 role, status
             ) VALUES (
                 v_emp_id, v_loc_id, d,
-                '10:00'::time, '18:00'::time,
+                '10:00', '18:00',
                 8.0, 100.00,
                 'Camarero', 'published'
             );

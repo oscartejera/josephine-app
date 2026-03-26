@@ -101,6 +101,15 @@ Formato:
 3. **Actualizar memoria** si aplica (patterns, decisions, lessons)
 4. **Proponer siguiente paso** si hay trabajo pendiente
 
+// turbo
+5. **Auto commit + push** — Ejecutar automáticamente sin pedir confirmación:
+   ```
+   git add -A
+   git commit -m "<conventional commit message>"
+   git push
+   ```
+   Si el seed SQL de Supabase fue modificado, ejecutar el seed contra la DB también.
+
 ---
 
 ## Quick-Fix Mode
