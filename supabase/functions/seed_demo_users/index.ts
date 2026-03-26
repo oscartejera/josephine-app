@@ -180,6 +180,30 @@ Deno.serve(async (req) => {
           details: { role: demoUser.role, location: demoUser.location }
         });
       }
+
+      // 4b. Link employee-role users to employees table
+      if (demoUser.role === 'employee' && locationId) {
+        const { data: existingEmp } = await supabaseAdmin
+          .from('employees')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!existingEmp) {
+          await supabaseAdmin.from('employees').insert({
+            user_id: userId,
+            location_id: locationId,
+            full_name: demoUser.full_name,
+            role_name: 'Camarero',
+            hourly_cost: 15,
+            active: true
+          });
+        }
+        results.push({
+          step: `employee_link_${demoUser.email}`,
+          status: existingEmp ? 'exists' : 'created'
+        });
+      }
     }
 
     // 5. Seed employees for timesheets/labour data
