@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
         .from('locations')
         .select('id')
         .eq('name', loc.name)
-        .eq('group_id', groupId)
+        .eq('org_id', groupId)
         .single();
 
       if (existing) {
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       } else {
         const { data: newLoc, error: locError } = await supabaseAdmin
           .from('locations')
-          .insert({ name: loc.name, city: loc.city, group_id: groupId })
+          .insert({ name: loc.name, city: loc.city, org_id: groupId })
           .select('id')
           .single();
 
