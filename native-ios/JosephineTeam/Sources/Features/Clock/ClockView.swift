@@ -366,7 +366,12 @@ struct ClockView: View {
 
     // MARK: - Actions
     private func clockIn() async {
-        guard let emp = authVM.employee else { return }
+        guard let emp = authVM.employee else {
+            errorMessage = "No se encontró tu registro de empleado. Contacta al administrador."
+            showError = true
+            HapticManager.play(.error)
+            return
+        }
         isProcessing = true
         defer { isProcessing = false }
 

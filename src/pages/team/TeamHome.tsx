@@ -91,7 +91,10 @@ export default function TeamHome() {
         .limit(1)
         .single();
 
-      if (!emp) return;
+      if (!emp) {
+        toast.error('No se encontró tu registro de empleado. Contacta al administrador.');
+        return;
+      }
 
       // Get location name
       const { data: loc } = await supabase
