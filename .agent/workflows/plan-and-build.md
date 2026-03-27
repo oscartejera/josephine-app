@@ -97,18 +97,24 @@ Formato:
 ## Fase 5: FINISH (obligatoria)
 
 1. **Resumir** qué cambió exactamente
-2. **Proponer commit** con mensaje descriptivo (conventional commits)
+2. **Commit message** — ya debe estar preparado desde Fase 4 (conventional commits: `type(scope): description`)
 3. **Actualizar memoria** si aplica (patterns, decisions, lessons)
 4. **Proponer siguiente paso** si hay trabajo pendiente
 
 // turbo
-5. **Auto commit + push** — Ejecutar automáticamente sin pedir confirmación:
+5. **Atomic commit + push** — Ejecutar TODO en un solo bloque, sin paradas:
    ```
    git add -A
+   git diff --stat HEAD   # verificar scope — abortar si hay archivos inesperados
    git commit -m "<conventional commit message>"
    git push
+   git log --oneline -1   # confirmar commit limpio
    ```
-   Si el seed SQL de Supabase fue modificado, ejecutar el seed contra la DB también.
+   - **UN solo commit por tarea.** Nunca múltiples commits para el mismo cambio lógico.
+   - **Push inmediato.** Nunca dejar commits sin push.
+   - **< 15 segundos** desde `git add` hasta `git push` exitoso. Si tarda más, debugear tooling.
+   - Si el seed SQL de Supabase fue modificado, ejecutar el seed contra la DB también.
+   - Si se desplegó edge function: `$env:SUPABASE_ACCESS_TOKEN = "sbp_..."; npx supabase functions deploy <name> --legacy-bundle --no-verify-jwt`
 
 ---
 

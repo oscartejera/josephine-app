@@ -116,6 +116,30 @@ After ANY task that changes files:
 - Before committing: `git diff --cached --name-status` — verify no `src/`, `public/`, or root config files staged.
 - Web app = live production site (www.josephine-ai.com). Deleting it takes the site offline.
 
+### Commits must be atomic, clean, and one-shot — ZERO iteration
+
+**Date:** 2026-03-27
+**Area:** Tooling / Workflow
+**Root cause:** Commits took multiple iterations — wrong CLI flags, stuck bundler, missing auth tokens, env vars not loaded. Each retry wasted time and polluted git history.
+**What failed:** Edge function deploy hung (Supabase CLI bundler on Windows), wrong `--project-ref` flag, missing `SUPABASE_ACCESS_TOKEN`.
+**Prevention:**
+1. **Pre-flight checklist before ANY commit/deploy:**
+   - Run `git diff --stat` to verify scope (no unrelated files)
+   - Run `git add -A && git status` to confirm staged files
+   - Compose commit message ONCE using conventional commits: `type(scope): description`
+   - Commit + push in a single command chain: `git add -A; git commit -m "msg"; git push`
+2. **Supabase CLI on Windows:**
+   - Always use `--legacy-bundle` flag (modern bundler hangs on Windows)
+   - Always set `$env:SUPABASE_ACCESS_TOKEN` before deploy commands
+   - If token expired/missing: generate from `https://supabase.com/dashboard/account/tokens`
+   - Deploy command: `$env:SUPABASE_ACCESS_TOKEN = "sbp_..."; npx supabase functions deploy <name> --legacy-bundle --no-verify-jwt`
+3. **In /plan-and-build Fase 5 FINISH:**
+   - Commit message must be written DURING Phase 4 Review, not improvised at commit time
+   - One commit per task. Never multiple commits for the same logical change.
+   - Push immediately after commit. Never leave unpushed commits.
+**Validation:** After `git push`, verify with `git log --oneline -1` that the commit is clean. Check `git status` shows clean working tree.
+**Notes:** The entire commit flow from `git add` to successful `git push` should take < 15 seconds. If it takes longer, something is wrong — debug the tooling, not the workflow.
+
 ---
 
 ## Architecture / Security
