@@ -113,7 +113,11 @@ export default function TeamNews() {
   const filtered =
     tab === 'all'
       ? announcements
-      : announcements.filter((a) => a.type === tab);
+      : tab === 'for-you'
+        ? announcements.filter((a) => a.pinned)
+        : tab === 'urgent'
+          ? announcements.filter((a) => a.type === 'important')
+          : announcements;
 
   const pinned = filtered.filter((a) => a.pinned);
   const rest = filtered.filter((a) => !a.pinned);
@@ -136,13 +140,12 @@ export default function TeamNews() {
         </p>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Filter Tabs — matches iOS AnnouncementsView */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="important">Importantes</TabsTrigger>
-          <TabsTrigger value="schedule">Horarios</TabsTrigger>
-          <TabsTrigger value="celebration">Equipo</TabsTrigger>
+          <TabsTrigger value="all">Todas</TabsTrigger>
+          <TabsTrigger value="for-you">Para Ti</TabsTrigger>
+          <TabsTrigger value="urgent">Urgentes</TabsTrigger>
         </TabsList>
       </Tabs>
 

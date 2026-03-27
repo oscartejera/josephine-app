@@ -79,6 +79,7 @@ const TeamClock = lazy(() => import("@/pages/team/TeamClock"));
 const TeamPay = lazy(() => import("@/pages/team/TeamPay"));
 const TeamDirectory = lazy(() => import("@/pages/team/TeamDirectory"));
 const TeamNews = lazy(() => import("@/pages/team/TeamNews"));
+const TeamProfile = lazy(() => import("@/pages/team/TeamProfile"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -293,6 +294,7 @@ function AppRoutes() {
             <Route path="/team/schedule" element={<Suspense fallback={<SectionLoader section="Horarios" />}><TeamSchedule /></Suspense>} />
             <Route path="/team/clock" element={<Suspense fallback={<SectionLoader section="Fichaje" />}><TeamClock /></Suspense>} />
             <Route path="/team/pay" element={<Suspense fallback={<SectionLoader section="Nómina" />}><TeamPay /></Suspense>} />
+            <Route path="/team/profile" element={<Suspense fallback={<SectionLoader section="Perfil" />}><TeamProfile /></Suspense>} />
             <Route path="/team/directory" element={<Suspense fallback={<SectionLoader section="Directorio" />}><TeamDirectory /></Suspense>} />
             <Route path="/team/news" element={<Suspense fallback={<SectionLoader section="Noticias" />}><TeamNews /></Suspense>} />
           </Route>

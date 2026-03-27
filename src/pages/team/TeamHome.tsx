@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 
 interface ClockRecord {
   id: string;
@@ -63,6 +64,21 @@ export default function TeamHome() {
   const [upcomingShifts, setUpcomingShifts] = useState<PlannedShift[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Fetch latest announcements for home widget
+  const { data: latestAnnouncements = [] } = useQuery({
+    queryKey: ['announcements-home'],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('announcements')
+        .select('id, title, type, pinned, created_at')
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(3);
+      return (data || []) as { id: string; title: string; type: string; pinned: boolean; created_at: string }[];
+    },
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -398,7 +414,7 @@ export default function TeamHome() {
               <TrendingUp className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-sm font-medium">Mi Nómina</p>
+              <p className="text-sm font-medium">Nómina</p>
               <p className="text-xs text-muted-foreground">Horas y pagos</p>
             </div>
           </CardContent>
@@ -418,6 +434,40 @@ export default function TeamHome() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Announcements Widget */}
+      {latestAnnouncements.length > 0 && (
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/team/news')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-orange-500" />
+                <span className="text-sm font-semibold">Novedades</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="space-y-2">
+              {latestAnnouncements.map((a) => (
+                <div key={a.id} className="flex items-center gap-2 text-sm">
+                  {a.type === 'important' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                  )}
+                  {a.type === 'celebration' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                  )}
+                  {a.type !== 'important' && a.type !== 'celebration' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                  )}
+                  <span className="truncate text-muted-foreground">{a.title}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Location Badge */}
       {employee && (

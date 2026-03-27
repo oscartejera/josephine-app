@@ -7,6 +7,7 @@ import {
   Wallet,
   Users,
   Megaphone,
+  UserCircle,
   LogOut,
   Menu,
   ChefHat,
@@ -19,11 +20,17 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 
-const teamNavItems = [
+// 5 core tabs — matches iOS FloatingTabBar (AppTab enum)
+const coreNavItems = [
   { icon: Home, label: 'Inicio', path: '/team' },
-  { icon: Calendar, label: 'Mi Horario', path: '/team/schedule' },
+  { icon: Calendar, label: 'Horario', path: '/team/schedule' },
   { icon: Clock, label: 'Fichaje', path: '/team/clock' },
-  { icon: Wallet, label: 'Mi Nómina', path: '/team/pay' },
+  { icon: Wallet, label: 'Nómina', path: '/team/pay' },
+  { icon: UserCircle, label: 'Perfil', path: '/team/profile' },
+];
+
+// Sidebar-only items — visible on desktop, accessible via Profile on mobile
+const sidebarOnlyItems = [
   { icon: Users, label: 'Equipo', path: '/team/directory' },
   { icon: Megaphone, label: 'Novedades', path: '/team/news' },
 ];
@@ -68,9 +75,10 @@ export function TeamLayout() {
   const getBreadcrumb = () => {
     const breadcrumbMap: Record<string, string> = {
       '/team': 'Inicio',
-      '/team/schedule': 'Mi Horario',
+      '/team/schedule': 'Horario',
       '/team/clock': 'Fichaje',
-      '/team/pay': 'Mi Nómina',
+      '/team/pay': 'Nómina',
+      '/team/profile': 'Perfil',
       '/team/directory': 'Equipo',
       '/team/news': 'Novedades',
     };
@@ -113,7 +121,7 @@ export function TeamLayout() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 space-y-1">
-        {teamNavItems.map((item) => {
+        {[...coreNavItems, ...sidebarOnlyItems].map((item) => {
           const isActive =
             item.path === '/team'
               ? location.pathname === '/team'
@@ -192,7 +200,7 @@ export function TeamLayout() {
 
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border z-50 flex items-center justify-around px-2">
-        {teamNavItems.slice(0, 5).map((item) => {
+        {coreNavItems.map((item) => {
           const isActive =
             item.path === '/team'
               ? location.pathname === '/team'
