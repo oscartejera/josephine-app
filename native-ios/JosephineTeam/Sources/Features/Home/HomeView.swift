@@ -90,6 +90,10 @@ struct HomeView: View {
                 HapticManager.play(.success)
             }
             .task { await loadData() }
+            .onChange(of: authVM.employee?.id) { _, newId in
+                guard newId != nil else { return }
+                Task { await loadData() }
+            }
             .errorBanner(errorMessage, isPresented: $showError)
         }
     }
@@ -491,6 +495,12 @@ struct HomeView: View {
         upcomingShifts = published
             .filter { $0.shiftDate > today }
             .sorted { $0.shiftDate < $1.shiftDate }
+            // Deduplicate: keep only the first shift per day
+            .reduce(into: [PlannedShift]()) { result, shift in
+                if !result.contains(where: { $0.shiftDate == shift.shiftDate }) {
+                    result.append(shift)
+                }
+            }
             .prefix(5)
             .map { $0 }
 
@@ -513,7 +523,8 @@ struct HomeView: View {
         let cal = Calendar.current
         var days = Set<Int>()
         for record in weekRecords {
-            guard record.clockOut != nil else { continue }
+            // Count both completed AND active (in-progress) records
+            // An active clock-in means the employee IS working that day
             let weekday = cal.component(.weekday, from: record.clockIn)
             // .weekday: Sun=1 ... Sat=7 → ISO Mon=1 ... Sun=7
             let iso = weekday == 1 ? 7 : weekday - 1

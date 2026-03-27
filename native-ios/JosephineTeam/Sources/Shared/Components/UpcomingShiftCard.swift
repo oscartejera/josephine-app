@@ -5,7 +5,7 @@ struct UpcomingShiftCard: View {
     let shift: PlannedShift
     let isFirst: Bool
 
-    /// Relative day label (MÑN, PAS. MÑN, or weekday abbreviation)
+    /// Relative day label (Mañana, Pasado mañana, or full weekday name)
     private var relativeDay: String {
         guard let shiftDate = shift.date else { return "—" }
         let cal = Calendar.current
@@ -13,13 +13,13 @@ struct UpcomingShiftCard: View {
         let days = cal.dateComponents([.day], from: today, to: cal.startOfDay(for: shiftDate)).day ?? 0
 
         switch days {
-        case 1:  return "MÑN"
-        case 2:  return "PAS. MÑN"
+        case 1:  return "Mañana"
+        case 2:  return "Pasado mañana"
         default:
             let fmt = DateFormatter()
             fmt.locale = Locale(identifier: "es_ES")
-            fmt.dateFormat = "EEE"
-            return fmt.string(from: shiftDate).uppercased()
+            fmt.dateFormat = "EEEE"
+            return fmt.string(from: shiftDate).capitalized
         }
     }
 
