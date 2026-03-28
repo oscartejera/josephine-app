@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, RefreshCw, ChefHat, SlidersHorizontal } from 'lucide-react';
+import { Database, RefreshCw, ChefHat, SlidersHorizontal, Shield } from 'lucide-react';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
+import { usePavesicAnalysis } from '@/hooks/usePavesicAnalysis';
 import { type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import {
   MenuEngineeringHeader,
@@ -13,6 +14,7 @@ import {
   MenuEngineeringTable,
   DynamicPricingPanel,
   WhatIfSimulator,
+  PavesicAnalysis,
 } from '@/components/menu-engineering';
 import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
 
@@ -40,6 +42,8 @@ export default function MenuEngineering() {
   } = useMenuEngineeringData();
 
 
+
+  const pavesic = usePavesicAnalysis(items, stats);
 
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [activeTab, setActiveTab] = useState('menu-engineering');
@@ -121,10 +125,10 @@ export default function MenuEngineering() {
         </Card>
       )}
 
-      {/* Main content — Two Tabs */}
+      {/* Main content — Three Tabs */}
       {!error && !showEmptyState && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-lg">
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl">
             <TabsTrigger value="menu-engineering" className="gap-2">
               <ChefHat className="h-4 w-4" />
               Menu Engineering
@@ -132,6 +136,10 @@ export default function MenuEngineering() {
             <TabsTrigger value="simulator" className="gap-2">
               <SlidersHorizontal className="h-4 w-4" />
               What-If Simulator
+            </TabsTrigger>
+            <TabsTrigger value="cost-check" className="gap-2">
+              <Shield className="h-4 w-4" />
+              Cost Check
             </TabsTrigger>
           </TabsList>
 
@@ -215,6 +223,14 @@ export default function MenuEngineering() {
             <WhatIfSimulator
               items={items}
               stats={stats}
+              loading={meLoading}
+            />
+          </TabsContent>
+
+          {/* ═══════ TAB 3: COST CHECK (PAVESIC) ═══════ */}
+          <TabsContent value="cost-check" className="space-y-6 mt-0">
+            <PavesicAnalysis
+              result={pavesic}
               loading={meLoading}
             />
           </TabsContent>
