@@ -320,6 +320,10 @@ If the user-facing behavior matters, verify in browser.
 - `npm test`
 - `npm run preflight` — **smart pre-push gate** (tsc + lint + tests + migration lint + demo verify)
 - `npm run preflight:quick` — tsc + lint only
+- `npm run impact-map` — generate full dependency graph (`docs/impact-map.json`)
+- `npm run impact-map:query -- src/data/sales.ts` — show impact for one file
+- `npm run impact-map:summary` — condensed codebase overview
+- `npm run scaffold -- --name X --type page` — scaffold new feature (page/hook/component/data)
 - `npm run demo:verify`
 - `npm run db:lint`
 - `npm run docs:rpcs`
