@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Database, RefreshCw, ChefHat, SlidersHorizontal, Shield } from 'lucide-react';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { usePavesicAnalysis } from '@/hooks/usePavesicAnalysis';
+import { useMenuEngineeringHistory } from '@/hooks/useMenuEngineeringHistory';
 import { type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
+import { format } from 'date-fns';
 import {
   MenuEngineeringHeader,
   MenuEngineeringKPICards,
@@ -15,6 +17,7 @@ import {
   DynamicPricingPanel,
   WhatIfSimulator,
   PavesicAnalysis,
+  ClassificationTimeline,
 } from '@/components/menu-engineering';
 import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
 
@@ -44,9 +47,21 @@ export default function MenuEngineering() {
 
 
   const pavesic = usePavesicAnalysis(items, stats);
+  const history = useMenuEngineeringHistory();
 
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [activeTab, setActiveTab] = useState('menu-engineering');
+
+  // Auto-save snapshot when data loads successfully
+  useEffect(() => {
+    if (!meLoading && items.length > 0 && dateFrom && dateTo) {
+      const from = format(dateFrom, 'yyyy-MM-dd');
+      const to = format(dateTo, 'yyyy-MM-dd');
+      history.saveSnapshot(items, pavesic?.items ?? null, selectedLocationId, from, to);
+      history.fetchTimeline(selectedLocationId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meLoading, items.length, selectedLocationId]);
 
   // Sync filters
   const handleDateChange = (range: DateRangeValue, mode: DateMode, _granularity: ChartGranularity) => {
@@ -165,6 +180,14 @@ export default function MenuEngineering() {
                 />
               </div>
             </div>
+
+            {/* Classification Trend */}
+            <ClassificationTimeline
+              changes={history.changes}
+              timelineLoading={history.timelineLoading}
+              saving={history.saving}
+              hasData={history.timeline.length > 0}
+            />
 
             {/* AI Pricing Advisor */}
             <DynamicPricingPanel
