@@ -15,7 +15,44 @@ At the start of every session, **read `memory/lessons.md`** before doing any wor
 
 **After fixing any bug or regression**, ask the user: _"¿Quieres que registre esta lección en `memory/lessons.md`?"_ — then use `/log-lesson` workflow to add the entry.
 
----
+## ⚠️ RULE #1 — Mandatory Automation Protocol (MAP)
+
+Every code change MUST follow this protocol. No exceptions.
+
+### Before editing any `src/` file:
+```bash
+npm run impact-map:query -- <file-you-will-edit>
+```
+If the file has ≥5 consumers, warn the user before editing.
+
+### Before creating new pages/hooks/components/data modules:
+```bash
+npm run scaffold -- --name X --type page|hook|component|data
+```
+NEVER write boilerplate from scratch. Use scaffold.
+
+### Before creating features touching 3+ files:
+```bash
+npm run decompose -- --name "Feature Name"
+```
+
+### After every code edit (before continuing):
+```bash
+npm run preflight:quick
+```
+If it fails, fix BEFORE continuing.
+
+### Before every commit:
+```bash
+npm run preflight
+```
+If it fails, DO NOT commit. Fix first.
+
+### Exceptions (only these):
+- `.md`, `.json` config, `.yml` changes → skip impact-map (still run preflight before commit)
+- `.agent/` or `scripts/` only changes → skip impact-map (still run preflight:quick)
+
+
 
 ## Mission
 
