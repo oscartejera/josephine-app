@@ -324,6 +324,9 @@ If the user-facing behavior matters, verify in browser.
 - `npm run impact-map:query -- src/data/sales.ts` — show impact for one file
 - `npm run impact-map:summary` — condensed codebase overview
 - `npm run scaffold -- --name X --type page` — scaffold new feature (page/hook/component/data)
+- `npm run health` — **codebase health audit** (tsc + lint + tests + large files + TODOs + any types)
+- `npm run changelog` — auto-generate changelog from git commits
+- `npm run changelog:save` — append changelog to `docs/CHANGELOG.md`
 - `npm run demo:verify`
 - `npm run db:lint`
 - `npm run docs:rpcs`
