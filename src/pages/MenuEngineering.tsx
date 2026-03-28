@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, RefreshCw, ChefHat, SlidersHorizontal, Shield } from 'lucide-react';
+import { Database, RefreshCw, ChefHat, SlidersHorizontal, Shield, FileDown } from 'lucide-react';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { usePavesicAnalysis } from '@/hooks/usePavesicAnalysis';
 import { useMenuEngineeringHistory } from '@/hooks/useMenuEngineeringHistory';
 import { useRecipeMatch } from '@/hooks/useRecipeMatch';
+import { generateMenuEngineeringPDF } from '@/hooks/useMenuEngineeringPDF';
 import { type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import { format } from 'date-fns';
 import {
@@ -20,6 +21,8 @@ import {
   PavesicAnalysis,
   ClassificationTimeline,
   PromotionalStrategy,
+  MenuDesignGuide,
+  IndustryBenchmarks,
 } from '@/components/menu-engineering';
 import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
 
@@ -54,6 +57,22 @@ export default function MenuEngineering() {
 
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [activeTab, setActiveTab] = useState('menu-engineering');
+
+  // PDF export handler
+  const handleExportPDF = useCallback(() => {
+    if (!dateFrom || !dateTo || items.length === 0) return;
+    const locName = selectedLocationId
+      ? accessibleLocations.find(l => l.id === selectedLocationId)?.name || 'Location'
+      : 'All locations';
+    generateMenuEngineeringPDF({
+      items,
+      stats,
+      locationName: locName,
+      categoryName: selectedCategory,
+      dateFrom,
+      dateTo,
+    });
+  }, [items, stats, selectedLocationId, selectedCategory, dateFrom, dateTo, accessibleLocations]);
 
   // Auto-save snapshot when data loads successfully
   useEffect(() => {
@@ -112,6 +131,16 @@ export default function MenuEngineering() {
       {/* Setup completeness banner */}
       <SetupBanner />
 
+      {/* Export PDF button — only when data loaded */}
+      {!loading && items.length > 0 && (
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleExportPDF}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+        </div>
+      )}
+
       {/* Error state */}
       {error && (
         <Card className="border-destructive">
@@ -166,6 +195,9 @@ export default function MenuEngineering() {
             {/* KPI Cards */}
             <MenuEngineeringKPICards stats={stats} loading={meLoading} />
 
+            {/* Industry Benchmarks */}
+            <IndustryBenchmarks items={items} stats={stats} loading={meLoading} />
+
             {/* Matrix + Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
@@ -199,6 +231,9 @@ export default function MenuEngineering() {
               loading={meLoading}
               selectedCategory={selectedCategory}
             />
+
+            {/* Menu Design Guide */}
+            <MenuDesignGuide items={items} stats={stats} loading={meLoading} />
 
             {/* AI Pricing Advisor */}
             <DynamicPricingPanel
