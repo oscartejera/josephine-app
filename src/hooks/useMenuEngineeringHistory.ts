@@ -61,7 +61,7 @@ export function useMenuEngineeringHistory() {
       );
 
       const rows = items.map((item) => ({
-        organization_id: orgId,
+        org_id: orgId,
         location_id: locationId,
         product_id: item.product_id,
         product_name: item.name,
@@ -84,7 +84,7 @@ export function useMenuEngineeringHistory() {
       const { error } = await (supabase as any)
         .from('menu_engineering_snapshots')
         .upsert(rows, {
-          onConflict: 'organization_id,location_id,product_id,period_start,period_end',
+          onConflict: 'org_id,location_id,product_id,period_start,period_end',
         });
 
       if (error) {
@@ -109,7 +109,7 @@ export function useMenuEngineeringHistory() {
     setTimelineLoading(true);
     try {
       const { data, error } = await (supabase as any).rpc('get_menu_engineering_timeline', {
-        p_organization_id: orgId,
+        p_org_id: orgId,
         p_location_id: locationId,
         p_limit: limit,
       });

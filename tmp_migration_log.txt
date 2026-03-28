@@ -1,0 +1,159 @@
+﻿Push Pending Migrations	Set up job	´╗┐2026-03-28T21:19:24.9783762Z Current runner version: '2.333.0'
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9808330Z ##[group]Runner Image Provisioner
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9809127Z Hosted Compute Agent
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9809700Z Version: 20260213.493
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9810256Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9810877Z Build Date: 2026-02-13T00:28:41Z
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9811496Z Worker ID: {297b4212-c88b-45e8-8059-d3e719e76232}
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9812073Z Azure Region: westus3
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9812547Z ##[endgroup]
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9813838Z ##[group]Operating System
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9814365Z Ubuntu
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9814780Z 24.04.4
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9815255Z LTS
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9815646Z ##[endgroup]
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9816086Z ##[group]Runner Image
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9816622Z Image: ubuntu-24.04
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9817222Z Version: 20260323.65.1
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9818101Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260323.65/images/ubuntu/Ubuntu2404-Readme.md
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9819584Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260323.65
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9820399Z ##[endgroup]
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9821395Z ##[group]GITHUB_TOKEN Permissions
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9823247Z Contents: read
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9823825Z Metadata: read
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9824257Z Packages: read
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9824695Z ##[endgroup]
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9827333Z Secret source: Actions
+Push Pending Migrations	Set up job	2026-03-28T21:19:24.9827979Z Prepare workflow directory
+Push Pending Migrations	Set up job	2026-03-28T21:19:25.0326216Z Prepare all required actions
+Push Pending Migrations	Set up job	2026-03-28T21:19:25.0365338Z Getting action download info
+Push Pending Migrations	Set up job	2026-03-28T21:19:25.4106191Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+Push Pending Migrations	Set up job	2026-03-28T21:19:25.5255517Z Download action repository 'supabase/setup-cli@v1' (SHA:b60b5899c73b63a2d2d651b1e90db8d4c9392f51)
+Push Pending Migrations	Set up job	2026-03-28T21:19:26.5749586Z Complete job name: Push Pending Migrations
+Push Pending Migrations	Run actions/checkout@v4	´╗┐2026-03-28T21:19:26.6495144Z ##[group]Run actions/checkout@v4
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6496687Z with:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6497801Z   repository: oscartejera/josephine-app
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6499301Z   token: ***
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6500129Z   ssh-strict: true
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6500982Z   ssh-user: git
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6501829Z   persist-credentials: true
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6502786Z   clean: true
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6503669Z   sparse-checkout-cone-mode: true
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6504680Z   fetch-depth: 1
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6505541Z   fetch-tags: false
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6506398Z   show-progress: true
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6507359Z   lfs: false
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6508201Z   submodules: false
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6509075Z   set-safe-directory: true
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6510305Z env:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6511495Z   SUPABASE_ACCESS_TOKEN: ***
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6512556Z   SUPABASE_DB_PASSWORD: ***
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6513588Z   PROJECT_REF: qixipveebfhurbarksib
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.6514598Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7598512Z Syncing repository: oscartejera/josephine-app
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7602129Z ##[group]Getting Git version info
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7603630Z Working directory is '/home/runner/work/josephine-app/josephine-app'
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7605780Z [command]/usr/bin/git version
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7617247Z git version 2.53.0
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7642338Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7667316Z Temporarily overriding HOME='/home/runner/work/_temp/add958f6-e737-47df-acec-cc63d21e1aa6' before making global git config changes
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7672058Z Adding repository directory to the temporary git global config as a safe directory
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7676039Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/josephine-app/josephine-app
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7703950Z Deleting the contents of '/home/runner/work/josephine-app/josephine-app'
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7708053Z ##[group]Initializing the repository
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7712853Z [command]/usr/bin/git init /home/runner/work/josephine-app/josephine-app
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7799021Z hint: Using 'master' as the name for the initial branch. This default branch name
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7802894Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7805990Z hint: to use in all of your new repositories, which will suppress this warning,
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7808772Z hint: call:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7810021Z hint:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7811663Z hint: 	git config --global init.defaultBranch <name>
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7813808Z hint:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7815611Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7818832Z hint: 'development'. The just-created branch can be renamed via this command:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7820400Z hint:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7821218Z hint: 	git branch -m <name>
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7822298Z hint:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7824401Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7827753Z Initialized empty Git repository in /home/runner/work/josephine-app/josephine-app/.git/
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7831389Z [command]/usr/bin/git remote add origin https://github.com/oscartejera/josephine-app
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7842412Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7844964Z ##[group]Disabling automatic garbage collection
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7847323Z [command]/usr/bin/git config --local gc.auto 0
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7872281Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7874727Z ##[group]Setting up auth
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7880261Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.7908012Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8159213Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8186803Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8360068Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8390206Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8570775Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8600184Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8602751Z ##[group]Fetching the repository
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:26.8611838Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +8d96e8fef87d93faa9c2ff830025383482044e40:refs/remotes/origin/main
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1323797Z From https://github.com/oscartejera/josephine-app
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1325202Z  * [new ref]         8d96e8fef87d93faa9c2ff830025383482044e40 -> origin/main
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1349245Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1349954Z ##[group]Determining the checkout info
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1351161Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1356869Z [command]/usr/bin/git sparse-checkout disable
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1390470Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1412403Z ##[group]Checking out the ref
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1417954Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1981063Z Switched to a new branch 'main'
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1981749Z branch 'main' set up to track 'origin/main'.
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.1987970Z ##[endgroup]
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.2023423Z [command]/usr/bin/git log -1 --format=%H
+Push Pending Migrations	Run actions/checkout@v4	2026-03-28T21:19:28.2044575Z 8d96e8fef87d93faa9c2ff830025383482044e40
+Push Pending Migrations	Run supabase/setup-cli@v1	´╗┐2026-03-28T21:19:28.2200279Z ##[group]Run supabase/setup-cli@v1
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.2200556Z with:
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.2200732Z   version: latest
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.2200905Z env:
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.2201293Z   SUPABASE_ACCESS_TOKEN: ***
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.2201675Z   SUPABASE_DB_PASSWORD: ***
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.2201900Z   PROJECT_REF: qixipveebfhurbarksib
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.2202134Z ##[endgroup]
+Push Pending Migrations	Run supabase/setup-cli@v1	2026-03-28T21:19:28.9797281Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/5e70a15f-d6b3-4066-8082-425a4c715c68 -f /home/runner/work/_temp/d904c5ec-7137-45ea-9b32-154ce6de71b5
+Push Pending Migrations	Link project	´╗┐2026-03-28T21:19:29.7652879Z ##[group]Run supabase link --project-ref $PROJECT_REF
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7653436Z [36;1msupabase link --project-ref $PROJECT_REF[0m
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7674480Z shell: /usr/bin/bash -e {0}
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7674753Z env:
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7675142Z   SUPABASE_ACCESS_TOKEN: ***
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7675413Z   SUPABASE_DB_PASSWORD: ***
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7675652Z   PROJECT_REF: qixipveebfhurbarksib
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7675914Z   SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+Push Pending Migrations	Link project	2026-03-28T21:19:29.7676178Z ##[endgroup]
+Push Pending Migrations	Link project	2026-03-28T21:19:32.7559581Z Finished supabase link.
+Push Pending Migrations	Push migrations to remote	´╗┐2026-03-28T21:19:32.7602417Z ##[group]Run supabase db push
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7602754Z [36;1msupabase db push[0m
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7618804Z shell: /usr/bin/bash -e {0}
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7619051Z env:
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7619609Z   SUPABASE_ACCESS_TOKEN: ***
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7619916Z   SUPABASE_DB_PASSWORD: ***
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7620149Z   PROJECT_REF: qixipveebfhurbarksib
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7620405Z   SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.7620676Z ##[endgroup]
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:32.8256846Z Connecting to remote database...
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:34.0455263Z Found local migration files to be inserted before the last migration on remote database.
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:34.0455698Z 
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:34.0455885Z Rerun the command with --include-all flag to apply these migrations:
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:34.0456301Z supabase/migrations/20260328210000_menu_engineering_snapshots.sql
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:34.0475013Z 
+Push Pending Migrations	Push migrations to remote	2026-03-28T21:19:34.0485201Z ##[error]Process completed with exit code 1.
+Push Pending Migrations	Post Run actions/checkout@v4	´╗┐2026-03-28T21:19:34.0588808Z Post job cleanup.
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1465638Z [command]/usr/bin/git version
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1497622Z git version 2.53.0
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1535993Z Temporarily overriding HOME='/home/runner/work/_temp/717218d0-dabe-4453-b8fc-074057488542' before making global git config changes
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1536794Z Adding repository directory to the temporary git global config as a safe directory
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1549276Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/josephine-app/josephine-app
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1580608Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1608107Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1784893Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1802888Z http.https://github.com/.extraheader
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1814337Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.1839195Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.2009178Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Push Pending Migrations	Post Run actions/checkout@v4	2026-03-28T21:19:34.2035146Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Push Pending Migrations	Complete job	´╗┐2026-03-28T21:19:34.2303878Z Cleaning up orphan processes
+Push Pending Migrations	Complete job	2026-03-28T21:19:34.2497796Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, supabase/setup-cli@v1. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

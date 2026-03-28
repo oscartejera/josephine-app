@@ -7,10 +7,10 @@
 -- Table: one row per (product × period)
 CREATE TABLE IF NOT EXISTS menu_engineering_snapshots (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  -- Multi-tenancy
-  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  -- Multi-tenancy (matches pattern: orgs.id, locations.id)
+  org_id          uuid NOT NULL,
   location_id     uuid REFERENCES locations(id) ON DELETE SET NULL,
-  -- Product reference (nullable FK for resilience — product could be removed)
+  -- Product reference (no FK for resilience — product could be removed)
   product_id      uuid NOT NULL,
   product_name    text NOT NULL,
   category        text,
@@ -31,12 +31,12 @@ CREATE TABLE IF NOT EXISTS menu_engineering_snapshots (
   -- Metadata
   created_at      timestamptz NOT NULL DEFAULT now(),
   -- Prevent duplicate snapshots for same product + period
-  UNIQUE (organization_id, location_id, product_id, period_start, period_end)
+  UNIQUE (org_id, location_id, product_id, period_start, period_end)
 );
 
 -- Index for fast timeline queries
 CREATE INDEX IF NOT EXISTS idx_me_snapshots_org_period
-  ON menu_engineering_snapshots (organization_id, period_start DESC);
+  ON menu_engineering_snapshots (org_id, period_start DESC);
 
 CREATE INDEX IF NOT EXISTS idx_me_snapshots_product_period
   ON menu_engineering_snapshots (product_id, period_start DESC);
@@ -53,9 +53,9 @@ DO $$ BEGIN
     CREATE POLICY org_isolation ON menu_engineering_snapshots
       FOR ALL
       USING (
-        organization_id IN (
-          SELECT om.organization_id
-          FROM organization_members om
+        org_id IN (
+          SELECT om.org_id
+          FROM org_memberships om
           WHERE om.user_id = auth.uid()
         )
       );
@@ -64,10 +64,10 @@ END $$;
 
 -- RPC: Get classification timeline for a product or all products
 CREATE OR REPLACE FUNCTION get_menu_engineering_timeline(
-  p_organization_id uuid,
-  p_location_id     uuid DEFAULT NULL,
-  p_product_id      uuid DEFAULT NULL,
-  p_limit           integer DEFAULT 6
+  p_org_id      uuid,
+  p_location_id uuid DEFAULT NULL,
+  p_product_id  uuid DEFAULT NULL,
+  p_limit       integer DEFAULT 6
 )
 RETURNS TABLE (
   product_id              uuid,
@@ -97,14 +97,14 @@ AS $$
     s.food_cost_pct,
     s.units_sold
   FROM menu_engineering_snapshots s
-  WHERE s.organization_id = p_organization_id
+  WHERE s.org_id = p_org_id
     AND (p_location_id IS NULL OR s.location_id = p_location_id)
     AND (p_product_id  IS NULL OR s.product_id  = p_product_id)
   ORDER BY s.period_start DESC
   LIMIT p_limit * (
     SELECT count(DISTINCT s2.product_id)
     FROM menu_engineering_snapshots s2
-    WHERE s2.organization_id = p_organization_id
+    WHERE s2.org_id = p_org_id
       AND (p_location_id IS NULL OR s2.location_id = p_location_id)
   )
 $$;
