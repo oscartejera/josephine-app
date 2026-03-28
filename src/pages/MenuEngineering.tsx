@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, RefreshCw, ChefHat, DollarSign, SlidersHorizontal } from 'lucide-react';
+import { Database, RefreshCw, ChefHat, SlidersHorizontal } from 'lucide-react';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
-import { usePricingOmnesData } from '@/hooks/usePricingOmnesData';
 import { type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import {
   MenuEngineeringHeader,
@@ -16,11 +15,6 @@ import {
   WhatIfSimulator,
 } from '@/components/menu-engineering';
 import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
-import {
-  PricingHealthCards,
-  PricingBandChart,
-  PricingOmnesTable,
-} from '@/components/pricing-omnes';
 
 export default function MenuEngineering() {
   const {
@@ -45,40 +39,34 @@ export default function MenuEngineering() {
     accessibleLocations,
   } = useMenuEngineeringData();
 
-  const omnes = usePricingOmnesData();
+
 
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [activeTab, setActiveTab] = useState('menu-engineering');
 
-  // Sync filters between engines
+  // Sync filters
   const handleDateChange = (range: DateRangeValue, mode: DateMode, _granularity: ChartGranularity) => {
     setDateFrom(range.from);
     setDateTo(range.to);
     setDateMode(mode);
-    omnes.setDateFrom(range.from);
-    omnes.setDateTo(range.to);
   };
 
   const handleLocationChange = (id: string | null) => {
     setSelectedLocationId(id);
-    omnes.setSelectedLocationId(id);
   };
 
   const handleCategoryChange = (cat: string | null) => {
     setSelectedCategory(cat);
-    omnes.setSelectedCategory(cat);
   };
 
   const handleRefresh = () => {
     meRefetch();
-    omnes.refetch();
   };
 
-  // Merge categories from both engines
-  const allCategories = [...new Set([...meCategories, ...omnes.categories])].sort();
+  const allCategories = meCategories;
 
-  const loading = meLoading || omnes.loading;
-  const error = meError || omnes.error;
+  const loading = meLoading;
+  const error = meError;
   const showEmptyState = !loading && !error && items.length === 0;
 
   return (
@@ -136,14 +124,10 @@ export default function MenuEngineering() {
       {/* Main content — Two Tabs */}
       {!error && !showEmptyState && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl">
+          <TabsList className="grid w-full grid-cols-2 max-w-lg">
             <TabsTrigger value="menu-engineering" className="gap-2">
               <ChefHat className="h-4 w-4" />
               Menu Engineering
-            </TabsTrigger>
-            <TabsTrigger value="pricing-omnes" className="gap-2">
-              <DollarSign className="h-4 w-4" />
-              Pricing Analysis
             </TabsTrigger>
             <TabsTrigger value="simulator" className="gap-2">
               <SlidersHorizontal className="h-4 w-4" />
@@ -174,7 +158,7 @@ export default function MenuEngineering() {
               </div>
             </div>
 
-            {/* AI Pricing Advisor (uses both ME + OMNES) */}
+            {/* AI Pricing Advisor */}
             <DynamicPricingPanel
               items={items}
               stats={stats}
@@ -184,18 +168,6 @@ export default function MenuEngineering() {
                   : 'All locations'
               }
               categoryName={selectedCategory || undefined}
-              omnesData={omnes.result ? {
-                price_range_ratio: omnes.result.price_range_ratio,
-                price_range_state: omnes.result.price_range_state,
-                category_ratio: omnes.result.category_ratio,
-                pricing_health_state: omnes.result.pricing_health_state,
-                band_distribution_state: omnes.result.band_distribution_state,
-                lower_band_pct: omnes.result.lower_band_pct,
-                middle_band_pct: omnes.result.middle_band_pct,
-                upper_band_pct: omnes.result.upper_band_pct,
-                average_menu_price: omnes.result.average_menu_price,
-                average_check_per_plate: omnes.result.average_check_per_plate,
-              } : undefined}
             />
 
             {/* Products Table */}
@@ -236,78 +208,7 @@ export default function MenuEngineering() {
             </Card>
           </TabsContent>
 
-          {/* ═══════ TAB 2: PRICING / OMNES ═══════ */}
-          <TabsContent value="pricing-omnes" className="space-y-6 mt-0">
-            {!selectedCategory && (
-              <Card className="border-amber-300 bg-amber-50/50 dark:bg-amber-950/20">
-                <CardContent className="py-6 text-center">
-                  <DollarSign className="h-8 w-8 mx-auto text-amber-500 mb-3" />
-                  <h3 className="text-base font-semibold mb-1">Select a category</h3>
-                  <p className="text-sm text-muted-foreground">
-                    OMNES analysis applies to an individual category. Select one from the filter above.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
 
-            {selectedCategory && (
-              <>
-                {/* OMNES Health Cards */}
-                <PricingHealthCards
-                  result={omnes.result}
-                  topActions={omnes.topActions}
-                  loading={omnes.loading}
-                />
-
-                {/* Band Distribution Chart */}
-                <PricingBandChart
-                  result={omnes.result}
-                  loading={omnes.loading}
-                />
-
-                {/* OMNES Table */}
-                <PricingOmnesTable
-                  result={omnes.result}
-                  loading={omnes.loading}
-                />
-
-                {/* OMNES Methodology Explainer */}
-                <Card className="bg-muted/30 border-muted">
-                  <CardContent className="py-4">
-                    <h4 className="text-sm font-semibold mb-2">💰 How Josephine Analyzes Prices — OMNES Method</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
-                      <div>
-                        <p className="font-medium text-foreground mb-1">OMNES 1: Price Range Ratio</p>
-                        <p>ratio = max price / min price</p>
-                        <p>&lt; 2.5 = too narrow</p>
-                        <p>2.5–3.0 = healthy</p>
-                        <p>&gt; 3.0 = too wide</p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground mb-1">OMNES 2: Band Distribution</p>
-                        <p>3 equal bands: lower / middle / upper</p>
-                        <p>Target: 25% lower · 50% middle · 25% upper</p>
-                        <p>Promote middle band products</p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground mb-1">OMNES 3: Category Ratio</p>
-                        <p>ratio = avg check / avg menu price</p>
-                        <p>&lt; 0.90 = perceived as expensive</p>
-                        <p>0.90–1.00 = healthy</p>
-                        <p>&gt; 1.00 = underpriced</p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground mb-1">⚠️ Engine Separation</p>
-                        <p>OMNES does NOT affect Star/Plow Horse/Puzzle/Dog</p>
-                        <p>OMNES analyzes price structure coherence</p>
-                        <p>Menu Engineering analyzes popularity + profitability</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </TabsContent>
 
           {/* ═══════ TAB 3: WHAT-IF SIMULATOR ═══════ */}
           <TabsContent value="simulator" className="space-y-6 mt-0">
