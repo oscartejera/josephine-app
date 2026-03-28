@@ -8,6 +8,7 @@ Ejecutar estos pasos al INICIO de cada sesión, ANTES de cualquier otro trabajo:
 
 // turbo-all
 
+0. Ejecutar `npm run session:brief` — obtiene estado actual del proyecto (TS errors, commits, branch, archivos)
 1. Leer `memory/lessons.md` completo — contiene lecciones de bugs y regresiones pasadas
 2. Leer `memory/session-context.md` — contiene el contexto de la última sesión (qué se hizo, TODOs pendientes, decisiones, prioridad para esta sesión)
 3. Leer `memory/decisions.md` — contiene decisiones de arquitectura vigentes
