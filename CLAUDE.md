@@ -62,6 +62,16 @@ This gives you the current state of the project in <5 seconds.
 
 For deep codebase context, reference `docs/codebase-snapshot.md` (regenerate with `npm run snapshot`).
 
+## ⚠️ RULE #3 — Domain Knowledge & Product Vision
+
+Before building any F&B feature (KPIs, costs, inventory, labour, menu, pricing):
+1. **Check `docs/knowledge/`** for domain theory, formulas, and industry targets
+2. **Check `docs/vision/ROADMAP.md`** to confirm the feature is aligned with product priorities
+3. **Check `docs/vision/VISION.md`** to understand target personas and value props
+
+When implementing formulas (COGS%, GP%, SPLH, etc.), use the exact definitions from `docs/knowledge/kpis/`.
+When naming metrics or labels, use industry-standard terminology from the knowledge base.
+
 ---
 
 ## Mission
