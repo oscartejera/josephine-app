@@ -327,6 +327,8 @@ If the user-facing behavior matters, verify in browser.
 - `npm run health` — **codebase health audit** (tsc + lint + tests + large files + TODOs + any types)
 - `npm run changelog` — auto-generate changelog from git commits
 - `npm run changelog:save` — append changelog to `docs/CHANGELOG.md`
+- `npm run decompose -- --name "Feature"` — decompose feature into parallelizable tracks
+- `npm run decompose -- --analyze src/hooks/useX.ts` — analyze existing feature's dependency tree
 - `npm run demo:verify`
 - `npm run db:lint`
 - `npm run docs:rpcs`

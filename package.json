@@ -28,6 +28,7 @@
     "health:json": "node scripts/health-check.mjs --json",
     "changelog": "node scripts/changelog.mjs",
     "changelog:save": "node scripts/changelog.mjs --append",
+    "decompose": "node scripts/decompose.mjs",
     "db:types": "npx supabase gen types typescript --project-id qixipveebfhurbarksib > src/integrations/supabase/types.ts",
     "docs:rpcs": "node scripts/generate-rpc-catalog.mjs",
     "test:e2e": "npx playwright test",
