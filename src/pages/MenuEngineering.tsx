@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, RefreshCw, ChefHat, DollarSign } from 'lucide-react';
+import { Database, RefreshCw, ChefHat, DollarSign, SlidersHorizontal } from 'lucide-react';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { usePricingOmnesData } from '@/hooks/usePricingOmnesData';
 import { type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
@@ -13,6 +13,7 @@ import {
   MenuEngineeringActions,
   MenuEngineeringTable,
   DynamicPricingPanel,
+  WhatIfSimulator,
 } from '@/components/menu-engineering';
 import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
 import {
@@ -135,7 +136,7 @@ export default function MenuEngineering() {
       {/* Main content — Two Tabs */}
       {!error && !showEmptyState && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-lg">
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl">
             <TabsTrigger value="menu-engineering" className="gap-2">
               <ChefHat className="h-4 w-4" />
               Menu Engineering
@@ -143,6 +144,10 @@ export default function MenuEngineering() {
             <TabsTrigger value="pricing-omnes" className="gap-2">
               <DollarSign className="h-4 w-4" />
               Pricing Analysis
+            </TabsTrigger>
+            <TabsTrigger value="simulator" className="gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              What-If Simulator
             </TabsTrigger>
           </TabsList>
 
@@ -303,6 +308,16 @@ export default function MenuEngineering() {
               </>
             )}
           </TabsContent>
+
+          {/* ═══════ TAB 3: WHAT-IF SIMULATOR ═══════ */}
+          <TabsContent value="simulator" className="space-y-6 mt-0">
+            <WhatIfSimulator
+              items={items}
+              stats={stats}
+              loading={meLoading}
+            />
+          </TabsContent>
+
         </Tabs>
       )}
     </div>

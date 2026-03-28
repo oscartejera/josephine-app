@@ -58,6 +58,7 @@ export interface MenuEngineeringStats {
   dogs: number;
   totalUnits: number;
   totalSales: number;
+  totalGrossProfit: number;
   // Canonical thresholds (from RPC, NOT recalculated)
   popThreshold: number;        // = ideal_average_popularity (%)
   marginThreshold: number;     // = average_gross_profit (€)
@@ -175,6 +176,7 @@ export function useMenuEngineeringData() {
         dogs: mappedItems.filter(i => i.classification === 'dog').length,
         totalUnits,
         totalSales,
+        totalGrossProfit: mappedItems.reduce((s, i) => s + i.total_gross_profit, 0),
         // Use canonical thresholds directly from RPC
         popThreshold: firstItem?.ideal_average_popularity || 0,
         marginThreshold: firstItem?.average_gross_profit || 0,

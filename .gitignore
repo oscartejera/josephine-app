@@ -54,3 +54,6 @@ lighthouse-*.html
 memory/session-context.md
 memory/decisions.md
 memory/patterns.md
+
+# MCP server config (contains local paths)
+.mcp.json

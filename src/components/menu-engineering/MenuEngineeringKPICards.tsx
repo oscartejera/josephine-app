@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Info, AlertTriangle } from 'lucide-react';
+import { Info, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
 
@@ -81,27 +81,65 @@ export function MenuEngineeringKPICards({ stats, loading }: MenuEngineeringKPICa
 
       {/* Context bar */}
       {stats && (
-        <div className="flex flex-wrap items-center gap-4 px-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Info className="h-3.5 w-3.5 shrink-0" />
-            <span>
-              {stats.totalItems} products · {stats.totalUnits.toLocaleString()} plates sold ·
-              Avg profit/plate: <strong>{formatCurrency(stats.marginThreshold)}</strong>
-            </span>
+        <>
+          <div className="flex flex-wrap items-center gap-4 px-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {stats.totalItems} products · {stats.totalUnits.toLocaleString()} plates sold ·
+                Avg profit/plate: <strong>{formatCurrency(stats.marginThreshold)}</strong>
+              </span>
+            </div>
+            {lowConfidencePct > 30 && (
+              <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span>{lowConfidencePct}% of products have no recipe cost data — results may be approximate</span>
+              </div>
+            )}
+            {!stats.isCanonical && (
+              <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span>Select a single category above for the most accurate analysis</span>
+              </div>
+            )}
           </div>
-          {lowConfidencePct > 30 && (
-            <div className="flex items-center gap-1.5 text-xs text-amber-600">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              <span>{lowConfidencePct}% of products have no recipe cost data — results may be approximate</span>
-            </div>
-          )}
-          {!stats.isCanonical && (
-            <div className="flex items-center gap-1.5 text-xs text-amber-600">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              <span>Select a single category above for the most accurate analysis</span>
-            </div>
-          )}
-        </div>
+
+          {/* Financial summary bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-1">
+            {[
+              {
+                label: 'Total Revenue',
+                value: formatCurrency(stats.totalSales),
+                icon: '💰',
+              },
+              {
+                label: 'Total Gross Profit',
+                value: formatCurrency(stats.totalGrossProfit),
+                icon: '📈',
+              },
+              {
+                label: 'Menu Food Cost %',
+                value: stats.totalSales > 0
+                  ? `${(((stats.totalSales - stats.totalGrossProfit) / stats.totalSales) * 100).toFixed(1)}%`
+                  : '—',
+                icon: '🔢',
+              },
+              {
+                label: 'Avg CM / plate',
+                value: formatCurrency(stats.marginThreshold),
+                icon: '📊',
+              },
+            ].map((metric) => (
+              <div key={metric.label} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
+                <span className="text-sm">{metric.icon}</span>
+                <div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">{metric.label}</p>
+                  <p className="text-sm font-semibold">{metric.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ Ejecutar estos pasos al INICIO de cada sesión, ANTES de cualquier otro trabajo:
 3. Leer `memory/decisions.md` — contiene decisiones de arquitectura vigentes
 4. Leer `memory/patterns.md` — contiene patrones reutilizables descubiertos
 5. Leer `memory/checklists.md` — contiene checklists de validación del proyecto
+6. Escanear el vault de Obsidian (`C:\Users\oscar\josephine-vault`) — listar carpetas para saber qué features están documentadas. Si el trabajo pendiente tiene un spec en `features/`, leerlo.
 
 Después de leer todo, presentar al usuario un briefing ultra-conciso:
 

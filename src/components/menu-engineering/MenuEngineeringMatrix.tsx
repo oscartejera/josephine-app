@@ -70,22 +70,25 @@ export function MenuEngineeringMatrix({
   loading,
 }: MenuEngineeringMatrixProps) {
   // Y-axis = unit_gross_profit (€), X-axis = popularity_pct (%)
-  const scatterData = useMemo(() => {
-    return items.map((item) => ({
+  // Radius = scaled by total_revenue so larger-revenue items appear bigger
+  const { scatterData, xMax, yMax } = useMemo(() => {
+    if (items.length === 0) return { scatterData: [], xMax: 30, yMax: 20 };
+
+    const revenues = items.map((i) => i.selling_price_ex_vat * i.units_sold);
+    const maxRevenue = Math.max(...revenues, 1);
+
+    const data = items.map((item, idx) => ({
       ...item,
       x: item.popularity_pct,
       y: item.unit_gross_profit,
+      radius: Math.max(4, Math.min(14, Math.sqrt(revenues[idx] / maxRevenue) * 14)),
     }));
-  }, [items]);
-
-  // Calculate axis domains
-  const { xMax, yMax } = useMemo(() => {
-    if (items.length === 0) return { xMax: 30, yMax: 20 };
 
     const xValues = items.map((i) => i.popularity_pct);
     const yValues = items.map((i) => i.unit_gross_profit);
 
     return {
+      scatterData: data,
       xMax: Math.ceil(Math.max(...xValues) * 1.2),
       yMax: Math.ceil(Math.max(...yValues) * 1.2),
     };
@@ -227,7 +230,7 @@ export function MenuEngineeringMatrix({
                   <Cell
                     key={`cell-${index}`}
                     fill={CLASSIFICATION_COLORS[entry.classification]}
-                    r={5}
+                    r={entry.radius}
                     cursor="pointer"
                   />
                 ))}
