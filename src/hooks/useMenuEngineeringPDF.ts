@@ -1,15 +1,7 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import type { MenuEngineeringItem, MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
-
-// Extend jsPDF type for autoTable plugin
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable: { finalY: number };
-  }
-}
 
 const CLASS_LABEL: Record<string, string> = {
   star: '⭐ Star',
@@ -188,7 +180,7 @@ export function generateMenuEngineeringPDF({
     return b.total_gross_profit - a.total_gross_profit;
   });
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Product', 'Category', 'Price', 'Food Cost', 'FC%', 'Sold', 'GP/plate', 'Total GP', 'Type']],
     body: sortedItems.map(item => {
@@ -244,7 +236,7 @@ export function generateMenuEngineeringPDF({
     margin: { left: margin, right: margin },
   });
 
-  y = doc.lastAutoTable.finalY + 10;
+  y = (doc as any).lastAutoTable.finalY + 10;
 
   // ═══════════════════════════════════════════════════════════
   // SECTION 4: ACTION PLAN
