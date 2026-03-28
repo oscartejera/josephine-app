@@ -318,6 +318,8 @@ If the user-facing behavior matters, verify in browser.
 - `npm run build`
 - `npm run lint`
 - `npm test`
+- `npm run preflight` — **smart pre-push gate** (tsc + lint + tests + migration lint + demo verify)
+- `npm run preflight:quick` — tsc + lint only
 - `npm run demo:verify`
 - `npm run db:lint`
 - `npm run docs:rpcs`
@@ -351,58 +353,60 @@ Do not assume both suites are equivalent.
 
 ## Git and Deployment Rules
 
+### ⚡ Auto-Deploy Policy (DEFAULT)
+After completing ANY change, the agent MUST automatically:
+1. Run `npm run preflight` — if errors, fix before continuing
+2. `git add -A`
+3. `git commit -m "<type>(<scope>): <description>"`
+4. `git push origin main`
+
+Valid commit types: `feat`, `fix`, `refactor`, `style`, `db`, `docs`, `chore`, `perf`
+
+This is the **default behavior** for every prompt. Do NOT ask the user for permission to commit or push.
+For trivial changes (docs only): `npm run preflight:quick` (tsc + lint only).
+
 ### Git
 - prefer small, coherent commits
 - keep commit scope intentional
 - do not leave unrelated edits behind
 - do not describe work as complete if the repo state is ambiguous
 
-### Push policy
-Do not push blindly.
-Push only after validation appropriate to the risk of the change.
-
 ### Main branch awareness
-This repo is operationally oriented around direct work to `main`, and pushes to `main` have real consequences:
-- Vercel production auto-deploys on push to `main`
-- Edge Functions deploy workflow triggers on pushes affecting `supabase/functions/**`
+This repo is operationally oriented around direct work to `main`, and pushes to `main` trigger:
+- Vercel production auto-deploy
+- Edge Functions deploy (when `supabase/functions/**` changes)
+- DB migration deploy (when `supabase/migrations/**` changes)
 
-Because of this:
-- validate first
-- push second
-- never treat `main` as a scratchpad
+The `tsc --noEmit` gate ensures we never push broken code.
+
+### Push failure handling
+- If push fails due to conflicts: `git pull --rebase origin main` then retry
+- **NEVER** use `git push --force`
 
 ### Vercel
 Production domains:
 - `www.josephine-ai.com`
 - `josephine-ai.com`
 
-A push to `main` can create a production deployment.
-Treat UI, routing, auth, and environment-sensitive changes accordingly.
-
 ---
 
 ## Database Rules
 
-### General workflow
+### General workflow (auto-deploy)
 For schema changes:
-1. create a migration in `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
-2. review the change carefully
-3. lint the migration
-4. apply only when the task explicitly requires it
-5. validate downstream effects on types, contracts, and frontend usage
+1. Create migration in `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
+2. Use safe SQL patterns (`IF NOT EXISTS`, `CREATE OR REPLACE`, etc.)
+3. Lint: `node scripts/validate-migration.mjs <file>`
+4. Regenerate types: `npm run db:types`
+5. Commit + push (auto-deploy policy applies)
+6. GitHub Actions will run `supabase db push` automatically
 
-### Do not apply schema changes blindly
-Commands like:
-- `npx supabase db push`
-- migration runners
-- repair scripts
-- seed scripts
-
-must not be run automatically without understanding:
-- target environment
-- blast radius
-- reversibility
-- shared-environment risk
+### SQL safety rules
+- `CREATE TABLE IF NOT EXISTS` (never bare CREATE TABLE)
+- `CREATE OR REPLACE FUNCTION/VIEW`
+- `DROP` only with `IF EXISTS`
+- `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+- Add `NOTIFY pgrst, 'reload schema';` when touching functions/views
 
 ### Function replacement
 If replacing a Postgres function and signature conflicts are possible:
