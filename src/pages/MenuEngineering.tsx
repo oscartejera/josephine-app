@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, RefreshCw, ChefHat, SlidersHorizontal, Shield, FileDown } from 'lucide-react';
+import { Database, RefreshCw, ChefHat, SlidersHorizontal, Shield, FileDown, AlertTriangle } from 'lucide-react';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { usePavesicAnalysis } from '@/hooks/usePavesicAnalysis';
 import { useMenuEngineeringHistory } from '@/hooks/useMenuEngineeringHistory';
@@ -57,6 +57,7 @@ export default function MenuEngineering() {
 
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [activeTab, setActiveTab] = useState('menu-engineering');
+  const lastSnapshotHash = useRef<string>('');
 
   // PDF export handler
   const handleExportPDF = useCallback(() => {
@@ -74,13 +75,25 @@ export default function MenuEngineering() {
     });
   }, [items, stats, selectedLocationId, selectedCategory, dateFrom, dateTo, accessibleLocations]);
 
-  // Auto-save snapshot when data loads successfully
+  // Auto-save snapshot when data loads successfully (de-duplicated by hash)
   useEffect(() => {
     if (!meLoading && items.length > 0 && dateFrom && dateTo) {
       const from = format(dateFrom, 'yyyy-MM-dd');
       const to = format(dateTo, 'yyyy-MM-dd');
-      history.saveSnapshot(items, pavesic?.items ?? null, selectedLocationId, from, to);
-      history.fetchTimeline(selectedLocationId);
+
+      // Build a lightweight hash to avoid redundant upserts
+      const hash = [
+        selectedLocationId ?? 'all',
+        from,
+        to,
+        items.map(i => `${i.product_id}:${i.classification}`).sort().join(','),
+      ].join('|');
+
+      if (hash !== lastSnapshotHash.current) {
+        lastSnapshotHash.current = hash;
+        history.saveSnapshot(items, pavesic?.items ?? null, selectedLocationId, from, to);
+        history.fetchTimeline(selectedLocationId);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meLoading, items.length, selectedLocationId]);
@@ -194,6 +207,32 @@ export default function MenuEngineering() {
           <TabsContent value="menu-engineering" className="space-y-6 mt-0">
             {/* KPI Cards */}
             <MenuEngineeringKPICards stats={stats} loading={meLoading} />
+
+            {/* Category selection banner — Kasavana-Smith is per-category */}
+            {!selectedCategory && !meLoading && items.length > 0 && (
+              <div className="rounded-lg border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                    Select a category for accurate analysis
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                    Menu Engineering (Kasavana & Smith) is designed to analyze one category at a time — mixing
+                    starters with desserts makes the thresholds unreliable. Select a single category above.
+                  </p>
+                </div>
+                {allCategories.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 border-amber-400 text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/40"
+                    onClick={() => handleCategoryChange(allCategories[0])}
+                  >
+                    Select "{allCategories[0]}"
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Industry Benchmarks */}
             <IndustryBenchmarks items={items} stats={stats} loading={meLoading} />

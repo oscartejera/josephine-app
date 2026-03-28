@@ -4,10 +4,10 @@ import { format } from 'date-fns';
 import type { MenuEngineeringItem, MenuEngineeringStats } from '@/hooks/useMenuEngineeringData';
 
 const CLASS_LABEL: Record<string, string> = {
-  star: '⭐ Star',
-  plow_horse: '🐴 Plow Horse',
-  puzzle: '💎 Puzzle',
-  dog: '🔍 Dog',
+  star: '[*] Star',
+  plow_horse: '[PH] Plow Horse',
+  puzzle: '[P] Puzzle',
+  dog: '[D] Dog',
 };
 
 const CLASS_ACTION: Record<string, string> = {
@@ -254,10 +254,10 @@ export function generateMenuEngineeringPDF({
   y += 6;
 
   const classifications: Array<{ key: string; label: string }> = [
-    { key: 'star', label: '⭐ Stars — Keep & Protect' },
-    { key: 'plow_horse', label: '🐴 Plow Horses — Improve Margins' },
-    { key: 'puzzle', label: '💎 Puzzles — Promote More' },
-    { key: 'dog', label: '🔍 Dogs — Rethink or Remove' },
+    { key: 'star', label: 'Stars -- Keep & Protect' },
+    { key: 'plow_horse', label: 'Plow Horses -- Improve Margins' },
+    { key: 'puzzle', label: 'Puzzles -- Promote More' },
+    { key: 'dog', label: 'Dogs -- Rethink or Remove' },
   ];
 
   for (const cls of classifications) {
