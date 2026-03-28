@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -6,12 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, ArrowUpDown, Star, HelpCircle, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { Search, ArrowUpDown, AlertTriangle, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { MenuEngineeringItem, Classification } from '@/hooks/useMenuEngineeringData';
+import type { RecipeMatchResult } from '@/hooks/useRecipeMatch';
 
 interface MenuEngineeringTableProps {
   items: MenuEngineeringItem[];
   loading: boolean;
+  /** Recipe match map from useRecipeMatch */
+  recipeMatchMap?: Map<string, RecipeMatchResult>;
+  /** Recipe coverage stats */
+  recipeCoverage?: { withRecipe: number; withFallback: number; total: number; coveragePct: number };
 }
 
 type SortField = 'name' | 'units_sold' | 'selling_price_ex_vat' | 'unit_food_cost' | 'unit_gross_profit' | 'popularity_pct' | 'total_gross_profit';
@@ -71,7 +77,7 @@ function getFoodCostHealth(pct: number): { label: string; className: string } {
   return { label: `${pct.toFixed(0)}%`, className: 'text-red-600 font-semibold' };
 }
 
-export function MenuEngineeringTable({ items, loading }: MenuEngineeringTableProps) {
+export function MenuEngineeringTable({ items, loading, recipeMatchMap, recipeCoverage }: MenuEngineeringTableProps) {
   const [search, setSearch] = useState('');
   const [classificationFilter, setClassificationFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('total_gross_profit');
@@ -126,6 +132,27 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
               {filteredItems.length} products · Total profit: <strong className={totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}>{formatCurrency(totalProfit)}</strong>
               {avgFoodCostPct > 0 && <> · Avg food cost: <strong>{avgFoodCostPct.toFixed(0)}%</strong></>}
             </p>
+            {recipeCoverage && recipeCoverage.total > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 max-w-[200px] h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all"
+                    style={{ width: `${recipeCoverage.coveragePct}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-muted-foreground">
+                  {recipeCoverage.withRecipe}/{recipeCoverage.total} with recipe cost ({recipeCoverage.coveragePct}%)
+                </span>
+                {recipeCoverage.withFallback > 0 && (
+                  <Link
+                    to="/inventory-setup/recipes"
+                    className="text-[10px] text-violet-600 hover:text-violet-700 font-medium flex items-center gap-0.5"
+                  >
+                    Fix {recipeCoverage.withFallback} missing <ExternalLink className="h-2.5 w-2.5" />
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -156,6 +183,7 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
                 <SortHeader field="selling_price_ex_vat">Price</SortHeader>
                 <SortHeader field="unit_food_cost">Food Cost</SortHeader>
                 <TableHead>FC %</TableHead>
+                <TableHead>Source</TableHead>
                 <SortHeader field="units_sold">Sold</SortHeader>
                 <SortHeader field="popularity_pct">% Sales</SortHeader>
                 <SortHeader field="unit_gross_profit">Profit/plate</SortHeader>
@@ -166,7 +194,7 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
             </TableHeader>
             <TableBody>
               {filteredItems.length === 0 ? (
-                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               ) : filteredItems.map((item) => {
                 const config = CLASSIFICATION_CONFIG[item.classification] || CLASSIFICATION_CONFIG.dog;
                 const foodCostPct = item.selling_price_ex_vat > 0 ? (item.unit_food_cost / item.selling_price_ex_vat) * 100 : 0;
@@ -198,6 +226,49 @@ export function MenuEngineeringTable({ items, loading }: MenuEngineeringTablePro
                     </TableCell>
                     <TableCell className="text-right">
                       <span className={fcHealth.className}>{item.unit_food_cost > 0 ? fcHealth.label : '—'}</span>
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const match = recipeMatchMap?.get(item.product_id);
+                        if (hasRealCost) {
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600">
+                                    <CheckCircle2 className="h-3 w-3" /> Recipe
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">Cost from escandallo{match ? `: ${match.recipe_name}` : ''}</p>
+                                  {match && (
+                                    <Link to={match.link} className="text-xs text-violet-500 hover:underline">View recipe →</Link>
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        }
+                        if (hasFallbackCost) {
+                          const link = match?.link || '/inventory-setup/recipes';
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Link to={link} className="inline-flex items-center gap-1 text-[10px] text-amber-600 hover:text-amber-700">
+                                    <AlertCircle className="h-3 w-3" /> Fix
+                                  </Link>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs font-medium text-amber-600">Estimated cost</p>
+                                  <p className="text-xs text-muted-foreground">Based on category average. Create a recipe in Escandallos for accurate analysis.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        }
+                        return <span className="text-[10px] text-muted-foreground">—</span>;
+                      })()}
                     </TableCell>
                     <TableCell className="text-right">{item.units_sold.toLocaleString()}</TableCell>
                     <TableCell className="text-right">{item.popularity_pct.toFixed(1)}%</TableCell>

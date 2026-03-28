@@ -6,6 +6,7 @@ import { Database, RefreshCw, ChefHat, SlidersHorizontal, Shield } from 'lucide-
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { usePavesicAnalysis } from '@/hooks/usePavesicAnalysis';
 import { useMenuEngineeringHistory } from '@/hooks/useMenuEngineeringHistory';
+import { useRecipeMatch } from '@/hooks/useRecipeMatch';
 import { type DateMode, type DateRangeValue, type ChartGranularity } from '@/components/bi/DateRangePickerNoryLike';
 import { format } from 'date-fns';
 import {
@@ -18,6 +19,7 @@ import {
   WhatIfSimulator,
   PavesicAnalysis,
   ClassificationTimeline,
+  PromotionalStrategy,
 } from '@/components/menu-engineering';
 import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
 
@@ -48,6 +50,7 @@ export default function MenuEngineering() {
 
   const pavesic = usePavesicAnalysis(items, stats);
   const history = useMenuEngineeringHistory();
+  const { matchMap: recipeMatchMap, stats: recipeCoverage } = useRecipeMatch(items);
 
   const [dateMode, setDateMode] = useState<DateMode>('monthly');
   const [activeTab, setActiveTab] = useState('menu-engineering');
@@ -189,6 +192,14 @@ export default function MenuEngineering() {
               hasData={history.timeline.length > 0}
             />
 
+            {/* OMNES P4: Promotional Strategy (only when category selected) */}
+            <PromotionalStrategy
+              items={items}
+              stats={stats}
+              loading={meLoading}
+              selectedCategory={selectedCategory}
+            />
+
             {/* AI Pricing Advisor */}
             <DynamicPricingPanel
               items={items}
@@ -202,7 +213,12 @@ export default function MenuEngineering() {
             />
 
             {/* Products Table */}
-            <MenuEngineeringTable items={items} loading={meLoading} />
+            <MenuEngineeringTable
+              items={items}
+              loading={meLoading}
+              recipeMatchMap={recipeMatchMap}
+              recipeCoverage={recipeCoverage}
+            />
 
             {/* Methodology Explainer */}
             <Card className="bg-muted/30 border-muted">
