@@ -20,11 +20,11 @@ Si falla, corregir ANTES de continuar. No commitear código roto.
 ## 2. Commit + Push en UN solo comando
 
 **CRÍTICO: Usar SIEMPRE `--no-verify` en commit Y push porque ya validamos con tsc.**
-**CRÍTICO: Usar `&&` para encadenar, NUNCA `;` en PowerShell.**
-**CRÍTICO: Usar `WaitMsBeforeAsync: 10000` — el comando DEBE terminar en background.**
+**CRÍTICO: Usar `;` para encadenar comandos (PowerShell 5.1 NO soporta `&&`).**
+**CRÍTICO: Poner `WaitMsBeforeAsync: 10000`.**
 
 ```powershell
-git add -A && git commit --no-verify -m "<tipo>(<scope>): <descripción>" && git push --no-verify origin main
+git add -A; git commit --no-verify -m "<tipo>(<scope>): <descripción>"; git push --no-verify origin main
 ```
 
 Tipos válidos: `feat`, `fix`, `refactor`, `style`, `db`, `docs`, `chore`, `perf`
@@ -46,10 +46,10 @@ git log --oneline -1
 
 ## ⚠️ Errores comunes que NUNCA repetir
 
-1. **NUNCA usar `git commit` sin `--no-verify`** — el pre-commit hook ejecuta `npm run preflight:quick` que tarda 30-60s y bloquea el terminal
-2. **NUNCA usar `git push` sin `--no-verify`** — el pre-push hook ejecuta `npm run preflight` completo que tarda 1-2 min
-3. **NUNCA separar commit y push en comandos separados** — encadenar SIEMPRE con `&&`
-4. **NUNCA usar `;` en PowerShell** — usar `&&` para encadenar
+1. **NUNCA usar `git commit` sin `--no-verify`** — el pre-commit hook ejecuta `npm run preflight:quick` que cuelga el terminal 30-60s+
+2. **NUNCA usar `git push` sin `--no-verify`** — el pre-push hook ejecuta `npm run preflight` completo que cuelga 1-2 min+
+3. **NUNCA separar commit y push en comandos separados** — encadenar SIEMPRE con `;` en la misma línea
+4. **NUNCA usar `&&` en PowerShell** — esta máquina usa PowerShell 5.1 que NO soporta `&&`. Usar siempre `;`
 5. **NUNCA hacer force push (`git push --force`)**
 6. **NUNCA commitear archivos `.env`, secrets, o tokens**
 7. Si el push falla por conflictos, hacer `git pull --rebase origin main` primero
@@ -58,8 +58,15 @@ git log --oneline -1
 ## Razón del `--no-verify`
 
 Los husky hooks (`.husky/pre-commit` y `.husky/pre-push`) ejecutan:
-- pre-commit: `npm run preflight:quick` (tsc + eslint)  
-- pre-push: `npm run preflight` (tsc + eslint + tests)
+- pre-commit: `npm run preflight:quick` (tsc + eslint) → 30-60 segundos  
+- pre-push: `npm run preflight` (tsc + eslint + tests) → 1-2 minutos
 
 Como YA ejecutamos `npx tsc --noEmit` manualmente en el paso 1, estos hooks son redundantes
-y solo causan que los comandos se "cuelguen" durante minutos.
+y solo causan que los comandos se "cuelguen" durante minutos sin output visible.
+
+## Sintaxis PowerShell 5.1
+
+Esta máquina (Windows) usa PowerShell 5.1. Diferencias clave:
+- `&&` → NO funciona. Usar `;` (ejecuta siempre el siguiente, sin short-circuit)
+- `2>&1` → funciona para redirigir stderr
+- El operador `;` ejecuta todos los comandos aunque uno falle, lo cual está OK para nuestro caso
