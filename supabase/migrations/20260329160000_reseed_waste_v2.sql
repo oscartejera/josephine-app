@@ -1,7 +1,13 @@
 -- ============================================================
--- Realistic Waste Demo Data (90 days)
--- v2: Adds logged_by (real profiles) + over_production/plate_waste
+-- v2 Reseed: Adds logged_by + over_production/plate_waste
+-- Re-runs the seeding with improved data for demo quality
 -- ============================================================
+
+-- Step 0: Ensure logged_by column exists (baseline defines it but live DB may not have it)
+DO $$ BEGIN
+  ALTER TABLE waste_events ADD COLUMN logged_by uuid;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
 
 -- Step 1: Delete existing waste events for all demo locations
 DELETE FROM waste_events
@@ -14,6 +20,7 @@ DO $$
 DECLARE
   v_loc_id     uuid;
   v_org_id     uuid;
+  v_group_id   uuid;
   v_item_ids   uuid[];
   v_item_count int;
   v_profile_ids uuid[];
@@ -32,7 +39,7 @@ DECLARE
   v_hour_rand  float;
   v_i          int;
 BEGIN
-  -- Get first active location
+  -- Get first active location (locations has org_id)
   SELECT id, org_id INTO v_loc_id, v_org_id
   FROM locations WHERE active = true LIMIT 1;
 
@@ -41,7 +48,16 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Get real inventory item IDs
+  -- Get group_id from locations for profile lookup
+  SELECT group_id INTO v_group_id
+  FROM locations WHERE id = v_loc_id;
+
+  -- Fallback: if group_id is null, use org_id
+  IF v_group_id IS NULL THEN
+    v_group_id := v_org_id;
+  END IF;
+
+  -- Get real inventory item IDs (inventory_items uses org_id)
   SELECT ARRAY_AGG(id ORDER BY name)
   INTO v_item_ids
   FROM inventory_items
@@ -54,23 +70,24 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Get real profile IDs for logged_by (fixes "Unassigned" leaderboard)
+  -- Get real profile IDs for logged_by (profiles uses group_id)
   SELECT ARRAY_AGG(id ORDER BY full_name)
   INTO v_profile_ids
   FROM profiles
-  WHERE org_id = v_org_id AND full_name IS NOT NULL;
+  WHERE group_id = v_group_id AND full_name IS NOT NULL;
 
   v_profile_count := COALESCE(array_length(v_profile_ids, 1), 0);
 
-  -- If no profiles found, try getting ANY profiles in the org
+  -- Fallback: try without full_name filter
   IF v_profile_count = 0 THEN
     SELECT ARRAY_AGG(id)
     INTO v_profile_ids
     FROM profiles
-    WHERE org_id = v_org_id
-    LIMIT 10;
+    WHERE group_id = v_group_id;
     v_profile_count := COALESCE(array_length(v_profile_ids, 1), 0);
   END IF;
+
+  RAISE NOTICE 'Seeding waste: loc=%, items=%, profiles=%', v_loc_id, v_item_count, v_profile_count;
 
   -- Loop through last 90 days
   v_day := CURRENT_DATE - 90;
@@ -80,13 +97,13 @@ BEGIN
 
     -- Events per day based on day-of-week (Fri/Sat higher)
     v_events_today := CASE v_dow
-      WHEN 0 THEN 9 + floor(random() * 4)::int   -- Dom
-      WHEN 1 THEN 11 + floor(random() * 5)::int  -- Lun
-      WHEN 2 THEN 8 + floor(random() * 4)::int   -- Mar
-      WHEN 3 THEN 8 + floor(random() * 4)::int   -- Mié
-      WHEN 4 THEN 9 + floor(random() * 4)::int   -- Jue
-      WHEN 5 THEN 13 + floor(random() * 5)::int  -- Vie
-      WHEN 6 THEN 12 + floor(random() * 5)::int  -- Sáb
+      WHEN 0 THEN 9 + floor(random() * 4)::int
+      WHEN 1 THEN 11 + floor(random() * 5)::int
+      WHEN 2 THEN 8 + floor(random() * 4)::int
+      WHEN 3 THEN 8 + floor(random() * 4)::int
+      WHEN 4 THEN 9 + floor(random() * 4)::int
+      WHEN 5 THEN 13 + floor(random() * 5)::int
+      WHEN 6 THEN 12 + floor(random() * 5)::int
       ELSE 10
     END;
 
@@ -95,33 +112,33 @@ BEGIN
       -- Reason: Pareto distribution with 11 canonical codes
       v_rand := random();
       v_reason := CASE
-        WHEN v_rand < 0.25 THEN 'end_of_day'        -- 25% sobreproducción al cierre
-        WHEN v_rand < 0.43 THEN 'expiry'             -- 18% caducidad
-        WHEN v_rand < 0.58 THEN 'kitchen_error'      -- 15% errores de cocina
-        WHEN v_rand < 0.68 THEN 'spillage'           -- 10% derrames
-        WHEN v_rand < 0.76 THEN 'over_production'    --  8% sobreproducción prep
-        WHEN v_rand < 0.83 THEN 'broken'             --  7% rotura
-        WHEN v_rand < 0.89 THEN 'courtesy'           --  6% cortesías
-        WHEN v_rand < 0.93 THEN 'plate_waste'        --  4% resto de plato
-        WHEN v_rand < 0.96 THEN 'expired'            --  3% producto vencido
-        WHEN v_rand < 0.98 THEN 'theft'              --  2% robo/consumo
-        ELSE 'other'                                  --  2% otros
+        WHEN v_rand < 0.25 THEN 'end_of_day'
+        WHEN v_rand < 0.43 THEN 'expiry'
+        WHEN v_rand < 0.58 THEN 'kitchen_error'
+        WHEN v_rand < 0.68 THEN 'spillage'
+        WHEN v_rand < 0.76 THEN 'over_production'
+        WHEN v_rand < 0.83 THEN 'broken'
+        WHEN v_rand < 0.89 THEN 'courtesy'
+        WHEN v_rand < 0.93 THEN 'plate_waste'
+        WHEN v_rand < 0.96 THEN 'expired'
+        WHEN v_rand < 0.98 THEN 'theft'
+        ELSE 'other'
       END;
 
       -- Hour: peaks during service
       v_hour_rand := random();
       v_hour := CASE
-        WHEN v_hour_rand < 0.05 THEN 6 + floor(random() * 2)::int   -- Early prep
-        WHEN v_hour_rand < 0.20 THEN 8 + floor(random() * 3)::int   -- Morning prep
-        WHEN v_hour_rand < 0.45 THEN 11 + floor(random() * 3)::int  -- Lunch service
-        WHEN v_hour_rand < 0.55 THEN 14 + floor(random() * 3)::int  -- Afternoon
-        WHEN v_hour_rand < 0.75 THEN 17 + floor(random() * 3)::int  -- Dinner service
-        WHEN v_hour_rand < 0.90 THEN 20 + floor(random() * 2)::int  -- Late dinner
-        ELSE 22 + floor(random() * 2)::int                           -- Close
+        WHEN v_hour_rand < 0.05 THEN 6 + floor(random() * 2)::int
+        WHEN v_hour_rand < 0.20 THEN 8 + floor(random() * 3)::int
+        WHEN v_hour_rand < 0.45 THEN 11 + floor(random() * 3)::int
+        WHEN v_hour_rand < 0.55 THEN 14 + floor(random() * 3)::int
+        WHEN v_hour_rand < 0.75 THEN 17 + floor(random() * 3)::int
+        WHEN v_hour_rand < 0.90 THEN 20 + floor(random() * 2)::int
+        ELSE 22 + floor(random() * 2)::int
       END;
       v_minute := floor(random() * 60)::int;
 
-      -- Value: exponential distribution (most events small)
+      -- Value: exponential distribution
       v_rand := random();
       v_value := CASE
         WHEN v_rand < 0.50 THEN ROUND((2 + random() * 10)::numeric, 2)
@@ -135,18 +152,17 @@ BEGIN
       -- Item: cycle through real items
       v_item_idx := ((v_i + EXTRACT(DOY FROM v_day)::int) % v_item_count) + 1;
 
-      -- Profile: distribute across team members (weighted — some log more)
+      -- Profile: distribute across team members (weighted)
       IF v_profile_count > 0 THEN
-        -- Senior staff log more waste (first profiles in array get more weight)
         v_rand := random();
         IF v_rand < 0.35 THEN
-          v_profile_idx := 1;  -- Lead cook/manager logs ~35%
+          v_profile_idx := 1;
         ELSIF v_rand < 0.60 THEN
-          v_profile_idx := LEAST(2, v_profile_count);  -- Second cook ~25%
+          v_profile_idx := LEAST(2, v_profile_count);
         ELSIF v_rand < 0.80 THEN
-          v_profile_idx := LEAST(3, v_profile_count);  -- Third ~20%
+          v_profile_idx := LEAST(3, v_profile_count);
         ELSE
-          v_profile_idx := LEAST(floor(random() * v_profile_count)::int + 1, v_profile_count);  -- Rest ~20%
+          v_profile_idx := LEAST(floor(random() * v_profile_count)::int + 1, v_profile_count);
         END IF;
       ELSE
         v_profile_idx := 0;
@@ -172,5 +188,5 @@ BEGIN
     v_day := v_day + 1;
   END LOOP;
 
-  RAISE NOTICE 'Waste seed complete for location %', v_loc_id;
+  RAISE NOTICE 'Waste seed v2 complete for location %', v_loc_id;
 END $$;

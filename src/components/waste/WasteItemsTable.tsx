@@ -22,20 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { WasteItem, WasteReason } from '@/hooks/useWasteData';
+import { REASON_LABELS } from '@/hooks/useWasteData';
 
-const REASON_LABELS: Record<WasteReason, string> = {
-  spillage: 'Spillage',
-  expiry: 'Expiry',
-  kitchen_error: 'Kitchen Error',
-  courtesy: 'Courtesy',
-  broken: 'Broken',
-  end_of_day: 'End of day',
-  expired: 'Expired',
-  theft: 'Theft',
-  other: 'Other'
-};
-
-const REASON_OPTIONS: WasteReason[] = ['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'expired', 'theft', 'other'];
+const REASON_OPTIONS: WasteReason[] = ['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'over_production', 'plate_waste', 'expired', 'theft', 'other'];
 
 interface WasteItemsTableProps {
   items: WasteItem[];
@@ -106,9 +95,9 @@ export function WasteItemsTable({
         <CardContent className="py-16">
           <div className="flex flex-col items-center justify-center text-center">
             <Search className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No waste data found</h3>
+            <h3 className="text-lg font-semibold mb-2">Sin datos de merma</h3>
             <p className="text-sm text-muted-foreground max-w-md">
-              No waste events recorded for the selected period and location.
+              No se registraron mermas en el período y local seleccionados.
             </p>
           </div>
         </CardContent>
@@ -120,7 +109,7 @@ export function WasteItemsTable({
     <Card className="border-border">
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-sm font-medium text-foreground">% of total waste</p>
+          <p className="text-sm font-medium text-foreground">% del total de merma</p>
           <div className="flex items-center gap-2">
             {/* Reason Filter */}
             <Select
@@ -131,7 +120,7 @@ export function WasteItemsTable({
                 <SelectValue placeholder="All reasons" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
-                <SelectItem value="all">All reasons</SelectItem>
+                <SelectItem value="all">Todos los motivos</SelectItem>
                 {REASON_OPTIONS.map(reason => (
                   <SelectItem key={reason} value={reason}>
                     {REASON_LABELS[reason]}
@@ -156,7 +145,7 @@ export function WasteItemsTable({
             <div className="relative w-full sm:w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by item name"
+                placeholder="Buscar por nombre"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-9 text-sm"
@@ -171,23 +160,23 @@ export function WasteItemsTable({
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b">
                 <TableHead className="text-xs font-medium text-muted-foreground min-w-[180px]">
-                  Items
+                  Producto
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">
-                  Quantity
+                  Cantidad
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">
-                  Value
+                  Valor
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground w-24">
-                  Type
+                  Tipo
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground w-32">
-                  Top reason by value
+                  Motivo principal
                 </TableHead>
                 <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">
                   <div className="flex items-center justify-end gap-1">
-                    % of sales
+                    % de ventas
                     <ArrowDown className="h-3 w-3" />
                   </div>
                 </TableHead>
@@ -209,7 +198,7 @@ export function WasteItemsTable({
                       {currency}{item.value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="py-3 text-sm text-muted-foreground">
-                      {item.type === 'ingredient' ? 'Ingredient' : 'Menu item'}
+                      {item.type === 'ingredient' ? 'Ingrediente' : 'Menú'}
                     </TableCell>
                     <TableCell className="py-3">
                       <Badge
@@ -240,7 +229,7 @@ export function WasteItemsTable({
             <TableFooter>
               <TableRow className="bg-transparent hover:bg-transparent border-t">
                 <TableCell className="py-3 text-sm text-muted-foreground" colSpan={2}>
-                  SUM
+                  TOTAL
                 </TableCell>
                 <TableCell className="py-3 text-right text-sm font-medium tabular-nums">
                   {currency}{totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

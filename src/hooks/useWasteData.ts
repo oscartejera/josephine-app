@@ -8,7 +8,7 @@ import { format, eachDayOfInterval, parseISO, differenceInDays, subDays } from '
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
-export type WasteReason = 'spillage' | 'expiry' | 'kitchen_error' | 'courtesy' | 'broken' | 'end_of_day' | 'expired' | 'theft' | 'other';
+export type WasteReason = 'spillage' | 'expiry' | 'kitchen_error' | 'courtesy' | 'broken' | 'end_of_day' | 'over_production' | 'plate_waste' | 'expired' | 'theft' | 'other';
 
 export interface WasteMetrics {
   totalSales: number;
@@ -24,6 +24,8 @@ export interface WasteTrendData {
   courtesy: number;
   broken: number;
   end_of_day: number;
+  over_production: number;
+  plate_waste: number;
   expired: number;
   theft: number;
   other: number;
@@ -61,15 +63,17 @@ export interface WasteItem {
 }
 
 export const REASON_LABELS: Record<WasteReason, string> = {
-  spillage: 'Spillage',
-  expiry: 'Expiry',
-  kitchen_error: 'Kitchen Error',
-  courtesy: 'Courtesy',
-  broken: 'Broken',
-  end_of_day: 'End of day',
-  expired: 'Expired',
-  theft: 'Theft',
-  other: 'Other'
+  spillage: 'Derrame',
+  expiry: 'Caducidad',
+  kitchen_error: 'Error de cocina',
+  courtesy: 'Cortesía',
+  broken: 'Rotura',
+  end_of_day: 'Fin de día',
+  over_production: 'Sobreproducción',
+  plate_waste: 'Resto de plato',
+  expired: 'Producto vencido',
+  theft: 'Robo/Consumo',
+  other: 'Otros'
 };
 
 // Normalize reason from various formats to standard WasteReason (8 canonical codes)
@@ -79,7 +83,7 @@ function normalizeReason(rawReason: string | null | undefined): WasteReason {
   const lower = rawReason.toLowerCase().trim();
 
   // Canonical codes — pass through directly
-  const canonical: WasteReason[] = ['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'expired', 'theft', 'other'];
+  const canonical: WasteReason[] = ['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'over_production', 'plate_waste', 'expired', 'theft', 'other'];
   if (canonical.includes(lower as WasteReason)) return lower as WasteReason;
 
   // Spanish / legacy aliases
@@ -88,7 +92,9 @@ function normalizeReason(rawReason: string | null | undefined): WasteReason {
   if (lower === 'error cocina' || lower === 'error_cocina' || lower.includes('preparación')) return 'kitchen_error';
   if (lower === 'cortesía' || lower === 'cortesia' || lower === 'invitación' || lower.includes('devolución')) return 'courtesy';
   if (lower === 'rotura' || lower === 'dañado' || lower === 'deterioro') return 'broken';
-  if (lower === 'fin de día' || lower === 'sobreproducción' || lower === 'end of day') return 'end_of_day';
+  if (lower === 'fin de día' || lower === 'end of day') return 'end_of_day';
+  if (lower === 'sobreproducción' || lower === 'overproduction') return 'over_production';
+  if (lower === 'resto de plato' || lower === 'plate waste' || lower === 'plate_return') return 'plate_waste';
   if (lower === 'robo' || lower === 'hurto') return 'theft';
 
   return 'other';
@@ -159,7 +165,7 @@ export function useWasteData(
       // Fetch waste events with inventory items
       let wasteQuery = supabase
         .from('waste_events')
-        .select('id, location_id, waste_value, reason, quantity, created_at, inventory_item_id, inventory_items(name, category_name)')
+        .select('id, location_id, waste_value, reason, quantity, created_at, logged_by, inventory_item_id, inventory_items(name, category_name)')
         .gte('created_at', `${fromDate}T00:00:00`)
         .lte('created_at', `${toDate}T23:59:59`);
 
@@ -224,6 +230,8 @@ export function useWasteData(
           courtesy: 0,
           broken: 0,
           end_of_day: 0,
+          over_production: 0,
+          plate_waste: 0,
           expired: 0,
           theft: 0,
           other: 0
@@ -244,7 +252,7 @@ export function useWasteData(
 
       // Calculate by reason
       const reasonMap = new Map<WasteReason, { count: number; value: number }>();
-      (['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'expired', 'theft', 'other'] as WasteReason[]).forEach(r => {
+      (['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'over_production', 'plate_waste', 'expired', 'theft', 'other'] as WasteReason[]).forEach(r => {
         reasonMap.set(r, { count: 0, value: 0 });
       });
 

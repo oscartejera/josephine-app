@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from 'react';
+import { REASON_LABELS } from './useWasteData';
 import type { WasteMetrics, WasteByReason, WasteItem } from './useWasteData';
 
 export interface WasteAlert {
@@ -52,8 +53,8 @@ export function useWasteAlerts({
       alerts.push({
         id: 'waste-spike-critical',
         severity: 'critical',
-        title: 'Waste Spike Detected',
-        message: `Waste is at ${currentPct.toFixed(1)}% of sales — ${(currentPct / avgWastePercent).toFixed(1)}× above the ${avgWastePercent}% average. Immediate review recommended.`,
+        title: 'Pico de merma detectado',
+        message: `La merma está en ${currentPct.toFixed(1)}% de ventas — ${(currentPct / avgWastePercent).toFixed(1)}× por encima del promedio de ${avgWastePercent}%. Revisión inmediata recomendada.`,
         metric: 'waste_pct',
         value: currentPct,
         threshold: criticalThreshold,
@@ -62,8 +63,8 @@ export function useWasteAlerts({
       alerts.push({
         id: 'waste-spike-warning',
         severity: 'warning',
-        title: 'Waste Above Average',
-        message: `Waste is at ${currentPct.toFixed(1)}% of sales, above the ${avgWastePercent}% target. Monitor closely.`,
+        title: 'Merma por encima del promedio',
+        message: `La merma está en ${currentPct.toFixed(1)}% de ventas, por encima del objetivo de ${avgWastePercent}%. Monitorizar de cerca.`,
         metric: 'waste_pct',
         value: currentPct,
         threshold: warningThreshold,
@@ -74,11 +75,12 @@ export function useWasteAlerts({
     if (topItems?.length) {
       const worstItem = topItems[0];
       if (worstItem.percentOfSales >= 0.5) {
+        const reasonLabel = REASON_LABELS[worstItem.topReason as keyof typeof REASON_LABELS] || worstItem.topReason;
         alerts.push({
           id: `item-spike-${worstItem.itemId}`,
           severity: worstItem.percentOfSales >= 1.0 ? 'critical' : 'warning',
-          title: `${worstItem.itemName} — High Waste`,
-          message: `€${worstItem.value.toFixed(0)} wasted (${worstItem.percentOfSales.toFixed(1)}% of sales). Top reason: ${worstItem.topReason}.`,
+          title: `${worstItem.itemName} — merma alta`,
+          message: `€${worstItem.value.toFixed(0)} de merma (${worstItem.percentOfSales.toFixed(1)}% de ventas). Motivo principal: ${reasonLabel}.`,
           metric: 'item_waste',
           value: worstItem.value,
         });
@@ -92,8 +94,8 @@ export function useWasteAlerts({
         alerts.push({
           id: 'theft-alert',
           severity: 'critical',
-          title: 'Theft Reports',
-          message: `${theft.count} theft event(s) totalling €${theft.value.toFixed(0)}. Review security footage.`,
+          title: 'Alertas de robo/consumo',
+          message: `${theft.count} evento(s) de robo/consumo por un total de €${theft.value.toFixed(0)}. Revisa las cámaras de seguridad.`,
           metric: 'theft_value',
           value: theft.value,
         });
@@ -107,8 +109,8 @@ export function useWasteAlerts({
         alerts.push({
           id: 'expired-alert',
           severity: 'warning',
-          title: 'High Expiration Count',
-          message: `${expired.count} items expired (€${expired.value.toFixed(0)}). Review FIFO procedures and par levels.`,
+          title: 'Alto volumen de caducidades',
+          message: `${expired.count} productos caducados (€${expired.value.toFixed(0)}). Revisa los procedimientos FIFO y los niveles de stock.`,
           metric: 'expired_count',
           value: expired.count,
         });
@@ -123,8 +125,8 @@ export function useWasteAlerts({
         alerts.push({
           id: 'overproduction-alert',
           severity: 'info',
-          title: 'Overproduction Pattern',
-          message: `${Math.round((eod.value / totalValue) * 100)}% of waste is end-of-day. Consider reducing batch sizes or adjusting prep schedules.`,
+          title: 'Patrón de sobreproducción',
+          message: `${Math.round((eod.value / totalValue) * 100)}% de la merma es de fin de día. Considera reducir el tamaño de las partidas o ajustar los horarios de preparación.`,
           metric: 'eod_ratio',
           value: eod.value / totalValue,
         });

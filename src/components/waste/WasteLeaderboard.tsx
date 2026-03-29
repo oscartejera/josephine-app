@@ -41,16 +41,16 @@ export function WasteLeaderboard({
   return (
     <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">Waste Logs Leaderboard</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">Ranking de Registros</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="text-xs font-medium text-muted-foreground h-9">Team Member</TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Waste Logs</TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground h-9">Location</TableHead>
-              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Logged waste value</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground h-9">Miembro del equipo</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Registros</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground h-9">Local</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Valor registrado</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -81,7 +81,7 @@ export function WasteLeaderboard({
           <TableFooter>
             <TableRow className="bg-transparent hover:bg-transparent">
               <TableCell colSpan={3} className="text-right text-xs text-muted-foreground font-medium py-2.5">
-                SUM
+                TOTAL
               </TableCell>
               <TableCell className="text-right text-sm font-medium py-2.5">
                 {currency}{totalValue.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

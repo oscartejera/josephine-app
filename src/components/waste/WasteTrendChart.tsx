@@ -20,6 +20,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { WasteTrendData, WasteReason, WasteByReason } from '@/hooks/useWasteData';
+import { REASON_LABELS } from '@/hooks/useWasteData';
 
 const REASON_COLORS: Record<WasteReason, string> = {
   spillage: '#06b6d4',      // Cyan
@@ -28,21 +29,11 @@ const REASON_COLORS: Record<WasteReason, string> = {
   courtesy: '#a855f7',      // Purple
   broken: '#22c55e',        // Green
   end_of_day: '#3b82f6',    // Blue
+  over_production: '#14b8a6', // Teal
+  plate_waste: '#ec4899',   // Pink
   expired: '#84cc16',       // Lime
   theft: '#f97316',         // Orange
   other: '#6b7280'          // Gray
-};
-
-const REASON_LABELS: Record<WasteReason, string> = {
-  spillage: 'Spillage',
-  expiry: 'Expiry',
-  kitchen_error: 'Kitchen Error',
-  courtesy: 'Courtesy',
-  broken: 'Broken',
-  end_of_day: 'End of day',
-  expired: 'Expired',
-  theft: 'Theft',
-  other: 'Other'
 };
 
 interface WasteTrendChartProps {
@@ -150,8 +141,8 @@ export function WasteTrendChart({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">Reason</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Logged</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">Motivo</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Registrados</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

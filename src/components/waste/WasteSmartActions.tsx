@@ -160,8 +160,8 @@ function generateActions(
       id: 'fifo-check',
       priority: 'medium',
       title: 'Auditoría FIFO semanal',
-      description: 'Programa una revisión FIFO de las cámaras cada lunes. El 30-50% del spoilage se elimina con una rotación correcta.',
-      expectedImpact: 'Reducir spoilage un 30-50%',
+      description: 'Programa una revisión FIFO de las cámaras cada lunes. El 30-50% del desperdicio por caducidad se elimina con una rotación correcta.',
+      expectedImpact: 'Reducir caducidades un 30-50%',
       category: 'inventory',
     });
   }

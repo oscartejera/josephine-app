@@ -69,18 +69,18 @@ export function WasteCategoryDonut({
     <Card className="border-border">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-foreground">Waste by ingredient category</CardTitle>
+          <CardTitle className="text-sm font-medium text-foreground">Merma por categoría de ingrediente</CardTitle>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               className="h-7 text-xs gap-1.5 font-normal"
             >
-              Category
+              Categoría
               <ChevronDown className="h-3 w-3" />
             </Button>
             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground">
-              See all
+              Ver todo
               <ArrowRight className="h-3 w-3" />
             </Button>
           </div>
@@ -111,7 +111,7 @@ export function WasteCategoryDonut({
                   borderRadius: '6px',
                   fontSize: '12px'
                 }}
-                formatter={(value: number) => [`${currency}${value.toFixed(2)}`, 'Value']}
+                formatter={(value: number) => [`${currency}${value.toFixed(2)}`, 'Valor']}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -122,9 +122,9 @@ export function WasteCategoryDonut({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-muted-foreground h-9">Item category</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">% of total waste</TableHead>
-                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Value</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground h-9">Categoría</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">% del total</TableHead>
+                <TableHead className="text-xs font-medium text-muted-foreground text-right h-9">Valor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
