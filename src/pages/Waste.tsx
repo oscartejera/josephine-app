@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { startOfMonth, endOfMonth, parseISO } from 'date-fns';
-import { FileDown } from 'lucide-react';
+import { FileDown, BarChart3, LineChart, Building2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import {
   WasteHeader,
@@ -30,6 +31,8 @@ import {
   WasteImpactSimulator,
   WasteRecipeCost,
   WasteAnnualReport,
+  WasteQuickLog,
+  WasteEndOfDay,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
@@ -53,10 +56,31 @@ import { useApp } from '@/contexts/AppContext';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
+type ViewMode = 'simple' | 'advanced' | 'executive';
+
+const VIEW_MODE_KEY = 'josephine_waste_view';
+const VIEW_MODES: { value: ViewMode; label: string; icon: React.ReactNode; desc: string }[] = [
+  { value: 'simple',    label: 'Simple',    icon: <BarChart3 className="h-3.5 w-3.5" />,  desc: 'KPIs + tendencias + registro' },
+  { value: 'advanced',  label: 'Avanzado',  icon: <LineChart className="h-3.5 w-3.5" />,  desc: '+ financiero + predicción + patrones' },
+  { value: 'executive', label: 'Ejecutivo', icon: <Building2 className="h-3.5 w-3.5" />, desc: '+ informe anual + benchmarks' },
+];
+
 export default function Waste() {
   const [searchParams] = useSearchParams();
   const today = new Date();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Progressive disclosure — persisted view mode
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    try { return (localStorage.getItem(VIEW_MODE_KEY) as ViewMode) || 'simple'; }
+    catch { return 'simple'; }
+  });
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_MODE_KEY, mode);
+  };
+  const showAdvanced = viewMode === 'advanced' || viewMode === 'executive';
+  const showExecutive = viewMode === 'executive';
 
   // Initialize from query params if present
   const initialFrom = searchParams.get('start_date')
@@ -194,12 +218,23 @@ export default function Waste() {
     }
   }, [metrics, wasteTarget, items, byReason, byCategory, shiftData, patterns, dateRange]);
 
+  // Nudge: no data in 3+ days
+  const lastEventDate = useMemo(() => {
+    if (!rawEvents || rawEvents.length === 0) return null;
+    const dates = rawEvents.map(e => new Date(e.created_at).getTime());
+    return new Date(Math.max(...dates));
+  }, [rawEvents]);
+  const daysSinceLastLog = lastEventDate
+    ? Math.floor((Date.now() - lastEventDate.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const showNudge = !isLoading && (rawEvents.length === 0 || (daysSinceLastLog !== null && daysSinceLastLog >= 3));
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Demo Data Warning */}
       <DemoDataBanner />
 
-      {/* Header with Log Waste + Export PDF buttons */}
+      {/* Header with view mode + action buttons */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
           <WasteHeader
@@ -212,7 +247,7 @@ export default function Waste() {
             isConnected={isConnected}
           />
         </div>
-        <div className="flex-shrink-0 lg:pt-6 flex items-center gap-2">
+        <div className="flex-shrink-0 lg:pt-6 flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -221,14 +256,61 @@ export default function Waste() {
             className="gap-1.5"
           >
             <FileDown className="h-4 w-4" />
-            Exportar PDF
+            PDF
           </Button>
+          <WasteEndOfDay
+            defaultLocationId={selectedLocations[0]}
+            onSuccess={handleWasteLogged}
+          />
+          <WasteQuickLog
+            defaultLocationId={selectedLocations[0]}
+            onSuccess={handleWasteLogged}
+          />
           <LogWasteDialog
             onSuccess={handleWasteLogged}
             defaultLocationId={selectedLocations[0]}
           />
         </div>
       </div>
+
+      {/* View Mode Selector — Progressive Disclosure */}
+      <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl w-fit">
+        {VIEW_MODES.map(mode => (
+          <button
+            key={mode.value}
+            onClick={() => handleViewChange(mode.value)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              viewMode === mode.value
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            title={mode.desc}
+          >
+            {mode.icon}
+            {mode.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Nudge: no recent data */}
+      {showNudge && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="py-3 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {rawEvents.length === 0
+                  ? '⚠️ Sin registros de merma en este período'
+                  : `⚠️ Sin registros en los últimos ${daysSinceLastLog} días`
+                }
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Los datos de análisis dependen de registros regulares. Usa "Quick Log" o "Cierre de Merma" arriba para registrar rápidamente.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards Row — with target + period deltas */}
       <WasteKPICards
@@ -241,55 +323,64 @@ export default function Waste() {
         isLoading={isLoading}
       />
 
-      {/* P&L Impact (Sprint 4) */}
+      {/* P&L Impact — always visible */}
       <WastePnLImpact
         metrics={metrics}
         wasteTarget={wasteTarget}
         isLoading={isLoading}
       />
 
-      {/* Phase 4: Variance Analysis + Impact Simulator */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <WasteVarianceAnalysis result={varianceResult} isLoading={isLoading} />
-        <WasteImpactSimulator result={simulationResult} isLoading={isLoading} />
-      </div>
+      {/* ── ADVANCED+ ── */}
+      {showAdvanced && (
+        <>
+          {/* Phase 4: Variance Analysis + Impact Simulator */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <WasteVarianceAnalysis result={varianceResult} isLoading={isLoading} />
+            <WasteImpactSimulator result={simulationResult} isLoading={isLoading} />
+          </div>
+        </>
+      )}
 
-      {/* Phase 2: Predictive Forecast + Smart Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <WasteForecastCard
-          dailyForecasts={dailyForecasts}
-          summary={forecastSummary}
-          isReliable={forecastReliable}
-          isLoading={isLoading}
-        />
-        <WasteSmartActions
-          metrics={metrics}
-          wasteTarget={wasteTarget}
-          patterns={patterns}
-          forecastSummary={forecastReliable ? forecastSummary : null}
-          items={items}
-          byReason={byReason}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Phase 2: Prep Optimization */}
-      <WastePrepOptimizer result={prepResult} isLoading={isLoading} />
-
-      {/* Alert Banners — spike detection */}
+      {/* Alert Banners — always visible */}
       <WasteAlertBanner alerts={alerts} />
 
-      {/* ME ↔ Waste Cross-Reference */}
-      <WasteMECrossRef
-        wasteItems={items}
-        meItems={meItems}
-        isLoading={isLoading || meLoading}
-      />
+      {showAdvanced && (
+        <>
+          {/* Phase 2: Predictive Forecast + Smart Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <WasteForecastCard
+              dailyForecasts={dailyForecasts}
+              summary={forecastSummary}
+              isReliable={forecastReliable}
+              isLoading={isLoading}
+            />
+            <WasteSmartActions
+              metrics={metrics}
+              wasteTarget={wasteTarget}
+              patterns={patterns}
+              forecastSummary={forecastReliable ? forecastSummary : null}
+              items={items}
+              byReason={byReason}
+              isLoading={isLoading}
+            />
+          </div>
 
-      {/* Phase 4: Waste-Adjusted Recipe Cost */}
-      <WasteRecipeCost result={recipeCostResult} isLoading={isLoading || meLoading} />
+          {/* Phase 2: Prep Optimization */}
+          <WastePrepOptimizer result={prepResult} isLoading={isLoading} />
 
-      {/* Charts Row - Trend and By Reason Value */}
+          {/* ME ↔ Waste Cross-Reference */}
+          <WasteMECrossRef
+            wasteItems={items}
+            meItems={meItems}
+            isLoading={isLoading || meLoading}
+          />
+
+          {/* Phase 4: Waste-Adjusted Recipe Cost */}
+          <WasteRecipeCost result={recipeCostResult} isLoading={isLoading || meLoading} />
+        </>
+      )}
+
+      {/* Charts — always visible in Simple */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WasteTrendChart
           trendData={trendData}
@@ -302,31 +393,14 @@ export default function Waste() {
         />
       </div>
 
-      {/* Sprint 3: Heatmap (full width) */}
-      <WasteHeatmap
-        heatmapData={heatmapData}
+      {/* Items Table — always visible */}
+      <WasteItemsTable
+        items={items}
+        totalWastePercent={metrics.wastePercentOfSales}
         isLoading={isLoading}
       />
 
-      {/* Sprint 3: Shift Analysis + Patterns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <WasteShiftAnalysis
-          shiftData={shiftData}
-          isLoading={isLoading}
-        />
-        <WastePatterns
-          patterns={patterns}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Phase 2: Supplier Quality Score */}
-      <WasteSupplierScore result={supplierResult} isLoading={isLoading} />
-
-      {/* Phase 2: Shelf-Life Tracker */}
-      <WasteShelfLifeTracker result={shelfLifeResult} />
-
-      {/* Category Donut and Team Score */}
+      {/* Category Donut + Team Score — always visible */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WasteCategoryDonut
           byCategory={byCategory}
@@ -335,21 +409,55 @@ export default function Waste() {
         <WasteTeamScore result={teamScoreResult} isLoading={isLoading} />
       </div>
 
-      {/* Items Table */}
-      <WasteItemsTable
-        items={items}
-        totalWastePercent={metrics.wastePercentOfSales}
-        isLoading={isLoading}
-      />
+      {/* ── ADVANCED+ ── */}
+      {showAdvanced && (
+        <>
+          <WasteHeatmap
+            heatmapData={heatmapData}
+            isLoading={isLoading}
+          />
 
-      {/* Phase 4: Annual Waste Report */}
-      <WasteAnnualReport result={annualReportResult} isLoading={isLoading} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <WasteShiftAnalysis
+              shiftData={shiftData}
+              isLoading={isLoading}
+            />
+            <WastePatterns
+              patterns={patterns}
+              isLoading={isLoading}
+            />
+          </div>
 
-      {/* Phase 3: Cross-Location Benchmarking (solo si ≥2 locales) */}
-      <WasteBenchmark result={benchmarkResult} isLoading={isLoading} />
+          <WasteSupplierScore result={supplierResult} isLoading={isLoading} />
+          <WasteShelfLifeTracker result={shelfLifeResult} />
+        </>
+      )}
 
-      {/* Phase 3: Auto-Actions & Threshold Config */}
+      {/* ── EXECUTIVE ONLY ── */}
+      {showExecutive && (
+        <>
+          <WasteAnnualReport result={annualReportResult} isLoading={isLoading} />
+          <WasteBenchmark result={benchmarkResult} isLoading={isLoading} />
+        </>
+      )}
+
+      {/* Auto-Actions — always visible (config is lightweight) */}
       <WasteThresholdConfig autoActions={autoActionsResult} wasteTarget={wasteTarget} />
+
+      {/* Upsell banner when in Simple mode */}
+      {viewMode === 'simple' && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-3 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">¿Quieres más insights?</p>
+              <p className="text-xs text-muted-foreground">Cambia a vista "Avanzado" para ver predicciones IA, varianza de coste y optimización de preparación.</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => handleViewChange('advanced')} className="flex-shrink-0">
+              Ver más →
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

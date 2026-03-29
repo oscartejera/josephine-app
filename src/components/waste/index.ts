@@ -24,6 +24,9 @@ export { WasteVarianceAnalysis } from './WasteVarianceAnalysis';
 export { WasteImpactSimulator } from './WasteImpactSimulator';
 export { WasteRecipeCost } from './WasteRecipeCost';
 export { WasteAnnualReport } from './WasteAnnualReport';
+// P0 — Operational fixes
+export { WasteQuickLog } from './WasteQuickLog';
+export { WasteEndOfDay } from './WasteEndOfDay';
 export { LogWasteDialog } from './LogWasteDialog';
 
 
