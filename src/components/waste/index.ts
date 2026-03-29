@@ -10,4 +10,5 @@ export { WasteMECrossRef } from './WasteMECrossRef';
 export { WasteShiftAnalysis } from './WasteShiftAnalysis';
 export { WasteHeatmap } from './WasteHeatmap';
 export { WastePatterns } from './WastePatterns';
+export { WastePnLImpact } from './WastePnLImpact';
 export { LogWasteDialog } from './LogWasteDialog';

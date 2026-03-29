@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { startOfMonth, endOfMonth, parseISO } from 'date-fns';
+import { FileDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import {
   WasteHeader,
   WasteKPICards,
@@ -14,12 +17,14 @@ import {
   WasteShiftAnalysis,
   WasteHeatmap,
   WastePatterns,
+  WastePnLImpact,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
 import { useWasteAlerts } from '@/hooks/useWasteAlerts';
 import { useWasteShiftAnalysis } from '@/hooks/useWasteShiftAnalysis';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
+import { generateWastePDF } from '@/hooks/useWastePDF';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -79,12 +84,34 @@ export default function Waste() {
   // Shift analysis, heatmap, and patterns (Sprint 3)
   const { shiftData, heatmapData, patterns } = useWasteShiftAnalysis(rawEvents);
 
+  // PDF Export handler (Sprint 4)
+  const handleExportPDF = useCallback(() => {
+    try {
+      generateWastePDF({
+        metrics,
+        wasteTarget,
+        items,
+        byReason,
+        byCategory,
+        shiftData,
+        patterns,
+        dateFrom: dateRange.from,
+        dateTo: dateRange.to,
+        locationName: 'Todos los locales',
+      });
+      toast.success('PDF generado', { description: 'El informe se ha descargado correctamente.' });
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      toast.error('Error al generar PDF', { description: 'Inténtalo de nuevo.' });
+    }
+  }, [metrics, wasteTarget, items, byReason, byCategory, shiftData, patterns, dateRange]);
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Demo Data Warning */}
       <DemoDataBanner />
 
-      {/* Header with Log Waste button */}
+      {/* Header with Log Waste + Export PDF buttons */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
           <WasteHeader
@@ -97,7 +124,17 @@ export default function Waste() {
             isConnected={isConnected}
           />
         </div>
-        <div className="flex-shrink-0 lg:pt-6">
+        <div className="flex-shrink-0 lg:pt-6 flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPDF}
+            disabled={isLoading || items.length === 0}
+            className="gap-1.5"
+          >
+            <FileDown className="h-4 w-4" />
+            Exportar PDF
+          </Button>
           <LogWasteDialog
             onSuccess={handleWasteLogged}
             defaultLocationId={selectedLocations[0]}
@@ -113,6 +150,13 @@ export default function Waste() {
         wasteTarget={wasteTarget}
         prevTotalWaste={prevMetrics?.totalWaste}
         prevWastePercent={prevMetrics?.wastePercent}
+        isLoading={isLoading}
+      />
+
+      {/* P&L Impact (Sprint 4) */}
+      <WastePnLImpact
+        metrics={metrics}
+        wasteTarget={wasteTarget}
         isLoading={isLoading}
       />
 
