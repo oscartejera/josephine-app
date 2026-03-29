@@ -10,10 +10,12 @@ import {
   WasteLeaderboard,
   WasteItemsTable,
   WasteAlertBanner,
+  WasteMECrossRef,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
 import { useWasteAlerts } from '@/hooks/useWasteAlerts';
+import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -40,10 +42,14 @@ export default function Waste() {
     initialLocation && initialLocation !== 'all' ? [initialLocation] : []
   );
 
+  // Configurable waste target (default 3%)
+  const [wasteTarget] = useState(3.0);
+
   const {
     isLoading,
     isConnected,
     metrics,
+    prevMetrics,
     trendData,
     byReason,
     byCategory,
@@ -52,7 +58,6 @@ export default function Waste() {
   } = useWasteData(dateRange, dateMode, selectedLocations);
 
   const handleWasteLogged = () => {
-    // Trigger refresh by updating key
     setRefreshKey(k => k + 1);
   };
 
@@ -62,6 +67,9 @@ export default function Waste() {
     byReason,
     topItems: items,
   });
+
+  // Menu Engineering data for cross-reference
+  const { items: meItems, loading: meLoading } = useMenuEngineeringData();
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -89,16 +97,26 @@ export default function Waste() {
         </div>
       </div>
 
-      {/* KPI Cards Row */}
+      {/* KPI Cards Row — with target + period deltas */}
       <WasteKPICards
         totalSales={metrics.totalSales}
         totalAccountedWaste={metrics.totalAccountedWaste}
         wastePercentOfSales={metrics.wastePercentOfSales}
+        wasteTarget={wasteTarget}
+        prevTotalWaste={prevMetrics?.totalWaste}
+        prevWastePercent={prevMetrics?.wastePercent}
         isLoading={isLoading}
       />
 
       {/* Alert Banners — spike detection */}
       <WasteAlertBanner alerts={alerts} />
+
+      {/* ME ↔ Waste Cross-Reference */}
+      <WasteMECrossRef
+        wasteItems={items}
+        meItems={meItems}
+        isLoading={isLoading || meLoading}
+      />
 
       {/* Charts Row - Trend and By Reason Value */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

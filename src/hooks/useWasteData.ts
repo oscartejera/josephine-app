@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toLegacyDataSource } from '@/data';
-import { format, eachDayOfInterval, parseISO } from 'date-fns';
+import { format, eachDayOfInterval, parseISO, differenceInDays, subDays } from 'date-fns';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -109,6 +109,7 @@ export function useWasteData(
     totalAccountedWaste: 0,
     wastePercentOfSales: 0
   });
+  const [prevMetrics, setPrevMetrics] = useState<{ totalWaste: number; wastePercent: number } | null>(null);
   const [trendData, setTrendData] = useState<WasteTrendData[]>([]);
   const [byReason, setByReason] = useState<WasteByReason[]>([]);
   const [byCategory, setByCategory] = useState<WasteByCategory[]>([]);
@@ -169,6 +170,37 @@ export function useWasteData(
 
       const totalAccountedWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
       const wastePercentOfSales = totalSales > 0 ? (totalAccountedWaste / totalSales) * 100 : 0;
+
+      // ── Fetch previous period for delta comparison ──
+      const periodDays = differenceInDays(dateRange.to, dateRange.from) + 1;
+      const prevFrom = format(subDays(dateRange.from, periodDays), 'yyyy-MM-dd');
+      const prevTo = format(subDays(dateRange.from, 1), 'yyyy-MM-dd');
+
+      let prevSalesQuery = supabase
+        .from('sales_daily_unified' as any)
+        .select('net_sales')
+        .eq('data_source', dsLegacy)
+        .gte('date', prevFrom)
+        .lte('date', prevTo);
+      if (locationIds.length > 0 && locationIds.length < locations.length) {
+        prevSalesQuery = prevSalesQuery.in('location_id', locationIds);
+      }
+      const { data: prevSalesData } = await prevSalesQuery;
+      const prevTotalSales = (prevSalesData || []).reduce((sum: number, d: any) => sum + (d.net_sales || 0), 0);
+
+      let prevWasteQuery = supabase
+        .from('waste_events')
+        .select('waste_value')
+        .gte('created_at', `${prevFrom}T00:00:00`)
+        .lte('created_at', `${prevTo}T23:59:59`);
+      if (locationIds.length > 0 && locationIds.length < locations.length) {
+        prevWasteQuery = prevWasteQuery.in('location_id', locationIds);
+      }
+      const { data: prevWasteData } = await prevWasteQuery;
+      const prevTotalWaste = (prevWasteData || []).reduce((sum: number, w: any) => sum + (w.waste_value || 0), 0);
+      const prevWastePercent = prevTotalSales > 0 ? (prevTotalWaste / prevTotalSales) * 100 : 0;
+
+      setPrevMetrics(prevTotalWaste > 0 ? { totalWaste: prevTotalWaste, wastePercent: prevWastePercent } : null);
 
       setMetrics({
         totalSales,
@@ -394,6 +426,7 @@ export function useWasteData(
     isLoading,
     isConnected,
     metrics,
+    prevMetrics,
     trendData,
     byReason,
     byCategory,

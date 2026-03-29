@@ -24,6 +24,10 @@ import {
 import type { WasteItem, WasteReason } from '@/hooks/useWasteData';
 
 const REASON_LABELS: Record<WasteReason, string> = {
+  spillage: 'Spillage',
+  expiry: 'Expiry',
+  kitchen_error: 'Kitchen Error',
+  courtesy: 'Courtesy',
   broken: 'Broken',
   end_of_day: 'End of day',
   expired: 'Expired',
@@ -31,7 +35,7 @@ const REASON_LABELS: Record<WasteReason, string> = {
   other: 'Other'
 };
 
-const REASON_OPTIONS: WasteReason[] = ['broken', 'end_of_day', 'expired', 'theft', 'other'];
+const REASON_OPTIONS: WasteReason[] = ['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'expired', 'theft', 'other'];
 
 interface WasteItemsTableProps {
   items: WasteItem[];

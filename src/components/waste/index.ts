@@ -6,4 +6,5 @@ export { WasteCategoryDonut } from './WasteCategoryDonut';
 export { WasteLeaderboard } from './WasteLeaderboard';
 export { WasteItemsTable } from './WasteItemsTable';
 export { WasteAlertBanner } from './WasteAlertBanner';
+export { WasteMECrossRef } from './WasteMECrossRef';
 export { LogWasteDialog } from './LogWasteDialog';
