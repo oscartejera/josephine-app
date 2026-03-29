@@ -20,6 +20,8 @@ import {
   WastePnLImpact,
   WasteForecastCard,
   WasteSmartActions,
+  WastePrepOptimizer,
+  WasteSupplierScore,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
@@ -28,6 +30,8 @@ import { useWasteShiftAnalysis } from '@/hooks/useWasteShiftAnalysis';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { generateWastePDF } from '@/hooks/useWastePDF';
 import { useWasteForecast } from '@/hooks/useWasteForecast';
+import { useWastePrepOptimization } from '@/hooks/useWastePrepOptimization';
+import { useWasteSupplierScore } from '@/hooks/useWasteSupplierScore';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -93,6 +97,12 @@ export default function Waste() {
     wasteTarget,
     metrics.totalSales,
   );
+
+  // Prep Optimization — Phase 2
+  const prepResult = useWastePrepOptimization(rawEvents, metrics.totalSales);
+
+  // Supplier Quality Score — Phase 2
+  const supplierResult = useWasteSupplierScore(rawEvents);
 
   // PDF Export handler (Sprint 4)
   const handleExportPDF = useCallback(() => {
@@ -189,6 +199,9 @@ export default function Waste() {
         />
       </div>
 
+      {/* Phase 2: Prep Optimization */}
+      <WastePrepOptimizer result={prepResult} isLoading={isLoading} />
+
       {/* Alert Banners — spike detection */}
       <WasteAlertBanner alerts={alerts} />
 
@@ -229,6 +242,9 @@ export default function Waste() {
           isLoading={isLoading}
         />
       </div>
+
+      {/* Phase 2: Supplier Quality Score */}
+      <WasteSupplierScore result={supplierResult} isLoading={isLoading} />
 
       {/* Category Donut and Leaderboard */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

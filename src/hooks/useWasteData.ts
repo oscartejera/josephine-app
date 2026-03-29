@@ -165,7 +165,7 @@ export function useWasteData(
       // Fetch waste events with inventory items
       let wasteQuery = supabase
         .from('waste_events')
-        .select('id, location_id, waste_value, reason, quantity, created_at, logged_by, inventory_item_id, inventory_items(name, category_name)')
+        .select('id, location_id, waste_value, reason, quantity, created_at, logged_by, inventory_item_id, inventory_items(name, category_name, supplier_name)')
         .gte('created_at', `${fromDate}T00:00:00`)
         .lte('created_at', `${toDate}T23:59:59`);
 

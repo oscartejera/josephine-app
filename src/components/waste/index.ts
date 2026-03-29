@@ -13,4 +13,7 @@ export { WastePatterns } from './WastePatterns';
 export { WastePnLImpact } from './WastePnLImpact';
 export { WasteForecastCard } from './WasteForecastCard';
 export { WasteSmartActions } from './WasteSmartActions';
+export { WastePrepOptimizer } from './WastePrepOptimizer';
+export { WasteSupplierScore } from './WasteSupplierScore';
 export { LogWasteDialog } from './LogWasteDialog';
+
