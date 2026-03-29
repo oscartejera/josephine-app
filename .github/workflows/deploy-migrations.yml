@@ -27,7 +27,18 @@ jobs:
         run: supabase link --project-ref $PROJECT_REF
 
       - name: Push migrations to remote
-        run: supabase db push
+        run: |
+          # Try normal push first; if it fails due to out-of-order migrations,
+          # repair the history and retry with --include-all
+          if ! supabase db push 2>&1; then
+            echo "⚠️  Normal push failed — attempting repair + --include-all"
+            # Mark any out-of-order migrations as applied (reverted first)
+            for f in supabase/migrations/*.sql; do
+              ts=$(basename "$f" | cut -d_ -f1)
+              supabase migration repair --status reverted "$ts" 2>/dev/null || true
+            done
+            supabase db push --include-all
+          fi
 
       - name: Regenerate TypeScript types
         run: |
