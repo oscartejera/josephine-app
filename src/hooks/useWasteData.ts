@@ -163,6 +163,7 @@ export function useWasteData(
       const totalSales = (dailySales || []).reduce((sum, d) => sum + (d.net_sales || 0), 0);
 
       // Fetch waste events with inventory items
+      // Try with supplier_name first; fallback without it if column doesn't exist yet
       let wasteQuery = supabase
         .from('waste_events')
         .select('id, location_id, waste_value, reason, quantity, created_at, logged_by, inventory_item_id, inventory_items(name, category_name, supplier_name)')
@@ -173,7 +174,25 @@ export function useWasteData(
         wasteQuery = wasteQuery.in('location_id', locationIds);
       }
 
-      const { data: wasteEvents } = await wasteQuery;
+      let { data: wasteEvents, error: wasteError } = await wasteQuery;
+
+      // Fallback: if supplier_name column doesn't exist, retry without it
+      if (wasteError && wasteError.message?.includes('supplier_name')) {
+        console.warn('supplier_name column not found, retrying without it');
+        let fallbackQuery = supabase
+          .from('waste_events')
+          .select('id, location_id, waste_value, reason, quantity, created_at, logged_by, inventory_item_id, inventory_items(name, category_name)')
+          .gte('created_at', `${fromDate}T00:00:00`)
+          .lte('created_at', `${toDate}T23:59:59`);
+
+        if (locationIds.length > 0 && locationIds.length < locations.length) {
+          fallbackQuery = fallbackQuery.in('location_id', locationIds);
+        }
+
+        const fallbackResult = await fallbackQuery;
+        wasteEvents = fallbackResult.data;
+      }
+
       setRawEvents(wasteEvents || []);
 
       const totalAccountedWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
