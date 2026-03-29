@@ -15,5 +15,8 @@ export { WasteForecastCard } from './WasteForecastCard';
 export { WasteSmartActions } from './WasteSmartActions';
 export { WastePrepOptimizer } from './WastePrepOptimizer';
 export { WasteSupplierScore } from './WasteSupplierScore';
+export { WasteShelfLifeTracker } from './WasteShelfLifeTracker';
+export { WasteTeamScore } from './WasteTeamScore';
 export { LogWasteDialog } from './LogWasteDialog';
+
 

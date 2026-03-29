@@ -22,6 +22,8 @@ import {
   WasteSmartActions,
   WastePrepOptimizer,
   WasteSupplierScore,
+  WasteShelfLifeTracker,
+  WasteTeamScore,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
@@ -32,6 +34,8 @@ import { generateWastePDF } from '@/hooks/useWastePDF';
 import { useWasteForecast } from '@/hooks/useWasteForecast';
 import { useWastePrepOptimization } from '@/hooks/useWastePrepOptimization';
 import { useWasteSupplierScore } from '@/hooks/useWasteSupplierScore';
+import { useWasteShelfLife } from '@/hooks/useWasteShelfLife';
+import { useWasteTeamScore } from '@/hooks/useWasteTeamScore';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -103,6 +107,15 @@ export default function Waste() {
 
   // Supplier Quality Score — Phase 2
   const supplierResult = useWasteSupplierScore(rawEvents);
+
+  // Shelf-Life Tracker — Phase 2 (complete version)
+  const shelfLifeResult = useWasteShelfLife();
+
+  // Team Waste Score — Phase 3 (gamification)
+  const teamScoreResult = useWasteTeamScore(
+    rawEvents,
+    leaderboard.map(l => ({ id: l.employeeId || '', full_name: l.employeeName })),
+  );
 
   // PDF Export handler (Sprint 4)
   const handleExportPDF = useCallback(() => {
@@ -246,16 +259,16 @@ export default function Waste() {
       {/* Phase 2: Supplier Quality Score */}
       <WasteSupplierScore result={supplierResult} isLoading={isLoading} />
 
-      {/* Category Donut and Leaderboard */}
+      {/* Phase 2: Shelf-Life Tracker */}
+      <WasteShelfLifeTracker result={shelfLifeResult} />
+
+      {/* Category Donut and Team Score */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WasteCategoryDonut
           byCategory={byCategory}
           isLoading={isLoading}
         />
-        <WasteLeaderboard
-          leaderboard={leaderboard}
-          isLoading={isLoading}
-        />
+        <WasteTeamScore result={teamScoreResult} isLoading={isLoading} />
       </div>
 
       {/* Items Table */}
