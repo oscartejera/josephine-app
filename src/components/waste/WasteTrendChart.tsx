@@ -18,6 +18,7 @@ import {
   Legend,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import type { WasteTrendData, WasteReason, WasteByReason } from '@/hooks/useWasteData';
 
 const REASON_COLORS: Record<WasteReason, string> = {
@@ -72,8 +73,11 @@ export function WasteTrendChart({
   // Convert data to show count per day (shows the number of logs trend)
   const chartData = trendData.map(d => ({
     ...d,
-    dateLabel: format(parseISO(d.date), 'EEE')
+    dateLabel: format(parseISO(d.date), 'd MMM', { locale: es })
   }));
+
+  // Smart tick interval: show every Nth label to avoid crowding
+  const tickInterval = chartData.length > 21 ? 3 : chartData.length > 14 ? 2 : 1;
 
   // Get max value for Y axis
   const reasonKeys = Object.keys(REASON_COLORS) as WasteReason[];
@@ -84,7 +88,7 @@ export function WasteTrendChart({
   return (
     <Card className="border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-foreground">Waste by Reason trend</CardTitle>
+        <CardTitle className="text-sm font-medium text-foreground">Tendencia de Merma por Motivo</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[220px]">
@@ -94,7 +98,8 @@ export function WasteTrendChart({
                 dataKey="dateLabel"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                interval={tickInterval - 1}
               />
               <YAxis
                 axisLine={false}
