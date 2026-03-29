@@ -7,4 +7,7 @@ export { WasteLeaderboard } from './WasteLeaderboard';
 export { WasteItemsTable } from './WasteItemsTable';
 export { WasteAlertBanner } from './WasteAlertBanner';
 export { WasteMECrossRef } from './WasteMECrossRef';
+export { WasteShiftAnalysis } from './WasteShiftAnalysis';
+export { WasteHeatmap } from './WasteHeatmap';
+export { WastePatterns } from './WastePatterns';
 export { LogWasteDialog } from './LogWasteDialog';

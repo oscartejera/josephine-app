@@ -11,10 +11,14 @@ import {
   WasteItemsTable,
   WasteAlertBanner,
   WasteMECrossRef,
+  WasteShiftAnalysis,
+  WasteHeatmap,
+  WastePatterns,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
 import { useWasteAlerts } from '@/hooks/useWasteAlerts';
+import { useWasteShiftAnalysis } from '@/hooks/useWasteShiftAnalysis';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
@@ -55,6 +59,7 @@ export default function Waste() {
     byCategory,
     leaderboard,
     items,
+    rawEvents,
   } = useWasteData(dateRange, dateMode, selectedLocations);
 
   const handleWasteLogged = () => {
@@ -70,6 +75,9 @@ export default function Waste() {
 
   // Menu Engineering data for cross-reference
   const { items: meItems, loading: meLoading } = useMenuEngineeringData();
+
+  // Shift analysis, heatmap, and patterns (Sprint 3)
+  const { shiftData, heatmapData, patterns } = useWasteShiftAnalysis(rawEvents);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -131,7 +139,25 @@ export default function Waste() {
         />
       </div>
 
-      {/* Second Row - Category Donut and Leaderboard */}
+      {/* Sprint 3: Heatmap (full width) */}
+      <WasteHeatmap
+        heatmapData={heatmapData}
+        isLoading={isLoading}
+      />
+
+      {/* Sprint 3: Shift Analysis + Patterns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <WasteShiftAnalysis
+          shiftData={shiftData}
+          isLoading={isLoading}
+        />
+        <WastePatterns
+          patterns={patterns}
+          isLoading={isLoading}
+        />
+      </div>
+
+      {/* Category Donut and Leaderboard */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WasteCategoryDonut
           byCategory={byCategory}

@@ -115,6 +115,7 @@ export function useWasteData(
   const [byCategory, setByCategory] = useState<WasteByCategory[]>([]);
   const [leaderboard, setLeaderboard] = useState<WasteLeaderboard[]>([]);
   const [items, setItems] = useState<WasteItem[]>([]);
+  const [rawEvents, setRawEvents] = useState<any[]>([]);
 
   const locationIds = useMemo(() => {
     if (selectedLocations.length === 0) {
@@ -167,6 +168,7 @@ export function useWasteData(
       }
 
       const { data: wasteEvents } = await wasteQuery;
+      setRawEvents(wasteEvents || []);
 
       const totalAccountedWaste = (wasteEvents || []).reduce((sum, w) => sum + (w.waste_value || 0), 0);
       const wastePercentOfSales = totalSales > 0 ? (totalAccountedWaste / totalSales) * 100 : 0;
@@ -432,6 +434,7 @@ export function useWasteData(
     byCategory,
     leaderboard,
     items,
+    rawEvents,
     locations: locations.filter(l => locationIds.includes(l.id)),
     REASON_LABELS,
     refetch: fetchData
