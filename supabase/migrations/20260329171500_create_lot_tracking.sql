@@ -67,10 +67,10 @@ DECLARE
     "Other": 7
   }'::jsonb;
 BEGIN
-  -- Get demo org and location
-  SELECT org_id INTO v_org FROM profiles WHERE full_name = 'Demo Owner' LIMIT 1;
+  -- Get demo org and location (via locations — profiles has no org_id)
+  SELECT org_id INTO v_org FROM locations WHERE active = true LIMIT 1;
   IF v_org IS NULL THEN
-    RAISE NOTICE 'No demo org found, skipping lot tracking seed';
+    RAISE NOTICE 'No active location found, skipping lot tracking seed';
     RETURN;
   END IF;
 

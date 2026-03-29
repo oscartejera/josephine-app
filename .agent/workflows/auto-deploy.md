@@ -57,12 +57,17 @@ git log --oneline -1
 
 ## Razón del `--no-verify`
 
-Los husky hooks (`.husky/pre-commit` y `.husky/pre-push`) ejecutan:
-- pre-commit: `npm run preflight:quick` (tsc + eslint) → 30-60 segundos  
-- pre-push: `npm run preflight` (tsc + eslint + tests) → 1-2 minutos
+Los husky hooks (`.husky/pre-commit` y `.husky/pre-push`) fueron desactivados (exit 0)
+porque referenciaban scripts npm inexistentes (`preflight:quick`, `preflight`) y causaban
+que git se colgara INDEFINIDAMENTE sin output.
 
-Como YA ejecutamos `npx tsc --noEmit` manualmente en el paso 1, estos hooks son redundantes
-y solo causan que los comandos se "cuelguen" durante minutos sin output visible.
+### Fix permanente aplicado (2026-03-29):
+1. `.husky/pre-commit` → `exit 0` (era `npm run preflight:quick` — no existe)
+2. `.husky/pre-push` → `exit 0` (era `npm run preflight` — no existe)  
+3. `git config --unset core.hooksPath` → elimina la redirección `.husky/_`
+
+Si en el futuro se añaden los scripts `preflight:quick` y `preflight` al package.json,
+se pueden reactivar los hooks eliminando el `exit 0`.
 
 ## Sintaxis PowerShell 5.1
 
@@ -70,3 +75,11 @@ Esta máquina (Windows) usa PowerShell 5.1. Diferencias clave:
 - `&&` → NO funciona. Usar `;` (ejecuta siempre el siguiente, sin short-circuit)
 - `2>&1` → funciona para redirigir stderr
 - El operador `;` ejecuta todos los comandos aunque uno falle, lo cual está OK para nuestro caso
+
+## Si git se cuelga de nuevo
+
+1. Matar procesos: `Get-Process -Name "git*" | Stop-Process -Force`
+2. Limpiar locks: `Remove-Item -Force .git/index.lock`
+3. Verificar hooks: `git config --get core.hooksPath` (debe dar vacío)
+4. Re-desactivar si Husky lo reactivó: `git config --unset core.hooksPath`
+

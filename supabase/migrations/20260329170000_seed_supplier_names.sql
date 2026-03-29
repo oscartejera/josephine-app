@@ -3,15 +3,7 @@
 
 DO $$
 DECLARE
-  v_org uuid;
-  suppliers text[] := ARRAY[
-    'Distribuciones García',
-    'Pescados del Norte',
-    'Lácteos La Vega',
-    'Frutas Hernández',
-    'Cárnicas Martínez',
-    'Bodega El Páramo'
-  ];
+  v_org_id uuid;
   category_supplier_map jsonb := '{
     "Proteins":  "Cárnicas Martínez",
     "Meat":      "Cárnicas Martínez",
@@ -29,10 +21,12 @@ DECLARE
   v_supplier text;
   v_cat text;
 BEGIN
-  -- Get demo org
-  SELECT org_id INTO v_org FROM profiles WHERE full_name = 'Demo Owner' LIMIT 1;
-  IF v_org IS NULL THEN
-    RAISE NOTICE 'No demo org found, skipping supplier seed';
+  -- Get demo org via locations (locations has org_id column)
+  SELECT org_id INTO v_org_id
+  FROM locations WHERE active = true LIMIT 1;
+
+  IF v_org_id IS NULL THEN
+    RAISE NOTICE 'No active location found, skipping supplier seed';
     RETURN;
   END IF;
 
@@ -46,7 +40,7 @@ BEGIN
 
   -- Assign suppliers based on category
   FOR v_item IN
-    SELECT id, category_name FROM inventory_items WHERE org_id = v_org
+    SELECT id, category_name FROM inventory_items WHERE org_id = v_org_id
   LOOP
     v_cat := COALESCE(v_item.category_name, 'Other');
     v_supplier := category_supplier_map ->> v_cat;
@@ -57,5 +51,5 @@ BEGIN
     UPDATE inventory_items SET supplier_name = v_supplier WHERE id = v_item.id;
   END LOOP;
 
-  RAISE NOTICE 'Supplier names seeded for org %', v_org;
+  RAISE NOTICE 'Supplier names seeded for org %', v_org_id;
 END $$;
