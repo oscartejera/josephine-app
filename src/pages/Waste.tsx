@@ -18,6 +18,8 @@ import {
   WasteHeatmap,
   WastePatterns,
   WastePnLImpact,
+  WasteForecastCard,
+  WasteSmartActions,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
@@ -25,6 +27,7 @@ import { useWasteAlerts } from '@/hooks/useWasteAlerts';
 import { useWasteShiftAnalysis } from '@/hooks/useWasteShiftAnalysis';
 import { useMenuEngineeringData } from '@/hooks/useMenuEngineeringData';
 import { generateWastePDF } from '@/hooks/useWastePDF';
+import { useWasteForecast } from '@/hooks/useWasteForecast';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -83,6 +86,13 @@ export default function Waste() {
 
   // Shift analysis, heatmap, and patterns (Sprint 3)
   const { shiftData, heatmapData, patterns } = useWasteShiftAnalysis(rawEvents);
+
+  // Waste Forecast — Phase 2: Predictive Intelligence
+  const { dailyForecasts, summary: forecastSummary, isReliable: forecastReliable } = useWasteForecast(
+    rawEvents,
+    wasteTarget,
+    metrics.totalSales,
+  );
 
   // PDF Export handler (Sprint 4)
   const handleExportPDF = useCallback(() => {
@@ -159,6 +169,25 @@ export default function Waste() {
         wasteTarget={wasteTarget}
         isLoading={isLoading}
       />
+
+      {/* Phase 2: Predictive Forecast + Smart Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <WasteForecastCard
+          dailyForecasts={dailyForecasts}
+          summary={forecastSummary}
+          isReliable={forecastReliable}
+          isLoading={isLoading}
+        />
+        <WasteSmartActions
+          metrics={metrics}
+          wasteTarget={wasteTarget}
+          patterns={patterns}
+          forecastSummary={forecastReliable ? forecastSummary : null}
+          items={items}
+          byReason={byReason}
+          isLoading={isLoading}
+        />
+      </div>
 
       {/* Alert Banners — spike detection */}
       <WasteAlertBanner alerts={alerts} />

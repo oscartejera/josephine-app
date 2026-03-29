@@ -11,4 +11,6 @@ export { WasteShiftAnalysis } from './WasteShiftAnalysis';
 export { WasteHeatmap } from './WasteHeatmap';
 export { WastePatterns } from './WastePatterns';
 export { WastePnLImpact } from './WastePnLImpact';
+export { WasteForecastCard } from './WasteForecastCard';
+export { WasteSmartActions } from './WasteSmartActions';
 export { LogWasteDialog } from './LogWasteDialog';
