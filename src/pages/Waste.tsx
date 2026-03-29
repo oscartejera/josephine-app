@@ -33,6 +33,7 @@ import {
   WasteAnnualReport,
   WasteQuickLog,
   WasteEndOfDay,
+  WasteDataQuality,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
@@ -51,6 +52,7 @@ import { useWasteVariance } from '@/hooks/useWasteVariance';
 import { useWasteSimulation } from '@/hooks/useWasteSimulation';
 import { useWasteRecipeCost } from '@/hooks/useWasteRecipeCost';
 import { useWasteAnnualReport } from '@/hooks/useWasteAnnualReport';
+import { useWasteDataQuality } from '@/hooks/useWasteDataQuality';
 import { differenceInDays } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
@@ -196,6 +198,9 @@ export default function Waste() {
   // Annual Report
   const annualReportResult = useWasteAnnualReport(rawEvents, metrics.totalSales, periodDays);
 
+  // P1 — Data Quality Score
+  const dataQualityResult = useWasteDataQuality(rawEvents, dateRange);
+
   // PDF Export handler (Sprint 4)
   const handleExportPDF = useCallback(() => {
     try {
@@ -322,6 +327,9 @@ export default function Waste() {
         prevWastePercent={prevMetrics?.wastePercent}
         isLoading={isLoading}
       />
+
+      {/* P1: Data Quality Score — always visible */}
+      <WasteDataQuality result={dataQualityResult} isLoading={isLoading} />
 
       {/* P&L Impact — always visible */}
       <WastePnLImpact

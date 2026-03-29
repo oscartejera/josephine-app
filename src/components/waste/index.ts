@@ -27,6 +27,8 @@ export { WasteAnnualReport } from './WasteAnnualReport';
 // P0 — Operational fixes
 export { WasteQuickLog } from './WasteQuickLog';
 export { WasteEndOfDay } from './WasteEndOfDay';
+// P1 — Data quality
+export { WasteDataQuality } from './WasteDataQuality';
 export { LogWasteDialog } from './LogWasteDialog';
 
 
