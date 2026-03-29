@@ -21,14 +21,22 @@ import { format, parseISO } from 'date-fns';
 import type { WasteTrendData, WasteReason, WasteByReason } from '@/hooks/useWasteData';
 
 const REASON_COLORS: Record<WasteReason, string> = {
-  broken: '#22c55e',      // Green
-  end_of_day: '#3b82f6',  // Blue
-  expired: '#84cc16',     // Lime/yellow-green
-  theft: '#f97316',       // Orange
-  other: '#ef4444'        // Red
+  spillage: '#06b6d4',      // Cyan
+  expiry: '#f59e0b',        // Amber
+  kitchen_error: '#ef4444', // Red
+  courtesy: '#a855f7',      // Purple
+  broken: '#22c55e',        // Green
+  end_of_day: '#3b82f6',    // Blue
+  expired: '#84cc16',       // Lime
+  theft: '#f97316',         // Orange
+  other: '#6b7280'          // Gray
 };
 
 const REASON_LABELS: Record<WasteReason, string> = {
+  spillage: 'Spillage',
+  expiry: 'Expiry',
+  kitchen_error: 'Kitchen Error',
+  courtesy: 'Courtesy',
   broken: 'Broken',
   end_of_day: 'End of day',
   expired: 'Expired',
@@ -68,7 +76,8 @@ export function WasteTrendChart({
   }));
 
   // Get max value for Y axis
-  const allValues = trendData.flatMap(d => [d.broken, d.end_of_day, d.expired, d.theft, d.other]);
+  const reasonKeys = Object.keys(REASON_COLORS) as WasteReason[];
+  const allValues = trendData.flatMap(d => reasonKeys.map(k => (d as any)[k] || 0));
   const maxValue = Math.max(...allValues, 1);
   const yAxisMax = Math.ceil(maxValue / 10) * 10 + 10;
 

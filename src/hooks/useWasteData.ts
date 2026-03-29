@@ -8,7 +8,7 @@ import { format, eachDayOfInterval, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
-export type WasteReason = 'broken' | 'end_of_day' | 'expired' | 'theft' | 'other';
+export type WasteReason = 'spillage' | 'expiry' | 'kitchen_error' | 'courtesy' | 'broken' | 'end_of_day' | 'expired' | 'theft' | 'other';
 
 export interface WasteMetrics {
   totalSales: number;
@@ -18,6 +18,10 @@ export interface WasteMetrics {
 
 export interface WasteTrendData {
   date: string;
+  spillage: number;
+  expiry: number;
+  kitchen_error: number;
+  courtesy: number;
   broken: number;
   end_of_day: number;
   expired: number;
@@ -57,6 +61,10 @@ export interface WasteItem {
 }
 
 export const REASON_LABELS: Record<WasteReason, string> = {
+  spillage: 'Spillage',
+  expiry: 'Expiry',
+  kitchen_error: 'Kitchen Error',
+  courtesy: 'Courtesy',
   broken: 'Broken',
   end_of_day: 'End of day',
   expired: 'Expired',
@@ -64,29 +72,25 @@ export const REASON_LABELS: Record<WasteReason, string> = {
   other: 'Other'
 };
 
-// Normalize reason from various formats to standard WasteReason
+// Normalize reason from various formats to standard WasteReason (8 canonical codes)
 function normalizeReason(rawReason: string | null | undefined): WasteReason {
   if (!rawReason) return 'other';
 
   const lower = rawReason.toLowerCase().trim();
 
-  // Map various formats to standard reasons
-  if (lower === 'broken' || lower === 'rotura' || lower === 'dañado' || lower === 'deterioro') {
-    return 'broken';
-  }
-  if (lower === 'end of day' || lower === 'end_of_day' || lower === 'sobreproducción' || lower === 'fin de día') {
-    return 'end_of_day';
-  }
-  if (lower === 'expired' || lower === 'caducado' || lower === 'caducidad') {
-    return 'expired';
-  }
-  if (lower === 'theft' || lower === 'robo' || lower === 'hurto') {
-    return 'theft';
-  }
-  if (lower === 'other' || lower === 'otro' || lower === 'otros' || lower.includes('error') || lower.includes('devolución') || lower.includes('preparación')) {
-    return 'other';
-  }
-  // Default fallback
+  // Canonical codes — pass through directly
+  const canonical: WasteReason[] = ['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'expired', 'theft', 'other'];
+  if (canonical.includes(lower as WasteReason)) return lower as WasteReason;
+
+  // Spanish / legacy aliases
+  if (lower === 'derrame' || lower === 'vertido') return 'spillage';
+  if (lower === 'caducado' || lower === 'caducidad' || lower === 'vencido') return 'expiry';
+  if (lower === 'error cocina' || lower === 'error_cocina' || lower.includes('preparación')) return 'kitchen_error';
+  if (lower === 'cortesía' || lower === 'cortesia' || lower === 'invitación' || lower.includes('devolución')) return 'courtesy';
+  if (lower === 'rotura' || lower === 'dañado' || lower === 'deterioro') return 'broken';
+  if (lower === 'fin de día' || lower === 'sobreproducción' || lower === 'end of day') return 'end_of_day';
+  if (lower === 'robo' || lower === 'hurto') return 'theft';
+
   return 'other';
 }
 
@@ -180,6 +184,10 @@ export function useWasteData(
         const dateStr = format(day, 'yyyy-MM-dd');
         trendMap.set(dateStr, {
           date: dateStr,
+          spillage: 0,
+          expiry: 0,
+          kitchen_error: 0,
+          courtesy: 0,
           broken: 0,
           end_of_day: 0,
           expired: 0,
@@ -202,7 +210,7 @@ export function useWasteData(
 
       // Calculate by reason
       const reasonMap = new Map<WasteReason, { count: number; value: number }>();
-      (['broken', 'end_of_day', 'expired', 'theft', 'other'] as WasteReason[]).forEach(r => {
+      (['spillage', 'expiry', 'kitchen_error', 'courtesy', 'broken', 'end_of_day', 'expired', 'theft', 'other'] as WasteReason[]).forEach(r => {
         reasonMap.set(r, { count: 0, value: 0 });
       });
 
@@ -236,40 +244,45 @@ export function useWasteData(
         percentOfTotal: totalCategoryValue > 0 ? (value / totalCategoryValue) * 100 : 0
       })));
 
-      // Calculate leaderboard (mock employee names since we don't have logged_by)
-      const locationWasteMap = new Map<string, { count: number; value: number }>();
-      (wasteEvents || []).forEach(event => {
-        const locId = event.location_id;
-        const existing = locationWasteMap.get(locId) || { count: 0, value: 0 };
+      // Calculate leaderboard from real logged_by data
+      const userWasteMap = new Map<string, { count: number; value: number; locationIds: Set<string> }>();
+      (wasteEvents || []).forEach((event: any) => {
+        const userId = event.logged_by || 'unknown';
+        const existing = userWasteMap.get(userId) || { count: 0, value: 0, locationIds: new Set<string>() };
         existing.count++;
         existing.value += event.waste_value || 0;
-        locationWasteMap.set(locId, existing);
+        existing.locationIds.add(event.location_id);
+        userWasteMap.set(userId, existing);
       });
 
-      const mockEmployees = [
-        { name: 'Carlos Martín', initials: 'CM' },
-        { name: 'Ana López', initials: 'AL' },
-        { name: 'María García', initials: 'MG' },
-        { name: 'David Ruiz', initials: 'DR' },
-        { name: 'Laura Sánchez', initials: 'LS' }
-      ];
+      // Fetch profile names for logged_by users
+      const userIds = Array.from(userWasteMap.keys()).filter(id => id !== 'unknown');
+      let profileMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+        (profiles || []).forEach((p: any) => {
+          profileMap.set(p.id, p.full_name || 'Unknown');
+        });
+      }
 
       const leaderboardData: WasteLeaderboard[] = [];
-      let empIndex = 0;
-      locationWasteMap.forEach((data, locId) => {
-        const loc = locations.find(l => l.id === locId);
-        if (loc) {
-          const emp = mockEmployees[empIndex % mockEmployees.length];
-          leaderboardData.push({
-            employeeId: null,
-            employeeName: emp.name,
-            initials: emp.initials,
-            locationName: loc.name,
-            logsCount: data.count,
-            totalValue: data.value
-          });
-          empIndex++;
-        }
+      userWasteMap.forEach((data, userId) => {
+        const name = userId === 'unknown' ? 'Unassigned' : (profileMap.get(userId) || 'Unknown');
+        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        // Find primary location
+        const locIds = Array.from(data.locationIds);
+        const loc = locations.find(l => locIds.includes(l.id));
+        leaderboardData.push({
+          employeeId: userId === 'unknown' ? null : userId,
+          employeeName: name,
+          initials: initials || '??',
+          locationName: loc?.name || '-',
+          logsCount: data.count,
+          totalValue: data.value
+        });
       });
       setLeaderboard(leaderboardData.sort((a, b) => b.totalValue - a.totalValue));
 

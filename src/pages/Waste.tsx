@@ -9,9 +9,11 @@ import {
   WasteCategoryDonut,
   WasteLeaderboard,
   WasteItemsTable,
+  WasteAlertBanner,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
+import { useWasteAlerts } from '@/hooks/useWasteAlerts';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -54,6 +56,13 @@ export default function Waste() {
     setRefreshKey(k => k + 1);
   };
 
+  // Spike detection alerts
+  const alerts = useWasteAlerts({
+    metrics,
+    byReason,
+    topItems: items,
+  });
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Demo Data Warning */}
@@ -87,6 +96,9 @@ export default function Waste() {
         wastePercentOfSales={metrics.wastePercentOfSales}
         isLoading={isLoading}
       />
+
+      {/* Alert Banners — spike detection */}
+      <WasteAlertBanner alerts={alerts} />
 
       {/* Charts Row - Trend and By Reason Value */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

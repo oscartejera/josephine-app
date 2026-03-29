@@ -5,4 +5,5 @@ export { WasteByReasonChart } from './WasteByReasonChart';
 export { WasteCategoryDonut } from './WasteCategoryDonut';
 export { WasteLeaderboard } from './WasteLeaderboard';
 export { WasteItemsTable } from './WasteItemsTable';
+export { WasteAlertBanner } from './WasteAlertBanner';
 export { LogWasteDialog } from './LogWasteDialog';

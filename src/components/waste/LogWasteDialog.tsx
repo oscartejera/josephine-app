@@ -32,14 +32,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-
-const WASTE_REASONS = [
-  { value: 'broken', label: 'Broken' },
-  { value: 'end_of_day', label: 'End of day' },
-  { value: 'expired', label: 'Expired' },
-  { value: 'theft', label: 'Theft' },
-  { value: 'other', label: 'Other' },
-] as const;
+import { useWasteEntry, WASTE_REASONS } from '@/hooks/useWasteEntry';
+import type { WasteReasonCode } from '@/hooks/useWasteEntry';
 
 const formSchema = z.object({
   inventory_item_id: z.string().min(1, 'Please select an item'),
@@ -65,8 +59,8 @@ interface LogWasteDialogProps {
 
 export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogProps) {
   const { locations } = useApp();
+  const { logWaste } = useWasteEntry();
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
 
@@ -81,7 +75,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
     },
   });
 
-  // Fetch inventory items from database (synced with POS products)
+  // Fetch inventory items from database
   useEffect(() => {
     async function fetchItems() {
       setIsLoadingItems(true);
@@ -114,37 +108,21 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
   }, [selectedItemId, quantity, inventoryItems, form]);
 
   const onSubmit = async (values: FormValues) => {
-    setIsSubmitting(true);
-
     try {
-      // Check if using demo items
-      const isDemo = values.inventory_item_id.startsWith('demo-');
-      
-      if (isDemo) {
-        // Simulate success for demo
-        toast({
-          title: 'Waste logged (Demo)',
-          description: 'In production, this would save to the database.',
-        });
-        setOpen(false);
-        form.reset();
-        onSuccess?.();
-        return;
-      }
-
-      const { error } = await supabase.from('waste_events').insert({
-        inventory_item_id: values.inventory_item_id,
+      // Use unified useWasteEntry hook — writes to both waste_events + stock_movements
+      await logWaste.mutateAsync({
+        item_id: values.inventory_item_id,
         location_id: values.location_id,
+        reason: values.reason as WasteReasonCode,
         quantity: values.quantity,
-        reason: values.reason,
-        waste_value: values.waste_value,
+        unit_cost: values.waste_value > 0 && values.quantity > 0
+          ? values.waste_value / values.quantity
+          : undefined,
       });
-
-      if (error) throw error;
 
       toast({
         title: 'Waste logged successfully',
-        description: `${quantity} units recorded as ${values.reason}`,
+        description: `${values.quantity} units recorded as ${values.reason}`,
       });
 
       setOpen(false);
@@ -157,8 +135,6 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
         title: 'Error logging waste',
         description: 'Please try again.',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -261,7 +237,7 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
               )}
             />
 
-            {/* Reason */}
+            {/* Reason — canonical 8 codes */}
             <FormField
               control={form.control}
               name="reason"
@@ -276,8 +252,8 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
                     </FormControl>
                     <SelectContent>
                       {WASTE_REASONS.map((reason) => (
-                        <SelectItem key={reason.value} value={reason.value}>
-                          {reason.label}
+                        <SelectItem key={reason.code} value={reason.code}>
+                          {reason.icon} {reason.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -316,8 +292,8 @@ export function LogWasteDialog({ onSuccess, defaultLocationId }: LogWasteDialogP
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Log Waste'}
+              <Button type="submit" disabled={logWaste.isPending}>
+                {logWaste.isPending ? 'Saving...' : 'Log Waste'}
               </Button>
             </DialogFooter>
           </form>

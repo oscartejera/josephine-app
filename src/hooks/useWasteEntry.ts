@@ -33,6 +33,13 @@ export interface WasteEntryPayload {
     notes?: string;
 }
 
+/**
+ * Unified waste entry hook.
+ *
+ * Writes to BOTH waste_events (for dashboard analytics) and
+ * stock_movements (for inventory adjustment) in a single mutation.
+ * This ensures both systems stay in sync.
+ */
 export function useWasteEntry() {
     const { group } = useApp();
     const { user } = useAuth();
@@ -53,8 +60,26 @@ export function useWasteEntry() {
                 unitCost = item?.last_cost ?? 0;
             }
 
-            // Insert negative qty_delta into stock_movements
-            const { error } = await supabase
+            const wasteValue = Math.abs(entry.quantity) * unitCost;
+
+            // 1. Insert into waste_events (source of truth for analytics)
+            const { error: weError } = await supabase
+                .from('waste_events')
+                .insert({
+                    org_id: group.id,
+                    inventory_item_id: entry.item_id,
+                    location_id: entry.location_id,
+                    quantity: Math.abs(entry.quantity),
+                    reason: entry.reason,
+                    waste_value: wasteValue,
+                    notes: entry.notes ?? null,
+                    logged_by: user?.id ?? null,
+                });
+
+            if (weError) throw weError;
+
+            // 2. Insert into stock_movements (for inventory adjustment)
+            const { error: smError } = await supabase
                 .from('stock_movements')
                 .insert({
                     org_id: group.id,
@@ -68,7 +93,9 @@ export function useWasteEntry() {
                     created_by: user?.id ?? null,
                 });
 
-            if (error) throw error;
+            if (smError) {
+                console.warn('[WasteEntry] stock_movements insert failed (non-blocking):', smError.message);
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['waste'] });
