@@ -24,6 +24,8 @@ import {
   WasteSupplierScore,
   WasteShelfLifeTracker,
   WasteTeamScore,
+  WasteBenchmark,
+  WasteThresholdConfig,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
@@ -36,6 +38,9 @@ import { useWastePrepOptimization } from '@/hooks/useWastePrepOptimization';
 import { useWasteSupplierScore } from '@/hooks/useWasteSupplierScore';
 import { useWasteShelfLife } from '@/hooks/useWasteShelfLife';
 import { useWasteTeamScore } from '@/hooks/useWasteTeamScore';
+import { useWasteBenchmark } from '@/hooks/useWasteBenchmark';
+import { useWasteAutoActions } from '@/hooks/useWasteAutoActions';
+import { useApp } from '@/contexts/AppContext';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
 
@@ -115,6 +120,17 @@ export default function Waste() {
   const teamScoreResult = useWasteTeamScore(
     rawEvents,
     leaderboard.map(l => ({ id: l.employeeId || '', full_name: l.employeeName })),
+  );
+
+  // Cross-Location Benchmark — Phase 3
+  const { locations: appLocations } = useApp();
+  const benchmarkResult = useWasteBenchmark(rawEvents, appLocations);
+
+  // Auto-Actions — Phase 3
+  const autoActionsResult = useWasteAutoActions(
+    metrics.wastePercentOfSales,
+    wasteTarget,
+    metrics.totalAccountedWaste,
   );
 
   // PDF Export handler (Sprint 4)
@@ -277,6 +293,12 @@ export default function Waste() {
         totalWastePercent={metrics.wastePercentOfSales}
         isLoading={isLoading}
       />
+
+      {/* Phase 3: Cross-Location Benchmarking (solo si ≥2 locales) */}
+      <WasteBenchmark result={benchmarkResult} isLoading={isLoading} />
+
+      {/* Phase 3: Auto-Actions & Threshold Config */}
+      <WasteThresholdConfig autoActions={autoActionsResult} wasteTarget={wasteTarget} />
     </div>
   );
 }

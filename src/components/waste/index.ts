@@ -17,6 +17,9 @@ export { WastePrepOptimizer } from './WastePrepOptimizer';
 export { WasteSupplierScore } from './WasteSupplierScore';
 export { WasteShelfLifeTracker } from './WasteShelfLifeTracker';
 export { WasteTeamScore } from './WasteTeamScore';
+export { WasteBenchmark } from './WasteBenchmark';
+export { WasteThresholdConfig } from './WasteThresholdConfig';
 export { LogWasteDialog } from './LogWasteDialog';
+
 
 
