@@ -26,6 +26,10 @@ import {
   WasteTeamScore,
   WasteBenchmark,
   WasteThresholdConfig,
+  WasteVarianceAnalysis,
+  WasteImpactSimulator,
+  WasteRecipeCost,
+  WasteAnnualReport,
   LogWasteDialog
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
@@ -40,6 +44,11 @@ import { useWasteShelfLife } from '@/hooks/useWasteShelfLife';
 import { useWasteTeamScore } from '@/hooks/useWasteTeamScore';
 import { useWasteBenchmark } from '@/hooks/useWasteBenchmark';
 import { useWasteAutoActions } from '@/hooks/useWasteAutoActions';
+import { useWasteVariance } from '@/hooks/useWasteVariance';
+import { useWasteSimulation } from '@/hooks/useWasteSimulation';
+import { useWasteRecipeCost } from '@/hooks/useWasteRecipeCost';
+import { useWasteAnnualReport } from '@/hooks/useWasteAnnualReport';
+import { differenceInDays } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
 import type { DateMode, DateRangeValue } from '@/components/bi/DateRangePickerNoryLike';
@@ -133,6 +142,36 @@ export default function Waste() {
     metrics.totalAccountedWaste,
   );
 
+  // Phase 4 — Financial Intelligence
+  const periodDays = Math.max(1, differenceInDays(dateRange.to, dateRange.from) + 1);
+
+  // Variance Analysis
+  const varianceResult = useWasteVariance(rawEvents, metrics.totalSales);
+
+  // Impact Simulator
+  const simulationResult = useWasteSimulation(
+    metrics.wastePercentOfSales,
+    metrics.totalAccountedWaste,
+    metrics.totalSales,
+    periodDays,
+  );
+
+  // Waste-Adjusted Recipe Cost
+  const recipeCostResult = useWasteRecipeCost(
+    rawEvents,
+    meItems.map(m => ({
+      name: m.name || '',
+      selling_price: (m as any).selling_price || (m as any).price || 0,
+      food_cost: (m as any).food_cost || 0,
+      food_cost_pct: (m as any).food_cost_pct || 0,
+      quantity_sold: (m as any).quantity_sold || (m as any).qty_sold || 0,
+    })),
+    metrics.totalSales,
+  );
+
+  // Annual Report
+  const annualReportResult = useWasteAnnualReport(rawEvents, metrics.totalSales, periodDays);
+
   // PDF Export handler (Sprint 4)
   const handleExportPDF = useCallback(() => {
     try {
@@ -209,6 +248,12 @@ export default function Waste() {
         isLoading={isLoading}
       />
 
+      {/* Phase 4: Variance Analysis + Impact Simulator */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <WasteVarianceAnalysis result={varianceResult} isLoading={isLoading} />
+        <WasteImpactSimulator result={simulationResult} isLoading={isLoading} />
+      </div>
+
       {/* Phase 2: Predictive Forecast + Smart Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WasteForecastCard
@@ -240,6 +285,9 @@ export default function Waste() {
         meItems={meItems}
         isLoading={isLoading || meLoading}
       />
+
+      {/* Phase 4: Waste-Adjusted Recipe Cost */}
+      <WasteRecipeCost result={recipeCostResult} isLoading={isLoading || meLoading} />
 
       {/* Charts Row - Trend and By Reason Value */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -293,6 +341,9 @@ export default function Waste() {
         totalWastePercent={metrics.wastePercentOfSales}
         isLoading={isLoading}
       />
+
+      {/* Phase 4: Annual Waste Report */}
+      <WasteAnnualReport result={annualReportResult} isLoading={isLoading} />
 
       {/* Phase 3: Cross-Location Benchmarking (solo si ≥2 locales) */}
       <WasteBenchmark result={benchmarkResult} isLoading={isLoading} />

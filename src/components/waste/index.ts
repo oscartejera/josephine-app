@@ -19,7 +19,13 @@ export { WasteShelfLifeTracker } from './WasteShelfLifeTracker';
 export { WasteTeamScore } from './WasteTeamScore';
 export { WasteBenchmark } from './WasteBenchmark';
 export { WasteThresholdConfig } from './WasteThresholdConfig';
+// Phase 4 — Financial Intelligence
+export { WasteVarianceAnalysis } from './WasteVarianceAnalysis';
+export { WasteImpactSimulator } from './WasteImpactSimulator';
+export { WasteRecipeCost } from './WasteRecipeCost';
+export { WasteAnnualReport } from './WasteAnnualReport';
 export { LogWasteDialog } from './LogWasteDialog';
+
 
 
 
