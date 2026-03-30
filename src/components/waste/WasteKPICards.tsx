@@ -10,6 +10,11 @@ interface WasteKPICardsProps {
   // Period deltas (vs previous period)
   prevTotalWaste?: number;
   prevWastePercent?: number;
+  // Sprint 4: New KPIs
+  avoidableWaste?: number;  // kitchen_error + over_production + plate_waste
+  unavoidableWaste?: number; // expiry + broken + spillage
+  daysWithoutLogs?: number;
+  totalDaysInPeriod?: number;
   isLoading?: boolean;
   currency?: string;
 }
@@ -21,6 +26,10 @@ export function WasteKPICards({
   wasteTarget = 3.0,
   prevTotalWaste,
   prevWastePercent,
+  avoidableWaste,
+  unavoidableWaste,
+  daysWithoutLogs,
+  totalDaysInPeriod,
   isLoading = false,
   currency = '€'
 }: WasteKPICardsProps) {
@@ -128,6 +137,69 @@ export function WasteKPICards({
           </p>
         </CardContent>
       </Card>
+
+      {/* Sprint 4: Evitable vs Inevitable */}
+      {(avoidableWaste !== undefined || unavoidableWaste !== undefined) && (
+        <Card className="border-border">
+          <CardContent className="py-4 px-5">
+            <p className="text-sm text-muted-foreground mb-2">Merma Evitable vs Inevitable</p>
+            <div className="flex items-end gap-3">
+              <div>
+                <p className="text-xs text-red-600 font-medium">⚠️ Evitable</p>
+                <p className="text-xl font-bold text-red-600">
+                  {formatCurrency(avoidableWaste ?? 0)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Inevitable</p>
+                <p className="text-xl font-bold text-muted-foreground">
+                  {formatCurrency(unavoidableWaste ?? 0)}
+                </p>
+              </div>
+            </div>
+            {/* Visual bar */}
+            {(avoidableWaste ?? 0) + (unavoidableWaste ?? 0) > 0 && (
+              <div className="flex h-2 rounded-full overflow-hidden mt-2 bg-muted">
+                <div
+                  className="bg-red-500 transition-all"
+                  style={{ width: `${((avoidableWaste ?? 0) / ((avoidableWaste ?? 0) + (unavoidableWaste ?? 0))) * 100}%` }}
+                />
+                <div
+                  className="bg-slate-400 transition-all"
+                  style={{ width: `${((unavoidableWaste ?? 0) / ((avoidableWaste ?? 0) + (unavoidableWaste ?? 0))) * 100}%` }}
+                />
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground mt-1.5">
+              Evitable = errores, sobreproducción, restos · Inevitable = caducidad, rotura, derrames
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sprint 4: Días sin registros */}
+      {daysWithoutLogs !== undefined && totalDaysInPeriod !== undefined && (
+        <Card className={`border-border ${
+          daysWithoutLogs > 5 ? 'bg-red-500/5 border-red-500/20' : 
+          daysWithoutLogs > 2 ? 'bg-amber-500/5 border-amber-500/20' : 
+          'bg-emerald-500/5 border-emerald-500/20'
+        }`}>
+          <CardContent className="py-4 px-5">
+            <p className="text-sm text-muted-foreground mb-1">Cobertura de Registro</p>
+            <p className="text-2xl font-semibold">
+              {totalDaysInPeriod - daysWithoutLogs}/{totalDaysInPeriod} días
+            </p>
+            <p className={`text-xs mt-0.5 ${
+              daysWithoutLogs > 5 ? 'text-red-600' : daysWithoutLogs > 2 ? 'text-amber-600' : 'text-emerald-600'
+            }`}>
+              {daysWithoutLogs === 0 
+                ? '✓ Registro completo — ¡excelente!' 
+                : `${daysWithoutLogs} días sin registros`
+              }
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

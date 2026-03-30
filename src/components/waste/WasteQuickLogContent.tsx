@@ -1,13 +1,15 @@
 /**
- * WasteQuickLogContent — Quick Log UI without Sheet wrapper
+ * WasteQuickLogContent v2 — "El Registro Perfecto"
  *
- * Extracted content from WasteQuickLog for reuse in the
- * global WasteFloatingButton. Includes voice input and all
- * the same functionality.
+ * Sprint 1 upgrades:
+ * - Prominent cost feedback (€ in red) on confirm screen
+ * - Animated success with confetti, cost, daily counter & streak
+ * - Unit-adaptive quantity chips (kg/L/ud)
+ * - Improved favorites section
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Check, Clock, Search, Zap, Plus, Minus, ChevronRight, Mic, MicOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Check, Clock, Search, Zap, Plus, Minus, ChevronRight, Mic, MicOff, Loader2, ArrowLeft, Flame, TrendingDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +33,119 @@ interface WasteQuickLogContentProps {
   onBack?: () => void;
 }
 
+// ── Daily stats helper (localStorage) ──
+const DAILY_STATS_KEY = 'josephine_waste_daily';
+const STREAK_KEY = 'josephine_waste_streak';
+
+interface DailyStats {
+  date: string;
+  count: number;
+  totalCost: number;
+}
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getDailyStats(): DailyStats {
+  try {
+    const stored = localStorage.getItem(DAILY_STATS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as DailyStats;
+      if (parsed.date === getTodayStr()) return parsed;
+    }
+  } catch { /* ignore */ }
+  return { date: getTodayStr(), count: 0, totalCost: 0 };
+}
+
+function bumpDailyStats(cost: number): DailyStats {
+  const stats = getDailyStats();
+  stats.count += 1;
+  stats.totalCost += cost;
+  localStorage.setItem(DAILY_STATS_KEY, JSON.stringify(stats));
+  return stats;
+}
+
+function getStreak(): number {
+  try {
+    const stored = localStorage.getItem(STREAK_KEY);
+    if (stored) {
+      const { lastDate, streak } = JSON.parse(stored);
+      const today = getTodayStr();
+      if (lastDate === today) return streak;
+      // Check if yesterday
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (lastDate === yesterday.toISOString().slice(0, 10)) return streak;
+    }
+  } catch { /* ignore */ }
+  return 0;
+}
+
+function bumpStreak(): number {
+  const today = getTodayStr();
+  try {
+    const stored = localStorage.getItem(STREAK_KEY);
+    if (stored) {
+      const { lastDate, streak } = JSON.parse(stored);
+      if (lastDate === today) return streak; // Already bumped today
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const newStreak = lastDate === yesterday.toISOString().slice(0, 10) ? streak + 1 : 1;
+      localStorage.setItem(STREAK_KEY, JSON.stringify({ lastDate: today, streak: newStreak }));
+      return newStreak;
+    }
+  } catch { /* ignore */ }
+  localStorage.setItem(STREAK_KEY, JSON.stringify({ lastDate: today, streak: 1 }));
+  return 1;
+}
+
+// ── Global counters for WastePersonalStats ──
+const TOTAL_LOGS_KEY = 'josephine_waste_total_logs';
+const TOTAL_VALUE_KEY = 'josephine_waste_total_value';
+const WEEK_LOGS_KEY = 'josephine_waste_week_logs';
+
+function getWeekStr() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff)).toISOString().slice(0, 10);
+}
+
+function bumpGlobalCounters(cost: number) {
+  // Total logs
+  const totalLogs = parseInt(localStorage.getItem(TOTAL_LOGS_KEY) || '0', 10) + 1;
+  localStorage.setItem(TOTAL_LOGS_KEY, String(totalLogs));
+
+  // Total value
+  const totalValue = parseFloat(localStorage.getItem(TOTAL_VALUE_KEY) || '0') + cost;
+  localStorage.setItem(TOTAL_VALUE_KEY, String(totalValue));
+
+  // Week logs
+  const weekStr = getWeekStr();
+  let weekData = { week: weekStr, count: 0 };
+  try {
+    const stored = localStorage.getItem(WEEK_LOGS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.week === weekStr) weekData = parsed;
+    }
+  } catch { /* ignore */ }
+  weekData.count += 1;
+  weekData.week = weekStr;
+  localStorage.setItem(WEEK_LOGS_KEY, JSON.stringify(weekData));
+}
+
+// ── Unit-adaptive quantity chips ──
+function getQuantityChips(unit: string): number[] {
+  const u = (unit || 'ud').toLowerCase();
+  if (u === 'l' || u === 'lt' || u === 'litro' || u === 'litros') return [0.5, 1, 2, 5, 10];
+  if (u === 'kg' || u === 'kilo' || u === 'kilos') return [0.25, 0.5, 1, 2, 5];
+  if (u === 'g' || u === 'gramos') return [100, 250, 500, 1000, 2000];
+  if (u === 'ml' || u === 'mililitros') return [50, 100, 250, 500, 1000];
+  return [1, 2, 5, 10, 20]; // ud, unidades
+}
+
 export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: WasteQuickLogContentProps) {
   const {
     frequentItems,
@@ -48,6 +163,15 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
   const [quantity, setQuantity] = useState(1);
   const [reason, setReason] = useState<WasteReasonCode>(suggestedReason);
   const [step, setStep] = useState<'select' | 'confirm'>('select');
+
+  // Success animation state
+  const [successInfo, setSuccessInfo] = useState<{
+    name: string;
+    cost: number;
+    dailyCount: number;
+    dailyCost: number;
+    streak: number;
+  } | null>(null);
 
   // Voice input
   const voice = useVoiceInput('es-ES');
@@ -89,16 +213,36 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
   };
 
   const handleSubmit = async () => {
-    if (!selectedItemId) return;
+    if (!selectedItemId || !selectedItem) return;
+    const cost = selectedItem.lastCost * quantity;
     await submitQuickLog(selectedItemId, quantity, reason);
+
+    // Bump stats
+    const dailyStats = bumpDailyStats(cost);
+    const streak = bumpStreak();
+    bumpGlobalCounters(cost);
+
+    // Show success animation
+    setSuccessInfo({
+      name: `${selectedItem.name} (${selectedItem.unit})`,
+      cost,
+      dailyCount: dailyStats.count,
+      dailyCost: dailyStats.totalCost,
+      streak,
+    });
+
     setStep('select');
     setSelectedItemId(null);
     setQuantity(1);
     setSearch('');
     onSuccess?.();
+
+    // Clear success after 4s
+    setTimeout(() => setSuccessInfo(null), 4000);
   };
 
   const wasteValue = selectedItem ? (selectedItem.lastCost * quantity) : 0;
+  const chips = selectedItem ? getQuantityChips(selectedItem.unit) : [0.5, 1, 2, 5, 10];
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -110,7 +254,7 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
-          <div>
+          <div className="flex-1">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               Registro Rápido de Merma
@@ -120,16 +264,49 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
               Motivo sugerido: <Badge variant="outline" className="text-xs">{suggestedReasonLabel}</Badge>
             </p>
           </div>
+          {/* Daily counter badge */}
+          {getDailyStats().count > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <TrendingDown className="h-3 w-3" />
+              {getDailyStats().count} hoy
+              {getStreak() >= 2 && (
+                <span className="flex items-center gap-0.5 text-orange-500">
+                  <Flame className="h-3 w-3" />
+                  {getStreak()}d
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Success toast */}
-      {lastLoggedItem && (
+      {/* Success animation — enhanced with cost, counter, streak */}
+      {(successInfo || lastLoggedItem) && (
         <div className="px-4 animate-in slide-in-from-top-2 duration-300">
-          <div className="bg-emerald-500 text-white px-4 py-3 rounded-xl flex items-center gap-2 shadow-lg">
-            <Check className="h-5 w-5" />
-            <span className="text-sm font-medium">Registrado: {lastLoggedItem}</span>
-          </div>
+          {successInfo ? (
+            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-3 rounded-xl shadow-lg shadow-emerald-500/25 space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center">
+                  <Check className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-semibold">✓ Registrado: {successInfo.name}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-white/90">
+                <span className="flex items-center gap-3">
+                  <span>💰 −€{successInfo.cost.toFixed(2)}</span>
+                  <span>📊 {successInfo.dailyCount} registros hoy</span>
+                  {successInfo.streak >= 2 && (
+                    <span>🔥 Racha: {successInfo.streak} días</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          ) : lastLoggedItem ? (
+            <div className="bg-emerald-500 text-white px-4 py-3 rounded-xl flex items-center gap-2 shadow-lg">
+              <Check className="h-5 w-5" />
+              <span className="text-sm font-medium">Registrado: {lastLoggedItem}</span>
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -210,22 +387,22 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
             )}
           </div>
 
-          {/* Frequent items */}
+          {/* ⚡ Frequent items — improved layout */}
           {!search && frequentItems.length > 0 && (
             <div className="px-4 py-2 flex-shrink-0">
-              <p className="text-xs font-medium text-muted-foreground mb-2">⚡ Frecuentes</p>
-              <div className="flex flex-wrap gap-2">
-                {frequentItems.slice(0, 8).map(item => (
+              <p className="text-xs font-medium text-muted-foreground mb-2">⚡ Tus frecuentes</p>
+              <div className="grid grid-cols-2 gap-2">
+                {frequentItems.slice(0, 6).map(item => (
                   <button
                     key={item.id}
                     onClick={() => handleSelectItem(item.id)}
-                    className="flex items-center justify-between p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 hover:bg-amber-500/10 transition-colors text-left"
+                    className="flex items-center justify-between p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all text-left group"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{item.name}</p>
                       <p className="text-[10px] text-muted-foreground">{item.category} · €{item.lastCost}/{item.unit}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-1 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 ))}
               </div>
@@ -264,7 +441,7 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
           </div>
         </>
       ) : (
-        /* Confirm step */
+        /* ── Confirm step v2 — prominent cost feedback ── */
         <div className="px-4 py-4 space-y-5 overflow-y-auto">
           <div className="p-4 rounded-xl bg-muted/50">
             <p className="text-base font-bold">{selectedItem?.name}</p>
@@ -273,7 +450,7 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
             </p>
           </div>
 
-          {/* Quantity */}
+          {/* Quantity — with unit-adaptive chips */}
           <div>
             <p className="text-xs font-medium text-muted-foreground mb-2">Cantidad ({selectedItem?.unit})</p>
             <div className="flex items-center gap-3 justify-center">
@@ -281,7 +458,7 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
                 variant="outline"
                 size="icon"
                 className="h-14 w-14 rounded-2xl text-lg"
-                onClick={() => setQuantity(Math.max(0.5, quantity - 1))}
+                onClick={() => setQuantity(Math.max(0.1, quantity - (chips[0] || 1)))}
               >
                 <Minus className="h-5 w-5" />
               </Button>
@@ -290,20 +467,21 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
                 value={quantity}
                 onChange={e => setQuantity(Math.max(0.1, parseFloat(e.target.value) || 0))}
                 className="text-center text-2xl font-bold h-14 w-24 rounded-2xl"
-                step="0.5"
+                step={chips[0]}
                 min="0.1"
               />
               <Button
                 variant="outline"
                 size="icon"
                 className="h-14 w-14 rounded-2xl text-lg"
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => setQuantity(quantity + (chips[0] || 1))}
               >
                 <Plus className="h-5 w-5" />
               </Button>
             </div>
+            {/* Unit-adaptive quick chips */}
             <div className="flex justify-center gap-2 mt-3">
-              {[0.5, 1, 2, 5, 10].map(q => (
+              {chips.map(q => (
                 <button
                   key={q}
                   onClick={() => setQuantity(q)}
@@ -336,10 +514,26 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
             </Select>
           </div>
 
-          {/* Value preview */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-red-500/5 border border-red-500/15">
-            <span className="text-sm text-muted-foreground">Coste estimado</span>
-            <span className="text-lg font-bold text-red-600">€{wasteValue.toFixed(2)}</span>
+          {/* ── Cost preview — PROMINENT (Sprint 1 key feature) ── */}
+          <div className="relative overflow-hidden rounded-2xl border-2 border-red-500/30 bg-gradient-to-r from-red-500/5 to-red-500/10">
+            <div className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">💸 Coste estimado de esta merma</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {quantity} {selectedItem?.unit} × €{selectedItem?.lastCost?.toFixed(2)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-black text-red-600 tabular-nums">
+                  €{wasteValue.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            {/* Animated bottom bar for visual weight */}
+            <div
+              className="h-1 bg-gradient-to-r from-red-400 to-red-600 transition-all duration-500"
+              style={{ width: `${Math.min(100, (wasteValue / 50) * 100)}%` }}
+            />
           </div>
 
           {/* Actions */}
@@ -352,10 +546,13 @@ export function WasteQuickLogContent({ defaultLocationId, onSuccess, onBack }: W
               ← Cambiar
             </Button>
             <Button
-              className="flex-1 h-12 rounded-xl text-base font-semibold"
+              className="flex-1 h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-primary to-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               {isSubmitting ? 'Guardando...' : '✓ Registrar'}
             </Button>
           </div>

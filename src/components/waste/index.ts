@@ -35,3 +35,7 @@ export { WasteNotificationSettings } from './WasteNotificationSettings';
 // P2 — Global access
 export { WasteFloatingButton } from './WasteFloatingButton';
 export { WasteQuickLogContent } from './WasteQuickLogContent';
+// P2 — Daily workflow
+export { WasteDayFlow } from './WasteDayFlow';
+// P3 — Gamification
+export { WastePersonalStats } from './WastePersonalStats';
