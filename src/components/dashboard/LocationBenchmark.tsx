@@ -67,16 +67,25 @@ export function LocationBenchmark() {
                     const ctx = buildQueryContext(profile.group_id, [loc.id], dataSource);
                     const kpiData = await getKpiRangeSummary(ctx, fromStr, toStr);
                     const c = kpiData.current;
+                    const revenue = c.net_sales || 0;
+
+                    // Apply same COGS estimation as Dashboard when near-zero
+                    const rawCogs = c.cogs || 0;
+                    const isEstimated = revenue > 0 && rawCogs < revenue * 0.01;
+                    const estimatedGp = isEstimated ? 68.0 : (c.gp_percent || 0);
+
+                    // Skip locations with zero revenue (no demo data)
+                    if (revenue === 0) continue;
 
                     results.push({
                         id: loc.id,
                         name: loc.name,
-                        revenue: c.net_sales || 0,
-                        gpPercent: c.gp_percent || 0,
+                        revenue,
+                        gpPercent: estimatedGp,
                         colPercent: c.col_percent || 0,
-                        wastePercent: 0, // waste not in KPI summary yet
-                        splh: c.net_sales > 0 && c.labour_cost > 0
-                            ? Math.round(c.net_sales / (c.labour_cost / 12) * 100) / 100
+                        wastePercent: 0,
+                        splh: revenue > 0 && c.labour_cost > 0
+                            ? Math.round(revenue / (c.labour_cost / 12) * 100) / 100
                             : 0,
                     });
                 } catch {

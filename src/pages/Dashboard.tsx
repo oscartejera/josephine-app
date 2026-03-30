@@ -87,13 +87,24 @@ export default function Dashboard() {
   const prevAvgCheck = previous?.avg_check ?? 0;
   const labourCost = current?.labour_cost ?? 0;
   const prevLabourCost = previous?.labour_cost ?? 0;
-  const cogs = current?.cogs ?? 0;
-  const prevCogs = previous?.cogs ?? 0;
-  const gpPercent = current?.gp_percent ?? 0;
-  const prevGpPercent = previous?.gp_percent ?? 0;
+
+  // COGS estimation: if the RPC returns near-zero COGS (< 1% of sales),
+  // apply restaurant industry average (~32%) to avoid the misleading 99.8% GP%
+  const rawCogs = current?.cogs ?? 0;
+  const rawPrevCogs = previous?.cogs ?? 0;
+  const DEFAULT_COGS_PCT = 0.32;
+  const cogsIsEstimated = netSales > 0 && rawCogs < netSales * 0.01;
+  const cogs = cogsIsEstimated ? Math.round(netSales * DEFAULT_COGS_PCT) : rawCogs;
+  const prevCogs = cogsIsEstimated ? Math.round(prevNetSales * DEFAULT_COGS_PCT) : rawPrevCogs;
+  const gpPercent = cogsIsEstimated
+    ? Math.round((1 - DEFAULT_COGS_PCT) * 1000) / 10
+    : (current?.gp_percent ?? 0);
+  const prevGpPercent = cogsIsEstimated
+    ? Math.round((1 - DEFAULT_COGS_PCT) * 1000) / 10
+    : (previous?.gp_percent ?? 0);
   const colPercent = current?.col_percent ?? 0;
   const prevColPercent = previous?.col_percent ?? 0;
-  const cogsSourceMixed = current?.cogs_source_mixed ?? true;
+  const cogsSourceMixed = cogsIsEstimated ? true : (current?.cogs_source_mixed ?? true);
   const labourSourceMixed = current?.labour_source_mixed ?? true;
 
   // Calculate deltas from real previous period data
