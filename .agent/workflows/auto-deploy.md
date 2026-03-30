@@ -17,15 +17,20 @@ npx tsc --noEmit
 
 Si falla, corregir ANTES de continuar. No commitear código roto.
 
-## 2. Commit + Push en UN solo comando
+## 2. Commit + Push (SEPARAR EN 2 TOOL CALLS)
 
-**CRÍTICO: Usar SIEMPRE `--no-verify` en commit Y push porque ya validamos con tsc.**
-**CRÍTICO: Usar `;` para encadenar comandos (PowerShell 5.1 NO soporta `&&`).**
-**CRÍTICO: Poner `WaitMsBeforeAsync: 30000` para dar tiempo al push.**
-**CRÍTICO: Siempre setear `$env:GIT_TERMINAL_PROMPT = "0"` ANTES para evitar prompts GUI colgados.**
+**CRÍTICO: Usar `--no-verify` en commit Y push porque ya validamos con tsc.**
+**CRÍTICO: Siempre setear `$env:GIT_TERMINAL_PROMPT = "0"` ANTES del push.**
+**CRÍTICO: SEPARAR commit y push en tool calls distintos. Combinados, el output del push se pierde y parece colgado.**
 
+### Step A: Commit (SafeToAutoRun: true, WaitMsBeforeAsync: 10000)
 ```powershell
-$env:GIT_TERMINAL_PROMPT = "0"; git add -A; git commit --no-verify -m "<tipo>(<scope>): <descripción>"; git push --no-verify origin main; git log --oneline -1
+git add -A; git commit --no-verify -m "<tipo>(<scope>): <descripción>"
+```
+
+### Step B: Push (SafeToAutoRun: false, WaitMsBeforeAsync: 30000)
+```powershell
+$env:GIT_TERMINAL_PROMPT = "0"; git push --no-verify origin main 2>&1; git log --oneline -1
 ```
 
 Tipos válidos: `feat`, `fix`, `refactor`, `style`, `db`, `docs`, `chore`, `perf`
@@ -37,11 +42,13 @@ Ejemplos:
 
 ## 3. Confirmar deploy
 
-Esperar max 30s con `command_status` y verificar con:
+Verificar que HEAD y origin/main coinciden:
 
 ```bash
-git log --oneline -1
+git fetch origin; git rev-parse HEAD; git rev-parse origin/main
 ```
+
+Si ambos SHAs son iguales → push exitoso.
 
 ---
 

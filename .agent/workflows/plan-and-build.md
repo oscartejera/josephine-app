@@ -102,17 +102,16 @@ Formato:
 4. **Proponer siguiente paso** si hay trabajo pendiente
 
 // turbo
-5. **Atomic commit + push** — Ejecutar TODO en un solo bloque, sin paradas:
+5. **Atomic commit + push** — Seguir `/auto-deploy` workflow (2 steps):
+   ```powershell
+   # Step A: Commit (WaitMs: 10000)
+   git add -A; git commit --no-verify -m "<conventional commit message>"
+   # Step B: Push (WaitMs: 30000)  
+   $env:GIT_TERMINAL_PROMPT = "0"; git push --no-verify origin main 2>&1; git log --oneline -1
    ```
-   git add -A
-   git diff --stat HEAD   # verificar scope — abortar si hay archivos inesperados
-   git commit -m "<conventional commit message>"
-   git push
-   git log --oneline -1   # confirmar commit limpio
-   ```
+   - **SEPARAR commit y push en 2 tool calls** — combinados, el output se pierde y parece colgado.
    - **UN solo commit por tarea.** Nunca múltiples commits para el mismo cambio lógico.
    - **Push inmediato.** Nunca dejar commits sin push.
-   - **< 15 segundos** desde `git add` hasta `git push` exitoso. Si tarda más, debugear tooling.
    - Si el seed SQL de Supabase fue modificado, ejecutar el seed contra la DB también.
    - Si se desplegó edge function: `$env:SUPABASE_ACCESS_TOKEN = "sbp_..."; npx supabase functions deploy <name> --legacy-bundle --no-verify-jwt`
 
