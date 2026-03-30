@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useGlobalRealtimeNotifications } from '@/hooks/useGlobalRealtimeNotifications';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WasteFloatingButton } from '@/components/waste/WasteFloatingButton';
 
 function PageSkeleton() {
   return (
@@ -52,6 +53,10 @@ export function DashboardLayout() {
           </Suspense>
         </main>
       </div>
+
+      {/* Global Waste FAB — visible on all pages except /insights/waste */}
+      <WasteFloatingButton />
     </div>
   );
 }
+

@@ -32,5 +32,6 @@ export { WasteDataQuality } from './WasteDataQuality';
 export { LogWasteDialog } from './LogWasteDialog';
 // P2 — Push notifications
 export { WasteNotificationSettings } from './WasteNotificationSettings';
-
-
+// P2 — Global access
+export { WasteFloatingButton } from './WasteFloatingButton';
+export { WasteQuickLogContent } from './WasteQuickLogContent';
