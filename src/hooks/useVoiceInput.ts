@@ -105,6 +105,8 @@ export function useVoiceInput(lang: string = 'es-ES'): VoiceInputState {
     recognition.lang = lang;
     recognition.maxAlternatives = 1;
 
+    let hasFinalResult = false;
+
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = '';
       let final = '';
@@ -119,6 +121,7 @@ export function useVoiceInput(lang: string = 'es-ES'): VoiceInputState {
       }
 
       if (final) {
+        hasFinalResult = true;
         setTranscript(prev => (prev + ' ' + final).trim());
         setStatus('done');
       }
@@ -141,14 +144,17 @@ export function useVoiceInput(lang: string = 'es-ES'): VoiceInputState {
     };
 
     recognition.onend = () => {
-      if (status === 'listening') {
-        setStatus(transcript ? 'done' : 'idle');
+      // Use local variable to avoid stale closure
+      if (!hasFinalResult) {
+        setStatus('idle');
       }
       recognitionRef.current = null;
     };
 
     recognition.onspeechend = () => {
-      setStatus('processing');
+      if (!hasFinalResult) {
+        setStatus('processing');
+      }
     };
 
     recognitionRef.current = recognition;
@@ -161,13 +167,13 @@ export function useVoiceInput(lang: string = 'es-ES'): VoiceInputState {
       return;
     }
 
-    // Auto-stop after 8 seconds
+    // Auto-stop after 10 seconds
     timeoutRef.current = setTimeout(() => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-    }, 8000);
-  }, [isSupported, lang, cleanup, status, transcript]);
+    }, 10000);
+  }, [isSupported, lang, cleanup]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {

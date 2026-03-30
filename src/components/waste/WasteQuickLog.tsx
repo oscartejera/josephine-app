@@ -155,56 +155,64 @@ export function WasteQuickLog({ defaultLocationId, onSuccess }: WasteQuickLogPro
                     autoFocus
                   />
                 </div>
-                {/* Voice button */}
-                {voice.isSupported && (
-                  <Button
-                    variant={voice.status === 'listening' ? 'default' : 'outline'}
-                    size="icon"
-                    className={`h-11 w-11 rounded-xl flex-shrink-0 transition-all ${
-                      voice.status === 'listening'
-                        ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                        : ''
-                    }`}
-                    onClick={() => {
-                      if (voice.status === 'listening') {
-                        voice.stopListening();
-                      } else {
-                        voice.reset();
-                        voice.startListening();
-                      }
-                    }}
-                  >
-                    {voice.status === 'listening' ? (
-                      <MicOff className="h-4 w-4 text-white" />
-                    ) : voice.status === 'processing' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Mic className="h-4 w-4" />
-                    )}
-                  </Button>
-                )}
+                {/* Voice button — always visible */}
+                <Button
+                  variant={voice.status === 'listening' ? 'default' : 'outline'}
+                  disabled={!voice.isSupported}
+                  className={`h-11 rounded-xl flex-shrink-0 transition-all gap-1.5 px-3 ${
+                    voice.status === 'listening'
+                      ? 'bg-red-500 hover:bg-red-600 animate-pulse text-white border-red-500'
+                      : voice.isSupported
+                        ? 'border-primary/30 text-primary hover:bg-primary/5 hover:border-primary'
+                        : 'opacity-50'
+                  }`}
+                  onClick={() => {
+                    if (!voice.isSupported) return;
+                    if (voice.status === 'listening') {
+                      voice.stopListening();
+                    } else {
+                      voice.reset();
+                      voice.startListening();
+                    }
+                  }}
+                  title={!voice.isSupported ? 'Tu navegador no soporta voz' : 'Registrar merma por voz'}
+                >
+                  {voice.status === 'listening' ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : voice.status === 'processing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                  <span className="text-xs font-medium hidden sm:inline">
+                    {voice.status === 'listening' ? 'Parar' : voice.status === 'processing' ? 'Procesando...' : 'Voz'}
+                  </span>
+                </Button>
               </div>
 
               {/* Voice status feedback */}
               {voice.status === 'listening' && (
-                <div className="mt-2 px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/20 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-xs text-red-600 font-medium">Escuchando...</span>
+                <div className="mt-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-sm text-red-600 font-medium">🎙️ Escuchando… di algo como "dos kilos de pollo por caducidad"</span>
                   {voice.interimTranscript && (
-                    <span className="text-xs text-muted-foreground italic truncate">
+                    <span className="text-xs text-muted-foreground italic truncate ml-auto">
                       "{voice.interimTranscript}"
                     </span>
                   )}
                 </div>
               )}
               {voice.error && (
-                <div className="mt-2 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                  <span className="text-xs text-amber-600">{voice.error}</span>
+                <div className="mt-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                  <span className="text-xs text-amber-700">{voice.error}</span>
                 </div>
               )}
               {voiceDebug && voice.status === 'done' && (
-                <div className="mt-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-                  <span className="text-xs text-emerald-600">{voiceDebug}</span>
+                <div className="mt-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                  <span className="text-xs text-emerald-700">✅ {voiceDebug}</span>
+                  {voice.transcript && (
+                    <p className="text-[10px] text-muted-foreground mt-1">Transcripción: "{voice.transcript}"</p>
+                  )}
                 </div>
               )}
             </div>
