@@ -76,7 +76,6 @@ export function useWasteEntry() {
                     quantity: Math.abs(entry.quantity),
                     reason: entry.reason,
                     waste_value: wasteValue,
-                    notes: entry.notes ?? null,
                     logged_by: user?.id ?? null,
                 });
 
