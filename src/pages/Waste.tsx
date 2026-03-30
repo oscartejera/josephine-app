@@ -206,6 +206,26 @@ export default function Waste() {
   // P2 — Push Notifications
   const notifState = useWasteNotifications();
 
+  // Sprint 4 — Avoidable vs Unavoidable waste
+  const AVOIDABLE_REASONS = ['kitchen_error', 'over_production', 'plate_waste', 'courtesy', 'theft'];
+  const avoidableWaste = useMemo(
+    () => byReason.filter(r => AVOIDABLE_REASONS.includes(r.reason)).reduce((s, r) => s + r.value, 0),
+    [byReason],
+  );
+  const unavoidableWaste = useMemo(
+    () => byReason.filter(r => !AVOIDABLE_REASONS.includes(r.reason)).reduce((s, r) => s + r.value, 0),
+    [byReason],
+  );
+
+  // Sprint 4 — Log coverage (days with/without logs)
+  const { daysWithoutLogs, totalDaysInPeriod: periodTotalDays } = useMemo(() => {
+    const total = periodDays;
+    const datesWithLogs = new Set(
+      rawEvents.map((e: any) => (e.created_at || e.date || '').slice(0, 10)).filter(Boolean),
+    );
+    return { daysWithoutLogs: Math.max(0, total - datesWithLogs.size), totalDaysInPeriod: total };
+  }, [rawEvents, periodDays]);
+
   // PDF Export handler (Sprint 4)
   const handleExportPDF = useCallback(() => {
     try {
@@ -330,6 +350,10 @@ export default function Waste() {
         wasteTarget={wasteTarget}
         prevTotalWaste={prevMetrics?.totalWaste}
         prevWastePercent={prevMetrics?.wastePercent}
+        avoidableWaste={byReason.length > 0 ? avoidableWaste : undefined}
+        unavoidableWaste={byReason.length > 0 ? unavoidableWaste : undefined}
+        daysWithoutLogs={rawEvents.length > 0 ? daysWithoutLogs : undefined}
+        totalDaysInPeriod={rawEvents.length > 0 ? periodTotalDays : undefined}
         isLoading={isLoading}
       />
 
