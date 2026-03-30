@@ -70,7 +70,6 @@ export function useWasteEntry() {
             const { error: weError } = await supabase
                 .from('waste_events')
                 .insert({
-                    org_id: group.id,
                     inventory_item_id: entry.item_id,
                     location_id: entry.location_id,
                     quantity: Math.abs(entry.quantity),
