@@ -53,6 +53,9 @@ function generateLocalBriefing(
 
         const locTarget = targetColByLoc[loc.id] || 30;
 
+        // Skip alert generation for locations with no data (avoids false -100% alerts)
+        if (sales === 0 && labour === 0) return;
+
         if (colPct > locTarget) {
             alerts.push({
                 location: loc.name,
@@ -85,7 +88,7 @@ function generateLocalBriefing(
         }
     });
 
-    const primeCost = totalLabour + wasteTotal;
+    const primeCost = totalLabour + (wasteTotal > 0 ? wasteTotal : 0);
     const primePct = totalSales > 0 ? (primeCost / totalSales) * 100 : 0;
     const salesVsTarget = totalBudgetSales > 0 ? ((totalSales - totalBudgetSales) / totalBudgetSales) * 100 : 0;
 
@@ -99,7 +102,12 @@ function generateLocalBriefing(
 
     const overallColPct = totalSales > 0 ? (totalLabour / totalSales) * 100 : 0;
 
-    narrativeParts.push(`El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (Labor €${Math.round(totalLabour).toLocaleString()} · COL% ${overallColPct.toFixed(1)}% + Mermas €${Math.round(wasteTotal).toLocaleString()}).`);
+    // Build Prime Cost narrative — hide €0 waste, mention estimated COGS
+    const primeParts = [`Labor €${Math.round(totalLabour).toLocaleString()} · COL% ${overallColPct.toFixed(1)}%`];
+    if (wasteTotal > 0) {
+        primeParts.push(`Mermas €${Math.round(wasteTotal).toLocaleString()}`);
+    }
+    narrativeParts.push(`El Prime Cost consolidado se situó en ${primePct.toFixed(1)}% (${primeParts.join(' + ')}).`);
 
     // Flag zero sales as a data gap — never praise €0 as 'excellent'
     if (totalSales <= 0) {
