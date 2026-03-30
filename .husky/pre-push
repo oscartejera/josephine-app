@@ -1,3 +1,0 @@
-# Disabled — scripts do not exist in package.json
-# Re-enable when preflight is added
-exit 0
