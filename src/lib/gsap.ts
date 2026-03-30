@@ -11,10 +11,12 @@
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
+import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { useGSAP } from "@gsap/react";
 
 // Register all plugins once
-gsap.registerPlugin(Flip, ScrollTrigger, useGSAP);
+gsap.registerPlugin(Flip, ScrollTrigger, SplitText, DrawSVGPlugin, useGSAP);
 
 // Project-wide defaults — premium feel
 gsap.defaults({
@@ -22,4 +24,4 @@ gsap.defaults({
   ease: "power2.out",
 });
 
-export { gsap, Flip, ScrollTrigger, useGSAP };
+export { gsap, Flip, ScrollTrigger, SplitText, DrawSVGPlugin, useGSAP };

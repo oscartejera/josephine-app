@@ -21,6 +21,9 @@ import Signup from "@/pages/Signup";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
+// Landing page — lazy loaded (marketing, only for unauthenticated visitors)
+const LandingPage = lazy(() => import("@/pages/LandingPage"));
+
 // Layout components loaded eagerly
 import { TeamLayout } from "@/components/team/TeamLayout";
 
@@ -227,7 +230,7 @@ function AppRoutes() {
           <Route path="/login" element={user ? <RoleRedirect /> : <Login />} />
           <Route path="/signup" element={user ? <RoleRedirect /> : <Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/" element={user ? <RoleRedirect /> : <Navigate to="/login" replace />} />
+          <Route path="/" element={user ? <RoleRedirect /> : <Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
 
           <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Suspense fallback={<SectionLoader section="Dashboard" />}><Dashboard /></Suspense>} />
