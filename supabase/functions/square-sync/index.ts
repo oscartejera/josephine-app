@@ -452,6 +452,40 @@ Deno.serve(async (req) => {
       await supabase.from('cdm_items').insert(cdmItems.slice(i, i + 200));
     }
 
+    // ── 7g. Resolve item_id on order lines ────────────────────────────
+    // Build lookup: catalog_object_id → cdm_items.id
+    // Then UPDATE cdm_order_lines SET item_id = ... WHERE metadata->>'catalog_object_id' = ...
+    if (cdmItems.length > 0) {
+      console.log(`[square-sync] Resolving item_id for ${allLines.length} order lines...`);
+      const { data: insertedItems } = await supabase
+        .from('cdm_items')
+        .select('id, external_id')
+        .eq('org_id', orgId)
+        .eq('provider', 'square');
+
+      if (insertedItems && insertedItems.length > 0) {
+        const externalIdToItemId = new Map<string, string>();
+        for (const item of insertedItems) {
+          if (item.external_id) externalIdToItemId.set(item.external_id, item.id);
+        }
+
+        // Batch update order lines where we can resolve catalog_object_id → item_id
+        let resolvedCount = 0;
+        for (const [externalId, itemId] of externalIdToItemId) {
+          const { count } = await supabase
+            .from('cdm_order_lines')
+            .update({ item_id: itemId })
+            .eq('org_id', orgId)
+            .eq('provider', 'square')
+            .is('item_id', null)
+            .filter('metadata->>catalog_object_id', 'eq', externalId)
+            .select('id', { count: 'exact', head: true });
+          resolvedCount += (count ?? 0);
+        }
+        console.log(`[square-sync] Resolved item_id for ${resolvedCount} order lines`);
+      }
+    }
+
     // ── 8. Success: update integration metadata + finalize run ────────
     await supabase
       .from('integrations')
@@ -466,7 +500,46 @@ Deno.serve(async (req) => {
 
     await finalizeRun('success', stats);
 
-    // ── 9. Auto-trigger forecast after initial sync ───────────────────
+    // ── 9. Post-sync: COGS calculation + MV refresh ──────────────────
+    // 9a. Calculate COGS from recipe costs (direct RPC, no EF needed)
+    if (stats.orders > 0) {
+      console.log('[square-sync] Calculating COGS from recipes...');
+      try {
+        const { data: cogsResult, error: cogsErr } = await supabase.rpc(
+          'calculate_cogs_daily',
+          {
+            p_org_id: orgId,
+            p_from: beginTime.slice(0, 10),
+            p_to: new Date().toISOString().slice(0, 10),
+          },
+        );
+        if (cogsErr) {
+          console.warn('[square-sync] COGS calculation warning:', cogsErr.message);
+        } else {
+          console.log('[square-sync] COGS calculated:', JSON.stringify(cogsResult));
+        }
+      } catch (cogsErr: any) {
+        console.warn('[square-sync] COGS calculation failed (non-blocking):', cogsErr.message);
+      }
+    }
+
+    // 9b. Refresh materialized views (direct RPC, bypasses CRON_SECRET)
+    console.log('[square-sync] Refreshing materialized views...');
+    try {
+      const { data: mvResult, error: mvErr } = await supabase.rpc(
+        'refresh_all_mvs',
+        { p_triggered_by: 'square-sync' },
+      );
+      if (mvErr) {
+        console.warn('[square-sync] MV refresh warning:', mvErr.message);
+      } else {
+        console.log('[square-sync] MVs refreshed:', JSON.stringify(mvResult));
+      }
+    } catch (mvErr: any) {
+      console.warn('[square-sync] MV refresh failed (non-blocking):', mvErr.message);
+    }
+
+    // 9c. Auto-trigger forecast after initial sync
     if (isInitialSync && stats.orders > 0) {
       console.log('[square-sync] Initial sync done, auto-triggering forecast generation...');
       try {
