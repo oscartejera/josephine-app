@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Check, Clock, Search, Zap, Plus, Minus, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, Clock, Search, Zap, Plus, Minus, ChevronRight, Mic, MicOff, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useWasteQuickLog } from '@/hooks/useWasteQuickLog';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
+import { useWasteVoiceParser } from '@/hooks/useWasteVoiceParser';
 import { WASTE_REASONS } from '@/hooks/useWasteEntry';
 import type { WasteReasonCode } from '@/hooks/useWasteEntry';
 
@@ -47,6 +49,32 @@ export function WasteQuickLog({ defaultLocationId, onSuccess }: WasteQuickLogPro
   const [quantity, setQuantity] = useState(1);
   const [reason, setReason] = useState<WasteReasonCode>(suggestedReason);
   const [step, setStep] = useState<'select' | 'confirm'>('select');
+
+  // Voice input
+  const voice = useVoiceInput('es-ES');
+  const { parse } = useWasteVoiceParser(allItems);
+  const [voiceDebug, setVoiceDebug] = useState<string | null>(null);
+
+  // Process voice result when transcript is ready
+  useEffect(() => {
+    if (voice.status === 'done' && voice.transcript) {
+      const result = parse(voice.transcript);
+      setVoiceDebug(result.debugInfo);
+
+      if (result.matchedItem) {
+        setSelectedItemId(result.matchedItem.id);
+        setQuantity(result.quantity || 1);
+        setReason(result.reason || suggestedReason);
+        setStep('confirm');
+      } else if (result.quantity) {
+        // Got quantity but no product — show in search
+        setSearch(voice.transcript);
+      }
+
+      // Auto-clear debug after 5s
+      setTimeout(() => setVoiceDebug(null), 5000);
+    }
+  }, [voice.status, voice.transcript]);
 
   // Filter items by search
   const filteredItems = search.trim()
@@ -114,18 +142,71 @@ export function WasteQuickLog({ defaultLocationId, onSuccess }: WasteQuickLogPro
 
         {step === 'select' ? (
           <div className="flex flex-col h-full overflow-hidden">
-            {/* Search */}
+            {/* Search + Voice */}
             <div className="px-4 py-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar producto..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-9 h-11 rounded-xl bg-muted/50"
-                  autoFocus
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar producto..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="pl-9 h-11 rounded-xl bg-muted/50"
+                    autoFocus
+                  />
+                </div>
+                {/* Voice button */}
+                {voice.isSupported && (
+                  <Button
+                    variant={voice.status === 'listening' ? 'default' : 'outline'}
+                    size="icon"
+                    className={`h-11 w-11 rounded-xl flex-shrink-0 transition-all ${
+                      voice.status === 'listening'
+                        ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      if (voice.status === 'listening') {
+                        voice.stopListening();
+                      } else {
+                        voice.reset();
+                        voice.startListening();
+                      }
+                    }}
+                  >
+                    {voice.status === 'listening' ? (
+                      <MicOff className="h-4 w-4 text-white" />
+                    ) : voice.status === 'processing' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
               </div>
+
+              {/* Voice status feedback */}
+              {voice.status === 'listening' && (
+                <div className="mt-2 px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/20 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-xs text-red-600 font-medium">Escuchando...</span>
+                  {voice.interimTranscript && (
+                    <span className="text-xs text-muted-foreground italic truncate">
+                      "{voice.interimTranscript}"
+                    </span>
+                  )}
+                </div>
+              )}
+              {voice.error && (
+                <div className="mt-2 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                  <span className="text-xs text-amber-600">{voice.error}</span>
+                </div>
+              )}
+              {voiceDebug && voice.status === 'done' && (
+                <div className="mt-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                  <span className="text-xs text-emerald-600">{voiceDebug}</span>
+                </div>
+              )}
             </div>
 
             {/* Frequent items */}

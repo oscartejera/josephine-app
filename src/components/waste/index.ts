@@ -30,7 +30,7 @@ export { WasteEndOfDay } from './WasteEndOfDay';
 // P1 — Data quality
 export { WasteDataQuality } from './WasteDataQuality';
 export { LogWasteDialog } from './LogWasteDialog';
-
-
+// P2 — Push notifications
+export { WasteNotificationSettings } from './WasteNotificationSettings';
 
 

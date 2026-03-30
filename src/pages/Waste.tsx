@@ -34,7 +34,8 @@ import {
   WasteQuickLog,
   WasteEndOfDay,
   WasteDataQuality,
-  LogWasteDialog
+  LogWasteDialog,
+  WasteNotificationSettings,
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
 import { useWasteAlerts } from '@/hooks/useWasteAlerts';
@@ -53,6 +54,7 @@ import { useWasteSimulation } from '@/hooks/useWasteSimulation';
 import { useWasteRecipeCost } from '@/hooks/useWasteRecipeCost';
 import { useWasteAnnualReport } from '@/hooks/useWasteAnnualReport';
 import { useWasteDataQuality } from '@/hooks/useWasteDataQuality';
+import { useWasteNotifications } from '@/hooks/useWasteNotifications';
 import { differenceInDays } from 'date-fns';
 import { useApp } from '@/contexts/AppContext';
 import { DemoDataBanner } from '@/components/ui/DemoDataBanner';
@@ -200,6 +202,9 @@ export default function Waste() {
 
   // P1 — Data Quality Score
   const dataQualityResult = useWasteDataQuality(rawEvents, dateRange);
+
+  // P2 — Push Notifications
+  const notifState = useWasteNotifications();
 
   // PDF Export handler (Sprint 4)
   const handleExportPDF = useCallback(() => {
@@ -449,8 +454,11 @@ export default function Waste() {
         </>
       )}
 
-      {/* Auto-Actions — always visible (config is lightweight) */}
-      <WasteThresholdConfig autoActions={autoActionsResult} wasteTarget={wasteTarget} />
+      {/* Auto-Actions + Notification Settings — always visible */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <WasteThresholdConfig autoActions={autoActionsResult} wasteTarget={wasteTarget} />
+        <WasteNotificationSettings notifState={notifState} />
+      </div>
 
       {/* Upsell banner when in Simple mode */}
       {viewMode === 'simple' && (
