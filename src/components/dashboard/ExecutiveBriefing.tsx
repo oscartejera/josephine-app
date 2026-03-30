@@ -53,8 +53,9 @@ function generateLocalBriefing(
 
         const locTarget = targetColByLoc[loc.id] || 30;
 
-        // Skip alert generation for locations with no data (avoids false -100% alerts)
-        if (sales === 0 && labour === 0) return;
+        // Skip alert generation for locations with no sales data
+        // (avoids false -100% alerts when POS hasn't synced for this location/day)
+        if (sales === 0) return;
 
         if (colPct > locTarget) {
             alerts.push({
