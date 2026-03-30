@@ -73,6 +73,15 @@ function bumpFrequency(itemId: string) {
   localStorage.setItem(FREQUENCY_STORAGE_KEY, JSON.stringify(map));
 }
 
+/** Extract unit from item name like "Pollo (kg)" → { displayName: "Pollo", unit: "kg" } */
+function parseNameUnit(name: string, dbUnit: string | null): { displayName: string; unit: string } {
+  const match = name.match(/^(.+?)\s*\(([^)]+)\)$/);
+  if (match) {
+    return { displayName: match[1].trim(), unit: dbUnit || match[2].trim() };
+  }
+  return { displayName: name, unit: dbUnit || 'ud' };
+}
+
 // ── Hook ──
 
 export function useWasteQuickLog(locationIdOverride?: string): QuickLogState {
@@ -102,15 +111,18 @@ export function useWasteQuickLog(locationIdOverride?: string): QuickLogState {
       }
 
       const freqMap = getFrequencyMap();
-      const items: QuickLogItem[] = data.map(item => ({
-        id: item.id,
-        name: item.name || 'Sin nombre',
-        unit: item.unit || 'ud',
-        lastCost: item.last_cost || 0,
-        category: item.category_name || 'Otros',
-        frequency: freqMap[item.id] || 0,
-        isFrequent: (freqMap[item.id] || 0) >= 2,
-      }));
+      const items: QuickLogItem[] = data.map(item => {
+        const { displayName, unit } = parseNameUnit(item.name || 'Sin nombre', item.unit);
+        return {
+          id: item.id,
+          name: `${displayName} (${unit})`,
+          unit,
+          lastCost: item.last_cost || 0,
+          category: item.category_name || 'Otros',
+          frequency: freqMap[item.id] || 0,
+          isFrequent: (freqMap[item.id] || 0) >= 1,
+        };
+      });
 
       setAllItems(items);
       setIsLoadingItems(false);
