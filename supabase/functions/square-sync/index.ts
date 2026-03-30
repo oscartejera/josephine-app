@@ -539,9 +539,10 @@ Deno.serve(async (req) => {
       console.warn('[square-sync] MV refresh failed (non-blocking):', mvErr.message);
     }
 
-    // 9c. Auto-trigger forecast after initial sync
-    if (isInitialSync && stats.orders > 0) {
-      console.log('[square-sync] Initial sync done, auto-triggering forecast generation...');
+    // 9c. Auto-trigger forecast on every sync with new orders
+    // (not just initial sync — ensures forecast stays current with real POS data)
+    if (stats.orders > 0) {
+      console.log('[square-sync] New orders synced, triggering forecast regeneration...');
       try {
         await fetch(`${supabaseUrl}/functions/v1/generate_forecast_v6`, {
           method: 'POST',
@@ -556,6 +557,22 @@ Deno.serve(async (req) => {
         // Don't fail the sync if forecast generation fails
         console.warn('[square-sync] Forecast trigger failed (non-blocking):', forecastErr);
       }
+    }
+
+    // 9d. Auto-generate budget if none exists for current month
+    // (prevents false "-100% below budget" alerts in Executive Briefing)
+    try {
+      const { data: budgetResult, error: budgetErr } = await supabase.rpc(
+        'generate_auto_budget',
+        { p_org_id: orgId },
+      );
+      if (budgetErr) {
+        console.warn('[square-sync] Auto-budget warning:', budgetErr.message);
+      } else if (budgetResult?.created) {
+        console.log('[square-sync] Auto-budget created:', JSON.stringify(budgetResult));
+      }
+    } catch (budgetErr: any) {
+      console.warn('[square-sync] Auto-budget failed (non-blocking):', budgetErr.message);
     }
 
     return new Response(
