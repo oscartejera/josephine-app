@@ -166,7 +166,7 @@ export function ExecutiveBriefing() {
                 .eq('date', targetDate);
 
             // Fetch yesterday's labour cost per location
-            // Fallback: compute SUM(planned_hours × hourly_cost) from planned_shifts + employees
+            // RPC now uses time_entries (actual) first, falls back to planned_shifts
             let labourData: any[] | null = null;
             try {
                 const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc('get_labour_cost_by_date', {
