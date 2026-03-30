@@ -36,6 +36,7 @@ import {
   WasteDataQuality,
   LogWasteDialog,
   WasteNotificationSettings,
+  ImplicitWasteCard,
 } from '@/components/waste';
 import { useWasteData } from '@/hooks/useWasteData';
 import { useWasteAlerts } from '@/hooks/useWasteAlerts';
@@ -71,6 +72,7 @@ const VIEW_MODES: { value: ViewMode; label: string; icon: React.ReactNode; desc:
 
 export default function Waste() {
   const [searchParams] = useSearchParams();
+  const { accessibleLocations } = useApp();
   const today = new Date();
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -375,6 +377,13 @@ export default function Waste() {
             <WasteVarianceAnalysis result={varianceResult} isLoading={isLoading} />
             <WasteImpactSimulator result={simulationResult} isLoading={isLoading} />
           </div>
+
+          {/* P3: Implicit Waste (Shrinkage) — POS × Recipes vs Stock Counts */}
+          <ImplicitWasteCard
+            locationId={selectedLocations.length > 0 ? selectedLocations[0] : (accessibleLocations.length > 0 ? accessibleLocations[0].id : null)}
+            dateFrom={dateRange.from}
+            dateTo={dateRange.to}
+          />
         </>
       )}
 

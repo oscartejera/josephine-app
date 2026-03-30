@@ -39,3 +39,5 @@ export { WasteQuickLogContent } from './WasteQuickLogContent';
 export { WasteDayFlow } from './WasteDayFlow';
 // P3 — Gamification
 export { WastePersonalStats } from './WastePersonalStats';
+// P3 — Implicit waste (shrinkage)
+export { ImplicitWasteCard } from './ImplicitWasteCard';
