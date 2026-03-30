@@ -21,10 +21,11 @@ Si falla, corregir ANTES de continuar. No commitear código roto.
 
 **CRÍTICO: Usar SIEMPRE `--no-verify` en commit Y push porque ya validamos con tsc.**
 **CRÍTICO: Usar `;` para encadenar comandos (PowerShell 5.1 NO soporta `&&`).**
-**CRÍTICO: Poner `WaitMsBeforeAsync: 10000`.**
+**CRÍTICO: Poner `WaitMsBeforeAsync: 30000` para dar tiempo al push.**
+**CRÍTICO: Siempre setear `$env:GIT_TERMINAL_PROMPT = "0"` ANTES para evitar prompts GUI colgados.**
 
 ```powershell
-git add -A; git commit --no-verify -m "<tipo>(<scope>): <descripción>"; git push --no-verify origin main
+$env:GIT_TERMINAL_PROMPT = "0"; git add -A; git commit --no-verify -m "<tipo>(<scope>): <descripción>"; git push --no-verify origin main; git log --oneline -1
 ```
 
 Tipos válidos: `feat`, `fix`, `refactor`, `style`, `db`, `docs`, `chore`, `perf`
@@ -83,3 +84,30 @@ Esta máquina (Windows) usa PowerShell 5.1. Diferencias clave:
 3. Verificar hooks: `git config --get core.hooksPath` (debe dar vacío)
 4. Re-desactivar si Husky lo reactivó: `git config --unset core.hooksPath`
 
+## Fix: Credential Manager GUI Hang (2026-03-30)
+
+### Problema
+El `credential.helper=manager` a nivel SYSTEM (`C:/Program Files/Git/etc/gitconfig`)
+abre un popup GUI invisible de Windows para pedir credenciales GitHub. En terminales
+headless (como Antigravity), este popup se queda colgado indefinidamente.
+
+### Fix aplicado
+```powershell
+gh auth setup-git  # Configura gh CLI como credential helper para github.com
+```
+
+Esto añade en `~/.gitconfig`:
+```ini
+[credential "https://github.com"]
+  helper =
+  helper = !'C:\Program Files\GitHub CLI\gh.exe' auth git-credential
+```
+
+El `helper =` vacío (primera línea) **anula** el `manager` del system gitconfig.
+El segundo helper delega a `gh` CLI que ya tiene token válido.
+
+### Reglas permanentes
+1. **SIEMPRE** setear `$env:GIT_TERMINAL_PROMPT = "0"` antes de git push
+2. **NUNCA** borrar `~/.gitconfig` — contiene el credential override
+3. Si `gh auth status` expira, correr `gh auth login` para renovar token
+4. Si se reinstala Git, correr `gh auth setup-git` de nuevo
