@@ -231,6 +231,7 @@ function AppRoutes() {
 
           <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Suspense fallback={<SectionLoader section="Dashboard" />}><Dashboard /></Suspense>} />
+            <Route path="/control-tower" element={<Navigate to="/dashboard" replace />} />
 
             {/* Insights routes — per-section Suspense boundary */}
             <Route path="/insights" element={<Suspense fallback={<SectionLoader section="Insights" />}><Insights /></Suspense>} />

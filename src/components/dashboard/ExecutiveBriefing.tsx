@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { format, subDays } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface BriefingData {
     narrative: string;
@@ -31,8 +32,8 @@ function generateLocalBriefing(
     const recommendations: string[] = [];
     const narrativeParts: string[] = [];
     const displayDate = targetDate
-        ? format(new Date(targetDate + 'T12:00:00'), "d 'de' MMMM")
-        : format(subDays(new Date(), 1), "d 'de' MMMM");
+        ? format(new Date(targetDate + 'T12:00:00'), "d 'de' MMMM", { locale: es })
+        : format(subDays(new Date(), 1), "d 'de' MMMM", { locale: es });
 
     let totalSales = 0;
     let totalLabour = 0;

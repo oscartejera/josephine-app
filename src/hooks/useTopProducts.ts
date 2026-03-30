@@ -115,7 +115,7 @@ export function useTopProducts() {
 
         return {
           product_id: productId,
-          product_name: item.name as string,
+          product_name: (item.name === 'Unknown' || !item.name) ? 'Ventas sin producto asignado' : item.name as string,
           category: (item.category as string) || 'Sin categoría',
           units: qty,
           sales,
