@@ -5,7 +5,7 @@ import { LucideIcon } from 'lucide-react';
 
 interface MetricCardProps {
   title: string | ReactNode;
-  value: string | number;
+  value: string | number | ReactNode;
   subtitle?: string;
   icon?: LucideIcon;
   trend?: {

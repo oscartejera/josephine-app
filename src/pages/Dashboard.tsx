@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { JosephineChat } from '@/components/ai/JosephineChat';
 import { useTranslation } from 'react-i18next';
@@ -21,9 +21,11 @@ import { LocationBenchmark } from '@/components/dashboard/LocationBenchmark';
 import { DashboardTour } from '@/pages/OnboardingWizardV2';
 import { DollarSign, Percent, Users, Receipt, TrendingUp, Flame, MapPin, AlertCircle, Bot } from 'lucide-react';
 import { EstimatedLabel } from '@/components/ui/EstimatedLabel';
+import { AnimatedValue } from '@/components/ui/AnimatedValue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { gsap, useGSAP } from '@/lib/gsap';
 import type { DashboardMetricsForAI } from '@/hooks/useAINarratives';
 
 function calculateDelta(current: number, previous: number): { value: number; positive: boolean } | undefined {
@@ -229,67 +231,26 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* KPI Cards */}
-        <div data-tour="kpi-cards" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          {[
-            <MetricCard
-              key="sales"
-              title={t('dashboard.netSales')}
-              value={`€${netSales.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-              icon={DollarSign}
-              variant="success"
-              trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: t('common.vsForecast') } : undefined}
-            />,
-            <MetricCard
-              key="gp"
-              title="GP%"
-              value={gpPercent != null ? `${Number(gpPercent).toFixed(1)}%` : '—'}
-              icon={Percent}
-              variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
-              trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: t('common.vsForecast') } : undefined}
-            />,
-            <MetricCard
-              key="cogs"
-              title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
-              value={`€${cogs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-              icon={Receipt}
-              trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: t('common.vsForecast') } : undefined}
-            />,
-            <MetricCard
-              key="labor"
-              title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
-              value={`€${labourCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}
-              icon={Users}
-              trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
-            />,
-            <MetricCard
-              key="col"
-              title="COL%"
-              value={colPercent != null ? `${Number(colPercent).toFixed(1)}%` : '—'}
-              icon={TrendingUp}
-              variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
-              trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: t('common.vsForecast') } : undefined}
-            />,
-            <MetricCard
-              key="covers"
-              title={t('dashboard.covers')}
-              value={ordersCount}
-              icon={Users}
-              trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: t('common.vsForecast') } : undefined}
-            />,
-            <MetricCard
-              key="ticket"
-              title={t('dashboard.avgTicket')}
-              value={`€${Number(avgCheck).toFixed(2)}`}
-              icon={Flame}
-              trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: t('common.vsForecast') } : undefined}
-            />,
-          ].map((card, i) => (
-            <div key={i} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'backwards' }}>
-              {card}
-            </div>
-          ))}
-        </div>
+        {/* KPI Cards — GSAP stagger reveal + animated counters */}
+        <KpiCardsRow
+          netSales={netSales}
+          gpPercent={gpPercent}
+          cogs={cogs}
+          labourCost={labourCost}
+          colPercent={colPercent}
+          ordersCount={ordersCount}
+          avgCheck={avgCheck}
+          salesDelta={salesDelta}
+          gpDelta={gpDelta}
+          cogsDelta={cogsDelta}
+          laborDelta={laborDelta}
+          colDelta={colDelta}
+          coversDelta={coversDelta}
+          avgTicketDelta={avgTicketDelta}
+          cogsSourceMixed={cogsSourceMixed}
+          labourSourceMixed={labourSourceMixed}
+          t={t}
+        />
 
         {/* Top 10 Products - full width */}
         <TopProductsCard />
@@ -333,5 +294,132 @@ export default function Dashboard() {
       {/* Product Tour (react-joyride) */}
       <DashboardTour />
     </>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ *  KpiCardsRow — GSAP-powered stagger + animated counters
+ * ──────────────────────────────────────────────────────────── */
+interface KpiCardsRowProps {
+  netSales: number;
+  gpPercent: number;
+  cogs: number;
+  labourCost: number;
+  colPercent: number;
+  ordersCount: number;
+  avgCheck: number;
+  salesDelta?: { value: number; positive: boolean };
+  gpDelta?: { value: number; positive: boolean };
+  cogsDelta?: { value: number; positive: boolean };
+  laborDelta?: { value: number; positive: boolean };
+  colDelta?: { value: number; positive: boolean };
+  coversDelta?: { value: number; positive: boolean };
+  avgTicketDelta?: { value: number; positive: boolean };
+  cogsSourceMixed: boolean;
+  labourSourceMixed: boolean;
+  t: (key: string) => string;
+}
+
+function KpiCardsRow({
+  netSales, gpPercent, cogs, labourCost, colPercent,
+  ordersCount, avgCheck,
+  salesDelta, gpDelta, cogsDelta, laborDelta, colDelta,
+  coversDelta, avgTicketDelta,
+  cogsSourceMixed, labourSourceMixed, t,
+}: KpiCardsRowProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // GSAP stagger reveal — cards slide up with 80ms gap
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add(
+      {
+        normal: '(prefers-reduced-motion: no-preference)',
+        reduced: '(prefers-reduced-motion: reduce)',
+      },
+      (context) => {
+        const { reduced } = context.conditions!;
+        if (reduced) return;
+
+        gsap.from('.gsap-kpi-card', {
+          y: 24,
+          autoAlpha: 0,
+          duration: 0.5,
+          stagger: 0.08,
+          ease: 'power2.out',
+          delay: 0.15,
+        });
+      }
+    );
+  }, { scope: containerRef });
+
+  return (
+    <div ref={containerRef} data-tour="kpi-cards" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="gsap-kpi-card">
+        <MetricCard
+          title={t('dashboard.netSales')}
+          value={<AnimatedValue value={netSales} prefix="€" />}
+          icon={DollarSign}
+          variant="success"
+          trend={salesDelta ? { value: salesDelta.value, positive: salesDelta.positive, label: t('common.vsForecast') } : undefined}
+        />
+      </div>
+
+      <div className="gsap-kpi-card">
+        <MetricCard
+          title="GP%"
+          value={<AnimatedValue value={gpPercent} suffix="%" decimals={1} />}
+          icon={Percent}
+          variant={gpPercent != null && gpPercent >= 65 ? 'success' : 'warning'}
+          trend={gpDelta ? { value: gpDelta.value, positive: gpDelta.positive, label: t('common.vsForecast') } : undefined}
+        />
+      </div>
+
+      <div className="gsap-kpi-card">
+        <MetricCard
+          title={<span className="flex items-center gap-1">COGS {cogsSourceMixed && <EstimatedLabel reason="COGS parcialmente estimado. Conecta inventario o recetas para datos reales." />}</span>}
+          value={<AnimatedValue value={cogs} prefix="€" />}
+          icon={Receipt}
+          trend={cogsDelta ? { value: cogsDelta.value, positive: !cogsDelta.positive, label: t('common.vsForecast') } : undefined}
+        />
+      </div>
+
+      <div className="gsap-kpi-card">
+        <MetricCard
+          title={<span className="flex items-center gap-1">Labor {labourSourceMixed && <EstimatedLabel reason="Datos de labor parcialmente estimados." />}</span>}
+          value={<AnimatedValue value={labourCost} prefix="€" />}
+          icon={Users}
+          trend={laborDelta ? { value: laborDelta.value, positive: !laborDelta.positive, label: t('common.vsForecast') } : undefined}
+        />
+      </div>
+
+      <div className="gsap-kpi-card">
+        <MetricCard
+          title="COL%"
+          value={<AnimatedValue value={colPercent} suffix="%" decimals={1} />}
+          icon={TrendingUp}
+          variant={colPercent != null && colPercent <= 25 ? 'success' : 'warning'}
+          trend={colDelta ? { value: Math.abs(colDelta.value), positive: colDelta.positive, label: t('common.vsForecast') } : undefined}
+        />
+      </div>
+
+      <div className="gsap-kpi-card">
+        <MetricCard
+          title={t('dashboard.covers')}
+          value={<AnimatedValue value={ordersCount} />}
+          icon={Users}
+          trend={coversDelta ? { value: coversDelta.value, positive: coversDelta.positive, label: t('common.vsForecast') } : undefined}
+        />
+      </div>
+
+      <div className="gsap-kpi-card">
+        <MetricCard
+          title={t('dashboard.avgTicket')}
+          value={<AnimatedValue value={avgCheck} prefix="€" decimals={2} />}
+          icon={Flame}
+          trend={avgTicketDelta ? { value: avgTicketDelta.value, positive: avgTicketDelta.positive, label: t('common.vsForecast') } : undefined}
+        />
+      </div>
+    </div>
   );
 }
