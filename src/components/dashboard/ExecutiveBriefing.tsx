@@ -24,12 +24,15 @@ function generateLocalBriefing(
     labourByLoc: Record<string, number>,
     budgetByLoc: Record<string, { sales: number; labour: number }>,
     wasteTotal: number,
-    targetColByLoc: Record<string, number> = {}
+    targetColByLoc: Record<string, number> = {},
+    targetDate?: string
 ): BriefingData {
     const alerts: BriefingData['alerts'] = [];
     const recommendations: string[] = [];
     const narrativeParts: string[] = [];
-    const yesterday = format(subDays(new Date(), 1), "d 'de' MMMM");
+    const displayDate = targetDate
+        ? format(new Date(targetDate + 'T12:00:00'), "d 'de' MMMM")
+        : format(subDays(new Date(), 1), "d 'de' MMMM");
 
     let totalSales = 0;
     let totalLabour = 0;
@@ -85,7 +88,7 @@ function generateLocalBriefing(
     const primePct = totalSales > 0 ? (primeCost / totalSales) * 100 : 0;
     const salesVsTarget = totalBudgetSales > 0 ? ((totalSales - totalBudgetSales) / totalBudgetSales) * 100 : 0;
 
-    narrativeParts.push(`Ayer (${yesterday}) las ventas totales fueron €${Math.round(totalSales).toLocaleString()}`);
+    narrativeParts.push(`Ayer (${displayDate}) las ventas totales fueron €${Math.round(totalSales).toLocaleString()}`);
 
     if (salesVsTarget > 0) {
         narrativeParts.push(`un ${salesVsTarget.toFixed(1)}% por encima del presupuesto`);
@@ -131,16 +134,26 @@ export function ExecutiveBriefing() {
     const fetchBriefing = async () => {
         setIsLoading(true);
         try {
-            const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
             const locIds = accessibleLocations.map(l => l.id);
             if (locIds.length === 0) { setIsLoading(false); return; }
 
-            // Fetch yesterday's sales
+            // Find the most recent day with actual sales data (not hardcoded yesterday)
+            const { data: recentSale } = await supabase
+                .from('sales_daily_unified')
+                .select('date')
+                .in('location_id', locIds)
+                .gt('net_sales', 0)
+                .order('date', { ascending: false })
+                .limit(1);
+
+            const targetDate = recentSale?.[0]?.date || format(subDays(new Date(), 1), 'yyyy-MM-dd');
+
+            // Fetch sales for that date
             const { data: salesData } = await supabase
                 .from('sales_daily_unified')
                 .select('location_id, net_sales')
                 .in('location_id', locIds)
-                .eq('date', yesterday);
+                .eq('date', targetDate);
 
             // Fetch yesterday's labour cost per location
             // Fallback: compute SUM(planned_hours × hourly_cost) from planned_shifts + employees
@@ -148,10 +161,10 @@ export function ExecutiveBriefing() {
             try {
                 const { data: rpcResult, error: rpcErr } = await (supabase as any).rpc('get_labour_cost_by_date', {
                     _location_ids: locIds,
-                    _from: yesterday,
-                    _to: yesterday,
+                    _from: targetDate,
+                    _to: targetDate,
                 });
-                if (!rpcErr && rpcResult) labourData = rpcResult;
+            if (!rpcErr && rpcResult) labourData = rpcResult;
                 else if (rpcErr) console.warn('[ExecutiveBriefing] RPC labour error:', rpcErr.message);
             } catch (e) { console.warn('[ExecutiveBriefing] RPC call failed, using fallback'); }
 
@@ -161,7 +174,7 @@ export function ExecutiveBriefing() {
                     .from('planned_shifts')
                     .select('location_id, planned_hours, employee_id')
                     .in('location_id', locIds)
-                    .eq('shift_date', yesterday);
+                    .eq('shift_date', targetDate);
 
                 if (shifts && shifts.length > 0) {
                     const empIds = [...new Set(shifts.map((s: any) => s.employee_id))];
@@ -188,7 +201,7 @@ export function ExecutiveBriefing() {
                 .from('budget_daily_unified')
                 .select('location_id, budget_sales, budget_labour')
                 .in('location_id', locIds)
-                .eq('day', yesterday);
+                .eq('day', targetDate);
 
             // Fetch waste (no waste_value column → compute from qty_delta × unit_cost)
             const { data: wasteData } = await supabase
@@ -196,8 +209,8 @@ export function ExecutiveBriefing() {
                 .select('qty_delta, unit_cost')
                 .in('location_id', locIds)
                 .eq('movement_type', 'waste')
-                .gte('created_at', `${yesterday}T00:00:00`)
-                .lte('created_at', `${yesterday}T23:59:59`);
+                .gte('created_at', `${targetDate}T00:00:00`)
+                .lte('created_at', `${targetDate}T23:59:59`);
 
             // Aggregate by location
             const salesByLoc: Record<string, number> = {};
@@ -229,7 +242,7 @@ export function ExecutiveBriefing() {
                 });
             } catch { /* location_settings may not exist */ }
 
-            const result = generateLocalBriefing(accessibleLocations, salesByLoc, labourByLoc, budgetByLoc, wasteTotal, targetColByLoc);
+            const result = generateLocalBriefing(accessibleLocations, salesByLoc, labourByLoc, budgetByLoc, wasteTotal, targetColByLoc, targetDate);
             setBriefing(result);
         } catch (err) {
             console.error('[ExecutiveBriefing]', err);

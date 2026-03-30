@@ -76,12 +76,13 @@ export function TopProductsCard({ className }: TopProductsCardProps) {
             {/* Date Preset Filter */}
             <Select
               value={datePreset}
-              onValueChange={(value) => setDatePreset(value as 'last7' | 'last30' | 'custom')}
+              onValueChange={(value) => setDatePreset(value as 'last7' | 'last30' | 'month' | 'custom')}
             >
               <SelectTrigger className="w-[140px] h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="month">Este mes</SelectItem>
                 <SelectItem value="last7">{t('common.lastWeek')}</SelectItem>
                 <SelectItem value="last30">{t('common.lastMonth')}</SelectItem>
                 <SelectItem value="custom">{t('common.custom')}</SelectItem>

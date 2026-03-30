@@ -28,15 +28,17 @@ export interface DateRangePreset {
   to: Date;
 }
 
-const getPresetDates = (preset: 'last7' | 'last30' | 'custom'): { from: Date; to: Date } => {
+const getPresetDates = (preset: 'last7' | 'last30' | 'month' | 'custom'): { from: Date; to: Date } => {
   const today = new Date();
   switch (preset) {
     case 'last7':
       return { from: subDays(today, 7), to: today };
     case 'last30':
       return { from: subDays(today, 30), to: today };
+    case 'month':
+      return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: today };
     default:
-      return { from: subDays(today, 7), to: today };
+      return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: today };
   }
 };
 
@@ -46,7 +48,7 @@ export function useTopProducts() {
 
   // Filter state
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
-  const [datePreset, setDatePreset] = useState<'last7' | 'last30' | 'custom'>('last7');
+  const [datePreset, setDatePreset] = useState<'last7' | 'last30' | 'month' | 'custom'>('month');
   const [customDateFrom, setCustomDateFrom] = useState<Date>(subDays(new Date(), 7));
   const [customDateTo, setCustomDateTo] = useState<Date>(new Date());
   const [orderBy, setOrderBy] = useState<OrderByOption>('share');
