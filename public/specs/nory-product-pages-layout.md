@@ -1412,3 +1412,421 @@ nory.ai/
     ├── /roi-calculator
     └── /content-library
 ```
+
+---
+
+## RESOURCES PAGES — INGENIERIA INVERSA COMPLETA (VERIFICADO CON BROWSER)
+
+### Mega-Menu Structure: Resources
+```
+Resources
+├── Blog (/blog)
+│   "Operator insights & ideas."
+├── Podcast (/podcasts)
+│   "What's Cooking? podcast."
+├── Benchmark (/benchmark)
+│   "Discover how your venues perform against the industry."
+├── ROI Calculator (/roi-calculator)
+│   "Calculate your potential savings with Nory."
+└── Content Library (/content-library)
+    "Guides, playbooks, and explainers."
+```
+
+---
+
+### 1. BLOG (/blog)
+
+**Hero:**
+- BG: cream/beige #F2F0E9 (consistent across all pages)
+- Headline: "Industry news, insights and more." — Bold sans-serif, dark black, massive
+- No CTA button in hero — editorial approach
+
+**Featured Post:**
+- Layout: Large horizontal card (image LEFT + content RIGHT)
+- Card includes: Category tag, Title (bold), Excerpt, Date
+- Full-width on cream background
+
+**Topic Filters:**
+- Pill-shaped category tags (scrollable horizontal)
+- Categories: "All topics", "AI", "Workforce", "Inventory", "Business Intelligence", etc.
+- Active filter: filled pill; inactive: outlined
+
+**Blog Grid:**
+- 3-column responsive grid
+- BG: cream #F2F0E9
+- Card design:
+  - Image (top, rounded corners)
+  - Title (bold sans-serif)
+  - Excerpt (body text)
+  - Date (bottom)
+- White cards on beige background
+- Subtle fade-in and slide-up animations on scroll
+
+**Pagination:**
+- "Load more" button (outlined → solid on hover)
+- NOT infinite scroll
+
+**Bottom CTA Section:**
+- BG: dark green #0B2414
+- Headline: "Thicken up the thinnest of margins" — bold white
+- High-contrast band before footer
+
+**Floating Element:**
+- "Book a chat" bubble — fixed bottom-right, lavender with white text
+
+---
+
+### 2. PODCAST (/podcasts)
+
+**Podcast Name:** "What's Cooking?"
+**Host:** Conor Sheridan (CEO & Founder of Nory)
+
+**Hero:**
+- BG: Soft Lavender #B8B2F3
+- Layout: 2-column (text LEFT + branding card RIGHT)
+- Headline: "A feast for your ears." — Bold sans-serif, dark text
+- Right: Square "What's Cooking?" branding card with cover art
+
+**Episode Feed (Universal Pattern):**
+- BG: Light Cream/Beige #F2F0E9
+- Each episode = horizontal row:
+  - LEFT: Episode thumbnail with play button overlay on hover
+  - RIGHT:
+    - `EP #X` — rounded chip/badge
+    - Headline: bold large title
+    - Description: 2-3 sentence teaser
+    - Metadata: Date + Duration (e.g., "41 mins")
+    - CTA: "Listen now" or "View episode" link with trailing arrow icon
+
+**Guest Photography:**
+- Signature dark green framed style for guest photos
+- High-quality portrait photos
+
+**Footer:**
+- Standard dark footer
+- Massive full-width "No profit lost." tagline in lavender over dark background
+
+**Animation:**
+- Scroll-reveal fade-in pattern for episode cards
+- Seamless transitions between Lavender hero and Cream content
+
+---
+
+### 3. BENCHMARK (/benchmark)
+
+**Purpose:** Lead-generation tool disguised as a benchmarking calculator. Multi-step interactive form.
+
+**Hero:**
+- BG: Dark green #0C2D1C
+- Headline: "Profit starts with perspective." — Serif bold, cream/white text
+- Subheadline: "Discover how your venues perform against the industry..."
+- Clean centered design
+
+**Step 1 — Industry Benchmark Form:**
+- White rounded card on dark green background
+- 3 input fields:
+  1. `Gross Profit (%)` — number input, required
+  2. `Cost of Labour (%)` — number input, required
+  3. `Average Google Reviews` — number input, required
+- CTA: [Next] — grey/dark button
+
+**Step 2 — Lead Capture:**
+- Transition to lead gen fields:
+  1. `First Name`
+  2. `Email`
+  3. `Type of Restaurant` — dropdown
+- CTAs: [Submit] (primary) + [Previous] (secondary link)
+
+**Step 3 — Benchmark Results (Dynamic):**
+- Headline: "You vs. Industry Benchmark"
+- Data Visualizations:
+  - Horizontal bar charts comparing user input vs industry "Lowest" and "Highest"
+  - Gross Profit comparison bar
+  - Cost of Labour comparison bar
+  - Customer Reviews metric bar
+- Shows exact percentage gaps and industry averages
+
+**Step 4 — Achievement Projections (Dynamic):**
+- Headline: "What you could achieve with Nory"
+- 3 large highlighted metrics:
+  1. Gross profit increase (%)
+  2. Labour cost reduction (%)
+  3. Review rating improvement (number)
+
+**Social Proof (Lower):**
+- Logo grid of brands
+- Success stories module (99% accuracy, 30% labour saving)
+- Final CTA: "Book a chat"
+
+**Color Palette:**
+- BG: Dark Green #0C2D1C
+- Form surface: white
+- Data highlights: Lime Green #C5FF4A
+- Results text: dark bold
+
+**Animation:**
+- Benchmark results bars animate from zero → calculated value
+- Step transitions with CSS animations
+
+---
+
+### 4. ROI CALCULATOR (/roi-calculator)
+
+**Purpose:** Interactive profitability calculator. Real-time calculations as user inputs data.
+
+**Layout:** Single-page tool with "← Back to website" link, no standard navbar.
+
+**BG:** Off-white/beige #F6F4F0 with white card container
+
+**Section 1 — Revenue:**
+- Headline: "Revenue" — extra bold sans-serif
+- Fields:
+  1. `Revenue period` — dropdown (Annually / Monthly) top-right
+  2. Currency selector: £ / $ / €
+  3. `Annual Revenue` — text input
+  4. `Type of restaurant` — dropdown (Quick Service, Full Service...)
+  5. `Number of locations` — numeric input
+
+**Section 2 — Gross Profit Metrics:**
+- Headline: "Gross profit metrics" — extra bold
+- Fields:
+  1. `Current Gross Profit (%)` — with live monetary calculation displayed right (e.g., £3.50m)
+  2. `Target Gross Profit (%)` — same live calc
+- **GP Variance block:** Highlighted beige card showing gap in:
+  - Bold percentage (e.g., **2.0%**)
+  - Bold monetary value (e.g., **£100k**)
+
+**Section 3 — Labour Cost Metrics:**
+- Headline: "Labour cost metrics" — extra bold
+- Fields:
+  1. `Current Cost of Labour (%)` — with live calc
+  2. `Target Cost of Labour (%)` — with live calc
+- **Labour Overspend block:** Same highlighted card showing savings potential
+
+**CTA:**
+- [Show projected results] — full-width dark button
+- Leads to results breakdown or Book a Chat
+
+**Footer:**
+- Disclaimer: "Figures shown are estimates and may be rounded for simplicity"
+- "← Back to website" link
+
+**Key Design Notes:**
+- NO standard navigation bar (isolated tool experience like Book a Chat)
+- Real-time updates — calculations happen instantly without reload
+- Clean minimal card-based layout with generous padding
+- Typography: Extra bold geometric sans-serif (Outfit or similar)
+
+---
+
+### 5. CONTENT LIBRARY (/content-library)
+
+**Hero:**
+- BG: Beige #FDFCF7
+- Badge: "● Resources" pill tag
+- Headline: "Our recipes for success" — Serif bold italic, dark, massive
+- Subheadline: "A collection of guides, playbooks, and explainers designed to help hospitality brands make better operational decisions."
+
+**Featured Resources:**
+- Large featured card layout (2-column):
+  - LEFT: Book/eBook cover on dark green #0B2117 background
+  - RIGHT: Category tag ("Explainer"), Title, Description, "Read now" CTA
+- Example featured: "Why your tech stack is killing your margins"
+
+**Content Grid:**
+- 2-3 column grid of resource cards
+- Card anatomy:
+  - Cover image / illustration
+  - Category tag (eBook, Explainer, Guide, Playbook)
+  - Title (bold)
+  - Short description
+  - "Read now" CTA link
+
+**Access Model:**
+- GATED content — clicking leads to dedicated landing page with HubSpot form for lead capture
+- Lead gen via email capture before downloading
+
+**Color Accents:**
+- Card illustrations: Lavender #B4A4FF and Dark Green #0B2117
+- Typography: Bold headlines (serif/sans mix)
+
+**Bottom CTA:**
+- Dark band with "Thicken up the thinnest of margins"
+- Same pattern as Blog page
+
+---
+
+### Resources Pages — Color Theme Table
+
+| Page | Hero BG | Accent Color | Interactive | Lead Gen |
+|------|---------|-------------|-------------|----------|
+| **Blog** | #F2F0E9 (cream) | Dark text | Filters + Load more | No |
+| **Podcast** | #B8B2F3 (lavender) | Dark green frames | Play buttons | No |
+| **Benchmark** | #0C2D1C (dark green) | #C5FF4A (lime) | Multi-step form | Yes (Step 2) |
+| **ROI Calculator** | #F6F4F0 (off-white) | Bold black metrics | Real-time calc | Yes (CTA) |
+| **Content Library** | #FDFCF7 (beige) | #B4A4FF (lavender) | Card grid | Yes (gated) |
+
+---
+
+## BOOK A CHAT PAGE — INGENIERIA INVERSA COMPLETA (VERIFICADO CON BROWSER)
+
+### URL: /book-a-chat
+
+**Purpose:** Primary conversion page. High-intent demo booking / sales qualification form.
+
+**Layout:** 2-column 50/50 split. NO standard navigation bar (isolated conversion experience).
+
+**Header:**
+- "← Back to the website" link (top-left)
+
+**LEFT Column (60%) — Form:**
+- BG: White card with generous padding
+- Headline: "See Nory in action" — Extra bold sans-serif, massive
+- Form fields (HubSpot-powered):
+  1. `First Name`* — text
+  2. `Last Name` — text
+  3. `Work email`* — email
+  4. `Phone Number`* — with country code selector (flag + code, default CH +41)
+  5. `Role` — dropdown/combobox
+  6. `Current ePOS system` — dropdown/combobox
+  7. `Number of venues`* — number
+  8. `Tell us about your goals with Nory?` — textarea (long)
+- CTA: [Submit] — full-width dark violet/black button
+- Legal: "By submitting this form I confirm I have read and accepted Nory AI's Privacy Policy."
+
+**RIGHT Column (40%) — Social Proof Panel:**
+- 3 stacked cards:
+
+**Card 1 (Top — largest):**
+- BG: Lavender/Lilac #AEB4F7
+- Nory logo (top-left)
+- Headline: "A brief chat could transform your business forever" — Serif bold, dark
+- Body: "Find out how Nory can help you level up your operations and your margins."
+- Logo marquee at bottom: Badiani, Black Sheep Coffee, Boston Tea Party, Bubble CiTea, Colicci, Camile
+
+**Card 2 (Bottom-left):**
+- BG: Dark Green #0A2B1A
+- Text: "Supporting all major POS systems" — white
+- White icon marquee: Square, Lightspeed, Toast, etc.
+
+**Card 3 (Bottom-right):**
+- BG: Dark Violet #0D0014
+- G2 Badges: "Users Love Us", "Users Most Likely To Recommend", "High Performer" (Fall 2025)
+- Text: "Top performer in Restaurant Management Software"
+- Rating: ★ Rated 4.8 by users
+
+**Page BG:** Off-white/beige #F4F4F2
+
+**Key Design Notes:**
+- No nav, no footer — pure conversion focus
+- Single viewport experience on desktop (no scroll needed)
+- HubSpot form integration
+- Lead qualification via Role + ePOS + Number of venues fields
+
+---
+
+## SUCCESS STORIES PAGE — INGENIERIA INVERSA COMPLETA (VERIFICADO CON BROWSER)
+
+### URL: /success-stories
+
+**Hero:**
+- BG: cream/beige #F2F0E9
+- Badge: "● Success Stories" pill tag
+- Headline: "We're putting profit on every plate." — Serif bold italic, dark, massive
+- Subheadline: "Find out how restaurants like yours are using Nory to transform their operations, saving time and protecting their margins where it really counts."
+- No CTA button in hero (editorial approach)
+
+**Featured Success Story:**
+- Large horizontal card (same UX as Blog featured post):
+  - LEFT: High-quality lifestyle photo
+  - RIGHT: Title, description, date
+- Featured example: "How CUPP reduces food waste by 60% with Nory"
+
+**Case Study Grid:**
+- 3-column responsive grid
+- Card anatomy:
+  - Full-width photo (top, rounded corners, lifestyle shots of restaurants)
+  - Title (bold sans-serif) — includes KPI highlight
+  - Description (excerpt, 2-3 lines)
+  - Date (bottom)
+- NO explicit category filters (unlike Blog)
+
+**Verified Case Studies (from grid):**
+1. **CUPP** — "How CUPP reduces food waste by 60% with Nory" (Featured)
+2. **Hampshire Pub Co** — "builds the infrastructure to scale with Nory" (Feb 2026)
+3. **Pieminister** — "builds financial clarity and operational confidence with Nory" (Feb 2026)
+4. **Digbeth Dining Club** — "0.38% labour accuracy and consistently strong GP" (Jan 2026)
+5. **Bubble CiTea** — visible in grid (green branding photo)
+6. **Pizzarova** — BOLLOM location storefront
+7. **Tasty African Food** — food photography (wings, bowls)
+8. Additional case studies below
+
+**Footer (FULL SITEMAP FOOTER):**
+- BG: Dark navy/purple #0D0D1A
+- 4-column sitemap:
+  - **Home:** Home, Product tour, Login
+  - **Product:** The system, Managing change, Capital, Integrations
+  - **Modules:** Business Intelligence, Inventory, Workforce, Payroll
+  - **About:** About Nory, Partner Program, Careers
+- 4-column lower row:
+  - **Get in touch:** Book a chat, Contact
+  - **Resources:** Success stories, Blog, ROI Calculator
+  - **Follow us:** X, Instagram, LinkedIn
+  - **Solutions for Business:** Independent brands, Franchise networks, Multi-location, Enterprise groups
+- Legal bar: © 2026 Nory AI. Terms and Privacy, Terms and Conditions, Cookie Preferences
+- **Kinetic Text:** Massive "No profit lost." in lavender/purple, full-width, semi-transparent over dark background
+
+**Floating CTA:**
+- "Book a chat 💬" — lavender pill, fixed bottom-right on ALL pages
+
+---
+
+## FOOTER UNIVERSAL (VERIFIED FROM SUCCESS STORIES PAGE)
+
+```
+FOOTER STRUCTURE:
+├── Row 1 (Main sitemap)
+│   ├── Column 1: [nory logo]
+│   ├── Column 2: Home (Home, Product tour, Login)
+│   ├── Column 3: Product (The system, Managing change, Capital, Integrations)
+│   ├── Column 4: Modules (BI, Inventory, Workforce, Payroll)
+│   └── Column 5: About (About Nory, Partner Program, Careers)
+│
+├── Row 2 (Secondary links)
+│   ├── Column 1: Get in touch (Book a chat, Contact)
+│   ├── Column 2: Resources (Success stories, Blog, ROI Calculator)
+│   ├── Column 3: Follow us (X, Instagram, LinkedIn)
+│   └── Column 4: Solutions for Business (Independent, Franchise, Multi-location, Enterprise)
+│
+├── Row 3 (Legal)
+│   ├── © 2026 Nory AI. All Rights Reserved.
+│   ├── Terms and Privacy
+│   ├── Terms and Conditions
+│   └── Cookie Preferences
+│
+└── KINETIC TEXT BANNER
+    └── "No profit lost." — massive serif, lavender #BEB1F0, ~200px height, semi-transparent
+```
+
+**Colors:**
+- BG: Dark navy/purple #0D0D1A
+- Section headers: Lavender #BEB1F0
+- Links: White/cream, hover → lavender highlight
+- Kinetic text: Lavender #BEB1F0, semi-transparent
+
+---
+
+## ✅ AUDITORÍA COMPLETA — RESUMEN FINAL DE PÁGINAS AUDITADAS
+
+| Sección | Páginas | Estado |
+|---------|---------|--------|
+| **Landing Page** | / | ✅ Completa |
+| **Product** | /product/business-intelligence, /inventory, /workforce-management, /payroll | ✅ 4/4 Completas |
+| **Solutions** | /solutions/independent-brands, /franchise-networks, /multi-location-brands, /enterprise-groups | ✅ 4/4 Completas |
+| **About** | /about, /partner-program, /careers | ✅ 3/3 Completas |
+| **Resources** | /blog, /podcasts, /benchmark, /roi-calculator, /content-library | ✅ 5/5 Completas |
+| **Success Stories** | /success-stories | ✅ Completa |
+| **Book a Chat** | /book-a-chat | ✅ Completa |
+| **Footer** | (universal) | ✅ Completa |
+
+**TOTAL: 19 páginas + footer auditadas y documentadas.**
