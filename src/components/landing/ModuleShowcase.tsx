@@ -15,7 +15,7 @@ export function ModuleShowcase() {
   const isEs = i18n.language === 'es' || i18n.language === 'ca';
 
   return (
-    <section className="l-section-cream">
+    <section className="l-section-cream l-with-dots">
       <div className="l-container">
         {/* Intro */}
         <div className="l-text-center l-mb-48">

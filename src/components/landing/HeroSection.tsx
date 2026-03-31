@@ -92,8 +92,7 @@ export function HeroSection() {
           {/* Headline */}
           <h1
             ref={headlineRef}
-            className="l-headline-hero"
-            style={{ color: 'var(--l-accent-lavender)' }}
+            className="l-headline-hero l-headline-glow l-text-gradient"
           >
             {isEs
               ? 'El ingrediente secreto de la rentabilidad.'
@@ -125,7 +124,7 @@ export function HeroSection() {
         </div>
 
         {/* Photo side */}
-        <div ref={photoRef} className="l-hero-photo">
+        <div ref={photoRef} className="l-hero-photo l-parallax-img">
           <img
             src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=800&q=80"
             alt={isEs ? 'Chef gestionando su restaurante con tablet' : 'Chef managing restaurant with tablet'}

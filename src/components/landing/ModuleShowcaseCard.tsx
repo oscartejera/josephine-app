@@ -40,31 +40,33 @@ export function ModuleShowcaseCard({
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
-    // Card slide up
-    gsap.from(cardRef.current, {
-      y: 60,
-      opacity: 0,
+    // Card slide up — use set+to for safe visibility
+    gsap.set(cardRef.current, { autoAlpha: 0, y: 50 });
+    gsap.to(cardRef.current, {
+      autoAlpha: 1,
+      y: 0,
       duration: 0.8,
       ease: 'power3.out',
       scrollTrigger: {
         trigger: cardRef.current,
-        start: 'top 85%',
-        toggleActions: 'play none none none',
+        start: 'top 90%',
+        toggleActions: 'play none none reverse',
       },
     });
 
     // Widget pop-in with delay
     if (widgetRef.current) {
-      gsap.from(widgetRef.current, {
-        scale: 0.9,
-        opacity: 0,
+      gsap.set(widgetRef.current, { scale: 0.9, autoAlpha: 0 });
+      gsap.to(widgetRef.current, {
+        scale: 1,
+        autoAlpha: 1,
         duration: 0.6,
         ease: 'power2.out',
         delay: 0.3,
         scrollTrigger: {
           trigger: cardRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none none',
+          start: 'top 90%',
+          toggleActions: 'play none none reverse',
         },
       });
     }

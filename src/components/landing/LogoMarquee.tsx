@@ -1,61 +1,94 @@
 /**
- * LogoMarquee — Infinite horizontal scroll of brand logos
+ * LogoMarquee — Premium double-row infinite scroll
  * 
- * Auto-duplicated for seamless loop. Monochrome with hover reveal.
- * CSS-only animation with prefers-reduced-motion fallback.
+ * Stylized brand logos using distinct typography (not real logos).
+ * Row 1 scrolls left, Row 2 scrolls right for depth.
+ * Grayscale by default, full opacity on hover.
  */
-import { useTranslation } from 'react-i18next';
 
-// Curated Unsplash restaurant/food brand placeholder logos
-// In production, replace with actual partner brand logos
-const LOGO_URLS = [
-  { name: 'Badiani Gelato', url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=120&h=48&fit=crop&q=80' },
-  { name: 'Black Sheep Coffee', url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=120&h=48&fit=crop&q=80' },
-  { name: 'Boston Party', url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=120&h=48&fit=crop&q=80' },
-  { name: 'Oakberry', url: 'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=120&h=48&fit=crop&q=80' },
-  { name: 'Roasting Plant', url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=120&h=48&fit=crop&q=80' },
-  { name: 'Camile Thai', url: 'https://images.unsplash.com/photo-1559847844-5315695dadae?w=120&h=48&fit=crop&q=80' },
-  { name: 'Tasty Buns', url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=120&h=48&fit=crop&q=80' },
-  { name: 'La Piazza', url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=120&h=48&fit=crop&q=80' },
+const BRANDS_ROW_1 = [
+  { name: 'Badiani Gelato', font: "'Playfair Display', serif", weight: 700, style: 'italic' },
+  { name: 'BLACK SHEEP', font: "'Inter', sans-serif", weight: 800, style: 'normal', tracking: '0.15em' },
+  { name: 'Boston Party', font: "'Playfair Display', serif", weight: 400, style: 'italic' },
+  { name: 'OAKBERRY', font: "'Inter', sans-serif", weight: 900, style: 'normal', tracking: '0.2em' },
+  { name: 'Roasting Plant', font: "'Playfair Display', serif", weight: 700, style: 'normal' },
+  { name: 'Camile Thai', font: "'Inter', sans-serif", weight: 600, style: 'normal' },
+  { name: 'Tasty Buns', font: "'Playfair Display', serif", weight: 700, style: 'italic' },
+  { name: 'LA PIAZZA', font: "'Inter', sans-serif", weight: 800, style: 'normal', tracking: '0.12em' },
 ];
 
+const BRANDS_ROW_2 = [
+  { name: 'SAKURA RAMEN', font: "'Inter', sans-serif", weight: 800, style: 'normal', tracking: '0.15em' },
+  { name: 'Urban Bites', font: "'Playfair Display', serif", weight: 700, style: 'italic' },
+  { name: 'CAFÉ MONTMARTRE', font: "'Inter', sans-serif", weight: 700, style: 'normal', tracking: '0.08em' },
+  { name: 'The Green Fork', font: "'Playfair Display', serif", weight: 400, style: 'italic' },
+  { name: 'NOMA BISTRO', font: "'Inter', sans-serif", weight: 900, style: 'normal', tracking: '0.18em' },
+  { name: 'Ember & Ash', font: "'Playfair Display', serif", weight: 700, style: 'normal' },
+  { name: 'HARVEST TABLE', font: "'Inter', sans-serif", weight: 800, style: 'normal', tracking: '0.12em' },
+  { name: 'Côte Brasserie', font: "'Playfair Display', serif", weight: 700, style: 'italic' },
+];
+
+interface BrandLogo {
+  name: string;
+  font: string;
+  weight: number;
+  style: string;
+  tracking?: string;
+}
+
+function BrandItem({ brand }: { brand: BrandLogo }) {
+  return (
+    <span
+      style={{
+        fontFamily: brand.font,
+        fontWeight: brand.weight,
+        fontStyle: brand.style,
+        letterSpacing: brand.tracking || '0',
+        fontSize: 'clamp(16px, 2vw, 22px)',
+        color: 'var(--l-text-dark)',
+        opacity: 0.35,
+        whiteSpace: 'nowrap',
+        userSelect: 'none',
+        transition: 'opacity 0.3s ease',
+        cursor: 'default',
+        padding: '0 8px',
+      }}
+      onMouseEnter={e => { (e.target as HTMLSpanElement).style.opacity = '0.85'; }}
+      onMouseLeave={e => { (e.target as HTMLSpanElement).style.opacity = '0.35'; }}
+    >
+      {brand.name}
+    </span>
+  );
+}
+
 export function LogoMarquee() {
-  // Duplicate logos for seamless loop
-  const allLogos = [...LOGO_URLS, ...LOGO_URLS];
+  const row1 = [...BRANDS_ROW_1, ...BRANDS_ROW_1, ...BRANDS_ROW_1];
+  const row2 = [...BRANDS_ROW_2, ...BRANDS_ROW_2, ...BRANDS_ROW_2];
 
   return (
-    <div className="l-marquee-container">
-      <div className="l-marquee">
-        {allLogos.map((logo, i) => (
-          <div
-            key={`${logo.name}-${i}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '12px 24px',
-              background: 'var(--l-surface-white)',
-              borderRadius: 'var(--l-radius-md)',
-              border: '1px solid var(--l-border-light)',
-              minWidth: 140,
-              height: 60,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--l-font-sans)',
-                fontWeight: 700,
-                fontSize: 13,
-                color: 'var(--l-text-dark)',
-                opacity: 0.6,
-                whiteSpace: 'nowrap',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {logo.name}
-            </span>
-          </div>
-        ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Row 1 — scrolls left */}
+      <div className="l-marquee-container">
+        <div className="l-marquee" style={{ gap: 56 }}>
+          {row1.map((brand, i) => (
+            <BrandItem key={`r1-${i}`} brand={brand} />
+          ))}
+        </div>
+      </div>
+      {/* Row 2 — scrolls right (reverse) */}
+      <div className="l-marquee-container">
+        <div
+          className="l-marquee"
+          style={{
+            gap: 56,
+            animationDirection: 'reverse',
+            animationDuration: '45s',
+          }}
+        >
+          {row2.map((brand, i) => (
+            <BrandItem key={`r2-${i}`} brand={brand} />
+          ))}
+        </div>
       </div>
     </div>
   );

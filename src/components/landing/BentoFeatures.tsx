@@ -23,16 +23,18 @@ export function BentoFeatures() {
     if (prefersReduced) return;
 
     const cards = gridRef.current.querySelectorAll('.l-bento-card');
-    gsap.from(cards, {
-      y: 40,
-      opacity: 0,
-      duration: 0.7,
+    // Set initial state explicitly, then animate to visible
+    gsap.set(cards, { autoAlpha: 0, y: 40 });
+    gsap.to(cards, {
+      autoAlpha: 1,
+      y: 0,
+      duration: 0.8,
       stagger: 0.15,
       ease: 'power3.out',
       scrollTrigger: {
         trigger: gridRef.current,
-        start: 'top 80%',
-        toggleActions: 'play none none none',
+        start: 'top 85%',
+        toggleActions: 'play none none reverse',
       },
     });
   }, { scope: gridRef });

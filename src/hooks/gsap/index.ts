@@ -11,3 +11,5 @@ export { useSplitTextReveal } from './useSplitTextReveal';
 export { useParallax } from './useParallax';
 export { useMagneticHover } from './useMagneticHover';
 export { useFloatingWidget } from './useFloatingWidget';
+export { useParallaxImage } from './useParallaxImage';
+export { useTiltEffect } from './useTiltEffect';

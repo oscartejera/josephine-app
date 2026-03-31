@@ -15,6 +15,8 @@ import { landingPagesMeta } from '@/data/landing/landingRoutes';
 import { MegaMenu } from './MegaMenu';
 import { LandingFooter } from './LandingFooter';
 import { FloatingCTA } from './FloatingCTA';
+import { SmoothScroll } from './SmoothScroll';
+import { CustomCursor } from './CustomCursor';
 
 /**
  * Hook: sets document <title> and <meta description> based on current route
@@ -46,13 +48,16 @@ export function LandingLayout() {
   useLandingSEO();
 
   return (
-    <div className="landing-page">
-      <MegaMenu />
-      <main>
-        <Outlet />
-      </main>
-      <LandingFooter />
-      <FloatingCTA />
-    </div>
+    <SmoothScroll>
+      <div className="landing-page">
+        <CustomCursor />
+        <MegaMenu />
+        <main>
+          <Outlet />
+        </main>
+        <LandingFooter />
+        <FloatingCTA />
+      </div>
+    </SmoothScroll>
   );
 }

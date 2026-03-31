@@ -26,12 +26,14 @@ export default function LandingPage() {
   return (
     <>
       <HeroSection />
+      <div className="l-gradient-bridge l-gradient-bridge-dark-to-cream" />
       <SocialProofBand />
       <WhyBrandsLove />
       <BentoFeatures />
       <MetricsSection />
       <ModuleShowcase />
       <SuccessStoryCarousel className="l-section-cream" />
+      <div className="l-gradient-bridge l-gradient-bridge-cream-to-dark" />
       <PreFooterCTA />
     </>
   );

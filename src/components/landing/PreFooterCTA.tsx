@@ -22,6 +22,7 @@ export function PreFooterCTA() {
             variant="hero"
             italic
             color="var(--l-accent-lavender)"
+            className="l-text-gradient"
           />
           <p className="l-body-light l-mt-24" style={{ maxWidth: 480 }}>
             {isEs
@@ -35,7 +36,7 @@ export function PreFooterCTA() {
             </Link>
           </div>
         </div>
-        <div style={{ borderRadius: 'var(--l-radius-lg)', overflow: 'hidden' }}>
+        <div className="l-parallax-img" style={{ borderRadius: 'var(--l-radius-lg)', overflow: 'hidden' }}>
           <img
             src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80"
             alt={isEs ? 'Equipo de restaurante trabajando' : 'Restaurant team at work'}

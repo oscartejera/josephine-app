@@ -12,7 +12,7 @@ export function WhyBrandsLove() {
   const isEs = i18n.language === 'es' || i18n.language === 'ca';
 
   return (
-    <section className="l-section-cream" style={{ paddingTop: 100, paddingBottom: 60 }}>
+    <section className="l-section-cream" style={{ paddingTop: 60, paddingBottom: 40 }}>
       <div className="l-container l-text-center">
         <SectionHeadline
           text={isEs ? 'Por qué las marcas de restauración eligen Josephine' : 'Why restaurant brands love Josephine'}
