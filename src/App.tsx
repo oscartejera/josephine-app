@@ -21,8 +21,28 @@ import Signup from "@/pages/Signup";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
-// Landing page — lazy loaded (marketing, only for unauthenticated visitors)
+// Landing pages — lazy loaded (marketing, only for unauthenticated visitors)
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
+import { LandingLayout } from '@/components/landing/LandingLayout';
+
+// Product pages
+const ProductBI = lazy(() => import('@/pages/landing/ProductBI'));
+const ProductInventory = lazy(() => import('@/pages/landing/ProductInventory'));
+const ProductWorkforce = lazy(() => import('@/pages/landing/ProductWorkforce'));
+const ProductPayroll = lazy(() => import('@/pages/landing/ProductPayroll'));
+// Solution pages
+const SolutionIndependent = lazy(() => import('@/pages/landing/SolutionIndependent'));
+const SolutionFranchise = lazy(() => import('@/pages/landing/SolutionFranchise'));
+const SolutionMultiLocation = lazy(() => import('@/pages/landing/SolutionMultiLocation'));
+const SolutionEnterprise = lazy(() => import('@/pages/landing/SolutionEnterprise'));
+// About / Resource pages
+const AboutPage = lazy(() => import('@/pages/landing/AboutPage'));
+const CareersPage = lazy(() => import('@/pages/landing/CareersPage'));
+const PartnerPage = lazy(() => import('@/pages/landing/PartnerPage'));
+const SuccessStoriesPage = lazy(() => import('@/pages/landing/SuccessStoriesPage'));
+const BlogPage = lazy(() => import('@/pages/landing/BlogPage'));
+// Conversion (isolated layout)
+const BookAChatPage = lazy(() => import('@/pages/landing/BookAChatPage'));
 
 // Layout components loaded eagerly
 import { TeamLayout } from "@/components/team/TeamLayout";
@@ -230,7 +250,26 @@ function AppRoutes() {
           <Route path="/login" element={user ? <RoleRedirect /> : <Login />} />
           <Route path="/signup" element={user ? <RoleRedirect /> : <Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/" element={user ? <RoleRedirect /> : <Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+          {/* ── Public Landing Pages (LandingLayout with MegaMenu + Footer) ── */}
+          <Route element={user ? <RoleRedirect /> : <LandingLayout />}>
+            <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+            <Route path="/product/business-intelligence" element={<Suspense fallback={<PageLoader />}><ProductBI /></Suspense>} />
+            <Route path="/product/inventory" element={<Suspense fallback={<PageLoader />}><ProductInventory /></Suspense>} />
+            <Route path="/product/workforce-management" element={<Suspense fallback={<PageLoader />}><ProductWorkforce /></Suspense>} />
+            <Route path="/product/payroll" element={<Suspense fallback={<PageLoader />}><ProductPayroll /></Suspense>} />
+            <Route path="/solutions/independent-brands" element={<Suspense fallback={<PageLoader />}><SolutionIndependent /></Suspense>} />
+            <Route path="/solutions/franchise-networks" element={<Suspense fallback={<PageLoader />}><SolutionFranchise /></Suspense>} />
+            <Route path="/solutions/multi-location-brands" element={<Suspense fallback={<PageLoader />}><SolutionMultiLocation /></Suspense>} />
+            <Route path="/solutions/enterprise-groups" element={<Suspense fallback={<PageLoader />}><SolutionEnterprise /></Suspense>} />
+            <Route path="/about" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
+            <Route path="/careers" element={<Suspense fallback={<PageLoader />}><CareersPage /></Suspense>} />
+            <Route path="/partner-program" element={<Suspense fallback={<PageLoader />}><PartnerPage /></Suspense>} />
+            <Route path="/success-stories" element={<Suspense fallback={<PageLoader />}><SuccessStoriesPage /></Suspense>} />
+            <Route path="/blog" element={<Suspense fallback={<PageLoader />}><BlogPage /></Suspense>} />
+          </Route>
+
+          {/* ── Isolated Conversion Pages (no MegaMenu/Footer) ── */}
+          <Route path="/book-a-chat" element={<Suspense fallback={<PageLoader />}><BookAChatPage /></Suspense>} />
 
           <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Suspense fallback={<SectionLoader section="Dashboard" />}><Dashboard /></Suspense>} />

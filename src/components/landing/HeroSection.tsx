@@ -1,7 +1,16 @@
+/**
+ * HeroSection — Landing page hero (2-column: text + photo)
+ * 
+ * Dark background, split layout:
+ * - Left (40%): G2 badge, serif italic headline, body, 2 CTAs
+ * - Right (60%): Lifestyle restaurant photo with widget overlay
+ * 
+ * GSAP: SplitText headline reveal, photo scale pop, widget delay pop
+ */
 import { useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChefHat, ArrowDown } from 'lucide-react';
+import { ArrowRight, Play, Star } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 
 export function HeroSection() {
@@ -9,36 +18,31 @@ export function HeroSection() {
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const photoRef = useRef<HTMLDivElement>(null);
+  const widgetRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const isEs = i18n.language === 'es' || i18n.language === 'ca';
 
   useGSAP(() => {
     if (!containerRef.current || !headlineRef.current) return;
-
-    // Check for reduced motion
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-
-    // Split headline into words
     const split = new SplitText(headlineRef.current, { type: 'words' });
 
-    tl.from(logoRef.current, {
-      scale: 0.5,
+    tl.from(badgeRef.current, {
+      y: 20,
       opacity: 0,
-      filter: 'blur(20px)',
-      duration: 0.8,
-      ease: 'power2.out',
+      duration: 0.6,
     })
     .from(split.words, {
       y: 50,
       opacity: 0,
       duration: 0.7,
-      stagger: 0.08,
-      ease: 'power3.out',
+      stagger: 0.06,
     }, '-=0.3')
     .from(subRef.current, {
       y: 25,
@@ -51,66 +55,98 @@ export function HeroSection() {
       duration: 0.5,
       stagger: 0.1,
     }, '-=0.2')
-    .from(scrollRef.current, {
+    .from(photoRef.current, {
+      scale: 0.95,
       opacity: 0,
-      duration: 0.5,
-    }, '-=0.1');
+      duration: 0.8,
+      ease: 'power2.out',
+    }, '-=0.6')
+    .from(widgetRef.current, {
+      y: 20,
+      scale: 0.9,
+      opacity: 0,
+      duration: 0.6,
+      ease: 'power2.out',
+    }, '-=0.2');
 
-    return () => {
-      split.revert();
-    };
+    return () => { split.revert(); };
   }, { scope: containerRef });
 
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex flex-col items-center justify-center px-6 text-center"
-      style={{ background: 'var(--landing-bg)' }}
+      className="l-section-dark l-hero"
     >
-      {/* Logo */}
-      <div
-        ref={logoRef}
-        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-8 shadow-[0_0_60px_rgba(124,58,237,0.3)]"
-      >
-        <ChefHat className="w-8 h-8 text-white" />
-      </div>
+      <div className="l-hero-inner">
+        {/* Text side */}
+        <div className="l-hero-text">
+          {/* G2 Badge */}
+          <div ref={badgeRef} className="l-badge-dark" style={{ alignSelf: 'flex-start' }}>
+            <Star className="w-3.5 h-3.5" style={{ color: '#FBBF24', fill: '#FBBF24' }} />
+            <span style={{ fontSize: 13 }}>
+              {isEs ? 'Líder en Software de Restauración' : 'Top performer in Restaurant Management'}
+            </span>
+            <span style={{ fontWeight: 700, fontSize: 13 }}>4.8</span>
+          </div>
 
-      {/* Headline */}
-      <h1
-        ref={headlineRef}
-        className="landing-hero-text max-w-[900px] mb-6"
-      >
-        {t('landing.heroTitle', 'Run your restaurant like an empire.')}
-      </h1>
+          {/* Headline */}
+          <h1
+            ref={headlineRef}
+            className="l-headline-hero"
+            style={{ color: 'var(--l-accent-lavender)' }}
+          >
+            {isEs
+              ? 'El ingrediente secreto de la rentabilidad.'
+              : "Profitability's secret ingredient."
+            }
+          </h1>
 
-      {/* Subtitle */}
-      <p
-        ref={subRef}
-        className="landing-body text-lg max-w-[600px] mb-10"
-      >
-        {t('landing.heroSubtitle', "Your restaurant's COO, powered by AI.")}
-      </p>
+          {/* Body */}
+          <p ref={subRef} className="l-body-light" style={{ maxWidth: 500 }}>
+            {isEs
+              ? 'Optimiza todas tus operaciones. Mejora tus márgenes. Reduce la merma. El sistema de gestión de restaurantes con IA que te da control total de tu negocio, todo en un solo lugar.'
+              : 'Streamline your entire operations. Boost your margins. Cut waste. The AI-powered restaurant management system that serves up full control of your business, all in one place.'
+            }
+          </p>
 
-      {/* CTAs */}
-      <div ref={ctaRef} className="flex flex-wrap items-center justify-center gap-4">
-        <button
-          onClick={() => navigate('/login')}
-          className="landing-btn-primary"
-        >
-          {t('landing.heroCta', 'Try Demo Free')}
-        </button>
-        <a
-          href="#story"
-          className="landing-btn-ghost"
-        >
-          {t('landing.heroSecondary', 'Discover the story')}
-          <ArrowDown className="w-4 h-4" />
-        </a>
-      </div>
+          {/* CTAs */}
+          <div ref={ctaRef} className="l-flex l-gap-16" style={{ flexWrap: 'wrap' }}>
+            <Link to="/book-a-chat" className="l-btn-primary">
+              {isEs ? 'Reservar demo' : 'Book a chat'}
+            </Link>
+            <button
+              onClick={() => {/* Product tour */}}
+              className="l-btn-ghost"
+            >
+              <Play className="w-4 h-4" />
+              {isEs ? 'Ver tour del producto' : 'Watch product tour'}
+            </button>
+          </div>
+        </div>
 
-      {/* Scroll indicator */}
-      <div ref={scrollRef} className="landing-scroll-indicator">
-        <ArrowDown className="w-5 h-5" />
+        {/* Photo side */}
+        <div ref={photoRef} className="l-hero-photo">
+          <img
+            src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=800&q=80"
+            alt={isEs ? 'Chef gestionando su restaurante con tablet' : 'Chef managing restaurant with tablet'}
+            loading="eager"
+          />
+          {/* Widget overlay */}
+          <div ref={widgetRef} className="l-hero-widget">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} />
+              <span style={{ fontWeight: 600, color: 'var(--l-text-dark)' }}>
+                {isEs ? 'Inventario' : 'Inventory'}
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--l-text-muted-dark)', lineHeight: 1.4, margin: 0 }}>
+              {isEs
+                ? '2 recetas de tu menú están por debajo del GP% objetivo del 70%'
+                : '2 recipes in your menu are below the GP% target of 70%'
+              }
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );
