@@ -1,15 +1,15 @@
 /**
- * CustomCursor — Premium dot + follower cursor for landing pages
+ * CustomCursor — Premium chef-hat cursor for landing pages
  * 
  * Only renders on desktop (pointer: fine).
- * Dot follows cursor instantly, follower follows with spring delay.
+ * Uses the Josephine chef hat as cursor, with a soft glow follower.
  * Grows on hover over interactive elements.
  */
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from '@/lib/gsap';
 
 export function CustomCursor() {
-  const dotRef = useRef<HTMLDivElement>(null);
+  const hatRef = useRef<HTMLDivElement>(null);
   const followerRef = useRef<HTMLDivElement>(null);
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -19,33 +19,33 @@ export function CustomCursor() {
     setIsDesktop(mql.matches);
     if (!mql.matches) return;
 
-    const dot = dotRef.current;
+    const hat = hatRef.current;
     const follower = followerRef.current;
-    if (!dot || !follower) return;
+    if (!hat || !follower) return;
 
     const onMove = (e: MouseEvent) => {
-      gsap.to(dot, {
-        x: e.clientX - 4,
-        y: e.clientY - 4,
-        duration: 0.1,
+      gsap.to(hat, {
+        x: e.clientX - 12,
+        y: e.clientY - 12,
+        duration: 0.08,
         ease: 'power2.out',
       });
       gsap.to(follower, {
-        x: e.clientX - 18,
-        y: e.clientY - 18,
-        duration: 0.35,
+        x: e.clientX - 20,
+        y: e.clientY - 20,
+        duration: 0.3,
         ease: 'power2.out',
       });
     };
 
     const onEnterInteractive = () => {
       follower.classList.add('hovering');
-      gsap.to(dot, { scale: 0.5, duration: 0.2 });
+      gsap.to(hat, { scale: 1.3, duration: 0.2 });
     };
 
     const onLeaveInteractive = () => {
       follower.classList.remove('hovering');
-      gsap.to(dot, { scale: 1, duration: 0.2 });
+      gsap.to(hat, { scale: 1, duration: 0.2 });
     };
 
     window.addEventListener('mousemove', onMove);
@@ -71,7 +71,14 @@ export function CustomCursor() {
 
   return (
     <>
-      <div ref={dotRef} className="l-custom-cursor" />
+      {/* Chef hat cursor */}
+      <div ref={hatRef} className="l-custom-cursor">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--l-accent-lavender)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.646-7.502 6 6 0 0 0-11.162 0A4 4 0 0 0 2.273 14.609C2.684 14.806 3 15.193 3 15.65V20a1 1 0 0 0 1 1z"/>
+          <path d="M7.5 17h9"/>
+        </svg>
+      </div>
+      {/* Glow follower */}
       <div ref={followerRef} className="l-cursor-follower" />
     </>
   );

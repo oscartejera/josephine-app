@@ -11,7 +11,7 @@ export interface LandingNavItem {
   href: string;
   description: string;
   descriptionEs: string;
-  icon?: string;
+  icon?: string; // Lucide icon name (e.g. 'Layers', 'Link2')
 }
 
 export interface LandingNavSection {
@@ -57,7 +57,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/product',
             description: 'Everything you need to grow your margins, all on one platform.',
             descriptionEs: 'Todo lo que necesitas para mejorar tus márgenes, en una sola plataforma.',
-            icon: '🏗️',
+            icon: 'Layers',
           },
           {
             title: 'Integrations',
@@ -65,7 +65,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/product/integrations',
             description: 'Bring all your data together through our integrations ecosystem.',
             descriptionEs: 'Unifica todos tus datos a través de nuestro ecosistema de integraciones.',
-            icon: '🔗',
+            icon: 'Link2',
           },
           {
             title: 'How we manage change',
@@ -73,7 +73,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/product/change-management',
             description: 'Smooth transitions, minimal interruptions, and big wins.',
             descriptionEs: 'Transiciones suaves, interrupciones mínimas, y grandes resultados.',
-            icon: '🔄',
+            icon: 'RefreshCw',
           },
         ],
       },
@@ -87,7 +87,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/product/business-intelligence',
             description: 'Access AI insights to guide restaurant teams toward success.',
             descriptionEs: 'Accede a insights de IA para guiar a tu equipo hacia el éxito.',
-            icon: '📊',
+            icon: 'BarChart3',
           },
           {
             title: 'Inventory',
@@ -95,7 +95,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/product/inventory',
             description: 'Maximise margins, reduce waste, and streamline supply chain.',
             descriptionEs: 'Maximiza márgenes, reduce merma y optimiza la cadena de suministro.',
-            icon: '📦',
+            icon: 'Package',
           },
           {
             title: 'Workforce',
@@ -103,7 +103,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/product/workforce-management',
             description: 'Onboard, engage, and reward your team effectively.',
             descriptionEs: 'Incorpora, motiva y recompensa a tu equipo de forma eficaz.',
-            icon: '👥',
+            icon: 'Users',
           },
           {
             title: 'Payroll',
@@ -111,7 +111,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/product/payroll',
             description: 'Automate the entire payroll process seamlessly.',
             descriptionEs: 'Automatiza todo el proceso de nóminas sin fricciones.',
-            icon: '💵',
+            icon: 'Banknote',
           },
         ],
       },
@@ -133,7 +133,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/solutions/independent-brands',
             description: 'Control and forecast day-to-day operations in one place.',
             descriptionEs: 'Controla y pronostica tus operaciones diarias en un solo lugar.',
-            icon: '🏪',
+            icon: 'Store',
           },
           {
             title: 'Franchise Networks',
@@ -141,7 +141,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/solutions/franchise-networks',
             description: 'Guide front-line franchise teams to increase performance.',
             descriptionEs: 'Guía a tus equipos de franquicia para mejorar el rendimiento.',
-            icon: '🌐',
+            icon: 'Globe',
           },
           {
             title: 'Multi-Location Brands',
@@ -149,7 +149,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/solutions/multi-location-brands',
             description: 'Focus on growing your multi-location restaurant.',
             descriptionEs: 'Enfócate en hacer crecer tu restaurante multi-local.',
-            icon: '📍',
+            icon: 'MapPin',
           },
           {
             title: 'Enterprise Groups',
@@ -157,7 +157,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/solutions/enterprise-groups',
             description: 'Drive consistent results and maximise your group\'s potential.',
             descriptionEs: 'Obtén resultados consistentes y maximiza el potencial de tu grupo.',
-            icon: '🏢',
+            icon: 'Building2',
           },
         ],
       },
@@ -179,7 +179,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/about',
             description: "We're serving up the Restaurant Revolution.",
             descriptionEs: 'Estamos liderando la Revolución de la Restauración.',
-            icon: '✨',
+            icon: 'Sparkles',
           },
           {
             title: 'Partner Program',
@@ -187,7 +187,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/partner-program',
             description: 'Growing through partnerships with like-minded businesses.',
             descriptionEs: 'Creciendo a través de alianzas con negocios afines.',
-            icon: '🤝',
+            icon: 'Handshake',
           },
           {
             title: 'Careers',
@@ -195,19 +195,13 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/careers',
             description: 'Ready to join the ranks?',
             descriptionEs: '¿Listo para unirte al equipo?',
-            icon: '🚀',
+            icon: 'Rocket',
           },
         ],
       },
     ],
   },
-  {
-    key: 'success-stories',
-    label: 'Success Stories',
-    labelEs: 'Casos de Éxito',
-    href: '/success-stories',
-    columns: 2,
-  },
+
   {
     key: 'resources',
     label: 'Resources',
@@ -224,15 +218,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/blog',
             description: 'Operator insights and ideas.',
             descriptionEs: 'Ideas e insights para operadores.',
-            icon: '📝',
-          },
-          {
-            title: 'Podcast',
-            titleEs: 'Podcast',
-            href: '/podcasts',
-            description: "What's Cooking? podcast.",
-            descriptionEs: 'Podcast ¿Qué se cuece?',
-            icon: '🎙️',
+            icon: 'FileText',
           },
           {
             title: 'Benchmark',
@@ -240,7 +226,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/benchmark',
             description: 'Discover how your venues perform against the industry.',
             descriptionEs: 'Descubre cómo rinden tus locales frente a la industria.',
-            icon: '📈',
+            icon: 'TrendingUp',
           },
           {
             title: 'ROI Calculator',
@@ -248,7 +234,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/roi-calculator',
             description: 'Calculate your potential savings with Josephine.',
             descriptionEs: 'Calcula tus ahorros potenciales con Josephine.',
-            icon: '🧮',
+            icon: 'Calculator',
           },
           {
             title: 'Content Library',
@@ -256,7 +242,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
             href: '/content-library',
             description: 'Guides, playbooks, and explainers.',
             descriptionEs: 'Guías, playbooks y explicadores.',
-            icon: '📚',
+            icon: 'BookOpen',
           },
         ],
       },
@@ -294,7 +280,7 @@ export const landingPagesMeta: LandingPageMeta[] = [
   { path: '/careers', titleEn: 'Careers at Josephine', titleEs: 'Trabaja con Nosotros — Josephine', descriptionEn: 'Join the team building the future of restaurants.', descriptionEs: 'Únete al equipo que construye el futuro de los restaurantes.', layout: 'standard' },
   // Resources
   { path: '/blog', titleEn: 'Blog — Josephine', titleEs: 'Blog — Josephine', descriptionEn: 'Industry insights, operator tips, and product updates.', descriptionEs: 'Insights de la industria, consejos y novedades de producto.', layout: 'standard' },
-  { path: '/podcasts', titleEn: 'Podcast — Josephine', titleEs: 'Podcast — Josephine', descriptionEn: 'What\'s Cooking? Conversations with hospitality leaders.', descriptionEs: '¿Qué se cuece? Conversaciones con líderes de hostelería.', layout: 'standard' },
+
   { path: '/benchmark', titleEn: 'Benchmark Your Restaurant — Josephine', titleEs: 'Compara tu Restaurante — Josephine', descriptionEn: 'See how your venue performs vs industry benchmarks.', descriptionEs: 'Mira cómo rinde tu local frente a benchmarks de la industria.', layout: 'standard' },
   { path: '/roi-calculator', titleEn: 'ROI Calculator — Josephine', titleEs: 'Calculadora ROI — Josephine', descriptionEn: 'Calculate your potential savings with Josephine.', descriptionEs: 'Calcula tus ahorros potenciales con Josephine.', layout: 'isolated' },
   { path: '/content-library', titleEn: 'Content Library — Josephine', titleEs: 'Biblioteca de Contenido — Josephine', descriptionEn: 'Guides, playbooks, and explainers for operators.', descriptionEs: 'Guías, playbooks y explicadores para operadores.', layout: 'standard' },
@@ -356,8 +342,8 @@ export const footerLinks = {
       heading: 'Resources',
       headingEs: 'Recursos',
       links: [
-        { label: 'Success stories', labelEs: 'Casos de éxito', href: '/success-stories' },
         { label: 'Blog', labelEs: 'Blog', href: '/blog' },
+        { label: 'Benchmark', labelEs: 'Benchmark', href: '/benchmark' },
         { label: 'ROI Calculator', labelEs: 'Calculadora ROI', href: '/roi-calculator' },
       ],
     },

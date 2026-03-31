@@ -3,7 +3,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { SectionHeadline } from '@/components/landing/SectionHeadline';
-import { MetricCard } from '@/components/landing/MetricCard';
+
 import { PreFooterCTA } from '@/components/landing/PreFooterCTA';
 
 const TEAM_PHOTOS = [
@@ -62,15 +62,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* VALUES */}
-      <section className="l-section-cream" style={{ paddingBottom: 80 }}>
-        <div className="l-container">
-          <div className="l-metrics-grid with-dividers">
-            <MetricCard value="40+" label={isEs ? 'miembros del equipo' : 'team members'} />
-            <MetricCard value="1" label={isEs ? 'misión: rentabilidad para todos' : 'mission: profitability for all'} />
-          </div>
-        </div>
-      </section>
 
       {/* TEAM */}
       <section className="l-section-cream" style={{ paddingBottom: 80 }}>

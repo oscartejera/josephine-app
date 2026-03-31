@@ -10,7 +10,7 @@
 import { useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Play, Star } from 'lucide-react';
+import { ArrowRight, Play } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 
 export function HeroSection() {
@@ -18,7 +18,7 @@ export function HeroSection() {
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const badgeRef = useRef<HTMLDivElement>(null);
+
   const photoRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export function HeroSection() {
     const split = new SplitText(headlineRef.current, { type: 'words' });
 
     // Safe set+to pattern — prevents elements staying invisible
-    gsap.set(badgeRef.current, { autoAlpha: 0, y: 20 });
+
     gsap.set(split.words, { autoAlpha: 0, y: 50 });
     gsap.set(subRef.current, { autoAlpha: 0, y: 25 });
     const ctaChildren = ctaRef.current?.children ? Array.from(ctaRef.current.children) : [];
@@ -43,10 +43,7 @@ export function HeroSection() {
 
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-    tl.to(badgeRef.current, {
-      autoAlpha: 1, y: 0, duration: 0.6,
-    })
-    .to(split.words, {
+    tl.to(split.words, {
       autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.06,
     }, '-=0.3')
     .to(subRef.current, {
@@ -73,14 +70,6 @@ export function HeroSection() {
       <div className="l-hero-inner">
         {/* Text side */}
         <div className="l-hero-text">
-          {/* G2 Badge */}
-          <div ref={badgeRef} className="l-badge-dark" style={{ alignSelf: 'flex-start' }}>
-            <Star className="w-3.5 h-3.5" style={{ color: '#FBBF24', fill: '#FBBF24' }} />
-            <span style={{ fontSize: 13 }}>
-              {isEs ? 'Líder en Software de Restauración' : 'Top performer in Restaurant Management'}
-            </span>
-            <span style={{ fontWeight: 700, fontSize: 13 }}>4.8</span>
-          </div>
 
           {/* Headline */}
           <h1

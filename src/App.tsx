@@ -44,6 +44,7 @@ const CareersPage = lazy(() => import('@/pages/landing/CareersPage'));
 const PartnerPage = lazy(() => import('@/pages/landing/PartnerPage'));
 const SuccessStoriesPage = lazy(() => import('@/pages/landing/SuccessStoriesPage'));
 const BlogPage = lazy(() => import('@/pages/landing/BlogPage'));
+const BenchmarkPage = lazy(() => import('@/pages/landing/BenchmarkPage'));
 // Conversion (isolated layout)
 const BookAChatPage = lazy(() => import('@/pages/landing/BookAChatPage'));
 
@@ -272,6 +273,7 @@ function AppRoutes() {
             <Route path="/partner-program" element={<Suspense fallback={<PageLoader />}><PartnerPage /></Suspense>} />
             <Route path="/success-stories" element={<Suspense fallback={<PageLoader />}><SuccessStoriesPage /></Suspense>} />
             <Route path="/blog" element={<Suspense fallback={<PageLoader />}><BlogPage /></Suspense>} />
+            <Route path="/benchmark" element={<Suspense fallback={<PageLoader />}><BenchmarkPage /></Suspense>} />
           </Route>
 
           {/* ── Isolated Conversion Pages (no MegaMenu/Footer) ── */}

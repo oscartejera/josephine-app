@@ -1,15 +1,14 @@
 /**
  * LandingPage — Josephine homepage (Nory-style Empire Design)
  * 
- * Section order (verified from Nory spec):
+ * Section order:
  * 1. Hero (dark BG, 2-col, lifestyle photo)
  * 2. Social Proof (cream BG, logo marquee)
  * 3. Why Brands Love (cream BG, headline + body)
  * 4. Bento Features (cream BG, notification widgets + integrations)
  * 5. Metrics (cream BG, 3 KPI counters)
  * 6. Module Showcase (cream BG, 4 stacked product cards)
- * 7. Success Stories (cream BG, horizontal carousel)
- * 8. Pre-Footer CTA (dark BG, "Want better margins?")
+ * 7. Pre-Footer CTA (dark BG, "Want better margins?")
  * 
  * Note: MegaMenu + Footer are rendered by LandingLayout wrapper.
  */
@@ -19,7 +18,6 @@ import { WhyBrandsLove } from '@/components/landing/WhyBrandsLove';
 import { BentoFeatures } from '@/components/landing/BentoFeatures';
 import { MetricsSection } from '@/components/landing/MetricsSection';
 import { ModuleShowcase } from '@/components/landing/ModuleShowcase';
-import { SuccessStoryCarousel } from '@/components/landing/SuccessStoryCarousel';
 import { PreFooterCTA } from '@/components/landing/PreFooterCTA';
 
 export default function LandingPage() {
@@ -32,7 +30,6 @@ export default function LandingPage() {
       <BentoFeatures />
       <MetricsSection />
       <ModuleShowcase />
-      <SuccessStoryCarousel className="l-section-cream" />
       <div className="l-gradient-bridge l-gradient-bridge-cream-to-dark" />
       <PreFooterCTA />
     </>
