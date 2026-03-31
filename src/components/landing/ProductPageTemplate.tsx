@@ -58,6 +58,16 @@ export function ProductPageTemplate({ config }: { config: ProductPageConfig }) {
   const { i18n } = useTranslation();
   const isEs = i18n.language === 'es' || i18n.language === 'ca';
 
+  // Detect if hero has a light background (body text should be dark)
+  const isLightHeroBg = (() => {
+    const hex = config.heroBg.replace('#', '');
+    if (hex.length < 6) return false;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return (r * 0.299 + g * 0.587 + b * 0.114) > 150;
+  })();
+  const heroBodyClass = isLightHeroBg ? 'l-body' : 'l-body-light';
   return (
     <>
       {/* S1: HERO */}
@@ -83,14 +93,14 @@ export function ProductPageTemplate({ config }: { config: ProductPageConfig }) {
             >
               {isEs ? config.heroHeadlineEs : config.heroHeadline}
             </h1>
-            <p className="l-body-light" style={{ maxWidth: 480 }}>
+            <p className={heroBodyClass} style={{ maxWidth: 480 }}>
               {isEs ? config.heroBodyEs : config.heroBody}
             </p>
             <div className="l-flex l-gap-16" style={{ flexWrap: 'wrap' }}>
               <Link to="/book-a-chat" className="l-btn-primary">
                 {isEs ? 'Reservar demo' : 'Book a chat'}
               </Link>
-              <Link to="/" className="l-btn-ghost">
+              <Link to="/" className={isLightHeroBg ? 'l-btn-outline' : 'l-btn-ghost'}>
                 {isEs ? 'Ver tour del producto' : 'Watch product tour'}
               </Link>
             </div>

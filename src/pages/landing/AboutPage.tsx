@@ -62,13 +62,12 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* METRICS */}
+      {/* VALUES */}
       <section className="l-section-cream" style={{ paddingBottom: 80 }}>
         <div className="l-container">
           <div className="l-metrics-grid with-dividers">
-            <MetricCard value="12" numericValue={12} label={isEs ? 'países' : 'countries'} />
-            <MetricCard value="500+" label={isEs ? 'restaurantes gestionados' : 'restaurants managed'} />
             <MetricCard value="40+" label={isEs ? 'miembros del equipo' : 'team members'} />
+            <MetricCard value="1" label={isEs ? 'misión: rentabilidad para todos' : 'mission: profitability for all'} />
           </div>
         </div>
       </section>

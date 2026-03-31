@@ -62,7 +62,7 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
           {
             title: 'Integrations',
             titleEs: 'Integraciones',
-            href: '/integrations',
+            href: '/product/integrations',
             description: 'Bring all your data together through our integrations ecosystem.',
             descriptionEs: 'Unifica todos tus datos a través de nuestro ecosistema de integraciones.',
             icon: '🔗',
@@ -70,18 +70,10 @@ export const megaMenuItems: LandingMegaMenuItem[] = [
           {
             title: 'How we manage change',
             titleEs: 'Cómo gestionamos el cambio',
-            href: '/change-management',
+            href: '/product/change-management',
             description: 'Smooth transitions, minimal interruptions, and big wins.',
             descriptionEs: 'Transiciones suaves, interrupciones mínimas, y grandes resultados.',
             icon: '🔄',
-          },
-          {
-            title: 'Capital',
-            titleEs: 'Capital',
-            href: '/capital',
-            description: 'Access a financing solution custom-built for restaurant growth.',
-            descriptionEs: 'Accede a una solución de financiación diseñada para el crecimiento de restaurantes.',
-            icon: '💰',
           },
         ],
       },
@@ -328,8 +320,7 @@ export const footerLinks = {
       headingEs: 'Producto',
       links: [
         { label: 'The system', labelEs: 'El sistema', href: '/product' },
-        { label: 'Integrations', labelEs: 'Integraciones', href: '/integrations' },
-        { label: 'Capital', labelEs: 'Capital', href: '/capital' },
+        { label: 'Integrations', labelEs: 'Integraciones', href: '/product/integrations' },
       ],
     },
     {

@@ -30,6 +30,9 @@ const ProductBI = lazy(() => import('@/pages/landing/ProductBI'));
 const ProductInventory = lazy(() => import('@/pages/landing/ProductInventory'));
 const ProductWorkforce = lazy(() => import('@/pages/landing/ProductWorkforce'));
 const ProductPayroll = lazy(() => import('@/pages/landing/ProductPayroll'));
+const ProductOverview = lazy(() => import('@/pages/landing/ProductOverviewPage'));
+const IntegrationsLanding = lazy(() => import('@/pages/landing/IntegrationsLandingPage'));
+const ChangeManagement = lazy(() => import('@/pages/landing/ChangeManagementPage'));
 // Solution pages
 const SolutionIndependent = lazy(() => import('@/pages/landing/SolutionIndependent'));
 const SolutionFranchise = lazy(() => import('@/pages/landing/SolutionFranchise'));
@@ -253,6 +256,9 @@ function AppRoutes() {
           {/* ── Public Landing Pages (LandingLayout with MegaMenu + Footer) ── */}
           <Route element={user ? <RoleRedirect /> : <LandingLayout />}>
             <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+            <Route path="/product" element={<Suspense fallback={<PageLoader />}><ProductOverview /></Suspense>} />
+            <Route path="/product/integrations" element={<Suspense fallback={<PageLoader />}><IntegrationsLanding /></Suspense>} />
+            <Route path="/product/change-management" element={<Suspense fallback={<PageLoader />}><ChangeManagement /></Suspense>} />
             <Route path="/product/business-intelligence" element={<Suspense fallback={<PageLoader />}><ProductBI /></Suspense>} />
             <Route path="/product/inventory" element={<Suspense fallback={<PageLoader />}><ProductInventory /></Suspense>} />
             <Route path="/product/workforce-management" element={<Suspense fallback={<PageLoader />}><ProductWorkforce /></Suspense>} />

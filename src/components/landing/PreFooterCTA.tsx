@@ -22,7 +22,6 @@ export function PreFooterCTA() {
             variant="hero"
             italic
             color="var(--l-accent-lavender)"
-            className="l-text-gradient"
           />
           <p className="l-body-light l-mt-24" style={{ maxWidth: 480 }}>
             {isEs

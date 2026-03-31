@@ -30,43 +30,36 @@ export function HeroSection() {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
     const split = new SplitText(headlineRef.current, { type: 'words' });
 
-    tl.from(badgeRef.current, {
-      y: 20,
-      opacity: 0,
-      duration: 0.6,
+    // Safe set+to pattern — prevents elements staying invisible
+    gsap.set(badgeRef.current, { autoAlpha: 0, y: 20 });
+    gsap.set(split.words, { autoAlpha: 0, y: 50 });
+    gsap.set(subRef.current, { autoAlpha: 0, y: 25 });
+    const ctaChildren = ctaRef.current?.children ? Array.from(ctaRef.current.children) : [];
+    if (ctaChildren.length) gsap.set(ctaChildren, { autoAlpha: 0, y: 20 });
+    gsap.set(photoRef.current, { autoAlpha: 0, scale: 0.95 });
+    gsap.set(widgetRef.current, { autoAlpha: 0, y: 20, scale: 0.9 });
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+    tl.to(badgeRef.current, {
+      autoAlpha: 1, y: 0, duration: 0.6,
     })
-    .from(split.words, {
-      y: 50,
-      opacity: 0,
-      duration: 0.7,
-      stagger: 0.06,
+    .to(split.words, {
+      autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.06,
     }, '-=0.3')
-    .from(subRef.current, {
-      y: 25,
-      opacity: 0,
-      duration: 0.6,
+    .to(subRef.current, {
+      autoAlpha: 1, y: 0, duration: 0.6,
     }, '-=0.3')
-    .from(ctaRef.current?.children ? Array.from(ctaRef.current.children) : [], {
-      y: 20,
-      opacity: 0,
-      duration: 0.5,
-      stagger: 0.1,
+    .to(ctaChildren, {
+      autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.1,
     }, '-=0.2')
-    .from(photoRef.current, {
-      scale: 0.95,
-      opacity: 0,
-      duration: 0.8,
-      ease: 'power2.out',
+    .to(photoRef.current, {
+      autoAlpha: 1, scale: 1, duration: 0.8, ease: 'power2.out',
     }, '-=0.6')
-    .from(widgetRef.current, {
-      y: 20,
-      scale: 0.9,
-      opacity: 0,
-      duration: 0.6,
-      ease: 'power2.out',
+    .to(widgetRef.current, {
+      autoAlpha: 1, y: 0, scale: 1, duration: 0.6, ease: 'power2.out',
     }, '-=0.2');
 
     return () => { split.revert(); };
@@ -92,7 +85,7 @@ export function HeroSection() {
           {/* Headline */}
           <h1
             ref={headlineRef}
-            className="l-headline-hero l-headline-glow l-text-gradient"
+            className="l-headline-hero l-headline-glow"
           >
             {isEs
               ? 'El ingrediente secreto de la rentabilidad.'
@@ -124,7 +117,7 @@ export function HeroSection() {
         </div>
 
         {/* Photo side */}
-        <div ref={photoRef} className="l-hero-photo l-parallax-img">
+        <div ref={photoRef} className="l-hero-photo">
           <img
             src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=800&q=80"
             alt={isEs ? 'Chef gestionando su restaurante con tablet' : 'Chef managing restaurant with tablet'}

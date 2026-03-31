@@ -39,9 +39,10 @@ export function useSplitTextReveal(
 
     const split = new SplitText(ref.current, { type: 'words' });
 
-    gsap.from(split.words, {
-      y: yOffset,
-      opacity: 0,
+    gsap.set(split.words, { autoAlpha: 0, y: yOffset });
+    gsap.to(split.words, {
+      autoAlpha: 1,
+      y: 0,
       duration,
       stagger,
       ease: 'power3.out',
