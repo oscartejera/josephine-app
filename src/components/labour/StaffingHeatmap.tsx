@@ -69,7 +69,10 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
                         p_location_id: effectiveLocationId,
                         p_weeks_back: 4,
                     });
-                    if (!error && rpcData) return rpcData as HeatmapData;
+                    // Only use RPC data if it has real days (not a stub)
+                    if (!error && rpcData && Array.isArray((rpcData as any).days) && (rpcData as any).days.length > 0) {
+                        return rpcData as HeatmapData;
+                    }
                 }
             } catch { /* RPC not available, use fallback */ }
 
@@ -85,11 +88,11 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
                     .eq('location_id', effectiveLocationId)
                     .gte('shift_date', fmt(fourWeeksAgo))
                     .lte('shift_date', fmt(today)),
-                supabase.from('sales_daily_unified')
-                    .select('date, net_sales')
+                supabase.from('daily_sales')
+                    .select('day, net_sales')
                     .eq('location_id', effectiveLocationId)
-                    .gte('date', fmt(fourWeeksAgo))
-                    .lte('date', fmt(today)),
+                    .gte('day', fmt(fourWeeksAgo))
+                    .lte('day', fmt(today)),
             ]);
 
             const shifts = shiftsRes.data || [];
@@ -104,7 +107,7 @@ export function StaffingHeatmap({ locationId }: StaffingHeatmapProps) {
 
             // Build sales by date
             const salesByDate: Record<string, number> = {};
-            sales.forEach((s: any) => { salesByDate[s.date] = (salesByDate[s.date] || 0) + Number(s.net_sales || 0); });
+            sales.forEach((s: any) => { const d = s.day || s.date; salesByDate[d] = (salesByDate[d] || 0) + Number(s.net_sales || 0); });
 
             // Build hours by date
             const hoursByDate: Record<string, number> = {};

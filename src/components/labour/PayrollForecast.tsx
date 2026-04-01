@@ -70,7 +70,10 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                         p_year: now.getFullYear(),
                         p_month: now.getMonth() + 1,
                     });
-                    if (!error && rpcData) return rpcData as ForecastData;
+                    // Only use RPC data if it has the expected structure (not a stub)
+                    if (!error && rpcData && (rpcData as any).period && (rpcData as any).worked) {
+                        return rpcData as ForecastData;
+                    }
                 }
             } catch { /* RPC not available */ }
 
@@ -106,8 +109,8 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 (supabase as any).from('budget_daily_unified')
                     .select('budget_labour')
                     .eq('location_id', effectiveLocationId)
-                    .gte('day', firstStr)
-                    .lte('day', lastStr),
+                    .gte('date', firstStr)
+                    .lte('date', lastStr),
             ]);
 
             const shifts = shiftsRes.data || [];

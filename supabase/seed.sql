@@ -37,16 +37,16 @@ ON CONFLICT DO NOTHING;
 -- §2  WORKFORCE: Employees
 -- ═══════════════════════════════════════════════════════════════════════════
 
-INSERT INTO employees (id, org_id, full_name, email, role_name, hourly_cost, status) VALUES
-  ('e0000001-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'Carlos Garcia', 'carlos.garcia@josephine.app', 'Head Chef', 22.00, 'active'),
-  ('e0000001-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'Maria Lopez', 'maria.lopez@josephine.app', 'Sous Chef', 18.00, 'active'),
-  ('e0000001-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', 'Pedro Martinez', 'pedro.martinez@josephine.app', 'Line Cook', 14.50, 'active'),
-  ('e0000001-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000001', 'Ana Rodriguez', 'ana.rodriguez@josephine.app', 'Line Cook', 14.50, 'active'),
-  ('e0000001-0000-0000-0000-000000000005', 'a0000000-0000-0000-0000-000000000001', 'Luis Fernandez', 'luis.fernandez@josephine.app', 'Waiter', 13.00, 'active'),
-  ('e0000001-0000-0000-0000-000000000006', 'a0000000-0000-0000-0000-000000000001', 'Carmen Sanchez', 'carmen.sanchez@josephine.app', 'Waiter', 13.00, 'active'),
-  ('e0000001-0000-0000-0000-000000000007', 'a0000000-0000-0000-0000-000000000001', 'Javier Ruiz', 'javier.ruiz@josephine.app', 'Waiter', 12.50, 'active'),
-  ('e0000001-0000-0000-0000-000000000008', 'a0000000-0000-0000-0000-000000000001', 'Elena Torres', 'elena.torres@josephine.app', 'Host', 12.00, 'active')
-ON CONFLICT (id) DO UPDATE SET hourly_cost = EXCLUDED.hourly_cost, role_name = EXCLUDED.role_name;
+INSERT INTO employees (id, org_id, location_id, full_name, email, role_name, hourly_cost, status) VALUES
+  ('e0000001-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Carlos Garcia', 'carlos.garcia@josephine.app', 'Head Chef', 22.00, 'active'),
+  ('e0000001-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Maria Lopez', 'maria.lopez@josephine.app', 'Sous Chef', 18.00, 'active'),
+  ('e0000001-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Pedro Martinez', 'pedro.martinez@josephine.app', 'Line Cook', 14.50, 'active'),
+  ('e0000001-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Ana Rodriguez', 'ana.rodriguez@josephine.app', 'Line Cook', 14.50, 'active'),
+  ('e0000001-0000-0000-0000-000000000005', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Luis Fernandez', 'luis.fernandez@josephine.app', 'Waiter', 13.00, 'active'),
+  ('e0000001-0000-0000-0000-000000000006', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Carmen Sanchez', 'carmen.sanchez@josephine.app', 'Waiter', 13.00, 'active'),
+  ('e0000001-0000-0000-0000-000000000007', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Javier Ruiz', 'javier.ruiz@josephine.app', 'Waiter', 12.50, 'active'),
+  ('e0000001-0000-0000-0000-000000000008', 'a0000000-0000-0000-0000-000000000001', '57f62bae-4d5b-44b0-8055-fdde12ee5a96', 'Elena Torres', 'elena.torres@josephine.app', 'Host', 12.00, 'active')
+ON CONFLICT (id) DO UPDATE SET hourly_cost = EXCLUDED.hourly_cost, role_name = EXCLUDED.role_name, location_id = EXCLUDED.location_id;
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
