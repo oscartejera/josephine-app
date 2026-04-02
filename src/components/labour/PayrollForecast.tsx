@@ -70,7 +70,10 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                         p_year: now.getFullYear(),
                         p_month: now.getMonth() + 1,
                     });
-                    if (!error && rpcData) return rpcData as ForecastData;
+                    // Only use RPC data if it has the expected structure (not a stub)
+                    if (!error && rpcData && (rpcData as any).period && (rpcData as any).worked) {
+                        return rpcData as ForecastData;
+                    }
                 }
             } catch { /* RPC not available */ }
 
@@ -106,8 +109,8 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 (supabase as any).from('budget_daily_unified')
                     .select('budget_labour')
                     .eq('location_id', effectiveLocationId)
-                    .gte('day', firstStr)
-                    .lte('day', lastStr),
+                    .gte('date', firstStr)
+                    .lte('date', lastStr),
             ]);
 
             const shifts = shiftsRes.data || [];
@@ -218,10 +221,15 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
         );
     }
 
-    const statusCfg = STATUS_CONFIG[data.budget.status] || STATUS_CONFIG.no_budget;
-    const progressPct = data.days.total > 0 ? Math.round((data.days.elapsed / data.days.total) * 100) : 0;
-    const costPct = data.projected.total_cost > 0
-        ? Math.round((data.worked.cost / data.projected.total_cost) * 100) : 0;
+    const budgetStatus = data.budget?.status ?? 'no_budget';
+    const statusCfg = STATUS_CONFIG[budgetStatus] || STATUS_CONFIG.no_budget;
+    const daysTotal = data.days?.total ?? 0;
+    const daysElapsed = data.days?.elapsed ?? 0;
+    const progressPct = daysTotal > 0 ? Math.round((daysElapsed / daysTotal) * 100) : 0;
+    const projectedCost = data.projected?.total_cost ?? 0;
+    const workedCost = data.worked?.cost ?? 0;
+    const costPct = projectedCost > 0
+        ? Math.round((workedCost / projectedCost) * 100) : 0;
 
     return (
         <Card className="bg-white">
@@ -230,8 +238,8 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                     <div>
                         <CardTitle className="text-base font-semibold">📊 Previsión de Nómina</CardTitle>
                         <p className="text-xs text-gray-500 mt-0.5">
-                            {format(new Date(data.period.year, data.period.month - 1), 'MMMM yyyy', { locale: es })}
-                            {' · '} Día {data.days.elapsed} de {data.days.total}
+                            {format(new Date(data.period?.year ?? new Date().getFullYear(), (data.period?.month ?? 1) - 1), 'MMMM yyyy', { locale: es })}
+                            {' · '} Día {daysElapsed} de {daysTotal}
                         </p>
                     </div>
                     <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full uppercase", statusCfg.bg, statusCfg.color)}>
@@ -244,18 +252,18 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 <div className="grid grid-cols-3 gap-4">
                     <div className="text-center p-3 bg-emerald-50/50 rounded-xl">
                         <div className="text-[10px] font-semibold text-emerald-600 uppercase">Ya gastado</div>
-                        <div className="text-xl font-bold text-emerald-700 mt-1">{fmt(data.worked.cost)}</div>
-                        <div className="text-[10px] text-emerald-500">{data.worked.hours}h trabajadas</div>
+                        <div className="text-xl font-bold text-emerald-700 mt-1">{fmt(workedCost)}</div>
+                        <div className="text-[10px] text-emerald-500">{data.worked?.hours ?? 0}h trabajadas</div>
                     </div>
                     <div className="text-center p-3 bg-blue-50/50 rounded-xl">
                         <div className="text-[10px] font-semibold text-blue-600 uppercase">Pendiente</div>
-                        <div className="text-xl font-bold text-blue-700 mt-1">{fmt(data.remaining.cost)}</div>
-                        <div className="text-[10px] text-blue-500">{data.remaining.hours}h planificadas</div>
+                        <div className="text-xl font-bold text-blue-700 mt-1">{fmt(data.remaining?.cost ?? 0)}</div>
+                        <div className="text-[10px] text-blue-500">{data.remaining?.hours ?? 0}h planificadas</div>
                     </div>
                     <div className="text-center p-3 bg-indigo-50/50 rounded-xl border-2 border-indigo-200">
                         <div className="text-[10px] font-semibold text-indigo-600 uppercase">Proyección mes</div>
-                        <div className="text-xl font-bold text-indigo-700 mt-1">{fmt(data.projected.total_cost)}</div>
-                        <div className="text-[10px] text-indigo-500">{fmt(data.projected.daily_run_rate)}/día</div>
+                        <div className="text-xl font-bold text-indigo-700 mt-1">{fmt(projectedCost)}</div>
+                        <div className="text-[10px] text-indigo-500">{fmt(data.projected?.daily_run_rate ?? 0)}/día</div>
                     </div>
                 </div>
 
@@ -288,24 +296,24 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                 </div>
 
                 {/* Budget comparison */}
-                {data.budget.amount > 0 && (
+                {(data.budget?.amount ?? 0) > 0 && (
                     <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg">
                         <div className="text-sm text-gray-600">
-                            <span className="font-medium">Presupuesto:</span> {fmt(data.budget.amount)}
+                            <span className="font-medium">Presupuesto:</span> {fmt(data.budget?.amount ?? 0)}
                         </div>
                         <div className="text-sm">
                             <span className={cn("font-bold", statusCfg.color)}>
-                                {data.budget.pct_projected}% proyectado
+                                {data.budget?.pct_projected ?? 0}% proyectado
                             </span>
                         </div>
                     </div>
                 )}
 
                 {/* Per-employee breakdown */}
-                {data.per_employee.length > 0 && (
+                {(data.per_employee?.length ?? 0) > 0 && (
                     <div className="space-y-1">
                         <div className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Desglose por empleado</div>
-                        {data.per_employee.slice(0, 6).map(emp => (
+                        {(data.per_employee ?? []).slice(0, 6).map(emp => (
                             <div key={emp.employee_id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50/50">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-gray-800">{emp.employee_name}</span>
@@ -317,8 +325,8 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                                 </div>
                             </div>
                         ))}
-                        {data.per_employee.length > 6 && (
-                            <p className="text-[10px] text-gray-400 text-center">+{data.per_employee.length - 6} más</p>
+                        {(data.per_employee?.length ?? 0) > 6 && (
+                            <p className="text-[10px] text-gray-400 text-center">+{(data.per_employee?.length ?? 0) - 6} más</p>
                         )}
                     </div>
                 )}
