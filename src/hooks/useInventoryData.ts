@@ -99,7 +99,7 @@ export function useInventoryData(
       // Fetch real data
       if (locations.length > 0 && !appLoading) {
         let salesQuery = supabase
-          .from('sales_daily_unified' as any)
+          .from('sales_daily_unified')
           .select('date, location_id, net_sales, gross_sales, orders_count')
           .eq('data_source', dsLegacy)
           .gte('date', fromDateStr)
@@ -209,7 +209,7 @@ export function useInventoryData(
     // ── Fetch product sales for COGS ratio + category breakdown ──
     // Column is 'day' (not 'date') in product_sales_daily_unified
     let prodQuery = supabase
-      .from('product_sales_daily_unified' as any)
+      .from('product_sales_daily_unified')
       .select('day, location_id, product_id, product_name, product_category, net_sales, cogs')
       .eq('data_source', dsLegacy)
       .gte('day', fromDateStr)

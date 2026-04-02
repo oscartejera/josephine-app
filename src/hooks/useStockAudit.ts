@@ -58,7 +58,7 @@ export function useStockAudit(locationId: string | null) {
             if (!group?.id || !locationId) return [];
 
             const { data, error } = await (supabase
-                .from('inventory_counts' as any)
+                .from('inventory_counts')
                 .select('*')
                 .eq('org_id', group.id)
                 .eq('location_id', locationId)
@@ -132,7 +132,7 @@ export function useStockAudit(locationId: string | null) {
             if (!group?.id || !locationId) throw new Error('Missing context');
 
             const { error } = await (supabase
-                .from('inventory_counts' as any)
+                .from('inventory_counts')
                 .insert({
                     org_id: group.id,
                     location_id: locationId,

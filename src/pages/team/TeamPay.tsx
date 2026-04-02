@@ -80,7 +80,7 @@ export default function TeamPay() {
       setLoading(true);
 
       const [clockRes, shiftsRes] = await Promise.all([
-        (supabase as any)
+        supabase
           .from('employee_clock_records')
           .select('id, clock_in, clock_out, source')
           .eq('employee_id', employee.id)

@@ -69,7 +69,7 @@ export default function TeamHome() {
   const { data: latestAnnouncements = [] } = useQuery({
     queryKey: ['announcements-home'],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('announcements')
         .select('id, title, type, pinned, created_at')
         .order('pinned', { ascending: false })
@@ -128,7 +128,7 @@ export default function TeamHome() {
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
 
-      const { data: records } = await (supabase as any)
+      const { data: records } = await supabase
         .from('employee_clock_records')
         .select('id, clock_in, clock_out, location_id, source')
         .eq('employee_id', emp.id)
@@ -167,7 +167,7 @@ export default function TeamHome() {
     if (!employee) return;
     setLoading(true);
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('employee_clock_records')
         .insert({
           employee_id: employee.id,
@@ -194,7 +194,7 @@ export default function TeamHome() {
     if (!activeRecord) return;
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('employee_clock_records')
         .update({
           clock_out: new Date().toISOString(),

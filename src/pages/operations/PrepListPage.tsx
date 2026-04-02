@@ -42,7 +42,7 @@ export default function PrepListPage() {
 
             setLoading(true);
             try {
-                const { data, error } = await (supabase.rpc as any)('get_daily_prep_list', {
+                const { data, error } = await supabase.rpc('get_daily_prep_list', {
                     _location_id: selectedLocationId,
                     _date: selectedDate,
                 });

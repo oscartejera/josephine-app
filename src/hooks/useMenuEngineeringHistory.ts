@@ -81,7 +81,7 @@ export function useMenuEngineeringHistory() {
       }));
 
       // Upsert — if same org+location+product+period exists, update
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('menu_engineering_snapshots')
         .upsert(rows, {
           onConflict: 'org_id,location_id,product_id,period_start,period_end',

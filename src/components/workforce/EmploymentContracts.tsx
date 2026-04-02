@@ -108,7 +108,7 @@ export function EmploymentContracts({ locationId }: Props) {
         setEmployees(emps || []);
 
         // Fetch contracts with employee names
-        const { data: contractsData } = await (supabase as any)
+        const { data: contractsData } = await supabase
             .from('employment_contracts')
             .select('id, employee_id, contract_type, base_salary_monthly, hourly_rate, jornada_pct, irpf_rate, active, created_at')
             .order('created_at', { ascending: false });
@@ -177,7 +177,7 @@ export function EmploymentContracts({ locationId }: Props) {
         };
 
         if (editingId) {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('employment_contracts')
                 .update(payload)
                 .eq('id', editingId);
@@ -187,7 +187,7 @@ export function EmploymentContracts({ locationId }: Props) {
                 toast.success('Contrato actualizado');
             }
         } else {
-            const { error } = await (supabase as any)
+            const { error } = await supabase
                 .from('employment_contracts')
                 .insert(payload);
             if (error) {
@@ -204,7 +204,7 @@ export function EmploymentContracts({ locationId }: Props) {
     };
 
     const toggleActive = async (c: Contract) => {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
             .from('employment_contracts')
             .update({ active: !c.active })
             .eq('id', c.id);

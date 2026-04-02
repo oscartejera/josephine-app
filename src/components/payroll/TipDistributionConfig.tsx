@@ -72,7 +72,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
         async function loadRule() {
             if (!orgId || !effectiveLocationId) return;
             const { data } = await supabase
-                .from('tip_distribution_rules' as any)
+                .from('tip_distribution_rules')
                 .select('method, pool_percentage')
                 .eq('org_id', orgId)
                 .eq('location_id', effectiveLocationId)
@@ -94,7 +94,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
 
         try {
             // 1) Upsert the rule
-            await supabase.from('tip_distribution_rules' as any).upsert({
+            await supabase.from('tip_distribution_rules').upsert({
                 org_id: orgId,
                 location_id: effectiveLocationId,
                 rule_name: 'default',
@@ -105,7 +105,7 @@ export function TipDistributionConfig({ locationId, className }: TipDistribution
 
             // 2) Upsert the tip entry
             const { data: entryData } = await supabase
-                .from('tip_entries' as any)
+                .from('tip_entries')
                 .upsert({
                     org_id: orgId,
                     location_id: effectiveLocationId,

@@ -43,7 +43,7 @@ export function LocationHealthIndicators() {
                 const [salesRes, labourRes, cogsRes, shiftsRes] = await Promise.all([
                     supabase.from('sales_daily_unified').select('location_id, net_sales')
                         .in('location_id', locIds).eq('date', yesterday),
-                    (supabase as any).from('labour_daily_unified').select('location_id, actual_cost, actual_hours')
+                    supabase.from('labour_daily_unified').select('location_id, actual_cost, actual_hours')
                         .in('location_id', locIds).eq('day', yesterday),
                     supabase.from('cogs_daily').select('location_id, cogs_amount')
                         .in('location_id', locIds).eq('date', yesterday),

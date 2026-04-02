@@ -54,7 +54,7 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
             if (!orgId) return;
             setLoading(true);
             const { data, error } = await supabase
-                .from('monthly_cost_entries' as any)
+                .from('monthly_cost_entries')
                 .select('category, amount')
                 .eq('org_id', orgId)
                 .eq('period_year', year)
@@ -87,7 +87,7 @@ export function MonthlyCostInput({ year, month, locationId, onSaved, className }
             for (const cat of COGS_CATEGORIES) {
                 const amount = entries[cat.key] || 0;
                 await supabase
-                    .from('monthly_cost_entries' as any)
+                    .from('monthly_cost_entries')
                     .upsert(
                         {
                             org_id: orgId,

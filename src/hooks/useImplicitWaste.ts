@@ -63,7 +63,7 @@ export function useImplicitWaste(
     queryFn: async (): Promise<ImplicitWasteResult | null> => {
       if (!orgId || !locationId) return null;
 
-      const { data, error } = await (supabase.rpc as any)(
+      const { data, error } = await supabase.rpc(
         'calculate_implicit_waste',
         {
           p_org_id: orgId,

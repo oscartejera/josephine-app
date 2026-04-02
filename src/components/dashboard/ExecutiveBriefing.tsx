@@ -207,7 +207,7 @@ export function ExecutiveBriefing() {
             }
 
             // Fetch yesterday's budget
-            const { data: budgetData } = await (supabase as any)
+            const { data: budgetData } = await supabase
                 .from('budget_daily_unified')
                 .select('location_id, budget_sales, budget_labour')
                 .in('location_id', locIds)
@@ -243,7 +243,7 @@ export function ExecutiveBriefing() {
             // Fetch target COL% per location from location_settings
             const targetColByLoc: Record<string, number> = {};
             try {
-                const { data: settingsData } = await (supabase as any)
+                const { data: settingsData } = await supabase
                     .from('location_settings')
                     .select('location_id, target_col_percent')
                     .in('location_id', locIds);

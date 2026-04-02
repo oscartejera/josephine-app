@@ -81,7 +81,7 @@ export function DataSourceSettings() {
 
     try {
       const { error } = await supabase
-        .from('org_settings' as any)
+        .from('org_settings')
         .upsert({
           org_id: profile.group_id,
           data_source_mode: localMode,

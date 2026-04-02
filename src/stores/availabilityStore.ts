@@ -75,7 +75,7 @@ async function loadFromDB() {
 
   try {
     // Load employee availability patterns
-    const { data: availData } = await (supabase as any)
+    const { data: availData } = await supabase
       .from('employee_availability')
       .select('employee_id, day_index, status, start_time, end_time, note');
 
@@ -103,7 +103,7 @@ async function loadFromDB() {
     }
 
     // Load time-off requests with employee names
-    const { data: timeOffData } = await (supabase as any)
+    const { data: timeOffData } = await supabase
       .from('time_off_requests')
       .select('id, employee_id, start_date, end_date, reason, type, status, reviewed_by, reviewed_at, notes, created_at, employees(full_name)')
       .order('created_at', { ascending: false });
@@ -171,7 +171,7 @@ export async function updateEmployeeAvailability(employeeId: string, weeklyPatte
   }));
 
   try {
-    await (supabase as any)
+    await supabase
       .from('employee_availability')
       .upsert(rows, { onConflict: 'employee_id,day_index' });
   } catch (err) {
@@ -295,7 +295,7 @@ export async function addTimeOffRequest(request: Omit<TimeOffRequest, 'id' | 'cr
 
   // Persist to DB
   try {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('time_off_requests')
       .insert({
         employee_id: request.employeeId,
@@ -343,7 +343,7 @@ export async function updateTimeOffRequestStatus(
 
   // Persist to DB
   try {
-    await (supabase as any)
+    await supabase
       .from('time_off_requests')
       .update({
         status,
@@ -364,7 +364,7 @@ export async function removeTimeOffRequest(requestId: string) {
   timeOffRequests = timeOffRequests.filter(req => req.id !== requestId);
 
   try {
-    await (supabase as any)
+    await supabase
       .from('time_off_requests')
       .delete()
       .eq('id', requestId);

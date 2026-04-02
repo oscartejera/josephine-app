@@ -38,7 +38,7 @@ export default function TeamNews() {
   const { data: announcements = [], isLoading } = useQuery({
     queryKey: ['announcements'],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('announcements')
         .select('id, title, body, type, pinned, created_at, author_name')
         .order('pinned', { ascending: false })

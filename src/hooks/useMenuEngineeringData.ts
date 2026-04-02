@@ -222,7 +222,7 @@ export function useMenuEngineeringData() {
     if (!user) throw new Error('Not authenticated');
 
     const { error: insertError } = await supabase
-      .from('menu_engineering_actions' as any)
+      .from('menu_engineering_actions')
       .insert({
         user_id: user.id,
         location_id: selectedLocationId || null,

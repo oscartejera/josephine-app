@@ -78,7 +78,7 @@ export function useTopProducts() {
       const [rpcResult, martResult] = await Promise.all([
         getTopProductsRpc(ctx, { from: fromStr, to: toStr }, 20),
         supabase
-          .from('mart_sales_category_daily' as any)
+          .from('mart_sales_category_daily')
           .select('product_id, product_name, category, units_sold, net_sales, cogs, cogs_source')
           .eq('org_id', orgId)
           .gte('date', fromStr)

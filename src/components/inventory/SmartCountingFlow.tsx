@@ -53,7 +53,7 @@ export function SmartCountingFlow({ locationId }: { locationId: string | null })
             // Get latest counts for reference
             const itemIds = invItems.map((i: any) => i.id);
             const { data: latestCounts } = await (supabase
-                .from('inventory_counts' as any)
+                .from('inventory_counts')
                 .select('item_id, counted_qty')
                 .in('item_id', itemIds)
                 .order('count_date', { ascending: false })

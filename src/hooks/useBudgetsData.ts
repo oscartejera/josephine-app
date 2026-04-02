@@ -132,7 +132,7 @@ export function useBudgetsData(
 
       // Fetch budgets from contract view
       let budgetQuery = supabase
-        .from('budget_daily_unified' as any)
+        .from('budget_daily_unified')
         .select('day, location_id, budget_sales, budget_labour, budget_cogs')
         .gte('day', fromDate)
         .lte('day', toDate);
@@ -153,7 +153,7 @@ export function useBudgetsData(
 
       // Fetch actuals - sales from contract view
       let salesQuery = supabase
-        .from('sales_daily_unified' as any)
+        .from('sales_daily_unified')
         .select('date, location_id, net_sales')
         .eq('data_source', dsLegacy)
         .gte('date', fromDate)
@@ -167,7 +167,7 @@ export function useBudgetsData(
 
       // Fetch labour from contract view
       let labourQuery = supabase
-        .from('labour_daily_unified' as any)
+        .from('labour_daily_unified')
         .select('day, location_id, actual_cost, actual_hours')
         .gte('day', fromDate)
         .lte('day', toDate);

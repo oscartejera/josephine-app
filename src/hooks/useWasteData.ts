@@ -149,7 +149,7 @@ export function useWasteData(
 
       // Fetch sales data from unified view
       let salesQuery = supabase
-        .from('sales_daily_unified' as any)
+        .from('sales_daily_unified')
         .select('location_id, net_sales')
         .eq('data_source', dsLegacy)
         .gte('date', fromDate)
@@ -204,7 +204,7 @@ export function useWasteData(
       const prevTo = format(subDays(dateRange.from, 1), 'yyyy-MM-dd');
 
       let prevSalesQuery = supabase
-        .from('sales_daily_unified' as any)
+        .from('sales_daily_unified')
         .select('net_sales')
         .eq('data_source', dsLegacy)
         .gte('date', prevFrom)

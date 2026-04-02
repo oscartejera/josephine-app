@@ -127,7 +127,7 @@ export function useCashManagementData(
 
       // Fetch current period from unified view
       let query = supabase
-        .from('sales_daily_unified' as any)
+        .from('sales_daily_unified')
         .select('date, location_id, net_sales, gross_sales, orders_count, payments_cash, payments_card, payments_other, refunds_amount, refunds_count, discounts_amount, comps_amount, voids_amount')
         .eq('data_source', dsLegacy)
         .gte('date', fromDate)
@@ -148,7 +148,7 @@ export function useCashManagementData(
 
       // Fetch previous period from unified view
       let prevQuery = supabase
-        .from('sales_daily_unified' as any)
+        .from('sales_daily_unified')
         .select('date, location_id, net_sales, gross_sales, orders_count, payments_cash, payments_card, payments_other, refunds_amount, refunds_count, discounts_amount, comps_amount, voids_amount')
         .eq('data_source', dsLegacy)
         .gte('date', prevFrom)

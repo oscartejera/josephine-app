@@ -342,7 +342,7 @@ export default function DataImport() {
             for (let i = 0; i < rows.length; i += 100) {
                 const batch = rows.slice(i, i + 100);
                 const { error } = await supabase
-                    .from('sales_daily_unified' as any)
+                    .from('sales_daily_unified')
                     .upsert(batch, { onConflict: 'location_id,date' });
                 if (error) {
                     console.error('Import batch error:', error);

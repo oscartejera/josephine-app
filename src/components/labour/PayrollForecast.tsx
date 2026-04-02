@@ -97,7 +97,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                     .eq('location_id', effectiveLocationId)
                     .gte('shift_date', firstStr)
                     .lte('shift_date', lastStr),
-                (supabase as any).from('employee_clock_records')
+                supabase.from('employee_clock_records')
                     .select('employee_id, clock_in, clock_out')
                     .eq('location_id', effectiveLocationId)
                     .gte('clock_in', firstStr + 'T00:00:00')
@@ -106,7 +106,7 @@ export function PayrollForecast({ locationId }: PayrollForecastProps) {
                     .select('id, full_name, role_name, hourly_cost')
                     .eq('location_id', effectiveLocationId)
                     .eq('active', true),
-                (supabase as any).from('budget_daily_unified')
+                supabase.from('budget_daily_unified')
                     .select('budget_labour')
                     .eq('location_id', effectiveLocationId)
                     .gte('date', firstStr)

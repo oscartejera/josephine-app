@@ -98,7 +98,7 @@ export async function fetchForecastMetrics(
     weekEndISO: string
 ): Promise<Record<string, { forecast_sales: number; planned_labor_cost: number; planned_labor_hours: number }>> {
     const { data, error } = await supabase
-        .from('forecast_daily_unified' as any)
+        .from('forecast_daily_unified')
         .select('day, forecast_sales, planned_labor_cost, planned_labor_hours')
         .eq('location_id', locationId)
         .gte('day', weekStartISO)
@@ -168,7 +168,7 @@ export async function checkForecastExists(locationId: string): Promise<boolean> 
     const futureDate = format(addDays(new Date(), 30), 'yyyy-MM-dd');
 
     const { count, error } = await supabase
-        .from('forecast_daily_unified' as any)
+        .from('forecast_daily_unified')
         .select('day', { count: 'exact', head: true })
         .eq('location_id', locationId)
         .gte('day', today)

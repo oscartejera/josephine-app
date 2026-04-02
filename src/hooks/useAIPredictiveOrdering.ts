@@ -141,7 +141,7 @@ export function useAIPredictiveOrdering(locationId: string | null) {
 
             if (itemIds.length > 0) {
                 const { data: latestCounts } = await (supabase
-                    .from('inventory_counts' as any)
+                    .from('inventory_counts')
                     .select('item_id, counted_qty')
                     .in('item_id', itemIds)
                     .order('count_date', { ascending: false })

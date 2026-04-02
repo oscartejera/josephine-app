@@ -33,7 +33,7 @@ export function useScheduleEfficiency(
         queryKey: ['schedule-efficiency', locationId, format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
         queryFn: async (): Promise<ScheduleEfficiency | null> => {
             if (!locationId) return null;
-            const { data, error } = await (supabase.rpc as any)('calculate_schedule_efficiency', {
+            const { data, error } = await supabase.rpc('calculate_schedule_efficiency', {
                 p_location_id: locationId,
                 p_week_start: format(weekStart, 'yyyy-MM-dd'),
                 p_week_end: format(weekEnd, 'yyyy-MM-dd'),

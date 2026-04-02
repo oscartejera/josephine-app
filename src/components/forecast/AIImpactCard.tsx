@@ -63,7 +63,7 @@ function useAIImpactData(): { data: ImpactMetrics | null; isLoading: boolean } {
                     .gte('created_at', monthStart)
                     .lte('created_at', today + 'T23:59:59'),
                 // Forecast accuracy
-                (supabase as any)
+                supabase
                     .from('v_forecast_accuracy')
                     .select('mape, days_evaluated')
                     .in('location_id', locationIds)

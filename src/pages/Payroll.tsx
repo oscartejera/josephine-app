@@ -110,7 +110,7 @@ export default function Payroll() {
     if (activeEntity) {
       // Sandbox check — compliance_tokens table may not exist yet
       try {
-        const { data: tokens } = await (supabase as any)
+        const { data: tokens } = await supabase
           .from('compliance_tokens')
           .select('id')
           .eq('legal_entity_id', activeEntity.id)

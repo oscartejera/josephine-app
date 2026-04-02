@@ -36,7 +36,7 @@ export function OnboardingChecklist() {
             path: '/integrations',
             checkFn: async () => {
                 // Check if any integration or import exists
-                const { count } = await (supabase as any)
+                const { count } = await supabase
                     .from('sales_daily_unified')
                     .select('*', { count: 'exact', head: true })
                     .limit(1);
@@ -50,7 +50,7 @@ export function OnboardingChecklist() {
             icon: Users,
             path: '/workforce/team',
             checkFn: async () => {
-                const { count } = await (supabase as any)
+                const { count } = await supabase
                     .from('employees')
                     .select('*', { count: 'exact', head: true })
                     .limit(1);

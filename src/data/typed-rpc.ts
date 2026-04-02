@@ -1,7 +1,7 @@
 /**
  * Typed RPC — Zero-tolerance wrapper for Supabase RPC calls.
  *
- * Replaces `(supabase.rpc as any)(name, params)` with a typed function
+ * Replaces `supabase.rpc(name, params)` with a typed function
  * that validates the response shape at runtime using Zod schemas.
  *
  * If the schema doesn't match, we get a loud error in dev +
@@ -32,7 +32,7 @@ export async function typedRpc<T>(
     params: Record<string, unknown>,
     options: TypedRpcOptions = {}
 ): Promise<T> {
-    const { data, error } = await (supabase.rpc as any)(name, params);
+    const { data, error } = await supabase.rpc(name, params);
 
     if (error) {
         console.error(`[typedRpc] ${name} error:`, error.message);

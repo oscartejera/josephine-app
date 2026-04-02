@@ -61,7 +61,7 @@ export function NotificationCenter() {
         queryKey: ['notifications', user?.id],
         queryFn: async () => {
             if (!user?.id) return [];
-            const { data, error } = await (supabase as any)
+            const { data, error } = await supabase
                 .from('notifications')
                 .select('id, type, title, body, link, read, created_at')
                 .eq('user_id', user.id)
@@ -84,7 +84,7 @@ export function NotificationCenter() {
     // Mark single notification as read
     const markRead = useMutation({
         mutationFn: async (id: string) => {
-            await (supabase as any)
+            await supabase
                 .from('notifications')
                 .update({ read: true })
                 .eq('id', id);
@@ -98,7 +98,7 @@ export function NotificationCenter() {
     const markAllRead = useMutation({
         mutationFn: async () => {
             if (!user?.id) return;
-            await (supabase as any)
+            await supabase
                 .from('notifications')
                 .update({ read: true })
                 .eq('user_id', user.id)

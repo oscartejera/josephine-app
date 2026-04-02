@@ -529,7 +529,7 @@ export function useSchedulingSupabase(
         .eq('is_available', true);
 
       // Fetch target settings (full settings for smart algorithm)
-      const { data: settingsRaw } = await (supabase as any)
+      const { data: settingsRaw } = await supabase
         .from('location_settings')
         .select('splh_goal, target_col_percent, opening_time, closing_time, closed_days, max_hours_per_day, hourly_demand_curve, staffing_ratios')
         .eq('location_id', locationId)

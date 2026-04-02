@@ -47,7 +47,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
     const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
     const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
 
-    const { data: records } = await (supabase as any)
+    const { data: records } = await supabase
       .from('employee_clock_records')
       .select('*')
       .eq('employee_id', resolvedEmpId)
@@ -134,7 +134,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
     setLoading(true);
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('employee_clock_records')
         .insert({
           employee_id: employeeId,
@@ -165,7 +165,7 @@ export function ClockInPanel({ locationId, locationName }: ClockInPanelProps) {
 
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('employee_clock_records')
         .update({
           clock_out: new Date().toISOString(),

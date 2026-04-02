@@ -124,7 +124,7 @@ export async function triggerBackfillForecastAccuracy(): Promise<{
     predictions_logged: number;
     actuals_backfilled: number;
 }> {
-    const { data, error } = await (supabase.rpc as any)(
+    const { data, error } = await supabase.rpc(
         'backfill_forecast_accuracy',
         {},
     );

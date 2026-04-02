@@ -105,7 +105,7 @@ export async function checkRpcHealth(dataSource: 'pos' | 'demo' = 'pos'): Promis
 
             const start = performance.now();
             try {
-                const { data, error } = await (supabase.rpc as any)(name, params);
+                const { data, error } = await supabase.rpc(name, params);
                 const latencyMs = Math.round(performance.now() - start);
 
                 if (error) {

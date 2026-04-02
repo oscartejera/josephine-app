@@ -62,8 +62,8 @@ export default function OnboardingChecklist() {
                 supabase.from('shifts').select('id', { count: 'exact', head: true }),
                 supabase.from('suppliers').select('id', { count: 'exact', head: true }),
                 supabase.from('recipes').select('id', { count: 'exact', head: true }),
-                (supabase as any).from('inventory_items').select('id', { count: 'exact', head: true }),
-                (supabase as any).from('budgets_daily').select('id', { count: 'exact', head: true }),
+                supabase.from('inventory_items').select('id', { count: 'exact', head: true }),
+                supabase.from('budgets_daily').select('id', { count: 'exact', head: true }),
             ]);
 
             const hasEmployees = (employeesRes.count ?? 0) > 0;

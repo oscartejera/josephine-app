@@ -37,7 +37,7 @@ export function FoodCostVarianceCard() {
             setLoading(true);
             try {
                 const { from, to } = getDateRangeValues();
-                const { data: result, error } = await (supabase.rpc as any)('get_food_cost_variance', {
+                const { data: result, error } = await supabase.rpc('get_food_cost_variance', {
                     _location_id: effectiveLocationId,
                     _from: from.toISOString().split('T')[0],
                     _to: to.toISOString().split('T')[0],
