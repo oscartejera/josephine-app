@@ -52,17 +52,8 @@ export default function Login() {
     });
 
     try {
-      // First, try to seed demo users if they don't exist
-      const { error: seedError } = await supabase.functions.invoke('seed_demo_users');
-
-      if (seedError) {
-        console.warn('Could not seed demo users:', seedError);
-      }
-
-      // Wait a moment for data to propagate
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Now try to login
+      // Demo user already exists in auth — login directly
+      // (seed_demo_users edge function removed: references legacy v1 tables)
       const { error } = await signIn(demoEmail, DEMO_PASSWORD);
 
       if (error) {
