@@ -44,7 +44,20 @@ export function FoodCostVarianceCard() {
                 });
 
                 if (result && !error) {
-                    setData(result as FoodCostData);
+                    // RPC may return array or object — normalize
+                    const raw = (Array.isArray(result) ? result[0] : result) as any;
+                    if (raw) {
+                        setData({
+                            theoretical_cogs: Number(raw.theoretical_cogs) || 0,
+                            actual_purchases: Number(raw.actual_purchases) || 0,
+                            waste_value: Number(raw.waste_value) || 0,
+                            variance: Number(raw.variance) || 0,
+                            variance_pct: Number(raw.variance_pct) || 0,
+                            total_revenue: Number(raw.total_revenue) || 0,
+                            theoretical_food_cost_pct: Number(raw.theoretical_food_cost_pct) || 0,
+                            actual_food_cost_pct: Number(raw.actual_food_cost_pct) || 0,
+                        });
+                    }
                 }
             } catch (err) {
                 console.warn('[FoodCostVariance] RPC unavailable:', err);
@@ -84,13 +97,13 @@ export function FoodCostVarianceCard() {
                 <div className="flex items-end justify-between">
                     <div>
                         <p className="text-2xl font-bold">
-                            {data.actual_food_cost_pct.toFixed(1)}%
+                            {(data.actual_food_cost_pct ?? 0).toFixed(1)}%
                         </p>
                         <p className="text-xs text-muted-foreground">Coste real</p>
                     </div>
                     <div className="text-right">
                         <p className="text-lg font-semibold text-muted-foreground">
-                            {data.theoretical_food_cost_pct.toFixed(1)}%
+                            {(data.theoretical_food_cost_pct ?? 0).toFixed(1)}%
                         </p>
                         <p className="text-xs text-muted-foreground">Teórico (recetas)</p>
                     </div>
@@ -110,7 +123,7 @@ export function FoodCostVarianceCard() {
                             )}
                         >
                             {isOverBudget ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                            {data.variance_pct > 0 ? '+' : ''}{data.variance_pct.toFixed(1)}%
+                            {(data.variance_pct ?? 0) > 0 ? '+' : ''}{(data.variance_pct ?? 0).toFixed(1)}%
                         </Badge>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -128,15 +141,15 @@ export function FoodCostVarianceCard() {
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
                     <div className="p-2 rounded-lg bg-muted/50">
                         <p className="text-xs text-muted-foreground">Compras</p>
-                        <p className="text-sm font-semibold">€{data.actual_purchases.toFixed(0)}</p>
+                        <p className="text-sm font-semibold">€{(data.actual_purchases ?? 0).toFixed(0)}</p>
                     </div>
                     <div className="p-2 rounded-lg bg-muted/50">
                         <p className="text-xs text-muted-foreground">Teórico</p>
-                        <p className="text-sm font-semibold">€{data.theoretical_cogs.toFixed(0)}</p>
+                        <p className="text-sm font-semibold">€{(data.theoretical_cogs ?? 0).toFixed(0)}</p>
                     </div>
                     <div className="p-2 rounded-lg bg-muted/50">
                         <p className="text-xs text-muted-foreground">Merma</p>
-                        <p className="text-sm font-semibold text-warning">€{data.waste_value.toFixed(0)}</p>
+                        <p className="text-sm font-semibold text-warning">€{(data.waste_value ?? 0).toFixed(0)}</p>
                     </div>
                 </div>
             </CardContent>

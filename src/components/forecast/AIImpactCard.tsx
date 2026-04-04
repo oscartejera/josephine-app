@@ -194,14 +194,14 @@ export function AIImpactCard() {
                         icon={TrendingDown}
                         label="Ahorro Laboral"
                         value={data.labourSavings > 0 ? `+${fmt(data.labourSavings)}` : '—'}
-                        subtitle={`COL ${data.actualCol.toFixed(1)}% vs ${INDUSTRY_COL_BENCHMARK}% benchmark`}
+                        subtitle={`COL ${(data.actualCol ?? 0).toFixed(1)}% vs ${INDUSTRY_COL_BENCHMARK}% benchmark`}
                         color="bg-emerald-50 text-emerald-600"
                     />
                     <ImpactKPI
                         icon={ShieldCheck}
                         label="Ahorro Merma"
                         value={data.wasteSavings > 0 ? `+${fmt(data.wasteSavings)}` : '—'}
-                        subtitle={`Waste ${data.actualWaste.toFixed(1)}% vs ${INDUSTRY_WASTE_BENCHMARK}% benchmark`}
+                        subtitle={`Waste ${(data.actualWaste ?? 0).toFixed(1)}% vs ${INDUSTRY_WASTE_BENCHMARK}% benchmark`}
                         color="bg-blue-50 text-blue-600"
                     />
                     <ImpactKPI
