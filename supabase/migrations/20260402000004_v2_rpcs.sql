@@ -3,6 +3,44 @@
 -- =============================================================================
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- DROP existing functions to allow parameter renames
+-- (PostgreSQL does not allow CREATE OR REPLACE to rename input parameters)
+-- ═══════════════════════════════════════════════════════════════════════════
+DO $$ 
+DECLARE fn text;
+BEGIN
+  FOR fn IN SELECT unnest(ARRAY[
+    'get_labour_kpis(date,date,uuid,text)',
+    'get_labour_timeseries(date,date,uuid,text)',
+    'get_labour_locations_table(date,date,uuid,text)',
+    'get_labour_cost_by_date(uuid[],date)',
+    'get_sales_timeseries_unified(date,date,uuid,text)',
+    'get_top_products_unified(date,date,uuid,text,int)',
+    'rpc_kpi_range_summary(date,date,uuid,text)',
+    'get_instant_pnl_unified(date,date,uuid)',
+    'menu_engineering_summary(date,date,uuid,text,text)',
+    'get_variance_summary(uuid,uuid[])',
+    'get_reconciliation_report(uuid,uuid)',
+    'check_labour_compliance(uuid,uuid,date)',
+    'calculate_tip_distribution(uuid)',
+    'get_payroll_forecast(uuid,uuid,int,int)',
+    'get_employee_revenue_scores(uuid,uuid,date,date)',
+    'get_staffing_heatmap(uuid,uuid,int)',
+    'get_staffing_recommendation(uuid,uuid,date,date)',
+    'rpc_data_health(uuid)',
+    'redeem_loyalty_reward(uuid,uuid,uuid)',
+    'generate_pos_daily_data(date)',
+    'process_refresh_mvs_jobs()'
+  ])
+  LOOP
+    BEGIN
+      EXECUTE 'DROP FUNCTION IF EXISTS ' || fn;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+  END LOOP;
+END $$;
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- LABOUR RPCs
 -- ═══════════════════════════════════════════════════════════════════════════
 
