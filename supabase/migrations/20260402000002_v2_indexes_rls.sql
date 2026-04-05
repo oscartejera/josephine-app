@@ -126,20 +126,34 @@ BEGIN
   LOOP
     BEGIN
       EXECUTE format('CREATE POLICY %I ON %I FOR SELECT TO authenticated USING (true)', t||'_sel', t);
+    EXCEPTION WHEN undefined_table OR duplicate_object THEN NULL;
+    END;
+    BEGIN
       EXECUTE format('CREATE POLICY %I ON %I FOR INSERT TO authenticated WITH CHECK (true)', t||'_ins', t);
+    EXCEPTION WHEN undefined_table OR duplicate_object THEN NULL;
+    END;
+    BEGIN
       EXECUTE format('CREATE POLICY %I ON %I FOR UPDATE TO authenticated USING (true) WITH CHECK (true)', t||'_upd', t);
+    EXCEPTION WHEN undefined_table OR duplicate_object THEN NULL;
+    END;
+    BEGIN
       EXECUTE format('CREATE POLICY %I ON %I FOR DELETE TO authenticated USING (true)', t||'_del', t);
+    EXCEPTION WHEN undefined_table OR duplicate_object THEN NULL;
+    END;
+    BEGIN
       EXECUTE format('GRANT ALL ON %I TO authenticated', t);
     EXCEPTION WHEN undefined_table THEN NULL;
     END;
   END LOOP;
 END $$;
 
--- Org-scoped policies for settings & integrations
-CREATE POLICY org_settings_rls ON org_settings FOR ALL
-  USING (true) WITH CHECK (true);
-CREATE POLICY integrations_rls ON integrations FOR ALL
-  USING (true) WITH CHECK (true);
+DO $$
+BEGIN
+  BEGIN CREATE POLICY org_settings_rls ON org_settings FOR ALL USING (true) WITH CHECK (true);
+  EXCEPTION WHEN duplicate_object THEN NULL; END;
+  BEGIN CREATE POLICY integrations_rls ON integrations FOR ALL USING (true) WITH CHECK (true);
+  EXCEPTION WHEN duplicate_object THEN NULL; END;
+END $$;
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
