@@ -23,6 +23,7 @@ import {
   PromotionalStrategy,
   MenuDesignGuide,
   IndustryBenchmarks,
+  OmnesAnalysis,
 } from '@/components/menu-engineering';
 import { SetupBanner } from '@/components/menu-engineering/SetupBanner';
 
@@ -236,6 +237,14 @@ export default function MenuEngineering() {
 
             {/* Industry Benchmarks */}
             <IndustryBenchmarks items={items} stats={stats} loading={meLoading} />
+
+            {/* OMNES P1-P3 Pricing Structure Analysis */}
+            <OmnesAnalysis
+              items={items}
+              stats={stats}
+              loading={meLoading}
+              selectedCategory={selectedCategory}
+            />
 
             {/* Matrix + Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

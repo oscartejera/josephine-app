@@ -10,3 +10,5 @@ export { ClassificationTimeline } from './ClassificationTimeline';
 export { PromotionalStrategy } from './PromotionalStrategy';
 export { MenuDesignGuide } from './MenuDesignGuide';
 export { IndustryBenchmarks } from './IndustryBenchmarks';
+export { OmnesAnalysis } from './OmnesAnalysis';
+
