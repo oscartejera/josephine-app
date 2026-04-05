@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "suppliers_org_read" ON suppliers FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "suppliers_org_write" ON suppliers FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "suppliers_org_read" ON suppliers FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "suppliers_org_write" ON suppliers FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
 
 -- 2. SUPPLIER_ITEMS
 CREATE TABLE IF NOT EXISTS supplier_items (
@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS supplier_items (
   UNIQUE(supplier_id, inventory_item_id)
 );
 ALTER TABLE supplier_items ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "si_read" ON supplier_items FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "si_write" ON supplier_items FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "si_read" ON supplier_items FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "si_write" ON supplier_items FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
 
 -- 3. PURCHASE_ORDERS + LINES
 CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -69,10 +69,10 @@ CREATE TABLE IF NOT EXISTS purchase_order_lines (
 );
 ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_order_lines ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "po_read" ON purchase_orders FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "po_write" ON purchase_orders FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "pol_read" ON purchase_order_lines FOR SELECT USING (purchase_order_id IN (SELECT id FROM purchase_orders WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
-CREATE POLICY "pol_write" ON purchase_order_lines FOR ALL USING (purchase_order_id IN (SELECT id FROM purchase_orders WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
+CREATE POLICY IF NOT EXISTS "po_read" ON purchase_orders FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "po_write" ON purchase_orders FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "pol_read" ON purchase_order_lines FOR SELECT USING (purchase_order_id IN (SELECT id FROM purchase_orders WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
+CREATE POLICY IF NOT EXISTS "pol_write" ON purchase_order_lines FOR ALL USING (purchase_order_id IN (SELECT id FROM purchase_orders WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
 
 -- 4. PAYROLL
 CREATE TABLE IF NOT EXISTS payroll_entries (
@@ -102,10 +102,10 @@ CREATE TABLE IF NOT EXISTS payroll_adjustments (
 );
 ALTER TABLE payroll_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payroll_adjustments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "pe_read" ON payroll_entries FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "pe_write" ON payroll_entries FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "pa_read" ON payroll_adjustments FOR SELECT USING (payroll_entry_id IN (SELECT id FROM payroll_entries WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
-CREATE POLICY "pa_write" ON payroll_adjustments FOR ALL USING (payroll_entry_id IN (SELECT id FROM payroll_entries WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
+CREATE POLICY IF NOT EXISTS "pe_read" ON payroll_entries FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "pe_write" ON payroll_entries FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "pa_read" ON payroll_adjustments FOR SELECT USING (payroll_entry_id IN (SELECT id FROM payroll_entries WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
+CREATE POLICY IF NOT EXISTS "pa_write" ON payroll_adjustments FOR ALL USING (payroll_entry_id IN (SELECT id FROM payroll_entries WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
 
 -- 5. COGS_ENTRIES
 CREATE TABLE IF NOT EXISTS cogs_entries (
@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS cogs_entries (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE cogs_entries ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "ce_read" ON cogs_entries FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "ce_write" ON cogs_entries FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "ce_read" ON cogs_entries FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "ce_write" ON cogs_entries FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
 
 -- 6. DATA_HEALTH_CHECKS
 CREATE TABLE IF NOT EXISTS data_health_checks (
@@ -135,8 +135,8 @@ CREATE TABLE IF NOT EXISTS data_health_checks (
   checked_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE data_health_checks ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "dhc_read" ON data_health_checks FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "dhc_write" ON data_health_checks FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "dhc_read" ON data_health_checks FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "dhc_write" ON data_health_checks FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
 
 -- 7. ONBOARDING_PROGRESS
 CREATE TABLE IF NOT EXISTS onboarding_progress (
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS onboarding_progress (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE onboarding_progress ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "onb_own" ON onboarding_progress FOR ALL USING (user_id = auth.uid());
+CREATE POLICY IF NOT EXISTS "onb_own" ON onboarding_progress FOR ALL USING (user_id = auth.uid());
 
 -- 8. FORECAST_ACCURACY_DAILY
 CREATE TABLE IF NOT EXISTS forecast_accuracy_daily (
@@ -166,8 +166,8 @@ CREATE TABLE IF NOT EXISTS forecast_accuracy_daily (
   UNIQUE(org_id, location_id, date, metric)
 );
 ALTER TABLE forecast_accuracy_daily ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "fad_read" ON forecast_accuracy_daily FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "fad_write" ON forecast_accuracy_daily FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "fad_read" ON forecast_accuracy_daily FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "fad_write" ON forecast_accuracy_daily FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
 
 -- 9. CASH_DENOMINATIONS
 CREATE TABLE IF NOT EXISTS cash_denominations (
@@ -179,8 +179,8 @@ CREATE TABLE IF NOT EXISTS cash_denominations (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE cash_denominations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "cd_read" ON cash_denominations FOR SELECT USING (cash_count_id IN (SELECT id FROM cash_counts_daily WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
-CREATE POLICY "cd_write" ON cash_denominations FOR ALL USING (cash_count_id IN (SELECT id FROM cash_counts_daily WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
+CREATE POLICY IF NOT EXISTS "cd_read" ON cash_denominations FOR SELECT USING (cash_count_id IN (SELECT id FROM cash_counts_daily WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
+CREATE POLICY IF NOT EXISTS "cd_write" ON cash_denominations FOR ALL USING (cash_count_id IN (SELECT id FROM cash_counts_daily WHERE org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid())));
 
 -- 10. MENU_ENGINEERING_SNAPSHOTS
 CREATE TABLE IF NOT EXISTS menu_engineering_snapshots (
@@ -196,8 +196,8 @@ CREATE TABLE IF NOT EXISTS menu_engineering_snapshots (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE menu_engineering_snapshots ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "mes_read" ON menu_engineering_snapshots FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "mes_write" ON menu_engineering_snapshots FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "mes_read" ON menu_engineering_snapshots FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "mes_write" ON menu_engineering_snapshots FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
 
 -- 11. AVAILABILITY
 CREATE TABLE IF NOT EXISTS availability (
@@ -213,8 +213,8 @@ CREATE TABLE IF NOT EXISTS availability (
   UNIQUE(employee_id, day_of_week)
 );
 ALTER TABLE availability ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "avail_read" ON availability FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY "avail_write" ON availability FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "avail_read" ON availability FOR SELECT USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY IF NOT EXISTS "avail_write" ON availability FOR ALL USING (org_id IN (SELECT group_id FROM profiles WHERE id = auth.uid()));
 
 -- 12. FIX: menu_engineering_summary RPC
 DROP FUNCTION IF EXISTS menu_engineering_summary(date, date, uuid, text, text);

@@ -2,6 +2,31 @@
 -- V2 MISSING RPCs — Port 9 functions from _archive to v2 schema
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- Drop existing functions/views that may have different signatures
+DO $$ 
+DECLARE fn text;
+BEGIN
+  FOR fn IN SELECT unnest(ARRAY[
+    'setup_new_owner(uuid,text,text)',
+    'get_setup_completeness(uuid)',
+    'get_recipe_food_cost(uuid)',
+    'get_recipe_ingredient_count(uuid)',
+    'get_menu_item_id_for_recipe(uuid)',
+    'get_recipe_ingredients(uuid)',
+    'receive_purchase_order(uuid)',
+    'add_loyalty_points(uuid,integer,text)',
+    'pricing_omnes_summary(date,date,uuid,text,text)',
+    'audit_data_coherence(uuid)',
+    'rpc_reconciliation_summary(uuid,uuid[],date,date,text)'
+  ])
+  LOOP
+    BEGIN
+      EXECUTE 'DROP FUNCTION IF EXISTS ' || fn;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+  END LOOP;
+END $$;
+
 -- ─── 1. setup_new_owner ──────────────────────────────────────────────────
 -- Creates org group, location, and owner role for new user onboarding
 CREATE OR REPLACE FUNCTION setup_new_owner(
@@ -505,6 +530,7 @@ $$;
 
 -- ─── 11. rpc_reconciliation_summary ──────────────────────────────────────
 -- Aggregated stock reconciliation data
+DROP VIEW IF EXISTS mart_stock_count_headers CASCADE;
 CREATE OR REPLACE VIEW mart_stock_count_headers AS
 SELECT
   sc.id, sc.group_id, sc.location_id,
@@ -520,6 +546,7 @@ GROUP BY sc.id, sc.group_id, sc.location_id, l.name,
          sc.start_date, sc.end_date, sc.status,
          sc.created_at, sc.updated_at;
 
+DROP VIEW IF EXISTS mart_stock_count_lines_enriched CASCADE;
 CREATE OR REPLACE VIEW mart_stock_count_lines_enriched AS
 SELECT
   scl.id, scl.stock_count_id,

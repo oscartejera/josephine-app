@@ -53,9 +53,10 @@ SELECT
 FROM daily_sales ds;
 
 -- labour_daily_unified: ensure org_id is exposed
+DROP VIEW IF EXISTS labour_daily_unified CASCADE;
 CREATE OR REPLACE VIEW labour_daily_unified AS
 SELECT
-  l.id, l.location_id,
+  l.location_id,
   loc.org_id,
   l.date,
   l.labour_cost,
