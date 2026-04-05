@@ -154,6 +154,7 @@ BEGIN
   RETURN NEW;
 END;$$;
 
+DROP TRIGGER IF EXISTS trg_inventory_counts_variance ON inventory_counts;
 CREATE TRIGGER trg_inventory_counts_variance
   BEFORE INSERT OR UPDATE ON inventory_counts
   FOR EACH ROW EXECUTE FUNCTION trg_compute_variance();
@@ -169,6 +170,7 @@ BEGIN
   RETURN NEW;
 END;$$;
 
+DROP TRIGGER IF EXISTS trg_stock_waste_decrement ON stock_movements;
 CREATE TRIGGER trg_stock_waste_decrement
   AFTER INSERT ON stock_movements FOR EACH ROW
   WHEN (NEW.movement_type = 'waste') EXECUTE FUNCTION trg_waste_auto_decrement();
@@ -188,6 +190,7 @@ BEGIN
   RETURN NEW;
 END;$$;
 
+DROP TRIGGER IF EXISTS trg_sync_success_refresh_mvs ON integration_sync_runs;
 CREATE TRIGGER trg_sync_success_refresh_mvs
   AFTER UPDATE OF status ON integration_sync_runs FOR EACH ROW
   WHEN (NEW.status = 'success' AND OLD.status IS DISTINCT FROM NEW.status)
@@ -243,29 +246,34 @@ GRANT EXECUTE ON FUNCTION public.resolve_data_source(uuid) TO anon, authenticate
 -- locations.group_id = org_id
 CREATE OR REPLACE FUNCTION trg_sync_location_group_id() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.group_id := NEW.org_id; RETURN NEW; END;$$;
+DROP TRIGGER IF EXISTS trg_locations_group_id ON locations;
 CREATE TRIGGER trg_locations_group_id BEFORE INSERT OR UPDATE ON locations
   FOR EACH ROW EXECUTE FUNCTION trg_sync_location_group_id();
 
 -- inventory_items.group_id = org_id
 CREATE OR REPLACE FUNCTION trg_sync_inv_group_id() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.group_id := NEW.org_id; RETURN NEW; END;$$;
+DROP TRIGGER IF EXISTS trg_inv_items_group_id ON inventory_items;
 CREATE TRIGGER trg_inv_items_group_id BEFORE INSERT OR UPDATE ON inventory_items
   FOR EACH ROW EXECUTE FUNCTION trg_sync_inv_group_id();
 
 -- employees.active = (status = 'active')
 CREATE OR REPLACE FUNCTION trg_sync_employee_active() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.active := (NEW.status = 'active'); RETURN NEW; END;$$;
+DROP TRIGGER IF EXISTS trg_employees_active ON employees;
 CREATE TRIGGER trg_employees_active BEFORE INSERT OR UPDATE ON employees
   FOR EACH ROW EXECUTE FUNCTION trg_sync_employee_active();
 
 -- stock_movements.inventory_item_id = item_id
 CREATE OR REPLACE FUNCTION trg_sync_sm_inv_item_id() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.inventory_item_id := NEW.item_id; RETURN NEW; END;$$;
+DROP TRIGGER IF EXISTS trg_sm_inv_item_id ON stock_movements;
 CREATE TRIGGER trg_sm_inv_item_id BEFORE INSERT OR UPDATE ON stock_movements
   FOR EACH ROW EXECUTE FUNCTION trg_sync_sm_inv_item_id();
 
 -- cash_counts_daily.day = date
 CREATE OR REPLACE FUNCTION trg_sync_cash_day() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.day := NEW.date; RETURN NEW; END;$$;
+DROP TRIGGER IF EXISTS trg_cash_day ON cash_counts_daily;
 CREATE TRIGGER trg_cash_day BEFORE INSERT OR UPDATE ON cash_counts_daily
   FOR EACH ROW EXECUTE FUNCTION trg_sync_cash_day();
