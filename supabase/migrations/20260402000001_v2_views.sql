@@ -66,7 +66,7 @@ FROM sales_hourly_raw s;
 
 CREATE OR REPLACE VIEW labour_daily_unified AS
 SELECT
-  l.id, l.location_id,
+  l.location_id,
   loc.org_id,
   l.date,
   l.labour_cost,
@@ -77,7 +77,7 @@ JOIN locations loc ON loc.id = l.location_id;
 
 CREATE OR REPLACE VIEW forecast_daily_unified AS
 SELECT
-  f.id, f.location_id,
+  f.location_id,
   loc.org_id,
   f.date,
   f.forecast_sales,
@@ -89,7 +89,7 @@ JOIN locations loc ON loc.id = f.location_id;
 
 CREATE OR REPLACE VIEW budget_daily_unified AS
 SELECT
-  b.id, b.location_id,
+  b.location_id,
   loc.org_id,
   b.date,
   b.budget_sales,
