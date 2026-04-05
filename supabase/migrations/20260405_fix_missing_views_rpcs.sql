@@ -7,7 +7,21 @@
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 1. RECREATE UNIFIED VIEWS (ensure they include ALL columns)
+-- Drop first because column sets differ from previous migration
 -- ═══════════════════════════════════════════════════════════════════════════
+
+DROP MATERIALIZED VIEW IF EXISTS product_sales_daily_unified_mv CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS product_sales_daily_unified_mv_v2 CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS sales_hourly_unified_mv CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS sales_hourly_unified_mv_v2 CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS mart_kpi_daily_mv CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS mart_sales_category_daily_mv CASCADE;
+
+DROP VIEW IF EXISTS low_stock_unified CASCADE;
+DROP VIEW IF EXISTS sales_daily_unified CASCADE;
+DROP VIEW IF EXISTS sales_hourly_unified CASCADE;
+DROP VIEW IF EXISTS product_sales_daily_unified CASCADE;
+DROP VIEW IF EXISTS v_forecast_accuracy CASCADE;
 
 -- sales_daily_unified: ensure gross_sales and all payment columns
 CREATE OR REPLACE VIEW sales_daily_unified AS
@@ -236,3 +250,19 @@ GRANT EXECUTE ON FUNCTION get_menu_engineering_timeline(uuid, uuid, int) TO anon
 
 -- Reload PostgREST schema cache
 NOTIFY pgrst, 'reload schema';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 6. RECREATE MATERIALIZED VIEWS (dropped at top of this migration)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_sales_daily_unified_mv AS
+SELECT * FROM product_sales_daily_unified;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS sales_hourly_unified_mv AS
+SELECT * FROM sales_hourly_unified;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS product_sales_daily_unified_mv_v2 AS
+SELECT * FROM product_sales_daily_unified;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS sales_hourly_unified_mv_v2 AS
+SELECT * FROM sales_hourly_unified;

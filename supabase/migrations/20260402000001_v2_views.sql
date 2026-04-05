@@ -3,6 +3,36 @@
 -- =============================================================================
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- DROP existing views first to allow column changes
+-- (PostgreSQL does not allow CREATE OR REPLACE VIEW to remove/reorder columns)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Drop materialized views first (they depend on base views)
+DROP MATERIALIZED VIEW IF EXISTS product_sales_daily_unified_mv CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS product_sales_daily_unified_mv_v2 CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS sales_hourly_unified_mv CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS sales_hourly_unified_mv_v2 CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS mart_kpi_daily_mv CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS mart_sales_category_daily_mv CASCADE;
+
+-- Drop base views (CASCADE handles any remaining deps)
+DROP VIEW IF EXISTS low_stock_unified CASCADE;
+DROP VIEW IF EXISTS sales_daily_unified CASCADE;
+DROP VIEW IF EXISTS sales_hourly_unified CASCADE;
+DROP VIEW IF EXISTS labour_daily_unified CASCADE;
+DROP VIEW IF EXISTS forecast_daily_unified CASCADE;
+DROP VIEW IF EXISTS budget_daily_unified CASCADE;
+DROP VIEW IF EXISTS product_sales_daily_unified CASCADE;
+DROP VIEW IF EXISTS cogs_daily_v CASCADE;
+DROP VIEW IF EXISTS inventory_position_unified CASCADE;
+DROP VIEW IF EXISTS recipe_summary CASCADE;
+DROP VIEW IF EXISTS mart_stock_count_headers CASCADE;
+DROP VIEW IF EXISTS mart_stock_count_lines_enriched CASCADE;
+DROP VIEW IF EXISTS mart_kpi_daily CASCADE;
+DROP VIEW IF EXISTS mart_sales_category_daily CASCADE;
+DROP VIEW IF EXISTS v_payroll_monthly_cost CASCADE;
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- UNIFIED VIEWS (frontend contracts)
 -- ═══════════════════════════════════════════════════════════════════════════
 
